@@ -113,7 +113,7 @@ def _main(configuration, logger, environ, op_name='', output_objects=None, clien
         logger = configuration.logger
 
     if output_objects is None:
-        output_objects = [] # create a new list if one was not supplied
+        output_objects = []  # create a new list if one was not supplied
 
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
@@ -209,7 +209,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             status = returnvalues.FILE_NOT_FOUND
 
         if not _check_serve_permitted(configuration, paths=match):
-            status = returnvalues.REJECTED_ERROR
+            status = returnvalues.SIZE_LIMIT_ERROR
             text = _render_error_text_for_serve_limit(configuration)
             output_objects.append({'object_type': 'error_text', 'text': text})
             return (output_objects, status)

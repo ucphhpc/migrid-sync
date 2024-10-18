@@ -2726,6 +2726,9 @@ def file_format(configuration, ret_val, ret_msg, out_obj):
                 file_content += line
         elif entry['object_type'] == 'binary':
             file_content = entry['data']
+        elif entry['object_type'] == 'error_text':
+            # Let error handler make sure errors are delivered as text
+            file_content += entry['text']
 
     return file_content
 
