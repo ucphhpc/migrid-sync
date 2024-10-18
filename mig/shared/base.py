@@ -36,6 +36,7 @@ import os
 import re
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
+from mig.shared.compat import PY2
 from mig.shared.defaults import default_str_coding, default_fs_coding, \
     keyword_all, keyword_auto, sandbox_names, _user_invisible_files, \
     _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, csrf_field, \
@@ -496,7 +497,7 @@ def is_unicode(val):
     return (type(u"") == type(val))
 
 
-def force_utf8(val, highlight=''):
+def _force_utf8_py2(val, highlight=''):
     """Internal helper to encode unicode strings to utf8 version. Actual
     changes are marked out with the highlight string if given.
     """
@@ -506,6 +507,31 @@ def force_utf8(val, highlight=''):
     if not is_unicode(val):
         return val
     return "%s%s%s" % (highlight, val.encode("utf8"), highlight)
+
+def _force_utf8_py3(val, highlight='', stringify=True):
+    """Internal helper to encode unicode strings to utf8 version. Actual
+    changes are marked out with the highlight string if given.
+    The optional stringify turns ALL values including numbers into string.
+    """
+    # We run into all kind of nasty encoding problems if we mix
+    if not isinstance(val, basestring):
+        if stringify:
+            val = "%s" % val
+        else:
+            return val
+    if not is_unicode(val):
+        return val
+    if is_unicode(highlight):
+        hl_utf = highlight.encode("utf8")
+    else:
+        hl_utf = highlight
+    return (b"%s%s%s" % (hl_utf, val.encode("utf8"), hl_utf))
+
+
+if PY2:
+    force_utf8 = _force_utf8_py2
+else:
+    force_utf8 = _force_utf8_py3
 
 
 def force_utf8_rec(input_obj, highlight=''):
