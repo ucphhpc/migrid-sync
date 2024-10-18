@@ -48,7 +48,7 @@ from mig.shared.base import requested_backend, allow_script, \
 from mig.shared.conf import get_configuration_object
 from mig.shared.httpsclient import extract_client_id
 from mig.shared.output import format_output, reject_main
-from mig.shared.returnvalues import CLIENT_ERROR
+from mig.shared.returnvalues import CLIENT_ERROR, SIZE_LIMIT_ERROR
 from mig.shared.scriptinput import fieldstorage_to_dict
 
 
@@ -97,6 +97,13 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
     elif not start_entry.get('headers', []):
         start_entry['headers'] = default_headers
     headers = start_entry['headers']
+
+    if ret_code == SIZE_LIMIT_ERROR[0]:
+        # NOTE: we don't have an easy way to get client_id here like in wsgi
+        client_id = "UNKNOWN"
+        logger.warning("Refuse %s request from %s - above size limit" %
+                       (backend, client_id))
+        headers.append(('Status', '%s %s' % (ret_code, ret_msg)))
 
     output = format_output(configuration, backend, ret_code, ret_msg,
                            output_objs, output_format)

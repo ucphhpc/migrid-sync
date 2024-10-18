@@ -45,8 +45,9 @@ FILE_NOT_FOUND = (105, 'File not found')
 SYSTEM_ERROR = (200, 'SYSTEM_ERROR')
 USER_NOT_CREATED = (201, 'USER_NOT_CREATED')
 OUTPUT_VALIDATION_ERROR = (202, 'The output the server '
-                            + 'has generated could not be validated')
+                           + 'has generated could not be validated')
 
 # REQUEST ERRORS
 
+SIZE_LIMIT_ERROR = (413, 'Payload Too Large')
 REJECTED_ERROR = (422, 'REJECTED')

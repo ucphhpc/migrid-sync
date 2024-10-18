@@ -1013,6 +1013,53 @@ if (jQuery) (function($){
                   );
         }
 
+        function downloadWrapper(el, dialog, download_url) {
+            var lastinfo = $(statusinfo).html();
+
+            var target = $(el).attr(pathAttribute).split('/');
+            var file_name;
+            if (target.lastIndexOf('/') === target.length-1) {
+                file_name = 'output.bin';
+            } else {
+                file_name = target[target.length-1];
+            }
+            startProgress("Downloading "+file_name);
+
+            $.ajax({
+                url: download_url,
+                dataType: 'binary',
+                method: 'GET',
+                xhrFields: {
+                    responseType: 'blob' // Set the response type to 'blob'
+                },
+                success: function(blob) {
+                    console.info("Starting download of "+file_name)
+                    let fileURL = URL.createObjectURL(blob);
+                    var link = document.createElement('a');
+                    link.href = fileURL;
+                    /* downloaded filename */
+                    link.download = file_name;
+                    document.body.appendChild(link);
+                    link.click();
+                    URL.revokeObjectURL(fileURL);
+                    stopProgress("");
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error downloading', file_name, ":" , error);
+                    //console.info('xhr: ', xhr);
+
+                    stopProgress("Download failed - above web size limit?");
+
+                    //console.info('response text: '+xhr.responseText);
+                    /* TODO: extract actual error message from response here */
+                    //var errors = $(this).renderError($.parseJSON(xhr.responseText));
+                    $(dialog).dialog(okDialog);
+                    $(dialog).dialog('open');
+                    $(dialog).html(error);
+                }
+            });
+        }
+
         // Callback helpers for context menu
         var callbacks = {
 
@@ -1024,8 +1071,9 @@ if (jQuery) (function($){
                 var path = chroot($(el).attr(pathAttribute), options);
                 if (options.enableGDP) {
                     /* Path may contain URL-unfriendly characters */
-                    document.location = 'cat.py?path=' +
+                    var download_url = 'cat.py?path=' +
                         encodeURIComponent(path)+'&output_format=file';
+                    downloadWrapper(el, '#cmd_dialog', download_url);
                 }
                 else {
                     var path_enc = encodeURI(path);
@@ -1057,8 +1105,9 @@ if (jQuery) (function($){
                     window.open('/cert_redirect/'+path_enc);
                 } else {
                     /* Path may contain URL-unfriendly characters */
-                    document.location = 'cat.py?path=' +
+                    var download_url = 'cat.py?path=' +
                         encodeURIComponent(path)+'&output_format=file';
+                    downloadWrapper(el, '#cmd_dialog', download_url);
                 }
             },
             edit:   function (action, el, pos) {
