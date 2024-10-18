@@ -58,7 +58,7 @@ else:
     from html import escape as escape_html
 assert escape_html is not None
 
-from mig.shared.base import force_unicode, force_utf8
+from mig.shared.base import force_unicode, force_native_str
 from mig.shared.defaults import src_dst_sep, username_charset, \
     username_max_length, session_id_charset, session_id_length, \
     subject_id_charset, subject_id_min_length, subject_id_max_length, \
@@ -2294,7 +2294,7 @@ class InputException(Exception):
     def __str__(self):
         """Return string representation"""
 
-        return force_utf8(force_unicode(self.value))
+        return force_native_str(self.value)
 
 
 def main(_exit=sys.exit, _print=print):
