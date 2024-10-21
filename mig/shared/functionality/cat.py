@@ -41,7 +41,8 @@ from mig.shared.fileio import read_file, read_file_lines, write_file, \
     write_file_lines
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.init import initialize_main_variables, start_download
+from mig.shared.init import initialize_main_variables, start_error, \
+    start_download
 from mig.shared.parseflags import verbose, binary
 from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.safeinput import valid_path_pattern
@@ -167,11 +168,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                    % dst})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
+    output_format = user_arguments_dict.get('output_format', ['txt'])[0]
     src_mode = "rb"
     dst_mode = "wb"
     if binary(flags):
         force_file = True
-    elif user_arguments_dict.get('output_format', ['txt'])[0] == 'file':
+    elif output_format == 'file':
         force_file = True
     else:
         force_file = False
@@ -209,8 +211,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
             status = returnvalues.FILE_NOT_FOUND
 
         if not _check_serve_permitted(configuration, paths=match):
-            status = returnvalues.SIZE_LIMIT_ERROR
+            status = returnvalues.REJECT_PROCESSING_ERROR
             text = _render_error_text_for_serve_limit(configuration)
+            output_objects.append(start_error(configuration, output_format,
+                                              status))
             output_objects.append({'object_type': 'error_text', 'text': text})
             return (output_objects, status)
 

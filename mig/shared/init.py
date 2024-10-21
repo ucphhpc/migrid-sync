@@ -100,6 +100,21 @@ def start_download(configuration, path, output):
                               % os.path.basename(path))])
 
 
+def start_error(configuration, output_format, status_pair):
+    """Helper to set the headers required to force an error message instead of
+    binary output delivery.
+    """
+    _logger = configuration.logger
+    if output_format in ['file', 'binary']:
+        content_type = 'text/plain'
+    else:
+        content_type = output_format
+    _logger.debug('force %s error message for %s request' % (content_type,
+                                                             output_format))
+    return make_start_entry([('Content-Type', content_type),
+                             ('Status', '%s %s' % status_pair)])
+
+
 def initialize_main_variables(client_id, op_title=True, op_header=True,
                               op_menu=True):
     """Script initialization is identical for most scripts in 

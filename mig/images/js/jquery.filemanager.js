@@ -1044,18 +1044,25 @@ if (jQuery) (function($){
                     URL.revokeObjectURL(fileURL);
                     stopProgress("");
                 },
-                error: function(xhr, status, error) {
-                    console.error('Error downloading', file_name, ":" , error);
+                error: function(xhr, textStatus, errorThrown) {
+                    console.error('Error downloading', file_name, ":", textStatus, ":", errorThrown);
                     //console.info('xhr: ', xhr);
+                    //console.info('xhr.status: ', xhr.status);
 
-                    stopProgress("Download failed - above web size limit?");
+                    var hint_txt = "";
+                    /* NOTE: this error code is from cat and in returnvalues */
+                    /* TODO: can we extract actual response from xhr instead? */
+                    if (xhr.status === 422) {
+                        hint_txt = "above web size limit"
+                    } else {
+                        hint_txt = textStatus +" ("+errorThrown+")";
+                    }
+                    var err_msg = "Download failed: "+hint_txt;
+                    stopProgress(err_msg);
 
-                    //console.info('response text: '+xhr.responseText);
-                    /* TODO: extract actual error message from response here */
-                    //var errors = $(this).renderError($.parseJSON(xhr.responseText));
                     $(dialog).dialog(okDialog);
                     $(dialog).dialog('open');
-                    $(dialog).html(error);
+                    $(dialog).html(err_msg);
                 }
             });
         }

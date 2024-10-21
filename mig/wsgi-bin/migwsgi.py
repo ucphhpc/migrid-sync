@@ -39,7 +39,6 @@ from mig.shared.defaults import download_block_size, default_fs_coding
 from mig.shared.conf import get_configuration_object
 from mig.shared.objecttypes import get_object_type_info
 from mig.shared.output import validate, format_output, dummy_main, reject_main
-from mig.shared.returnvalues import SIZE_LIMIT_ERROR
 from mig.shared.safeinput import valid_backend_name, html_escape, InputException
 from mig.shared.scriptinput import fieldstorage_to_dict
 
@@ -353,11 +352,6 @@ def application(environ, start_response):
         # _logger.debug("WSGI adding missing headers: %s" % default_headers)
         start_entry['headers'] = default_headers
     response_headers = start_entry['headers']
-
-    if ret_code == SIZE_LIMIT_ERROR[0]:
-        _logger.warning("Refuse %s request from %s - above size limit" %
-                        (backend, client_id))
-        response_headers.append(('Status', '%s %s' % (ret_code, ret_msg)))
 
     # Pass wsgi info and helpers for optional use in output delivery
     wsgi_env = {}

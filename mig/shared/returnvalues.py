@@ -49,5 +49,4 @@ OUTPUT_VALIDATION_ERROR = (202, 'The output the server '
 
 # REQUEST ERRORS
 
-SIZE_LIMIT_ERROR = (413, 'Payload Too Large')
-REJECTED_ERROR = (422, 'REJECTED')
+REJECT_PROCESSING_ERROR = (422, 'Unprocessable Content')
