@@ -109,7 +109,8 @@ class MigSharedFunctionalityCat(MigTestCase):
                                            user_arguments_dict=payload,
                                            environ=self.test_environ)
 
-        self.assertEqual(len(output_objects), 1)
+        # NOTE: start entry with headers and actual content
+        self.assertEqual(len(output_objects), 2)
         self.assertSingleOutputObject(output_objects,
                                       with_object_type='file_output')
 
@@ -161,13 +162,13 @@ class MigSharedFunctionalityCat(MigTestCase):
                                            user_arguments_dict=payload,
                                            environ=self.test_environ)
 
-        self.assertEqual(len(output_objects), 1)
+        # NOTE: start entry with headers and actual error message
+        self.assertEqual(len(output_objects), 2)
         relevant_obj = self.assertSingleOutputObject(output_objects,
-            with_object_type='error_text')
+                                                     with_object_type='error_text')
         self.assertEqual(relevant_obj['text'],
                          "Site configuration prevents web serving contents "
                          "bigger than 3896 bytes")
-
 
     def test_file_serving_over_limit_with_storage_protocols_sftp(self):
         test_binary_file = os.path.realpath(os.path.join(TEST_DATA_DIR,
@@ -186,13 +187,13 @@ class MigSharedFunctionalityCat(MigTestCase):
         self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
 
         (output_objects, status) = submain(self.configuration, self.logger,
-                                        client_id=self.TEST_CLIENT_ID,
-                                        user_arguments_dict=payload,
-                                        environ=self.test_environ)
+                                           client_id=self.TEST_CLIENT_ID,
+                                           user_arguments_dict=payload,
+                                           environ=self.test_environ)
 
-        self.assertEqual(len(output_objects), 1)
+        # NOTE: start entry with headers and actual error message
         relevant_obj = self.assertSingleOutputObject(output_objects,
-            with_object_type='error_text')
+                                                     with_object_type='error_text')
         self.assertEqual(relevant_obj['text'],
                          "Site configuration prevents web serving contents "
                          "bigger than 3896 bytes - please use better "
@@ -203,15 +204,17 @@ class MigSharedFunctionalityCat(MigTestCase):
         try:
             result = realmain(self.TEST_CLIENT_ID, {}, None)
         except Exception as unexpectedexc:
-            raise AssertionError("saw unexpected exception: %s" % (unexpectedexc,))
+            raise AssertionError(
+                "saw unexpected exception: %s" % (unexpectedexc,))
 
         (output_objects, status) = result
         self.assertEqual(status[1], 'Client error')
 
         error_text_objects = _only_output_objects(output_objects,
-            with_object_type='error_text')
+                                                  with_object_type='error_text')
         relevant_obj = error_text_objects[2]
-        self.assertEqual(relevant_obj['text'], 'Input arguments were rejected - not allowed for this script!')
+        self.assertEqual(
+            relevant_obj['text'], 'Input arguments were rejected - not allowed for this script!')
 
 
 if __name__ == '__main__':
