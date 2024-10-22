@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # init - shared helpers to init functionality backends
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -98,6 +98,22 @@ def start_download(configuration, path, output):
                              ('Content-Disposition',
                               'attachment; filename="%s";'
                               % os.path.basename(path))])
+
+
+def start_error(configuration, output_format, status_pair):
+    """Helper to set the headers required to force an error message to be shown
+    in particular in cases where file or binary output delivery was requested,
+    which would hide the error in the file.
+    """
+    _logger = configuration.logger
+    if output_format in ['file', 'binary']:
+        content_type = 'text/plain'
+    else:
+        content_type = output_format
+    _logger.debug('force %s error message for %s request' % (content_type,
+                                                             output_format))
+    return make_start_entry([('Content-Type', content_type),
+                             ('Status', '%s %s' % status_pair)])
 
 
 def initialize_main_variables(client_id, op_title=True, op_header=True,
