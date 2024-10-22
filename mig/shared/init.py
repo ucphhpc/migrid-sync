@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # init - shared helpers to init functionality backends
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -101,8 +101,9 @@ def start_download(configuration, path, output):
 
 
 def start_error(configuration, output_format, status_pair):
-    """Helper to set the headers required to force an error message instead of
-    binary output delivery.
+    """Helper to set the headers required to force an error message to be shown
+    in particular in cases where file or binary output delivery was requested,
+    which would hide the error in the file.
     """
     _logger = configuration.logger
     if output_format in ['file', 'binary']:

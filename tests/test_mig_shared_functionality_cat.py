@@ -109,7 +109,8 @@ class MigSharedFunctionalityCat(MigTestCase):
                                            user_arguments_dict=payload,
                                            environ=self.test_environ)
 
-        self.assertEqual(len(output_objects), 1)
+        # NOTE: start entry with headers and actual content
+        self.assertEqual(len(output_objects), 2)
         self.assertSingleOutputObject(output_objects,
                                       with_object_type='file_output')
 

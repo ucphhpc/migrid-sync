@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,6 +41,7 @@ from mig.shared.base import hexlify
 from mig.shared.defaults import file_dest_sep, keyword_any, keyword_updating
 from mig.shared.htmlgen import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
+from mig.shared.init import find_entry
 from mig.shared.objecttypes import validate
 from mig.shared.prettyprinttable import pprint_table
 from mig.shared.pwcrypto import sorted_hash_algos
@@ -2716,19 +2717,55 @@ def resource_format(configuration, ret_val, ret_msg, out_obj):
 def file_format(configuration, ret_val, ret_msg, out_obj):
     """Dump raw file contents"""
 
+    _logger = configuration.logger
+
     # TODO: use wsgi file_wrapper helper here if out_obj has wsgi entry?
 
     file_content = ''
 
+    # NOTE: carefully handle errors and ONLY render them when proper care has
+    #       been taken to deliver them as actual output, to avoid that they end
+    #       up hidden inside downloaded files.
+    #       Mark error output with the explicit start_error helper in backends
+    #       like it's done in cat.py, and only log such entries as warnings
+    #       here otherwise.
+    render_text, render_errors = False, False
+    headers = []
+    content_type = 'application/octet-stream'
+    start_entry = find_entry(out_obj, 'start')
+    if start_entry is not None:
+        headers = start_entry.get('headers', [])
+    for (key, val) in headers:
+        if key == 'Content-Type':
+            content_type = val
+    if content_type in ('text/plain', 'text/html'):
+        render_text, render_errors = True, True
+    _logger.debug("render output in file_format: %s (%s %s)" %
+                  (out_obj, render_text, render_errors))
     for entry in out_obj:
         if entry['object_type'] == 'file_output':
             for line in entry['lines']:
                 file_content += line
         elif entry['object_type'] == 'binary':
             file_content = entry['data']
+        elif entry['object_type'] == 'text':
+            if render_text:
+                file_content += entry['text']
+            else:
+                _logger.warning("skip %(object_type)s in file_format: %(text)s"
+                                % entry)
         elif entry['object_type'] == 'error_text':
-            # Let error handler make sure errors are delivered as text
-            file_content += entry['text']
+            if render_errors:
+                file_content += entry['text']
+            else:
+                _logger.warning("skip %(object_type)s in file_format: %(text)s"
+                                % entry)
+        elif entry['object_type'] == 'file_not_found':
+            if render_errors:
+                file_content += '%(name)s: No such file or directory\n' % entry
+            else:
+                _logger.warning("skip %(object_type)s in file_format: %(name)s"
+                                % entry)
 
     return file_content
 

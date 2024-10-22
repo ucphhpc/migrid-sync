@@ -1060,6 +1060,7 @@ if (jQuery) (function($){
                     var err_msg = "Download failed: "+hint_txt;
                     stopProgress(err_msg);
 
+                    err_msg += ". Please use other protocols for big downloads.";
                     $(dialog).dialog(okDialog);
                     $(dialog).dialog('open');
                     $(dialog).html(err_msg);

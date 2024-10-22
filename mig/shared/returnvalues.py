@@ -49,4 +49,7 @@ OUTPUT_VALIDATION_ERROR = (202, 'The output the server '
 
 # REQUEST ERRORS
 
+BAD_REQUEST_ERROR = (400, 'Bad Request')
+FORBIDDEN_ERROR = (403, 'Forbidden')
+NOT_FOUND_ERROR = (404, 'Not Found')
 REJECT_PROCESSING_ERROR = (422, 'Unprocessable Content')
