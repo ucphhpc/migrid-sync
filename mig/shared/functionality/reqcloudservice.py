@@ -109,8 +109,7 @@ def _ssh_help(configuration, client_id, cloud_id, cloud_dict,
     image = cloud_dict.get('INSTANCE_IMAGE', 'UNKNOWN')
     msg = cloud_ssh_login_help(configuration, client_id, cloud_id, label,
                                address, port, image)
-    # Wrap lines as html
-    return msg.replace('\n', '<br/>')
+    return msg
 
 
 def signature():
