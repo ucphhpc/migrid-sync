@@ -1185,21 +1185,27 @@ Host %(hostalias)s %(fqdn)s
     # Path to your ssh private key matching pub key set on your Cloud Setup page
     IdentityFile ~/.ssh/id_rsa
         """ % jump_host
-    msg += """Example explicit ssh command:<br/>
+    msg += """Example explicit ssh command:
+<pre class='codeblock'>
 <code>
 ssh %s %s@%s
 </code>
+</pre>
 </p>
     """ % (jump_opt, username, fqdn)
-    msg += """<br/><p>
+    msg += """<p>
 Alternatively you can add something like:
-<pre><code>
+<pre class='codeblock'>
+<code>
 %s
-</code></pre>
-to your ~/.ssh/config to allow connecting with the simple ssh command:<br/>
+</code>
+</pre>
+to your ~/.ssh/config to allow connecting with the simple ssh command:
+<pre class='codeblock'>
 <code>
 ssh %s
 </code>
+</pre>
 </p>
     """ % (ssh_config, label)
 
