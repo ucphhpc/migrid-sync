@@ -1056,6 +1056,7 @@ def _get_jump_host(configuration, client_id, cloud_id, manage=False):
         return jump_host
     addr = lookup_user_service_value(configuration, client_id, service,
                                      'service_jumphost_address', '')
+    jump_host['hostalias'] = '%s-cloud-jump' % cloud_id
     jump_host['address'] = jump_host['fqdn'] = addr
     jump_host['fqdn'] = cloud_fqdn_from_ip(configuration, addr)[0]
     jump_host['user'] = lookup_user_service_value(
@@ -1175,7 +1176,13 @@ IdentitiesOnly yes
     if jump_host['fqdn']:
         msg += jump_msg % jump_host
         jump_opt = "-J%(user)s@%(fqdn)s" % jump_host
-        ssh_config += """ProxyJump %(user)s@%(fqdn)s
+        ssh_config += """ProxyJump %(hostalias)s
+
+Host %(hostalias)s %(fqdn)s
+Hostname %(fqdn)s
+User %(user)s
+# Path to your ssh private key matching pub key set on your Cloud Setup page
+IdentityFile ~/.ssh/id_rsa
         """ % jump_host
     msg += """Example explicit ssh command:
 ssh %s %s@%s
