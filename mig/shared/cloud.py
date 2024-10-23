@@ -1185,11 +1185,15 @@ User %(user)s
 IdentityFile ~/.ssh/id_rsa
         """ % jump_host
     msg += """Example explicit ssh command:
+<code>
 ssh %s %s@%s
+</code>
     """ % (jump_opt, username, fqdn)
     msg += """
 Alternatively you can add something like:
+<code>
 %s
+</code>
 to your ~/.ssh/config to allow the simple ssh command:
 ssh %s
     """ % (ssh_config, label)
