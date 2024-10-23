@@ -1056,6 +1056,7 @@ def _get_jump_host(configuration, client_id, cloud_id, manage=False):
         return jump_host
     addr = lookup_user_service_value(configuration, client_id, service,
                                      'service_jumphost_address', '')
+    jump_host['hostalias'] = '%s-cloud-jump' % cloud_id
     jump_host['address'] = jump_host['fqdn'] = addr
     jump_host['fqdn'] = cloud_fqdn_from_ip(configuration, addr)[0]
     jump_host['user'] = lookup_user_service_value(
@@ -1152,39 +1153,60 @@ def cloud_remove_jump_host_key(configuration, client_id, cloud_id, auth_keys,
 def cloud_ssh_login_help(configuration, client_id, cloud_id, label, address,
                          port, image):
     """Return complete ssh login instructions for saved cloud_dict instance on
-    cloud_id.
+    cloud_id. Output is explicitly html-formatted.
     """
     _logger = configuration.logger
-    base_msg = """You can connect with ssh as user %s on host %s and port %d.
-    """
+    base_msg = """<p>
+You can connect with ssh as user %s on host %s and port %d.
+<br/>"""
     jump_msg = """Please note that you MUST explicitly ssh jump through host
 %(fqdn)s as user %(user)s to reach the instance.
-    """
+<br/>"""
     jump_host = cloud_login_jump_host(configuration, client_id, cloud_id)
     fqdn = cloud_fqdn_from_ip(configuration, address)[0]
     username = cloud_login_username(configuration, cloud_id, image)
     msg = base_msg % (username, fqdn, port)
     jump_opt = ''
     ssh_config = """Host %s
-HostName %s
-User %s
-# Path to your ssh private key matching pub key set on your Cloud Setup page
-IdentityFile ~/.ssh/id_rsa
-IdentitiesOnly yes
+    Hostname %s
+    User %s
+    # Path to your ssh private key matching pub key set on your Cloud Setup page
+    IdentityFile ~/.ssh/id_rsa
+    IdentitiesOnly yes
 """ % (label, fqdn, username)
     if jump_host['fqdn']:
         msg += jump_msg % jump_host
         jump_opt = "-J%(user)s@%(fqdn)s" % jump_host
-        ssh_config += """ProxyJump %(user)s@%(fqdn)s
+        ssh_config += """    ProxyJump %(hostalias)s
+
+Host %(hostalias)s %(fqdn)s
+    Hostname %(fqdn)s
+    User %(user)s
+    # Path to your ssh private key matching pub key set on your Cloud Setup page
+    IdentityFile ~/.ssh/id_rsa
         """ % jump_host
     msg += """Example explicit ssh command:
+<pre class='codeblock'>
+<code>
 ssh %s %s@%s
+</code>
+</pre>
+</p>
     """ % (jump_opt, username, fqdn)
-    msg += """
+    msg += """<p>
 Alternatively you can add something like:
+<pre class='codeblock'>
+<code>
 %s
-to your ~/.ssh/config to allow the simple ssh command:
+</code>
+</pre>
+to your ~/.ssh/config to allow connecting with the simple ssh command:
+<pre class='codeblock'>
+<code>
 ssh %s
+</code>
+</pre>
+</p>
     """ % (ssh_config, label)
 
     return msg
