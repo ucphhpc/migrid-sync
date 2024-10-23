@@ -221,7 +221,6 @@ def _get_required_user_dir_links(configuration, real_dir, link_dir):
     settings_dir = os.path.join(configuration.user_settings, real_dir)
     cache_dir = os.path.join(configuration.user_cache, real_dir)
     mrsl_dir = os.path.join(configuration.mrsl_files_dir, real_dir)
-    user_pending_dir = os.path.join(configuration.user_pending, real_dir)
     res_pending_dir = os.path.join(configuration.resource_pending, real_dir)
     if link_dir:
         home_link = os.path.join(configuration.user_home, link_dir)
@@ -234,11 +233,9 @@ def _get_required_user_dir_links(configuration, real_dir, link_dir):
         home_link = settings_link = cache_link = mrsl_link = False
         res_pending_link = False
 
-    # No link in user pending as that is before user has UUID
-    user_pending_link = None
+    # No content or link in user pending as that is before user has UUID
     dir_links = [(home_dir, home_link), (settings_dir, settings_link),
                  (cache_dir, cache_link), (mrsl_dir, mrsl_link),
-                 (user_pending_dir, user_pending_link),
                  (res_pending_dir, res_pending_link)]
     return dir_links
 
