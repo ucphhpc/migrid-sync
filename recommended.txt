@@ -27,9 +27,10 @@ email-validator<1.3;python_version < "3"
 wsgidav
 paramiko
 pyOpenSSL
-# NOTE: python-2.7 versions require older pyftpdlib
-pyftpdlib;python_version >= "3"
-pyftpdlib<2.0;python_version < "3"
+# NOTE: python-2.7 versions require pyftpdlib-1.x
+# NOTE: python-3.6 versions with dated pyopenssl (rocky8) require pyftpdlib-1.x
+pyftpdlib;python_version > "3.6"
+pyftpdlib<2.0;python_version <= "3.6"
 watchdog
 scandir
 python-openid
