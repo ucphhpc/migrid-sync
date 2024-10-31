@@ -2146,6 +2146,7 @@ def edit_gdp_user(
         configuration,
         user_id,
         changes,
+        removes,
         conf_path,
         mig_db_path,
         gdp_db_path=None,
@@ -2371,7 +2372,7 @@ def edit_gdp_user(
 
         try:
             new_project_user = edit_user(project_user_id, new_changes,
-                                         conf_path, mig_db_path,
+                                         removes, conf_path, mig_db_path,
                                          force, verbose)
             new_project_user_id = new_project_user['distinguished_name']
             new_user_ids.append(new_project_user_id)
@@ -2437,7 +2438,7 @@ def edit_gdp_user(
 
             # Change main user in MiG user database and on filesystem
 
-            user = edit_user(user_id, new_changes,
+            user = edit_user(user_id, new_changes, removes,
                              conf_path, mig_db_path,
                              force, verbose)
             new_user_id = user['distinguished_name']
@@ -2528,7 +2529,7 @@ def edit_gdp_user(
                 if verbose:
                     print(msg)
                 _logger.info(msg)
-                user = edit_user(rollback_id, rollback_dict,
+                user = edit_user(rollback_id, rollback_dict, [],
                                  conf_path, mig_db_path,
                                  True, verbose)
         except Exception as exc:

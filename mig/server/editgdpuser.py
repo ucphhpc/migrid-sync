@@ -78,6 +78,9 @@ if '__main__' == __name__:
     account_state = None
     reset_roles = False
     user_dict = {}
+    # NOTE: Remove fields is NOT supported through 'editgdpuser',
+    #       user 'edituser' to remove fields
+    remove_fields = []
     opt_args = 'c:g:d:fhri:S:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
@@ -171,6 +174,7 @@ if '__main__' == __name__:
             configuration,
             user_id,
             user_dict,
+            remove_fields,
             conf_path,
             mig_db_path,
             gdp_db_path=gdp_db_path,
