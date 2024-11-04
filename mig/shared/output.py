@@ -375,7 +375,7 @@ ___%s___
             header = [['ID', 'Path']]
             optional_cols = [('access', 'Access'), ('created', 'Created'),
                              ('active', 'Active'), ('owner', 'Owner'),
-                             ('invites', 'Invites'),  ('expire', 'Expire'),
+                             ('invites', 'Invites'), ('expire', 'Expire'),
                              ('single_file', 'Single file'),
                              ]
             content_keys = ['share_id', 'path']
@@ -2752,8 +2752,8 @@ def file_format(configuration, ret_val, ret_msg, out_obj):
             content_type = val
     if content_type in ('text/plain', 'text/html'):
         render_text, render_errors = True, True
-    _logger.debug("render output in file_format: %s (%s %s)" %
-                  (out_obj, render_text, render_errors))
+    #_logger.debug("render output in file_format: %s (%s %s)" %
+    #              (out_obj, render_text, render_errors))
     for entry in out_obj:
         if entry['object_type'] == 'file_output':
             for line in entry['lines']:
