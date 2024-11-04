@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_cron - daemon to monitor user crontabs and trigger actions
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -203,10 +203,10 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
     ):
         """Constructor"""
 
-        PatternMatchingEventHandler.__init__(self, patterns,
-                                             ignore_patterns,
-                                             ignore_directories,
-                                             case_sensitive)
+        PatternMatchingEventHandler.__init__(
+            self, patterns=patterns, ignore_patterns=ignore_patterns,
+            ignore_directories=ignore_directories,
+            case_sensitive=case_sensitive)
 
     def __update_crontab_monitor(
         self,
@@ -373,13 +373,13 @@ def __cron_err(configuration, client_id, msg):
     __cron_log(configuration, client_id, msg, 'error')
 
 
-def __cron_warn(configuration, client_id,  msg):
+def __cron_warn(configuration, client_id, msg):
     """Wrapper to send a single warning msg to client_id cron log"""
 
     __cron_log(configuration, client_id, msg, 'warning')
 
 
-def __cron_info(configuration, client_id,  msg):
+def __cron_info(configuration, client_id, msg):
     """Wrapper to send a single info msg to client_id cron log"""
 
     __cron_log(configuration, client_id, msg, 'info')
