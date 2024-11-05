@@ -1,5 +1,5 @@
-/* 
-   Local site variables to adjust look n' feel of what is displayed on the 
+/*
+   Local site variables to adjust look n' feel of what is displayed on the
    'static' html pages with javascript content loading on this site.
 
 */
@@ -8,9 +8,9 @@ function get_site_conf(key) {
     if (key === 'content_url') {
         value = "status-events.json";
     } else if (key === 'system_match') {
-        value = ["ALL", "SIF", "DEV.SIF"];
+        value = ["ALL", "ERDA", "TEST.ERDA"];
     } else if (key === 'auth_methods') {
-        value = ["extoid", "migoid"];
-    } 
+        value = ["extoid", "extoidc", "migoid", "extcert"];
+    }
     return value;
 }
