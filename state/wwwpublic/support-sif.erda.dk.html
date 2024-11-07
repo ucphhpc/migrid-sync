@@ -325,7 +325,7 @@
                                 previous backups if possible or more likely just refuse to restore any
                                 copies of the data from backup earlier than that point in time.
                             </p>
-                            <h4 class="staticpage">What's the cause of "read: Connection reset by peer" errors e.g. for SSHFS?</h4>
+                            <h4 class="staticpage">What's the cause of "read: Connection reset by peer" errors e.g. for SFTP/SSHFS?</h4>
                             <p>
                                 That error message is a common symptom of a firewall ban at SIF. We
                                 experience regular password guessing attacks and rely on a self-defense
@@ -335,17 +335,17 @@
                                 time. The ban period depends on the login pattern and simple repeated
                                 password failures usually only result in a 15 minute ban. More
                                 aggressive scans and failures on the other hand may trigger a 24 hour
-                                ban, while the most blatant cracking attempts result in a 24 day ban.
+                                ban, while the most blatant cracking attempts result in a 10 day ban.<br/>
                                 For multi-user systems and computers behind a shared gateway these bans
                                 unfortunately may result in not only the offender but also several
                                 other users or computers getting affected by the ban. In the sense that
                                 they are no longer able to reach SIF until the ban expires or gets
                                 manually lifted by the site administrators. Thus, please contact us on
                                 SIF support if you hit this issue and it remains so even after 15
-                                minutes without further login attempts. If you include the public IP
-                                address that you connect from (<a href="https://ip.me">ip.me</a>) it's
-                                a significant help to investigate and getting any unnecessary bans
-                                lifted without further delay.
+                                minutes without further login attempts.<br/>
+                                If you include the public IP address that you connect from
+                                (<a href="https://ip.me">ip.me</a>) it's a significant help to
+                                investigate and getting any unnecessary bans lifted without further delay.
                             </p>                                
                             <h4 class="staticpage">Can I get or keep a SIF account without a UCPH account?</h4>
                             <p>
@@ -634,19 +634,19 @@
                                 eller mere sandsynligt bare at afvise eventuelle anmodninger om at
                                 genskabe sikkerhedskopier af filerne fra en ældre dato.
                             </p>
-                            <h4 class="staticpage">Hvad er årsagen til "read: Connection reset by peer" fejl f.eks. med SSHFS?</h4>
+                            <h4 class="staticpage">Hvad er årsagen til "read: Connection reset by peer" fejl f.eks. med SFTP/SSHFS?</h4>
                             <p>
                                 Fejlbeskeden er typisk et symptom på firewall-blokering på SIF. Vi
                                 oplever jævnligt automatiserede forsøg på at gætte kodeord fra mørke
                                 afkroge af internettet og benytter et selvforsvars-system til at
-                                overvåge og handle når det ser tegn på mulige angreb eller misbrug. I
-                                praksis blokerer det automatisk IP-adresser midlertidigt når vi
-                                modtager for mange fejlede login-forsøg over en givet tidsrum.
+                                overvåge og handle når det ser tegn på mulige angreb eller misbrug.<br/>
+                                I praksis blokerer det automatisk IP-adresser midlertidigt når vi
+                                modtager for mange fejlede login-forsøg over en givet tidsrum.<br/>
                                 Blokeringens varighed afhænger af login-mønsteret så simple gentagne
                                 forkerte kodeord typisk kun fører til en 15 minutters blokering. Mere
                                 ihærdige skanninger eller systematiske gæt fører derimod til en
                                 24-timers blokering, mens der ved oplagte ondsindede angreb blokeres i
-                                24 dage.
+                                10 dage.<br/>
                                 For flerbrugersystemer og computere bag en delt gateway kan
                                 blokeringerne uheldigvis føre til at ikke kun synderen, men også 
                                 adskillige andre brugere eller computere bliver berørt. D.v.s. spærret
