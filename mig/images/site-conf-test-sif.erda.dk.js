@@ -9,6 +9,8 @@ function get_site_conf(key) {
         value = "status-events.json";
     } else if (key === 'system_match') {
         value = ["ALL", "SIF", "TEST.SIF"];
+    } else if (key === 'auth_methods') {
+        value = ["extoid", "migoid"];
     } 
     return value;
 }
