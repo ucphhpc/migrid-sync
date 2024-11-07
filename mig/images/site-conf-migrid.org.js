@@ -9,6 +9,8 @@ function get_site_conf(key) {
         value = "status-events.json";
     } else if (key === 'system_match') {
         value = ["ALL", "MiGrid"];
+    } else if (key === 'auth_methods') {
+        value = ["extoidc", "migoid", "extcert"];
     } 
     return value;
 }
