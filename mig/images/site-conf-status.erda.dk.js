@@ -10,7 +10,10 @@ function get_site_conf(key) {
     if (key === 'content_url') {
         value = "status-events.json";
     } else if (key === 'system_match') {
-        value = ["ALL", "ERDA", "IDMC", "SIF", "MiGrid"];
+        /* We keep IDMC for history */
+        value = ["ALL", "ERDA", "SIF", "MiGrid", "IDMC"];
+    } else if (key === 'auth_methods') {
+        value = ["extoid", "extoidc", "migoid", "extcert"];
     } 
     return value;
 }
