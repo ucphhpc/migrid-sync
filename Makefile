@@ -52,6 +52,14 @@ distclean: clean
 	@rm -rf ./tests/__pycache__
 	@rm -f ./tests/*.pyc
 
+.PHONY: lint
+lint:
+# ifneq ($(PY),'XXX')
+# 	@echo "linting is currently restricted to a lowest common denomiator of PY2"
+# 	@exit 1
+# endif
+	@./envhelp/python2 -m flake8 . --exclude=tests,state,envhelp,fixture,output,unittest,grsfs-fuse,irclib.py,seafile-seahub_settings-template.py --count --select=E9,F63,F7,F82 --show-source --statistics
+
 .PHONY: test
 test: dependencies testconfig
 	@$(PYTHON_BIN) -m unittest discover -s tests/
