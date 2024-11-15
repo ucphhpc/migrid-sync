@@ -216,7 +216,8 @@ def _main(configuration, args,
           role=None,
           peer_pattern=None,
           slack_secs=0,
-          hash_password=True
+          hash_password=True,
+          _generate_salt=None
           ):
     if configuration is None:
         if conf_path == keyword_auto:
@@ -306,7 +307,7 @@ def _main(configuration, args,
 
     if user_dict['password']:
         if hash_password:
-            user_dict['password_hash'] = make_hash(user_dict['password'])
+            user_dict['password_hash'] = make_hash(user_dict['password'], _generate_salt=_generate_salt)
             user_dict['password'] = ''
         else:
             salt = configuration.site_password_salt
