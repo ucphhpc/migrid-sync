@@ -41,7 +41,7 @@ import sys
 from unittest import TestCase, main as testmain
 
 from tests.support.configsupp import FakeConfiguration
-from tests.support.picklesupp import ensure_path_within_output_dir, \
+from tests.support.picklesupp import verify_path_within_output_dir_and_return, \
     is_path_within
 from tests.support.suppconst import MIG_BASE, TEST_BASE, TEST_FIXTURE_DIR, \
     TEST_DATA_DIR, TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR
@@ -391,7 +391,7 @@ def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):
     """
     assert isinstance(test_case, MigTestCase)
 
-    tmp_path = ensure_path_within_output_dir(relative_path)
+    tmp_path = verify_path_within_output_dir_and_return(relative_path)
 
     if ensure_dir:
         try:

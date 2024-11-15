@@ -13,7 +13,7 @@ def is_path_within(path, start=None, _msg=None):
     return not relative.startswith('..')
 
 
-def ensure_path_within_output_dir(relative_path):
+def verify_path_within_output_dir_and_return(relative_path):
     if os.path.isabs(relative_path):
         # the only permitted paths are those within the output directory set
         # aside for execution of the test suite: this will be enforced below
