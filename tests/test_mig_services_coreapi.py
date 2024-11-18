@@ -15,7 +15,9 @@ from tests.support.htmlsupp import HtmlAssertMixin
 
 from mig.services.coreapi import ThreadedApiHttpServer, \
     _create_and_expose_server
+from mig.server.createuser import _main as _createuser
 from mig.shared.conf import get_configuration_object
+from mig.shared.url import urlencode
 from mig.shared.useradm import _USERADM_CONFIG_DIR_KEYS
 
 _PYTHON_MAJOR = '2' if PY2 else '3'
@@ -220,6 +222,112 @@ class MigServerGrid_openid(MigTestCase, HtmlAssertMixin):
 
         self.assertEqual(status, 201)
         self.assertEqual(content, 'hello client!')
+
+    def _make_configuration(self, test_logger, server_addr, overrides=None):
+        configuration = self.configuration
+        _extend_configuration(
+            configuration,
+            server_addr[0],
+            server_addr[1],
+            logger=test_logger,
+            expandusername=False,
+            host_rsa_key='',
+            nossl=True,
+            show_address=False,
+            show_port=False,
+        )
+        return configuration
+
+    @staticmethod
+    def _make_server(configuration, logger=None, server_address=None):
+        def _on_instance(server):
+            server.server_app = _create_and_expose_server(
+                server, server.configuration)
+
+        (host, port) = server_address
+        server_thread = make_wrapped_server(ThreadedApiHttpServer, \
+            configuration, logger, host, port, on_instance=_on_instance)
+        return server_thread
+
+
+class MigServerGrid_openid__existing_user(MigTestCase, HtmlAssertMixin):
+    def before_each(self):
+        self.server_addr = None
+        self.server_thread = None
+
+        for config_key in _USERADM_CONFIG_DIR_KEYS:
+            dir_path = getattr(self.configuration, config_key)[0:-1]
+            try:
+                shutil.rmtree(dir_path)
+            except OSError as exc:
+                if exc.errno != errno.ENOENT:  # FileNotFoundError
+                    pass
+
+        _createuser(self.configuration, [
+            "Test User",
+            "Test Org",
+            "NA",
+            "DK",
+            "user@example.com",
+            "This is the create comment",
+            "password"
+        ], default_renew=True)
+        pass
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def after_each(self):
+        if self.server_thread:
+            self.server_thread.stop()
+
+    def issue_request(self, request_path):
+        return self.issue_GET(request_path)
+
+    def issue_GET(self, request_path, query_dict=None, response_encoding='textual'):
+        assert isinstance(request_path, str) and request_path.startswith('/'), "require http path starting with /"
+        request_url =  ''.join(('http://', self.server_addr[0], ':', str(self.server_addr[1]), request_path))
+
+        if query_dict is not None:
+            query_string = urlencode(query_dict)
+            request_url = ''.join((request_url, '?', query_string))
+
+        status = 0
+        data = None
+
+        try:
+            response = urlopen(request_url, None, timeout=2000)
+
+            status = response.getcode()
+            data = response.read()
+        except HTTPError as httpexc:
+            status = httpexc.code
+            data = None
+
+        content = attempt_to_decode_response_data(data, response_encoding)
+        return (status, content)
+
+    @unittest.skipIf(PY2, "Python 3 only")
+    def test_GET_openid_user_find(self):
+        flask_app = None
+
+        self.server_addr = ('localhost', 4567)
+        self.server_thread = self._make_server(self.configuration, self.logger, self.server_addr)
+        self.server_thread.start_wait_until_ready()
+
+        status, content = self.issue_GET('/user/find', {
+            'email': 'user@example.com'
+        })
+
+        self.assertEqual(status, 200)
+
+        self.assertIsInstance(content, dict)
+        self.assertIn('objects', content)
+        self.assertIsInstance(content['objects'], list)
+
+        user = content['objects'][0]
+        # check we received the correct user
+        self.assertEqual(user['full_name'], 'Test User')
 
     def _make_configuration(self, test_logger, server_addr, overrides=None):
         configuration = self.configuration
