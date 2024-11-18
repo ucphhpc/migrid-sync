@@ -74,7 +74,7 @@ from mig.shared.safeinput import valid_distinguished_name, valid_password, \
 from mig.shared.tlsserver import hardened_ssl_context
 from mig.shared.url import urlparse, urlencode, parse_qsl
 from mig.shared.useradm import get_any_oid_user_dn, check_password_scramble, \
-    check_hash
+    check_hash, search_users as useradm_search_users
 from mig.shared.userdb import default_db_path
 from mig.shared.validstring import possible_user_id, is_valid_email_address
 from mig.server.createuser import _main as createuser
@@ -204,6 +204,12 @@ _REQUEST_ARGS_POST_USER._validators = defaultdict(lambda: _is_not_none, dict(
     password=_is_string_and_non_empty,
 ))
 
+def search_users(configuration, search_filter):
+    conf_path = configuration.config_file
+    db_path = default_db_path(configuration)
+    _, hits = useradm_search_users(search_filter, conf_path, db_path)
+    return list((obj for _, obj in hits))
+
 def validate_payload(definition, payload):
     args = definition(*[payload.get(field, None) for field in definition._fields])
 
@@ -227,6 +233,19 @@ def _create_and_expose_server(server, configuration):
     @app.get('/openid/user/<username>')
     def GET_user_username(username):
         return 'FOOBAR'
+
+    @app.get('/openid/user/find')
+    def GET_user_find():
+        query_params = request.args
+
+        objects = search_users(configuration, {
+            'email': query_params['email']
+        })
+
+        if len(objects) != 1:
+            raise http_error_from_status_code(404, None)
+
+        return dict(objects=objects)
 
     @app.post('/openid/user')
     def POST_user():
