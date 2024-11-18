@@ -156,8 +156,8 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
             elif os.path.getmtime(authpasswords_path) > first.last_update:
                 first.last_update = os.path.getmtime(authpasswords_path)
                 changed_paths.append(authpasswords_path)
-        elif os.path.exists(authpasswords_path):# and \
-                #os.path.getsize(authpasswords_path) > 0:
+        elif os.path.exists(authpasswords_path) and \
+                os.path.getsize(authpasswords_path) > 0:
             changed_paths.append(authpasswords_path)
 
     if conf["allow_digest"]:

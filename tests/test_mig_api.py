@@ -42,8 +42,10 @@ class MigServerGrid_openid(MigTestCase):
         return self.issue_GET(request_path)
 
     def issue_GET(self, request_path):
-        assert isinstance(request_path, str) and request_path.startswith('/'), "require http path starting with /"
-        request_url =  ''.join(('http://', self.server_addr[0], ':', str(self.server_addr[1]), request_path))
+        assert isinstance(request_path, str) and request_path.startswith(
+            '/'), "require http path starting with /"
+        request_url = ''.join(
+            ('http://', self.server_addr[0], ':', str(self.server_addr[1]), request_path))
 
         status = 0
         data = None
@@ -60,11 +62,14 @@ class MigServerGrid_openid(MigTestCase):
         return (status, data)
 
     def issue_POST(self, request_path, request_data=None, request_json=None):
-        assert isinstance(request_path, str) and request_path.startswith('/'), "require http path starting with /"
-        request_url =  ''.join(('http://', self.server_addr[0], ':', str(self.server_addr[1]), request_path))
+        assert isinstance(request_path, str) and request_path.startswith(
+            '/'), "require http path starting with /"
+        request_url = ''.join(
+            ('http://', self.server_addr[0], ':', str(self.server_addr[1]), request_path))
 
         if request_data and request_json:
-            raise ValueError("only one of data or json request data may be specified")
+            raise ValueError(
+                "only one of data or json request data may be specified")
 
         status = 0
         data = None
@@ -75,7 +80,8 @@ class MigServerGrid_openid(MigTestCase):
                 request_headers = {
                     'Content-Type': 'application/json'
                 }
-                request = Request(request_url, request_data, headers=request_headers)
+                request = Request(request_url, request_data,
+                                  headers=request_headers)
             elif request_data is not None:
                 request = Request(request_url, request_data)
             else:
@@ -100,7 +106,8 @@ class MigServerGrid_openid(MigTestCase):
     def test__GET_returns_not_found_for_missing_path(self):
         self.server_addr = ('localhost', 4567)
         configuration = self._make_configuration(self.logger, self.server_addr)
-        self.server_thread = self._make_server(configuration).start_wait_until_ready()
+        self.server_thread = self._make_server(
+            configuration).start_wait_until_ready()
 
         status, _ = self.issue_request('/user')
 
@@ -110,7 +117,8 @@ class MigServerGrid_openid(MigTestCase):
     def test__GET_openid_user__top_level_request_succeeds_with_status_ok(self):
         self.server_addr = ('localhost', 4567)
         configuration = self._make_configuration(self.logger, self.server_addr)
-        self.server_thread = self._make_server(configuration).start_wait_until_ready()
+        self.server_thread = self._make_server(
+            configuration).start_wait_until_ready()
 
         status, _ = self.issue_request('/openid/user')
 
@@ -119,8 +127,10 @@ class MigServerGrid_openid(MigTestCase):
     @unittest.skipIf(PY2, "Python 3 only")
     def test_GET__openid_user_username__user_userid_request_succeeds_with_status_ok(self):
         example_username = 'dummy-user'
-        example_username_home_dir = temppath('state/user_home/%s' % example_username, self, ensure_dir=True)
-        test_user_home = os.path.dirname(example_username_home_dir) # strip user from path
+        example_username_home_dir = temppath(
+            'state/user_home/%s' % example_username, self, ensure_dir=True)
+        test_user_home = os.path.dirname(
+            example_username_home_dir)  # strip user from path
         test_state_dir = os.path.dirname(test_user_home)
         test_user_db_home = os.path.join(test_state_dir, "user_db_home")
 
@@ -129,9 +139,11 @@ class MigServerGrid_openid(MigTestCase):
             user_home=test_user_home,
             user_db_home=test_user_db_home,
         ))
-        self.server_thread = self._make_server(configuration).start_wait_until_ready()
+        self.server_thread = self._make_server(
+            configuration).start_wait_until_ready()
 
-        the_url = '/openid/user/%s' % (example_username,) # /openid/user/dummy-user
+        # /openid/user/dummy-user
+        the_url = '/openid/user/%s' % (example_username,)
         status, body = self.issue_request(the_url)
 
         self.assertEqual(status, 200)
@@ -144,7 +156,7 @@ class MigServerGrid_openid(MigTestCase):
         self.server_addr = ('localhost', 4567)
         configuration = self._make_configuration(self.logger, self.server_addr)
         self.server_thread = self._make_server(configuration)
-        #flask_app = _create_and_bind_flask_app_to_server(self.server_thread, configuration)
+        # flask_app = _create_and_bind_flask_app_to_server(self.server_thread, configuration)
         self.server_thread.start_wait_until_ready()
 
         request_json = json.dumps({})
@@ -206,7 +218,8 @@ class MigServerGrid_openid(MigTestCase):
         def _on_instance(server):
             server.server_app = _create_and_expose_server(server.configuration)
 
-        server_thread = make_wrapped_server(ThreadedApiHttpServer, configuration, on_instance=_on_instance)
+        server_thread = make_wrapped_server(
+            ThreadedApiHttpServer, configuration, on_instance=_on_instance)
         return server_thread
 
 
