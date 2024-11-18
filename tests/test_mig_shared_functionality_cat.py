@@ -75,19 +75,20 @@ class MigSharedFunctionalityCat(MigTestCase):
         test_user_dir = os.path.join(conf_user_home, test_client_dir)
 
         # ensure a user db that includes our test user
+
         conf_user_db_home = ensure_dirs_exist(self.configuration.user_db_home)
-        temppath(conf_user_db_home, self, skip_output_anchor=True)
+        temppath(conf_user_db_home, self)
         db_fixture, db_fixture_file = fixturefile('MiG-users.db--example',
                                                   fixture_format='binary',
                                                   include_path=True)
         test_db_file = temppath(fixturefile_normname('MiG-users.db--example',
                                                      prefix=conf_user_db_home),
-                                self, skip_output_anchor=True)
+                                self)
         shutil.copyfile(db_fixture_file, test_db_file)
 
         # create the test user home directory
         self.test_user_dir = ensure_dirs_exist(test_user_dir)
-        temppath(self.test_user_dir, self, skip_output_anchor=True)
+        temppath(self.test_user_dir, self)
         self.test_environ = create_http_environ(self.configuration)
 
     def assertSingleOutputObject(self, output_objects, with_object_type=None):
