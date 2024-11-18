@@ -70,9 +70,9 @@ class ConfiguredServer(
         """
         self.auth_grant = OAuth2AuthorizationCodeGrant(request_validator)
         self.implicit_grant = OAuth2ImplicitGrant(request_validator)
-        #self.password_grant = ResourceOwnerPasswordCredentialsGrant(request_validator)
-        #self.credentials_grant = ClientCredentialsGrant(request_validator)
-        #self.refresh_grant = RefreshTokenGrant(request_validator)
+        # self.password_grant = ResourceOwnerPasswordCredentialsGrant(request_validator)
+        # self.credentials_grant = ClientCredentialsGrant(request_validator)
+        # self.refresh_grant = RefreshTokenGrant(request_validator)
         self.openid_connect_auth = AuthorizationCodeGrant(request_validator)
         self.openid_connect_implicit = ImplicitGrant(request_validator)
         self.openid_connect_hybrid = HybridGrant(request_validator)
@@ -119,9 +119,9 @@ class ConfiguredServer(
             default_grant_type="authorization_code",
             grant_types={
                 "authorization_code": self.token_grant_choice,
-                #"password": self.password_grant,
-                #"client_credentials": self.credentials_grant,
-                #"refresh_token": self.refresh_grant,
+                # "password": self.password_grant,
+                # "client_credentials": self.credentials_grant,
+                # "refresh_token": self.refresh_grant,
             },
             default_token_type=self.bearer,
         )

@@ -1,4 +1,7 @@
+import urllib.parse
+
 from tests.support import MigTestCase, testmain
+from unittest import mock
 
 from mig.server.createuser import _main as createuser
 from mig.services.oidc import _create_service
@@ -6,6 +9,7 @@ from mig.shared.useradm import _USERADM_CONFIG_DIR_KEYS
 
 
 class TestCase(MigTestCase):
+    TEST_CLIENT_ID = 'user@example.com'
     TEST_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=user@example.com'
 
     def _provide_configuration(self):
@@ -42,6 +46,22 @@ class TestCase(MigTestCase):
 
         self.assertIsInstance(request_validator._user_db, dict)
         self.assertIn(self.TEST_USER_DN, request_validator._user_db)
+
+    @mock.patch('oauthlib.common.generate_token', new=lambda: 'abc')
+    def test_authorization_grant(self):
+        self.ensure_userdb_with_user()
+        server, request_validator = _create_service(self.configuration)
+        uri = 'http://i.b/l?' + urllib.parse.urlencode({
+            'response_type': 'code',
+            'client_id': 'user@example.com',
+            'state': 'xyz',
+            'redirect_uri': 'http://back.to/me',
+        })
+        headers, body, status_code = server.create_authorization_response(uri)
+
+        self.assertIn('Location', headers)
+        self.assertEqual(headers['Location'], 'http://back.to/me?code=abc&state=xyz')
+        self.assertIn(self.TEST_CLIENT_ID, request_validator._saved)
 
 
 if __name__ == '__main__':
