@@ -30,6 +30,21 @@ else:
     from urllib.request import urlopen, Request
 
 
+def attempt_to_decode_response_data(data, response_encoding=None):
+    if response_encoding == 'textual':
+        data = codecs.decode(data, 'utf8')
+
+        try:
+            return json.loads(data)
+        except Exception as e:
+            return data
+    elif response_encoding == 'binary':
+        return data
+    else:
+        raise AssertionError(
+            'issue_POST: unknown response_encoding "%s"' % (response_encoding,))
+
+
 class MigServerGrid_openid(MigTestCase, HtmlAssertMixin):
     def before_each(self):
         self.server_addr = None
@@ -107,18 +122,8 @@ class MigServerGrid_openid(MigTestCase, HtmlAssertMixin):
             status = httpexc.code
             data = httpexc.file.read()
 
-        if response_encoding == 'textual':
-            data = codecs.decode(data, 'utf8')
-
-            try:
-                data = json.loads(data)
-            except Exception as e:
-                pass
-        elif response_encoding != 'binary':
-            raise AssertionError(
-                'issue_POST: unknown response_encoding "%s"' % (response_encoding,))
-
-        return (status, data)
+        content = attempt_to_decode_response_data(data, response_encoding)
+        return (status, content)
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test__GET_returns_not_found_for_missing_path(self):
