@@ -213,7 +213,7 @@ def fix_missing(config_file, verbose=True):
         'twofactor_home': '~/state/twofactor_home/',
         'gdp_home': '~/state/gdp_home/',
         'workflows_home': '~/state/workflows_home/',
-        'workflows_db_home': '~/state/workflows_home/workflows_db_home/',
+        'workflows_db_home': '~/state/workflows_db_home/',
         'notify_home': '~/state/notify_home',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
