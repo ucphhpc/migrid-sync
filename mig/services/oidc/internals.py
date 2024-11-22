@@ -22,7 +22,7 @@ def create_model(**kwargs):
         client_id=kwargs['client_id'],
         response_type=kwargs['response_type'],
         redirect_uri=kwargs['redirect_uri'],
-        authorization_code=kwargs.get('authorization_code', None),
+        authorization_code=kwargs['authorization_code'],
     )
 
 
@@ -79,7 +79,7 @@ class OidcRequestValidator(RequestValidator):
 
     # Post-authorization
 
-    def save_authorization_code(self, client_id, code, request, *args, **kwargs):
+    def save_authorization_code(self, client_id, code_and_state, request, *args, **kwargs):
         # Remember to associate it with request.scopes, request.redirect_uri
         # request.client and request.user (the last is passed in
         # post_authorization credentials, i.e. { 'user': request.user}.
@@ -91,6 +91,7 @@ class OidcRequestValidator(RequestValidator):
 
         self._saved[client_id] = create_model(
             scopes=request.scopes,
+            authorization_code=code_and_state['code'],
             distinguished_name=user['distinguished_name'],
             **dict(request.uri_query_params)
         )
