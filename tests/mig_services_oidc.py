@@ -1,4 +1,6 @@
+
 import copy
+import json
 from types import SimpleNamespace
 import urllib.parse
 
@@ -17,6 +19,9 @@ EXAMPLE_CLIENT_OBJECT = SimpleNamespace(
     response_type='code',
     redirect_uri='http://back.to/me',
     authorization_code='__AUTHORIZATION_CODE__',
+    token_access=None,
+    token_refresh=None,
+    token_type=None,
 )
 EXAMPLE_CLIENT_ID = 'user@example.com'
 EXAMPLE_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=user@example.com'
@@ -85,8 +90,45 @@ class TestCase(MigTestCase):
         self.assertEqual(headers['Location'], 'http://back.to/me?code=abc&state=xyz')
         self.assertIn(self.TEST_CLIENT_ID, request_validator._saved)
         client = request_validator._saved[self.TEST_CLIENT_ID]
-        print(client)
         self.assertEqual(client, self.TEST_CLIENT_OBJECT)
+
+class TestCase2(MigTestCase):
+    TEST_CLIENT_ID = EXAMPLE_CLIENT_ID
+    TEST_CLIENT_OBJECT = copy.deepcopy(EXAMPLE_CLIENT_OBJECT)
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        _clear_userdb_related_state(self.configuration)
+        _ensure_userdb_with_user(self.configuration)
+
+    @mock.patch('oauthlib.common.generate_token', new=lambda: 'ttookkeenn')
+    def test_token_response(self):
+        server, request_validator = _create_service(self.configuration)
+        # arrange a pre-existing client record with a known authorization code
+        request_validator._saved[self.TEST_CLIENT_ID] = self.TEST_CLIENT_OBJECT
+
+        body_query = urllib.parse.urlencode({
+            'client_id': 'user@example.com',
+            'redirect_uri': 'http://back.to/me',
+            'grant_type': 'authorization_code',
+            'code': '__AUTHORIZATION_CODE__',
+            'scope': 'openid',
+        })
+        headers, body, status_code = server.create_token_response(
+            '', body=body_query)
+
+        body = json.loads(body)
+        token = {
+            'token_type': 'Bearer',
+            'expires_in': 3600,
+            'id_token': '456',
+            'access_token': 'ttookkeenn',
+            'refresh_token': 'ttookkeenn',
+            'scope': 'openid'
+        }
+        self.assertEqual(body, token)
 
 
 if __name__ == '__main__':
