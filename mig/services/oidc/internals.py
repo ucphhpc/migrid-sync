@@ -34,7 +34,7 @@ def init_oidc_op(app):
 
 def oidc_provider_init_app(op_config, name=None, **kwargs):
     name = name or __name__
-    app = Flask(name, static_url_path='', **kwargs)
+    app = Flask(name, root_path=dir_path, **kwargs)
     app.srv_config = op_config
 
     oidc_op_views = create_views_blueprint()
@@ -77,7 +77,7 @@ def oidc_provider_init_app(op_config, name=None, **kwargs):
 #         return environ
 
 
-def _create_service(configuration):
+def _create_service(configuration, debug=False):
     with open(os.path.join(dir_path, 'config.json')) as examplecfg:
         idpyoidc_cnf = json.loads(examplecfg.read())
     provider_config = Configuration(
@@ -106,6 +106,7 @@ def _create_service(configuration):
     the_kwargs['instance'] = user_info
 
     app = oidc_provider_init_app(provider_config.op, 'oidc_op')
+    app.debug = debug
     app.logger = configuration.logger
 
     return app, user_db, user_authn, user_info

@@ -1,9 +1,13 @@
+import copy
+import json
+import time
 from types import SimpleNamespace
 import urllib.parse
 from urllib.request import urlopen
 
 from tests.support import MigTestCase, testmain
-from tests.support.serversupp import make_wrapped_server
+from tests.support.wsgisupp import WsgiAssertMixin, \
+    create_wsgi_environ, create_wsgi_start_response
 
 from mig.server.createuser import _main as createuser
 from mig.services.oidc import _create_service
@@ -65,6 +69,60 @@ class TestCase(MigTestCase):
 
         self.assertIsInstance(user_db, dict)
         self.assertIn(self.TEST_USER_DN, user_db)
+
+
+class TestCase2(MigTestCase, WsgiAssertMixin):
+    TEST_CLIENT_ID = EXAMPLE_CLIENT_ID
+    TEST_CLIENT_OBJECT = copy.deepcopy(EXAMPLE_CLIENT_OBJECT)
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        _clear_userdb_related_state(self.configuration)
+        _ensure_userdb_with_user(self.configuration)
+
+        server_instance, _, __, ___ = _create_service(self.configuration)
+        self.wsgi_app = server_instance.wsgi_app
+
+        # generic WSGI setup
+        self.fake_wsgi_environ = create_wsgi_environ(self.configuration, wsgi_variables=dict(
+            http_host='localhost',
+            path_info='/',
+        ))
+        self.fake_start_response = create_wsgi_start_response()
+
+    def test_GET_index(self):
+        wsgi_result = self.wsgi_app(self.fake_wsgi_environ, self.fake_start_response)
+
+        content = self.assertWsgiResponse(wsgi_result, self.fake_start_response, 200)
+        print(content)
+
+        return
+
+        # arrange a pre-existing client record with a known authorization code
+        request_validator._saved[self.TEST_CLIENT_ID] = self.TEST_CLIENT_OBJECT
+
+        body_query = urllib.parse.urlencode({
+            'client_id': 'user@example.com',
+            'redirect_uri': 'http://back.to/me',
+            'grant_type': 'authorization_code',
+            'code': '__AUTHORIZATION_CODE__',
+            'scope': 'openid',
+        })
+        headers, body, status_code = server.create_token_response(
+            '', body=body_query)
+
+        body = json.loads(body)
+        token = {
+            'token_type': 'Bearer',
+            'expires_in': 3600,
+            'id_token': '456',
+            'access_token': 'ttookkeenn',
+            'refresh_token': 'ttookkeenn',
+            'scope': 'openid'
+        }
+        self.assertEqual(body, token)
 
 
 if __name__ == '__main__':
