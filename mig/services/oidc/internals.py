@@ -42,6 +42,7 @@ class OidcRequestValidator(RequestValidator):
     def __init__(self, configuration):
         self.configuration = configuration
 
+        self._client_by_bearer_token = {}
         self._saved = {}
 
         db_path = default_db_path(configuration)
@@ -157,13 +158,22 @@ class OidcRequestValidator(RequestValidator):
         return grant_type == 'authorization_code'
 
     def save_bearer_token(self, token, request, *args, **kwargs):
-        client_id = request.client.client_id
+        self._apply_token_to_client_id(token, request.client.client_id)
+
+    def _apply_token_to_client_id(self, token=None, client_id=None):
+        assert client_id in self._saved
         client = self._saved.get(client_id, None)
         if not client:
             raise NotImplementedError()  # FIXME:
+        self._apply_token_to_client(token, client)
+
+    def _apply_token_to_client(self, token, client):
+        assert client in self._saved.values()
 
         client.token_access = token['access_token']
         client.token_refresh = token['refresh_token']
+
+        self._client_by_bearer_token[token['access_token']] = client
 
     def invalidate_authorization_code(self, client_id, code, request, *args, **kwargs):
         client = request.client
@@ -174,3 +184,6 @@ class OidcRequestValidator(RequestValidator):
 
     def finalize_id_token(self, id_token, token, token_handler, request):
         return '456'
+
+    def validate_bearer_token(self, bearer_token, scopes, request):
+        return bearer_token in self._client_by_bearer_token

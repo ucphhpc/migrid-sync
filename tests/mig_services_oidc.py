@@ -1,6 +1,8 @@
 
 import copy
 import json
+from oauthlib.common import Request
+from oauthlib.oauth2.rfc6749.tokens import BearerToken
 from types import SimpleNamespace
 import urllib.parse
 
@@ -130,6 +132,31 @@ class TestCase2(MigTestCase):
         }
         self.assertEqual(body, token)
 
+
+class TestCase_Bearer(MigTestCase):
+    TEST_CLIENT_ID = EXAMPLE_CLIENT_ID
+    TEST_CLIENT_OBJECT = copy.deepcopy(EXAMPLE_CLIENT_OBJECT)
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def test_valid_bearer_is_validated(self):
+        _ensure_userdb_with_user(self.configuration)
+        _, request_validator = _create_service(self.configuration)
+        # arrange a pre-existing client record with a known authorization code
+        request_validator._saved[self.TEST_CLIENT_ID] = self.TEST_CLIENT_OBJECT
+        # arrange a pre-existing authenticated record
+        request_validator._apply_token_to_client_id(client_id=self.TEST_CLIENT_ID, token={
+            'access_token': 'vF9dft4qmT',
+            'refresh_token': '__REFRESH__',
+        })
+
+        success = BearerToken(request_validator=request_validator).validate_request(
+            Request("/", headers={
+                'Authorization': 'Bearer vF9dft4qmT'
+            })
+        )
+        self.assertTrue(success)
 
 if __name__ == '__main__':
     testmain()
