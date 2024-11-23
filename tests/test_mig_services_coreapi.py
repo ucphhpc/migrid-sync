@@ -14,7 +14,7 @@ from tests.support import PY2, MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
     testmain, temppath, make_wrapped_server
 from tests.support.htmlsupp import HtmlAssertMixin
 
-from mig.api import ThreadedApiHttpServer, _extend_configuration, _create_and_expose_server
+from mig.services.coreapi import ThreadedApiHttpServer, _extend_configuration, _create_and_expose_server
 from mig.server.createuser import _main as _createuser
 from mig.shared.conf import get_configuration_object
 from mig.shared.useradm import _USERADM_CONFIG_DIR_KEYS
