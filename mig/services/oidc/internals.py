@@ -43,7 +43,7 @@ class OidcRequestValidator(RequestValidator):
         self.configuration = configuration
 
         self._client_by_bearer_token = {}
-        self._saved = {}
+        self._client_by_client_id = {}
 
         db_path = default_db_path(configuration)
         self._user_db = load_user_db(db_path, do_lock=True)
@@ -89,7 +89,7 @@ class OidcRequestValidator(RequestValidator):
         #user = users[0]
         #user_id = user['distinguished_name']
 
-        user_model = self._saved.get(client_id, None)
+        user_model = self._client_by_client_id.get(client_id, None)
         if not user_model:
             return {}
         return user_model.scopes
@@ -112,7 +112,7 @@ class OidcRequestValidator(RequestValidator):
         assert len(users) == 1
         user = users[0]
 
-        self._saved[client_id] = create_model(
+        self._client_by_client_id[client_id] = create_model(
             scopes=request.scopes,
             authorization_code=code_and_state['code'],
             distinguished_name=user['distinguished_name'],
@@ -124,7 +124,7 @@ class OidcRequestValidator(RequestValidator):
     def authenticate_client(self, request, *args, **kwargs):
         params = dict(request.decoded_body)
 
-        client = self._saved[params.get('client_id', None)]
+        client = self._client_by_client_id[params.get('client_id', None)]
         if not client:
             return False
 
@@ -136,7 +136,7 @@ class OidcRequestValidator(RequestValidator):
         # Validate the code belongs to the client. Add associated scopes
         # and user to request.scopes and request.user.
 
-        client = self._saved.get(client_id, None)
+        client = self._client_by_client_id.get(client_id, None)
         if not client:
             return False
 
@@ -161,14 +161,14 @@ class OidcRequestValidator(RequestValidator):
         self._apply_token_to_client_id(token, request.client.client_id)
 
     def _apply_token_to_client_id(self, token=None, client_id=None):
-        assert client_id in self._saved
-        client = self._saved.get(client_id, None)
+        assert client_id in self._client_by_client_id
+        client = self._client_by_client_id.get(client_id, None)
         if not client:
             raise NotImplementedError()  # FIXME:
         self._apply_token_to_client(token, client)
 
     def _apply_token_to_client(self, token, client):
-        assert client in self._saved.values()
+        assert client in self._client_by_client_id.values()
 
         client.token_access = token['access_token']
         client.token_refresh = token['refresh_token']
