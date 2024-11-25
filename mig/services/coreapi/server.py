@@ -43,7 +43,7 @@ import base64
 import cgi
 import cgitb
 import codecs
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 from flask import Flask, request, Response
 from functools import partial, update_wrapper
 import os
@@ -158,6 +158,58 @@ def invalid_argument(arg):
     raise ValueError("Unexpected query variable: %s" % quoteattr(arg))
 
 
+class PayloadDefinition:
+    def __init__(self, name, positional):
+        self._item_checks = []
+        self._item_names = []
+
+        for name, validator_fn in positional:
+            self._item_names.append(name)
+            self._item_checks.append(validator_fn)
+
+    @property
+    def _fields(self):
+        return self._item_names
+
+    @property
+    def _validators(self):
+        return self._item_checks
+
+    def __call__(self, *args):
+        return self._extract_and_bundle(args, extract_by='position')
+
+    def _extract_and_bundle(self, args, extract_by=None):
+        if extract_by == 'position':
+            keys_to_bundle = list(range(len(args)))
+        elif extract_by == 'name':
+            keys_to_bundle = self._item_names
+        elif extract_by == 'short':
+            keys_to_bundle = self._item_short
+        else:
+            raise RuntimeError()
+
+        return Payload.from_args(self, args, keys_to_bundle)
+
+    @staticmethod
+    def bundle_generic(thekeys):
+        for key in thekeys:
+            pass
+
+
+class Payload(OrderedDict):
+    def __init__(self, definition, dictionary):
+        super().__init__(dictionary)
+        self._definition = definition
+
+    def __iter__(self):
+        return iter(self.values())
+
+    @staticmethod
+    def from_args(definition, args, keys):
+        dictionary = {key:args[key] for key in keys}
+        return Payload(definition, dictionary)
+
+
 class ValidationReport(RuntimeError):
     def __init__(self, errors_by_field):
         self.errors_by_field = errors_by_field
@@ -181,26 +233,15 @@ def _is_string_and_non_empty(value):
     return isinstance(value, str) and len(value) > 0
 
 
-_REQUEST_ARGS_POST_USER = namedtuple('PostUserArgs', [
-    'full_name',
-    'organization',
-    'state',
-    'country',
-    'email',
-    'comment',
-    'password',
+_REQUEST_ARGS_POST_USER = PayloadDefinition('PostUserArgs', [
+    ('full_name', _is_string_and_non_empty),
+    ('organization', _is_string_and_non_empty),
+    ('state', _is_string_and_non_empty),
+    ('country', _is_string_and_non_empty),
+    ('email', _is_string_and_non_empty),
+    ('comment', _is_string_and_non_empty),
+    ('password', _is_string_and_non_empty),
 ])
-
-
-_REQUEST_ARGS_POST_USER._validators = defaultdict(lambda: _is_not_none, dict(
-    full_name=_is_string_and_non_empty,
-    organization=_is_string_and_non_empty,
-    state=_is_string_and_non_empty,
-    country=_is_string_and_non_empty,
-    email=_is_string_and_non_empty,
-    comment=_is_string_and_non_empty,
-    password=_is_string_and_non_empty,
-))
 
 
 def search_users(configuration, search_filter):
@@ -214,7 +255,7 @@ def validate_payload(definition, payload):
     args = definition(*[payload.get(field, None) for field in definition._fields])
 
     errors_by_field = {}
-    for field_name, field_value in args._asdict().items():
+    for field_name, field_value in args.items():
         validator_fn = definition._validators[field_name]
         if not validator_fn(field_value):
             errors_by_field[field_name] = validator_fn.__doc__
@@ -257,9 +298,7 @@ def _create_and_expose_server(server, configuration):
         except ValidationReport as vr:
             return http_error_from_status_code(400, None, vr.serialize())
 
-        args = list(validated)
-
-        ret = createuser(configuration, args)
+        ret = createuser(configuration, validated)
         if ret != 0:
             raise http_error_from_status_code(400, None)
 
