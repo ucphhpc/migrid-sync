@@ -110,7 +110,7 @@ def determine_timezone(_environ=os.environ, _path_exists=os.path.exists, _print=
             localtime_timezone = '/'.join(
                 zoneinfo_path_parts[zoneinfo_index + 1:])
             return localtime_timezone
-        except IndexError:
+        except (IndexError, ValueError):
             pass
 
         _print("WARNING: ignoring non-standard /etc/localtime")
