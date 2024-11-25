@@ -112,6 +112,14 @@ def determine_timezone(_environ=os.environ, _path_exists=os.path.exists, _print=
             return localtime_timezone
         except IndexError:
             pass
+        except ValueError:
+            # The attempt to reassemble a timezone string based searching split
+            # data is brittle and can fail if the locale information happen to
+            # be located elsewhere in disk - as is the case on e.g. FreeBSD.
+            # Rather than fail hard we catch the exception such that fallback
+            # logic below can still run and thus failng to decode the timezone
+            # does not prevent the installation routine running to completion.
+            pass
 
         _print("WARNING: ignoring non-standard /etc/localtime")
 
