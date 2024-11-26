@@ -33,6 +33,7 @@ from __future__ import absolute_import
 from builtins import input
 from getpass import getpass
 import datetime
+import errno
 import getopt
 import os
 import sys
@@ -181,7 +182,7 @@ def main(args, cwd, db_path=keyword_auto):
             if verbose:
                 print('using configuration from MIG_CONF (or default)')
 
-    _main(None, args,
+    ret = _main(None, args,
           conf_path=conf_path,
           db_path=db_path,
           expire=expire,
@@ -198,6 +199,12 @@ def main(args, cwd, db_path=keyword_auto):
           slack_secs=slack_secs,
           hash_password=hash_password
           )
+
+    if ret == errno.ENOTSUP:
+        usage()
+        sys.exit(1)
+
+    sys.exit(ret)
 
 
 def _main(configuration, args,
@@ -234,14 +241,12 @@ def _main(configuration, args,
 
     if user_file and args:
         print('Error: Only one kind of user specification allowed at a time')
-        usage()
-        sys.exit(1)
+        return errno.ENOTSUP
 
     if auth_type not in valid_auth_types:
         print('Error: invalid account auth type %r requested (allowed: %s)' %
               (auth_type, ', '.join(valid_auth_types)))
-        usage()
-        sys.exit(1)
+        return errno.ENOTSUP
 
     # NOTE: renew requires original password
     if auth_type == 'cert':
@@ -262,8 +267,7 @@ def _main(configuration, args,
         except IndexError:
             print('Error: too few arguments given (expected 7 got %d)'
                   % len(args))
-            usage()
-            sys.exit(1)
+            return errno.ENOTSUP
         # Force user ID fields to canonical form for consistency
         # Title name, lowercase email, uppercase country and state, etc.
         user_dict = canonical_user(configuration, raw_user, raw_user.keys())
@@ -272,14 +276,12 @@ def _main(configuration, args,
             user_dict = load(user_file)
         except Exception as err:
             print('Error in user name extraction: %s' % err)
-            usage()
-            sys.exit(1)
+            return errno.ENOTSUP
     elif default_renew and user_id:
         saved = load_user_dict(logger, user_id, db_path, verbose)
         if not saved:
             print('Error: no such user in user db: %s' % user_id)
-            usage()
-            sys.exit(1)
+            return errno.ENOTSUP
         user_dict.update(saved)
         del user_dict['expire']
     elif not configuration.site_enable_gdp:
@@ -301,7 +303,7 @@ def _main(configuration, args,
         print("Error: Missing one or more of the arguments: "
               + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
               + "[EMAIL] [COMMENT] [PASSWORD]")
-        sys.exit(1)
+        return 1
 
     # Encode password if set but not already encoded
 
@@ -364,13 +366,15 @@ def _main(configuration, args,
         print("Error creating user: %s" % exc)
         import traceback
         logger.warning("Error creating user: %s" % traceback.format_exc())
-        sys.exit(1)
+        return 1
     print('Created or updated %s in user database and in file system' %
           user_dict['distinguished_name'])
     if user_file:
         if verbose:
             print('Cleaning up tmp file: %s' % user_file)
         os.remove(user_file)
+
+    return 0
 
 
 if __name__ == '__main__':
