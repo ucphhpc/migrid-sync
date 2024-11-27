@@ -36,7 +36,7 @@ from mig.shared.fileio import unpickle
 
 
 def get_configuration_object(config_file=None, skip_log=False,
-                             disable_auth_log=False):
+                             disable_auth_log=False, overrides=None):
     """Simple helper to call the general configuration init. Optional skip_log
     and disable_auth_log arguments are passed on to allow skipping the default
     log initialization and disabling auth log for unit tests.
@@ -53,15 +53,15 @@ def get_configuration_object(config_file=None, skip_log=False,
         else:
             _config_file = os.path.join(app_dir, '..', 'server',
                     'MiGserver.conf')
-    configuration = Configuration(_config_file, False, skip_log,
-                                  disable_auth_log)
+    configuration = Configuration(_config_file, verbose=False, overrides=overrides,
+        skip_log=skip_log, disable_auth_log=disable_auth_log)
     return configuration
 
 
 def get_resource_configuration(resource_home, unique_resource_name,
                                logger):
     """Load a resource configuration from file"""
-    
+
     # open the configuration file
 
     resource_config_file = resource_home + '/' + unique_resource_name\
