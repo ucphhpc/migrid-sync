@@ -219,7 +219,11 @@ def main(_main, args, cwd, db_path=keyword_auto):
             if verbose:
                 print('using configuration from MIG_CONF (or default)')
 
-    bundle = _BUNDLE_DEFINITION(*args)
+    try:
+        bundle = _BUNDLE_DEFINITION(*args)
+    except ValueError as valueexc:
+        print(valueexc)
+        sys.exit(1)
 
     ret = _main(None, bundle,
           conf_path=conf_path,
@@ -249,7 +253,7 @@ def main(_main, args, cwd, db_path=keyword_auto):
     sys.exit(ret)
 
 
-def _main(configuration, args,
+def _main(configuration, bundle,
           conf_path=keyword_auto,
           db_path=keyword_auto,
           auth_type='custom',
@@ -268,6 +272,9 @@ def _main(configuration, args,
           hash_password=True,
           _generate_salt=None
           ):
+
+    args = _BUNDLE_DEFINITION.ensure_bundle(bundle)
+
     if configuration is None:
         if conf_path == keyword_auto:
             config_file = None
