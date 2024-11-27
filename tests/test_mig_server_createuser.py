@@ -36,7 +36,8 @@ import sys
 from tests.support import PY2, MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, testmain
 from tests.support.picklesupp import PickleAssertMixin
 
-from mig.server.createuser import _main as createuser
+from mig.shared.arguments import ArgumentBundle
+from mig.server.createuser import _main as createuser, main as createuser_main
 from mig.shared.useradm import _USERADM_CONFIG_DIR_KEYS
 
 
@@ -57,6 +58,30 @@ class TestMigServerCreateuser(MigTestCase, PickleAssertMixin):
 
     def _provide_configuration(self):
         return 'testconfig'
+
+    def test_argument_conversion(self):
+        args = [
+            "Test User",
+            "Test Org",
+            "NA",
+            "DK",
+            "user@example.com",
+            "This is the create comment",
+            "password"
+        ]
+        def _instrumented_main(*args, **kwargs):
+            _instrumented_main.calls.append((args, kwargs))
+            return None
+        _instrumented_main.calls = []
+
+        createuser_main(_instrumented_main, args, TEST_OUTPUT_DIR)
+
+        self.assertEqual(len(_instrumented_main.calls), 1)
+        thecall_args = _instrumented_main.calls[0][0]
+        self.assertEqual(len(thecall_args), 2)
+        maybe_argument_bundle = thecall_args[1]
+        self.assertIsInstance(maybe_argument_bundle, ArgumentBundle)
+        self.assertEqual(maybe_argument_bundle.name, 'UserArguments')
 
     def test_user_db_is_created_when_absent(self):
         args = [

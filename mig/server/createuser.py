@@ -40,7 +40,8 @@ import sys
 import time
 
 from mig.shared.accountstate import default_account_expire
-from mig.shared.arguments import parse_getopt_args, break_apart_legacy_usage
+from mig.shared.arguments import parse_getopt_args, break_apart_legacy_usage, \
+    ArgumentBundleDefinition
 from mig.shared.base import fill_distinguished_name, fill_user, canonical_user
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import valid_auth_types, keyword_auto
@@ -107,8 +108,26 @@ help_by_argument = break_apart_legacy_usage("""
    -v: Verbose output
 """)
 
+def _is_not_none(value):
+    """value is not None"""
+    return value is not None
 
-def main(args, cwd, db_path=keyword_auto):
+def _is_string_and_non_empty(value):
+    """value is a non-empty string"""
+    return isinstance(value, str) and len(value) > 0
+
+_BUNDLE_DEFINITION = ArgumentBundleDefinition('UserArguments', [
+    (None, 'full_name', _is_string_and_non_empty),
+    (None, 'organization', _is_string_and_non_empty),
+    (None, 'state', _is_string_and_non_empty),
+    (None, 'country', _is_string_and_non_empty),
+    (None, 'email', _is_string_and_non_empty),
+    (None, 'comment', _is_string_and_non_empty),
+    (None, 'password', _is_string_and_non_empty),
+])
+
+
+def main(_main, args, cwd, db_path=keyword_auto):
     conf_path = None
     auth_type = 'custom'
     expire = None
@@ -200,7 +219,9 @@ def main(args, cwd, db_path=keyword_auto):
             if verbose:
                 print('using configuration from MIG_CONF (or default)')
 
-    ret = _main(None, args,
+    bundle = _BUNDLE_DEFINITION(*args)
+
+    ret = _main(None, bundle,
           conf_path=conf_path,
           db_path=db_path,
           expire=expire,
@@ -217,6 +238,9 @@ def main(args, cwd, db_path=keyword_auto):
           slack_secs=slack_secs,
           hash_password=hash_password
           )
+
+    if ret is None:
+        return
 
     if ret == errno.ENOTSUP:
         usage()
@@ -397,4 +421,4 @@ def _main(configuration, args,
 
 if __name__ == '__main__':
     (args, cwd, db_path) = init_user_adm()
-    main(args, cwd, db_path=db_path)
+    main(_main, args, cwd, db_path=db_path)
