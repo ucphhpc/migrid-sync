@@ -1,10 +1,86 @@
 import argparse
+from collections import OrderedDict
 
 from mig.shared.compat import PY2
 
 _EMPTY_DICT = {}
+_EMPTY_LIST = {}
 _NO_DEFAULT = object()
 _POSITIONAL_MARKER = '__args__'
+
+
+class ArgumentBundleDefinition:
+    def __init__(self, name, positional=_EMPTY_LIST):
+        self._definition_name = name
+        self._expected_positions = 0
+        self._item_checks = []
+        self._item_names = []
+
+        if positional is not _EMPTY_LIST:
+            self._define_positional(positional)
+
+    @property
+    def _fields(self):
+        return self._item_names
+
+    @property
+    def _validators(self):
+        return self._item_checks
+
+    def __call__(self, *args):
+        return self._extract_and_bundle(args, extract_by='position')
+
+    def _define_positional(self, positional):
+        for flag, name, validator_fn in positional:
+            assert flag is None
+            self._item_names.append(name)
+            self._item_checks.append(validator_fn)
+        self._expected_positions = len(positional)
+
+    def _extract_and_bundle(self, args, extract_by=None):
+        if extract_by == 'position':
+            actual_positions = len(args)
+            if actual_positions < self._expected_positions:
+                raise ValueError('Error: too few arguments given (expected %d got %d)' % (
+                    self._expected_positions, actual_positions))
+            keys_to_bundle = list(range(actual_positions))
+        elif extract_by == 'name':
+            keys_to_bundle = self._item_names
+        elif extract_by == 'short':
+            keys_to_bundle = self._item_short
+        else:
+            raise RuntimeError()
+
+        return ArgumentBundle.from_args(self, args, keys_to_bundle)
+
+    def ensure_bundle(self, bundle_or_args):
+        assert isinstance(self, ArgumentBundleDefinition)
+
+        bundle_definition = self
+
+        if isinstance(bundle_or_args, ArgumentBundle):
+            assert bundle_or_args.name == bundle_definition._definition_name
+            return bundle_or_args
+        else:
+            return bundle_definition(*bundle_or_args)
+
+
+class ArgumentBundle(OrderedDict):
+    def __init__(self, definition, dictionary):
+        super(ArgumentBundle, self).__init__(dictionary)
+        self._definition = definition
+
+    @property
+    def name(self):
+        return self._definition._definition_name
+
+    def __iter__(self):
+        return iter(self.values())
+
+    @classmethod
+    def from_args(cls, definition, args, keys):
+        dictionary = {key: args[key] for key in keys}
+        return cls(definition, dictionary)
 
 
 class GetoptCompatNamespace(argparse.Namespace):
