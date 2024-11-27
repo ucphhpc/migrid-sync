@@ -77,7 +77,8 @@ from mig.shared.useradm import get_any_oid_user_dn, check_password_scramble, \
     check_hash, search_users as useradm_search_users
 from mig.shared.userdb import default_db_path
 from mig.shared.validstring import possible_user_id, is_valid_email_address
-from mig.server.createuser import _main as createuser
+from mig.server.createuser import _main as createuser, \
+    _BUNDLE_DEFINITION as _REQUEST_ARGS_POST_USER
 
 # Update with extra fields
 cert_field_map.update({'role': 'ROLE', 'timezone': 'TZ', 'nickname': 'NICK',
@@ -171,38 +172,6 @@ class ValidationReport(RuntimeError):
             return 'payload failed to validate:%s' % ('\n'.join(lines),)
 
 
-def _is_not_none(value):
-    """value is not None"""
-    return value is not None
-
-
-def _is_string_and_non_empty(value):
-    """value is a non-empty string"""
-    return isinstance(value, str) and len(value) > 0
-
-
-_REQUEST_ARGS_POST_USER = namedtuple('PostUserArgs', [
-    'full_name',
-    'organization',
-    'state',
-    'country',
-    'email',
-    'comment',
-    'password',
-])
-
-
-_REQUEST_ARGS_POST_USER._validators = defaultdict(lambda: _is_not_none, dict(
-    full_name=_is_string_and_non_empty,
-    organization=_is_string_and_non_empty,
-    state=_is_string_and_non_empty,
-    country=_is_string_and_non_empty,
-    email=_is_string_and_non_empty,
-    comment=_is_string_and_non_empty,
-    password=_is_string_and_non_empty,
-))
-
-
 def search_users(configuration, search_filter):
     conf_path = configuration.config_file
     db_path = default_db_path(configuration)
@@ -214,7 +183,7 @@ def validate_payload(definition, payload):
     args = definition(*[payload.get(field, None) for field in definition._fields])
 
     errors_by_field = {}
-    for field_name, field_value in args._asdict().items():
+    for field_name, field_value in args.items():
         validator_fn = definition._validators[field_name]
         if not validator_fn(field_value):
             errors_by_field[field_name] = validator_fn.__doc__
@@ -257,9 +226,7 @@ def _create_and_expose_server(server, configuration):
         except ValidationReport as vr:
             return http_error_from_status_code(400, None, vr.serialize())
 
-        args = list(validated)
-
-        ret = createuser(configuration, args)
+        ret = createuser(configuration, validated)
         if ret != 0:
             raise http_error_from_status_code(400, None)
 
