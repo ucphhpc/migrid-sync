@@ -2295,21 +2295,27 @@ def default_search():
     return search_filter
 
 
-def search_users(search_filter, conf_path, db_path,
+def search_users(search_filter, conf_path, db_path, configuration=None,
                  verbose=False, do_lock=True, regex_match=[]):
     """Search for matching users. The optional regex_match is a list of keys in
     search_filter to apply regular expression match rather than the usual
     fnmatch for.
     """
 
-    if conf_path:
+    if configuration is not None:
+        assert conf_path is None
+        assert db_path is None
+        db_path = keyword_auto
+    elif conf_path:
         if isinstance(conf_path, basestring):
             configuration = Configuration(conf_path)
         else:
             configuration = conf_path
     else:
         configuration = get_configuration_object()
+
     _logger = configuration.logger
+
     if db_path == keyword_auto:
         db_path = default_db_path(configuration)
 
