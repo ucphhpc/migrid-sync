@@ -29,15 +29,24 @@ import codecs
 """Test support library for WSGI."""
 
 
-def create_wsgi_environ(configuration, wsgi_variables):
+def create_wsgi_environ(configuration, wsgi_variables, wsgi_headers=None, wsgi_url=None):
+
+
     environ = {}
     environ['wsgi.input'] = ()
     environ['wsgi.url_scheme'] = 'http'
     environ['MIG_CONF'] = configuration.config_file
     environ['HTTP_HOST'] = wsgi_variables.get('http_host')
     environ['PATH_INFO'] = wsgi_variables.get('path_info')
+    environ['QUERY_STRING'] = wsgi_url
     environ['REQUEST_METHOD'] = 'GET'
     environ['SCRIPT_URI'] = ''.join(('http://', environ['HTTP_HOST'], environ['PATH_INFO']))
+
+    if wsgi_headers:
+        for k, v in wsgi_headers.items():
+            header_key = "HTTP_%s" % (k.upper(),)
+            environ[header_key] = v
+
     return environ
 
 
