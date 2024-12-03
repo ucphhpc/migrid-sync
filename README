@@ -388,6 +388,7 @@ settings:
 --destination_suffix=DESTINATION_SUFFIX
 --auto_add_filter_fields=AUTO_ADD_FILTER_FIELDS
 --auto_add_filter_method=AUTO_ADD_FILTER_METHOD
+--auto_add_user_permit=AUTO_ADD_USER_PERMIT
 --base_fqdn=BASE_FQDN
 --public_fqdn=PUBLIC_FQDN
 --public_alias_fqdn=PUBLIC_ALIAS_FQDN
@@ -400,6 +401,7 @@ settings:
 --ext_oidc_fqdn=EXT_OIDC_FQDN
 --sid_fqdn=SID_FQDN
 --io_fqdn=IO_FQDN
+--cert_fqdn_extras=CERT_FQDN_EXTRAS
 --seafile_fqdn=SEAFILE_FQDN
 --seafile_base=SEAFILE_BASE
 --seafmedia_base=SEAFMEDIA_BASE
@@ -408,6 +410,7 @@ settings:
 --sftp_address=SFTP_ADDRESS
 --sftp_subsys_address=SFTP_SUBSYS_ADDRESS
 --ftps_address=FTPS_ADDRESS
+--ftps_pasv_ports=FTPS_PASV_PORTS
 --davs_address=DAVS_ADDRESS
 --jupyter_services=JUPYTER_SERVICES
 --jupyter_services_desc=JUPYTER_SERVICES_DESC
@@ -429,12 +432,33 @@ settings:
 --mig_oid_provider=MIG_OID_PROVIDER
 --ext_oid_title=EXT_OID_TITLE
 --ext_oid_provider=EXT_OID_PROVIDER
+--mig_oidc_title=MIG_OIDC_TITLE
 --mig_oidc_provider_meta_url=MIG_OIDC_PROVIDER_META_URL
+--ext_oidc_title=EXT_OIDC_TITLE
 --ext_oidc_provider_meta_url=EXT_OIDC_PROVIDER_META_URL
---ext_oidc_client_name=EXT_OIDC_CLIENT_NAME
---ext_oidc_client_id=EXT_OIDC_CLIENT_ID
+--ext_oidc_provider_issuer=EXT_OIDC_PROVIDER_ISSUER
+--ext_oidc_provider_authorization_endpoint=EXT_OIDC_PROVIDER_AUTHORIZATION_ENDPOINT
+--ext_oidc_provider_verify_cert_files=EXT_OIDC_PROVIDER_VERIFY_CERT_FILES
+--ext_oidc_provider_token_endpoint=EXT_OIDC_PROVIDER_TOKEN_ENDPOINT
+--ext_oidc_provider_token_endpoint_auth=EXT_OIDC_PROVIDER_TOKEN_ENDPOINT_AUTH
+--ext_oidc_provider_user_info_endpoint=EXT_OIDC_PROVIDER_USER_INFO_ENDPOINT
 --ext_oidc_scope=EXT_OIDC_SCOPE
+--ext_oidc_user_info_token_method=EXT_OIDC_USER_INFO_TOKEN_METHOD
+--ext_oidc_public_key_files=EXT_OIDC_PUBLIC_KEY_FILES
+--ext_oidc_private_key_files=EXT_OIDC_PRIVATE_KEY_FILES
+--ext_oidc_response_type=EXT_OIDC_RESPONSE_TYPE
+--ext_oidc_response_mode=EXT_OIDC_RESPONSE_MODE
+--ext_oidc_client_id=EXT_OIDC_CLIENT_ID
+--ext_oidc_client_name=EXT_OIDC_CLIENT_NAME
+--ext_oidc_pkce_method=EXT_OIDC_PKCE_METHOD
+--ext_oidc_id_token_encrypted_response_alg=EXT_OIDC_ID_TOKEN_ENCRYPTED_RESPONSE_ALG
+--ext_oidc_id_token_encrypted_response_enc=EXT_OIDC_ID_TOKEN_ENCRYPTED_RESPONSE_ENC
+--ext_oidc_user_info_signed_response_alg=EXT_OIDC_USER_INFO_SIGNED_RESPONSE_ALG
+--ext_oidc_cookie_same_site=EXT_OIDC_COOKIE_SAME_SITE
+--ext_oidc_pass_cookies=EXT_OIDC_PASS_COOKIES
 --ext_oidc_remote_user_claim=EXT_OIDC_REMOTE_USER_CLAIM
+--ext_oidc_pass_claim_as=EXT_OIDC_PASS_CLAIM_AS
+--ext_oidc_rewrite_cookie=EXT_OIDC_REWRITE_COOKIE
 --dhparams_path=DHPARAMS_PATH
 --daemon_keycert=DAEMON_KEYCERT
 --daemon_pubkey=DAEMON_PUBKEY
@@ -445,6 +469,8 @@ settings:
 --vgrid_managers=VGRID_MANAGERS
 --signup_methods=SIGNUP_METHODS
 --login_methods=LOGIN_METHODS
+--digest_salt=DIGEST_SALT
+--crypto_salt=CRYPTO_SALT
 --csrf_protection=CSRF_PROTECTION
 --password_policy=PASSWORD_POLICY
 --password_legacy_policy=PASSWORD_LEGACY_POLICY
@@ -462,6 +488,8 @@ settings:
 --skin=SKIN
 --title=TITLE
 --short_title=SHORT_TITLE
+--extra_userpage_scripts=EXTRA_USERPAGE_SCRIPTS
+--extra_userpage_styles=EXTRA_USERPAGE_STYLES
 --peers_explicit_fields=PEERS_EXPLICIT_FIELDS
 --peers_contact_hint=PEERS_CONTACT_HINT
 --external_doc=EXTERNAL_DOC
@@ -473,16 +501,35 @@ settings:
 --collaboration_links=COLLABORATION_LINKS
 --default_vgrid_links=DEFAULT_VGRID_LINKS
 --advanced_vgrid_links=ADVANCED_VGRID_LINKS
+--support_email=SUPPORT_EMAIL
 --admin_email=ADMIN_EMAIL
 --admin_list=ADMIN_LIST
+--smtp_server=SMTP_SERVER
+--smtp_sender=SMTP_SENDER
 --log_level=LOG_LEVEL
 --twofactor_mandatory_protos=TWOFACTOR_MANDATORY_PROTOS
+--twofactor_auth_apps=TWOFACTOR_AUTH_APPS
+--permanent_freeze=PERMANENT_FREEZE
 --freeze_to_tape=FREEZE_TO_TAPE
 --status_system_match=STATUS_SYSTEM_MATCH
+--storage_protocols=STORAGE_PROTOCOLS
 --duplicati_protocols=DUPLICATI_PROTOCOLS
+--imnotify_address=IMNOTIFY_ADDRESS
+--imnotify_channel=IMNOTIFY_CHANNEL
+--imnotify_username=IMNOTIFY_USERNAME
+--imnotify_password=IMNOTIFY_PASSWORD
 --gdp_data_categories=GDP_DATA_CATEGORIES
+--gdp_id_scramble=GDP_ID_SCRAMBLE
+--gdp_path_scramble=GDP_PATH_SCRAMBLE
+--quota_backend=QUOTA_BACKEND
+--ca_fqdn=CA_FQDN
+--ca_user=CA_USER
+--ca_smtp=CA_SMTP
+--datasafety_link=DATASAFETY_LINK
+--datasafety_text=DATASAFETY_TEXT
 --cert_valid_days=CERT_VALID_DAYS
 --oid_valid_days=OID_VALID_DAYS
+--oidc_valid_days=OIDC_VALID_DAYS
 --generic_valid_days=GENERIC_VALID_DAYS
 --apache_worker_procs=APACHE_WORKER_PROCS
 --sftp_subsys_auth_procs=SFTP_SUBSYS_AUTH_PROCS
@@ -501,6 +548,7 @@ settings:
 --sftp_show_port=SFTP_SHOW_PORT
 --sftp_subsys_port=SFTP_SUBSYS_PORT
 --sftp_subsys_show_port=SFTP_SUBSYS_SHOW_PORT
+--sftp_max_sessions=SFTP_MAX_SESSIONS
 --davs_port=DAVS_PORT
 --davs_show_port=DAVS_SHOW_PORT
 --ftps_ctrl_port=FTPS_CTRL_PORT
@@ -512,6 +560,9 @@ settings:
 --seafile_seafhttp_port=SEAFILE_SEAFHTTP_PORT
 --seafile_client_port=SEAFILE_CLIENT_PORT
 --seafile_quota=SEAFILE_QUOTA
+--quota_user_limit=QUOTA_USER_LIMIT
+--quota_vgrid_limit=QUOTA_VGRID_LIMIT
+--wwwserve_max_bytes=WWWSERVE_MAX_BYTES
 --auto_add_cert_user=AUTO_ADD_CERT_USER
 --auto_add_oid_user=AUTO_ADD_OID_USER
 --auto_add_oidc_user=AUTO_ADD_OIDC_USER
@@ -526,6 +577,7 @@ settings:
 --enable_workflows=ENABLE_WORKFLOWS
 --enable_events=ENABLE_EVENTS
 --enable_sharelinks=ENABLE_SHARELINKS
+--enable_quota=ENABLE_QUOTA
 --enable_transfers=ENABLE_TRANSFERS
 --enable_freeze=ENABLE_FREEZE
 --enable_sandboxes=ENABLE_SANDBOXES
@@ -616,6 +668,7 @@ additional web apps and OpenID on CentOS:
                    --ext_cert_fqdn= \
                    --mig_oid_fqdn=dk-ext.migrid.org \
                    --ext_oid_fqdn=dk-oid.migrid.org \
+                   --ext_oidc_fqdn=dk-oidc.migrid.org \
                    --sid_fqdn=dk-sid.migrid.org \
                    --io_fqdn=dk-io.migrid.org \
                    --daemon_show_address=dk-io.migrid.org \
@@ -635,9 +688,13 @@ additional web apps and OpenID on CentOS:
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
                    --public_http_port=80 --public_https_port=443 \
                    --ext_cert_port=443 --mig_oid_port=443 \
-                   --ext_oid_port=443 --sid_port=443 \
+                   --ext_oid_port=443 --ext_oidc_port=443 --sid_port=443 \
                    --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
+                   --ext_oidc_provider_meta_url=https://id.ku.dk/nidp/oauth/nam/.well-known/openid-configuration \
+                   --ext_oidc_scope=AS_SIF-ERDA \
+                   --ext_oidc_client_name=erda_migrid-dk \
+                   --ext_oidc_remote_user_claim=upn \
                    --enable_openid=True --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True \
                    --enable_sandboxes=True --enable_jobs=True \
@@ -656,9 +713,13 @@ additional web apps and OpenID on CentOS:
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
                    --daemon_pubkey_from_dns=True \
-                   --signup_methods="extoid migoid migcert" \
-                   --login_methods="extoid migoid migcert" \
+                   --signup_methods="extoid migoid migcert extoidc" \
+                   --login_methods="extoid migoid migcert extoidc" \
                    --distro=centos --skin=migrid-basic \
+                   --default_menu="home files submitjob jobs vgrids settings setup logout" \
+                   --user_menu="sharelinks people cloud crontab transfers runtimeenvs resources peers downloads docs dashboard migadmin" \
+                   --wsgi_procs=25 --sftp_subsys_auth_procs=20 \
+                   --sftp_max_sessions=16 \
                    --collaboration_links="default advanced" \
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm tracker workflows monitor" \
@@ -669,11 +730,10 @@ additional web apps and OpenID on CentOS:
                    --short_title="MiG" \
                    --external_doc=https://www.migrid.org \
                    --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
-                   --default_menu="home files submitjob jobs vgrids settings setup logout" \
-                   --user_menu="sharelinks people cloud crontab transfers runtimeenvs resources peers downloads docs dashboard migadmin" \
-                   --wsgi_procs=25 --sftp_subsys_auth_procs=20 \
-                   --sftp_max_sessions=16 \
-                   --auto_add_oid_user=True --auto_add_cert_user=True \
+                   --ext_oidc_title="KU/UCPH" \
+                   --auto_add_oid_user=True --auto_add_oidc_user=True \
+                   --auto_add_cert_user=True \
+                   --auto_add_user_permit='email:.+@([a-z0-9]+\.|)ku\.dk$' \
                    --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
                    --io_account_expire=True \
                    --password_policy="MODERN:12" \
@@ -686,6 +746,7 @@ additional web apps and OpenID on CentOS:
                    --imnotify_channel="FILE::/home/mig/state/secrets/imnotify_channel.txt" \
                    --imnotify_username="FILE::/home/mig/state/secrets/imnotify_username.txt" \
                    --imnotify_password="FILE::/home/mig/state/secrets/imnotify_password.txt" \
+                   --ca_fqdn=ca.migrid.org --ca_user=mig-ca --ca_smtp=migrid.science \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
@@ -701,6 +762,7 @@ local OpenID login and added Jupyter+cloud integration for data analysis:
                    --ext_cert_fqdn=cert.erda.dk \
                    --mig_oid_fqdn=ext.erda.dk \
                    --ext_oid_fqdn=erda.dk \
+                   --ext_oidc_fqdn=oidc.erda.dk \
                    --sid_fqdn=sid.erda.dk \
                    --io_fqdn=io.erda.dk \
                    --seafile_fqdn=sid.erda.dk \
@@ -723,9 +785,13 @@ local OpenID login and added Jupyter+cloud integration for data analysis:
                    --trac_admin_path='' --trac_ini_path='' \
                    --public_http_port=80 --public_https_port=443 \
                    --ext_cert_port=443 --mig_oid_port=443 \
-                   --ext_oid_port=443 --sid_port=443 \
+                   --ext_oid_port=443 --ext_oidc_port=443 --sid_port=443 \
                    --mig_oid_provider=https://ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
+                   --ext_oidc_provider_meta_url=https://id.ku.dk/nidp/oauth/nam/.well-known/openid-configuration \
+                   --ext_oidc_scope=AS_SIF-ERDA \
+                   --ext_oidc_client_name=erda \
+                   --ext_oidc_remote_user_claim=upn \
                    --enable_openid=True --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True \
                    --enable_duplicati=True --enable_seafile=True \
@@ -747,8 +813,8 @@ local OpenID login and added Jupyter+cloud integration for data analysis:
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
                    --daemon_pubkey_from_dns=True \
-                   --signup_methods="extoid migoid extcert" \
-                   --login_methods="extoid migoid extcert" \
+                   --signup_methods="extoid migoid extcert extoidc" \
+                   --login_methods="extoid migoid extcert extoidc" \
                    --distro=centos --skin=erda-ucph-science \
                    --vgrid_label=Workgroup --apache_worker_procs=2048 \
                    --davs_port=8020 --openid_port=8001 \
@@ -766,7 +832,10 @@ local OpenID login and added Jupyter+cloud integration for data analysis:
                    --short_title="UCPH ERDA" \
                    --external_doc=https://erda.ku.dk \
                    --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
-                   --auto_add_oid_user=True --auto_add_cert_user=True \
+                   --ext_oidc_title="KU/UCPH" \
+                   --auto_add_oid_user=True --auto_add_oidc_user=True \
+                   --auto_add_cert_user=True \
+                   --auto_add_user_permit='email:.+@([a-z0-9]+\.|)(ku|kb)\.dk$' \
                    --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
                    --permanent_freeze="freeze phd backup" --freeze_to_tape="4w" \
                    --io_account_expire=True \
