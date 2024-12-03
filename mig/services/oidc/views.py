@@ -1,6 +1,7 @@
 import json
 import sys
 import traceback
+from types import SimpleNamespace
 from typing import Union
 from urllib.parse import urlparse
 
@@ -24,6 +25,7 @@ from idpyoidc.server.oidc.token import Token
 
 def create_views_blueprint():
     oidc_op_views = Blueprint('oidc_op', __name__, url_prefix='')
+    oidc_op_views_state = SimpleNamespace(authz={})
 
 
     def _add_cookie(resp: Response, cookie_spec: Union[dict, list]):
@@ -184,8 +186,9 @@ def create_views_blueprint():
 
     @oidc_op_views.route('/authorization')
     def authorization():
+        authz_state = oidc_op_views_state.authz
         return service_endpoint(
-            current_app.server.get_endpoint('authorization'))
+            current_app.server.get_endpoint('authorization'), **authz_state)
 
 
     @oidc_op_views.route('/token', methods=['GET', 'POST'])
@@ -215,7 +218,7 @@ def create_views_blueprint():
     IGNORE = ["cookie", "user-agent"]
 
 
-    def service_endpoint(endpoint):
+    def service_endpoint(endpoint, **kwargs):
         _log = current_app.logger
         _log.info('At the "{}" endpoint'.format(endpoint.name))
 
@@ -230,7 +233,7 @@ def create_views_blueprint():
 
         if request.method == 'GET':
             try:
-                req_args = endpoint.parse_request(request.args.to_dict(), http_info=http_info)
+                req_args = endpoint.parse_request(request.args.to_dict(), http_info=http_info, **kwargs)
             except ClientAuthenticationError as err:
                 _log.error(err)
                 return make_response(json.dumps({
@@ -360,4 +363,4 @@ def create_views_blueprint():
         return page
 
 
-    return oidc_op_views
+    return oidc_op_views, oidc_op_views_state

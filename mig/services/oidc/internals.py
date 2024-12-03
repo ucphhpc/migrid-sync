@@ -10,13 +10,15 @@ from idpyoidc.server.configure import OPConfiguration
 from mig.services.oidc.authn import MigUserPass
 from mig.services.oidc.userinfo import MigServiceOidcUserInfo
 from mig.services.oidc.views import create_views_blueprint
-from mig.shared.useradm import default_db_path
+from mig.shared.useradm import default_db_path, \
+    search_users as useradm_search_users
 from mig.shared.userdb import load_user_db
 
+_EMPTY_DICT = {}
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-def init_oidc_op(app):
+def init_oidc_op(app, **kwargs):
     _op_config = app.srv_config
 
     server = Server(_op_config, cwd=dir_path)
@@ -32,18 +34,55 @@ def init_oidc_op(app):
     return server
 
 
-def oidc_provider_init_app(op_config, name=None, **kwargs):
+def oidc_provider_init_app(op_config, name=None, client_db=None, **kwargs):
     name = name or __name__
     app = Flask(name, root_path=dir_path, **kwargs)
     app.srv_config = op_config
 
-    oidc_op_views = create_views_blueprint()
+    oidc_op_views, oidc_op_views_state = create_views_blueprint()
     app.register_blueprint(oidc_op_views)
 
     # Initialize the oidc_provider after views to be able to set correct urls
-    app.server = init_oidc_op(app)
+    app.server = init_oidc_op(app, client_db=client_db)
 
-    return app
+    return app, oidc_op_views_state
+
+
+def oidc_state_user_record(client_id):
+    return {
+        'client_secret': '__PASSWORD__',
+        'redirect_uris': ['http://back.to/me'],
+    }
+
+
+class OidcState:
+    def __init__(self, configuration, user_db):
+        self._configuration = configuration
+        self._passwords = None
+        self._user_db = user_db
+        self._user_db_values = list(user_db.values())
+
+        self._passwords = {client['email']:oidc_state_user_record(client['email']) for client in self._user_db_values}
+
+    def __getitem__(self, item):
+        return self._passwords.get(item, _EMPTY_DICT)
+
+    # quack like a dict
+    def get(self, item, *args):
+        return self.__getitem__(item)
+
+    def get_user_client_id(self, client_id):
+        search_filter = {
+            'email': client_id,
+        }
+        _, users = useradm_search_users(search_filter, None, None, configuration=self._configuration)
+        users_count = len(users)
+        if users_count == 0:
+            raise NotImplementedError('NOT_FOUND')
+        if users_count > 1:
+            raise NotImplementedError('BAD_SEARCH')
+        else:
+            return users[0]
 
 
 # class PeerCertWSGIRequestHandler(werkzeug.serving.WSGIRequestHandler):
@@ -90,6 +129,12 @@ def _create_service(configuration, debug=False):
 
     db_path = default_db_path(configuration)
     user_db = load_user_db(db_path, do_lock=True)
+    oidc_state = OidcState(configuration, user_db)
+
+    the_kwargs = provider_config.op['client_db']['kwargs']
+    assert 'instance' in the_kwargs
+    assert the_kwargs['instance'] is None
+    the_kwargs['instance'] = oidc_state
 
     # user authn
     user_authn = MigUserPass(db=user_db)
@@ -105,8 +150,15 @@ def _create_service(configuration, debug=False):
     assert the_kwargs['instance'] is None
     the_kwargs['instance'] = user_info
 
-    app = oidc_provider_init_app(provider_config.op, 'oidc_op')
+    app, views_state = oidc_provider_init_app(provider_config.op, 'oidc_op', client_db=oidc_state)
     app.debug = debug
     app.logger = configuration.logger
 
-    return app, user_db, user_authn, user_info
+    oidc_state.views = views_state
+
+    def _mig_service_oidc_get_client_info(clientid, endpoint):
+        user = oidc_state.get_user_client_id(clientid)
+        return { 'client_authn_method': ['client_secret_basic'] }
+    oidc_state.views.authz['get_client_info'] = _mig_service_oidc_get_client_info
+
+    return app, oidc_state, user_authn, user_info

@@ -5,6 +5,12 @@
     "base_url": "https://{domain}:{port}",
     "op": {
         "server_info": {
+            "client_db": {
+                "class": "mig.services.oidc.clientdb.instantiate",
+                "kwargs": {
+                    "instance": null
+                }
+            },
             "add_on": {
                 "pkce": {
                     "function": "idpyoidc.server.oauth2.add_on.pkce.add_support",

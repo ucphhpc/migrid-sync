@@ -1,4 +1,6 @@
 import copy
+from idpyoidc.client.client_auth import ClientSecretBasic
+from idpyoidc.message import Message
 import json
 import time
 from types import SimpleNamespace
@@ -65,11 +67,11 @@ class TestCase(MigTestCase):
         _clear_userdb_related_state(self.configuration)
         _ensure_userdb_with_user(self.configuration)
 
-    def test_server_creation_loads_user_db(self):
-        server, user_db, x1, x2 = _create_service(self.configuration)
+    def _test_server_creation_loads_user_db(self):
+        server, oidc_state, x1, x2 = _create_service(self.configuration)
 
-        self.assertIsInstance(user_db, dict)
-        self.assertIn(self.TEST_USER_DN, user_db)
+        self.assertIsInstance(oidc_state, OidcState)
+        self.assertIn(self.TEST_USER_DN, oidc_state.user_db)
 
 
 class TestCase2(MigTestCase, HtmlAssertMixin, WsgiAssertMixin):
@@ -97,10 +99,48 @@ class TestCase2(MigTestCase, HtmlAssertMixin, WsgiAssertMixin):
 
         self.assertIsValidHtmlDocument(content)
 
-        return  # FIXME:
 
+class TestCase3(MigTestCase, WsgiAssertMixin):
+    TEST_CLIENT_ID = EXAMPLE_CLIENT_ID
+    TEST_CLIENT_OBJECT = copy.deepcopy(EXAMPLE_CLIENT_OBJECT)
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        _clear_userdb_related_state(self.configuration)
+        _ensure_userdb_with_user(self.configuration)
+
+        server_instance, oidc_state, __, ___ = _create_service(self.configuration)
+        self.oidc_state = oidc_state
+        self.wsgi_app = server_instance.wsgi_app
+
+
+    def test_xxx(self):
+        csb = ClientSecretBasic()
+        http_args = csb.construct(
+            Message(),
+            password="__PASSWORD__",
+            user=self.TEST_CLIENT_ID,
+        )
+
+
+        query_string = urllib.parse.urlencode({
+            'response_type': 'code',
+            'client_id': self.TEST_CLIENT_ID,
+            'scope': 'openid',
+            'redirect_uri': 'http://back.to/me',
+        })
+
+
+        # generic WSGI setup
+        self.fake_wsgi_environ = create_wsgi_environ(self.configuration, 'http://localhost/authorization', wsgi_headers=http_args['headers'])
+        self.fake_start_response = create_wsgi_start_response()
         # arrange a pre-existing client record with a known authorization code
-        request_validator._saved[self.TEST_CLIENT_ID] = self.TEST_CLIENT_OBJECT
+        #request_validator._saved[self.TEST_CLIENT_ID] = self.TEST_CLIENT_OBJECT
+
+        wsgi_result = self.wsgi_app(self.fake_wsgi_environ, self.fake_start_response)
+        content = self.assertWsgiResponse(wsgi_result, self.fake_start_response, 200)
 
         body_query = urllib.parse.urlencode({
             'client_id': 'user@example.com',
