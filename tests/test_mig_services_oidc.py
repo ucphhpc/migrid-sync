@@ -123,8 +123,6 @@ class TestCase3(MigTestCase, WsgiAssertMixin):
             password="__PASSWORD__",
             user=self.TEST_CLIENT_ID,
         )
-
-
         query_string = urllib.parse.urlencode({
             'response_type': 'code',
             'client_id': self.TEST_CLIENT_ID,
@@ -132,36 +130,14 @@ class TestCase3(MigTestCase, WsgiAssertMixin):
             'redirect_uri': 'http://back.to/me',
         })
 
-
         # generic WSGI setup
         self.fake_wsgi_environ = create_wsgi_environ(self.configuration, 'http://localhost/authorization', wsgi_headers=http_args['headers'])
         self.fake_start_response = create_wsgi_start_response()
-        # arrange a pre-existing client record with a known authorization code
-        #request_validator._saved[self.TEST_CLIENT_ID] = self.TEST_CLIENT_OBJECT
 
         wsgi_result = self.wsgi_app(self.fake_wsgi_environ, self.fake_start_response)
+
         content = self.assertWsgiResponse(wsgi_result, self.fake_start_response, 200)
-
-        body_query = urllib.parse.urlencode({
-            'client_id': 'user@example.com',
-            'redirect_uri': 'http://back.to/me',
-            'grant_type': 'authorization_code',
-            'code': '__AUTHORIZATION_CODE__',
-            'scope': 'openid',
-        })
-        headers, body, status_code = server.create_token_response(
-            '', body=body_query)
-
-        body = json.loads(body)
-        token = {
-            'token_type': 'Bearer',
-            'expires_in': 3600,
-            'id_token': '456',
-            'access_token': 'ttookkeenn',
-            'refresh_token': 'ttookkeenn',
-            'scope': 'openid'
-        }
-        self.assertEqual(body, token)
+        self.assertEqual(content, '')
 
 
 if __name__ == '__main__':

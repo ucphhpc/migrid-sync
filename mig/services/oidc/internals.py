@@ -142,6 +142,7 @@ def _create_service(configuration, debug=False):
     assert 'instance' in the_kwargs
     assert the_kwargs['instance'] is None
     the_kwargs['instance'] = user_authn
+    the_kwargs['apply_kwargs'] = ['upstream_get']
 
     # user info
     user_info = MigServiceOidcUserInfo(db=user_db)
