@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # verifyarchives - Search for missing files in user Archives
-# Copyright (C) 2021-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2021-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,6 +42,7 @@ from mig.shared.base import client_dir_id, distinguished_name_to_user
 from mig.shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     public_archive_index, public_archive_files, public_archive_doi, \
     keyword_pending, keyword_final
+from mig.shared.freezefunctions import sorted_hash_algos, checksum_file
 
 
 def fuzzy_match(i, j, offset=2.0):
@@ -110,12 +111,29 @@ def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
                           archive_path)
             # NOTE: we allow a minor time offset to accept various fs hiccups
             elif not fuzzy_match(entry['timestamp'], archived_created) and \
-                    not fuzzy_match(entry['timestamp'], archived_modified):
+                    not fuzzy_match(entry['timestamp'], archived_modified) and \
+                    not fuzzy_match(entry.get('file_mtime', -1), archived_modified):
                 if meta_state == keyword_final:
                     print("Archive entry %s has wrong timestamp %f / %f (expected %f, %s)" %
                           (archive_path, archived_created, archived_modified,
                            entry['timestamp'], archived_stat))
-                    return False
+                    chksum_verified = False
+                    for algo in sorted_hash_algos:
+                        chksum = entry.get(algo, '')
+                        if not chksum or ' ' in chksum:
+                            continue
+                        print("Checking that %s of %r matches %r" %
+                              (algo, archive_path, chksum))
+                        verify_chksum = checksum_file(archive_path, algo,
+                                                      max_chunks=-1)
+                        if verify_chksum == chksum:
+                            chksum_verified = True
+                            break
+                    if chksum_verified:
+                        print("Verified that %s of %r matches %r" %
+                              (algo, archive_path, chksum))
+                    else:
+                        return False
                 elif verbose:
                     print("ignore ctime mismatch on non-final %s" %
                           archive_path)
