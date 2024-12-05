@@ -1,4 +1,4 @@
-#!/usr/bin/env python -u
+#!/usr/bin/env -S python -u
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
