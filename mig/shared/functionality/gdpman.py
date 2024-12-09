@@ -1531,7 +1531,7 @@ def main(client_id, user_arguments_dict, environ=None):
     gdp_category_id = accepted['gdp_category_id'][-1].strip()
     gdp_ref_id_list = [i.strip() for i in accepted['gdp_ref_id']]
     gdp_ref_value_list = [i.strip() for i in accepted['gdp_ref_value']]
-    gdp_ref_pairs = zip(gdp_ref_id_list, gdp_ref_value_list)
+    gdp_ref_pairs = dict(zip(gdp_ref_id_list, gdp_ref_value_list))
     # Force username (email) to lowercase to reduce user confusion
     username = accepted['username'][-1].strip().lower()
     if action:
@@ -1779,7 +1779,7 @@ Please contact the site admins %s if you think it should be enabled.
                 try:
                     category_entry = fill_category_meta(configuration,
                                                         gdp_category_id, action,
-                                                        dict(gdp_ref_pairs))
+                                                        gdp_ref_pairs)
                 except ValueError as err:
                     status = False
                     msg = "missing reference: %s" % err
@@ -1833,7 +1833,7 @@ Please contact the site admins %s if you think it should be enabled.
                 try:
                     category_entry = fill_category_meta(configuration,
                                                         gdp_category_id, action,
-                                                        dict(gdp_ref_pairs))
+                                                        gdp_ref_pairs)
                 except ValueError as err:
                     status = False
                     msg = "missing reference: %s" % err
@@ -1921,12 +1921,12 @@ Please contact the site admins %s if you think it should be enabled.
                 promote_category_entry = fill_category_meta(configuration,
                                                             gdp_category_id,
                                                             'promote_to_owner',
-                                                            dict(gdp_ref_pairs))
+                                                            gdp_ref_pairs)
                 #logger.debug("promote_category_entry: %s" % promote_category_entry)
                 demote_category_entry = fill_category_meta(configuration,
                                                            gdp_category_id,
                                                            'demote_owner',
-                                                           dict(gdp_ref_pairs))
+                                                           gdp_ref_pairs)
                 logger.debug("demote_category_entry: %s" %
                              demote_category_entry)
             except ValueError as err:
@@ -1975,7 +1975,7 @@ Please contact the site admins %s if you think it should be enabled.
 
             try:
                 category_entry = fill_category_meta(configuration, gdp_category_id,
-                                                    action, dict(gdp_ref_pairs))
+                                                    action, gdp_ref_pairs)
             except ValueError as err:
                 status = False
                 msg = "missing reference: %s" % err
@@ -2009,7 +2009,7 @@ Please contact the site admins %s if you think it should be enabled.
             try:
                 category_entry = fill_category_meta(configuration,
                                                     gdp_category_id, action,
-                                                    dict(gdp_ref_pairs))
+                                                    gdp_ref_pairs)
             except ValueError as err:
                 status = False
                 msg = "missing reference: %s" % err
