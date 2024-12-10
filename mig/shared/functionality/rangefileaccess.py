@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rangefileaccess - read or write byte range inside file
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -363,8 +363,8 @@ def main(client_id, user_arguments_dict, environ=None):
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.warn('%s tried to %s %s restricted path! (%s)'
-                            % (client_id, op_name, abs_path, pattern))
+                logger.warning('%s tried to %s %s restricted path! (%s)' %
+                               (client_id, op_name, abs_path, pattern))
                 continue
             match.append(abs_path)
 
