@@ -386,6 +386,7 @@ def build_reitem_object(configuration, re_dict):
             })
 
     created_timestamp = re_dict['CREATED_TIMESTAMP']
+    # Timestamp should always be set but default to epoch e.g. if None
     if isinstance(created_timestamp, basestring):
         # NOTE: fromisoformat was only added in python 3.x
         try:
@@ -395,6 +396,8 @@ def build_reitem_object(configuration, re_dict):
             # Fall back to old fragile parser
             created_timestamp = datetime.datetime.strptime(
                 created_timestamp, '%Y-%m-%d %H:%M:%S.%f')
+    else:
+        created_timestamp = datetime.datetime.utcfromtimestamp(0)
 
     created_timetuple = created_timestamp.timetuple()
     created_asctime = time.asctime(created_timetuple)
