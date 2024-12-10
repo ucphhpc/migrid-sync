@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mkdir - create directory in user home
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -175,8 +175,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.warn('%s tried to %s %s restricted path! (%s)'
-                            % (client_id, op_name, abs_path, pattern))
+                logger.warning('%s tried to %s %s restricted path! (%s)' %
+                               (client_id, op_name, abs_path, pattern))
                 continue
             match.append(abs_path)
 

@@ -3,7 +3,7 @@
 #
 # map.py - Collection of map related functions
 #
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -22,10 +22,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """A shared collection of map helper functions"""
+
 from __future__ import absolute_import
 
-import os
 import fcntl
+import os
+
 from mig.shared.serial import load
 
 
@@ -50,7 +52,7 @@ def load_system_map(configuration, kind, do_lock):
         map_stamp = os.path.getmtime(map_path)
 
     except IOError:
-        configuration.logger.warn("No %s map to load" % kind)
+        configuration.logger.warning("No %s map to load" % kind)
         entity_map = {}
         map_stamp = -1
     if do_lock:

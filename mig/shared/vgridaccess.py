@@ -107,7 +107,7 @@ def load_entity_map(configuration, kind, do_lock, caching):
         _logger.info("after %s map load from %s" % (kind, map_path))
         map_stamp = os.path.getmtime(map_path)
     except IOError:
-        _logger.warn("No %s map to load" % kind)
+        _logger.warning("No %s map to load" % kind)
         entity_map = {}
         map_stamp = -1
     if do_lock:
