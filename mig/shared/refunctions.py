@@ -388,7 +388,6 @@ def build_reitem_object(configuration, re_dict):
     if not created_timestamp:
         created_timestamp = datetime.datetime.utcfromtimestamp(0)
     created_timetuple = created_timestamp.timetuple()
-    created_timetuple = re_dict['CREATED_TIMESTAMP'].timetuple()
     created_asctime = time.asctime(created_timetuple)
     created_epoch = time.mktime(created_timetuple)
     return {
