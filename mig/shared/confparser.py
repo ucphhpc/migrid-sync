@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # confparser - parse resource configurations
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@
 from __future__ import absolute_import
 
 from mig.shared.conf import get_configuration_object
+from mig.shared.fileio import write_file
 from mig.shared.parser import parse, check_types
 from mig.shared.refunctions import is_runtime_environment, get_re_dict
 from mig.shared.resconfkeywords import get_keywords_dict as \
@@ -77,6 +78,7 @@ def run(configuration, localfile_spaces, unique_resource_name,
 
     if not configuration:
         configuration = get_configuration_object()
+    _logger = configuration.logger
 
     (status, msg, conf) = get_resource_config_dict(configuration,
                                                    localfile_spaces)
@@ -230,12 +232,6 @@ owner and ask if you can be included in the %s.""" %
     else:
         return (True, 'Everything ok')
 
-    try:
-        fsock = open(filename, 'w')
-        st = dumps(conf, 0)
-        fsock.write(st)
-        fsock.close()
-    except Exception as err:
-        return (False, "Fatal error: could not open %r for writing!\n Msg: %s"
-                % (filename, err))
+    if not write_file(dumps(conf, 0), filename, _logger):
+        return (False, "Fatal error: could not open %r for writing!" % filename)
     return (True, 'Everything ok, config updated')

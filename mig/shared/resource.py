@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resource - resource configuration functions
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -50,7 +50,8 @@ except ImportError:
 from mig.shared.base import client_id_dir
 from mig.shared.confparser import get_resource_config_dict, run
 from mig.shared.defaults import exe_leader_name, keyword_auto
-from mig.shared.fileio import pickle, move, walk
+from mig.shared.fileio import pickle, move, walk, write_file, read_file_lines, \
+    write_file_lines
 from mig.shared.modified import mark_resource_modified, mark_vgrid_modified
 from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.resconfkeywords import get_resource_specs, get_exenode_specs, \
@@ -827,6 +828,7 @@ def empty_resource_config(configuration):
 def write_resource_config(configuration, resource_conf, conf_path):
     """Write resource_conf dictionary settings into conf_path on disk"""
 
+    _logger = configuration.logger
     lines = []
     for (field, __) in get_resource_specs(configuration):
         value = resource_conf.get(field, None)
@@ -867,9 +869,7 @@ def write_resource_config(configuration, resource_conf, conf_path):
     if not os.path.isdir(os.path.dirname(conf_path)):
         os.makedirs(os.path.dirname(conf_path))
 
-    conf_fd = open(conf_path, 'w')
-    conf_fd.write('\n'.join(lines))
-    conf_fd.close()
+    write_file('\n'.join(lines), conf_path, _logger)
 
     return lines
 
@@ -1039,6 +1039,7 @@ def create_resource_conf(
     relative path it will prefixed with the resource_pending dir of the
     client_id.
     """
+    _logger = configuration.logger
     if new_resource:
         msg = """
 Trying to create configuration for new resource: '%s.%d' from file '%s':
@@ -1078,7 +1079,7 @@ Failure:
             """
 Failure:
   resource_name: '%s'
-  does'nt match hosturl: '%s'
+  doesn't match hosturl: '%s'
   in configfile: '%s'"""\
              % (resource_name, config_dict['HOSTURL'], pending_file)
         return (False, msg)
@@ -1095,21 +1096,13 @@ Failure:
                 pending_file)
         return (False, msg)
 
-    try:
-        fr = open(pending_file, 'r')
-        fw = open(tmpfile, 'w')
-        readline = fr.readline()
-        while len(readline) > 0:
-            fw.write(readline.replace(keyword_auto, "%d" %
-                                      resource_identifier))
-            readline = fr.readline()
-        fw.close()
-        fr.close()
-    except Exception as err:
-
-        msg += \
-            'Failed to apply hostidentifier to configfile. Failure: %s'\
-            % err
+    pending_lines = read_file_lines(pending_file, _logger)
+    replaced_lines = []
+    for line in pending_lines:
+        replaced_lines.append(line.replace(keyword_auto, "%d" %
+                                           resource_identifier))
+    if not write_file_lines(replaced_lines, tmpfile, _logger):
+        msg += 'Failed to apply hostidentifier to configfile.'
         return (False, msg)
 
     unique_resource_name = "%s.%d" % (resource_name, resource_identifier)
