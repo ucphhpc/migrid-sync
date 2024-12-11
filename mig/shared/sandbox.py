@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sandbox - shared sandbox helpers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,7 @@ import tempfile
 from mig.shared.base import hexlify
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import default_vgrid, keyword_auto
-from mig.shared.fileio import make_symlink
+from mig.shared.fileio import make_symlink, write_named_tempfile
 from mig.shared.resource import create_resource
 from mig.shared.serial import load, dump
 
@@ -173,10 +173,7 @@ vgrid=%s
     # write the conf string to a temporary conf file
     # create_resource removes the tempfile automatically
 
-    tmp_file = tempfile.NamedTemporaryFile(delete=False)
-    tmp_file.write(res_conf_string)
-    tmp_file.close()
-    pending_file = tmp_file.name
+    pending_file = write_named_tempfile(configuration, res_conf_string)
 
     (status, id_msg) = create_resource(configuration, sandboxkey,
                                        resource_name, pending_file)
@@ -190,6 +187,7 @@ vgrid=%s
 
     exe_pgid_file = configuration.resource_home + unique_resource_name\
         + os.sep + 'EXE_%s.PGID' % exe_name
+
     try:
         fd = open(exe_pgid_file, 'w')
         fd.write('stopped')
@@ -314,10 +312,7 @@ vgrid=%s
     # write the conf string to a temporary conf file
     # create_resource removes the tempfile automatically
 
-    tmp_file = tempfile.NamedTemporaryFile(delete=False)
-    tmp_file.write(res_conf_string)
-    tmp_file.close()
-    pending_file = tmp_file.name
+    pending_file = write_named_tempfile(configuration, res_conf_string)
 
     (status, id_msg) = create_resource(configuration, sandboxkey,
                                        resource_name, pending_file)
@@ -368,7 +363,7 @@ def get_resource(client_id, configuration, logger):
 
         # Generate key, and set cookie
 
-        sandboxkey = hexlify(open('/dev/urandom').read(32))
+        sandboxkey = hexlify(os.urandom(32))
         cookie = 'Set-Cookie: ' + __MIG_ONECLICK_COOKIE__ + '='\
             + sandboxkey + '; '\
             + 'expires=Thu 31-Jan-2099 12:00:00 GMT; path=/; '\

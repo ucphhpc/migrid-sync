@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobscriptgenerator - dynamically generate job script right before job handout
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -182,8 +182,8 @@ def create_job_script(
     # TODO: hexlify is an awfully space wasting URL-safe encoding.
     #       We should just use something like the proposed secure method from
     #       http://stackoverflow.com/a/23728630/2213647
-    sessionid = hexlify(open('/dev/urandom').read(session_id_bytes))
-    iosessionid = hexlify(open('/dev/urandom').read(session_id_bytes))
+    sessionid = hexlify(os.urandom(session_id_bytes))
+    iosessionid = hexlify(os.urandom(session_id_bytes))
     helper_dict_filename = os.path.join(configuration.resource_home,
                                         unique_resource_name,
                                         'empty_job_helper_dict.%s' % exe)
@@ -475,7 +475,7 @@ def create_arc_job(
         return (None, 'Error. empty job for ARC?')
 
     # generate random session ID:
-    sessionid = hexlify(open('/dev/urandom').read(session_id_bytes))
+    sessionid = hexlify(os.urandom(session_id_bytes))
     logger.debug('session ID (for creating links): %s' % sessionid)
 
     client_dir = client_id_dir(client_id)
