@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssscreateimg - Back end to SSS zip generator
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -92,7 +92,7 @@ def main(client_id, user_arguments_dict):
     win_solution = accepted['win_solution'][-1]
     vgrid_list = accepted['vgrid']
     cputime = 1000000
-    sandboxkey = hexlify(open('/dev/urandom').read(32))
+    sandboxkey = hexlify(os.urandom(32))
     ip_address = 'UNKNOWN'
     if 'REMOTE_ADDR' in os.environ:
         ip_address = os.environ['REMOTE_ADDR']
