@@ -2289,11 +2289,15 @@ def search_users(search_filter, conf_path, db_path,
         match = True
         for (key, val) in search_filter.items():
             if key == 'expire_after':
-                if user_dict.get('expire', val) < val:
+                # NOTE: expire may be None for legacy sites
+                user_expire = user_dict.get('expire', val)
+                if user_expire is not None and user_expire < val:
                     match = False
                     break
             elif key == 'expire_before':
-                if user_dict.get('expire', 0) > val:
+                # NOTE: expire may be None for legacy sites
+                user_expire = user_dict.get('expire', 0)
+                if user_expire is None or user_expire > val:
                     match = False
                     break
             elif key in regex_match and \
