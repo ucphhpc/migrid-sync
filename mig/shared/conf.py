@@ -32,6 +32,7 @@ from __future__ import absolute_import
 import os
 import sys
 
+from mig.shared._env import MIG_BASE
 from mig.shared.fileio import unpickle
 
 
@@ -43,16 +44,14 @@ def get_configuration_object(config_file=None, skip_log=False,
     """
     from mig.shared.configuration import Configuration
     if config_file:
+        # use config file path passed explicitly to the function
         _config_file = config_file
     elif os.environ.get('MIG_CONF', None):
+        # use config file explicitly set in the environment
         _config_file = os.environ['MIG_CONF']
     else:
-        app_dir = os.path.dirname(sys.argv[0])
-        if not app_dir:
-            _config_file = '../server/MiGserver.conf'
-        else:
-            _config_file = os.path.join(app_dir, '..', 'server',
-                    'MiGserver.conf')
+        # find config file relative to the directory in which the scrip resides
+        _config_file = os.path.join(MIG_BASE, 'server/MiGserver.conf')
     configuration = Configuration(_config_file, False, skip_log,
                                   disable_auth_log)
     return configuration
@@ -61,7 +60,7 @@ def get_configuration_object(config_file=None, skip_log=False,
 def get_resource_configuration(resource_home, unique_resource_name,
                                logger):
     """Load a resource configuration from file"""
-    
+
     # open the configuration file
 
     resource_config_file = resource_home + '/' + unique_resource_name\

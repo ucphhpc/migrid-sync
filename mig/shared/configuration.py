@@ -735,7 +735,7 @@ class Configuration:
         else:
             print("""Could not find your configuration file (%s). You might
 need to point the MIG_CONF environment to your actual MiGserver.conf
-location.""" % self.config_file)
+location.""" % _config_file)
             raise IOError
 
         config = ConfigParser()
