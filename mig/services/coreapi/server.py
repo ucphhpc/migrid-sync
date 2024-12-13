@@ -193,49 +193,14 @@ class ApiHttpServer(HTTPServer):
     #       any gain and it potentially introduces a race
     hash_cache, scramble_cache = None, None
 
-    def __init__(self, configuration, **kwargs):
+    def __init__(self, configuration, logger=None, host=None, port=None, **kwargs):
         self.configuration = configuration
-        self.logger = configuration.logger
+        self.logger = logger if logger else configuration.logger
+        self.server_app = None
         self._on_start = kwargs.pop('on_start', lambda _: None)
 
-        address = configuration.daemon_conf['address']
-        port = configuration.daemon_conf['port']
-
-        addr = (address, port)
+        addr = (host, port)
         HTTPServer.__init__(self, addr, ApiHttpRequestHandler, **kwargs)
-
-        fqdn = self.server_name
-        port = self.server_port
-        # Masquerading if needed
-        if configuration.daemon_conf['show_address']:
-            fqdn = configuration.daemon_conf['show_address']
-        if configuration.daemon_conf['show_port']:
-            port = configuration.daemon_conf['show_port']
-        if configuration.daemon_conf['nossl']:
-            proto = 'http'
-            proto_port = 80
-        else:
-            proto = 'https'
-            proto_port = 443
-        if port != proto_port:
-            self.base_url = '%s://%s:%s/' % (proto, fqdn, port)
-        else:
-            self.base_url = '%s://%s/' % (proto, fqdn)
-
-        # We serve from sub dir to ease targeted proxying
-        self.server_app = None
-        self.server_base = 'openid'
-        self.base_url += "%s/" % self.server_base
-        self.openid = None
-        self.approved = {}
-        self.lastCheckIDRequest = {}
-
-        # print "DEBUG: sreg fields: %s" % sreg.data_fields
-        for name in cert_field_names:
-            cert_field_aliases[name] = []
-            for target in [i for i in cert_field_names if name != i]:
-                if cert_field_map[name] == cert_field_map[target]:
-                    cert_field_aliases[name].append(target)
 
     @property
     def base_environ(self):
@@ -263,7 +228,11 @@ class ApiHttpServer(HTTPServer):
 
 class ThreadedApiHttpServer(ThreadingMixIn, ApiHttpServer):
     """Multi-threaded version of the ApiHttpServer"""
-    pass
+
+    @property
+    def base_url(self):
+        proto = 'http'
+        return '%s://%s:%d/' % (proto, self.server_name, self.server_port)
 
 
 class ApiHttpRequestHandler(WSGIRequestHandler):
@@ -311,11 +280,6 @@ class ApiHttpRequestHandler(WSGIRequestHandler):
     def __init__(self, socket, addr, server, **kwargs):
         self.server = server
 
-        if self.daemon_conf['session_ttl'] > 0:
-            self.session_ttl = self.daemon_conf['session_ttl']
-        else:
-            self.session_ttl = 48 * 3600
-
         # NOTE: drop idle clients after N seconds to clean stale connections.
         #       Does NOT include clients that connect and do nothing at all :-(
         self.timeout = 120
@@ -337,7 +301,7 @@ class ApiHttpRequestHandler(WSGIRequestHandler):
 
     @property
     def logger(self):
-        return self.server.configuration.daemon_conf['logger']
+        return self.server.logger
 
 
 def limited_accept(logger, self, *args, **kwargs):
@@ -372,18 +336,16 @@ def start_service(configuration, host=None, port=None):
     assert host is not None, "required kwarg: host"
     assert port is not None, "required kwarg: port"
 
-    """Service launcher"""
-    daemon_conf = configuration.daemon_conf
     logger = configuration.logger
 
-    nossl = daemon_conf['nossl']
-    addr = (host, port)
     # TODO: is this threaded version robust enough (thread safety)?
     # OpenIDServer = ApiHttpServer
-    httpserver = ThreadedApiHttpServer(configuration, addr)
+    def _on_start(server, *args, **kwargs):
+        server.server_app = _create_and_expose_server(None, server.configuration)
+    httpserver = ThreadedApiHttpServer(configuration, host=host, port=port, on_start=_on_start)
 
     # Wrap in SSL if enabled
-    if nossl:
+    if True:
         logger.warning('Not wrapping connections in SSL - only for testing!')
     else:
         # Use best possible SSL/TLS args for this python version
@@ -415,144 +377,33 @@ def start_service(configuration, host=None, port=None):
         httpserver.expire_volatile()
 
 
-def _extend_configuration(configuration, address, port, **kwargs):
-    configuration.daemon_conf = {
-        'address': address,
-        'port': port,
-        'root_dir': os.path.abspath(configuration.user_home),
-        'db_path': os.path.abspath(default_db_path(configuration)),
-        'session_store': os.path.abspath(configuration.openid_store),
-        'session_ttl': 24 * 3600,
-        'allow_password': 'password' in configuration.user_openid_auth,
-        'allow_digest': 'digest' in configuration.user_openid_auth,
-        'allow_publickey': 'publickey' in configuration.user_openid_auth,
-        'user_alias': configuration.user_openid_alias,
-        'host_rsa_key': kwargs['host_rsa_key'],
-        'users': [],
-        'login_map': {},
-        'time_stamp': 0,
-        'logger': kwargs['logger'],
-        'nossl': kwargs['nossl'],
-        'expandusername': kwargs['expandusername'],
-        'show_address': kwargs['show_address'],
-        'show_port': kwargs['show_port'],
-        'support_email': configuration.support_email,
-        # TODO: Add the following to configuration:
-        # max_openid_user_hits
-        # max_openid_user_abuse_hits
-        # max_openid_proto_abuse_hits
-        # max_openid_secret_hits
-        'auth_limits':
-            {'max_user_hits': default_max_user_hits,
-             'user_abuse_hits': default_user_abuse_hits,
-             'proto_abuse_hits': default_proto_abuse_hits,
-             'max_secret_hits': 1,
-             },
-    }
-
-
-def main():
-    # Force no log init since we use separate logger
-    configuration = get_configuration_object(skip_log=True)
+def main(configuration=None):
+    if not configuration:
+        # Force no log init since we use separate logger
+        configuration = get_configuration_object(skip_log=True)
 
     log_level = configuration.loglevel
     if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
         log_level = sys.argv[1]
 
     # Use separate logger
-    logger = daemon_logger("openid", configuration.user_openid_log, log_level)
+    logger = daemon_logger("coreapi", configuration.user_openid_log, log_level)
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
     register_hangup_handler(configuration)
 
-    # For masquerading
-    show_address = configuration.user_openid_show_address
-    show_port = configuration.user_openid_show_port
+    # FIXME:
+    host = 'localhost'  # configuration.user_openid_address
+    port = 5555            # configuration.user_openid_port
+    server_address = (host, port)
 
-    # Allow configuration overrides on command line
-    nossl = False
-    expandusername = False
-    if sys.argv[2:]:
-        configuration.user_openid_address = sys.argv[2]
-    if sys.argv[3:]:
-        configuration.user_openid_port = int(sys.argv[3])
-    if sys.argv[4:]:
-        nossl = (sys.argv[4].lower() in ('1', 'true', 'yes', 'on'))
-    if sys.argv[5:]:
-        expandusername = (sys.argv[5].lower() in ('1', 'true', 'yes', 'on'))
-
-    if not configuration.site_enable_openid:
-        err_msg = "OpenID service is disabled in configuration!"
-        logger.error(err_msg)
-        print(err_msg)
-        sys.exit(1)
-    print("""
-Running grid openid server for user authentication against MiG user DB.
-
-Set the MIG_CONF environment to the server configuration path
-unless it is available in mig/server/MiGserver.conf
-""")
-    print(__doc__)
-
-    default_host_key = """
------BEGIN RSA PRIVATE KEY-----
-MIIEogIBAAKCAQEA404IBMReHOdvhhJ5YtgquY3DNi0v0QwfPUk+EcH/CxFW8UCC
-SUJe85up6lEQmOE9yKvrh+3yJgIjdV/ASOw9bd/u0NgNoPwl6A6P8GzHp94vz7UP
-nTp+PEUbA8gwqXnzzdeuF3dLDSXuGHdcv8qQEVRBwj/haecO0fgZcfd4fmLDAG53
-e/Vwc4lVIp4xx+OQowm9RW3nsAZge1DUoxlStD1/rEzBq1DvVx1Wu8pWS48f2ABH
-fHt2Z4ozypMB+a4B56jervcZCNkV/fN2bdGZ8z07hNbn/EkaH2tPw/d62zdHddum
-u7Pi0tYwMZz9GN3t18r9qi5ldUJuJNeNvNc7swIBIwKCAQBuZ7rAfKK9lPunhVDm
-3gYfnKClSSXakNv5MjQXQPg4k2S+UohsudZZERgEGL7rK5MJspb44Um6sJThPSLh
-l1EJe2VeH8wa/iEKUDdI5GD5w7DSmcXBZY3FgKa4sbE8X84wx9g3SJIq9SqA6YTS
-LzAIasDasVA6wK9tTJ6lEczPq2VkxkzpKauDMgI6SpaBV+7Un3OM7VJEbWeaJVoZ
-9I/2AHfp1hDpIfmaYBCnn2Ky70PBGA8DqAnHUKiid2dfZr8jKLu287LaUHxzIZXz
-qSzS6Vg1K0kc5FrgTgrjaXAGNtMenXZdw2/7PMuBDaNuNUApFUlAP5LGvPQ9IRCt
-YggDAoGBAP7z3lm74yxrzSa7HRASO2v3vp7jsbaYl4jPCc+6UruBFJlmUUdIQ2fh
-8i2S1M5mAvZiJ/PKLQ3r6RXxWZOeh4Vw479HFCVHr5GstSfLolJ5svY8iWEoEGdN
-D8aQTQrVAJwAPbLbF4eH5lgSokjOZcWMKsekk4vX2WmCMKWCMms/AoGBAOQ9Fffg
-B8TMc1b+jTcj1Py5TiFsxIe3usYjn8Pgg8kpoGfdBoS/TxwoR0MbJdrPgXDKLlLn
-A4GG6/7lFmxagCAfUyR2wAsOwAugcaFwS3K4QHGPiv9cgKxt9xhuhhDqXGI2lgAu
-oJLcRYBvomPQ+3cGGgifclETTWgkzD5dNVaNAoGBAMStf6RPHPZhyiUxQk4581NK
-FrUWDMAPUFOYZqePvCo/AUMjC4AhzZlH5rVxRRRAEOnz8u9EMWKCycB4Wwt6S0mu
-25OOmoMorAKpzZO6WKYGHFeNyRBvXRx9Rq8e3FjQM6uLKEglW0tLlG/T3EbLG09A
-PkI9IV1AHL8bShlHLjV5AoGBAJyBqKn4tN64FJNsuJrWve8f+w+bCmuxL53PSPtY
-H9plr9IxKQqRz9jLKY0Z7hJiZ2NIz07KS4wEvxUvX9VFXyv4OQMPmaEur5LxrQD8
-i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
-8V/rAoGAEUheXHIqv9n+3oXLvHadC3aApiz1TcyttDM0AjZoSHpXoBB3AIpPdU8O
-0drRG9zJTyU/BC02FvsGAMo0ZpGQRVMuN1Jj7sHsPaUdV38P4G0EaSQJDNxwFKVN
-3stfzMDGtKM9lntAsfFQ8n4yvvEbn/quEWad6srf1yxt9B4t5JA=
------END RSA PRIVATE KEY-----
-"""
-
-    try:
-        host_key_fd = open(configuration.user_openid_key, 'r')
-        host_rsa_key = host_key_fd.read()
-        host_key_fd.close()
-    except IOError:
-        logger.info("No valid host key provided - using default")
-        host_rsa_key = default_host_key
-
-    address = configuration.user_openid_address
-    port = configuration.user_openid_port
-    _extend_configuration(
-        configuration,
-        address,
-        port,
-        logger=logger,
-        expandusername=False,
-        host_rsa_key=host_rsa_key,
-        nossl=True,
-        show_address=False,
-        show_port=False,
-    )
-
-    logger.info("Starting OpenID server")
-    info_msg = "Listening on address '%s' and port %d" % (address, port)
+    info_msg = "Starting coreapi..."
     logger.info(info_msg)
     print(info_msg)
+
     try:
-        start_service(configuration, host=address, port=port)
+        start_service(configuration, host=host, port=port)
     except KeyboardInterrupt:
         info_msg = "Received user interrupt"
         logger.info(info_msg)
@@ -560,7 +411,3 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
     info_msg = "Leaving with no more workers active"
     logger.info(info_msg)
     print(info_msg)
-
-
-if __name__ == '__main__':
-    main()

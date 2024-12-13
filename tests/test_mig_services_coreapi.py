@@ -11,7 +11,7 @@ from tests.support import PY2, MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
     testmain, temppath, make_wrapped_server
 
 from mig.services.coreapi import ThreadedApiHttpServer, \
-    _create_and_expose_server, _extend_configuration
+    _create_and_expose_server
 from mig.shared.conf import get_configuration_object
 
 _PYTHON_MAJOR = '2' if PY2 else '3'
@@ -106,9 +106,8 @@ class MigServerGrid_openid(MigTestCase):
     @unittest.skipIf(PY2, "Python 3 only")
     def test__GET_returns_not_found_for_missing_path(self):
         self.server_addr = ('localhost', 4567)
-        configuration = self._make_configuration(self.logger, self.server_addr)
-        self.server_thread = self._make_server(
-            configuration).start_wait_until_ready()
+        self.server_thread = self._make_server(self.configuration, self.logger, self.server_addr)
+        self.server_thread.start_wait_until_ready()
 
         status, _ = self.issue_request('/nonexistent')
 
@@ -117,9 +116,8 @@ class MigServerGrid_openid(MigTestCase):
     @unittest.skipIf(PY2, "Python 3 only")
     def test__GET_openid_user__top_level_request_succeeds_with_status_ok(self):
         self.server_addr = ('localhost', 4567)
-        configuration = self._make_configuration(self.logger, self.server_addr)
-        self.server_thread = self._make_server(
-            configuration).start_wait_until_ready()
+        self.server_thread = self._make_server(self.configuration, self.logger, self.server_addr)
+        self.server_thread.start_wait_until_ready()
 
         status, _ = self.issue_request('/user')
 
@@ -136,12 +134,8 @@ class MigServerGrid_openid(MigTestCase):
         test_user_db_home = os.path.join(test_state_dir, "user_db_home")
 
         self.server_addr = ('localhost', 4567)
-        configuration = self._make_configuration(self.logger, self.server_addr, overrides=dict(
-            user_home=test_user_home,
-            user_db_home=test_user_db_home,
-        ))
-        self.server_thread = self._make_server(
-            configuration).start_wait_until_ready()
+        self.server_thread = self._make_server(self.configuration, self.logger, self.server_addr)
+        self.server_thread.start_wait_until_ready()
 
         the_url = '/user/%s' % (example_username,)
         status, body = self.issue_request(the_url)
@@ -154,9 +148,7 @@ class MigServerGrid_openid(MigTestCase):
         flask_app = None
 
         self.server_addr = ('localhost', 4567)
-        configuration = self._make_configuration(self.logger, self.server_addr)
-        self.server_thread = self._make_server(configuration)
-        # flask_app = _create_and_bind_flask_app_to_server(self.server_thread, configuration)
+        self.server_thread = self._make_server(self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
 
         request_json = json.dumps({})
@@ -172,8 +164,7 @@ class MigServerGrid_openid(MigTestCase):
         flask_app = None
 
         self.server_addr = ('localhost', 4567)
-        configuration = self._make_configuration(self.logger, self.server_addr)
-        self.server_thread = self._make_server(configuration)
+        self.server_thread = self._make_server(self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
 
         status, content = self.issue_POST('/user', request_json={
@@ -187,8 +178,7 @@ class MigServerGrid_openid(MigTestCase):
         flask_app = None
 
         self.server_addr = ('localhost', 4567)
-        configuration = self._make_configuration(self.logger, self.server_addr)
-        self.server_thread = self._make_server(configuration)
+        self.server_thread = self._make_server(self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
 
         status, content = self.issue_POST('/user', request_json={
@@ -214,12 +204,13 @@ class MigServerGrid_openid(MigTestCase):
         return configuration
 
     @staticmethod
-    def _make_server(configuration):
+    def _make_server(configuration, logger=None, server_address=None):
         def _on_instance(server):
             server.server_app = _create_and_expose_server(server.configuration)
 
-        server_thread = make_wrapped_server(
-            ThreadedApiHttpServer, configuration, on_instance=_on_instance)
+        (host, port) = server_address
+        server_thread = make_wrapped_server(ThreadedApiHttpServer, \
+            configuration, logger, host, port, on_instance=_on_instance)
         return server_thread
 
 
