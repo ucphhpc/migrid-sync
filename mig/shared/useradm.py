@@ -47,7 +47,7 @@ from mig.shared.accountstate import update_account_expire_cache, \
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
     get_client_id, extract_field, fill_user, fill_distinguished_name, \
     is_gdp_user, mask_creds, sandbox_resource
-from mig.shared.compat import _unicode_string_to_escaped_unicode
+from mig.shared.compat import raw_input, _unicode_string_to_escaped_unicode
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
 from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \

@@ -46,6 +46,10 @@ PY2 = sys.version_info[0] < 3
 _TYPE_UNICODE = type(u"")
 
 
+if not PY2:
+    raw_input = input
+
+
 def _is_unicode(val):
     """Return boolean indicating if the value is a unicode string.
 
