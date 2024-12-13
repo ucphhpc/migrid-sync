@@ -92,7 +92,7 @@ Where OPTIONS may be one or more of:
 """ % {'name': name, 'cert_warn': cert_warn})
 
 
-def main(args, cwd, db_path=keyword_auto):
+def main(_main, args, cwd, db_path=keyword_auto):
     conf_path = None
     auth_type = 'custom'
     expire = None
@@ -170,7 +170,12 @@ def main(args, cwd, db_path=keyword_auto):
             print('Error: %s not supported!' % opt)
             sys.exit(1)
 
-    if conf_path and not os.path.isfile(conf_path):
+    if not conf_path:
+        # explicitly set the default value of keyword_auto if no option was
+        # provided since it is unconditionally passed inward as a keyword arg
+        # and thus the fallback would accidentally be ignored
+        conf_path = keyword_auto
+    elif not os.path.isfile(conf_path):
         print('Failed to read configuration file: %s' % conf_path)
         sys.exit(1)
 
@@ -379,4 +384,4 @@ def _main(configuration, args,
 
 if __name__ == '__main__':
     (args, cwd, db_path) = init_user_adm()
-    main(args, cwd, db_path=db_path)
+    main(_main, args, cwd, db_path=db_path)

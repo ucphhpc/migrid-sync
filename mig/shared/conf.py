@@ -53,6 +53,7 @@ def get_configuration_object(config_file=None, skip_log=False,
         else:
             _config_file = os.path.join(app_dir, '..', 'server',
                     'MiGserver.conf')
+            _config_file = os.path.normpath(_config_file)
     configuration = Configuration(_config_file, False, skip_log,
                                   disable_auth_log)
     return configuration
