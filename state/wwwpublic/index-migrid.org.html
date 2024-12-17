@@ -34,6 +34,9 @@
         <link rel="icon" type="image/vnd.microsoft.icon"
               href="/images/skin/migrid-basic/favicon.ico"/>
 
+        <!-- site-specific variables used to adjust displayed information -->
+        <script type="text/javascript" src="/images/site-conf.js"></script>
+
         <script type="text/javascript" src="/images/js/jquery.js"></script>
         <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
         <script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
@@ -114,26 +117,37 @@
              switch_language(user_lang);
              $("#langselect").msDropdown().fadeIn(500);
 
-	     var query = window.location.search;
-	     const urlParams = new URLSearchParams(query);
-	     var show = [];
-	     var quicktabs = ['extoid', 'extoidc', 'migoid', 'migcert'];
-	     urlParams.forEach((value, key) => {
-	         //console.log("Found "+value+" in "+key);
-		 show.push(value);
-	     });
-	     if (!urlParams.get('show')) {
-	         show = ['extoid', 'migoid', 'migcert'];
-	     }
-	     quicktabs.forEach((name) => {
-		 if (show.indexOf(name) >= 0) {
-	             //console.log("show "+name+" tab");
+             var auth_methods = lookup_site_conf('auth_methods', ['extoid', 'migoid', 'extcert']);
+             var query = window.location.search;
+             const urlParams = new URLSearchParams(query);
+             var show = [];
+             var quicktabs = ['extoid', 'extoidc', 'migoid', 'migcert'];
+             urlParams.forEach((value, key) => {
+                 //console.log("Found "+value+" in "+key);
+                 if (quicktabs.indexOf(value) >= 0) {
+                     show.push(value);
+                 }
+             });
+             if (!urlParams.get('show')) {
+                 if (auth_methods.length > 0) {
+                     //console.log("show auth_methods: " + auth_methods);
+                     show = auth_methods;
+                 } else {
+                     //console.log("show quicktabs: " + quicktabs);
+                     show = quicktabs;
+                 }
+             } else {
+                 //console.log("show urlparams: " + show);
+             }
+             quicktabs.forEach((name) => {
+                 if (show.indexOf(name) >= 0) {
+                     //console.log("show "+name+" tab");
                      $(".show-"+name).show();
-		 } else {
-	             //console.log("remove "+name+" tab");
+                 } else {
+                     //console.log("remove "+name+" tab");
                      $(".show-"+name).remove();
-		 }
-	     });
+                 }
+             });
 
              /* Init Quick Start as tabs to avoid information overload and do
                 last for proper init. */
@@ -204,10 +218,10 @@
 
                         <div id="quick-start-tabs-en">
                             <ul class="fillwidth padspace">
-			        <li title="KU OpenID 2.0 Auth" class="show-extoid"><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
-				<li title="KU OpenID Connect Auth" class="show-extoidc"><a href="#ucph-oidc-user-tab-en">KU / UCPH Users (NEW OIDC)</a></li>
-                                <li title="Built-in OpenID 2.0 Auth" class="show-migoid"><a href="#external-user-tab-en">External Users</a></li>
-                                <li title="X509 User Certificate Auth" class="show-extcert"><a href="#cert-user-tab-en">Advanced Access</a></li>
+                                <li title="KU OpenID 2.0 Auth" class="show-extoid"><a class="extoid-icon" href="#ucph-user-tab-en">KU / UCPH Users</a></li>
+                                <li title="KU OpenID Connect Auth" class="show-extoidc"><a class="extoidc-icon" href="#ucph-oidc-user-tab-en">KU / UCPH Users</a></li>
+                                <li title="Built-in OpenID 2.0 Auth" class="show-migoid"><a class="migoid-icon" href="#external-user-tab-en">External Users</a></li>
+                                <li title="X509 User Certificate Auth" class="show-extcert"><a class="extcert-icon" href="#cert-user-tab-en">Advanced Access</a></li>
                             </ul>
 
                             <div id="ucph-user-tab-en" class="show-extoid">
@@ -408,10 +422,10 @@
                         <div id="quick-start-tabs-da">
 
                             <ul>
-                                <li class="show-extoid" title="UCPH OpenID 2.0 Auth"><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
-                                <li class="show-extoidc" title="UCPH OpenID Connect Auth"><a href="#ucph-oidc-user-tab-da">KU / UCPH brugere (NY OIDC)</a></li>
-                                <li class="show-migoid" title="Built-in OpenID 2.0 Auth"><a href="#external-user-tab-da">Eksterne brugere</a></li>
-                                <li class="show-extcert" title="X509 User Certificate Auth"><a href="#cert-user-tab-da">Avanceret adgang</a></li>
+                                <li title="UCPH OpenID 2.0 Auth" class="show-extoid"><a class="extoid-icon" href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
+                                <li title="UCPH OpenID Connect Auth" class="show-extoidc"><a class="extoidc-icon" href="#ucph-oidc-user-tab-da">KU / UCPH brugere</a></li>
+                                <li title="Built-in OpenID 2.0 Auth" class="show-migoid"><a class="migoid-icon" href="#external-user-tab-da">Eksterne brugere</a></li>
+                                <li title="X509 User Certificate Auth" class="show-extcert"><a class="extcert-icon" href="#cert-user-tab-da">Avanceret adgang</a></li>
                             </ul>
 
                             <div id="ucph-user-tab-da" class="show-extoid">
