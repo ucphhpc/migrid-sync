@@ -139,6 +139,7 @@ def fix_missing(config_file, verbose=True):
         'auto_add_oidc_user': False,
         'auto_add_resource': False,
         'auto_add_user_permit': 'distinguished_name:.*',
+        'auto_add_user_with_peer': 'distinguished_name:.*',
         'auto_add_filter_method': '',
         'auto_add_filter_fields': '',
         'server_fqdn': fqdn,
@@ -671,6 +672,7 @@ _CONFIGURATION_DEFAULTS = {
     'auto_add_oidc_user': False,
     'auto_add_resource': False,
     'auto_add_user_permit': [('distinguished_name', '.*')],
+    'auto_add_user_with_peer': [('distinguished_name', '.*')],
     'auto_add_filter_method': '',
     'auto_add_filter_fields': [],
 
@@ -2605,12 +2607,21 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'auto_add_resource'):
             self.auto_add_resource = config.getboolean('GLOBAL',
                                                        'auto_add_resource')
-        # Limit sign up without operator interaction using ID fields regex.
+        # Limit direct sign up without operator interaction using ID field and
+        # regex pairs.
         # For autocreate auto_add_X_user must be True and auto_add_user_permit
         # specification must match actual user on all given fields.
         if config.has_option('GLOBAL', 'auto_add_user_permit'):
             req = config.get('GLOBAL', 'auto_add_user_permit').split()
             self.auto_add_user_permit = [i.split(':', 2) for i in req]
+        # Limit peer accepted sign up without operator interaction using ID
+        # field and regex pairs.
+        # For autocreate auto_add_X_user must be True and
+        # auto_add_user_with_peer specification must match actual user on all
+        # given fields. Plus an active peer acceptance to match must exist.
+        if config.has_option('GLOBAL', 'auto_add_user_with_peer'):
+            req = config.get('GLOBAL', 'auto_add_user_with_peer').split()
+            self.auto_add_user_with_peer = [i.split(':', 2) for i in req]
 
         # Apply requested automatic filtering of selected auto add user fields
         if config.has_option('GLOBAL', 'auto_add_filter_method'):
