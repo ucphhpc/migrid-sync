@@ -73,6 +73,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'auto_add_filter_fields',
         'auto_add_filter_method',
         'auto_add_user_permit',
+        'auto_add_user_with_peer',
         'base_fqdn',
         'public_fqdn',
         'public_alias_fqdn',

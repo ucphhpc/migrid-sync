@@ -33,7 +33,7 @@ OpenID Connect logins.
    Also see req-/extcertaction.py
    Differences:
      - automatic upload of a proxy certificate when provided
-     - no special check for KU organization
+     - no special check for organization and email match
      - allows empty fields for things like country, email, and state
 """
 
@@ -46,7 +46,8 @@ import os
 import time
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import auto_add_user_allowed
+from mig.shared.accountreq import auto_add_user_allowed_direct, \
+    auto_add_user_allowed_with_peer
 from mig.shared.accountstate import default_account_expire
 from mig.shared.bailout import filter_output_objects
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
@@ -729,7 +730,13 @@ accepting create matching supplied ID!'''})
             configuration.auto_add_oidc_user:
         fill_user(user_dict)
 
-        if not auto_add_user_allowed(configuration, user_dict):
+        if auto_add_user_allowed_direct(configuration, user_dict):
+            logger.debug('autocreate directly permitted for %s' % client_id)
+        elif auto_add_user_allowed_with_peer(configuration, user_dict):
+            logger.debug('autocreate only permitted with peer for %s' %
+                         client_id)
+            peer_pattern = keyword_auto
+        else:
             logger.warning('autocreate not permitted for %s' % client_id)
             output_objects.append({
                 'object_type': 'error_text', 'text':
