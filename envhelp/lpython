@@ -2,7 +2,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# python2 - wrap python2 docker container for testing
+# python3 - wrapper to invoke a local python3 virtual environment
 # Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -29,5 +29,18 @@ set -e
 
 SCRIPT_PATH=$(realpath "$0")
 SCRIPT_BASE=$(dirname -- "$SCRIPT_PATH")
+MIG_BASE=$(realpath "$SCRIPT_BASE/..")
 
-PY=3 $SCRIPT_BASE/dpython "$@"
+PYTHON_BIN=${PYTHON_BIN:-"$SCRIPT_BASE/venv/bin/python3"}
+if [ ! -f "${PYTHON_BIN}" ]; then
+    echo "No python binary found - perhaps the virtual env was not created"
+    exit 1
+fi
+
+# default PYTHONPATH such that directly executing files in the repo "just works"
+PYTHONPATH=${PYTHONPATH:-"$MIG_BASE"}
+
+# default any variables for local development
+MIG_ENV=${MIG_ENV:-'local'}
+
+PYTHONPATH="$PYTHONPATH" MIG_ENV="$MIG_ENV" "$PYTHON_BIN" "$@"
