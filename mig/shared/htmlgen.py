@@ -71,12 +71,15 @@ menu_items['runtimeenvs'] = {'class': 'runtimeenvs fas fa-warehouse', 'url': 're
 menu_items['archives'] = {'class': 'archives fas fa-archive', 'url': 'freezedb.py',
                           'title': 'Archives',
                           'hover': 'Frozen archives: write-once file archives'}
+menu_items['account'] = {'class': 'account fas fa-account', 'url': 'account.py',
+                         'legacy_only': True, 'title': 'Account',
+                         'hover': 'Account info and management'}
 menu_items['settings'] = {'class': 'settings fas fa-user', 'url': 'settings.py',
                           'legacy_only': True, 'title': 'Settings',
                           'hover': 'Your personal settings for these pages'}
 menu_items['setup'] = {'class': 'setup fas fa-user-cog', 'url': 'setup.py',
                        'legacy_only': True, 'title': 'Setup',
-                       'hover': 'Your client access settings for this site'}
+                       'hover': 'Your client access setup for this site'}
 menu_items['transfers'] = {'class': 'transfers fas fa-datatransfer', 'url': 'datatransfer.py',
                            'title': 'Data Transfers',
                            'hover': 'For background batch transfers of data'}
@@ -2061,7 +2064,7 @@ def get_xgi_html_header(
                 for user_entry in ['logout', 'help']:
                     profile_helper['disable%s' % user_entry] = ''
                 # Disable any other entries missing from base and user menu
-                for user_entry in ['home', 'settings', 'setup']:
+                for user_entry in ['home', 'account', 'settings', 'setup']:
                     profile_helper['disable%s' % user_entry] = ''
                     if not user_entry in base_menu + user_menu:
                         profile_helper['disable%s' %
@@ -2085,9 +2088,10 @@ def get_xgi_html_header(
     </div>
     <div class="popup-middle col-12">
         <a class="user-menu__item link-home %(disablehome)s" href="home.py">Home</a>
+        <a class="user-menu__item link-account %(disableaccount)s" href="account.py">Account</a>
         <a class="user-menu__item link-settings %(disablesettings)s" href="settings.py">Settings</a>
-        <a class="user-menu__item link-setup %(disablesetup)s " href="setup.py">Setup</a>
-        <a class="user-menu__item link-help %(disablehelp)s " href="%(help_url)s">Help</a>
+        <a class="user-menu__item link-setup %(disablesetup)s" href="setup.py">Setup</a>
+        <a class="user-menu__item link-help %(disablehelp)s" href="%(help_url)s">Help</a>
     </div>
     <div class="popup-footer col-12">
         <a class="user-menu__item link-logout %(disablelogout)s " href="logout.py">Sign Out</a>

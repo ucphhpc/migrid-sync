@@ -188,6 +188,7 @@ def validate_auth_attempt(configuration,
                           authtype_enabled=False,
                           valid_auth=False,
                           auth_reset=False,
+                          auth_removal=False,
                           exceeded_rate_limit=False,
                           exceeded_max_sessions=False,
                           user_abuse_hits=default_user_abuse_hits,
@@ -231,6 +232,8 @@ def validate_auth_attempt(configuration,
                  % (authtype_enabled, valid_auth)
                  + "auth_reset: %s\n"
                  % auth_reset
+                 + "auth_removal: %s\n"
+                 % auth_removal
                  + "exceeded_rate_limit: %s\n"
                  % exceeded_rate_limit
                  + "exceeded_max_sessions: %s\n"
@@ -397,6 +400,16 @@ mandatory two factor session was closed or expired.
                 notify=notify, hint=mount_hint)
     elif authtype_enabled and auth_reset:
         # IMPORTANT: leave unauthorized here to enforce rate limit on resets
+        authorized = False
+        auth_msg = "Allow %s" % authtype
+        log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
+        logger.info(log_msg)
+        authlog(configuration, 'INFO', protocol, authtype,
+                username, ip_addr, auth_msg, notify=notify)
+    elif authtype_enabled and auth_removal:
+        # IMPORTANT: leave unauthorized here to enforce rate limit on removals
         authorized = False
         auth_msg = "Allow %s" % authtype
         log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
