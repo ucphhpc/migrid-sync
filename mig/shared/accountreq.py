@@ -1243,15 +1243,39 @@ sudo su - %s
     return cmd_helpers
 
 
-def auto_add_user_allowed(configuration, user_dict):
+def __auto_add_user_allowed(configuration, user_dict, permit_list):
     """Check if user with user_dict is allowed to sign up without operator
-    approval e.g. using autocreate based on optional configuration limits.
+    approval e.g. using autocreate based on optional configuration limits in
+    given permit_list of fields and regex values. Always fail if permit_list
+    is empty.
     """
 
-    for (key, val) in configuration.auto_add_user_permit:
+    if not permit_list:
+        return False
+    for (key, val) in permit_list:
         if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
             return False
     return True
+
+
+def auto_add_user_allowed_direct(configuration, user_dict):
+    """Check if user with user_dict is allowed to sign up directly e.g. using
+    autocreate without operator or peer approval. The check is based on
+    optional configuration limits and must match all such permit expressions.
+    """
+    return __auto_add_user_allowed(configuration, user_dict,
+                                   configuration.auto_add_user_permit)
+
+
+def auto_add_user_allowed_with_peer(configuration, user_dict):
+    """Check if user with user_dict is allowed to sign up with peer acceptance
+    e.g. using autocreate without explicit operator approval. The check is
+    based on optional configuration limits and must match all such permit
+    expressions.
+    """
+
+    return __auto_add_user_allowed(configuration, user_dict,
+                                   configuration.auto_add_user_with_peer)
 
 
 def peers_permit_allowed(configuration, user_dict):
