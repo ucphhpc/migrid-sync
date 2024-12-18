@@ -327,6 +327,7 @@ def generate_confs(
     auto_add_filter_fields='',
     auto_add_filter_method='skip',
     auto_add_user_permit='distinguished_name:.*',
+    auto_add_user_with_peer='distinguished_name:.*',
     cert_valid_days=365,
     oid_valid_days=365,
     oidc_valid_days=365,
@@ -644,6 +645,7 @@ def _generate_confs_prepare(
     auto_add_filter_fields,
     auto_add_filter_method,
     auto_add_user_permit,
+    auto_add_user_with_peer,
     cert_valid_days,
     oid_valid_days,
     oidc_valid_days,
@@ -891,6 +893,7 @@ def _generate_confs_prepare(
     user_dict['__AUTO_ADD_FILTER_FIELDS__'] = auto_add_filter_fields
     user_dict['__AUTO_ADD_FILTER_METHOD__'] = auto_add_filter_method
     user_dict['__AUTO_ADD_USER_PERMIT__'] = auto_add_user_permit
+    user_dict['__AUTO_ADD_USER_WITH_PEER__'] = auto_add_user_with_peer
     user_dict['__CERT_VALID_DAYS__'] = "%s" % cert_valid_days
     user_dict['__OID_VALID_DAYS__'] = "%s" % oid_valid_days
     user_dict['__OIDC_VALID_DAYS__'] = "%s" % oidc_valid_days
@@ -2583,6 +2586,7 @@ def create_user(
     auto_add_filter_fields = ''
     auto_add_filter_method = 'skip'
     auto_add_user_permit = 'distinguished_name:.*'
+    auto_add_user_with_peer = 'distinguished_name:.*'
     cert_valid_days = 365
     oid_valid_days = 365
     oidc_valid_days = 365
