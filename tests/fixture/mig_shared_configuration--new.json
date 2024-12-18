@@ -17,6 +17,12 @@
       ".*"
     ]
   ],
+  "auto_add_user_with_peer": [
+    [
+      "distinguished_name",
+      ".*"
+    ]
+  ],
   "ca_dir": "",
   "ca_file": "",
   "ca_fqdn": "",
