@@ -722,6 +722,29 @@ def verify_reset_token(configuration, user_dict, token, auth_type,
     return True
 
 
+def generate_removal_token(configuration, user_dict, timestamp=time.time()):
+    """Generate an account removal token for user_dict. Importantly the token
+    must be time limited and encode enough information about the account to
+    help verify that the intended recipient of the token should actually be
+    allowed to remove the account. This is done by embedding a timestamp plus
+    the unique user ID. The token should only be sent to the registered email
+    of the account holder or inlined in web forms where the user already
+    authenticated.
+    The optional timestamp argument can be used to override the used timestamp
+    in cases where operators handle the removal with delay. It defaults to the
+    current epoch value if not provided.
+    """
+    _logger = configuration.logger
+    unique_id = user_dict.get('unique_id', 'unset')
+    # NOTE: use integer timestamp for simplicity
+    token = fernet_encrypt_password(configuration, "%d::%s" % (timestamp,
+                                                               unique_id))
+    # IMPORTANT: do NOT log complete token
+    _logger.debug("generated account removal token %r at %r" % (
+        string_snippet(token), timestamp))
+    return token
+
+
 def make_csrf_token(configuration, method, operation, client_id, limit=None):
     """Generate a Cross-Site Request Forgery (CSRF) token to help verify the
     authenticity of user requests. The optional limit argument can be used to

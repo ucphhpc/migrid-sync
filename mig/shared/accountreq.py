@@ -633,7 +633,7 @@ and select which authentication method you want to change password for.
 <form method='%(form_method)s' action='%(target_op)s.py'>
     <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
     <!-- NOTE: cert_id field to allow either full DN or email -->
-    <input type='text' name='cert_id' required />
+    <input type='text' name='cert_id' value='%(cert_id)s' required />
     <select class='form-control themed-select html-select' id='reset_auth_type'
         name='auth_type' minlength=3 maxlength=4
         placeholder='The kind of authentication for which to reset password'
@@ -1250,12 +1250,13 @@ def __auto_add_user_allowed(configuration, user_dict, permit_list):
     is empty.
     """
 
-    if not permit_list:
-        return False
+    match = False
+    if permit_list:
+        match = True
     for (key, val) in permit_list:
         if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
             return False
-    return True
+    return match
 
 
 def auto_add_user_allowed_direct(configuration, user_dict):
