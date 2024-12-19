@@ -213,7 +213,11 @@ def daemon_logger(name, path=None, level="INFO", log_format=None):
     return logger_obj.logger
 
 
-def daemon_gdp_logger(name, path=None, level="INFO", log_format=None):
+def daemon_gdp_logger(name,
+                      path=None,
+                      level="INFO",
+                      log_format=None,
+                      propagate=False):
     """Simple logger for daemons to get separate logging in standard format"""
 
     if path is None:
@@ -223,6 +227,7 @@ def daemon_gdp_logger(name, path=None, level="INFO", log_format=None):
     else:
         gdp_logger = daemon_logger(
             name, path=path, level=level, log_format=log_format)
+    gdp_logger.propagate = propagate
 
     return gdp_logger
 
