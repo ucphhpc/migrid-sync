@@ -2,7 +2,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# test_mig_unittest_testcore - unit test of the corresponding mig unittest module
+# test_mig_shared_base - unit test of the corresponding mig shared module
 # Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -25,33 +25,35 @@
 # --- END_HEADER ---
 #
 
-"""Temporary wrapper allowing the inclusion of testcore into the automated suite."""
+"""Unit test base functions"""
 
-import importlib
+import binascii
+import codecs
 import os
 import sys
 
-from tests.support import MigTestCase, testmain
+from tests.support import PY2, MigTestCase, testmain
 
-from mig.unittest.testcore import main as testcore_main
+from mig.shared.base import force_utf8
+
+DUMMY_STRING = "foo bÆr baz"
+DUMMY_UNICODE = u'UniCode123½¾µßðþđŋħĸþł@ª€£$¥©®'
 
 
-class MigUnittestTestcore(MigTestCase):
+class MigSharedBase(MigTestCase):
+    """Unit tests of fucntions within the mig.shared.base module."""
 
-    def _provide_configuration(self):
-        return 'testconfig'
+    def test_force_utf8_on_string(self):
+        actual = force_utf8(DUMMY_STRING)
 
-    def test_existing_main(self):
-        def raise_on_error_exit(exit_code, identifying_message=None):
-            if exit_code != 0:
-                if identifying_message is None:
-                    identifying_message = 'unknown'
-                raise AssertionError(
-                    'failure in unittest/testcore: %s' % (identifying_message,))
+        self.assertIsInstance(actual, bytes)
+        self.assertEqual(binascii.hexlify(actual), b'666f6f2062c386722062617a')
 
-        print("") # account for wrapped tests printing to console
+    def test_force_utf8_on_unicode(self):
+        actual = force_utf8(DUMMY_UNICODE)
 
-        testcore_main(self.configuration, _exit=raise_on_error_exit)
+        self.assertIsInstance(actual, bytes)
+        self.assertEqual(actual, codecs.encode(DUMMY_UNICODE, 'utf8'))
 
 
 if __name__ == '__main__':
