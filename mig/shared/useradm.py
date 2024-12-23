@@ -47,7 +47,7 @@ from mig.shared.accountstate import update_account_expire_cache, \
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
     get_client_id, extract_field, fill_user, fill_distinguished_name, \
     is_gdp_user, mask_creds, sandbox_resource
-from mig.shared.compat import raw_input, _unicode_string_to_escaped_unicode
+from mig.shared.compat import PY2, _unicode_string_to_escaped_unicode
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
 from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
@@ -85,6 +85,9 @@ from mig.shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
 from mig.shared.vgridaccess import get_resource_map, get_vgrid_map, \
     force_update_user_map, force_update_resource_map, force_update_vgrid_map, \
     VGRIDS, OWNERS, MEMBERS
+
+if not PY2:
+    raw_input = input
 
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
 ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
