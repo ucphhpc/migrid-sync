@@ -1,9 +1,10 @@
-#!/bin/sh
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
 #
-# python2 - wrap python2 docker container for testing
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# mig.shared._env - environment related consants only
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -19,15 +20,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
-# USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-# --- END_HEADER ---
+# -- END_HEADER ---
 #
 
-set -e
 
-SCRIPT_PATH=$(realpath "$0")
-SCRIPT_BASE=$(dirname -- "$SCRIPT_PATH")
+"""Environment consants separated from defaults to reduce import pollution."""
 
-PY=3 $SCRIPT_BASE/dpython "$@"
+import os
+import sys
+
+# expose the configured environment as a constant
+MIG_ENV = os.environ.get('MIG_ENV', 'local')
+
+# force the chosen environment globally
+os.environ['MIG_ENV'] = MIG_ENV
+
+# expose a boolean indicating whether we are executing on Python 2
+PY2 = (sys.version_info[0] == 2)
