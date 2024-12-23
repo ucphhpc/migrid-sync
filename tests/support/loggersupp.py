@@ -101,7 +101,14 @@ class FakeLogger:
 
     def write(self, message):
         """Actual write handler"""
-        channel, namespace, specifics = message.split(':', 2)
+
+        try:
+            channel, namespace, specifics = message.split(':', 2)
+        except ValueError:
+            # no channel on sme Python versions
+            channel = 'ERROR'
+            namespace = ''
+            specifics = message
 
         # ignore everything except warnings sent by the python runtime
         if not (channel == 'WARNING' and namespace == 'py.warnings'):
