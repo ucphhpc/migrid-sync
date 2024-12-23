@@ -18,10 +18,8 @@ _EMPTY_DICT = {}
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-def init_oidc_op(app, **kwargs):
-    _op_config = app.srv_config
-
-    server = Server(_op_config, cwd=dir_path)
+def init_oidc_op(op_config, **kwargs):
+    server = Server(op_config, cwd=dir_path)
 
     for endp in server.endpoint.values():
         p = urlparse(endp.endpoint_path)
@@ -43,7 +41,7 @@ def oidc_provider_init_app(op_config, name=None, client_db=None, **kwargs):
     app.register_blueprint(oidc_op_views)
 
     # Initialize the oidc_provider after views to be able to set correct urls
-    app.server = init_oidc_op(app, client_db=client_db)
+    app.server = init_oidc_op(op_config, client_db=client_db)
 
     return app, oidc_op_views_state
 
