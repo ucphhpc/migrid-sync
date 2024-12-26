@@ -4,7 +4,7 @@ from idpyoidc.message import Message
 import json
 import time
 from types import SimpleNamespace
-import urllib.parse
+from urllib.parse import urlparse, urlencode
 from urllib.request import urlopen
 
 from tests.support import MigTestCase, testmain
@@ -107,6 +107,14 @@ class TestCase3(MigTestCase, WsgiAssertMixin):
     def _provide_configuration(self):
         return 'testconfig'
 
+    def _request_url(self, base_url, query_dict=None):
+        parsed = urlparse(base_url)
+        if query_dict:
+            assert parsed.query == ''
+            query_string = urlencode(query_dict)
+            return '?'.join((base_url, query_string))
+        return base_url
+
     def before_each(self):
         _clear_userdb_related_state(self.configuration)
         _ensure_userdb_with_user(self.configuration)
@@ -123,15 +131,13 @@ class TestCase3(MigTestCase, WsgiAssertMixin):
             password="__PASSWORD__",
             user=self.TEST_CLIENT_ID,
         )
-        query_string = urllib.parse.urlencode({
+        request_url = self._request_url('http://localhost/authorization', query_dict={
             'response_type': 'code',
             'client_id': self.TEST_CLIENT_ID,
             'scope': 'openid',
             'redirect_uri': 'http://back.to/me',
         })
-
-        # generic WSGI setup
-        self.fake_wsgi_environ = create_wsgi_environ(self.configuration, 'http://localhost/authorization', wsgi_headers=http_args['headers'])
+        self.fake_wsgi_environ = create_wsgi_environ(self.configuration, request_url, wsgi_headers=http_args['headers'])
         self.fake_start_response = create_wsgi_start_response()
 
         wsgi_result = self.wsgi_app(self.fake_wsgi_environ, self.fake_start_response)
