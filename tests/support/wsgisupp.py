@@ -77,11 +77,6 @@ def _trigger_and_unpack_result(wsgi_result):
     return decoded_value
 
 
-class WsgiResponse:
-    def __init__(self):
-        pass
-
-
 class WsgiAssertMixin:
     """Custom assertions for verifying server code executed under test."""
 
