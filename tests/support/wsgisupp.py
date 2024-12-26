@@ -26,19 +26,26 @@
 
 import codecs
 
+from tests.support._env import PY2
+
+if PY2:
+    from urlparse import urlparse
+else:
+    from urllib.parse import urlparse
+
 """Test support library for WSGI."""
 
 
-def create_wsgi_environ(configuration, wsgi_variables, wsgi_headers=None, wsgi_url=None):
-
+def create_wsgi_environ(configuration, wsgi_url, wsgi_headers=None):
+    parsed_url = urlparse(wsgi_url)
 
     environ = {}
     environ['wsgi.input'] = ()
-    environ['wsgi.url_scheme'] = 'http'
+    environ['wsgi.url_scheme'] = parsed_url.scheme
     environ['MIG_CONF'] = configuration.config_file
-    environ['HTTP_HOST'] = wsgi_variables.get('http_host')
-    environ['PATH_INFO'] = wsgi_variables.get('path_info')
-    environ['QUERY_STRING'] = wsgi_url
+    environ['HTTP_HOST'] = parsed_url.netloc
+    environ['PATH_INFO'] = parsed_url.path
+    environ['QUERY_STRING'] = parsed_url.query
     environ['REQUEST_METHOD'] = 'GET'
     environ['SCRIPT_URI'] = ''.join(('http://', environ['HTTP_HOST'], environ['PATH_INFO']))
 

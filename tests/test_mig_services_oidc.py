@@ -6,6 +6,7 @@ import urllib.parse
 from urllib.request import urlopen
 
 from tests.support import MigTestCase, testmain
+from tests.support.htmlsupp import HtmlAssertMixin
 from tests.support.wsgisupp import WsgiAssertMixin, \
     create_wsgi_environ, create_wsgi_start_response
 
@@ -71,7 +72,7 @@ class TestCase(MigTestCase):
         self.assertIn(self.TEST_USER_DN, user_db)
 
 
-class TestCase2(MigTestCase, WsgiAssertMixin):
+class TestCase2(MigTestCase, HtmlAssertMixin, WsgiAssertMixin):
     TEST_CLIENT_ID = EXAMPLE_CLIENT_ID
     TEST_CLIENT_OBJECT = copy.deepcopy(EXAMPLE_CLIENT_OBJECT)
 
@@ -86,19 +87,17 @@ class TestCase2(MigTestCase, WsgiAssertMixin):
         self.wsgi_app = server_instance.wsgi_app
 
         # generic WSGI setup
-        self.fake_wsgi_environ = create_wsgi_environ(self.configuration, wsgi_variables=dict(
-            http_host='localhost',
-            path_info='/',
-        ))
+        self.fake_wsgi_environ = create_wsgi_environ(self.configuration, 'http://localhost/')
         self.fake_start_response = create_wsgi_start_response()
 
     def test_GET_index(self):
         wsgi_result = self.wsgi_app(self.fake_wsgi_environ, self.fake_start_response)
 
         content = self.assertWsgiResponse(wsgi_result, self.fake_start_response, 200)
-        print(content)
 
-        return
+        self.assertIsValidHtmlDocument(content)
+
+        return  # FIXME:
 
         # arrange a pre-existing client record with a known authorization code
         request_validator._saved[self.TEST_CLIENT_ID] = self.TEST_CLIENT_OBJECT
