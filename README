@@ -761,7 +761,7 @@ local OpenID login and added Jupyter+cloud integration for data analysis:
                    --mig_cert_fqdn= \
                    --ext_cert_fqdn=cert.erda.dk \
                    --mig_oid_fqdn=ext.erda.dk \
-                   --ext_oid_fqdn=erda.dk \
+                   --ext_oid_fqdn=oid.erda.dk \
                    --ext_oidc_fqdn=oidc.erda.dk \
                    --sid_fqdn=sid.erda.dk \
                    --io_fqdn=io.erda.dk \
