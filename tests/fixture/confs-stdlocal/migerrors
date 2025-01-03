@@ -29,21 +29,21 @@ MAXLINES=1000
 grep -H "Internal Server Error" $LOGDIR/webdavs.out | tail -n $MAXLINES
 grep -H -A 12 "Traceback" $LOGDIR/webdavs.out | tail -n $MAXLINES
 
-grep -H ERROR $LOGDIR/ftps.log | \
+grep -H " ERROR " $LOGDIR/ftps.log | \
         grep -E -v "ERROR Invalid user(name)? .* from ${SECSCANIP}|Invalid username [a-zA-Z0-9._-]* from|ERROR Account disabled or expired" | tail -n $MAXLINES
 
-grep -H ERROR $LOGDIR/sftp*.log | \
+grep -H " ERROR " $LOGDIR/sftp*.log | \
 	grep -E -v "Password authentication failed for|Socket exception: Connection reset by peer|Error reading SSH protocol banner|check_banner|list_folder on missing path|chmod (292|365) rejected on path|symlink rejected on path|ERROR mkdir .* failed: \[Errno 17\] File exists|ERROR rmdir .* failed: \[Errno 39\] Directory not empty|ERROR open .* failed: \[Errno 21\] Is a directory|ERROR open for modify on read-only path|ERROR open existing file on missing path |ERROR Exception.*: Incompatible ssh|ERROR Exception.*: Incompatible version |Exception.*: Invalid SSH banner|ERROR Exception.*: no moduli available|ERROR Exception.*: Expecting packet from \(20,\), got 0|ERROR Socket exception: Connection timed out|ERROR Exception.*: Key-exchange timed out|ERROR Invalid user(name)? .* from ${SECSCANIP}|Invalid username [a-zA-Z0-9._-]* from|ERROR Account disabled or expired|ERROR Exception.*: Client kex .* is out of range|ERROR Exception.*: Expecting packet from .*|ERROR $" | tail -n $MAXLINES
 
-grep -H ERROR $LOGDIR/davs.log | grep -E -v "The handshake operation timed out|decryption failed or bad record mac|length too short|no ciphers specified|(unknown error|parse tlsext|https proxy request) \(_ssl.c:\)|SSL/TLS wrap of .* failed unexpectedly:|Failed password login for .* from ${SECSCANIP}|ERROR Invalid user(name)? .* from ${SECSCANIP}|Invalid username [a-zA-Z0-9._-]* from|ERROR Account disabled or expired|invalid share mode (write|read)-only for " | tail -n $MAXLINES
+grep -H " ERROR " $LOGDIR/davs.log | grep -E -v "The handshake operation timed out|decryption failed or bad record mac|length too short|no ciphers specified|(unknown error|parse tlsext|https proxy request) \(_ssl.c:\)|SSL/TLS wrap of .* failed unexpectedly:|Failed password login for .* from ${SECSCANIP}|ERROR Invalid user(name)? .* from ${SECSCANIP}|Invalid username [a-zA-Z0-9._-]* from|ERROR Account disabled or expired|invalid share mode (write|read)-only for " | tail -n $MAXLINES
 
-grep -H ERROR $LOGDIR/chkchroot.log | grep -E -v " from ${SECSCANIP} "| \
+grep -H " ERROR " $LOGDIR/chkchroot.log | grep -E -v " from ${SECSCANIP} "| \
         grep -E -v "((HNAP1|GponForm|provisioning|provision|prov|polycom|yealink|CertProv|phpmyadmin|admin|cfg|wp|wordpress|cms|blog|old|new|test|dev|tmp|temp|remote|mgmt|properties|authenticate|tmui|ddem|a2billing|vtigercrm|secure|rpc|recordings|dana-na)(/.*|)|.*(Login|login|logon|configuration|header|admin|index)\.(php|jsp|asp)|(api/v1/pods|Telerik.Web.UI.WebResource.axd))" | \
         grep -E -v "/index\.html$|/state/webserver_home/share_redirect$" | \
         tail -n $MAXLINES
 
 # NOTE: we ignore script crashed errors here and treat specifically next
-grep -H ERROR $LOGDIR/mig.log | \
+grep -H " ERROR " $LOGDIR/mig.log | \
 	grep -E -v "problems importing arclib|disabled in configuration|(settings|userprofile) could not be opened/unpickled|load (ssh|ftps|davs|seafile) publickeys failed|is not a valid openid provider|script crashed:|INFO Content-Length missing or zero|${SECSCANIP} (refused to|could not) import .*shared\.functionality\.|INFO Not available on this site.*Replied .ERROR.|: failed on .*: .*\[Errno 2\] No such file or directory: |: failed on .*: .*\[Errno 17\] File exists: |create directory failed: .*\[Errno 17\] File exists:|refusing rm link: .*/user_home/.*/Trash" | tail -n $MAXLINES
 # Extract variable length script crash tracebacks terminated with a blank line
 sed -n "/ERROR.* script crashed:/""{ :a; $p; N; /\n$/!ba; p; }" $LOGDIR/mig.log | tail -n $MAXLINES
