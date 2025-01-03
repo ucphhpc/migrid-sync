@@ -10,7 +10,7 @@ function get_site_conf(key) {
     } else if (key === 'system_match') {
         value = ["ALL", "ERDA", "TEST.ERDA"];
     } else if (key === 'auth_methods') {
-        value = ["extoid", "extoidc", "migoid", "extcert"];
+        value = ["extoidc", "migoid", "extcert"];
     }
     return value;
 }

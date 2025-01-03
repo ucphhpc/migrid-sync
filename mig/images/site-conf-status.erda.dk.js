@@ -1,5 +1,5 @@
-/* 
-   Local site variables to adjust look n' feel of what is displayed on the 
+/*
+   Local site variables to adjust look n' feel of what is displayed on the
    'static' html pages with javascript content loading on this site.
 
    IMPORTANT: ui doubles as status.erda.dk so we should only display production
@@ -13,7 +13,7 @@ function get_site_conf(key) {
         /* We keep IDMC for history */
         value = ["ALL", "ERDA", "SIF", "MiGrid", "IDMC"];
     } else if (key === 'auth_methods') {
-        value = ["extoid", "extoidc", "migoid", "extcert"];
-    } 
+        value = ["extoidc", "migoid", "extcert"];
+    }
     return value;
 }
