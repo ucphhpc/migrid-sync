@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridman - backend to manage vgrids
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -64,6 +64,7 @@ def main(client_id, user_arguments_dict):
     defaults = signature()[1]
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
+    support_email = "%s" % configuration.support_email
     title_entry['text'] = "%s Management" % label
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -106,6 +107,7 @@ def main(client_id, user_arguments_dict):
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
     fill_helpers = {'vgrid_label': label,
+                    'support_email': support_email,
                     'form_method': form_method,
                     'csrf_field': csrf_field,
                     'csrf_limit': csrf_limit}
@@ -488,11 +490,11 @@ resources.''' % label})
     if operation in show_operations:
         user_map = get_full_user_map(configuration)
         user_dict = user_map.get(client_id, None)
+        output_objects.append({'object_type': 'sectionheader', 'text':
+                               'Additional %ss' % label})
+
         # Optional limitation of create vgrid permission
         if user_dict and vgrid_create_allowed(configuration, user_dict):
-            output_objects.append({'object_type': 'sectionheader', 'text':
-                                   'Additional %ss' % label})
-
             output_objects.append(
                 {'object_type': 'text', 'text':
                  '''Please enter a name for the new %(vgrid_label)s to add,
@@ -515,6 +517,15 @@ you can create a sub-%(vgrid_label)s called DEF by entering ABC/DEF below.
         <input type="submit" value="Create %(vgrid_label)s" />
         </form>
      ''' % fill_helpers})
+        else:
+            output_objects.append(
+                {'object_type': 'warning', 'text':
+                 """You don't have permission to create %(vgrid_label)ss on
+this site.""" % fill_helpers})
+            output_objects.append(
+                {'object_type': 'text', 'text':
+                 """Please contact support at %(support_email)s if you think
+that you qualify for it.""" % fill_helpers})
 
         output_objects.append({'object_type': 'sectionheader', 'text':
                                'Request Access to %ss' % label})
