@@ -282,7 +282,7 @@ if [[ ${org_mtime} -ne ${new_mtime} && "${org_chksum}" != "${new_chksum}" ]]; th
     done
     if [ -n "${migrid_subservices}" ]; then
         pem_sha256_fp=$(openssl x509 -noout -fingerprint -sha256 -in ${combined_pem})
-        pem_sha256_fp=${pem_sha256_fp/SHA256 Fingerprint=/}
+        pem_sha256_fp=${pem_sha256_fp/* Fingerprint=/}
         echo "Please manually update ftps/davs sha256 fingerprint in MiGserver.conf to:"
         echo "${pem_sha256_fp}"
         echo "or point those configuration values to the latest fingerprint file with:"
