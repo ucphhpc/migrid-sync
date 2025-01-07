@@ -289,9 +289,18 @@ if [[ ${org_mtime} -ne ${new_mtime} && "${org_chksum}" != "${new_chksum}" ]]; th
         echo "FILE::${combined_pem_sha256}"
         echo "optionally appending '\$\$CACHE_PATH' for memory caching in CACHE_PATH."
         echo "${pem_sha256_fp}" > ${combined_pem_sha256}
+        pub_md5_fp=$(ssh-keygen -l -E md5 -f ${combined_pub})
+        pub_md5_fp=${pub_md5_fp/* MD5:/}
+        pub_md5_fp=${pub_md5_fp/ */}
+        echo "Please verify that sftp md5 fingerprint in MiGserver.conf is:"
+        echo "${pub_md5_fp}"
+        echo "or point that configuration value to the latest fingerprint file with:"
+        echo "FILE::${combined_pub_md5}"
+        echo "optionally appending '\$\$CACHE_PATH' for memory caching in CACHE_PATH."
+        echo "${pub_md5_fp}" > ${combined_pub_md5}
         pub_sha256_fp=$(ssh-keygen -l -f ${combined_pub})
         pub_sha256_fp=${pub_sha256_fp/* SHA256:/}
-        pub_sha256_fp=${pub_sha256_fp/ no comment */}
+        pub_sha256_fp=${pub_sha256_fp/ */}
         echo "Please verify that sftp sha256 fingerprint in MiGserver.conf is:"
         echo "${pub_sha256_fp}"
         echo "or point that configuration value to the latest fingerprint file with:"
