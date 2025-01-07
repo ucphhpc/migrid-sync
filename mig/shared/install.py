@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -412,10 +412,7 @@ def generate_confs(
     ext_oidc_rewrite_cookie='',
     dhparams_path='',
     daemon_keycert='',
-    daemon_keycert_sha256=keyword_auto,
     daemon_pubkey='',
-    daemon_pubkey_md5=keyword_auto,
-    daemon_pubkey_sha256=keyword_auto,
     daemon_pubkey_from_dns=False,
     daemon_show_address='',
     alias_field='',
@@ -733,10 +730,7 @@ def _generate_confs_prepare(
     ext_oidc_rewrite_cookie,
     dhparams_path,
     daemon_keycert,
-    daemon_keycert_sha256,
     daemon_pubkey,
-    daemon_pubkey_md5,
-    daemon_pubkey_sha256,
     daemon_pubkey_from_dns,
     daemon_show_address,
     alias_field,
@@ -1005,9 +999,9 @@ def _generate_confs_prepare(
     user_dict['__DHPARAMS_PATH__'] = dhparams_path
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
     user_dict['__DAEMON_PUBKEY__'] = daemon_pubkey
-    user_dict['__DAEMON_KEYCERT_SHA256__'] = daemon_keycert_sha256
-    user_dict['__DAEMON_PUBKEY_MD5__'] = daemon_pubkey_md5
-    user_dict['__DAEMON_PUBKEY_SHA256__'] = daemon_pubkey_sha256
+    user_dict['__DAEMON_KEYCERT_SHA256__'] = ''
+    user_dict['__DAEMON_PUBKEY_MD5__'] = ''
+    user_dict['__DAEMON_PUBKEY_SHA256__'] = ''
     user_dict['__DAEMON_PUBKEY_FROM_DNS__'] = "%s" % daemon_pubkey_from_dns
     user_dict['__SFTP_PORT__'] = "%s" % sftp_port
     user_dict['__SFTP_SUBSYS_PORT__'] = "%s" % sftp_subsys_port
@@ -1931,19 +1925,15 @@ and save it into %(__DHPARAMS_PATH__)s or generate a unique one with:
 openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict)
             sys.exit(1)
 
-    # Auto-fill fingerprints if daemon key is set with AUTO fingerprint
+    # Auto-fill fingerprints if daemon key is set
     if user_dict['__DAEMON_KEYCERT__']:
         if not os.path.isfile(os.path.expanduser("%(__DAEMON_KEYCERT__)s" %
                                                  user_dict)):
             print("ERROR: requested daemon keycert file not found!")
-            print("""You can create it e.g. with:
-openssl genrsa -out %(__DAEMON_KEYCERT__)s 4096""" % user_dict)
+            print("""You can create it with:
+openssl genrsa -out %(__DAEMON_KEYCERT__)s 2048""" % user_dict)
             sys.exit(1)
-    else:
-        user_dict['__DAEMON_KEYCERT_SHA256__'] = ''
 
-    if user_dict['__DAEMON_KEYCERT__'] and keyword_auto in \
-            (daemon_keycert_sha256, ):
         key_path = os.path.expanduser(user_dict['__DAEMON_KEYCERT__'])
         openssl_cmd = ["openssl", "x509", "-noout", "-fingerprint", "-sha256",
                        "-in", key_path]
@@ -1958,8 +1948,7 @@ openssl genrsa -out %(__DAEMON_KEYCERT__)s 4096""" % user_dict)
             print("ERROR: failed to extract sha256 fingerprint of %s: %s" %
                   (key_path, exc))
             daemon_keycert_sha256 = ''
-        if daemon_keycert_sha256 == keyword_auto:
-            user_dict['__DAEMON_KEYCERT_SHA256__'] = daemon_keycert_sha256
+        user_dict['__DAEMON_KEYCERT_SHA256__'] = daemon_keycert_sha256
     if user_dict['__DAEMON_PUBKEY__']:
         if not os.path.isfile(os.path.expanduser("%(__DAEMON_PUBKEY__)s" %
                                                  user_dict)):
@@ -1967,12 +1956,7 @@ openssl genrsa -out %(__DAEMON_KEYCERT__)s 4096""" % user_dict)
             print("""You can create it with:
 ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
             sys.exit(1)
-    else:
-        user_dict['__DAEMON_PUBKEY_MD5__'] = ''
-        user_dict['__DAEMON_PUBKEY_SHA256__'] = ''
 
-    if user_dict['__DAEMON_PUBKEY__'] and keyword_auto in \
-            (daemon_pubkey_md5, daemon_pubkey_sha256):
         pubkey_path = os.path.expanduser(user_dict['__DAEMON_PUBKEY__'])
         pubkey = read_file(pubkey_path, None)
         if pubkey is None:
@@ -1990,12 +1974,9 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         except Exception as exc:
             print("ERROR: failed to extract fingerprints of %s : %s" %
                   (pubkey_path, exc))
-            daemon_pubkey_md5 = ''
             daemon_pubkey_sha256 = ''
-        if daemon_pubkey_md5 == keyword_auto:
-            user_dict['__DAEMON_PUBKEY_MD5__'] = daemon_pubkey_md5
-        if daemon_pubkey_sha256 == keyword_auto:
-            user_dict['__DAEMON_PUBKEY_SHA256__'] = daemon_pubkey_sha256
+        user_dict['__DAEMON_PUBKEY_MD5__'] = daemon_pubkey_md5
+        user_dict['__DAEMON_PUBKEY_SHA256__'] = daemon_pubkey_sha256
 
     # Enable Debian/Ubuntu specific lines only there
     if user_dict['__DISTRO__'].lower() in ('ubuntu', 'debian'):
