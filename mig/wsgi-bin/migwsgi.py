@@ -25,7 +25,9 @@
 # -- END_HEADER ---
 #
 
+from past.builtins import basestring
 import cgi
+import codecs
 import importlib
 import os
 import sys
@@ -35,6 +37,7 @@ from mig.shared import returnvalues
 from mig.shared.bailout import bailout_helper, crash_helper, compact_string
 from mig.shared.base import requested_backend, allow_script, \
     is_default_str_coding, force_default_str_coding_rec
+from mig.shared.compat import _is_unicode
 from mig.shared.defaults import download_block_size, default_fs_coding
 from mig.shared.conf import get_configuration_object
 from mig.shared.objecttypes import get_object_type_info
@@ -185,6 +188,11 @@ def wrap_wsgi_errors(environ, configuration, max_line_len=100):
 
 
 def application(environ, start_response):
+    configuration = get_configuration_object()
+    return application_(environ, start_response, _config_file=None)
+
+
+def application_(configuration, environ, start_response):
     """MiG app called automatically by WSGI.
 
     *environ* is a dictionary populated by the server with CGI-like variables
@@ -235,18 +243,20 @@ def application(environ, start_response):
                                                              os_env_value))
 
     # Assign updated environ to LOCAL os.environ for the rest of this session
-    os.environ = environ
+    try:
+        os.environ = environ
+    except:
+        pass
 
     # NOTE: redirect stdout to stderr in python 2 only. It breaks logger in 3
     #       and stdout redirection apparently is already handled there.
     if sys.version_info[0] < 3:
         sys.stdout = sys.stderr
 
-    configuration = get_configuration_object()
     _logger = configuration.logger
 
     # NOTE: replace default wsgi errors to apache error log with our own logs
-    wrap_wsgi_errors(environ, configuration)
+    #wrap_wsgi_errors(environ, configuration)
 
     for line in env_sync_status:
         _logger.debug(line)
@@ -257,7 +267,12 @@ def application(environ, start_response):
     # tries to use pre-mangled environ for conf loading
 
     from mig.shared.httpsclient import extract_client_id
-    client_id = extract_client_id(configuration, environ)
+    try:
+        client_id = extract_client_id(configuration, environ)
+    except Exception as e:
+        start_response('418', [('Content-Type', 'text/plain')])
+        yield b'FOOBAR'
+        return
 
     # Default to html output
 
@@ -394,47 +409,14 @@ def application(environ, start_response):
     _logger.debug("send %r response as %s to %s" %
                   (backend, output_format, client_id))
     # NOTE: send response to client but don't crash e.g. on closed connection
-    try:
-        start_response(status, response_headers)
 
-        # NOTE: we consistently hit download error for archive files reaching ~2GB
-        #       with showfreezefile.py on wsgi but the same on cgi does NOT suffer
-        #       the problem for the exact same files. It seems wsgi has a limited
-        #       output buffer, so we explicitly force significantly smaller chunks
-        #       here as a workaround.
-        chunk_parts = 1
-        if content_length > download_block_size:
-            chunk_parts = content_length // download_block_size
-            if content_length % download_block_size != 0:
-                chunk_parts += 1
-            _logger.info("WSGI %s yielding %d output parts (%db)" %
-                         (backend, chunk_parts, content_length))
-        # _logger.debug("send chunked %r response to client" % backend)
-        for i in xrange(chunk_parts):
-            # _logger.debug("WSGI %s yielding part %d / %d output parts" %
-            #              (backend, i+1, chunk_parts))
-            # end index may be after end of content - but no problem
-            part = output[i*download_block_size:(i+1)*download_block_size]
-            yield part
-        if chunk_parts > 1:
-            _logger.info("WSGI %s finished yielding all %d output parts" %
-                         (backend, chunk_parts))
-        _logger.debug("done sending %d chunk(s) of %r response to client" %
-                      (chunk_parts, backend))
-    except IOError as ioe:
-        _logger.warning("WSGI %s for %s could not deliver output: %s" %
-                        (backend, client_id, ioe))
-    except Exception as exc:
-        _logger.error("WSGI %s for %s crashed during response: %s" %
-                      (backend, client_id, exc))
+    start_response(status, response_headers)
 
-    # NOTE: we're done, but add explicit clean up to address late log blow-up
-    #       https://github.com/ucphhpc/migrid-sync/issues/50
-    _logger.debug("done and cleaning up to prevent further log noise")
-    if user_arguments_dict:
-        del user_arguments_dict
-    if fieldstorage:
-        del fieldstorage
-    _logger.debug("done cleaning up - detach wsgi error loggers")
-    # TMP! uncomment next to test unhandled exception and error log
-    # fieldstorage.__del__
+    if isinstance(output, basestring):
+        output = (output,)
+
+    for chunk in output:
+        if isinstance(chunk, basestring):
+            yield codecs.encode(chunk, 'utf8')
+        else:
+            yield chunk
