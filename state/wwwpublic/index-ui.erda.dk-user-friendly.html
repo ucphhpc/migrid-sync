@@ -46,6 +46,9 @@
         <link rel="icon" type="image/vnd.microsoft.icon"
               href="/images/skin/erda-user-friendly/favicon.ico"/>
 
+        <!-- site-specific variables used to adjust displayed information -->
+        <script type="text/javascript" src="/images/site-conf.js"></script>
+
         <script type="text/javascript" src="/assets/vendor/jquery/js/jquery.js"></script>
         <script type="text/javascript" src="/assets/vendor/jquery-ui/js/jquery-ui.js"></script>
         <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
@@ -69,26 +72,39 @@
          /* We assume UCPH users here and leave external users to FAQ entry */
          function login(user) {
              if (user == "extoid") {
-                 window.open('https://ui.erda.dk', '_blank');
-             } else if (user == "cert") {
+                 window.open('https://ui-oid.erda.dk', '_blank');
+             } else if (user == "extoidc") {
+                 window.open('https://ui-oidc.erda.dk', '_blank');
+             } else if (user == "extcert") {
                  window.open('https://ui-cert.erda.dk', '_blank');
              } else if (user == "migoid") {
                  window.open('https://ui-ext.erda.dk', '_blank');
+             } else if (user == "migcert") {
+                 window.open('https://ui-cert.erda.dk', '_blank');
              } else {
-                 window.open('https://ui-sid.erda.dk/cgi-sid/login.py', '_blank');
+                 window.open('https://ui-sid.erda.dk/cgi-sid/login.py',
+                             '_blank');
              }
          }
          function signup(user) {
              if (user == "extoid") {
-                 window.open('https://ui-sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
+                 window.open('https://ui-oid.erda.dk/wsgi-bin/autocreate.py',
                              '_blank');
-             } else if (user == "cert") {
-                 window.open('https://ui-sid.erda.dk/cgi-sid/signup.py?show=extcert',
+             } else if (user == "extoidc") {
+                 window.open('https://ui-oidc.erda.dk/wsgi-bin/autocreate.py',
+                             '_blank');
+             } else if (user == "extcert") {
+                 window.open('https://ui-cert.erda.dk/wsgi-bin/extcert.py',
                              '_blank');
              } else if (user == "migoid") {
-                 window.open('https://ui-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
+                 window.open('https://ui-sid.erda.dk/cgi-sid/reqoid.py',
+                             '_blank');
+             } else if (user == "migcert") {
+                 window.open('https://ui-cert.erda.dk/cgi-sid/reqcert.py',
+                             '_blank');
              } else {
-                 window.open('https://ui-sid.erda.dk/cgi-sid/signup.py', '_blank');
+                 window.open('https://ui-sid.erda.dk/cgi-sid/signup.py',
+                             '_blank');
              }
          }
 
@@ -104,11 +120,11 @@
                      supported_languages.push($(this).val());
                  }
              });
-             console.log("found supported langs: "+supported_languages);
+             //console.debug("found supported langs: "+supported_languages);
              if (locale && supported_languages.indexOf(locale) >= 0)  {
                  user_lang = locale;
              } else {
-                 console.log(locale+" not supported - fall back to: "+default_lang);
+                 console.warn(locale+" not supported - fall back to: "+default_lang);
                  user_lang = default_lang;
              }
 
@@ -154,6 +170,29 @@
              $("#langselect").val(user_lang);
              switch_language(user_lang);
              $("#langselect").msDropdown().fadeIn(500);
+
+             var auth_methods = lookup_site_conf('auth_methods', ['extoid', 'migoid', 'extcert']);
+             var query = window.location.search;
+             const urlParams = new URLSearchParams(query);
+             var show = [];
+             var quicktabs = ['extoid', 'extoidc', 'migoid', 'extcert'];
+             urlParams.forEach((value, key) => {
+                 //console.log("Found "+value+" in "+key);
+                 if (quicktabs.indexOf(value) >= 0) {
+                     show.push(value);
+                 }
+             });
+             if (!urlParams.get('show')) {
+                 if (auth_methods.length > 0) {
+                     //console.log("show auth_methods: " + auth_methods);
+                     show = auth_methods;
+                 } else {
+                     //console.log("show quicktabs: " + quicktabs);
+                     show = quicktabs;
+                 }
+             } else {
+                 //console.log("show urlparams: " + show);
+             }
          });
         </script>
 
@@ -249,13 +288,9 @@
                     <div class="col-12 align-self-center">
                         <h1>Keep everything organized with ERDA</h1>
                         <p class="sub-title">ERDA - Electronic Research Data Archive is a storage, sharing and archiving facility provided by University of Copenhagen to employees and students.</p>
-                        <button style="color: #fff; background-color: #46743C; border-radius: 30px; width: 120px; height: 40px;" value="log in" onClick="login('extoid');">Log in</button>
+                        <button style="color: #fff; background-color: #46743C; border-radius: 30px; width: 120px; height: 40px;" value="log in" onClick="login('extoidc');">Log in</button>
                         <div id="signupform" class="hidden">
-                            <form method='post' action='https://ui.erda.dk/wsgi-bin/autocreate.py'>
-                                <!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
-                                <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-                                <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-                                <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+                            <form method='post' action='https://ui-oidc.erda.dk/wsgi-bin/autocreate.py'>
                                 <input class="signupbutton" type="submit" value="sign up" />
 
                             </form>
