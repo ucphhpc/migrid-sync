@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project
 #
 # This file is part of MiG.
 #
@@ -291,6 +291,9 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'enable_openid',
         'enable_gravatars',
         'enable_sitestatus',
+        'daemon_keycert_sha256',
+        'daemon_pubkey_md5',
+        'daemon_pubkey_sha256',
         'daemon_pubkey_from_dns',
         'seafile_ro_access',
         'public_use_https',
