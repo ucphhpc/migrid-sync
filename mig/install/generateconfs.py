@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project
 #
 # This file is part of MiG.
 #
@@ -146,7 +146,10 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'ext_oidc_rewrite_cookie',
         'dhparams_path',
         'daemon_keycert',
+        'daemon_keycert_sha256',
         'daemon_pubkey',
+        'daemon_pubkey_md5',
+        'daemon_pubkey_sha256',
         'daemon_show_address',
         'alias_field',
         'peers_permit',

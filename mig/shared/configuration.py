@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -1157,7 +1157,8 @@ location.""" % self.config_file)
             fingerprint = config.get('GLOBAL', 'user_sftp_key_md5')
             self.user_sftp_key_md5 = fingerprint
         if config.has_option('GLOBAL', 'user_sftp_key_sha256'):
-            fingerprint = config.get('GLOBAL', 'user_sftp_key_sha256')
+            fingerprint = expand_external_sources(
+                logger, config.get('GLOBAL', 'user_sftp_key_sha256'))
             self.user_sftp_key_sha256 = fingerprint
         if config.has_option('GLOBAL', 'user_sftp_key_from_dns'):
             self.user_sftp_key_from_dns = config.getboolean(
@@ -1251,7 +1252,8 @@ location.""" % self.config_file)
             self.user_davs_key = config.get('GLOBAL',
                                             'user_davs_key')
         if config.has_option('GLOBAL', 'user_davs_key_sha256'):
-            fingerprint = config.get('GLOBAL', 'user_davs_key_sha256')
+            fingerprint = expand_external_sources(
+                logger, config.get('GLOBAL', 'user_davs_key_sha256'))
             self.user_davs_key_sha256 = fingerprint
         if config.has_option('GLOBAL', 'user_davs_auth'):
             self.user_davs_auth = config.get('GLOBAL',
@@ -1297,7 +1299,8 @@ location.""" % self.config_file)
             self.user_ftps_key = config.get('GLOBAL',
                                             'user_ftps_key')
         if config.has_option('GLOBAL', 'user_ftps_key_sha256'):
-            fingerprint = config.get('GLOBAL', 'user_ftps_key_sha256')
+            fingerprint = expand_external_sources(
+                logger, config.get('GLOBAL', 'user_ftps_key_sha256'))
             self.user_ftps_key_sha256 = fingerprint
         if config.has_option('GLOBAL', 'user_ftps_auth'):
             self.user_ftps_auth = config.get('GLOBAL',
