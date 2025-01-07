@@ -1131,7 +1131,8 @@ location.""" % self.config_file)
             self.user_sftp_key_pub = config.get('GLOBAL',
                                                 'user_sftp_key_pub')
         if config.has_option('GLOBAL', 'user_sftp_key_md5'):
-            fingerprint = config.get('GLOBAL', 'user_sftp_key_md5')
+            fingerprint = expand_external_sources(
+                logger, config.get('GLOBAL', 'user_sftp_key_md5'))
             self.user_sftp_key_md5 = fingerprint
         if config.has_option('GLOBAL', 'user_sftp_key_sha256'):
             fingerprint = expand_external_sources(
