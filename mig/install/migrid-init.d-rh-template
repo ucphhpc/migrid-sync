@@ -38,7 +38,7 @@
 # config: /etc/sysconfig/migrid
 # 
 
-# This systemd marker will be overriden by sourced functions
+# This systemd marker will be overridden by sourcing 'functions' below
 _use_systemctl=0
 
 # Source function library.
