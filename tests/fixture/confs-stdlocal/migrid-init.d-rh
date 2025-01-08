@@ -38,6 +38,9 @@
 # config: /etc/sysconfig/migrid
 # 
 
+# This systemd marker will be overriden by sourced functions
+_use_systemctl=0
+
 # Source function library.
 . /etc/init.d/functions
 
@@ -114,6 +117,22 @@ kick_script() {
         echo "" >> ${MIG_CODE}/server/server.stdin
 }
 
+fallback_save_pid () {
+    # Save daemon PID in PID_FILE if not already handled by daemon or systemd
+    DAEMON_PATH="$1"
+    PID_FILE="$2"
+    DAEMON_PID="$3"
+    [ "$_use_systemctl" = "1" ] && return
+    [ -s "${PID_FILE}" ] && return
+    if [ -z "${DAEMON_PID}" ]; then
+        # Caller failed to extract child PID from daemonizing command
+        #echo "DEBUG: empty DAEMON_PID provided - try pgrep look up"
+        DAEMON_PID=$(pgrep -f ${DAEMON_PATH})
+    fi
+    #echo "DEBUG: saving PID ${DAEMON_PID} for ${SHORT_NAME} in ${PID_FILE}"
+    echo "${DAEMON_PID}" > ${PID_FILE}
+}
+
 start_script() {
     check_enabled "jobs" || return
     DAEMON_PATH=${MIG_SCRIPT}
@@ -122,6 +141,7 @@ start_script() {
     echo -n "Starting MiG server daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/script.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET=$?
     if [ $RET -ne 0 ]; then 
 	failure
@@ -141,6 +161,7 @@ start_monitor() {
     echo -n "Starting MiG monitor daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/monitor.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -155,6 +176,7 @@ start_sshmux() {
     echo -n "Starting MiG sshmux daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/sshmux.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -170,6 +192,7 @@ start_events() {
     echo -n "Starting MiG events daemon: $SHORT_NAME"
     daemon +10 --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/events.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -185,6 +208,7 @@ start_cron() {
     echo -n "Starting MiG cron daemon: $SHORT_NAME"
     daemon +10 --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/cron.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -199,6 +223,7 @@ start_transfers() {
     echo -n "Starting MiG transfers daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/transfers.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -213,6 +238,7 @@ start_openid() {
     echo -n "Starting MiG openid daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/openid.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -227,6 +253,7 @@ start_sftp() {
     echo -n "Starting MiG sftp daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/sftp.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -241,6 +268,7 @@ start_webdavs() {
     echo -n "Starting MiG webdavs daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/webdavs.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -255,6 +283,7 @@ start_ftps() {
     echo -n "Starting MiG ftps daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/ftps.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -269,6 +298,7 @@ start_notify() {
     echo -n "Starting MiG notify daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
        "${DAEMON_PATH} >> ${MIG_LOG}/notify.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -283,6 +313,7 @@ start_imnotify() {
     echo -n "Starting MiG IM notify daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/imnotify.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
@@ -297,6 +328,7 @@ start_vmproxy() {
     echo -n "Starting MiG VM proxy daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/vmproxy.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
     [ $RET2 ] && success
     echo
