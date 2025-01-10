@@ -53,6 +53,23 @@ jobs:
         run: |
           make test
 
+  python3-rocky9:
+    runs-on: ubuntu-22.04
+    container:
+      image: rockylinux/rockylinux:9
+    steps:
+      - name: Check out repository contents
+        uses: actions/checkout@v3
+      - name: Set up Python 3 and make with DNF
+        run: |
+          dnf install -y python3 python3-pip make
+      - name: Setup environment
+        run: |
+          make dependencies
+      - name: Run tests
+        run: |
+          make test
+
   python3-rocky8ish:
     runs-on: ubuntu-20.04
     steps:
@@ -62,6 +79,23 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: "3.6.8"
+      - name: Setup environment
+        run: |
+          make dependencies
+      - name: Run tests
+        run: |
+          make test
+
+  python3-rocky8:
+    runs-on: ubuntu-20.04
+    container:
+      image: rockylinux/rockylinux:8
+    steps:
+      - name: Check out repository contents
+        uses: actions/checkout@v3
+      - name: Set up Python 3 and make with DNF
+        run: |
+          dnf install -y python3 python3-pip make
       - name: Setup environment
         run: |
           make dependencies
