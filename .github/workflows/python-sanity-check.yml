@@ -54,7 +54,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Set up Python 2.7 with DNF and link to default
       run: |
-        sudo dnf install -y python2 python2-pip
+        dnf install -y python2 python2-pip
     - name: Install dependencies
       run: |
         python2 -m pip install --upgrade pip
