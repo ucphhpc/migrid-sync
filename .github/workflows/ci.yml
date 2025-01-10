@@ -60,9 +60,9 @@ jobs:
     steps:
       - name: Check out repository contents
         uses: actions/checkout@v3
-    - name: Set up Python 3 with DNF
-      run: |
-        dnf install -y python3 python3-pip
+      - name: Set up Python 3 with DNF
+        run: |
+          dnf install -y python3 python3-pip
       - name: Setup environment
         run: |
           make dependencies
@@ -93,9 +93,9 @@ jobs:
     steps:
       - name: Check out repository contents
         uses: actions/checkout@v3
-    - name: Set up Python 3 with DNF
-      run: |
-        dnf install -y python3 python3-pip
+      - name: Set up Python 3 with DNF
+        run: |
+          dnf install -y python3 python3-pip
       - name: Setup environment
         run: |
           make dependencies
