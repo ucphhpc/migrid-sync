@@ -475,7 +475,7 @@
 .popup-container {
     position: fixed;
     width: 270px;
-    height: 300px;
+    height: 340px;
     background-color: #FFF;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     border-radius: 8px;
@@ -504,7 +504,7 @@
 }
 
 .popup-middle {
-    height: 180px;
+    height: 220px;
     width: 100%;
     border-bottom: 1px solid #EEE;
     padding: 10px;
