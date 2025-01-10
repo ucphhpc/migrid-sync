@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqoid - OpenID account request backend
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Request OpenID account back end"""
+"""Request account access through built-in OpenID 2.0 service auth"""
 
 from __future__ import absolute_import
 
@@ -198,8 +198,8 @@ to your old files, jobs and privileges. </p>''' %
         fill_helpers['readonly_%s' % field] = ''
     ro_fields = [i for i in accepted['ro_fields'] if i in
                  list(cert_field_map) + given_peers]
-    # Only write-protect ID fields in auto-mode
-    if keyword_auto in accepted['ro_fields']:
+    # Write-protect ID fields in auto-mode or if already logged in
+    if keyword_auto in accepted['ro_fields'] or client_id:
         ro_fields += [i for i in list(cert_field_map) if not i in ro_fields]
     if reset_token:
         user_fields['reset_token'] = reset_token
