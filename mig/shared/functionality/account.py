@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # account - account page with info and account management options
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -26,7 +26,7 @@
 #
 
 
-"""Profile page generator with user details and account management options"""
+"""Account page with user details and account management options"""
 
 from __future__ import absolute_import
 
