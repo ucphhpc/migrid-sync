@@ -82,7 +82,7 @@ jobs:
   lint-python3-rocky9:
     runs-on: ubuntu-22.04
     container:
-      image: rockylinux/rockylinux:8
+      image: rockylinux/rockylinux:9
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3 with DNF
