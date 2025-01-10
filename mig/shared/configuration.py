@@ -1921,10 +1921,10 @@ location.""" % self.config_file)
             req = config.get('SITE', 'default_menu').split()
             self.site_default_menu = [i for i in req if i in menu_items]
         else:
-            self.site_default_menu = ['home', 'files', 'submitjob',
-                                      'jobs', 'resources', 'vgrids',
-                                      'downloads', 'runtimeenvs', 'people',
-                                      'settings', 'crontab', 'docs', 'logout']
+            self.site_default_menu = ['home', 'files', 'submitjob', 'jobs',
+                                      'resources', 'vgrids', 'downloads',
+                                      'runtimeenvs', 'people', 'settings',
+                                      'crontab', 'account', 'docs', 'logout']
         if config.has_option('SITE', 'simple_menu'):
             req = config.get('SITE', 'simple_menu').split()
             self.site_simple_menu = [i for i in req if i in menu_items]
