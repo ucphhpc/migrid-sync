@@ -716,7 +716,7 @@ additional web apps and OpenID on CentOS:
                    --signup_methods="extoid migoid migcert extoidc" \
                    --login_methods="extoid migoid migcert extoidc" \
                    --distro=centos --skin=migrid-basic \
-                   --default_menu="home files submitjob jobs vgrids settings setup logout" \
+                   --default_menu="home files submitjob jobs vgrids account settings setup logout" \
                    --user_menu="sharelinks people cloud crontab transfers runtimeenvs resources peers downloads docs dashboard migadmin" \
                    --wsgi_procs=25 --sftp_subsys_auth_procs=20 \
                    --sftp_max_sessions=16 \
@@ -820,7 +820,7 @@ local OpenID login and added Jupyter+cloud integration for data analysis:
                    --davs_port=8020 --openid_port=8001 \
                    --wsgi_procs=100 --sftp_subsys_auth_procs=50 \
                    --sftp_max_sessions=16 \
-                   --default_menu="home files vgrids archives jupyter settings setup logout" \
+                   --default_menu="home files vgrids archives jupyter account settings setup logout" \
                    --user_menu="sharelinks seafile crontab transfers cloud people downloads peers docs migadmin" \
                    --collaboration_links="default advanced" \
                    --default_vgrid_links="files web" \
@@ -908,7 +908,7 @@ local OpenID login and support for legacy sftp clients:
                    --wsgi_procs=25 --sftp_subsys_auth_procs=25 \
                    --sftp_max_sessions=16 \
                    --davs_port=8020 --openid_port=8001 \
-                   --default_menu="home files submitjob jobs vgrids jupyter settings setup logout" \
+                   --default_menu="home files submitjob jobs vgrids jupyter account settings setup logout" \
                    --user_menu="sharelinks people cloud crontab transfers runtimeenvs resources downloads peers docs migadmin" \
                    --collaboration_links="default advanced" \
                    --default_vgrid_links="files web" \
