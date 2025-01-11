@@ -42,18 +42,17 @@ from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list
 
 
-_LOCAL_MIG_BASE = '/usr/src/app' if PY2 else MIG_BASE # account for execution in container
-_PYTHON_MAJOR = '2' if PY2 else '3'
-_TEST_CONF_DIR = os.path.join(MIG_BASE, "envhelp/output/testconfs-py%s" % (_PYTHON_MAJOR,))
-_TEST_CONF_FILE = os.path.join(_TEST_CONF_DIR, "MiGserver.conf")
+_TEST_CONF_FILE = os.environ['MIG_CONF']
+_TEST_CONF_DIR = os.path.dirname(_TEST_CONF_FILE)
 _TEST_CONF_SYMLINK = os.path.join(MIG_BASE, "envhelp/output/testconfs")
 
 
 def _assert_local_config():
     try:
-        link_stat = os.lstat(_TEST_CONF_SYMLINK)
-        assert stat.S_ISLNK(link_stat.st_mode)
-        configdir_stat = os.stat(_TEST_CONF_DIR)
+        #link_stat = os.lstat(_TEST_CONF_SYMLINK)
+        #assert stat.S_ISLNK(link_stat.st_mode)
+        _test_conf_dir = os.path.dirname(_TEST_CONF_DIR)
+        configdir_stat = os.stat(_test_conf_dir)
         assert stat.S_ISDIR(configdir_stat.st_mode)
         config = ConfigParser()
         config.read([_TEST_CONF_FILE])
@@ -67,22 +66,15 @@ def _assert_local_config_global_values(config):
 
     for path in ('mig_path', 'certs_path', 'state_path'):
         path_value = config_global_values.get(path)
-        if not is_path_within(path_value, start=_LOCAL_MIG_BASE):
+        if not is_path_within(path_value, start=MIG_BASE):
             raise AssertionError('local config contains bad path: %s=%s' % (path, path_value))
 
     return config_global_values
 
 
-def main(_exit=sys.exit):
+def main(configuration, _exit=sys.exit):
     config = _assert_local_config()
     config_global_values = _assert_local_config_global_values(config)
-
-    from mig.shared.conf import get_configuration_object
-    configuration = get_configuration_object(_TEST_CONF_FILE, skip_log=True,
-                                             disable_auth_log=True)
-    logging.basicConfig(filename=None, level=logging.INFO,
-                        format="%(asctime)s %(levelname)s %(message)s")
-    configuration.logger = logging
 
     print("Running unit test on shared core functions ..")
 
@@ -192,4 +184,5 @@ def main(_exit=sys.exit):
     _exit(0)
 
 if __name__ == "__main__":
-    main()
+    from mig.shared.conf import get_configuration_object
+    main(get_configuration_object())
