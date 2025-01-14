@@ -35,7 +35,7 @@ jobs:
           make dependencies
       - name: Run tests
         run: |
-          make test
+          make unittest
 
   python3-rocky9:
     runs-on: ubuntu-22.04
@@ -52,7 +52,7 @@ jobs:
           make dependencies
       - name: Run tests
         run: |
-          make test
+          make unittest
 
   python3-rocky8:
     runs-on: ubuntu-20.04
@@ -69,7 +69,7 @@ jobs:
           make dependencies
       - name: Run tests
         run: |
-          make test
+          make unittest
 
   python2-latest:
     runs-on: ubuntu-latest
@@ -82,8 +82,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup environment
         run: |
-          pip install --no-cache-dir -r requirements.txt -r local-requirements.txt
+          make PYTHON_BIN=python PY=2 dependencies
       - name: Run tests
         run: |
-          PYTHON_BIN=python ./envhelp/makeconfig test --python2
-          MIG_ENV='local' python -m unittest discover -s tests/
+          make PYTHON_BIN=python PY=2 unittest
