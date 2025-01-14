@@ -29,46 +29,5 @@ set -e
 
 SCRIPT_PATH=$(realpath "$0")
 SCRIPT_BASE=$(dirname -- "$SCRIPT_PATH")
-DOCKER_BASE="$SCRIPT_BASE/docker"
-DOCKER_IMAGEID_FILE="$SCRIPT_BASE/py2.imageid"
-# NOTE: portable dynamic lookup with docker as default and fallback to podman
-DOCKER_BIN=$(command -v docker || command -v podman || echo "")
 
-if [ -z "${DOCKER_BIN}" ]; then
-    echo "No docker binary found - cannot use for python2 tests"
-    exit 1
-fi
-
-# default PYTHONPATH such that directly executing files in the repo "just works"
-# NOTE: this is hard-coded to the mount point used within the container
-PYTHONPATH='/usr/app/src'
-
-# default any variables for local development
-MIG_ENV=${MIG_ENV:-'local'}
-
-# determine if the image has changed
-echo -n "validating container.. "
-
-# load a previously written docker image id if present
-IMAGEID_STORED=$(cat "$DOCKER_IMAGEID_FILE" 2>/dev/null || echo "")
-
-IMAGEID=$(${DOCKER_BIN} build -f "$DOCKER_BASE/Dockerfile.python2" . -q)
-if [ "$IMAGEID" != "$IMAGEID_STORED" ]; then
-    echo "rebuilt for changes"
-
-    # reset the image id so the next call finds no changes
-    echo "$IMAGEID" > "$DOCKER_IMAGEID_FILE"
-else
-    echo "no changes needed"
-fi
-
-echo "running with MIG_ENV='$MIG_ENV' under python 2"
-echo
-
-# execute python2 within the image passing the supplied arguments
-
-${DOCKER_BIN} run -it --rm \
-    --mount type=bind,source=.,target=/usr/src/app \
-    --env "PYTHONPATH=$PYTHON_PATH" \
-    --env "MIG_ENV=$MIG_ENV" \
-    "$IMAGEID" python2 "$@"
+PY=2 $SCRIPT_BASE/dpython "$@"
