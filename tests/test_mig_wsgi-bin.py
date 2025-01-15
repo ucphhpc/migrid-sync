@@ -123,5 +123,44 @@ class MigWsgibin(MigTestCase, HtmlAssertMixin,
             output, 'title', 'TEST', trim_newlines=True)
 
 
+class MigWsgibin_output_format_template(MigTestCase, HtmlAssertMixin,
+                 WsgiAssertMixin, WsgibinAssertMixin):
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        self.fake_wsgi = prepare_wsgi(self.configuration, 'http://localhost/')
+        self.wsgibin_instrumentation = WsgibinInstrumentation()
+
+        self.application_args = (
+            self.configuration,
+            self.fake_wsgi.environ,
+            self.fake_wsgi.start_response,
+        )
+        self.application_kwargs = dict(
+            _wrap_wsgi_errors=noop,
+            _format_output=self.wsgibin_instrumentation.format_output,
+            _retrieve_handler=self.wsgibin_instrumentation.retrieve_handler,
+            _set_environ=noop,
+        )
+
+    def test_return_value_ok_returns_status_200(self):
+        output_objects = [
+            {
+                'object_type': 'template',
+            }
+        ]
+        self.wsgibin_instrumentation.set_response(output_objects, returnvalues.OK)
+
+        wsgi_result = migwsgi._application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        html_output = self.assertWsgibinHtml()
+        self.assertIsValidHtmlDocument(html_output)
+
 if __name__ == '__main__':
     testmain()
