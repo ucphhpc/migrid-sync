@@ -48,11 +48,58 @@ else:
     from html.parser import HTMLParser
 
 
-class TitleExtractingHtmlParser(HTMLParser):
-    """An HTML parser using builtin machinery which will extract the title."""
+class DocumentBasicsHtmlParser(HTMLParser):
+    """An HTML parser using builtin machinery to check basic html structure."""
 
     def __init__(self):
         HTMLParser.__init__(self)
+        self._doctype = "none"
+        self._saw_doctype = False
+        self._saw_tags = False
+        self._tag_html = "none"
+
+    def handle_decl(self, decl):
+        try:
+            decltag, decltype = decl.split(' ')
+        except Exception:
+            decltag = ""
+            decltype = ""
+
+        if decltag.upper() == 'DOCTYPE':
+            self._saw_doctype = True
+        else:
+            decltype = "unknown"
+
+        self._doctype = decltype
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'html':
+            if self._saw_tags:
+                tag_html = 'not_first'
+            else:
+                tag_html = 'was_first'
+            self._tag_html = tag_html
+        self._saw_tags = True
+
+    def assert_basics(self):
+        if not self._saw_doctype:
+            raise AssertionError("missing DOCTYPE")
+
+        if self._doctype != 'html':
+            raise AssertionError("non-html DOCTYPE")
+
+        if self._tag_html == 'none':
+            raise AssertionError("missing <html>")
+
+        if self._tag_html != 'was_first':
+            raise AssertionError("first tag seen was not <html>")
+
+
+class TitleExtractingHtmlParser(DocumentBasicsHtmlParser):
+    """An HTML parser using builtin machinery which will extract the title."""
+
+    def __init__(self):
+        DocumentBasicsHtmlParser.__init__(self)
         self._title = None
         self._within_title = None
 
@@ -61,14 +108,20 @@ class TitleExtractingHtmlParser(HTMLParser):
             self._title = args[0]
 
     def handle_starttag(self, tag, attrs):
+        super().handle_starttag(tag, attrs)
+
         if tag == 'title':
             self._within_title = True
 
     def handle_endtag(self, tag):
+        super().handle_endtag(tag)
+
         if tag == 'title':
             self._within_title = False
 
     def title(self, trim_newlines=False):
+        self.assert_basics()
+
         if self._title and not self._within_title:
             if trim_newlines:
                 return self._title.strip()
@@ -171,6 +224,47 @@ class MigWsgibin(MigTestCase, WsgiAssertMixin):
 
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
         self.assertHtmlTitle(output, title_text='TEST', trim_newlines=True)
+
+
+class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin):
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        self.fake_backend = FakeBackend()
+        self.fake_wsgi = prepare_wsgi(self.configuration, 'http://localhost/')
+
+        self.application_args = (
+            self.fake_wsgi.environ,
+            self.fake_wsgi.start_response,
+        )
+        self.application_kwargs = dict(
+            configuration=self.configuration,
+            _import_module=self.fake_backend.to_import_module(),
+            _set_os_environ=False,
+        )
+
+    def assertIsValidHtmlDocument(self, value):
+        parser = DocumentBasicsHtmlParser()
+        parser.feed(value)
+        parser.assert_basics()
+
+    def test_unknown_object_type_generates_valid_error_page(self):
+        output_objects = [
+            {
+                'object_type': 'nonexistent',  # trigger error handling path
+            }
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        self.assertIsValidHtmlDocument(output)
 
 
 if __name__ == '__main__':
