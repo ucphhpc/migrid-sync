@@ -135,5 +135,42 @@ class MigWsgibin(MigTestCase, HtmlAssertMixin, WsgiAssertMixin):
             output, 'title', 'TEST', trim_newlines=True)
 
 
+class MigWsgibin_output_objects(MigTestCase, HtmlAssertMixin, WsgiAssertMixin):
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        self.fake_backend = FakeBackend()
+        self.fake_wsgi = prepare_wsgi(self.configuration, 'http://localhost/')
+
+        self.application_args = (
+            self.configuration,
+            self.fake_wsgi.environ,
+            self.fake_wsgi.start_response,
+        )
+        self.application_kwargs = dict(
+            configuration=self.configuration,
+            _import_module=self.fake_backend.to_import_module(),
+            _set_os_environ=False,
+        )
+
+    def test_unknown_object_type_generates_valid_error_page(self):
+        output_objects = [
+            {
+                'object_type': 'nonexistent',  # trigger error handling path
+            }
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        self.assertIsValidHtmlDocument(html_output)
+
+
 if __name__ == '__main__':
     testmain()
