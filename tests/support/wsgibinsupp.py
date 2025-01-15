@@ -79,7 +79,7 @@ def create_instrumented_format_output():
             'text': _instrumented_format_output.values['header_text']
         })
 
-        return format_output(
+        output = format_output(
             configuration,
             backend,
             ret_val,
@@ -87,7 +87,10 @@ def create_instrumented_format_output():
             out_obj,
             outputformat,
         )
+        _instrumented_format_output.returned = output
+        return output
     _instrumented_format_output.calls = []
+    _instrumented_format_output.returned = None
     _instrumented_format_output.values = dict(
         title_text='',
         header_text='',
@@ -129,8 +132,27 @@ class WsgibinInstrumentation:
         self.format_output = create_instrumented_format_output()
         self.retrieve_handler = create_instrumented_retrieve_handler()
 
+    def arranged(self):
+        simulated_action = self.retrieve_handler.simulated
+        if simulated_action is None:
+            return 'nothing'
+
+        return_value = simulated_action.returning
+        if isinstance(return_value, tuple) and isinstance(return_value[0], list):
+            return 'html'
+
+        raise NotImplementedError()
+
     def set_response(self, content, returnvalue):
         self.retrieve_handler.program(content, returnvalue)
+
+    def return_value(self):
+        arranged_return_type = self.arranged()
+
+        if arranged_return_type == 'html':
+            return self.format_output.returned
+
+        raise NotImplementedError()
 
 
 class WsgibinAssertMixin:
@@ -139,9 +161,8 @@ class WsgibinAssertMixin:
             instrumentation = getattr(self, 'wsgibin_instrumentation', None)
         assert isinstance(instrumentation, WsgibinInstrumentation)
 
-        simulated_action = instrumentation.retrieve_handler.simulated
-        self.assertIsNotNone(simulated_action.returning,
-                             "no response programmed")
+        self.assertNotEqual(instrumentation.arranged(),
+                            'nothing', "no response programmed")
 
         def was_called(fake):
             assert hasattr(fake, 'calls')
@@ -151,3 +172,10 @@ class WsgibinAssertMixin:
             instrumentation.format_output), "no output generated")
         self.assertTrue(was_called(
             instrumentation.retrieve_handler), "no output generated")
+
+        return instrumentation
+
+    def assertWsgibinHtml(self, instrumentation=None):
+        instrumentation = self.assertWsgibinInstrumentation(instrumentation=instrumentation)
+        self.assertEqual(instrumentation.arranged(), 'html', "wsgibinsupp: arranged output was not html")
+        return instrumentation.return_value()
