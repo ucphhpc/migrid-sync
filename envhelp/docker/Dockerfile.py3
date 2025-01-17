@@ -1,4 +1,5 @@
-FROM python:2
+# NOTE: we use upstream python-3.9 image to mimic the version on RHEL/Rocky 9
+FROM python:3.9
 
 WORKDIR /usr/src/app
 
