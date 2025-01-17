@@ -128,7 +128,7 @@ def fix_missing(config_file, verbose=True):
     """Add missing configuration options - used by checkconf script"""
 
     config = ConfigParser()
-    config.read([config_file])
+    config.read([config_file], 'utf-8')
 
     fqdn = socket.getfqdn()
     user = os.environ['USER']
@@ -741,7 +741,7 @@ location.""" % self.config_file)
             raise IOError
 
         config = ConfigParser()
-        config.read([self.config_file])
+        config.read([self.config_file], 'utf-8')
 
         # print "expanding config paths"
 
@@ -2688,7 +2688,7 @@ location.""" % self.config_file)
         peer_conf = ConfigParser()
 
         try:
-            peer_conf.read([peerfile])
+            peer_conf.read([peerfile], 'utf-8')
             for section in peer_conf.sections():
 
                 # set up defaults
