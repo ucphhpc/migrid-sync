@@ -38,6 +38,9 @@ from mig.unittest.testcore import main as testcore_main
 
 class MigUnittestTestcore(MigTestCase):
 
+    def _provide_configuration(self):
+        return 'testconfig'
+
     def test_existing_main(self):
         def raise_on_error_exit(exit_code, identifying_message=None):
             if exit_code != 0:
@@ -48,7 +51,7 @@ class MigUnittestTestcore(MigTestCase):
 
         print("") # account for wrapped tests printing to console
 
-        testcore_main(_exit=raise_on_error_exit)
+        testcore_main(self.configuration, _exit=raise_on_error_exit)
 
 
 if __name__ == '__main__':
