@@ -1,0 +1,9 @@
+# NOTE: we use upstream python-2.7 image to mimic the version on CentOS/RHEL 7
+FROM python:2
+
+WORKDIR /usr/src/app
+
+COPY requirements.txt local-requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r local-requirements.txt
+
+CMD [ "python", "--version" ]

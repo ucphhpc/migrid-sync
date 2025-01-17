@@ -42,26 +42,29 @@ from unittest import TestCase, main as testmain
 
 from tests.support.configsupp import FakeConfiguration
 from tests.support.suppconst import MIG_BASE, TEST_BASE, TEST_FIXTURE_DIR, \
-    TEST_OUTPUT_DIR, TEST_DATA_DIR
+    TEST_DATA_DIR, TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR
 
-PY2 = (sys.version_info[0] == 2)
+from tests.support._env import MIG_ENV, PY2
 
-# force defaults to a local environment
-os.environ['MIG_ENV'] = 'local'
+# Provide access to a configuration file for the active environment.
 
-# expose the configured environment as a constant
-MIG_ENV = os.environ['MIG_ENV']
-
-if MIG_ENV == 'local':
-    # force testconfig as the conig file path
-    is_py2 = PY2
-    _conf_dir_suffix = "-py%s" % ('2' if is_py2 else '3',)
-    _conf_dir = "testconfs%s" % (_conf_dir_suffix,)
-    _local_conf = os.path.join(
-        MIG_BASE, 'envhelp/output', _conf_dir, 'MiGserver.conf')
+if MIG_ENV in ('local', 'docker'):
+    # force local testconfig
+    _output_dir = os.path.join(MIG_BASE, 'envhelp/output')
+    _conf_dir_name = "testconfs-%s" % (MIG_ENV,)
+    _conf_dir = os.path.join(_output_dir, _conf_dir_name)
+    _local_conf = os.path.join(_conf_dir, 'MiGserver.conf')
     _config_file = os.getenv('MIG_CONF', None)
     if _config_file is None:
         os.environ['MIG_CONF'] = _local_conf
+
+    # adjust the link through which confs are accessed to suit the environment
+    _conf_link = os.path.join(_output_dir, 'testconfs')
+    assert os.path.lexists(_conf_link) # it must already exist
+    os.remove(_conf_link)              # blow it away
+    os.symlink(_conf_dir, _conf_link)  # recreate it using the active MIG_BASE
+else:
+    raise NotImplementedError()
 
 # All MiG related code will at some point include bits from the mig module
 # namespace. Rather than have this knowledge spread through every test file,
@@ -75,7 +78,10 @@ try:
     os.mkdir(TEST_OUTPUT_DIR)
 except EnvironmentError as enverr:
     if enverr.errno == errno.EEXIST:  # FileExistsError
-        shutil.rmtree(TEST_OUTPUT_DIR)
+        try:
+            shutil.rmtree(TEST_OUTPUT_DIR)
+        except Exception as exc:
+            raise
         os.mkdir(TEST_OUTPUT_DIR)
 
 # Exports to expose at the top level from the support library.
@@ -146,7 +152,11 @@ class MigTestCase(TestCase):
             if os.path.islink(path):
                 os.remove(path)
             elif os.path.isdir(path):
-                shutil.rmtree(path)
+                try:
+                    shutil.rmtree(path)
+                except Exception as exc:
+                    print(path)
+                    raise
             elif os.path.exists(path):
                 os.remove(path)
             else:
@@ -163,6 +173,11 @@ class MigTestCase(TestCase):
 
     def _register_check(self, check_callable):
         self._cleanup_checks.append(check_callable)
+
+    def _register_path(self, cleanup_path):
+        assert os.path.isabs(cleanup_path)
+        self._cleanup_paths.add(cleanup_path)
+        return cleanup_path
 
     def _reset_logging(self, stream):
         root_logger = logging.getLogger()
@@ -188,11 +203,26 @@ class MigTestCase(TestCase):
     @property
     def configuration(self):
         """Init a fake configuration if not already done"""
-        if self._configuration is None:
-            configuration_to_make = self._provide_configuration()
-            self._configuration = self._make_configuration_instance(
-                configuration_to_make)
-        return self._configuration
+
+        if self._configuration is not None:
+            return self._configuration
+
+        configuration_to_make = self._provide_configuration()
+        configuration_instance = self._make_configuration_instance(
+            configuration_to_make)
+
+        if configuration_to_make == 'testconfig':
+            # use the paths defined by the loaded configuration to create
+            # the directories which are expected to be present by the code
+            os.mkdir(self._register_path(configuration_instance.certs_path))
+            os.mkdir(self._register_path(configuration_instance.state_path))
+            log_path = os.path.join(configuration_instance.state_path, "log")
+            os.mkdir(self._register_path(log_path))
+
+        self._configuration = configuration_instance
+
+        return configuration_instance
+
 
     @property
     def logger(self):
@@ -361,18 +391,31 @@ def fixturepath(relative_path):
     return tmp_path
 
 
-def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False,
-             skip_output_anchor=False):
+def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):
     """Register relative_path as a temp path and schedule automatic clean up
     after unit tests unless skip_clean is set. Anchors the temp path in
     internal test output dir unless skip_output_anchor is set. Returns
     resulting temp path.
     """
     assert isinstance(test_case, MigTestCase)
-    if not skip_output_anchor:
-        tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-    else:
+
+    if os.path.isabs(relative_path):
+        # the only permitted paths are those within the output directory set
+        # aside for execution of the test suite: this will be enforced below
+        # so effectively submit the supplied path for scrutiny
         tmp_path = relative_path
+    else:
+        tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+
+    # failsafe path checking that supplied paths are rooted within valid paths
+    is_tmp_path_within_safe_dir = False
+    for start in (ENVHELP_OUTPUT_DIR):
+        is_tmp_path_within_safe_dir = is_path_within(tmp_path, start=start)
+        if is_tmp_path_within_safe_dir:
+            break
+    if not is_tmp_path_within_safe_dir:
+        raise AssertionError("ABORT: corrupt test path=%s" % (tmp_path,))
+
     if ensure_dir:
         try:
             os.mkdir(tmp_path)

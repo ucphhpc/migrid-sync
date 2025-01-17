@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# --- BEGIN_HEADER ---
+#
+# dpython - wrapper to invoke a containerised python
+# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
+#
+# --- END_HEADER ---
+#
+
+set -e
+
+SCRIPT_PATH=$(realpath "$0")
+SCRIPT_BASE=$(dirname -- "$SCRIPT_PATH")
+MIG_BASE=$(realpath "$SCRIPT_BASE/..")
+
+if [ -n "${PY}" ]; then
+    PYVER="$PY"
+    PYTHON_SUFFIX="py$PY"
+    DOCKER_FILE_SUFFIX="$PYTHON_SUFFIX"
+elif [ -n "${PYVER}" ]; then
+    PY=3
+    PYTHON_SUFFIX="pyver-$PYVER"
+    DOCKER_FILE_SUFFIX="pyver"
+else
+    echo "No python version specified - please supply a PY env var"
+    exit 1
+fi
+
+DOCKER_FILE="$SCRIPT_BASE/docker/Dockerfile.$DOCKER_FILE_SUFFIX"
+DOCKER_IMAGEID_FILE="$SCRIPT_BASE/$PYTHON_SUFFIX.imageid"
+
+# NOTE: portable dynamic lookup with docker as default and fallback to podman
+DOCKER_BIN=$(command -v docker || command -v podman || echo "")
+if [ -z "${DOCKER_BIN}" ]; then
+    echo "No docker binary found - cannot use for python $PY tests"
+    exit 1
+fi
+
+# default PYTHONPATH such that directly executing files in the repo "just works"
+# NOTE: this is hard-coded to the mount point used within the container
+PYTHONPATH='/usr/src/app'
+
+# default any variables for container development
+MIG_ENV=${MIG_ENV:-'docker'}
+
+# determine if the image has changed
+echo -n "validating python $PY container.. "
+
+# load a previously written docker image id if present
+IMAGEID_STORED=$(cat "$DOCKER_IMAGEID_FILE" 2>/dev/null || echo "")
+
+IMAGEID=$(${DOCKER_BIN} build -f "$DOCKER_FILE" . -q --build-arg "pyver=$PYVER")
+if [ "$IMAGEID" != "$IMAGEID_STORED" ]; then
+    echo "rebuilt for changes"
+
+    # reset the image id so the next call finds no changes
+    echo "$IMAGEID" > "$DOCKER_IMAGEID_FILE"
+else
+    echo "no changes needed"
+fi
+
+echo "using image id $IMAGEID"
+
+# execute python2 within the image passing the supplied arguments
+
+${DOCKER_BIN} run -it --rm \
+    --mount "type=bind,source=$MIG_BASE,target=/usr/src/app" \
+    --env "PYTHONPATH=$PYTHONPATH" \
+    --env "MIG_ENV=$MIG_ENV" \
+    "$IMAGEID" python$PY $@
