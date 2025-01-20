@@ -28,9 +28,13 @@
 
 """ Defines valid objecttypes and provides a method to verify if an object is correct """
 
+from mig.lib.templates import init_global_templates
+
+
 start = {'object_type': 'start', 'required': [], 'optional': ['headers'
                                                               ]}
 end = {'object_type': 'end', 'required': [], 'optional': []}
+template = {'object_type': 'template'}
 timing_info = {'object_type': 'timing_info', 'required': [],
                'optional': []}
 title = {'object_type': 'title', 'required': ['text'],
@@ -396,6 +400,7 @@ image_setting = {'object_type': 'image_setting', 'required': [
 valid_types_list = [
     start,
     end,
+    template,
     timing_info,
     title,
     text,
@@ -499,6 +504,8 @@ valid_types_list = [
     image_settings_list,
 ]
 
+base_template_required = set(('template_name', 'template_group', 'template_args,'))
+
 # valid_types_dict = {"title":title, "link":link, "header":header}
 
 # autogenerate dict based on list. Dictionary access is prefered to allow
@@ -539,8 +546,8 @@ def get_object_type_info(object_type_list):
     return out
 
 
-def validate(input_object):
-    """ validate input_object """
+def validate(input_object, configuration=None):
+    """ validate presented objects against their definitions """
 
     if not type(input_object) == type([]):
         return (False, 'validate object must be a list' % ())
@@ -560,6 +567,19 @@ def validate(input_object):
 
             this_object_type = obj['object_type']
             valid_object_type = valid_types_dict[this_object_type]
+
+            if this_object_type == 'template':
+                # the required keys stuff below is not applicable to templates
+                # because templates know what they need in terms of data thus
+                # are self-documenting - use this fact to perform validation
+                #template_ref = "%s_%s.html" % (obj['template_group'], )
+                store = init_global_templates(configuration)
+                template = store.grab_template(obj['template_name'], obj['template_group'], 'html')
+                valid_object_type = {
+                    'required': store.extract_variables(template)
+                }
+                obj = obj.get('template_args', None)
+
             if 'required' in valid_object_type:
                 for req in valid_object_type['required']:
                     if req not in obj:

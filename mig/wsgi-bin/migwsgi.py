@@ -130,7 +130,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         crash_helper(configuration, backend, output_objects)
         return (output_objects, returnvalues.ERROR)
 
-    (val_ret, val_msg) = validate(output_objects)
+    (val_ret, val_msg) = validate(output_objects, configuration=configuration)
     if not val_ret:
         (ret_code, ret_msg) = returnvalues.OUTPUT_VALIDATION_ERROR
         bailout_helper(configuration, backend, output_objects,

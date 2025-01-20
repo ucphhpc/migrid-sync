@@ -34,7 +34,7 @@ import os
 import stat
 import sys
 
-from tests.support import PY2, MIG_BASE, MigTestCase, testmain, is_path_within
+from tests.support import PY2, MIG_BASE, TEST_DATA_DIR, MigTestCase, testmain
 from tests.support.snapshotsupp import SnapshotAssertMixin
 from tests.support.wsgisupp import prepare_wsgi, WsgiAssertMixin
 
@@ -47,6 +47,13 @@ if PY2:
     from HTMLParser import HTMLParser
 else:
     from html.parser import HTMLParser
+
+
+def _force_test_templates(configuration):
+    from mig.lib.templates import init_global_templates, _clear_global_store
+    _clear_global_store()
+    test_tmpl_dir = os.path.join(TEST_DATA_DIR, 'templates')
+    init_global_templates(configuration, _templates_dirs=lambda: [test_tmpl_dir])
 
 
 class DocumentBasicsHtmlParser(HTMLParser):
@@ -294,6 +301,33 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin, SnapshotAssertMixi
             }
         ]
         self.fake_backend.set_response(output_objects, returnvalues.OK)
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        self.assertSnapshotOfHtmlContent(output)
+
+    def test_objects_with_type_template(self):
+        output_objects = [
+            # workaround invalid HTML being generated with no title object
+            {
+                'object_type': 'title',
+                'text': 'TEST'
+            },
+            {
+                'object_type': 'template',
+                'template_name': 'something',
+                'template_group': 'test',
+                'template_args': {
+                    'content': 'here!!'
+                }
+            }
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+        _force_test_templates(self.configuration)
 
         wsgi_result = migwsgi.application(
             *self.application_args,
