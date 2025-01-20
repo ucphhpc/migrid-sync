@@ -42,6 +42,7 @@ server_key_crt_ca_pem="${domain_cert_path}/server.key.crt.ca.pem"
 combined_pem="${domain_cert_path}/combined.pem"
 combined_pem_sha256="${combined_pem}.sha256"
 combined_pub="${domain_cert_path}/combined.pub"
+combined_pub_md5="${combined_pub}.md5"
 combined_pub_sha256="${combined_pub}.sha256"
 dhparams_pem="${cert_base}/dhparams.pem"
 # use git latest or release version of getssl
@@ -122,7 +123,10 @@ if [[ ${verbose} -eq 1 ]]; then
     echo "server_key_crt_ca_pem: ${server_key_crt_ca_pem}"
     echo "dhparams_pem: ${dhparams_pem}" 
     echo "combined_pem: ${combined_pem}"
+    echo "combined_pem_sha256: ${combined_pem_sha256}"
     echo "combined_pub: ${combined_pub}"
+    echo "combined_pub_md5: ${combined_pub_md5}"
+    echo "combined_pub_sha256: ${combined_pub_sha256}"
 fi
 
 # Ensure domain certificate path
