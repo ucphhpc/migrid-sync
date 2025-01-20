@@ -1953,13 +1953,13 @@ openssl genrsa -out %(__DAEMON_KEYCERT__)s 4096""" % user_dict)
             raw_sha256 = openssl_proc.stdout.read().strip()
             # NOTE: openssl outputs something like 'SHA256 Fingerprint=BLA'
             #       but algo part case may vary - split and take last part.
-            daemon_keycert_sha256 = raw_sha256.split(" Fingerprint=", 1)[-1]
+            cur_keycert_sha256 = raw_sha256.split(" Fingerprint=", 1)[-1]
         except Exception as exc:
             print("ERROR: failed to extract sha256 fingerprint of %s: %s" %
                   (key_path, exc))
-            daemon_keycert_sha256 = ''
+            cur_keycert_sha256 = ''
         if daemon_keycert_sha256 == keyword_auto:
-            user_dict['__DAEMON_KEYCERT_SHA256__'] = daemon_keycert_sha256
+            user_dict['__DAEMON_KEYCERT_SHA256__'] = cur_keycert_sha256
     if user_dict['__DAEMON_PUBKEY__']:
         if not os.path.isfile(os.path.expanduser("%(__DAEMON_PUBKEY__)s" %
                                                  user_dict)):
@@ -1983,19 +1983,19 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
                 pubkey.strip().split()[1].encode('ascii'))
             raw_md5 = make_simple_hash(b64_key)
             # reformat into colon-spearated octets
-            daemon_pubkey_md5 = ':'.join(a + b for a, b in zip(raw_md5[::2],
-                                                               raw_md5[1::2]))
+            cur_pubkey_md5 = ':'.join(a + b for a, b in zip(raw_md5[::2],
+                                                            raw_md5[1::2]))
             raw_sha256 = make_safe_hash(b64_key, False)
-            daemon_pubkey_sha256 = base64.b64encode(raw_sha256).rstrip('=')
+            cur_pubkey_sha256 = base64.b64encode(raw_sha256).rstrip('=')
         except Exception as exc:
             print("ERROR: failed to extract fingerprints of %s : %s" %
                   (pubkey_path, exc))
-            daemon_pubkey_md5 = ''
-            daemon_pubkey_sha256 = ''
+            cur_pubkey_md5 = ''
+            cur_pubkey_sha256 = ''
         if daemon_pubkey_md5 == keyword_auto:
-            user_dict['__DAEMON_PUBKEY_MD5__'] = daemon_pubkey_md5
+            user_dict['__DAEMON_PUBKEY_MD5__'] = cur_pubkey_md5
         if daemon_pubkey_sha256 == keyword_auto:
-            user_dict['__DAEMON_PUBKEY_SHA256__'] = daemon_pubkey_sha256
+            user_dict['__DAEMON_PUBKEY_SHA256__'] = cur_pubkey_sha256
 
     # Enable Debian/Ubuntu specific lines only there
     if user_dict['__DISTRO__'].lower() in ('ubuntu', 'debian'):
