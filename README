@@ -711,7 +711,10 @@ additional web apps and OpenID on CentOS:
                    --serveralias_clause='ServerAlias' --alias_field=email \
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
+                   --daemon_keycert_sha256='FILE::/home/mig/certs/combined.pem.sha256' \
                    --daemon_pubkey=~/certs/combined.pub \
+                   --daemon_pubkey_md5='FILE::/home/mig/certs/combined.pub.md5' \
+                   --daemon_pubkey_sha256='FILE::/home/mig/certs/combined.pub.sha256' \
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid migcert extoidc" \
                    --login_methods="extoid migoid migcert extoidc" \
@@ -811,7 +814,10 @@ local OpenID login and added Jupyter+cloud integration for data analysis:
                    --serveralias_clause='#ServerAlias' --alias_field=email \
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
+                   --daemon_keycert_sha256='FILE::/home/mig/certs/combined.pem.sha256' \
                    --daemon_pubkey=~/certs/combined.pub \
+                   --daemon_pubkey_md5='FILE::/home/mig/certs/combined.pub.md5' \
+                   --daemon_pubkey_sha256='FILE::/home/mig/certs/combined.pub.sha256' \
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid extcert extoidc" \
                    --login_methods="extoid migoid extcert extoidc" \
@@ -997,7 +1003,10 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --serveralias_clause='#ServerAlias' --alias_field=email \
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
+                   --daemon_keycert_sha256='FILE::/home/mig/certs/combined.pem.sha256' \
                    --daemon_pubkey=~/certs/combined.pub \
+                   --daemon_pubkey_md5='FILE::/home/mig/certs/combined.pub.md5' \
+                   --daemon_pubkey_sha256='FILE::/home/mig/certs/combined.pub.sha256' \
                    --daemon_pubkey_from_dns=True \
                    --daemon_show_address=sif-io.erda.dk \
                    --signup_methods="extoid migoid" \
