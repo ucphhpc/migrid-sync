@@ -711,8 +711,11 @@ additional web apps and OpenID on CentOS:
                    --serveralias_clause='ServerAlias' --alias_field=email \
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
+                   --daemon_keycert_sha256='FILE::/etc/httpd/MiG-certificates/combined.pem.sha256' \
                    --daemon_pubkey=~/certs/combined.pub \
                    --daemon_pubkey_from_dns=True \
+                   --daemon_pubkey_md5='FILE::/etc/httpd/MiG-certificates/combined.pub.md5' \
+                   --daemon_pubkey_sha256='FILE::/etc/httpd/MiG-certificates/combined.pub.sha256' \
                    --signup_methods="extoid migoid migcert extoidc" \
                    --login_methods="extoid migoid migcert extoidc" \
                    --distro=centos --skin=migrid-basic \
@@ -811,8 +814,11 @@ local OpenID login and added Jupyter+cloud integration for data analysis:
                    --serveralias_clause='#ServerAlias' --alias_field=email \
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
+                   --daemon_keycert_sha256='FILE::/etc/httpd/MiG-certificates/combined.pem.sha256' \
                    --daemon_pubkey=~/certs/combined.pub \
                    --daemon_pubkey_from_dns=True \
+                   --daemon_pubkey_md5='FILE::/etc/httpd/MiG-certificates/combined.pub.md5' \
+                   --daemon_pubkey_sha256='FILE::/etc/httpd/MiG-certificates/combined.pub.sha256' \
                    --signup_methods="extoid migoid extcert extoidc" \
                    --login_methods="extoid migoid extcert extoidc" \
                    --distro=centos --skin=erda-ucph-science \
@@ -997,8 +1003,11 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --serveralias_clause='#ServerAlias' --alias_field=email \
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
+                   --daemon_keycert_sha256='FILE::/etc/httpd/MiG-certificates/combined.pem.sha256' \
                    --daemon_pubkey=~/certs/combined.pub \
                    --daemon_pubkey_from_dns=True \
+                   --daemon_pubkey_md5='FILE::/etc/httpd/MiG-certificates/combined.pub.md5' \
+                   --daemon_pubkey_sha256='FILE::/etc/httpd/MiG-certificates/combined.pub.sha256' \
                    --daemon_show_address=sif-io.erda.dk \
                    --signup_methods="extoid migoid" \
                    --login_methods="extoid migoid" \
