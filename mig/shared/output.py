@@ -57,6 +57,7 @@ from mig.shared.objecttypes import validate
 from mig.shared.prettyprinttable import pprint_table
 from mig.shared.pwcrypto import sorted_hash_algos
 from mig.shared.safeinput import html_escape
+from mig.shared.templates import init_global_templates
 
 
 row_name = ('even', 'odd')
@@ -746,6 +747,15 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     for i in out_obj:
         if i['object_type'] == 'start':
             pass
+        elif i['object_type'] == 'template':
+            store = init_global_templates(configuration)
+            template = store.grab_template(
+                i['template_name'],
+                i['template_group'],
+                'html',
+                store.context.extend(**i['template_args'])
+            )
+            lines.append(template.render())
         elif i['object_type'] == 'error_text':
             msg = "%(text)s" % i
             if i.get('exc', False):
@@ -824,8 +834,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             # Global container introduced with UI V3
             # the optional container_class is used to switch to full width
             lines.append('''
-<!-- Begin UI container -->
 <div class="container page-content %s">
+<!-- Begin UI container -->
 ''' % i.get('container_class', ''))
         elif i['object_type'] == 'text':
             lines.append('<p>%s</p>' % html_escape(i['text']))
@@ -2627,6 +2637,10 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
         else:
             lines.append('unknown object %s' % i)
 
+    lines.append('''
+<!-- End UI container -->
+''')
+
     if status_line:
         timing_footer = ''
         status_line = status_line.replace('TIMING_INFO', timing_info)
@@ -2635,7 +2649,6 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
         # TODO: move inside get_xgi_html_footer?
         # Terminate UI V3 container
         lines.append('''
-<!-- End UI container -->
 </div>
 '''
                      )

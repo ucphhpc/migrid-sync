@@ -33,6 +33,8 @@ import os
 
 from tests.support.suppconst import TEST_BASE
 
+MARKER_CONTENT_BEGIN = '<!-- Begin UI container -->'
+MARKER_CONTENT_END = '<!-- End UI container -->'
 TEST_SNAPSHOTS_DIR = os.path.join(TEST_BASE, "snapshots")
 
 try:
@@ -40,6 +42,12 @@ try:
 except OSError as direxc:
     if direxc.errno != errno.EEXIST:  # FileExistsError
         raise
+
+
+def _content_only(value):
+    content_start_index = value.find(MARKER_CONTENT_BEGIN) + len(MARKER_CONTENT_BEGIN)
+    content_end_index = value.find(MARKER_CONTENT_END)
+    return value[content_start_index:content_end_index].strip()
 
 
 def _delimited_lines(value):
@@ -75,13 +83,7 @@ def _force_refresh_snapshots():
 class SnapshotAssertMixin:
     """Custom assertions alowing the use of snapshots within tests."""
 
-    def assertSnapshot(self, actual_content, extension=None):
-        """Load a snapshot corresponding to the named test and check that its
-        content, which is th expectatoin, matches what was actually given. In
-        the case a snapshot does not exist it is saved on first invocation."""
-
-        assert extension is not None
-
+    def _snapshotsupp_compare_snapshot(self, extension, actual_content):
         file_name = ''.join([self._testMethodName, ".", extension])
         file_path = os.path.join(TEST_SNAPSHOTS_DIR, file_name)
 
@@ -92,10 +94,9 @@ class SnapshotAssertMixin:
             return
 
         with open(file_path) as snapshot_file:
-            expected_content = snapshot_file.read()
+            return snapshot_file.read()
 
-        if actual_content == expected_content:
-            # they match, nothing more to do
+        if expected_content == actual_content:
             return
 
         udiff = difflib.unified_diff(
@@ -106,3 +107,22 @@ class SnapshotAssertMixin:
         )
         raise AssertionError(
             "content did not match snapshot\n\n%s" % (''.join(udiff),))
+
+    def assertSnapshot(self, actual_content, extension=None):
+        """Load a snapshot corresponding to the named test and check that its
+        content, which is th expectatoin, matches what was actually given. In
+        the case a snapshot does not exist it is saved on first invocation."""
+
+        assert extension is not None
+
+        self._snapshotsupp_compare_snapshot(extension, actual_content)
+
+    def assertSnapshotOfContent(self, actual_content, extension=None):
+        """Load a snapshot corresponding to the named test and check that its
+        content, which is th expectatoin, matches what was actually given. In
+        the case a snapshot does not exist it is saved on first invocation."""
+
+        assert extension is not None
+
+        actual_content = _content_only(actual_content)
+        self._snapshotsupp_compare_snapshot(extension, actual_content)
