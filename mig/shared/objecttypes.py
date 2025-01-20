@@ -28,9 +28,13 @@
 
 """ Defines valid objecttypes and provides a method to verify if an object is correct """
 
+from mig.lib.templates import init_global_templates
+
+
 start = {'object_type': 'start', 'required': [], 'optional': ['headers'
                                                               ]}
 end = {'object_type': 'end', 'required': [], 'optional': []}
+template = {'object_type': 'template'}
 timing_info = {'object_type': 'timing_info', 'required': [],
                'optional': []}
 title = {'object_type': 'title', 'required': ['text'],
@@ -320,6 +324,7 @@ object_types = {'object_type': 'object_types',
 valid_types_list = [
     start,
     end,
+    template,
     timing_info,
     title,
     text,
@@ -417,6 +422,12 @@ valid_types_list = [
     table_pager,
 ]
 
+valid_template_type_attrs_and_types = {
+    'template_name': str,
+    'template_group': str,
+    'template_args': dict,
+}
+
 # valid_types_dict = {"title":title, "link":link, "header":header}
 
 # autogenerate dict based on list. Dictionary access is prefered to allow
@@ -457,13 +468,13 @@ def get_object_type_info(object_type_list):
     return out
 
 
-def validate(input_object):
-    """ validate input_object """
+def validate(input_object, configuration=None):
+    """ validate presented objects against their definitions """
 
     if not type(input_object) == type([]):
         return (False, 'validate object must be a list' % ())
 
-    for obj in input_object:
+    for i, obj in enumerate(input_object):
         try:
             'object_type' in obj
         except Exception as exc:
@@ -478,6 +489,45 @@ def validate(input_object):
 
             this_object_type = obj['object_type']
             valid_object_type = valid_types_dict[this_object_type]
+
+            if this_object_type == 'template':
+                # in contrast to other types here there are two components to
+                # validating a template object: the output object itself but
+                # in addition the arguments that will be provided to templates
+
+                # first, directly validate the template output object
+                missing_attrs = [attr for attr, attr_type
+                                 in valid_template_type_attrs_and_types.items()
+                                 if not isinstance(obj.get(attr, None), attr_type)]
+                if missing_attrs:
+                    return (False,
+                            'template object is not a valid: %r' % obj)
+
+                # second, repurpose required keys stuff below given that
+                # templates know what they need in terms of data thus are
+                # self-documenting - use this fact to perform validation of
+                # what we will attempt to render
+                store = init_global_templates(configuration)
+                try:
+                    required = store.extract_variables(obj['template_name'], obj['template_group'], 'html')
+                except Exception as template_exc:
+                    # An error occurred while trying get hold of the requested
+                    # template and we must somehow communicate this to whatever
+                    # is making the request. This is expecting HTML fragments
+                    # and already has the necessary logic client-side to
+                    # check for an error_text type being rendered. Make use of
+                    # that here: the net effect is the error will be displayed.
+                    errortext = "%s: %s" % (type(template_exc).__name__, str(template_exc))
+                    input_object[i] = {
+                        "object_type": "error_text",
+                        "text": errortext,
+                    }
+                    continue
+                valid_object_type = {
+                    'required': required
+                }
+                obj = obj['template_args']
+
             if 'required' in valid_object_type:
                 for req in valid_object_type['required']:
                     if req not in obj:

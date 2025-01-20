@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_configuration - unit test of configuration
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -31,11 +31,14 @@ import inspect
 import os
 import unittest
 
-from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain
+from tests.support import MigTestCase, testmain, \
+    MIG_BASE, TEST_OUTPUT_DIR, TEST_DATA_DIR
 from tests.support.fixturesupp import FixtureAssertMixin
 
-from mig.shared.configuration import Configuration, \
+from mig.shared.configuration import Configuration, fix_missing, \
     _CONFIGURATION_ARGUMENTS, _CONFIGURATION_PROPERTIES
+
+TEST_TEMPLATE_CACHE_DIR = os.path.join(TEST_OUTPUT_DIR, "__template_cache__")
 
 
 class MigSharedConfiguration__static_definitions(MigTestCase):
@@ -47,6 +50,66 @@ class MigSharedConfiguration__static_definitions(MigTestCase):
 
         self.assertEqual(len(mismatched), 0,
                          "configuration defaults do not match arguments")
+
+
+class MigSharedConfiguration__incomplete_configurations(MigTestCase):
+    """Coverage of loaded Configuration instances."""
+
+    SUBSTITUTED_PROPERTIES = [
+        'server_fqdn',
+        'admin_email',
+        'migserver_http_url',
+        'mig_server_id',
+        'smtp_server',
+        'user_sftp_address',
+        'user_sftp_subsys_address',
+        'user_davs_address',
+        'user_ftps_address',
+        'user_openid_address',
+    ]
+
+    def test_fix_missing_completes_an_empty_file(self):
+        conf_file = os.path.join(TEST_OUTPUT_DIR, "empty.conf")
+        open(conf_file, 'w').close()
+
+        def noop(*args):
+            pass
+
+        fix_missing(conf_file, print=noop)
+
+        # check it is now a valid configuration
+        try:
+            Configuration(conf_file, skip_log=True, disable_auth_log=True)
+        except Exception as exc:
+            self.assertFalse(True, 'should not be reached')
+
+    def test_fix_missing_performs_substitutions(self):
+        conf_file = os.path.join(TEST_OUTPUT_DIR, "empty.conf")
+        open(conf_file, 'w').close()
+
+        def noop(*args):
+            pass
+
+        fix_missing(conf_file, user='testuser', fqdn='testhost', print=noop)
+        fixed_configuration = Configuration(
+            conf_file, skip_log=True, disable_auth_log=True)
+
+        # check the substitutions were made correctly
+        only_substituted_properties = {attr: getattr(fixed_configuration, attr)
+                                       for attr in self.SUBSTITUTED_PROPERTIES}
+        admin_email = only_substituted_properties.pop('admin_email')
+        admin_email.endswith('@localhost')
+        self.assertEqual(only_substituted_properties, {
+            'mig_server_id': 'testhost.0',
+            'migserver_http_url': 'http://testhost',
+            'server_fqdn': 'testhost',
+            'smtp_server': 'testhost',
+            'user_davs_address': 'testhost',
+            'user_ftps_address': 'testhost',
+            'user_openid_address': 'testhost',
+            'user_sftp_address': 'testhost',
+            'user_sftp_subsys_address': 'testhost',
+        })
 
 
 class MigSharedConfiguration__loaded_configurations(MigTestCase):
@@ -327,11 +390,36 @@ class MigSharedConfiguration__loaded_configurations(MigTestCase):
         # TODO: rename file to valid section name we can check and enable next?
         # self.assertEqual(configuration.multi, 'blabla')
 
+    def test_structured_templates_defaults(self):
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--empty_templates.conf')
+
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        division = configuration.division(section_name='TEMPLATES')
+        self.assertEqual(division.__dict__, {
+            'base_packages': [],
+            'cache_dir': os.path.join(MIG_BASE, 'state', 'templates'),
+        })
+
+    def test_structured_templates_enabled(self):
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--templates.conf')
+
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        division = configuration.division(section_name='TEMPLATES')
+        self.assertEqual(division.__dict__, {
+            'base_packages': ['testplugin'],
+            'cache_dir': TEST_TEMPLATE_CACHE_DIR,
+        })
+
 
 class MigSharedConfiguration__new_instance(MigTestCase, FixtureAssertMixin):
     """Coverage of programatically created Configuration instances."""
 
-    @unittest.skipIf(PY2, "Python 3 only")
     def test_default_object(self):
         prepared_fixture = self.prepareFixtureAssert(
             'mig_shared_configuration--new', fixture_format='json')
@@ -357,6 +445,16 @@ class MigSharedConfiguration__new_instance(MigTestCase, FixtureAssertMixin):
 
         # check the other was not affected
         self.assertEqual(configuration_2.default_page, [''])
+
+    def test_structured_templates_defaults(self):
+        configuration = Configuration(
+            None, skip_log=True, disable_auth_log=True)
+
+        division = configuration.division(section_name='TEMPLATES')
+        self.assertEqual(division.__dict__, {
+            'base_packages': [],
+            'cache_dir': os.path.join(MIG_BASE, 'state', 'templates'),
+        })
 
 
 if __name__ == '__main__':

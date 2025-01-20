@@ -67,6 +67,43 @@ def _html_content_only(value):
     return value[content_start_index:content_end_index].strip()
 
 
+def _html_fragment_only(value):
+    """For a given HTML input extract only the portion that corresponds to the
+    page content. This is somewhat convoluted due to having to work around an
+    inability to move the comment markers to enclose only the content.
+    """
+
+    content_length = len(value)
+
+    first_tag_index = value.find('<')
+
+    first_tag_name = ""
+    first_tag_index_close = first_tag_index + 1
+    while first_tag_index_close < content_length:
+        character = value[first_tag_index_close]
+        if character == '>':
+            break
+        first_tag_name += character
+        first_tag_index_close += 1
+
+    # remove any attributes from the first found tag
+    try:
+        first_tag_name = first_tag_name[0:first_tag_name.index(' ')]
+    except ValueError:
+        pass
+    assert first_tag_name, "fragment did not begin with a valid tag"
+    assert first_tag_index_close != content_length, "fragment is unclosed"
+
+    first_tag_closing = "</%s>" % (first_tag_name,)
+    after_first_tag_closing_index = value.rfind(first_tag_closing) + len(first_tag_closing)
+
+    trailing_characters_if_any = value[after_first_tag_closing_index:content_length]
+
+    assert trailing_characters_if_any.rstrip() == '', "fragment did not end with its opening tag"
+
+    return value
+
+
 def _delimited_lines(value):
     """Break a value by newlines into lines suitable for diffing."""
 
@@ -129,8 +166,10 @@ class SnapshotAssertMixin:
             'expected',
             'actual'
         )
+
+        display_snapshot_file = os.path.relpath(file_path, TEST_SNAPSHOTS_DIR)
         raise AssertionError(
-            "content did not match snapshot\n\n%s" % (''.join(udiff),))
+            "content did not match snapshot file: %s\n\n%s" % (display_snapshot_file, ''.join(udiff),))
 
     def assertSnapshot(self, actual_content, extension=None):
         """Load a snapshot corresponding to the named test and check that what
@@ -141,11 +180,14 @@ class SnapshotAssertMixin:
 
         self._snapshotsupp_compare_snapshot(extension, actual_content)
 
-    def assertSnapshotOfHtmlContent(self, actual_content):
+    def assertSnapshotOfHtmlContent(self, actual_content, is_fragment=False):
         """Load a snapshot corresponding to the named test and check that what
         it contains, which is the expectation, matches against the portion of
         what was actually given that corresponds to the output HTML content.
         """
 
-        actual_content = _html_content_only(actual_content)
+        if is_fragment:
+            actual_content = _html_fragment_only(actual_content)
+        else:
+            actual_content = _html_content_only(actual_content)
         self._snapshotsupp_compare_snapshot('html', actual_content)
