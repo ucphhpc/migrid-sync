@@ -2832,10 +2832,11 @@ def format_output(
 
         # hide previous output
 
-        out_obj = []
-        out_obj.extend([{'object_type': 'error_text', 'text':
-                         'Validation error! %s' % val_msg},
-                        {'object_type': 'title', 'text': 'Validation error!'}])
+        out_obj = [
+            {'object_type': 'start'},
+            {'object_type': 'title', 'text': 'Validation error!'},
+            {'object_type': 'error_text', 'text': 'Validation error! %s' % val_msg},
+        ]
 
     start = None
     title = None
