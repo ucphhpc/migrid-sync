@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -22,7 +22,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-# -- END_HEADER ---
+# --- END_HEADER ---
 #
 
 """User administration functions"""
@@ -1908,6 +1908,51 @@ def expire_oid_sessions(configuration, db_name, identity):
     query = 'DELETE FROM sessionmanager WHERE identity=?'
     args = (identity, )
     return __oid_sessions_execute(configuration, db_name, query, args, True)
+
+
+def assure_current_htaccess(configuration, client_id, user_dict, force=False,
+                            verbose=False):
+    """Check and force htaccess file renew for client_id to refresh any stale
+    old ID data no longer in sync with user DB.
+    """
+    logger = configuration.logger
+    now = time.time()
+    client_dir = client_id_dir(client_id)
+    user_home = os.path.join(configuration.user_home, client_dir)
+    user_cache = os.path.join(configuration.user_cache, client_dir)
+    try:
+        # The .htaccess file needs to have auth lines on the format
+        # require user "abc123@ku.dk"
+        # or similar where abc123@ku.dk equals the short_id of the user in the
+        # user database.
+        short_id = user_dict.get('short_id', False)
+        if not short_id:
+            print('No short_id found for %r - skip' % client_id)
+            return False
+        required_line = 'require user "%s"' % short_id
+        htaccess_path = os.path.join(user_home, htaccess_filename)
+        if not os.path.isfile(htaccess_path):
+            htaccess_contents = ''
+        else:
+            htaccess_contents = read_file(htaccess_path, logger)
+        if htaccess_contents.find(required_line) != -1:
+            if verbose:
+                print('account %r already up to date' % client_id)
+            return True
+        print('account %r requires htaccess refresh' % client_id)
+        # NOTE: backup current htaccess in user_cache as safety
+        htaccess_backup = os.path.join(user_cache, htaccess_filename + '.old')
+        print('write htaccess backup in %s' % htaccess_backup)
+        write_file(htaccess_contents, htaccess_backup, logger)
+        create_user_in_fs(configuration, client_id, user_dict, now, True,
+                          force, verbose)
+        print('Refreshed %r in file system' % user_dict['distinguished_name'])
+        return True
+    except Exception as exc:
+        if not force:
+            raise Exception('Could not refresh %r in file system: %s' %
+                            (client_id, exc))
+    return False
 
 
 def migrate_users(
