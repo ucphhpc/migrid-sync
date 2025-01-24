@@ -1927,8 +1927,10 @@ def assure_current_htaccess(configuration, client_id, user_dict, force=False,
         # user database.
         short_id = user_dict.get('short_id', False)
         if not short_id:
-            print('No short_id found for %r - skip' % client_id)
-            return False
+            if verbose:
+                print('No short_id found for %r - skip' % client_id)
+            if not force:
+                return False
         required_line = 'require user "%s"' % short_id
         htaccess_path = os.path.join(user_home, htaccess_filename)
         if not os.path.isfile(htaccess_path):
@@ -1937,16 +1939,20 @@ def assure_current_htaccess(configuration, client_id, user_dict, force=False,
             htaccess_contents = read_file(htaccess_path, logger)
         if htaccess_contents.find(required_line) != -1:
             if verbose:
-                print('account %r already up to date' % client_id)
+                print('Account %r already up to date' % client_id)
             return True
-        print('account %r requires htaccess refresh' % client_id)
+        if verbose:
+            print('Account %r requires htaccess refresh' % client_id)
         # NOTE: backup current htaccess in user_cache as safety
         htaccess_backup = os.path.join(user_cache, htaccess_filename + '.old')
-        print('write htaccess backup in %s' % htaccess_backup)
+        if verbose:
+            print('write htaccess backup in %s' % htaccess_backup)
         write_file(htaccess_contents, htaccess_backup, logger)
         create_user_in_fs(configuration, client_id, user_dict, now, True,
                           force, verbose)
-        print('Refreshed %r in file system' % user_dict['distinguished_name'])
+        if verbose:
+            print('Refreshed %(distinguished_name)r in file system' %
+                  user_dict)
         return True
     except Exception as exc:
         if not force:
