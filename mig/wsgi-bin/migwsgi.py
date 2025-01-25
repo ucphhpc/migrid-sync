@@ -34,7 +34,7 @@ import time
 from mig.shared import returnvalues
 from mig.shared.bailout import bailout_helper, crash_helper, compact_string
 from mig.shared.base import requested_backend, allow_script, \
-    is_default_str_coding, force_default_str_coding_rec
+    is_default_str_coding, force_default_str_coding_rec, force_utf8
 from mig.shared.defaults import download_block_size, default_fs_coding
 from mig.shared.conf import get_configuration_object
 from mig.shared.objecttypes import get_object_type_info
@@ -50,7 +50,7 @@ def object_type_info(object_type):
 
 
 def stub(configuration, client_id, import_path, backend, user_arguments_dict,
-         environ):
+         environ, _import_module):
     """Run backend on behalf of client_id with supplied user_arguments_dict.
     I.e. import main from import_path and execute it with supplied arguments.
     """
@@ -88,7 +88,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
 
         # _logger.debug("import main from %r" % import_path)
         # NOTE: dynamic module loading to find corresponding main function
-        module_handle = importlib.import_module(import_path)
+        module_handle = _import_module(import_path)
         main = module_handle.main
     except Exception as err:
         _logger.error("%s could not import %r (%s): %s" %
@@ -184,7 +184,8 @@ def wrap_wsgi_errors(environ, configuration, max_line_len=100):
         environ['wsgi.errors'].close()
 
 
-def application(environ, start_response):
+def application(environ, start_response, configuration=None,
+        _import_module=importlib.import_module, _set_os_environ=True):
     """MiG app called automatically by WSGI.
 
     *environ* is a dictionary populated by the server with CGI-like variables
@@ -235,14 +236,17 @@ def application(environ, start_response):
                                                              os_env_value))
 
     # Assign updated environ to LOCAL os.environ for the rest of this session
-    os.environ = environ
+    if _set_os_environ:
+        os.environ(environ)
 
     # NOTE: redirect stdout to stderr in python 2 only. It breaks logger in 3
     #       and stdout redirection apparently is already handled there.
     if sys.version_info[0] < 3:
         sys.stdout = sys.stderr
 
-    configuration = get_configuration_object()
+    if configuration is None:
+        configuration = get_configuration_object()
+
     _logger = configuration.logger
 
     # NOTE: replace default wsgi errors to apache error log with our own logs
@@ -313,7 +317,8 @@ def application(environ, start_response):
             # _logger.debug("wsgi handling script: %s" % script_name)
             (output_objs, ret_val) = stub(configuration, client_id,
                                           module_path, backend,
-                                          user_arguments_dict, environ)
+                                          user_arguments_dict, environ,
+                                          _import_module=_import_module)
         else:
             _logger.warning("wsgi handling refused script:%s" % script_name)
             (output_objs, ret_val) = reject_main(client_id,
@@ -410,12 +415,12 @@ def application(environ, start_response):
             _logger.info("WSGI %s yielding %d output parts (%db)" %
                          (backend, chunk_parts, content_length))
         # _logger.debug("send chunked %r response to client" % backend)
-        for i in xrange(chunk_parts):
+        for i in list(range(chunk_parts)):
             # _logger.debug("WSGI %s yielding part %d / %d output parts" %
             #              (backend, i+1, chunk_parts))
             # end index may be after end of content - but no problem
             part = output[i*download_block_size:(i+1)*download_block_size]
-            yield part
+            yield force_utf8(part)
         if chunk_parts > 1:
             _logger.info("WSGI %s finished yielding all %d output parts" %
                          (backend, chunk_parts))
