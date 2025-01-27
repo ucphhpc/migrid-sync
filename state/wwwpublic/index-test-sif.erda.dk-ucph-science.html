@@ -119,7 +119,7 @@
              switch_language(user_lang);
              $("#langselect").msDropdown().fadeIn(500);
 
-             var auth_methods = lookup_site_conf('auth_methods', ['extoid', 'migoid']);
+             var auth_methods = lookup_site_conf('auth_methods', ['extoidc', 'migoid']);
              var query = window.location.search;
              const urlParams = new URLSearchParams(query);
              var show = [];
