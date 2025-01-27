@@ -1928,9 +1928,8 @@ def assure_current_htaccess(configuration, client_id, user_dict, force=False,
         short_id = user_dict.get('short_id', False)
         if not short_id:
             if verbose:
-                print('No short_id found for %r - skip' % client_id)
-            if not force:
-                return False
+                print('No short_id found for %r - nothing to do' % client_id)
+            return False
         required_line = 'require user "%s"' % short_id
         htaccess_path = os.path.join(user_home, htaccess_filename)
         if not os.path.isfile(htaccess_path):

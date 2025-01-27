@@ -56,7 +56,7 @@ Where OPTIONS may be one or more of:
    -A EXPIRE_AFTER     Limit to users expiring after EXPIRE_AFTER (epoch)
    -B EXPIRE_BEFORE    Limit to users expiring before EXPIRE_BEFORE (epoch)
    -c CONF_FILE        Use CONF_FILE as server configuration
-   -d DB_FILE          Use DB_FILE as user data base file   
+   -d DB_FILE          Use DB_FILE as user data base file
    -f                  Force operations to continue past errors
    -h                  Show this help
    -I CERT_DN          Filter to user(s) with ID (distinguished name)
@@ -181,7 +181,7 @@ if '__main__' == __name__:
                           user_id)
                 continue
 
-        if not 'extoid' in known_auth or 'extoidc' in known_auth:
+        if not ('extoid' in known_auth or 'extoidc' in known_auth):
             if verbose:
                 print('Skip handling of user %r without extoid(c) auth' %
                       user_id)
