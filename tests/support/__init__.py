@@ -41,6 +41,7 @@ import sys
 from unittest import TestCase, main as testmain
 
 from tests.support.configsupp import FakeConfiguration
+from tests.support.pathsupp import is_path_within
 from tests.support.suppconst import MIG_BASE, TEST_BASE, TEST_FIXTURE_DIR, \
     TEST_DATA_DIR, TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR
 
@@ -294,16 +295,6 @@ included:
         relative_path = os.path.relpath(absolute_path, start=MIG_BASE)
         assert not relative_path.startswith('..')
         return relative_path
-
-
-def is_path_within(path, start=None, _msg=None):
-    """Check if path is within start directory"""
-    try:
-        assert os.path.isabs(path), _msg
-        relative = os.path.relpath(path, start=start)
-    except:
-        return False
-    return not relative.startswith('..')
 
 
 def ensure_dirs_exist(absolute_dir):
