@@ -42,14 +42,10 @@ from builtins import range
 from past.builtins import basestring
 import ast
 import base64
-import crypt
-import datetime
 import grp
 import os
 import pwd
-import random
 import re
-import socket
 import subprocess
 import sys
 
