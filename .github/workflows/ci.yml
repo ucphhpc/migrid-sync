@@ -23,7 +23,8 @@ permissions:
   contents: read
 
 jobs:
-  python3-latest:
+  # NOTE: this one has minor version fluctuations even between runners
+  python3-latest-ubuntu:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository contents
@@ -38,6 +39,23 @@ jobs:
       - name: Run tests
         run: |
           make unittest
+
+  # We rely on containers for everything else for consistency
+  python3-latest:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3
+      volumes:
+        - .:/usr/src/app
+    steps:
+      - name: Check out repository contents
+        uses: actions/checkout@v4
+      - name: Setup environment
+        run: |
+          make PYTHON_BIN=python3 dependencies
+      - name: Run tests
+        run: |
+          make PYTHON_BIN=python3 unittest
 
   python3-rocky9:
     runs-on: ubuntu-22.04
