@@ -32,6 +32,7 @@ from __future__ import absolute_import
 import os
 import sys
 
+from mig.shared.defaults import MIG_ENV
 from mig.shared.fileio import unpickle
 
 
@@ -53,6 +54,15 @@ def get_configuration_object(config_file=None, skip_log=False,
         else:
             _config_file = os.path.join(app_dir, '..', 'server',
                                         'MiGserver.conf')
+
+    if MIG_ENV == 'local':
+        # A local environment is one running directly out of a checkout on a
+        # local machine and we arrange this define only in those circumstances.
+        # Given that logging files are unsupported in such environments, detect
+        # this and disable them up front thus ensuring CLI tools can function.
+        skip_log = True
+        disable_auth_log = True
+
     configuration = Configuration(_config_file, False, skip_log,
                                   disable_auth_log)
     return configuration
