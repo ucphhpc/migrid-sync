@@ -60,6 +60,7 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -I CERT_DN          Filter to user(s) with ID (distinguished name)
+   -s SHORT_ID         Filter to user(s) with given short ID field
    -v                  Verbose output
 """
           % {'name': name})
@@ -75,11 +76,12 @@ if '__main__' == __name__:
     search_filter = default_search()
     # Default to all users with expire range between now and in 30 days
     search_filter['distinguished_name'] = '*'
+    search_filter['short_id'] = '*'
     search_filter['expire_after'] = now
     search_filter['expire_before'] = int(time.time() + 365 * 24 * 3600)
     # Default to only external openid accounts
     services = ['extoid']
-    opt_args = 'A:B:c:d:fhI:v'
+    opt_args = 'A:B:c:d:fhI:s:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -117,6 +119,8 @@ if '__main__' == __name__:
             sys.exit(0)
         elif opt == '-I':
             search_filter['distinguished_name'] = val
+        elif opt == '-s':
+            search_filter['short_id'] = val
         elif opt == '-v':
             verbose = True
         else:
