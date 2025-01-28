@@ -942,28 +942,31 @@ Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web),
 optimized SFTP, WebDAVS, strict access control and extensive logging to comply
 with the  General Data Protection Regulation (GDPR) imposed by EU:
 https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
-./generateconfs.py --source=. --destination=generated-confs \
+./generateconfs.py --source=. \
+                   --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --support_email="SIF Support <support@sif.erda.dk>" \
-                   --admin_email="SIF admin <info@sif.erda.dk>"
-                   --admin_list="/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk , C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Martin Rehr/emailAddress=rehr@nbi.ku.dk" \
+                   --admin_email="SIF Info <info@sif.erda.dk>"
+                   --admin_list="/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas \Bardino/emailAddress=bardino@nbi.ku.dk , /C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Martin Rehr/emailAddress=rehr@nbi.ku.dk" \
                    --auto_add_cert_user=False \
-                   --auto_add_oid_user=True \
-                   --auto_add_oidc_user=False \ 
-                   --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
+                   --auto_add_oid_user=False \
+                   --auto_add_filter_fields=full_name \
+                   --auto_add_filter_method=skip \
                    --oid_valid_days=180 \
+                   --daemon_show_address=sif-io.erda.dk \
                    --base_fqdn=sif.erda.dk \
                    --public_fqdn=sif-www.erda.dk \
                    --public_alias_fqdn=sif.ku.dk \
-                   --public_sec_fqdn=sif.ku.dk \
+                   --public_sec_fqdn=sif-www.erda.dk \
                    --public_use_https=True \
-                   --mig_cert_fqdn= \
-                   --ext_cert_fqdn= \
+                   --mig_cert_fqdn='' \
+                   --ext_cert_fqdn='' \
                    --mig_oid_fqdn=sif-ext.erda.dk \
-                   --ext_oid_fqdn=sif.erda.dk \
+                   --ext_oid_fqdn=sif-oid.erda.dk \
                    --sid_fqdn=sif-sid.erda.dk \
                    --io_fqdn=sif-io.erda.dk \
-                   --user=mig --group=mig \
+                   --user=mig \
+                   --group=mig \
                    --apache_version=2.4 \
                    --apache_etc=/etc/httpd \
                    --apache_run=/var/run/httpd \
@@ -975,58 +978,101 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --mig_certs=/etc/httpd/MiG-certificates \
                    --hg_path='' \
                    --hgweb_scripts='' \
-                   --trac_admin_path='' --trac_ini_path='' \
-                   --public_http_port=80 --public_https_port=443 \
-                   --ext_cert_port=443 --mig_oid_port=443 \
-                   --ext_oid_port=443 --sid_port=443 \
+                   --trac_admin_path='' \
+                   --trac_ini_path='' \
+                   --public_http_port=80 \
+                   --public_https_port=443 \
+                   --ext_cert_port=443 \
+                   --mig_oid_port=443 \
+                   --mig_oidc_port=443 \
+                   --ext_oid_port=443 \
+                   --sid_port=443 \
                    --mig_oid_provider=https://sif-ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_openid=True \
-                   --enable_sftp=True --enable_sftp_subsys=False \
-                   --enable_davs=True --enable_ftps=False \
-                   --enable_sharelinks=False --enable_transfers=False \
-                   --enable_duplicati=False --enable_seafile=False \
-                   --enable_sandboxes=False --enable_vmachines=False \
-                   --enable_crontab=False --enable_jobs=False \
-                   --enable_resources=False --enable_events=False \
-                   --enable_freeze=False --enable_preview=False \
-                   --enable_gdp=True --gdp_email_notify=True \
-                   --enable_notify=True --enable_twofactor=True \
+                   --enable_wsgi=True \
+                   --enable_sftp=True \
+                   --enable_sftp_subsys=False \
+                   --enable_davs=True \
+                   --enable_ftps=False \
+                   --enable_sharelinks=False \
+                   --enable_transfers=False \
+                   --enable_duplicati=False \
+                   --enable_seafile=False \
+                   --enable_sandboxes=False \
+                   --enable_vmachines=False \
+                   --enable_crontab=False \
+                   --enable_jobs=False \
+                   --enable_resources=False \
+                   --enable_events=False \
+                   --enable_freeze=False \
+                   --enable_preview=False \
+                   --enable_gdp=True \
+                   --enable_notify=True \
+                   --enable_twofactor=True \
                    --enable_twofactor_strict_address=True \
-                   --enable_cracklib=True --enable_hsts=True \
-                   --enable_vhost_certs=True --enable_verify_certs=True \
-                   --enable_migadmin=False --enable_peers=True \
-                   --peers_mandatory=True --peers_explicit_fields='full_name email' \
-                   --peers_contact_hint='employed at UCPH and authorized to invite external users' \
-                   --user_clause=User --group_clause=Group \
-                   --listen_clause='#Listen' \
-                   --serveralias_clause='#ServerAlias' --alias_field=email \
+                   --enable_cracklib=True \
+                   --enable_hsts=True \
+                   --enable_vhost_certs=True \
+                   --enable_verify_certs=True \
+                   --user_clause=User \
+                   --group_clause=Group \
+                   --listen_clause=#Listen \
+                   --serveralias_clause=#ServerAlias \
+                   --alias_field=email \
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
-                   --daemon_keycert_sha256='FILE::/etc/httpd/MiG-certificates/combined.pem.sha256' \
                    --daemon_pubkey=~/certs/combined.pub \
                    --daemon_pubkey_from_dns=True \
-                   --daemon_pubkey_md5='FILE::/etc/httpd/MiG-certificates/combined.pub.md5' \
-                   --daemon_pubkey_sha256='FILE::/etc/httpd/MiG-certificates/combined.pub.sha256' \
-                   --daemon_show_address=sif-io.erda.dk \
-                   --signup_methods="extoid migoid" \
-                   --login_methods="extoid migoid" \
-                   --password_policy=MODERN:12 --password_legacy_policy=HIGH \
-                   --distro=centos --skin=sif-ucph-science \
-                   --title="Sensitive Information Facility" \
-                   --short_title="SIF" \
-                   --external_doc=https://sif.ku.dk \
+                   --signup_methods="extoidc migoid" \
+                   --login_methods="extoidc migoid" \
+                   --password_policy=MODERN:12 \
+                   --password_legacy_policy=HIGH \
+                   --gdp_email_notify=True \
                    --mig_oid_title="External" \
                    --ext_oid_title="KU/UCPH" \
+                   --ext_oidc_title="KU/UCPH" \
                    --vgrid_label="Project" \
                    --vgrid_creators="role:.*(vip|tap)" \
-                   --csrf_protection="FULL" \
+                   --vgrid_managers="role:.*(vip|tap)" \
+                   --smtp_sender='UCPH SIF Server <noreply@sif.erda.dk>' \
+                   --title="Sensitive Information Facility" \
+                   --short_title="SIF"  \
+                   --default_menu="files setup close logout" \
+                   --user_interface="V2" --csrf_protection="FULL" \
                    --io_account_expire=True \
+                   --sftp_port=2222  \
+                   --sftp_subsys_port=22 \
+                   --sftp_show_port=22 \
+                   --davs_port=4443 \
+                   --davs_show_port=443 \
+                   --openid_port=8443 \
+                   --openid_show_port=443 \
                    --digest_salt="FILE::/home/mig/state/secrets/digest_salt.hex" \
                    --crypto_salt="FILE::/home/mig/state/secrets/crypto_salt.hex" \
-                   --wsgi_procs=25 --user_interface='V2' \
-                   --default_menu="files setup close logout" \
-                   --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
+                   --distro=centos \
+                   --skin=sif-ucph-science \
+                   --wsgi_procs=25 \
+                   --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137" \
+                   --public_sec_fqdn=sif.ku.dk \
+                   --enable_peers=True \
+                   --peers_mandatory=True \
+                   --peers_explicit_fields="full_name email" --peers_contact_hint="employed at UCPH and authorized to invite external users" \
+                   --enable_migadmin=False \
+                   --external_doc="https://sif.ku.dk" \
+                   --oidc_valid_days=180 \
+                   --ext_oidc_fqdn=sif-oidc.erda.dk \
+                   --ext_oidc_port=443 \
+                   --ext_oidc_provider_meta_url=https://id.ku.dk/nidp/oauth/nam/.well-known/openid-configuration \
+                   --ext_oidc_client_name=erda_sif \
+                   --ext_oidc_client_id=64ced371-a92d-4182-8e0c-4f66e8088e00 \
+                   --ext_oidc_scope=AS_SIF-ERDA \
+                   --ext_oidc_remote_user_claim=upn \
+                   --ext_oidc_pass_claim_as=both \
+                   --auto_add_oidc_user=True \
+                   --daemon_pubkey_sha256="FILE::/etc/httpd/MiG-certificates/combined.pub.sha256" \
+                   --daemon_keycert_sha256="FILE::/etc/httpd/MiG-certificates/combined.pem.sha256" \
+                   --daemon_pubkey_md5="FILE::/etc/httpd/MiG-certificates/combined.pub.md5"
 
 Most of the arguments should be relatively straight forward, but you
 need to provide the MIG_CERTS path where your apache server key and
