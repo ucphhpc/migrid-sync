@@ -35,7 +35,7 @@ try:
 except ImportError:
     import pickle
 # IMPORTANT: lazy-load json and yaml mainly in order to work around PAM crashes
-#            seen in sftpsubsys sessions. Apparently there's a bug or C-API
+#            seen in sshd+sftpsubsys sessions. Apparently there's a bug / C-API
 #            incompatibility when using yaml in embedded python interpreters,
 #            due to yaml using its own nested C-extensions. In practice it
 #            results in a metaclass conflict TypeError upon yaml re-init there
@@ -50,9 +50,10 @@ try:
 except ImportError:
     yaml = None
 except TypeError:
-    # NOTE: this should not really happen but does in sftpsubsys as described
-    #       above. We don't actually need yaml in that case so just silently
-    #       ignore it here and only raise an assertion error if used below.
+    # NOTE: this should not really happen but it does with sshd+sftpsubsys in
+    #       our PAM module hooking into this code as described above. We don't
+    #       actually need yaml in that case so just silently ignore it here and
+    #       only raise an assertion error if used below.
     yaml = None
 
 
