@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # serial - object serialization operations using pickle, json or yaml
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -29,13 +29,28 @@
 
 from __future__ import print_function
 
-# Python 2 requires explicit cPickle where as python 3 defaults to it
+# Python 2 requires explicit cPickle whereas python 3 defaults to it
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-import json
-import yaml
+# NOTE: lazy-load json and yaml, mainly in order to work around PAM crashes
+#       in sftpsubsys sessions due to an issue with yaml use of its own nested
+#       C-extensions and a metaclass conflict upon reinitializing like in
+#       https://github.com/ros-drivers/rosserial/issues/450
+try:
+    import json
+except ImportError:
+    json = None
+try:
+    import yaml
+except ImportError:
+    yaml = None
+except TypeError:
+    # NOTE: this should not happen but does in sftpsubsys as described above.
+    #       We do not really need yaml in that case so just silently ignore
+    #       and raise error only if used below.
+    yaml = None
 
 
 def dumps(data, protocol=0, serializer='pickle', **kwargs):
@@ -46,8 +61,10 @@ def dumps(data, protocol=0, serializer='pickle', **kwargs):
         if 'protocol' not in kwargs:
             kwargs['protocol'] = protocol
     if serializer == 'json':
+        assert json is not None, "JSON module must be loaded for actual use"
         serial_helper = json.dumps
     if serializer == 'yaml':
+        assert yaml is not None, "YAML module must be loaded for actual use"
         serial_helper = yaml.dump
     return serial_helper(data, **kwargs)
 
@@ -64,8 +81,10 @@ def loads(data, serializer='pickle', **kwargs):
     """
     serial_helper = pickle.loads
     if serializer == 'json':
+        assert json is not None, "JSON module must be loaded for actual use"
         serial_helper = json.loads
     if serializer == 'yaml':
+        assert yaml is not None, "YAML module must be loaded for actual use"
         # NOTE: yaml load supports both string and file-like obj
         serial_helper = yaml.load
         kwargs['Loader'] = yaml.SafeLoader
