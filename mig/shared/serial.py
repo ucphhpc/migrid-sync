@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # serial - object serialization operations using pickle, json or yaml
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -37,14 +37,32 @@ except Exception as exc:
     print("ERROR: failed to init compatibility setup")
     exit(1)
 
-import json
-import yaml
-
-# Python 2 requires explicit cPickle where as python 3 defaults to it
+# Python 2 requires explicit cPickle whereas python 3 defaults to it
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
+# IMPORTANT: lazy-load json and yaml mainly in order to work around PAM crashes
+#            seen in sshd+sftpsubsys sessions. Apparently there's a bug / C-API
+#            incompatibility when using yaml in embedded python interpreters,
+#            due to yaml using its own nested C-extensions. In practice it
+#            results in a metaclass conflict TypeError upon yaml re-init there
+#            like described in
+#            https://github.com/ros-drivers/rosserial/issues/450
+try:
+    import json
+except ImportError:
+    json = None
+try:
+    import yaml
+except ImportError:
+    yaml = None
+except TypeError:
+    # NOTE: this should not really happen but it does with sshd+sftpsubsys in
+    #       our PAM module hooking into this code as described above. We don't
+    #       actually need yaml in that case so just silently ignore it here and
+    #       only raise an assertion error if used below.
+    yaml = None
 
 from mig.shared.base import force_native_str_rec, force_utf8_rec
 
@@ -65,10 +83,12 @@ def dumps(data, protocol=0, serializer='pickle', **kwargs):
         # pickle dumps already returns bytes - skip post conversion
         postprocess_helper = None
     if serializer == 'json':
+        assert json is not None, "JSON module must be loaded for actual use"
         serial_helper = json.dumps
         # json dumps expects and returns native string - skip pre conversion
         preprocess_helper = None
     if serializer == 'yaml':
+        assert yaml is not None, "YAML module must be loaded for actual use"
         serial_helper = yaml.dump
     if not serial_helper:
         raise ValueError("invalid serializer %r provided" % serializer)
@@ -104,8 +124,10 @@ def loads(data, serializer='pickle', **kwargs):
     if serializer == 'pickle':
         serial_helper = pickle.loads
     if serializer == 'json':
+        assert json is not None, "JSON module must be loaded for actual use"
         serial_helper = json.loads
     if serializer == 'yaml':
+        assert yaml is not None, "YAML module must be loaded for actual use"
         # NOTE: yaml load supports both string and file-like obj
         serial_helper = yaml.load
         kwargs['Loader'] = yaml.SafeLoader
