@@ -92,6 +92,8 @@ AUTH_UNKNOWN = "Unknown"
 
 # Password reset tokens expire after this number of seconds (one hour)
 RESET_TOKEN_TTL = 3600
+# Account removal tokens expire after this number of seconds (24 hours)
+REMOVAL_TOKEN_TTL = 24*3600
 
 # Which format to use for unique user IDs, used to be X509 but modern sites
 # are moving to simple unique identifier keys (UUID) to simplify e.g. changes
