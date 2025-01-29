@@ -46,9 +46,10 @@ except ImportError:
 #            seen in sshd+sftpsubsys sessions. Apparently there's a bug / C-API
 #            incompatibility when using yaml in embedded python interpreters,
 #            due to yaml using its own nested C-extensions. In practice it
-#            results in a metaclass conflict TypeError upon yaml re-init there
-#            like described in
+#            results in a metaclass conflict TypeError or SystemError upon yaml
+#            re-init there like described in
 #            https://github.com/ros-drivers/rosserial/issues/450
+#            On Rocky 9 it's the TypeError and on Rocky 8 the SystemError.
 try:
     import json
 except ImportError:
@@ -57,7 +58,7 @@ try:
     import yaml
 except ImportError:
     yaml = None
-except TypeError:
+except (TypeError, SystemError):
     # NOTE: this should not really happen but it does with sshd+sftpsubsys in
     #       our PAM module hooking into this code as described above. We don't
     #       actually need yaml in that case so just silently ignore it here and
