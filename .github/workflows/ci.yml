@@ -23,24 +23,7 @@ permissions:
   contents: read
 
 jobs:
-  # NOTE: this one has minor version fluctuations even between runners
-  python3-latest-ubuntu:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository contents
-        uses: actions/checkout@v4
-      - name: Set up latest Python 3.x
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-      - name: Setup environment
-        run: |
-          make dependencies
-      - name: Run tests
-        run: |
-          make unittest
-
-  # We rely on containers for everything else for consistency
+  # NOTE: We rely on containers for everything to get version consistency
   python3-latest:
     runs-on: ubuntu-latest
     container:
