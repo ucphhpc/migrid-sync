@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - shared base helper functions
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -29,7 +29,6 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
-from past.builtins import basestring
 
 from builtins import range
 from past.builtins import basestring
@@ -654,12 +653,14 @@ def _force_default_coding_rec(input_obj, kind, highlight='', stringify=False):
         raise ValueError('Unsupported default coding kind: %s' % kind)
 
 
-def force_native_str_rec(input_obj, highlight=''):
-    """A helper to force input_obj to the default string coding.
+def force_native_str_rec(input_obj, highlight='', stringify=False):
+    """A helper to force input_obj to the default string coding recursively.
     Use the active interpreter and the shared.defaults helpers to force the
     current default.
+    Please note that the default here is to NOT stringify non-string values
+    like numbers.
     """
-    return _force_default_coding_rec(input_obj, STR_KIND, highlight)
+    return _force_default_coding_rec(input_obj, STR_KIND, highlight, stringify)
 
 
 def force_default_str_coding_rec(input_obj, highlight='', stringify=False):
@@ -680,16 +681,6 @@ def force_default_fs_coding_rec(input_obj, highlight='', stringify=False):
     like numbers.
     """
     return _force_default_coding_rec(input_obj, FS_KIND, highlight, stringify)
-
-
-def force_native_str_rec(input_obj, highlight='', stringify=False):
-    """A helper to force input_obj to the default string coding recursively.
-    Use the active interpreter and the shared.defaults helpers to force the
-    current default.
-    Please note that the default here is to NOT stringify non-string values
-    like numbers.
-    """
-    return _force_default_coding_rec(input_obj, STR_KIND, highlight, stringify)
 
 
 def native_str_escape(val):
