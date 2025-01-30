@@ -7,3 +7,4 @@ autopep8;python_version >= "3"
 # NOTE: paramiko-3.0.0 dropped python2 and python3.6 support
 paramiko;python_version >= "3.7"
 paramiko<3;python_version < "3.7"
+werkzeug
