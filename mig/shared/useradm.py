@@ -36,6 +36,7 @@ from past.builtins import basestring
 
 from email.utils import parseaddr
 import datetime
+import errno
 import fnmatch
 import os
 import re
@@ -100,6 +101,10 @@ ftps_authdigests = os.path.join(ftps_conf_dir, authdigests_filename)
 https_authkeys = ''
 https_authpasswords = user_db_filename
 https_authdigests = user_db_filename
+
+
+_USERADM_CONFIG_DIR_KEYS = ('user_db_home', 'user_home', 'user_settings',
+                            'user_cache', 'mrsl_files_dir', 'resource_pending')
 
 
 def init_user_adm(dynamic_db_path=True):
@@ -458,6 +463,21 @@ def verify_user_peers(configuration, db_path, client_id, user, now, verify_peer,
     return accepted_peer_list, effective_expire
 
 
+def _check_directories_unprovisioned(configuration, db_path):
+    user_db_home = os.path.dirname(db_path)
+    return not os.path.exists(db_path) and not os.path.exists(user_db_home)
+
+
+def _provision_directories(configuration):
+    for config_attr in _USERADM_CONFIG_DIR_KEYS:
+        try:
+            dir_to_create = getattr(configuration, config_attr)
+            os.makedirs(dir_to_create)
+        except OSError as oserr:
+            if oserr.errno != errno.ENOENT:  # FileNotFoundError
+                raise
+
+
 def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
                       reset_token, reset_auth_type, accepted_peer_list, force,
                       verbose, ask_renew, default_renew, do_lock,
@@ -470,8 +490,25 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
     flock = None
     user_db = {}
     renew = default_renew
+
+    retry_lock = False
     if do_lock:
+        try:
+            flock = lock_user_db(db_path)
+        except (IOError, OSError) as oserr:
+            if oserr.errno != errno.ENOENT:  # FileNotFoundError
+                raise
+
+            if _check_directories_unprovisioned(configuration, db_path=db_path):
+                _provision_directories(configuration)
+                retry_lock = True
+            else:
+                raise Exception("Failed to lock user DB: '%s'" % db_path)
+
+    if retry_lock:
         flock = lock_user_db(db_path)
+        if not flock:
+            raise Exception("Failed to lock user DB: '%s'" % db_path)
 
     if not os.path.exists(db_path):
         # Auto-create missing user DB if either auto_create_db or force is set
@@ -1027,7 +1064,9 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
     format as a first step.
     """
 
-    if conf_path:
+    if isinstance(conf_path, Configuration):
+        configuration = conf_path
+    elif conf_path:
         if isinstance(conf_path, basestring):
 
             # has been checked for accessibility above...
