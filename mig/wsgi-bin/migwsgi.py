@@ -240,7 +240,7 @@ def application(environ, start_response, configuration=None,
 
     # Assign updated environ to LOCAL os.environ for the rest of this session
     if _set_os_environ:
-        os.environ(environ)
+        os.environ = environ
 
     # NOTE: enable to debug runtime environment to apache error log
     # print("DEBUG: python %s" %
