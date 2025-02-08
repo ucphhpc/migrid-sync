@@ -150,7 +150,7 @@ class WsgiAssertMixin:
         try:
             self.assertTrue(called_once(fake_start_response))
         except AssertionError:
-            if len(fake.calls) == 0:
+            if len(fake_start_response.calls) == 0:
                 raise AssertionError("WSGI handler did not respond")
             else:
                 raise AssertionError("WSGI handler responded more than once")
