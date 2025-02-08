@@ -2,7 +2,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# test_mig_shared_pwcrypto - unit test of the corresponding mig shared module
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
