@@ -114,10 +114,10 @@ def best_crypt_salt(configuration):
     return salt_data
 
 
-def make_hash(password):
+def make_hash(password, _urandom=urandom):
     """Generate a random salt and return a new hash for the password."""
     # NOTE: urandom already returns bytes as required for base64 encode
-    salt = b64encode(urandom(SALT_LENGTH))
+    salt = b64encode(_urandom(SALT_LENGTH))
     # NOTE: hashlib functions require bytes, and post string format needs
     #       native strings to avoid actually inserting string type markers.
     derived = b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION,
