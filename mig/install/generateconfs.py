@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2025  The MiG Project
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -76,6 +76,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'base_fqdn',
         'public_fqdn',
         'public_alias_fqdn',
+        'status_alias_fqdn',
         'public_sec_fqdn',
         'mig_cert_fqdn',
         'ext_cert_fqdn',
