@@ -123,7 +123,7 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
             #print("DEBUG: oserror found as expected: %s" % ignore_oserr)
             pass
 
-    # TODO:
+    # NOTE: hits unrelated python3 issues on main so only enable on next
     @unittest.skipUnless(PY2, "Python 2 only")
     def test_creates_missing_htaccess_file(self):
         user_dict = {}
@@ -141,6 +141,7 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
         self.assertHtaccessRequireUserClause(DUMMY_HTACCESS_PATH,
                                              DUMMY_REQUIRE_USER)
 
+    # NOTE: hits unrelated python3 issues on main so only enable on next
     @unittest.skipUnless(PY2, "Python 2 only")
     def test_repairs_existing_stale_htaccess_file(self):
         user_dict = {}
