@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -22,7 +22,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-# -- END_HEADER ---
+# --- END_HEADER ---
 #
 
 """User administration functions"""
@@ -1914,6 +1914,59 @@ def expire_oid_sessions(configuration, db_name, identity):
     query = 'DELETE FROM sessionmanager WHERE identity=?'
     args = (identity, )
     return __oid_sessions_execute(configuration, db_name, query, args, True)
+
+
+def assure_current_htaccess(configuration, client_id, user_dict, force=False,
+                            verbose=False):
+    """Check and force htaccess file renew for client_id to refresh any stale
+    old ID data no longer in sync with user DB.
+    """
+    logger = configuration.logger
+    now = time.time()
+    client_dir = client_id_dir(client_id)
+    user_home = os.path.join(configuration.user_home, client_dir)
+    user_cache = os.path.join(configuration.user_cache, client_dir)
+    try:
+        htaccess_path = os.path.join(user_home, htaccess_filename)
+        if not os.path.isfile(htaccess_path):
+            htaccess_contents = ''
+        else:
+            htaccess_contents = read_file(htaccess_path, logger)
+        # The .htaccess file needs to have auth lines on the format
+        # require user "abc123@somewhere.org"
+        # for each abc123@somewhere.org from the openid_names of the account
+        # entry in the user database.
+        check_required_names = user_dict.get('openid_names', [])
+        short_id = user_dict.get('short_id', '')
+        if short_id and short_id not in check_required_names:
+            check_required_names.append(short_id)
+        missing_names = []
+        for username in check_required_names:
+            required_line = 'require user "%s"' % username
+            if htaccess_contents.find(required_line) == -1:
+                missing_names.append(username)
+        if not missing_names:
+            if verbose:
+                print('Account %r htaccess already up to date' % client_id)
+            return True
+        if verbose:
+            print('Account %r requires htaccess refresh: %s missing' %
+                  (client_id, ', '.join(missing_names)))
+        # NOTE: backup current htaccess in user_cache as safety
+        htaccess_backup = os.path.join(user_cache, htaccess_filename + '.old')
+        if verbose:
+            print('write htaccess backup in %s' % htaccess_backup)
+        write_file(htaccess_contents, htaccess_backup, logger)
+        create_user_in_fs(configuration, client_id, user_dict, now, True,
+                          force, verbose)
+        if verbose:
+            print('Refreshed %r in file system' % client_id)
+        return True
+    except Exception as exc:
+        if not force:
+            raise Exception('Could not refresh %r in file system: %s' %
+                            (client_id, exc))
+    return False
 
 
 def migrate_users(
