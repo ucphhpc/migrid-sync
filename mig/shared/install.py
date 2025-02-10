@@ -296,6 +296,7 @@ def generate_confs(
     base_fqdn='',
     public_fqdn='',
     public_alias_fqdn='',
+    status_alias_fqdn='',
     public_sec_fqdn='',
     mig_cert_fqdn='',
     ext_cert_fqdn='',
@@ -617,6 +618,7 @@ def _generate_confs_prepare(
     base_fqdn,
     public_fqdn,
     public_alias_fqdn,
+    status_alias_fqdn,
     public_sec_fqdn,
     mig_cert_fqdn,
     ext_cert_fqdn,
@@ -847,6 +849,7 @@ def _generate_confs_prepare(
     user_dict['__BASE_FQDN__'] = base_fqdn
     user_dict['__PUBLIC_FQDN__'] = public_fqdn
     user_dict['__PUBLIC_ALIAS_FQDN__'] = public_alias_fqdn
+    user_dict['__STATUS_ALIAS_FQDN__'] = status_alias_fqdn
     if public_use_https:
         if public_sec_fqdn:
             user_dict['__PUBLIC_SEC_FQDN__'] = public_sec_fqdn
@@ -1085,6 +1088,7 @@ def _generate_confs_prepare(
     user_dict['__GDP_PATH_SCRAMBLE__'] = gdp_path_scramble
     user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
+    user_dict['__STATUS_ALIAS_HTTPS_LISTEN__'] = listen_clause
     user_dict['__QUOTA_BACKEND__'] = quota_backend
     user_dict['__QUOTA_USER_LIMIT__'] = "%s" % quota_user_limit
     user_dict['__QUOTA_VGRID_LIMIT__'] = "%s" % quota_vgrid_limit
@@ -1224,6 +1228,9 @@ cert, oid and sid based https!
     user_dict['__IFDEF_PUBLIC_ALIAS_FQDN__'] = 'UnDefine'
     if user_dict['__PUBLIC_ALIAS_FQDN__']:
         user_dict['__IFDEF_PUBLIC_ALIAS_FQDN__'] = 'Define'
+    user_dict['__IFDEF_STATUS_ALIAS_FQDN__'] = 'UnDefine'
+    if user_dict['__STATUS_ALIAS_FQDN__']:
+        user_dict['__IFDEF_STATUS_ALIAS_FQDN__'] = 'Define'
 
     user_dict['__IFDEF_MIG_CERT_FQDN__'] = 'UnDefine'
     if user_dict['__MIG_CERT_FQDN__']:
@@ -2099,6 +2106,11 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         # Apache fails on duplicate listen clauses
         if public_use_https and public_alias_fqdn == public_fqdn:
             user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = "# %s" % listen_clause
+    if status_alias_fqdn:
+        # Apache fails on duplicate listen clauses
+        if public_use_https and status_alias_fqdn in (public_fqdn,
+                                                      public_alias_fqdn):
+            user_dict['__STATUS_ALIAS_HTTPS_LISTEN__'] = "# %s" % listen_clause
 
     if mig_cert_fqdn:
         user_dict['__MIG_CERT_URL__'] = 'https://%(__MIG_CERT_FQDN__)s' % \
