@@ -1921,27 +1921,31 @@ def assure_current_htaccess(configuration, client_id, user_dict, force=False,
     user_home = os.path.join(configuration.user_home, client_dir)
     user_cache = os.path.join(configuration.user_cache, client_dir)
     try:
-        # The .htaccess file needs to have auth lines on the format
-        # require user "abc123@ku.dk"
-        # or similar where abc123@ku.dk equals the short_id of the user in the
-        # user database.
-        short_id = user_dict.get('short_id', False)
-        if not short_id:
-            if verbose:
-                print('No short_id found for %r - nothing to do' % client_id)
-            return False
-        required_line = 'require user "%s"' % short_id
         htaccess_path = os.path.join(user_home, htaccess_filename)
         if not os.path.isfile(htaccess_path):
             htaccess_contents = ''
         else:
             htaccess_contents = read_file(htaccess_path, logger)
-        if htaccess_contents.find(required_line) != -1:
+        # The .htaccess file needs to have auth lines on the format
+        # require user "abc123@somewhere.org"
+        # for each abc123@somewhere.org from the openid_names of the account
+        # entry in the user database.
+        check_required_names = user_dict.get('openid_names', [])
+        short_id = user_dict.get('short_id', '')
+        if short_id and short_id not in check_required_names:
+            check_required_names.append(short_id)
+        missing_names = []
+        for username in check_required_names:
+            required_line = 'require user "%s"' % username
+            if htaccess_contents.find(required_line) == -1:
+                missing_names.append(username)
+        if not missing_names:
             if verbose:
-                print('Account %r already up to date' % client_id)
+                print('Account %r htaccess already up to date' % client_id)
             return True
         if verbose:
-            print('Account %r requires htaccess refresh' % client_id)
+            print('Account %r requires htaccess refresh: %s missing' %
+                  (client_id, ', '.join(missing_names)))
         # NOTE: backup current htaccess in user_cache as safety
         htaccess_backup = os.path.join(user_cache, htaccess_filename + '.old')
         if verbose:
@@ -1950,8 +1954,7 @@ def assure_current_htaccess(configuration, client_id, user_dict, force=False,
         create_user_in_fs(configuration, client_id, user_dict, now, True,
                           force, verbose)
         if verbose:
-            print('Refreshed %(distinguished_name)r in file system' %
-                  user_dict)
+            print('Refreshed %r in file system' % client_id)
         return True
     except Exception as exc:
         if not force:

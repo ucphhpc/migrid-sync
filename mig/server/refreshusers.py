@@ -153,12 +153,12 @@ if '__main__' == __name__:
         if verbose:
             print('Check refresh needed for %r' % user_id)
 
-        # TODO: what to do with gdp accounts here?
+        # NOTE: gdp accounts don't actually use .htaccess but cat.py serving
         if configuration.site_enable_gdp and \
                 user_id.split('/')[-1].startswith(gdp_prefix):
             if verbose:
-                print("Skip GDP project account: %s" % user_id)
-            continue
+                print("Handling GDP project account %r despite no effect" %
+                      user_id)
 
         # Don't warn about already disabled or suspended accounts
         account_state = user_dict.get('status', 'active')
