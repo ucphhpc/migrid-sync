@@ -35,6 +35,7 @@ import stat
 import sys
 
 from tests.support import PY2, MIG_BASE, MigTestCase, testmain, is_path_within
+from tests.support.snapshotsupp import SnapshotAssertMixin
 from tests.support.wsgisupp import prepare_wsgi, WsgiAssertMixin
 
 from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
@@ -122,7 +123,7 @@ class FakeBackend:
         return _import_module
 
 
-class MigWsgibin(MigTestCase, WsgiAssertMixin):
+class MigWsgibin(MigTestCase, SnapshotAssertMixin, WsgiAssertMixin):
     """WSGI glue test cases"""
 
     def _provide_configuration(self):
@@ -150,7 +151,7 @@ class MigWsgibin(MigTestCase, WsgiAssertMixin):
         actual_title = parser.title(trim_newlines=trim_newlines)
         self.assertEqual(actual_title, title_text)
 
-    def test_return_value_ok_returns_status_200(self):
+    def test_top_level_request_returns_status_ok(self):
         wsgi_result = migwsgi.application(
             *self.application_args,
             **self.application_kwargs
@@ -158,7 +159,7 @@ class MigWsgibin(MigTestCase, WsgiAssertMixin):
 
         self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
 
-    def test_return_value_ok_returns_expected_title(self):
+    def test_objects_containing_only_title_has_expected_title(self):
         output_objects = [
             {'object_type': 'title', 'text': 'TEST'}
         ]
@@ -171,6 +172,20 @@ class MigWsgibin(MigTestCase, WsgiAssertMixin):
 
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
         self.assertHtmlTitle(output, title_text='TEST', trim_newlines=True)
+
+    def test_objects_containing_only_title_matches_snapshot(self):
+        output_objects = [
+            {'object_type': 'title', 'text': 'TEST'}
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        self.assertSnapshot(output, extension='html')
 
 
 if __name__ == '__main__':
