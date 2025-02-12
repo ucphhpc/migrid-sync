@@ -26,12 +26,13 @@
 #
 
 """This module contains various helper contents for the certificate and OpenID
-account request handlers"""
+account request handlers.
+"""
 
 from __future__ import absolute_import
 
-import re
 import os
+import re
 import time
 
 # NOTE: the external iso3166 module is optional and only used if available
