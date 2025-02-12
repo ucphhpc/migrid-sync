@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Check out source repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # This is necessary to get the commits
       - name: Get changed python files between base and head
         run: >
           echo "CHANGED_FILES=$(echo $(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep \.py))" >> $GITHUB_ENV
