@@ -1250,12 +1250,13 @@ def __auto_add_user_allowed(configuration, user_dict, permit_list):
     is empty.
     """
 
-    if not permit_list:
-        return False
+    match = False
+    if permit_list:
+        match = True
     for (key, val) in permit_list:
         if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
             return False
-    return True
+    return match
 
 
 def auto_add_user_allowed_direct(configuration, user_dict):
