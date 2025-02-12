@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqpwreset - Account password reset request backend
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -135,16 +135,16 @@ def main(client_id, user_arguments_dict, environ=None):
                             (configuration.user_mig_oid_title, auth_type)}
             output_objects.append(migoidc_link)
         elif auth_flavor == AUTH_MIG_CERT:
-            extcert_url = os.path.join(os.path.dirname(bin_url), 'extcert.py')
-            extcert_link = {'object_type': 'link', 'destination': extcert_url,
+            migcert_url = os.path.join(os.path.dirname(bin_url), 'migcert.py')
+            migcert_link = {'object_type': 'link', 'destination': migcert_url,
                             'text': 'Change %s %s password' %
                             (configuration.user_mig_cert_title, auth_type)}
-            output_objects.append(extcert_link)
+            output_objects.append(migcert_link)
     else:
         form_method = 'post'
         csrf_limit = get_csrf_limit(configuration)
         fill_helpers = {'form_method': form_method, 'csrf_field': csrf_field,
-                        'csrf_limit': csrf_limit,
+                        'csrf_limit': csrf_limit, 'cert_id': '',
                         'short_title': configuration.short_title}
         target_op = "reqpwresetaction"
         csrf_token = make_csrf_token(configuration, form_method, target_op,
