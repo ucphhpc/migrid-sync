@@ -197,26 +197,28 @@ def html_tmpl(configuration, client_id, environ, title_entry):
     ''' % fill_helpers
 
     if user_dict.get('status', 'active') == 'temporal':
+        autocreate_allowed = False
         bin_url = requested_page(os.environ).replace('-sid', '-bin')
         if auth_flavor == AUTH_MIG_OID:
             migoid_url = os.path.join(os.path.dirname(bin_url), 'reqoid.py')
             migoid_link = {'object_type': 'link', 'destination': migoid_url,
-                           'text': 'Change %s %s password' %
+                           'text': 'Renew %s %s account access' %
                            (configuration.user_mig_oid_title, auth_type)}
-            fill_helpers['pwreset_helper'] = html_link(migoid_link)
+            fill_helpers['renew_helper'] = html_link(migoid_link)
         elif auth_flavor == AUTH_MIG_OIDC:
             migoidc_url = os.path.join(os.path.dirname(bin_url), 'reqoidc.py')
             migoidc_link = {'object_type': 'link', 'destination': migoidc_url,
-                            'text': 'Change %s %s password' %
+                            'text': 'Renew %s %s account access' %
                             (configuration.user_mig_oidc_title, auth_type)}
-            fill_helpers['pwreset_helper'] = html_link(migoidc_link)
+            fill_helpers['renew_helper'] = html_link(migoidc_link)
         elif auth_flavor == AUTH_MIG_CERT:
             migcert_url = os.path.join(os.path.dirname(bin_url), 'migcert.py')
             migcert_link = {'object_type': 'link', 'destination': migcert_url,
-                            'text': 'Change %s %s password' %
+                            'text': 'Renew %s %s account access' %
                             (configuration.user_mig_cert_title, auth_type)}
-            fill_helpers['pwreset_helper'] = html_link(migcert_link)
+            fill_helpers['renew_helper'] = html_link(migcert_link)
         else:
+            autocreate_allowed = True
             form_method = 'post'
             csrf_limit = get_csrf_limit(configuration)
             target_op = 'autocreate'
@@ -231,16 +233,18 @@ def html_tmpl(configuration, client_id, environ, title_entry):
         ''' % (target_op, form_method, csrf_field, csrf_token,
                user_dict.get('peers_full_name', ''),
                user_dict.get('peers_email', ''))
-        if auth_flavor == AUTH_EXT_CERT:
-            fill_helpers['autorenew_form_prefix'] += '''
+            if auth_flavor == AUTH_EXT_CERT:
+                fill_helpers['autorenew_form_prefix'] += '''
             <input type="hidden" name="cert_id" value="%s">
             <input type="hidden" name="email" value="%s">
-            ''' % (client_id, user_dict['email'])
-        fill_helpers['autorenew_form_suffix'] = '''
+                ''' % (client_id, user_dict['email'])
+            fill_helpers['autorenew_form_suffix'] = '''
             <input type="submit" value="Renew Account Access">
         </form>
-        '''
-        html += '''
+            '''
+
+        if autocreate_allowed:
+            html += '''
         <div class="autorenew__header col-12">
             <h3>Renew Access</h3>
             <p>
@@ -252,7 +256,21 @@ def html_tmpl(configuration, client_id, environ, title_entry):
             %(autorenew_form_prefix)s
             %(autorenew_form_suffix)s
         </div>
-        ''' % fill_helpers
+            ''' % fill_helpers
+        else:
+            html += '''
+        <div class="renew__header col-12">
+            <h3>Renew Access</h3>
+            <p>
+            Account access automatically expires after a while and needs to be
+            actively renewed. If you had someone appoint you as their peer and
+            that appointment has not yet expired you can renew your access here
+            with only manual operator approval. Otherwise you need manual peer
+            approval as well.
+            </p>
+            %(renew_helper)s
+        </div>
+            ''' % fill_helpers
 
     html += '''
             <div class="col-lg-12 vertical-spacer"></div>
