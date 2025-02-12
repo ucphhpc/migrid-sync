@@ -36,13 +36,13 @@ import os
 from mig.shared import returnvalues
 from mig.shared.accountreq import account_pw_reset_template
 from mig.shared.base import requested_page
-from mig.shared.defaults import csrf_field, user_home_label, AUTH_MIG_OID, \
-    AUTH_MIG_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT
+from mig.shared.defaults import AUTH_EXT_CERT, AUTH_MIG_CERT, AUTH_MIG_OID, \
+    AUTH_MIG_OIDC, csrf_field, user_home_label
 from mig.shared.functional import validate_input_and_cert
-from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import html_user_messages, man_base_js
 from mig.shared.httpsclient import detect_client_auth
+from mig.shared.init import find_entry, initialize_main_variables
 from mig.shared.output import html_link
 from mig.shared.useradm import get_full_user_map
 
