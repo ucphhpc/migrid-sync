@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- page specific meta tags -->
+
+
+<!-- site default style -->
+<link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+
+<!-- base page styles -->
+
+
+
+<!-- specific page styles -->
+
+
+
+<!-- skin page styles -->
+
+
+
+<!-- append any site-specific styles -->
+<link rel="stylesheet" type="text/css" href="/images/site-custom.css" media="screen"/>
+
+
+
+<!-- begin user supplied style dependencies -->
+
+<!-- end user supplied style dependencies -->
+
+
+<!-- Set site favicon -->
+<link rel="icon" type="image/vnd.microsoft.icon" href="/images/skin/migrid-basic/favicon.ico"/>
+
+
+<!-- base page scripts -->
+
+
+
+<!-- skin page scripts -->
+
+
+
+<!-- specific page scripts -->
+
+
+
+<!-- general script init and ready handlers -->
+<script type="text/javascript" >
+    
+    $(document).ready(function() {
+        //console.log("document ready handler");
+        
+    });
+</script>
+
+<!-- append any site-specific scripts -->
+
+
+<!-- begin user supplied script dependencies -->
+
+<!-- end user supplied script dependencies -->
+
+
+    
+<title>
+TEST
+</title>
+
+</head>
+    
+<body id="modern-ui-body" class=''>
+    
+<!-- Push notifications: updated/filled by AJAX -->
+<div id="sitestatus-popup" class="toast hidden" data-autohide="false">
+    <div id="sitestatus-top" class="toast-header">
+        <div id="sitestatus-title" class="toast-title">
+            <!-- TODO: move inline style to css files -->
+            <!-- NOTE: reuse 1.5rem size with ml-2 and mb-1 classes to mimic close -->
+            <span id="sitestatus-icon" class="fas fa-question-circle ml-2 mb-1" style="color: grey; font-size: 1.5rem; float: left;"></span>
+             <strong class="mr-auto text-primary" style="float: left;">
+                 <h3 id="sitestatus-caption" style="margin-left: 5px;">SITE STATUS</h3>
+             </strong>
+             <small id="sitestatus-timestamp" class="text-muted" style="float: right;"></small>
+        </div>
+        <div id="sitestatus-close" class="">
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
+        </div>
+    </div>
+    <div id="sitestatus-content" class="toast-body">
+        <h3>Site Status</h3>
+        <p id="sitestatus-line" class="status-text">
+        <!-- Filled by AJAX -->
+        </p>
+        <div id="sitestatus-recent" class="hidden"><h3>Active Announcements</h3>
+            <p id="sitestatus-announce" class="announce-text"></p>
+        </div>
+    </div>
+    <div id="sitestatus-more" class="toast-body">
+        <a target=_blank href="/public/status.html">More details ...</a>
+    </div>
+</div>
+
+
+<!--HEADER INFO AREA-->
+<nav id="headerNav">
+    <ul class="nav__items">
+        <li class="nav__item">
+            <a id="supportInfoButton" href="#" class="nav__label" onclick="toggle_info('supportInfo')">Support</a>
+        </li>
+        <li class="nav__item nav_item--expanded">
+            <a id="aboutInfoButton" href="#" class="nav__label" onclick="toggle_info('aboutInfo')">About</a>
+        </li>
+        <!-- NOTE: completely skip feedback button for now to avoid border
+            <li id="sitefeedback-button" class="nav__item nav_item--expanded fas fa-thumbs-up custom-hidden"></li>
+        -->
+        
+                <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" onclick="show_message()" title="Site status - click for details"></li>
+            
+     </ul>
+</nav>
+
+<div id="infoArea" class="infoArea-container">
+</div>
+
+<div id="supportInfo" class="infoArea-container">
+    <span class="far fa-times-circle close_btn" onclick="toggle_info('supportInfo')"></span>
+    <div class="popup container">
+        <div class="row">
+            <!-- NOTE: we invert color coding scheme for FAQ accordion -->
+            <div id="support-content" class="col-lg-12 invert-theme">
+                <!-- Filled by AJAX -->
+            </div>
+            <div class="vertical-spacer"></div>
+        </div>
+    </div>
+</div>
+
+<div id="aboutInfo" class="infoArea-container">
+<span class="far fa-times-circle close_btn" onclick="toggle_info('aboutInfo')"></span>
+    <div class="popup container">
+        <div class="row">
+            <div id="about-content" class="col-lg-12">
+                <!-- Filled by AJAX -->
+            </div>
+            <div class="vertical-spacer"></div>
+        </div>
+    </div>
+</div>
+
+<!--New nav side bar -->
+<nav id="sideBar" >
+    <!--SIDEBAR-->
+    <div class="sidebar-container row">
+        <div class="sidebar-header col-12 align-self-start">
+            <a id="logoMenu" href="home.py">
+                <div class="home-nav-logo"></div>
+            </a>
+        </div>
+            
+                
+                
+
+        <div class="sidebar-middle col-12 align-self-center">
+                
+                    <a href="home.py"   class="link-home link-fas link-fa-home" title="App overview and launch page">
+        <span  class="home fas fa-home"></span></a>
+        <a href="fileman.py"   class="link-files link-fas link-fa-folder" title="Manage files and folders in your home directory">
+        <span  class="files fas fa-folder"></span></a>
+        <a href="submitjob.py"   class="link-submitjob link-fas link-fa-running" title="Submit a job for execution on a resource">
+        <span  class="submitjob fas fa-running"></span></a>
+        <a href="jobman.py"   class="link-jobs link-fas link-fa-tasks" title="Manage and monitor your grid jobs">
+        <span  class="jobs fas fa-tasks"></span></a>
+        <a href="vgridman.py"   class="link-vgrids link-fas link-fa-network-wired" title="Virtual organisations sharing some resources and files">
+        <span  class="vgrids fas fa-network-wired"></span></a>
+        <a href="resman.py"   class="link-resources link-fas link-fa-server" title="Resources available in the system">
+        <span  class="resources fas fa-server"></span></a>
+        <a href="redb.py"   class="link-runtimeenvs link-fas link-fa-warehouse" title="Runtime environments: software which can be made available">
+        <span  class="runtimeenvs fas fa-warehouse"></span></a>
+        <a href="people.py"   class="link-people link-fas link-fa-users" title="View and communicate with other users">
+        <span  class="people fas fa-users"></span></a>
+           <!-- Skip built-in settings for modern UI -->
+<a href="downloads.py"   class="link-downloads link-fas link-fa-download" title="Download scripts to work directly from your local machine">
+        <span  class="downloads fas fa-download"></span></a>
+        <a href="datatransfer.py"   class="link-transfers link-fas link-fa-datatransfer" title="For background batch transfers of data">
+        <span  class="transfers fas fa-datatransfer"></span></a>
+        <a href="sharelink.py"   class="link-sharelinks link-fas link-fa-share-alt" title="Manage share links for easy data exchange">
+        <span  class="sharelinks fas fa-share-alt"></span></a>
+        <a href="crontab.py"   class="link-crontab link-fas link-fa-calendar-check" title="Your personal task scheduler">
+        <span  class="crontab fas fa-calendar-check"></span></a>
+        <a href="docs.py"   class="link-docs link-fas link-fa-book" title="Some built-in documentation for reference">
+        <span  class="docs fas fa-book"></span></a>
+           <!-- Skip built-in logout for modern UI -->
+
+    <div id="hamBtn" class="hamburger hamburger--vortex" onclick="hamburgerMenuToggle()">
+        <div class="hamburger-box">
+            <!--<div class="hamburger-inner"></div>-->
+            <h3>...</h3>
+        </div>
+        <!--<div id="menuTxt">Menu</div>-->
+    </div>
+        
+        
+                    
+        </div>
+        <div class = "col-12 align-self-end home-nav-user__container" >
+            <div id = "userMenuButton" class = "fas fa-user home-nav-user" onclick = "userMenuToggle()" title = "Your personal settings for MiG" > </div>
+        </div>
+
+                
+        
+                
+    </div>
+</nav>
+
+
+        <div id = "hamMenu" class = "slidernav-container" >
+
+            <div class = "slider-container__inner row" >
+                <div class="slider-header col-12 align-self-start">
+                    <h2>MiG</h2>
+                </div>
+                <div class="slider-middle col-12 align-self-center">
+                            
+    <div class="navmenu slider-middle col-12 align-self-center">
+        <a href="home.py"   class="link-home link-fas link-fa-home" title="App overview and launch page">
+        <span  class="home fas fa-home hidden"></span>Home</a>
+        <a href="fileman.py"   class="link-files link-fas link-fa-folder" title="Manage files and folders in your home directory">
+        <span  class="files fas fa-folder hidden"></span>Files</a>
+        <a href="submitjob.py"   class="link-submitjob link-fas link-fa-running" title="Submit a job for execution on a resource">
+        <span  class="submitjob fas fa-running hidden"></span>Submit Job</a>
+        <a href="jobman.py"   class="link-jobs link-fas link-fa-tasks" title="Manage and monitor your grid jobs">
+        <span  class="jobs fas fa-tasks hidden"></span>Jobs</a>
+        <a href="vgridman.py"   class="link-vgrids link-fas link-fa-network-wired" title="Virtual organisations sharing some resources and files">
+        <span  class="vgrids fas fa-network-wired hidden"></span>VGrids</a>
+        <a href="resman.py"   class="link-resources link-fas link-fa-server" title="Resources available in the system">
+        <span  class="resources fas fa-server hidden"></span>Resources</a>
+        <a href="redb.py"   class="link-runtimeenvs link-fas link-fa-warehouse" title="Runtime environments: software which can be made available">
+        <span  class="runtimeenvs fas fa-warehouse hidden"></span>Runtime Envs</a>
+        <a href="people.py"   class="link-people link-fas link-fa-users" title="View and communicate with other users">
+        <span  class="people fas fa-users hidden"></span>People</a>
+           <!-- Skip built-in settings for modern UI -->
+<a href="downloads.py"   class="link-downloads link-fas link-fa-download" title="Download scripts to work directly from your local machine">
+        <span  class="downloads fas fa-download hidden"></span>Downloads</a>
+        <a href="datatransfer.py"   class="link-transfers link-fas link-fa-datatransfer" title="For background batch transfers of data">
+        <span  class="transfers fas fa-datatransfer hidden"></span>Data Transfers</a>
+        <a href="sharelink.py"   class="link-sharelinks link-fas link-fa-share-alt" title="Manage share links for easy data exchange">
+        <span  class="sharelinks fas fa-share-alt hidden"></span>Share Links</a>
+        <a href="crontab.py"   class="link-crontab link-fas link-fa-calendar-check" title="Your personal task scheduler">
+        <span  class="crontab fas fa-calendar-check hidden"></span>Schedule Tasks</a>
+        <a href="docs.py"   class="link-docs link-fas link-fa-book" title="Some built-in documentation for reference">
+        <span  class="docs fas fa-book hidden"></span>Docs</a>
+           <!-- Skip built-in logout for modern UI -->
+
+    <div id="hamBtn" class="hamburger hamburger--vortex" onclick="hamburgerMenuToggle()">
+        <div class="hamburger-box">
+            <!--<div class="hamburger-inner"></div>-->
+            <h3>...</h3>
+        </div>
+        <!--<div id="menuTxt">Menu</div>-->
+    </div>
+        
+    </div>
+        
+                </div>
+                <div class="slider-footer col-12 align-self-end home-nav-user__inner">
+                    <a onclick="userMenuToggle()">User</a>
+                </div>
+            </div>
+        </div>
+                
+
+
+<!--USER ACCOUNT MENU POPUP - HIDDEN-->
+<div id="userMenu" class="popup-container row">
+    <div class="popup-header col-12">
+        <div class="row">
+            <div class="col-3">
+                <div class="user-avatar">
+                
+                    <span class="avatar-image anonymous"></span>
+                    
+                </div>
+            </div>
+            <div class="col-9">
+                
+                <a class="user-menu__link avatar-link  " href="settings.py">Change photo</a>
+            </div>
+        </div>
+    </div>
+    <div class="popup-middle col-12">
+        <a class="user-menu__item link-home " href="home.py">Home</a>
+        <a class="user-menu__item link-account disable-link" href="account.py">Account</a>
+        <a class="user-menu__item link-settings " href="settings.py">Settings</a>
+        <a class="user-menu__item link-setup disable-link" href="setup.py">Setup</a>
+        <a class="user-menu__item link-help " href="https://sourceforge.net/p/migrid/wiki">Help</a>
+    </div>
+    <div class="popup-footer col-12">
+        <a class="user-menu__item link-logout  " href="logout.py">Sign Out</a>
+    </div>
+</div>
+                
+            
+
+<section id="globalContainer" class="global-container frame menu  ">
+<div class="wallpaper "></div>
+
+
+<div id="migheader" class="">
+
+</div>
+
+
+<div id="content" class="i18n " lang="en">
+
+
+<!-- Begin UI container -->
+<div class="container page-content ">
+
+
+<!-- End UI container -->
+</div>
+
+
+</div>
+
+
+    <div id='exitcode'>
+    <span class='spacer'></span>
+    Exit code: 0 Description: OK (done in 0.000s)
+    <span class='spacer'></span>
+    </div>
+
+</section>
+    </body>
+    
+</html>
+    
