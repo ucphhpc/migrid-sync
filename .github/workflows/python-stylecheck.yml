@@ -1,0 +1,26 @@
+name: Python Style Checks
+
+on:
+  push:
+    branches:
+      - edge
+      - main
+  pull_request:
+    branches:
+      - edge
+      - main
+
+jobs:
+  stylecheckpython:
+    name: Style Check Python with Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v4
+      - name: Get changed python files between base and head
+        run: >
+          echo "CHANGED_FILES=$(echo $(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep \.py))" >> $GITHUB_ENV
+      - if: ${{ env.CHANGED_FILES }}
+        uses: marian-code/python-lint-annotate@v4
+        with:
+          python-root-list: ${{ env.CHANGED_FILES }}
