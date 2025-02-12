@@ -27,4 +27,5 @@ jobs:
         with:
           python-root-list: ${{ env.CHANGED_FILES }}
           extra-pycodestyle-options: "--max-line-length=80"
+          extra-flake8-options: "--max-line-length=80"
           extra-isort-options: "-m=HANGING_INDENT"
