@@ -28,8 +28,7 @@
 
 """Search code tree and add the required header to all python modules."""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import datetime
 import fnmatch
@@ -48,21 +47,22 @@ if mig is None:
     print("Using mig installation in %s" % MIG_ROOT)
     sys.path.append(MIG_ROOT)
 
-from mig.shared.fileio import read_head_lines, read_file_lines, write_file_lines
-from mig.shared.projcode import code_root, py_code_files, sh_code_files, \
-    js_code_files
+from mig.shared.fileio import read_file_lines, read_head_lines, \
+    write_file_lines
+from mig.shared.projcode import code_root, js_code_files, py_code_files, \
+    sh_code_files
 
 # Modify these to fit actual project
 PROJ_CONSTS = {}
-PROJ_CONSTS['project_name'] = "MiG"
-PROJ_CONSTS['authors'] = 'The MiG Project by the Science HPC Center at UCPH'
+PROJ_CONSTS["project_name"] = "MiG"
+PROJ_CONSTS["authors"] = "The MiG Project by the Science HPC Center at UCPH"
 
-PROJ_CONSTS['copyright_year'] = '2003-%d' % datetime.date.today().year
+PROJ_CONSTS["copyright_year"] = "2003-%d" % datetime.date.today().year
 
 # Set interpreter path and file encoding if not already set in source files
 # Use empty string to leave them alone.
-PROJ_CONSTS['interpreter_path'] = '/usr/bin/env python'
-PROJ_CONSTS['module_encoding'] = 'utf-8'
+PROJ_CONSTS["interpreter_path"] = "/usr/bin/env python"
+PROJ_CONSTS["module_encoding"] = "utf-8"
 
 BEGIN_MARKER, END_MARKER = "--- BEGIN_HEADER ---", "--- END_HEADER ---"
 BACKUP_MARKER = ".unlicensed"
@@ -103,9 +103,11 @@ def check_header(path, var_dict, preamble_lines=100):
     """Check if path already has a credible license header. Only looks inside
     the first preamble_size bytes of the file.
     """
-    module_preamble = '\n'.join(read_head_lines(path, preamble_lines, None))
-    return (BEGIN_MARKER in module_preamble or
-            var_dict['authors'] in module_preamble)
+    module_preamble = "\n".join(read_head_lines(path, preamble_lines, None))
+    return (
+        BEGIN_MARKER in module_preamble
+        or var_dict["authors"] in module_preamble
+    )
 
 
 def add_header(path, var_dict, explicit_border=True, block_wrap=False):
@@ -124,23 +126,23 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
         print("Failed to create backup of %s - skip!" % path)
         return False
     # Do not truncate any existing unix executable hint (shebang) and encoding
-    act = '#!%(interpreter_path)s\n' % var_dict
+    act = "#!%(interpreter_path)s\n" % var_dict
     if block_wrap:
-        enc = ''
+        enc = ""
     else:
-        enc = '# -*- coding: %(module_encoding)s -*-' % var_dict
+        enc = "# -*- coding: %(module_encoding)s -*-" % var_dict
     lic = LICENSE_TEXT % var_dict
     module_header = []
     if module_lines and module_lines[0].startswith("#!"):
         module_header.append(module_lines[0])
         module_lines = module_lines[1:]
-    elif var_dict['interpreter_path']:
+    elif var_dict["interpreter_path"]:
         module_header.append(act)
 
     if module_lines and module_lines[0].startswith("# -*- coding"):
         module_header.append(module_lines[0])
         module_lines = module_lines[1:]
-    elif var_dict['module_encoding']:
+    elif var_dict["module_encoding"]:
         module_header.append(enc)
 
     if explicit_border:
@@ -152,22 +154,29 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
 #
 # %s
 #
-""" % (BEGIN_MARKER, lic, END_MARKER)
+""" % (
+            BEGIN_MARKER,
+            lic,
+            END_MARKER,
+        )
     if block_wrap:
-        lic = """
+        lic = (
+            """
 /*
 %s
 */
-""" % lic
+"""
+            % lic
+        )
 
     module_header.append(lic)
 
-    updated_lines = [i % var_dict for i in module_header + [''] + module_lines]
+    updated_lines = [i % var_dict for i in module_header + [""] + module_lines]
 
     if not write_file_lines(updated_lines, path, None):
         print("Failed to write %s with added headers!" % path)
         return False
-    #print("DEBUG: wrote %s with added headers!" % path)
+    # print("DEBUG: wrote %s with added headers!" % path)
     return True
 
 
@@ -180,11 +189,11 @@ def main(argv):
     if len(argv) > 2:
         mig_code_base = os.path.abspath(argv[2])
 
-    for (root, _, files) in os.walk(target):
+    for root, _, files in os.walk(target):
 
         # skip all dot dirs - they are from repos etc and _not_ jobs
 
-        if root.find(os.sep + '.') != -1:
+        if root.find(os.sep + ".") != -1:
             continue
         for name in files:
             src_path = os.path.join(root, name)
@@ -192,19 +201,20 @@ def main(argv):
                 continue
             if src_path.endswith(BACKUP_MARKER):
                 continue
-            print('Inspecting %s' % src_path)
+            print("Inspecting %s" % src_path)
             for pattern in py_code_files + sh_code_files + js_code_files:
-                needs_block = (pattern in js_code_files)
-                pattern = os.path.normpath(os.path.join(
-                    mig_code_base, code_root, pattern))
+                needs_block = pattern in js_code_files
+                pattern = os.path.normpath(
+                    os.path.join(mig_code_base, code_root, pattern)
+                )
 
-                #print("DEBUG: Testing %s against %s" % (src_path, pattern))
+                # print("DEBUG: Testing %s against %s" % (src_path, pattern))
 
                 if src_path == pattern or fnmatch.fnmatch(src_path, pattern):
-                    print('Matched %s against %s' % (src_path, pattern))
-                    PROJ_CONSTS['module_name'] = name.replace('.py', '')
+                    print("Matched %s against %s" % (src_path, pattern))
+                    PROJ_CONSTS["module_name"] = name.replace(".py", "")
                     if check_header(src_path, PROJ_CONSTS):
-                        print('Skip %s with existing header' % src_path)
+                        print("Skip %s with existing header" % src_path)
                         continue
                     add_header(src_path, PROJ_CONSTS, block_wrap=needs_block)
                 # else:
@@ -218,5 +228,5 @@ def main(argv):
     print("if using the default GPL v2 license here.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)
