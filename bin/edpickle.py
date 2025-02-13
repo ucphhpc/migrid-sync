@@ -39,13 +39,17 @@ except ImportError:
 import os
 import sys
 
-# NOTE: include cmd parent path in search path for mig.X to generally work
+# Try to import mig to assure we have a suitable python module load path
 try:
     import mig
 except ImportError:
-    sys.path.append(
-        os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
-    )
+    mig = None
+
+if mig is None:
+    # NOTE: include cmd parent path in search path for mig.X imports to work
+    MIG_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
+    print("Using mig installation in %s" % MIG_ROOT)
+    sys.path.append(MIG_ROOT)
 
 from mig.shared.serial import dump, load
 
