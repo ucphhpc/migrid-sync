@@ -98,8 +98,11 @@ LICENSE_TEXT += """#
 
 
 def check_header(path, var_dict, preamble_lines=100):
-    """Check if path already has a credible license header. Only looks inside
-    the first preamble_size bytes of the file.
+    """Check if path has a credible license header and otherwise adds one.
+
+    Only looks inside the first preamble_lines of the file and if it doesn't
+    find an existing license header there it adds a standard header populated
+    with project variables from var_dict.
     """
     module_preamble = "\n".join(read_head_lines(path, preamble_lines, None))
     return (
