@@ -204,7 +204,7 @@ def main(argv):
                 continue
             print("Inspecting %s" % src_path)
             for pattern in list_code_files():
-                needs_block = pattern in list_code_files(JAVASCRIPT)
+                needs_block = pattern in list_code_files([JAVASCRIPT])
                 pattern = os.path.normpath(
                     os.path.join(mig_code_base, CODE_ROOT, pattern)
                 )

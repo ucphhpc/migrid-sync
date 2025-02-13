@@ -111,7 +111,8 @@ def list_code_files(code_langs=[keyword_all]):
     """Get list of all code files."""
     match = []
     for lang in code_langs:
-        if not lang in code_langs:
+        if not lang in LANG_MAP:
             print("Warning: no such code lang: %s" % lang)
-        match += LANG_MAP.get(lang, [])
+        else:
+            match += LANG_MAP[lang]
     return match
