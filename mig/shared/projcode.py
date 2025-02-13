@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # projcode - simple helpers for transforming or searching project code
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2009-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,10 @@ plain = '[a-zA-Z0-9]*.py'
 py_code_files = [
     # a few scripts are in parent dir of code_root
     '../%s' % plain,
+    '../bin/%s' % plain,
+    '../sbin/%s' % plain,
     '%s' % plain,
+    'lib/%s' % plain,
     'cgi-bin/%s' % plain,
     'cgi-sid/%s' % plain,
     'install/%s' % plain,
