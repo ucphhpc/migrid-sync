@@ -43,8 +43,9 @@ import sys
 try:
     import mig
 except ImportError:
-    sys.path.append(os.path.dirname(
-        os.path.dirname(os.path.abspath(sys.argv[0]))))
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
+    )
 
 from mig.shared.serial import dump, load
 
