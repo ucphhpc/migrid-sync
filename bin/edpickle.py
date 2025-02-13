@@ -40,12 +40,12 @@ import sys
 
 from mig.shared.serial import dump, load
 
-SERIALIZER = 'pickle'
+SERIALIZER = "pickle"
 
 if __name__ == "__main__":
     if len(sys.argv) not in (1, 2):
-        print('Usage: %s [PATH]' % sys.argv[0])
-        print('Edit pickled object file - load from PATH if provided')
+        print("Usage: %s [PATH]" % sys.argv[0])
+        print("Edit pickled object file - load from PATH if provided")
         sys.exit(1)
 
     dirty = False
@@ -62,33 +62,33 @@ if __name__ == "__main__":
     while True:
         command = input("Enter command: ")
         command = command.lower().strip()
-        if command in ['o', 'open']:
+        if command in ["o", "open"]:
             path = read_input("Path to open: ")
             obj = load(path, serializer=SERIALIZER)
-        elif command in ['h', 'help']:
+        elif command in ["h", "help"]:
             print("Valid commands include:")
             print("(d)isplay to display the opened pickled object")
             print("(e)dit to edit the opened pickled object")
             print("(o)pen to open a new pickle file")
             print("(c)lose to close the opened pickled object")
             print("(q)uit to quit pickle editor")
-        elif command in ['d', 'display']:
+        elif command in ["d", "display"]:
             print(obj)
-        elif command in ['e', 'edit']:
+        elif command in ["e", "edit"]:
             edit = read_input("Edit command: ")
             # eval(edit)
-            eval(compile(edit, 'command-line', 'single'))
+            eval(compile(edit, "command-line", "single"))
             dirty = True
-        elif command in ['c', 'close', 'q', 'quit']:
+        elif command in ["c", "close", "q", "quit"]:
             if dirty:
                 flush = read_input("Modified object not saved - save now?: ")
-                if flush.lower() in ('y', 'yes'):
+                if flush.lower() in ("y", "yes"):
                     while not path:
                         path = read_input("Object save path: ").strip()
                     dump(obj, path, serializer=SERIALIZER)
                     dirty = False
             obj = None
-            if command in ('q', 'quit'):
+            if command in ("q", "quit"):
                 print("Closing")
                 break
         else:
