@@ -26,7 +26,7 @@
 # --- END_HEADER ---
 #
 
-"""Edit pickled objects on disk"""
+"""Edit pickled objects on disk."""
 
 from __future__ import absolute_import, print_function
 
@@ -42,17 +42,14 @@ from mig.shared.serial import dump, load
 
 SERIALIZER = "pickle"
 
-if __name__ == "__main__":
-    if len(sys.argv) not in (1, 2):
-        print("Usage: %s [PATH]" % sys.argv[0])
-        print("Edit pickled object file - load from PATH if provided")
-        sys.exit(1)
 
+def main(argv):
+    """Run interactive session."""
     dirty = False
     path = None
     obj = None
-    if sys.argv[1:]:
-        path = sys.argv[1]
+    if argv[1:]:
+        path = argv[1]
         print("opening pickle in %s" % path)
         obj = load(path, serializer=SERIALIZER)
         print("pickled object loaded as 'obj'")
@@ -93,3 +90,11 @@ if __name__ == "__main__":
                 break
         else:
             print("unknown command '%s'" % command)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) not in (1, 2):
+        print("Usage: %s [PATH]" % sys.argv[0])
+        print("Edit pickled object file - load from PATH if provided")
+        sys.exit(1)
+    main(sys.argv)
