@@ -43,7 +43,7 @@ import sys
 try:
     import mig
 except ImportError:
-    mig = None
+    mig = None  # type: ignore[assignment]
 
 if mig is None:
     # NOTE: include cmd parent path in search path for mig.X imports to work
