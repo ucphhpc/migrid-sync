@@ -21,38 +21,42 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-"""Helpers to transform or search project code files"""
+"""Helpers to transform or search project code files."""
+
+from mig.shared.defaults import keyword_all
+
+# TODO: phase out lowercase names once all scripts switched to get_code_files
 
 # Top dir with all code
-code_root = 'mig'
+CODE_ROOT = code_root = 'mig'
 
 # Ignore backup and dot files in wild card match
-plain = '[a-zA-Z0-9]*.py'
+PLAIN = '[a-zA-Z0-9]*.py'
 py_code_files = [
     # a few scripts are in parent dir of code_root
-    '../%s' % plain,
-    '../bin/%s' % plain,
-    '../sbin/%s' % plain,
-    '%s' % plain,
-    'lib/%s' % plain,
-    'cgi-bin/%s' % plain,
-    'cgi-sid/%s' % plain,
-    'install/%s' % plain,
-    'migfs-fuse/%s' % plain,
-    'resource/bin/%s' % plain,
-    'resource/image-scripts/%s' % plain,
-    'resource/keepalive-scripts/%s' % plain,
-    'server/%s' % plain,
-    'shared/%s' % plain,
-    'shared/functionality/%s' % plain,
-    'shared/distos/%s' % plain,
-    'shared/gdp/%s' % plain,
-    'shared/griddaemons/%s' % plain,
-    'simulation/%s' % plain,
-    'user/%s' % plain,
-    'vm-proxy/%s' % plain,
-    'webserver/%s' % plain,
-    'wsgi-bin/%s' % plain,
+    '../%s' % PLAIN,
+    '../bin/%s' % PLAIN,
+    '../sbin/%s' % PLAIN,
+    '%s' % PLAIN,
+    'lib/%s' % PLAIN,
+    'cgi-bin/%s' % PLAIN,
+    'cgi-sid/%s' % PLAIN,
+    'install/%s' % PLAIN,
+    'migfs-fuse/%s' % PLAIN,
+    'resource/bin/%s' % PLAIN,
+    'resource/image-scripts/%s' % PLAIN,
+    'resource/keepalive-scripts/%s' % PLAIN,
+    'server/%s' % PLAIN,
+    'shared/%s' % PLAIN,
+    'shared/functionality/%s' % PLAIN,
+    'shared/distos/%s' % PLAIN,
+    'shared/gdp/%s' % PLAIN,
+    'shared/griddaemons/%s' % PLAIN,
+    'simulation/%s' % PLAIN,
+    'user/%s' % PLAIN,
+    'vm-proxy/%s' % PLAIN,
+    'webserver/%s' % PLAIN,
+    'wsgi-bin/%s' % PLAIN,
 ]
 py_code_files += ['cgi-sid/%s' % name for name in ['requestnewjob',
                                                    'putrespgid']]
@@ -68,12 +72,16 @@ py_code_files += ['cgi-bin/%s' % name for name in [
     'walk',
     'getrespgid',
 ]]
+PY_CODE_FILES = py_code_files
+
 sh_code_files = [
     'resource/frontend_script.sh',
     'resource/master_node_script.sh',
     'resource/leader_node_script.sh',
     'resource/dummy_node_script.sh',
 ]
+SH_CODE_FILES = sh_code_files
+
 js_code_files = [
     'images/js/jquery.accountform.js',
     'images/js/jquery.ajaxhelpers.js',
@@ -89,4 +97,21 @@ js_code_files = [
     'assets/js/V3/ui-global.js',
     'assets/js/V3/ui-extra.js',
 ]
+JS_CODE_FILES = js_code_files
+
 code_files = py_code_files + sh_code_files + js_code_files
+CODE_FILES = code_files
+
+PYTHON, SHELL, JAVASCRIPT = "PYTHON", "SHELL", "JAVASCRIPT"
+LANG_MAP = {keyword_all: CODE_FILES, PYTHON: PY_CODE_FILES,
+            JAVASCRIPT: JS_CODE_FILES, SHELL: SH_CODE_FILES}
+
+
+def list_code_files(code_langs=[keyword_all]):
+    """Get list of all code files."""
+    match = []
+    for lang in code_langs:
+        if not lang in code_langs:
+            print("Warning: no such code lang: %s" % lang)
+        match += LANG_MAP.get(lang, [])
+    return match

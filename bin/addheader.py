@@ -47,10 +47,8 @@ if mig is None:
     print("Using mig installation in %s" % MIG_ROOT)
     sys.path.append(MIG_ROOT)
 
-from mig.shared.fileio import read_file_lines, read_head_lines, \
-    write_file_lines
-from mig.shared.projcode import code_root, js_code_files, py_code_files, \
-    sh_code_files
+from mig.shared.fileio import read_file_lines, read_head_lines, write_file_lines
+from mig.shared.projcode import CODE_ROOT, JAVASCRIPT, list_code_files
 
 # Modify these to fit actual project
 PROJ_CONSTS = {}
@@ -112,6 +110,7 @@ def check_header(path, var_dict, preamble_lines=100):
 
 def add_header(path, var_dict, explicit_border=True, block_wrap=False):
     """Add the required copyright and license header to module in path.
+
     The optional explicit_border argument can be set to wrap the license
     text in begin and end lines that are easy to find, so that license can
     be updated or replaced later.
@@ -120,7 +119,6 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
     JavaScript where the per-line commenting using hash (#) won't work.
     Creates a '.unlicensed' backup copy of each file changed.
     """
-
     module_lines = read_file_lines(path, None)
     if not write_file_lines(module_lines, path + BACKUP_MARKER, None):
         print("Failed to create backup of %s - skip!" % path)
@@ -170,8 +168,11 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
         )
 
     module_header.append(lic)
+    # Make sure there's a blank line between license header and code
+    if module_lines and module_lines[0].strip():
+        module_header.append("\n")
 
-    updated_lines = [i % var_dict for i in module_header + [""] + module_lines]
+    updated_lines = [i % var_dict for i in module_header + module_lines]
 
     if not write_file_lines(updated_lines, path, None):
         print("Failed to write %s with added headers!" % path)
@@ -181,7 +182,7 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
 
 
 def main(argv):
-    """Run header addition for given argv"""
+    """Run header addition for given argv."""
     target = os.getcwd()
     if len(argv) > 1:
         target = os.path.abspath(argv[1])
@@ -202,10 +203,10 @@ def main(argv):
             if src_path.endswith(BACKUP_MARKER):
                 continue
             print("Inspecting %s" % src_path)
-            for pattern in py_code_files + sh_code_files + js_code_files:
-                needs_block = pattern in js_code_files
+            for pattern in list_code_files():
+                needs_block = pattern in list_code_files(JAVASCRIPT)
                 pattern = os.path.normpath(
-                    os.path.join(mig_code_base, code_root, pattern)
+                    os.path.join(mig_code_base, CODE_ROOT, pattern)
                 )
 
                 # print("DEBUG: Testing %s against %s" % (src_path, pattern))
