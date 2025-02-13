@@ -28,11 +28,11 @@ jobs:
           python-root-list: ${{ env.CHANGED_FILES }}
           extra-pycodestyle-options: "--max-line-length=80"
           extra-black-options: "--line-length=80"
-          extra-isort-options: "-m=HANGING_INDENT"
+          extra-isort-options: "--line-length=80 -m=HANGING_INDENT"
           # NOTE: we disable flake8 and pylint here to avoid overlap with lint action and limit noise
           use-flake8: false
           extra-flake8-options: "--max-line-length=80"
           use-pylint: false
           # NOTE: pylint C0209 string format suggestions requires python3.6+ so disable here
           # https://pylint.pycqa.org/en/latest/user_guide/messages/convention/consider-using-f-string.html
-          extra-pylint-options: "--disable=C0209" 
+          extra-pylint-options: "--max-line-length = 80 --disable=C0209" 
