@@ -36,7 +36,15 @@ try:
 except ImportError:
     from builtins import input as read_input
 
+import os
 import sys
+
+# NOTE: include cmd parent path in search path for mig.X to generally work
+try:
+    import mig
+except ImportError:
+    sys.path.append(os.path.dirname(
+        os.path.dirname(os.path.abspath(sys.argv[0]))))
 
 from mig.shared.serial import dump, load
 
