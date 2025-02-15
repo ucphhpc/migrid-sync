@@ -1,6 +1,10 @@
 # migrid core dependencies on a format suitable for pip install as described on
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 future
+
+# cgi was removed from the standard library in Python 3.13
+legacy-cgi;python_version >= "3.13"
+
 # NOTE: python-3.6 and earlier versions require older pyotp, whereas 3.7+
 #       should work with any modern version. We tested 2.9.0 to work.
 pyotp;python_version >= "3.7"

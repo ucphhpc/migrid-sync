@@ -109,13 +109,13 @@ class TitleExtractingHtmlParser(DocumentBasicsHtmlParser):
             self._title = args[0]
 
     def handle_starttag(self, tag, attrs):
-        super().handle_starttag(tag, attrs)
+        DocumentBasicsHtmlParser.handle_starttag(self, tag, attrs)
 
         if tag == 'title':
             self._within_title = True
 
     def handle_endtag(self, tag):
-        super().handle_endtag(tag)
+        DocumentBasicsHtmlParser.handle_endtag(self, tag)
 
         if tag == 'title':
             self._within_title = False

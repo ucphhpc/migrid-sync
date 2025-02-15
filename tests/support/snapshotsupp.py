@@ -27,6 +27,7 @@
 """Test support code for the use of snapshots in tests."""
 
 import difflib
+import errno
 import re
 import os
 
@@ -36,8 +37,9 @@ TEST_SNAPSHOTS_DIR = os.path.join(TEST_BASE, "snapshots")
 
 try:
     os.mkdir(TEST_SNAPSHOTS_DIR)
-except FileExistsError:
-    pass
+except OSError as direxc:
+    if direxc.errno != errno.EEXIST:  # FileExistsError
+        raise
 
 
 def _delimited_lines(value):
