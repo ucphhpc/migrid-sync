@@ -33,6 +33,9 @@ import os
 
 from tests.support.suppconst import TEST_BASE
 
+HTML_TAG = '<html>'
+MARKER_CONTENT_BEGIN = '<!-- Begin UI container -->'
+MARKER_CONTENT_END = '<!-- End UI container -->'
 TEST_SNAPSHOTS_DIR = os.path.join(TEST_BASE, "snapshots")
 
 try:
@@ -40,6 +43,28 @@ try:
 except OSError as direxc:
     if direxc.errno != errno.EEXIST:  # FileExistsError
         raise
+
+
+def _html_content_only(value):
+    """For a given HTML input extract only the portion that corresponds to the
+    page content. This is somewhat convoluted due to having to work around an
+    inability to move the comment markers to enclose only the content.
+    """
+
+    assert value.find(HTML_TAG) > -1, "value does not appear to be HTML"
+    content_start_index = value.find(MARKER_CONTENT_BEGIN)
+    assert content_start_index > -1, "unable to locate beginning of content"
+    # set the index after the content marker
+    content_start_index += len(MARKER_CONTENT_BEGIN)
+    # we now need to remove the container div inside it ..first find it
+    content_start_inner_div = value.find('<div', content_start_index)
+    # reset the content start to exclude up the end of the container div
+    content_start_index = value.find('>', content_start_inner_div) + 1
+
+    content_end_index = value.find(MARKER_CONTENT_END)
+    assert content_end_index > -1, "unable to locate end of content"
+
+    return value[content_start_index:content_end_index].strip()
 
 
 def _delimited_lines(value):
@@ -73,14 +98,14 @@ def _force_refresh_snapshots():
 
 
 class SnapshotAssertMixin:
-    """Custom assertions alowing the use of snapshots within tests."""
+    """Custom assertions allowing the use of snapshots within tests."""
 
-    def assertSnapshot(self, actual_content, extension=None):
-        """Load a snapshot corresponding to the named test and check that its
-        content, which is th expectatoin, matches what was actually given. In
-        the case a snapshot does not exist it is saved on first invocation."""
+    def _snapshotsupp_compare_snapshot(self, extension, actual_content):
+        """Helper which actually loads the snapshot from a file on disk and
+        does the comparison.
 
-        assert extension is not None
+        In the case a snapshot does not exist it is saved on first invocation.
+        """
 
         file_name = ''.join([self._testMethodName, ".", extension])
         file_path = os.path.join(TEST_SNAPSHOTS_DIR, file_name)
@@ -106,3 +131,21 @@ class SnapshotAssertMixin:
         )
         raise AssertionError(
             "content did not match snapshot\n\n%s" % (''.join(udiff),))
+
+    def assertSnapshot(self, actual_content, extension=None):
+        """Load a snapshot corresponding to the named test and check that what
+        it contains, which is the expectation, matches what was actually given.
+        """
+
+        assert extension is not None
+
+        self._snapshotsupp_compare_snapshot(extension, actual_content)
+
+    def assertSnapshotOfHtmlContent(self, actual_content):
+        """Load a snapshot corresponding to the named test and check that what
+        it contains, which is the expectation, matches against the portion of
+        what was actually given that corresponds to the output HTML content.
+        """
+
+        actual_content = _html_content_only(actual_content)
+        self._snapshotsupp_compare_snapshot('html', actual_content)
