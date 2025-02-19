@@ -15,7 +15,7 @@ from tests.support.httpsupp import HttpAssertMixin
 
 from mig.shared.base import keyword_auto
 from mig.shared.useradm import create_user
-from mig.services.coreapi import ThreadedApiHttpServer, \
+from mig.lib.coresvc import ThreadedApiHttpServer, \
     _create_and_expose_server
 
 _TAG_P_OPEN = '<p>'
