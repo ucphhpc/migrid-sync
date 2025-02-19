@@ -677,7 +677,7 @@ multiple "key=val" fields separated by "/".
         logger.error('%s autocreate not supported for %s - only ext auth' %
                      (auth_flavor, client_id))
         output_objects.append({'object_type': 'error_text', 'text': '''
-Unsuported %s sign up method - you should sign up through the official
+Unsupported %s sign up method - you should sign up through the official
 sign up wrappers or go through the dedicated web form for %s.''' %
                                (auth_type, auth_flavor)})
         return (output_objects, returnvalues.CLIENT_ERROR)
