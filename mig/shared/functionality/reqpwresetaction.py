@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqpwresetaction - handle account password reset requests and send email to user
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -165,13 +165,13 @@ Please contact the %s providers if you want to reset your associated password.
     (authorized, disconnect) = validate_auth_attempt(
         configuration,
         proto,
-        op_name,
+        "passwordreset",
         cert_id,
         client_addr,
         tcp_port,
         secret=None,
         authtype_enabled=True,
-        auth_reset=True,
+        modify_account=True,
         exceeded_rate_limit=exceeded_rate_limit,
         user_abuse_hits=default_user_abuse_hits,
         proto_abuse_hits=default_proto_abuse_hits,
