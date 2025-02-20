@@ -138,7 +138,6 @@ Please contact the %s providers if you want to reset your associated password.
              'class': 'genericbutton', 'text': "Back"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    os.environ.get('USER', 'mig')
     client_addr = os.environ.get('REMOTE_ADDR', None)
     tcp_port = int(os.environ.get('REMOTE_PORT', '0'))
     anon_migoid_url = configuration.migserver_https_sid_url
@@ -208,7 +207,7 @@ Origin will reload automatically in <span id="reload_counter">%d</span> seconds.
         # Registered emails are automatically lowercased
         search_filter['email'] = cert_id.lower()
     (_, hits) = search_users(search_filter, configuration, keyword_auto, False)
-    user_dict, _password_hash = None, None
+    user_dict = None
     for (uid, user_dict) in hits:
         if is_gdp_user(configuration, uid):
             logger.debug("skip password reset for gdp sub-user %r" % cert_id)
