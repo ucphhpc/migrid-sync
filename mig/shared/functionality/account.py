@@ -34,16 +34,14 @@ import datetime
 import os
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import account_pw_reset_template
-from mig.shared.base import requested_page
-from mig.shared.defaults import AUTH_EXT_CERT, AUTH_MIG_CERT, AUTH_MIG_OID, \
-    AUTH_MIG_OIDC, csrf_field, user_home_label
+from mig.shared.accountreq import account_pw_change_template, \
+    renew_account_access_template
+from mig.shared.defaults import csrf_field, user_home_label
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import html_user_messages, man_base_js
-from mig.shared.httpsclient import detect_client_auth
+from mig.shared.httpsclient import detect_client_auth, find_auth_type_and_label
 from mig.shared.init import find_entry, initialize_main_variables
-from mig.shared.output import html_link
 from mig.shared.useradm import get_full_user_map
 
 _account_field_order = [('full_name', 'Full Name'),
@@ -136,11 +134,18 @@ def html_tmpl(configuration, client_id, environ, title_entry):
         </div>
     '''
 
-    # Account management like renew user and change password for local users
+    # Account management like renew account access and change password for local users
     # TODO: add delete account support for all accounts?
-    (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+    (auth_type_name, auth_flavor) = detect_client_auth(configuration, environ)
+    (auth_type, auth_label) = find_auth_type_and_label(configuration,
+                                                       auth_type_name,
+                                                       auth_flavor)
     show_local = [i for i in configuration.site_login_methods
                   if i.startswith('mig')]
+    fill_helpers.update({'auth_type': auth_type,
+                         'auth_type_name': auth_type_name,
+                         'auth_flavor': auth_flavor,
+                         'auth_label': auth_label})
     html += '''
         <div id="manage-container" class="row">
             <div class="manage-page__header col-12">
@@ -151,126 +156,57 @@ def html_tmpl(configuration, client_id, environ, title_entry):
                 </p>
             </div>
             ''' % fill_helpers
-    if show_local and (user_dict.get('password', False) or
-                       user_dict.get('password_hash', False)):
-        bin_url = requested_page(os.environ).replace('-sid', '-bin')
-        if auth_flavor == AUTH_MIG_OID:
-            migoid_url = os.path.join(os.path.dirname(bin_url), 'reqoid.py')
-            migoid_link = {'object_type': 'link', 'destination': migoid_url,
-                           'text': 'Change %s %s password' %
-                           (configuration.user_mig_oid_title, auth_type)}
-            fill_helpers['pwreset_helper'] = html_link(migoid_link)
-        elif auth_flavor == AUTH_MIG_OIDC:
-            migoidc_url = os.path.join(os.path.dirname(bin_url), 'reqoidc.py')
-            migoidc_link = {'object_type': 'link', 'destination': migoidc_url,
-                            'text': 'Change %s %s password' %
-                            (configuration.user_mig_oidc_title, auth_type)}
-            fill_helpers['pwreset_helper'] = html_link(migoidc_link)
-        elif auth_flavor == AUTH_MIG_CERT:
-            migcert_url = os.path.join(os.path.dirname(bin_url), 'migcert.py')
-            migcert_link = {'object_type': 'link', 'destination': migcert_url,
-                            'text': 'Change %s %s password' %
-                            (configuration.user_mig_cert_title, auth_type)}
-            fill_helpers['pwreset_helper'] = html_link(migcert_link)
-        else:
-            form_method = 'post'
-            csrf_limit = get_csrf_limit(configuration)
-            target_op = 'reqpwresetaction'
-            csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                         client_id, csrf_limit)
-            fill_helpers.update({'target_op': target_op, 'form_method':
-                                 form_method, 'csrf_field': csrf_field,
-                                 'csrf_token': csrf_token, 'cert_id': client_id,
-                                 'show': show_local})
-            fill_helpers['pwreset_helper'] = '''
-            <p>You can reset your password with a reset link sent to your
-                email address above for proof of ownership</p>
-            '''
-            fill_helpers['pwreset_helper'] += account_pw_reset_template(
-                configuration, default_values=fill_helpers) % fill_helpers
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    target_op = 'accountaction'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'form_method':
+                         form_method, 'csrf_field': csrf_field,
+                         'csrf_token': csrf_token})
+    if auth_type in show_local and (user_dict.get('password', False) or
+                                    user_dict.get('password_hash', False)):
+        fill_helpers['account_action'] = "CHANGE_PASSWORD"
+        fill_helpers['pwchange_helper'] = account_pw_change_template(
+            configuration, default_values=fill_helpers) % fill_helpers
 
+        # TODO: display when ready
         html += '''
-            <div class="resetpw__header col-12">
-                <h3>Password Reset</h3>
-                %(pwreset_helper)s
+            <div class="change-account-pw__header col-12 hidden">
+                <h3>Change Account Password</h3>
+                %(pwchange_helper)s
             </div>
-    ''' % fill_helpers
+        ''' % fill_helpers
 
-    if user_dict.get('status', 'active') == 'temporal':
-        autocreate_allowed = False
-        bin_url = requested_page(os.environ).replace('-sid', '-bin')
-        if auth_flavor == AUTH_MIG_OID:
-            migoid_url = os.path.join(os.path.dirname(bin_url), 'reqoid.py')
-            migoid_link = {'object_type': 'link', 'destination': migoid_url,
-                           'text': 'Renew %s %s account access' %
-                           (configuration.user_mig_oid_title, auth_type)}
-            fill_helpers['renew_helper'] = html_link(migoid_link)
-        elif auth_flavor == AUTH_MIG_OIDC:
-            migoidc_url = os.path.join(os.path.dirname(bin_url), 'reqoidc.py')
-            migoidc_link = {'object_type': 'link', 'destination': migoidc_url,
-                            'text': 'Renew %s %s account access' %
-                            (configuration.user_mig_oidc_title, auth_type)}
-            fill_helpers['renew_helper'] = html_link(migoidc_link)
-        elif auth_flavor == AUTH_MIG_CERT:
-            migcert_url = os.path.join(os.path.dirname(bin_url), 'migcert.py')
-            migcert_link = {'object_type': 'link', 'destination': migcert_url,
-                            'text': 'Renew %s %s account access' %
-                            (configuration.user_mig_cert_title, auth_type)}
-            fill_helpers['renew_helper'] = html_link(migcert_link)
-        else:
-            autocreate_allowed = True
-            form_method = 'post'
-            csrf_limit = get_csrf_limit(configuration)
-            target_op = 'autocreate'
-            csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                         client_id, csrf_limit)
-            fill_helpers['autorenew_form_prefix'] = '''
-        <form class="autorenew" action="%s.py" method="%s">
-            <input type="hidden" name="%s" value="%s">
-            <input type="hidden" name="accept_terms" value="yes">
-            <input type="hidden" name="peers_full_name" value="%s">
-            <input type="hidden" name="peers_email" value="%s">
-        ''' % (target_op, form_method, csrf_field, csrf_token,
-               user_dict.get('peers_full_name', ''),
-               user_dict.get('peers_email', ''))
-            if auth_flavor == AUTH_EXT_CERT:
-                fill_helpers['autorenew_form_prefix'] += '''
-            <input type="hidden" name="cert_id" value="%s">
-            <input type="hidden" name="email" value="%s">
-                ''' % (client_id, user_dict['email'])
-            fill_helpers['autorenew_form_suffix'] = '''
-            <input type="submit" value="Renew Account Access">
-        </form>
-            '''
-
-        if autocreate_allowed:
-            html += '''
-        <div class="autorenew__header col-12">
-            <h3>Renew Access</h3>
-            <p>
-            Account access automatically expires after a while and needs to be
-            actively renewed. If you had someone appoint you as their peer and
-            that appointment has not yet expired you can renew your access here
-            without further operator or peer contact involvement.
-            </p>
-            %(autorenew_form_prefix)s
-            %(autorenew_form_suffix)s
-        </div>
-            ''' % fill_helpers
-        else:
-            html += '''
-        <div class="renew__header col-12">
-            <h3>Renew Access</h3>
-            <p>
-            Account access automatically expires after a while and needs to be
-            actively renewed. If you had someone appoint you as their peer and
-            that appointment has not yet expired you can renew your access here
-            with only manual operator approval. Otherwise you need manual peer
-            approval as well.
-            </p>
+    # TODO: extend renew to active ext accounts?
+    if show_local and user_dict.get('status', 'active') == 'temporal':
+        fill_helpers['account_action'] = "RENEW_ACCESS"
+        fill_helpers['peer_acceptance_notice'] = ""
+        if configuration.site_peers_mandatory:
+            peers_full_name = user_dict.get("peers_full_name", "")
+            peers_email = user_dict.get("peers_email", "")
+            peers_list = user_dict.get("peers", [])
+            if peers_list or (peers_full_name and peers_email):
+                fill_helpers['peer_acceptance_notice'] = """
+Apparently %(peers_full_name)s &lt;%(peers_email)s&gt; accepted you as a peer
+and if that peer appointment has not yet ended you can renew your access here
+without further operator or peer contact involvement. Otherwise you may need to
+obtain or await explicit extension or peer assignment from someone else before
+your access renewal can proceed.
+                """ % user_dict
+            else:
+                fill_helpers['peer_acceptance_notice'] = """
+It looks like you may need someone with authority to appoint you as their peer
+before your access renewal can be accepted.
+                """
+        fill_helpers['renew_helper'] = renew_account_access_template(
+            configuration, default_values=fill_helpers) % fill_helpers
+        html += '''
+        <div class="renew-account-access__header col-12">
+            <h3>Renew Account Access</h3>
             %(renew_helper)s
         </div>
-            ''' % fill_helpers
+        ''' % fill_helpers
 
     html += '''
             <div class="col-lg-12 vertical-spacer"></div>
