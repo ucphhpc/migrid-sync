@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqpwresetaction - handle account password reset requests and send email to user
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -30,21 +30,18 @@
 from __future__ import absolute_import
 
 import os
-import tempfile
-import time
 
 from mig.shared import returnvalues
-from mig.shared.base import canonical_user_with_peers, generate_https_urls, \
-    fill_distinguished_name, cert_field_map, auth_type_description, \
-    mask_creds, is_gdp_user
-from mig.shared.defaults import keyword_auto, RESET_TOKEN_TTL
-from mig.shared.functional import validate_input, REJECT_UNSET
-from mig.shared.griddaemons.https import default_max_user_hits, \
-    default_user_abuse_hits, default_proto_abuse_hits, hit_rate_limit, \
-    expire_rate_limit, validate_auth_attempt
-from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.htmlgen import themed_styles, themed_scripts
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.base import auth_type_description, canonical_user_with_peers, \
+    cert_field_map, is_gdp_user, mask_creds
+from mig.shared.defaults import RESET_TOKEN_TTL, keyword_auto
+from mig.shared.functional import REJECT_UNSET, validate_input
+from mig.shared.griddaemons.https import default_proto_abuse_hits, \
+    default_user_abuse_hits, expire_rate_limit, hit_rate_limit, \
+    validate_auth_attempt
+from mig.shared.handlers import get_csrf_limit, safe_handler
+from mig.shared.htmlgen import themed_scripts, themed_styles
+from mig.shared.init import initialize_main_variables
 from mig.shared.notification import send_email
 from mig.shared.pwcrypto import generate_reset_token
 from mig.shared.url import urlencode
@@ -125,7 +122,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
              'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if not auth_type in configuration.site_login_methods:
+    if auth_type not in configuration.site_login_methods:
         output_objects.append({'object_type': 'error_text', 'text':
                                'You must provide a supported auth_type!'})
         output_objects.append(
@@ -141,7 +138,6 @@ Please contact the %s providers if you want to reset your associated password.
              'class': 'genericbutton', 'text': "Back"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    mig_user = os.environ.get('USER', 'mig')
     client_addr = os.environ.get('REMOTE_ADDR', None)
     tcp_port = int(os.environ.get('REMOTE_PORT', '0'))
     anon_migoid_url = configuration.migserver_https_sid_url
@@ -165,13 +161,13 @@ Please contact the %s providers if you want to reset your associated password.
     (authorized, disconnect) = validate_auth_attempt(
         configuration,
         proto,
-        op_name,
+        "passwordreset",
         cert_id,
         client_addr,
         tcp_port,
         secret=None,
         authtype_enabled=True,
-        auth_reset=True,
+        modify_account=True,
         exceeded_rate_limit=exceeded_rate_limit,
         user_abuse_hits=default_user_abuse_hits,
         proto_abuse_hits=default_proto_abuse_hits,
@@ -211,7 +207,7 @@ Origin will reload automatically in <span id="reload_counter">%d</span> seconds.
         # Registered emails are automatically lowercased
         search_filter['email'] = cert_id.lower()
     (_, hits) = search_users(search_filter, configuration, keyword_auto, False)
-    user_dict, password_hash = None, None
+    user_dict = None
     for (uid, user_dict) in hits:
         if is_gdp_user(configuration, uid):
             logger.debug("skip password reset for gdp sub-user %r" % cert_id)
@@ -227,7 +223,7 @@ Origin will reload automatically in <span id="reload_counter">%d</span> seconds.
         try:
             reset_token = generate_reset_token(configuration, user_dict,
                                                auth_type)
-        except ValueError as vae:
+        except ValueError:
             logger.info("skip password reset for %r without matching auth" %
                         cert_id)
             continue

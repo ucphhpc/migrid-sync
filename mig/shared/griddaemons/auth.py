@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # auth - grid daemon auth helper functions
-# Copyright (C) 2010-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -27,15 +27,15 @@
 
 """ MiG daemon auth functions"""
 
-import time
 import re
+import time
 
 from mig.shared.auth import active_twofactor_session
-from mig.shared.base import extract_field, expand_openid_alias
+from mig.shared.base import expand_openid_alias, extract_field
 from mig.shared.defaults import CRACK_USERNAME_REGEX, protocol_aliases
 from mig.shared.gdp.all import get_client_id_from_project_client_id
-from mig.shared.griddaemons.ratelimits import default_user_abuse_hits, \
-    default_proto_abuse_hits, default_max_secret_hits, update_rate_limit
+from mig.shared.griddaemons.ratelimits import default_max_secret_hits, \
+    default_proto_abuse_hits, default_user_abuse_hits, update_rate_limit
 from mig.shared.griddaemons.sessions import active_sessions
 from mig.shared.notification import send_system_notification
 from mig.shared.settings import load_twofactor
@@ -187,7 +187,7 @@ def validate_auth_attempt(configuration,
                           valid_twofa=False,
                           authtype_enabled=False,
                           valid_auth=False,
-                          auth_reset=False,
+                          modify_account=False,
                           exceeded_rate_limit=False,
                           exceeded_max_sessions=False,
                           user_abuse_hits=default_user_abuse_hits,
@@ -229,8 +229,8 @@ def validate_auth_attempt(configuration,
                  % valid_twofa
                  + "authtype_enabled: %s, valid_auth: %s\n"
                  % (authtype_enabled, valid_auth)
-                 + "auth_reset: %s\n"
-                 % auth_reset
+                 + "modify_account: %s\n"
+                 % modify_account
                  + "exceeded_rate_limit: %s\n"
                  % exceeded_rate_limit
                  + "exceeded_max_sessions: %s\n"
@@ -268,12 +268,12 @@ def validate_auth_attempt(configuration,
                  or authtype in ["session"]):
         pass
     elif protocol == 'https' \
-            and authtype in ["twofactor", "reqpwresetaction"]:
+            and authtype in ["twofactor", "passwordreset", "accountupdate"]:
         pass
     elif protocol == 'openid' \
             and authtype in configuration.user_openid_auth:
         pass
-    elif not protocol in ['davs', 'ftps', 'sftp', 'sftp-subsys', 'https',
+    elif protocol not in ['davs', 'ftps', 'sftp', 'sftp-subsys', 'https',
                           'openid']:
         logger.error("Invalid protocol: %r" % protocol)
         return (authorized, disconnect)
@@ -395,8 +395,8 @@ mandatory two factor session was closed or expired.
         authlog(configuration, 'WARNING', protocol, authtype,
                 username, ip_addr, auth_msg,
                 notify=notify, hint=mount_hint)
-    elif authtype_enabled and auth_reset:
-        # IMPORTANT: leave unauthorized here to enforce rate limit on resets
+    elif authtype_enabled and modify_account:
+        # IMPORTANT: leave unauthorized here for rate limit on resets and renew
         authorized = False
         auth_msg = "Allow %s" % authtype
         log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
