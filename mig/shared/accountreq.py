@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountreq - helpers for certificate/OpenID account requests
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -603,7 +603,7 @@ def account_request_template(configuration, password=True, default_values={}):
 
 
 def account_pw_reset_template(configuration, default_values={}):
-    """A general form template used for various password reset requests"""
+    """A general form template used for various password reset requests."""
 
     html = """
 <div id='account-pw-reset-grid' class='form_container'>
@@ -634,7 +634,7 @@ and select which authentication method you want to change password for.
 <form method='%(form_method)s' action='%(target_op)s.py'>
     <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
     <!-- NOTE: cert_id field to allow either full DN or email -->
-    <input type='text' name='cert_id' required />
+    <input type='text' name='cert_id' value='%(cert_id)s' required />
     <select class='form-control themed-select html-select' id='reset_auth_type'
         name='auth_type' minlength=3 maxlength=4
         placeholder='The kind of authentication for which to reset password'
