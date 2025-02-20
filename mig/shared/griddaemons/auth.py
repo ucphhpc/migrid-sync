@@ -27,15 +27,15 @@
 
 """ MiG daemon auth functions"""
 
-import time
 import re
+import time
 
 from mig.shared.auth import active_twofactor_session
-from mig.shared.base import extract_field, expand_openid_alias
+from mig.shared.base import expand_openid_alias, extract_field
 from mig.shared.defaults import CRACK_USERNAME_REGEX, protocol_aliases
 from mig.shared.gdp.all import get_client_id_from_project_client_id
-from mig.shared.griddaemons.ratelimits import default_user_abuse_hits, \
-    default_proto_abuse_hits, default_max_secret_hits, update_rate_limit
+from mig.shared.griddaemons.ratelimits import default_max_secret_hits, \
+    default_proto_abuse_hits, default_user_abuse_hits, update_rate_limit
 from mig.shared.griddaemons.sessions import active_sessions
 from mig.shared.notification import send_system_notification
 from mig.shared.settings import load_twofactor
@@ -273,7 +273,7 @@ def validate_auth_attempt(configuration,
     elif protocol == 'openid' \
             and authtype in configuration.user_openid_auth:
         pass
-    elif not protocol in ['davs', 'ftps', 'sftp', 'sftp-subsys', 'https',
+    elif protocol not in ['davs', 'ftps', 'sftp', 'sftp-subsys', 'https',
                           'openid']:
         logger.error("Invalid protocol: %r" % protocol)
         return (authorized, disconnect)
