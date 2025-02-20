@@ -602,6 +602,64 @@ def account_request_template(configuration, password=True, default_values={}):
     return html
 
 
+def account_pw_change_template(configuration, default_values={}):
+    """A general form template used for changing existing local passwords."""
+
+    html = """
+<div id='account-pw-change-grid' class='form_container'>
+"""
+
+    _logger = configuration.logger
+    auth_map = auth_type_description(configuration)
+    show_auth_types = [(key, auth_map[key]) for key in
+                       default_values.get('show', auth_map.keys())]
+    filtered_auth_types = [i for i in show_auth_types if i[0] in
+                           configuration.site_signup_methods]
+    _logger.debug("show_auth_types %s filtered_auth_types %s" %
+                  (show_auth_types, filtered_auth_types))
+    if not filtered_auth_types:
+        html += """<p class='warningtext'>
+No matching local authentication methods enabled on this site, so no passwords
+to change here. In case you rely on a central or external identity provider you
+can probably also change your password with the corresponding ID provider.
+</p>
+"""
+    else:
+        html += """
+<p>
+Please enter your current password for your %(short_title)s account and then your
+new password of choice twice to confirm correctness.
+</p>
+<!-- use post here to avoid field contents in URL -->
+<form method='%(form_method)s' action='%(target_op)s.py'>
+    <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+    <input type='hidden' name='action' value='%(account_action)s'/>
+"""
+        html += """
+    <div class='form-row single-entry'>
+    <div class='col-md-12 mb-3 form-cell'>
+      <label for='curpassword'>Current Password</label>
+      <input type='password' name='curpassword' value='' minlength=6 maxlength=%(password_max_len)d pattern='.{6,%(password_max_len)d}' placeholder='The password you chose for your account' required />
+    </div>
+    <div class='col-md-12 mb-3 form-cell'>
+      <label for='password'>New Password</label>
+      <input type='password' name='password' value='' minlength=%(password_min_len)d maxlength=%(password_max_len)d pattern='.{%(password_min_len)d,%(password_max_len)d}' placeholder='A new strong password of your choice' required />
+    </div>
+    <div class='col-md-12 mb-3 form-cell'>
+      <label for='verifypassword'>Repeat New Password</label>
+      <input type='password' name='verifypassword' value='' minlength=%(password_min_len)d maxlength=%(password_max_len)d pattern='.{%(password_min_len)d,%(password_max_len)d}' placeholder='Your new strong password of choice again' required />
+    </div>
+  </div>
+""" % {'password_min_len': password_min_len, 'password_max_len':
+            password_max_len}
+    html += """
+    <input id='submit_button' type=submit value='Change %(auth_label)s Password'/>
+</form>
+</div>
+"""
+    return html
+
+
 def account_pw_reset_template(configuration, default_values={}):
     """A general form template used for various password reset requests."""
 
@@ -649,6 +707,48 @@ and select which authentication method you want to change password for.
         html += """
     </select>
     <input id='submit_button' type=submit value='Request Password Reset'/>
+</form>
+"""
+
+    html += """
+</div>
+"""
+    return html
+
+
+def renew_account_access_template(configuration, default_values={}):
+    """A general form template used for renewing account access."""
+
+    html = """
+<div id='account-renew-access-grid' class='form_container'>
+"""
+
+    _logger = configuration.logger
+    auth_map = auth_type_description(configuration)
+    show_auth_types = [(key, auth_map[key]) for key in
+                       default_values.get('show', auth_map.keys())]
+    filtered_auth_types = [i for i in show_auth_types if i[0] in
+                           configuration.site_signup_methods]
+    _logger.debug("show_auth_types %s filtered_auth_types %s" %
+                  (show_auth_types, filtered_auth_types))
+    if not filtered_auth_types:
+        html += """<p class='warningtext'>
+No matching local authentication methods enabled on this site, so no account
+access to renew here.
+</p>
+"""
+    else:
+        html += """
+<p>
+Account access automatically expires after a while and needs to be actively
+renewed.
+%(peer_acceptance_notice)s
+</p>
+<!-- use post here to avoid field contents in URL -->
+<form method='%(form_method)s' action='%(target_op)s.py'>
+    <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+    <input type='hidden' name='action' value='%(account_action)s'/>
+    <input id='submit_button' type=submit value='Renew %(auth_label)s Account Access'/>
 </form>
 """
 
