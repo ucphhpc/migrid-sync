@@ -354,20 +354,10 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
                                   const char *address, const char *secret)
 {
     bool result = false;
+    bool disconnect = false;
     WRITELOGMESSAGE(LOG_DEBUG,
                     "mode: 0x%X, username: %s, address: %s, secret: %s\n",
                     mode, username, address, secret);
-    /* NOTE: 1) 'secret == NULL'
-                if auth failed before password validation
-                (eg. due to invalid username or rate-limit)
-                there should be no more password (re)-tries
-             2) '(mode & MIG_VALID_AUTH)'
-                If caller (libpam_mig) validated credentials
-                then there are no more passwords (re-)tries
-    */
-    if (secret == NULL || (mode & MIG_VALID_AUTH)) {
-        migauth_exit = true;
-    }
     char pycmd[MAX_PYCMD_LENGTH] =
         "(authorized, disconnect) = validate_auth_attempt(configuration, 'sftp-subsys', ";
     char pytmp[MAX_PYCMD_LENGTH];
@@ -377,7 +367,7 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
         WRITELOGMESSAGE(LOG_ERR,
                         "mig_reg_auth_attempt: No valid auth-type in mode: 0x%X\n",
                         mode);
-        return false;
+        goto mig_reg_auth_attempt_return;
     }
     strncat(&pycmd[0], "'", MAX_PYCMD_LENGTH - strlen(pycmd));
     strncat(&pycmd[0], username, MAX_PYCMD_LENGTH - strlen(pycmd));
@@ -451,7 +441,7 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
     strncat(&pycmd[0], ")", MAX_PYCMD_LENGTH - strlen(pycmd));
     if (MAX_PYCMD_LENGTH == strlen(pycmd)) {
         WRITELOGMESSAGE(LOG_ERR, "mig_reg_auth_attempt: pycmd overflow\n");
-        return false;
+        goto mig_reg_auth_attempt_return;
     }
     pyrun(&pycmd[0]);
     PyObject *py_authorized = PyObject_GetAttrString(py_main, "authorized");
@@ -460,6 +450,24 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
     } else {
         result = PyObject_IsTrue(py_authorized);
         Py_DECREF(py_authorized);
+    }
+    PyObject *py_disconnect = PyObject_GetAttrString(py_main, "disconnect");
+    if (py_disconnect == NULL) {
+        WRITELOGMESSAGE(LOG_ERR, "Missing python variable: py_disconnect\n");
+    } else {
+        disconnect = PyObject_IsTrue(py_disconnect);
+        Py_DECREF(py_disconnect);
+    }
+
+mig_reg_auth_attempt_return:
+    /* NOTE: '(mode & MIG_VALID_AUTH)'
+              If caller (libpam_mig) validated credentials
+              then there are no more passwords (re-)tries
+    */
+    if (disconnect == true || (mode & MIG_VALID_AUTH)) {
+        WRITELOGMESSAGE(LOG_DEBUG, "disconnect: %d, mode & MIG_VALID_AUTH: %d\n",
+                disconnect, (mode & MIG_VALID_AUTH));
+        migauth_exit = true;
     }
 
     return result;
