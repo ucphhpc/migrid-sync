@@ -451,7 +451,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                     "In pam_sm_authenticate: pamh=%p flags=%x, argc=%d, argv:%p, migauth_exit:%d\n",
                     (void *)pamh, flags, argc, (void *)argv, migauth_exit);
     if (migauth_exit == true) {
-        WRITELOGMESSAGE(LOG_DEBUG, "migauthhandler blocked further password attempts");
+        WRITELOGMESSAGE(LOG_DEBUG, "migauthhandler blocked further password attempts\n");
         return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
     }
 
