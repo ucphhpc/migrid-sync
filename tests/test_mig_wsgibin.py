@@ -241,7 +241,7 @@ class MigWsgibin(MigTestCase, SnapshotAssertMixin, WsgiAssertMixin):
         self.assertSnapshot(output, extension='html')
 
 
-class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin):
+class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin, SnapshotAssertMixin):
 
     def _provide_configuration(self):
         return 'testconfig'
@@ -280,6 +280,28 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin):
 
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
         self.assertIsValidHtmlDocument(output)
+
+    def test_objects_with_type_text(self):
+        output_objects = [
+            # workaround invalid HTML being generated with no title object
+            {
+                'object_type': 'title',
+                'text': 'TEST'
+            },
+            {
+                'object_type': 'text',
+                'text': 'some text',
+            }
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        self.assertSnapshotOfHtmlContent(output)
 
 
 if __name__ == '__main__':
