@@ -354,7 +354,7 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
                                   const char *address, const char *secret)
 {
     bool result = false;
-    bool disconnect = false;
+    bool disconnect = true;
     WRITELOGMESSAGE(LOG_DEBUG,
                     "mode: 0x%X, username: %s, address: %s, secret: %s\n",
                     mode, username, address, secret);
