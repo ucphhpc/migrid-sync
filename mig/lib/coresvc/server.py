@@ -44,6 +44,8 @@ import time
 import werkzeug.exceptions as httpexceptions
 from wsgiref.simple_server import WSGIRequestHandler
 
+from mig.lib.coresvc.payloads import ValidationReport, validate_payload, \
+    PAYLOAD_POST_USER as _REQUEST_ARGS_POST_USER
 from mig.shared.base import canonical_user, keyword_auto, force_native_str_rec
 from mig.shared.useradm import fill_user, \
     create_user as useradm_create_user, search_users as useradm_search_users
@@ -58,20 +60,6 @@ def http_error_from_status_code(http_status_code, http_url, description=None):
     return httpexceptions_by_code[http_status_code](description)
 
 
-class ValidationReport(RuntimeError):
-    def __init__(self, errors_by_field):
-        self.errors_by_field = errors_by_field
-
-    def serialize(self, output_format='text'):
-        if output_format == 'json':
-            return dict(errors=self.errors_by_field)
-        else:
-            lines = ["- %s: required %s" %
-                     (k, v) for k, v in self.errors_by_field.items()]
-            lines.insert(0, '')
-            return 'payload failed to validate:%s' % ('\n'.join(lines),)
-
-
 def _create_user(user_dict, conf_path, **kwargs):
     try:
         useradm_create_user(user_dict, conf_path, keyword_auto, **kwargs)
@@ -80,69 +68,9 @@ def _create_user(user_dict, conf_path, **kwargs):
     return 0
 
 
-def _define_payload(payload_name, payload_fields):
-    class Payload(namedtuple('PostUserArgs', payload_fields)):
-        def keys(self):
-            return Payload._fields
-
-        def items(self):
-            return self._asdict().items()
-
-    Payload.__name__ = payload_name
-
-    return Payload
-
-
-def _is_not_none(value):
-    """value is not None"""
-    return value is not None
-
-
-def _is_string_and_non_empty(value):
-    """value is a non-empty string"""
-    return isinstance(value, str) and len(value) > 0
-
-
-_REQUEST_ARGS_POST_USER = _define_payload('PostUserArgs', [
-    'full_name',
-    'organization',
-    'state',
-    'country',
-    'email',
-    'comment',
-    'password',
-])
-
-
-_REQUEST_ARGS_POST_USER._validators = defaultdict(lambda: _is_not_none, dict(
-    full_name=_is_string_and_non_empty,
-    organization=_is_string_and_non_empty,
-    state=_is_string_and_non_empty,
-    country=_is_string_and_non_empty,
-    email=_is_string_and_non_empty,
-    comment=_is_string_and_non_empty,
-    password=_is_string_and_non_empty,
-))
-
-
 def search_users(configuration, search_filter):
     _, hits = useradm_search_users(search_filter, configuration, keyword_auto)
     return list((obj for _, obj in hits))
-
-
-def validate_payload(definition, payload):
-    args = definition(*[payload.get(field, None)
-                      for field in definition._fields])
-
-    errors_by_field = {}
-    for field_name, field_value in args._asdict().items():
-        validator_fn = definition._validators[field_name]
-        if not validator_fn(field_value):
-            errors_by_field[field_name] = validator_fn.__doc__
-    if errors_by_field:
-        raise ValidationReport(errors_by_field)
-    else:
-        return args
 
 
 def _create_and_expose_server(server, configuration):
