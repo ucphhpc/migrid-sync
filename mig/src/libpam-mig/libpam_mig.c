@@ -1,6 +1,6 @@
 /*
  * libpam_mig - PAM module for MiG user authentication
- * Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
  *
  * This file is part of MiG
  *
@@ -418,7 +418,7 @@ int pam_sm_authenticate_exit(int exit_value, struct pam_response *pwresp)
     /* Free password response struct */
     free_pam_response(pwresp, 1);
 #ifdef ENABLE_AUTHHANDLER
-    if (false == mig_pyexit()) {
+    if (false == mig_pyexit(exit_value)) {
         result = PAM_AUTH_ERR;
     }
 #endif                          /* ENABLE_AUTHHANDLER */
@@ -448,8 +448,12 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     struct pam_response *pwresp = NULL;
 
     WRITELOGMESSAGE(LOG_DEBUG,
-                    "In pam_sm_authenticate: pamh=%p flags=%x, argc=%d, argv:%p\n",
-                    (void *)pamh, flags, argc, (void *)argv);
+                    "In pam_sm_authenticate: pamh=%p flags=%x, argc=%d, argv:%p, migauth_exit:%d\n",
+                    (void *)pamh, flags, argc, (void *)argv, migauth_exit);
+    if (migauth_exit == true) {
+        WRITELOGMESSAGE(LOG_DEBUG, "migauthhandler blocked further password attempts\n");
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
+    }
 
     retval = pam_sm_authenticate_init();
     if (retval != PAM_SUCCESS) {
