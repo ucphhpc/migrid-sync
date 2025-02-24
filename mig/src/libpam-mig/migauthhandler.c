@@ -1,6 +1,6 @@
 /*
  * migauthhandler.c - C <-> Python wrappers for MiG user authentication
- * Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
  *
  * This file is part of MiG
  *
@@ -84,7 +84,14 @@
 #define RATE_LIMIT_EXPIRE_DELAY 120
 #endif
 
+#ifndef MAX_AUTH_TRIES
+#define MAX_AUTH_TRIES 3
+#endif
+
 void *libpython_handle = NULL;
+unsigned int migauth_tries = 0;
+bool migauth_exit = false;
+
 PyObject *py_main = NULL;
 
 static void pyrun(const char *cmd, ...)
@@ -110,8 +117,12 @@ static bool mig_pyinit()
 {
     // https://stackoverflow.com/questions/11842920/undefined-symbol-pyexc-importerror-when-embedding-python-in-c/50489814#50489814
     if (libpython_handle != NULL) {
-        WRITELOGMESSAGE(LOG_DEBUG, "Python already initialized\n");
+        migauth_tries += 1;
+        WRITELOGMESSAGE(LOG_DEBUG,
+            "Python already initialized with migauth_tries: %d/%d\n",
+                migauth_tries, MAX_AUTH_TRIES);
     } else {
+        migauth_tries = 1;
         // NOTE: use make-detected LIBPYTHON shared library and RTLD_NOW
         // NOTE: The issue with RTLD_LAZY is that C-extensions do not have dependency on the libpython 
         // (as can be seen with help of ldd), so once they are loaded and a symbol (e.g. PyFloat_Type)
@@ -119,7 +130,6 @@ static bool mig_pyinit()
         // the dynamic linker doesn't know that it has to look into the libpython.
         // https://stackoverflow.com/questions/67891197/ctypes-cpython-39-x86-64-linux-gnu-so-undefined-symbol-pyfloat-type-in-embedd
         libpython_handle = dlopen(LIBPYTHON, RTLD_NOW | RTLD_GLOBAL);
-
         #if PY_VERSION_HEX < 0x03000000
             Py_SetProgramName("pam-mig");
         #else
@@ -136,6 +146,9 @@ static bool mig_pyinit()
             WRITELOGMESSAGE(LOG_ERR, "Failed to find Python __main__\n");
             return false;
         }
+        WRITELOGMESSAGE(LOG_DEBUG,
+            "Python initialized with migauth_tries: %d/%d\n",
+                migauth_tries, MAX_AUTH_TRIES);
         pyrun("from __future__ import absolute_import");
 
         pyrun("import os");
@@ -164,14 +177,24 @@ static bool mig_pyinit()
     return true;
 }
 
-static bool mig_pyexit()
+static bool mig_pyexit(int exit_value)
 {
     if (libpython_handle == NULL) {
         WRITELOGMESSAGE(LOG_DEBUG, "Python already finalized\n");
-    } else {
+    } else if (exit_value == PAM_SUCCESS \
+            || migauth_exit == true \
+            || migauth_tries >= MAX_AUTH_TRIES) {
+        WRITELOGMESSAGE(LOG_DEBUG,
+            "Python finalize with exit value: %d, migauth_exit: %d, migauth_tries: %d/%d\n",
+                exit_value, migauth_exit, migauth_tries, MAX_AUTH_TRIES);
         Py_Finalize();
         dlclose(libpython_handle);
         libpython_handle = NULL;
+        migauth_exit = true;
+    } else {
+        WRITELOGMESSAGE(LOG_DEBUG,
+            "mig_pyexit called with exit_value: %d migauth_tries: %d/%d\n",
+                exit_value, migauth_tries, MAX_AUTH_TRIES);
     }
     return true;
 }
@@ -331,20 +354,26 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
                                   const char *address, const char *secret)
 {
     bool result = false;
+    bool disconnect = true;
     WRITELOGMESSAGE(LOG_DEBUG,
                     "mode: 0x%X, username: %s, address: %s, secret: %s\n",
                     mode, username, address, secret);
-    char pycmd[MAX_PYCMD_LENGTH] =
-        "(authorized, disconnect) = validate_auth_attempt(configuration, 'sftp-subsys', ";
-    char pytmp[MAX_PYCMD_LENGTH];
+    /* Filter valid auth types first - we currently only allow password auth */
     if (mode & MIG_AUTHTYPE_PASSWORD) {
-        strncat(&pycmd[0], "'password', ", MAX_PYCMD_LENGTH - strlen(pycmd));
+        WRITELOGMESSAGE(LOG_DEBUG, "proceed with password authentication\n");
     } else {
         WRITELOGMESSAGE(LOG_ERR,
                         "mig_reg_auth_attempt: No valid auth-type in mode: 0x%X\n",
                         mode);
+        /* We don't exit hard here to make sure other auth types may follow */
         return false;
     }
+    char pycmd[MAX_PYCMD_LENGTH] =
+        "(authorized, disconnect) = validate_auth_attempt(configuration, 'sftp-subsys', ";
+    char pytmp[MAX_PYCMD_LENGTH];
+    /* Always password auth here as mentioned in the above comment */
+    strncat(&pycmd[0], "'password', ", MAX_PYCMD_LENGTH - strlen(pycmd));
+
     strncat(&pycmd[0], "'", MAX_PYCMD_LENGTH - strlen(pycmd));
     strncat(&pycmd[0], username, MAX_PYCMD_LENGTH - strlen(pycmd));
     strncat(&pycmd[0], "', '", MAX_PYCMD_LENGTH - strlen(pycmd));
@@ -415,17 +444,36 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
                 MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     strncat(&pycmd[0], ")", MAX_PYCMD_LENGTH - strlen(pycmd));
-    if (MAX_PYCMD_LENGTH == strlen(pycmd)) {
-        WRITELOGMESSAGE(LOG_ERR, "mig_reg_auth_attempt: pycmd overflow\n");
-        return false;
-    }
-    pyrun(&pycmd[0]);
-    PyObject *py_authorized = PyObject_GetAttrString(py_main, "authorized");
-    if (py_authorized == NULL) {
-        WRITELOGMESSAGE(LOG_ERR, "Missing python variable: py_authorized\n");
+    /* Execute python command if and only if it didn't overflow */
+    if (MAX_PYCMD_LENGTH > strlen(pycmd)) {
+        pyrun(&pycmd[0]);
+        PyObject *py_authorized = PyObject_GetAttrString(py_main, "authorized");
+        if (py_authorized == NULL) {
+            WRITELOGMESSAGE(LOG_ERR, "Missing python variable: py_authorized\n");
+        } else {
+            result = PyObject_IsTrue(py_authorized);
+            Py_DECREF(py_authorized);
+        }
+        PyObject *py_disconnect = PyObject_GetAttrString(py_main, "disconnect");
+        if (py_disconnect == NULL) {
+            WRITELOGMESSAGE(LOG_ERR, "Missing python variable: py_disconnect\n");
+        } else {
+            disconnect = PyObject_IsTrue(py_disconnect);
+            Py_DECREF(py_disconnect);
+        }
     } else {
-        result = PyObject_IsTrue(py_authorized);
-        Py_DECREF(py_authorized);
+        WRITELOGMESSAGE(LOG_ERR, "mig_reg_auth_attempt: pycmd overflow!\n");
+    }
+
+    /* NOTE: '(mode & MIG_VALID_AUTH)'
+              If caller (libpam_mig) validated credentials
+              then there are no more passwords (re-)tries.
+              We honor 'disconnect' here to follow central password policy.
+    */
+    if (disconnect == true || (mode & MIG_VALID_AUTH)) {
+        WRITELOGMESSAGE(LOG_DEBUG, "disconnect: %d, mode & MIG_VALID_AUTH: %d\n",
+                disconnect, (mode & MIG_VALID_AUTH));
+        migauth_exit = true;
     }
 
     return result;
