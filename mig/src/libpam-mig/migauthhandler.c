@@ -365,16 +365,15 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
         WRITELOGMESSAGE(LOG_ERR,
                         "mig_reg_auth_attempt: No valid auth-type in mode: 0x%X\n",
                         mode);
-        // TODO: should we exit here or can other types follow?
-        //migauth_exit = true;
+        /* We don't exit hard here to make sure other auth types may follow */
         return false;
     }
     char pycmd[MAX_PYCMD_LENGTH] =
         "(authorized, disconnect) = validate_auth_attempt(configuration, 'sftp-subsys', ";
     char pytmp[MAX_PYCMD_LENGTH];
-    if (mode & MIG_AUTHTYPE_PASSWORD) {
-        strncat(&pycmd[0], "'password', ", MAX_PYCMD_LENGTH - strlen(pycmd));
-    }
+    /* Always password auth here as mentioned in the above comment */
+    strncat(&pycmd[0], "'password', ", MAX_PYCMD_LENGTH - strlen(pycmd));
+
     strncat(&pycmd[0], "'", MAX_PYCMD_LENGTH - strlen(pycmd));
     strncat(&pycmd[0], username, MAX_PYCMD_LENGTH - strlen(pycmd));
     strncat(&pycmd[0], "', '", MAX_PYCMD_LENGTH - strlen(pycmd));
@@ -445,6 +444,7 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
                 MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     strncat(&pycmd[0], ")", MAX_PYCMD_LENGTH - strlen(pycmd));
+    /* Execute python command if and only if it didn't overflow */
     if (MAX_PYCMD_LENGTH > strlen(pycmd)) {
         pyrun(&pycmd[0]);
         PyObject *py_authorized = PyObject_GetAttrString(py_main, "authorized");
@@ -467,7 +467,8 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
 
     /* NOTE: '(mode & MIG_VALID_AUTH)'
               If caller (libpam_mig) validated credentials
-              then there are no more passwords (re-)tries
+              then there are no more passwords (re-)tries.
+              We honor 'disconnect' here to follow central password policy.
     */
     if (disconnect == true || (mode & MIG_VALID_AUTH)) {
         WRITELOGMESSAGE(LOG_DEBUG, "disconnect: %d, mode & MIG_VALID_AUTH: %d\n",
