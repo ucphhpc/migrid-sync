@@ -214,6 +214,7 @@ def start_service(configuration, host=None, port=None):
 
 def main(configuration=None):
     if not configuration:
+        from mig.shared.conf import get_configuration_object
         # Force no log init since we use separate logger
         configuration = get_configuration_object(skip_log=True)
 
