@@ -220,7 +220,7 @@ def main(configuration=None):
     logger = configuration.logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    register_hangup_handler(configuration)
+    #register_hangup_handler(configuration)
 
     # FIXME:
     host = 'localhost'  # configuration.user_openid_address
