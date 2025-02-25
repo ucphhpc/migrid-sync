@@ -24,6 +24,10 @@ _USERADM_PATH_KEYS = ('user_cache', 'user_db_home', 'user_home',
                       'user_settings', 'mrsl_files_dir', 'resource_pending')
 
 
+def _extend_configuration(*args):
+    pass
+
+
 def ensure_dirs_needed_by_create_user(configuration):
     for config_key in _USERADM_PATH_KEYS:
         dir_path = getattr(configuration, config_key)[0:-1]
