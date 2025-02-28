@@ -1027,7 +1027,9 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
     format as a first step.
     """
 
-    if conf_path:
+    if isinstance(conf_path, Configuration):
+        configuration = conf_path
+    elif conf_path:
         if isinstance(conf_path, basestring):
 
             # has been checked for accessibility above...
@@ -1037,7 +1039,9 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
             configuration = conf_path
     else:
         configuration = get_configuration_object()
+
     _logger = configuration.logger
+
     if db_path == keyword_auto:
         db_path = default_db_path(configuration)
 
