@@ -315,8 +315,8 @@ if '__main__' == __name__:
     if verbose:
         print('using user dict: %s' % user_dict)
     try:
-        create_user(user_dict, conf_path, db_path, force, verbose, ask_renew,
-                    default_renew, verify_peer=peer_pattern,
+        create_user(user_dict, configuration, db_path, force, verbose,
+                    ask_renew, default_renew, verify_peer=peer_pattern,
                     peer_expire_slack=slack_secs, ask_change_pw=ask_change_pw)
         if configuration.site_enable_gdp:
             (success_here, msg) = ensure_gdp_user(configuration,
