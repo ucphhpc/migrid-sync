@@ -57,6 +57,7 @@ from mig.shared.objecttypes import validate
 from mig.shared.prettyprinttable import pprint_table
 from mig.shared.pwcrypto import sorted_hash_algos
 from mig.shared.safeinput import html_escape
+from mig.shared.templates import init_global_templates
 
 
 row_name = ('even', 'odd')
@@ -746,6 +747,15 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     for i in out_obj:
         if i['object_type'] == 'start':
             pass
+        elif i['object_type'] == 'template':
+            store = init_global_templates(configuration)
+            template = store.grab_template(
+                i['template_name'],
+                i['template_group'],
+                'html',
+                store.context.extend(**i['template_args'])
+            )
+            lines.append(template.render())
         elif i['object_type'] == 'error_text':
             msg = "%(text)s" % i
             if i.get('exc', False):

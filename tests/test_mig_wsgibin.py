@@ -303,6 +303,32 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin, SnapshotAssertMixi
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
         self.assertSnapshotOfHtmlContent(output)
 
+    def test_objects_with_type_template(self):
+        output_objects = [
+            # workaround invalid HTML being generated with no title object
+            {
+                'object_type': 'title',
+                'text': 'TEST'
+            },
+            {
+                'object_type': 'template',
+                'template_name': 'something',
+                'template_group': 'partial',
+                'template_args': {
+                    'content': 'here!!'
+                }
+            }
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        self.assertSnapshotOfHtmlContent(output)
+
 
 if __name__ == '__main__':
     testmain()
