@@ -50,9 +50,9 @@ else:
 
 
 def _force_test_templates(configuration):
-    from mig.lib.templates import init_global_templates, _clear_global_store
-    _clear_global_store()
+    from mig.lib.templates import init_global_templates
     test_tmpl_dir = os.path.join(TEST_DATA_DIR, 'templates')
+    # populate current context with a template store backed onto test templates
     init_global_templates(configuration, _templates_dirs=lambda: [test_tmpl_dir])
 
 

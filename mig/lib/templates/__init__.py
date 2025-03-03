@@ -46,7 +46,6 @@ TEMPLATES_CACHE_DIR = os.path.join(TEMPLATES_DIR, '__jinja__')
 _all_template_dirs = [
     TEMPLATES_DIR,
 ]
-_global_store = None
 
 
 def _clear_global_store():
@@ -147,15 +146,16 @@ class TemplateStore:
 
 
 def init_global_templates(configuration, _templates_dirs=template_dirs):
-    global _global_store
+    _context = configuration.context()
 
-    if _global_store is not None:
-        return _global_store
+    try:
+        return configuration.context(namespace='templates')
+    except KeyError as exc:
+        pass
 
-    _global_store = TemplateStore.populated(
+    store = TemplateStore.populated(
         _templates_dirs(),
         cache_dir=cache_dir(),
         context=_FormatContext(configuration)
     )
-
-    return _global_store
+    return configuration.context_set(store, namespace='templates')
