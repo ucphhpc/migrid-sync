@@ -26,12 +26,13 @@
 #
 
 """This module contains various helper contents for the certificate and OpenID
-account request handlers"""
+account request handlers.
+"""
 
 from __future__ import absolute_import
 
-import re
 import os
+import re
 import time
 
 # NOTE: the external iso3166 module is optional and only used if available
@@ -657,6 +658,48 @@ and select which authentication method you want to change password for.
     return html
 
 
+def renew_account_access_template(configuration, default_values={}):
+    """A general form template used for renewing account access."""
+
+    html = """
+<div id='account-renew-access-grid' class='form_container'>
+"""
+
+    _logger = configuration.logger
+    auth_map = auth_type_description(configuration)
+    show_auth_types = [(key, auth_map[key]) for key in
+                       default_values.get('show', auth_map.keys())]
+    filtered_auth_types = [i for i in show_auth_types if i[0] in
+                           configuration.site_signup_methods]
+    _logger.debug("show_auth_types %s filtered_auth_types %s" %
+                  (show_auth_types, filtered_auth_types))
+    if not filtered_auth_types:
+        html += """<p class='warningtext'>
+No matching local authentication methods enabled on this site, so no account
+access to renew here.
+</p>
+"""
+    else:
+        html += """
+<p>
+Account access automatically expires after a while and needs to be actively
+renewed.
+%(peer_acceptance_notice)s
+</p>
+<!-- use post here to avoid field contents in URL -->
+<form method='%(form_method)s' action='%(target_op)s.py'>
+    <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+    <input type='hidden' name='action' value='%(account_action)s'/>
+    <input id='submit_button' type=submit value='Renew %(auth_label)s Account Access'/>
+</form>
+"""
+
+    html += """
+</div>
+"""
+    return html
+
+
 def build_accountreqitem_object(configuration, accountreq_dict):
     """Build a accountreq object based on input accountreq_dict"""
 
@@ -1250,12 +1293,13 @@ def __auto_add_user_allowed(configuration, user_dict, permit_list):
     is empty.
     """
 
-    if not permit_list:
-        return False
+    match = False
+    if permit_list:
+        match = True
     for (key, val) in permit_list:
         if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
             return False
-    return True
+    return match
 
 
 def auto_add_user_allowed_direct(configuration, user_dict):
