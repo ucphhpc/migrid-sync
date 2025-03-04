@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Account actions backend for password change and account renewal."""
+"""Account actions backend e.g. for account renewal."""
 
 from __future__ import absolute_import
 
@@ -35,24 +35,21 @@ import time
 from mig.shared import returnvalues
 from mig.shared.base import is_gdp_user
 from mig.shared.defaults import keyword_auto, AUTH_MIG_CERT, AUTH_MIG_OID, \
-     AUTH_MIG_OIDC #, AUTH_EXT_CERT, AUTH_EXT_OID, AUTH_EXT_OIDC
+    AUTH_MIG_OIDC
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.gdp.all import ensure_gdp_user
 from mig.shared.griddaemons.https import default_user_abuse_hits, \
-     default_proto_abuse_hits, hit_rate_limit, expire_rate_limit, \
-     validate_auth_attempt
+    default_proto_abuse_hits, hit_rate_limit, expire_rate_limit, \
+    validate_auth_attempt
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.htmlgen import themed_styles, themed_scripts
 from mig.shared.httpsclient import detect_client_auth, find_auth_type_and_label
-from mig.shared.init import initialize_main_variables #, find_entry
-#from mig.shared.notification import send_email
-from mig.shared.pwcrypto import make_hash
+from mig.shared.init import initialize_main_variables
 from mig.shared.userdb import default_db_path
 from mig.shared.useradm import default_search, search_users, create_user
 
-SUPPORTED_ACTIONS = ["RENEW_ACCESS",
-                     #"CHANGE_PASSWORD"
-                     ]
+SUPPORTED_ACTIONS = ["RENEW_ACCESS", ]
+
 
 def allow_renew_access(configuration, client_id, user_dict, auth_flavor):
     """Helper to check prerequisites for the RENEW_ACCESS requests."""
@@ -62,8 +59,8 @@ def allow_renew_access(configuration, client_id, user_dict, auth_flavor):
         _logger.debug("Account renew for %r is allowed to proceed" % client_id)
         allow_renew, renew_err = True, ""
     else:
-        _logger.warning("Account renew for %r with %s auth unsupported" % \
-                       (client_id, auth_flavor))
+        _logger.warning("Account renew for %r with %s auth unsupported" %
+                        (client_id, auth_flavor))
         renew_err = "Account access renew refused - invalid auth flavor!"
     return (allow_renew, renew_err)
 
@@ -87,88 +84,29 @@ def renew_access(configuration, client_id, user_dict, auth_flavor):
     new_expire = max(old_expire, time.time() + max_extend_secs)
     user_dict['expire'] = new_expire
     try:
-        _logger.info("Renew %(distinguished_name)r with expire at %(expire)d" \
+        _logger.info("Renew %(distinguished_name)r with expire at %(expire)d"
                      % user_dict)
         updated = create_user(user_dict, configuration, db_path,
                               ask_renew=False, default_renew=True,
                               verify_peer=peer_pattern, auto_create_db=False)
         if configuration.site_enable_gdp:
             (gdp_success, msg) = ensure_gdp_user(configuration,
-                                                  "127.0.0.1",
-                                                  user_dict['distinguished_name'])
+                                                 "127.0.0.1",
+                                                 user_dict['distinguished_name'])
             if not gdp_success:
                 raise Exception("Failed to renew GDP user: %s" % msg)
         renewed_expire = updated.get('expire', -1)
-        _logger.info("Renewed %(distinguished_name)r to expire at %(expire)d" % \
-                    updated)
+        _logger.info("Renewed %(distinguished_name)r to expire at %(expire)d" %
+                     updated)
         if renewed_expire > old_expire:
             renew_status, renew_err = True, ""
         else:
             renew_err = "Renew could not extend account expire value (no peer?)"
     except Exception as exc:
         _logger.warning("Error renewing user %r: %s" % (client_id, exc))
-    
+
     # TODO: send email on renew?
     return (renew_status, renew_err)
-
-
-def allow_change_password(configuration, client_id, user_dict, auth_flavor,
-                    curpassword, password, verifypassword):
-    """Helper to check prerequisites for the CHANGE_PASSWORD requests."""
-    _logger = configuration.logger
-    allow_change, change_err = False, 'Not allowed'
-    saved_password = user_dict['password']
-    saved_password_hash = user_dict.get('password_hash', '')
-    # MiG OpenID users without password recovery have empty
-    # password value and on renew we then leave any saved cert
-    # password alone.
-    # External OpenID users do not provide a password so again any
-    # existing password should be left alone on renewal.
-    # The password_hash field is not guaranteed to exist.
-    if auth_flavor == AUTH_MIG_CERT:
-        if saved_password != curpassword:
-            _logger.warning("reject %r password change - wrong password" % \
-                           client_id)
-            change_err = "Password change refused - password mismatch!"
-            return (allow_change, change_err)
-    elif auth_flavor in (AUTH_MIG_OID, AUTH_MIG_OIDC):
-        if not saved_password_hash:
-            _logger.warning("reject %r password change - no saved hash" % \
-                           client_id)
-            change_err = "Password change refused - password auth disabled!"
-            return (allow_change, change_err)
-
-        curpassword_hash = make_hash(configuration, curpassword)
-        if saved_password_hash != curpassword_hash:
-            _logger.warning("reject %r password change - wrong password" % \
-                           client_id)
-            change_err = "Password change refused - password mismatch!"
-            return (allow_change, change_err)
-    else:
-        _logger.warning("Invalid password change for %r with %s auth" % \
-                       (client_id, auth_flavor))
-        change_err = "Password change refused - invalid auth flavor!"
-        return (allow_change, change_err)
-
-    if password != verifypassword:
-        _logger.warning("Password change for %r rejected with verify diff" % \
-                       client_id)
-        change_err = "Password change refused - password and verify differ!"
-        return (allow_change, change_err)
-
-    _logger.debug("Password change for %r is allowed to proceed" % client_id)
-    allow_change, change_err = True, ""
-    return (allow_change, change_err)
-
-
-def change_password(configuration, client_id, user_dict, auth_flavor,
-                    curpassword, password, verifypassword):
-    """Helper to actually change password for the RENEW_ACCESS requests."""
-    _logger = configuration.logger
-    # TODO: implement
-    change_status, change_err = False, 'Not implemented'
-    # TODO: send email on renew
-    return (change_status, change_err)
 
 
 def signature(configuration):
@@ -176,9 +114,6 @@ def signature(configuration):
 
     defaults = {
         'action': REJECT_UNSET,
-        'curpassword': [''],
-        'password': [''],
-        'verifypassword': [''],
     }
     return ['text', defaults]
 
@@ -214,16 +149,11 @@ def main(client_id, user_arguments_dict, environ=None):
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    action = accepted['action'][-1].strip()    
-    curpassword = accepted['curpassword'][-1].strip()
-    password = accepted['password'][-1].strip()
-    verifypassword = accepted['verifypassword'][-1].strip()
+    action = accepted['action'][-1].strip()
 
     # Seconds to delay next attempt after hitting rate limit
     if action == "RENEW_ACCESS":
         delay_retry = 3600
-    elif action == "CHANGE_PASSWORD":
-        delay_retry = 900
     else:
         delay_retry = 300
     scripts['init'] += '''
@@ -297,7 +227,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         client_id,
         client_addr,
         tcp_port,
-        secret=curpassword,
+        secret='',
         authtype_enabled=True,
         modify_account=True,
         exceeded_rate_limit=exceeded_rate_limit,
@@ -351,39 +281,7 @@ support if the problem persists.
     logger.debug('handle %s account %s request from %r' % (auth_type_name,
                                                            action, client_id))
     (uid, user_dict) = hits[0]
-    if action == "CHANGE_PASSWORD":
-       allowed, err = allow_change_password(configuration, client_id,
-                                            user_dict, auth_flavor,
-                                            curpassword, password,
-                                            verifypassword)
-       if not allowed:
-           output_objects.append(
-               {'object_type': 'error_text', 'text':
-                'Refused account password change: %s' % err})
-           output_objects.append(
-               {'object_type': 'link', 'destination':
-                'javascript:history.back();',
-                'class': 'genericbutton', 'text': "Try again"})
-           return (output_objects, returnvalues.CLIENT_ERROR)
-
-       changed, err = change_password(configuration, client_id, user_dict,
-                                      auth_flavor, curpassword, password,
-                                      verifypassword)
-       if not changed:
-           output_objects.append(
-               {'object_type': 'error_text', 'text':
-                'Failed account password change: %s' % err})
-           output_objects.append(
-               {'object_type': 'link', 'destination':
-                'javascript:history.back();',
-                'class': 'genericbutton', 'text': "Try again"})
-           return (output_objects, returnvalues.CLIENT_ERROR)            
-
-       output_objects.append(
-           {'object_type': 'text', 'text':
-            'Your account password was successfully changed'})
-
-    elif action == "RENEW_ACCESS":
+    if action == "RENEW_ACCESS":
         allowed, err = allow_renew_access(configuration, client_id,
                                           user_dict, auth_flavor)
         if not allowed:
@@ -410,17 +308,17 @@ support if the problem persists.
 
         output_objects.append(
             {'object_type': 'text', 'text':
-                 'Your account access was successfully renewed.'})
+             'Your account access was successfully renewed.'})
     else:
-            output_objects.append(
-                {'object_type': 'error_text', 'text':
-                 'Unsupported account action: %s' % action})
-            output_objects.append(
-                {'object_type': 'link', 'destination':
-                 'javascript:history.back();',
-                 'class': 'genericbutton', 'text': "Try again"})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-    
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Unsupported account action: %s' % action})
+        output_objects.append(
+            {'object_type': 'link', 'destination':
+             'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     logger.debug("Account %s %s completed" % (auth_type_name, action))
     output_objects.append(
         {'object_type': 'link', 'destination': 'account.py',

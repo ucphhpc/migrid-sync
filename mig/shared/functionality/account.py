@@ -34,8 +34,7 @@ import datetime
 import os
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import account_pw_change_template, \
-    renew_account_access_template
+from mig.shared.accountreq import renew_account_access_template
 from mig.shared.defaults import csrf_field, user_home_label
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
@@ -134,8 +133,8 @@ def html_tmpl(configuration, client_id, environ, title_entry):
         </div>
     '''
 
-    # Account management like renew account access and change password for local users
-    # TODO: add delete account support for all accounts?
+    # Account management like renew account access for local users
+    # TODO: add change password and delete account support for all accounts?
     (auth_type_name, auth_flavor) = detect_client_auth(configuration, environ)
     (auth_type, auth_label) = find_auth_type_and_label(configuration,
                                                        auth_type_name,
@@ -164,20 +163,6 @@ def html_tmpl(configuration, client_id, environ, title_entry):
     fill_helpers.update({'target_op': target_op, 'form_method':
                          form_method, 'csrf_field': csrf_field,
                          'csrf_token': csrf_token})
-    if auth_type in show_local and (user_dict.get('password', False) or
-                                    user_dict.get('password_hash', False)):
-        fill_helpers['account_action'] = "CHANGE_PASSWORD"
-        fill_helpers['pwchange_helper'] = account_pw_change_template(
-            configuration, default_values=fill_helpers) % fill_helpers
-
-        # TODO: display when ready
-        html += '''
-            <div class="change-account-pw__header col-12 hidden">
-                <h3>Change Account Password</h3>
-                %(pwchange_helper)s
-            </div>
-        ''' % fill_helpers
-
     # TODO: extend renew to active ext accounts?
     if show_local and user_dict.get('status', 'active') == 'temporal':
         fill_helpers['account_action'] = "RENEW_ACCESS"
