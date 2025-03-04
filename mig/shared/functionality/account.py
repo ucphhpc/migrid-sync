@@ -164,7 +164,7 @@ def html_tmpl(configuration, client_id, environ, title_entry):
                          form_method, 'csrf_field': csrf_field,
                          'csrf_token': csrf_token})
     # TODO: extend renew to active ext accounts?
-    if show_local and user_dict.get('status', 'active') == 'temporal':
+    if auth_type in show_local and user_dict.get('status', 'active') == 'temporal':
         fill_helpers['account_action'] = "RENEW_ACCESS"
         fill_helpers['peer_acceptance_notice'] = ""
         if configuration.site_peers_mandatory:
