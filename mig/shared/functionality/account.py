@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # account - account page with info and account management options
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -34,9 +34,13 @@ import datetime
 import os
 
 from mig.shared import returnvalues
+from mig.shared.accountreq import renew_account_access_template
+from mig.shared.defaults import csrf_field, user_home_label
 from mig.shared.functional import validate_input_and_cert
-from mig.shared.init import initialize_main_variables, find_entry
-from mig.shared.htmlgen import html_user_messages, man_base_html, man_base_js
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.htmlgen import html_user_messages, man_base_js
+from mig.shared.httpsclient import detect_client_auth, find_auth_type_and_label
+from mig.shared.init import find_entry, initialize_main_variables
 from mig.shared.useradm import get_full_user_map
 
 _account_field_order = [('full_name', 'Full Name'),
@@ -93,7 +97,7 @@ def html_tmpl(configuration, client_id, environ, title_entry):
         user_token += claim_dump
     fill_helpers = {'short_title': configuration.short_title,
                     'user_msg': user_msg, 'show_user_msg': show_user_msg,
-                    'user_account': user_account,
+                    'home_label': user_home_label, 'user_account': user_account,
                     'user_token': user_token}
 
     html = '''
@@ -129,7 +133,70 @@ def html_tmpl(configuration, client_id, environ, title_entry):
         </div>
     '''
 
-    # TODO: add account management actions
+    # Account management like renew account access for local users
+    # TODO: add change password and delete account support for all accounts?
+    (auth_type_name, auth_flavor) = detect_client_auth(configuration, environ)
+    (auth_type, auth_label) = find_auth_type_and_label(configuration,
+                                                       auth_type_name,
+                                                       auth_flavor)
+    show_local = [i for i in configuration.site_login_methods
+                  if i.startswith('mig')]
+    fill_helpers.update({'auth_type': auth_type,
+                         'auth_type_name': auth_type_name,
+                         'auth_flavor': auth_flavor,
+                         'auth_label': auth_label})
+    html += '''
+        <div id="manage-container" class="row">
+            <div class="manage-page__header col-12">
+                <h2>Manage Account</h2>
+                <p class="sub-title">Depending on your %(short_title)s account
+                type you have access to one or more account management actions
+                below.
+                </p>
+            </div>
+            ''' % fill_helpers
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    target_op = 'accountaction'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'form_method':
+                         form_method, 'csrf_field': csrf_field,
+                         'csrf_token': csrf_token})
+    # TODO: extend renew to active ext accounts?
+    if auth_type in show_local and user_dict.get('status', 'active') == 'temporal':
+        fill_helpers['account_action'] = "RENEW_ACCESS"
+        fill_helpers['peer_acceptance_notice'] = ""
+        if configuration.site_peers_mandatory:
+            peers_full_name = user_dict.get("peers_full_name", "")
+            peers_email = user_dict.get("peers_email", "")
+            peers_list = user_dict.get("peers", [])
+            if peers_list or (peers_full_name and peers_email):
+                fill_helpers['peer_acceptance_notice'] = """
+Apparently %(peers_full_name)s &lt;%(peers_email)s&gt; accepted you as a peer
+and if that peer appointment has not yet ended you can renew your access here
+without further operator or peer contact involvement. Otherwise you may need to
+obtain or await explicit extension or peer assignment from someone else before
+your access renewal can proceed.
+                """ % user_dict
+            else:
+                fill_helpers['peer_acceptance_notice'] = """
+It looks like you may need someone with authority to appoint you as their peer
+before your access renewal can be accepted.
+                """
+        fill_helpers['renew_helper'] = renew_account_access_template(
+            configuration, default_values=fill_helpers) % fill_helpers
+        html += '''
+        <div class="renew-account-access__header col-12">
+            <h3>Renew Account Access</h3>
+            %(renew_helper)s
+        </div>
+        ''' % fill_helpers
+
+    html += '''
+            <div class="col-lg-12 vertical-spacer"></div>
+        </div>
+    '''
 
     return html
 
