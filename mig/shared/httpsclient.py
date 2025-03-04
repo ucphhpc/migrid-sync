@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # httpsclient - Shared functions for all HTTPS clients
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -33,12 +33,12 @@ from __future__ import absolute_import
 import os
 import socket
 
+from mig.shared.base import is_gdp_user, get_xgi_bin, auth_type_description
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_GENERIC, AUTH_NONE, AUTH_MIG_OID, AUTH_EXT_OID, \
     AUTH_MIG_OIDC, AUTH_EXT_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT, \
     AUTH_SID_GENERIC, AUTH_UNKNOWN, auth_openid_mig_db, auth_openid_ext_db, \
     keyword_all, csrf_field
-from mig.shared.base import is_gdp_user, get_xgi_bin
 from mig.shared.gdp.all import get_project_user_dn
 from mig.shared.handlers import get_csrf_limit
 from mig.shared.pwcrypto import make_csrf_token, make_csrf_trust_token
@@ -418,6 +418,21 @@ def extract_client_id(configuration, environ, lookup_dn=True):
         # Fall back to use certificate value in any case
         distinguished_name = extract_client_cert(configuration, environ)
     return distinguished_name
+
+
+def find_auth_type_and_label(configuration, auth_type_name, auth_flavor):
+    """Use contents of auth_type_description and auth_flavor to lookup actual
+    simple auth_type (migoid, extcert, ...) and corresponding descritpive label
+    for that auth_type.
+    """
+    rev_auth_flavor_map = {AUTH_EXT_OID: 'extoid', AUTH_EXT_OIDC: 'extoidc',
+                           AUTH_MIG_OID: 'migoid', AUTH_MIG_OIDC: 'migoidc',
+                           AUTH_EXT_CERT: 'extcert', AUTH_MIG_CERT: 'migcert',
+                           AUTH_UNKNOWN: 'unknown'}
+    auth_type = rev_auth_flavor_map[auth_flavor]
+    auth_map = auth_type_description(configuration)
+    auth_label = auth_map[auth_type]
+    return (auth_type, auth_label)
 
 
 def require_twofactor_setup(configuration, script_name, client_id, environ):
