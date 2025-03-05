@@ -41,11 +41,15 @@ class ServerWithinThreadExecutor:
 
     def __init__(self, ServerClass, *args, **kwargs):
         self._serverclass = ServerClass
-        self._serverclass_on_instance = kwargs.pop('on_instance')
+        self._serverclass_on_instance = kwargs.pop('on_instance', None)
         self._arguments = (args, kwargs)
         self._started = ThreadEvent()
         self._thread = None
         self._wrapped = None
+
+    def __getattr__(self, attr):
+        assert self._wrapped, "wrapped instance was not created"
+        return getattr(self._wrapped, attr)
 
     def run(self):
         """Mimic the same method from the standard thread API"""
@@ -76,14 +80,16 @@ class ServerWithinThreadExecutor:
     def stop(self):
         """Mimic the same method from the standard thread API"""
         self.stop_server()
-        self._wrapped = None
-        self._thread.join()
-        self._thread = None
+        if self._thread:
+            self._thread.join()
+            self._thread = None
 
     def stop_server(self):
         """Stop server thread"""
-        self._wrapped.shutdown()
-        self._wrapped.server_close()
+        if self._wrapped:
+            self._wrapped.shutdown()
+            self._wrapped.server_close()
+            self._wrapped = None
 
 
 def make_wrapped_server(ServerClass, *args, **kwargs):
