@@ -26,8 +26,9 @@
 # --- END_HEADER ---
 #
 
-"""Refresh one or more accounts so that files and dirs fit current user ID, in
-particular replace any stale .htaccess files no longer in sync regarding
+"""Refresh one or more accounts so that files and dirs fit current user ID.
+
+In particular replace any stale .htaccess files no longer in sync regarding
 assigned IDs and therefore causing auth error upon fileman open, etc.
 """
 
@@ -45,8 +46,7 @@ from mig.shared.useradm import assure_current_htaccess, default_search, \
 
 
 def usage(name='refreshusers.py'):
-    """Usage help"""
-
+    """Usage help."""
     print("""Refresh MiG user user files and dirs based on user ID in MiG user
 database.
 
@@ -67,7 +67,7 @@ Where OPTIONS may be one or more of:
 
 
 if '__main__' == __name__:
-    (args, app_dir, db_path) = init_user_adm()
+    (args, _, db_path) = init_user_adm()
     conf_path = None
     force = False
     verbose = False
@@ -136,18 +136,18 @@ if '__main__' == __name__:
     gdp_prefix = "%s=" % gdp_distinguished_field
     # NOTE: we already filtered expired accounts here
     search_dn = search_filter['distinguished_name']
-    before = datetime.datetime.fromtimestamp(search_filter['expire_before'])
-    after = datetime.datetime.fromtimestamp(search_filter['expire_after'])
+    before_date = datetime.datetime.fromtimestamp(
+        search_filter['expire_before'])
+    after_date = datetime.datetime.fromtimestamp(search_filter['expire_after'])
     if verbose:
         if hits:
             print("Check %d account(s) expiring between %s and %s for ID %r" %
-                  (len(hits), after, before, search_dn))
+                  (len(hits), after_date, before_date, search_dn))
         else:
             print("No accounts expire between %s and %s for ID %r" %
-                  (after, before, search_dn))
+                  (after_date, before_date, search_dn))
 
     for (user_id, user_dict) in hits:
-        affected = []
         if verbose:
             print('Check refresh needed for %r' % user_id)
 
@@ -183,7 +183,10 @@ if '__main__' == __name__:
                           user_id)
                 continue
 
-        if not (AUTH_EXT_OID in known_auth or AUTH_EXT_OIDC in known_auth):
+        # The auth list changed at one point so it may contain alias or name
+        oid_auth = [i for i in known_auth if i in [AUTH_EXT_OID, AUTH_EXT_OIDC,
+                                                   'extoid', 'extoidc']]
+        if not oid_auth:
             if verbose:
                 print('Skip handling of user %r without extoid(c) auth' %
                       user_id)
