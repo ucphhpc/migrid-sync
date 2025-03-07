@@ -31,17 +31,17 @@ particular replace any stale .htaccess files no longer in sync regarding
 assigned IDs and therefore causing auth error upon fileman open, etc.
 """
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import datetime
 import getopt
 import sys
 import time
 
-from mig.shared.defaults import gdp_distinguished_field
-from mig.shared.useradm import init_user_adm, search_users, default_search, \
-    assure_current_htaccess
+from mig.shared.defaults import AUTH_EXT_OID, AUTH_EXT_OIDC, AUTH_MIG_CERT, \
+    AUTH_MIG_OID, gdp_distinguished_field
+from mig.shared.useradm import assure_current_htaccess, default_search, \
+    init_user_adm, search_users
 
 
 def usage(name='refreshusers.py'):
@@ -79,8 +79,6 @@ if '__main__' == __name__:
     search_filter['short_id'] = '*'
     search_filter['expire_after'] = now
     search_filter['expire_before'] = int(time.time() + 365 * 24 * 3600)
-    # Default to only external openid accounts
-    services = ['extoid']
     opt_args = 'A:B:c:d:fhI:s:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
@@ -162,7 +160,7 @@ if '__main__' == __name__:
 
         # Don't warn about already disabled or suspended accounts
         account_state = user_dict.get('status', 'active')
-        if not account_state in ('active', 'temporal'):
+        if account_state not in ('active', 'temporal'):
             if verbose:
                 print('Skip handling of already %s user %r' % (account_state,
                                                                user_id))
@@ -171,21 +169,21 @@ if '__main__' == __name__:
         known_auth = user_dict.get('auth', [])
         if not known_auth:
             if user_dict.get('main_id', ''):
-                known_auth.append("extoidc")
+                known_auth.append(AUTH_EXT_OIDC)
             elif user_dict.get('openid_names', []):
                 if user_dict.get('password_hash', ''):
-                    known_auth.append("migoid")
+                    known_auth.append(AUTH_MIG_OID)
                 else:
-                    known_auth.append("extoid")
+                    known_auth.append(AUTH_EXT_OID)
             elif user_dict.get('password', ''):
-                known_auth.append("migcert")
+                known_auth.append(AUTH_MIG_CERT)
             else:
                 if verbose:
                     print('Skip handling of user %r without auth info' %
                           user_id)
                 continue
 
-        if not ('extoid' in known_auth or 'extoidc' in known_auth):
+        if not (AUTH_EXT_OID in known_auth or AUTH_EXT_OIDC in known_auth):
             if verbose:
                 print('Skip handling of user %r without extoid(c) auth' %
                       user_id)
