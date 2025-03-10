@@ -52,6 +52,10 @@ class MigServerGrid_openid(MigTestCase, HttpAssertMixin):
 
         ensure_dirs_needed_by_create_user(self.configuration)
 
+        self.server_addr = ('localhost', 4567)
+        self.server_thread = self._make_server(
+            self.configuration, self.logger, self.server_addr)
+
     def _provide_configuration(self):
         return 'testconfig'
 
@@ -67,9 +71,6 @@ class MigServerGrid_openid(MigTestCase, HttpAssertMixin):
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test__GET_returns_not_found_for_missing_path(self):
-        self.server_addr = ('localhost', 4567)
-        self.server_thread = self._make_server(
-            self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
 
         status, _ = self.issue_GET('/nonexistent')
@@ -78,9 +79,6 @@ class MigServerGrid_openid(MigTestCase, HttpAssertMixin):
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_GET_user__top_level_request(self):
-        self.server_addr = ('localhost', 4567)
-        self.server_thread = self._make_server(
-            self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
 
         status, _ = self.issue_GET('/user')
@@ -96,29 +94,16 @@ class MigServerGrid_openid(MigTestCase, HttpAssertMixin):
             example_username_home_dir)  # strip user from path
         test_state_dir = os.path.dirname(test_user_home)
         test_user_db_home = os.path.join(test_state_dir, "user_db_home")
-
-        self.server_addr = ('localhost', 4567)
-        self.server_thread = self._make_server(
-            self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
 
-        the_url = '/user/%s' % (example_username,)
-        status, content = self.issue_GET(the_url)
+        status, content = self.issue_GET('/user/dummy-user')
 
         self.assertEqual(status, 200)
         self.assertEqual(content, 'FOOBAR')
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_GET_openid_user_username(self):
-        flask_app = None
-
-        self.server_addr = ('localhost', 4567)
-        self.server_thread = self._make_server(
-            self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
-
-        request_json = json.dumps({})
-        request_data = codecs.encode(request_json, 'utf8')
 
         status, content = self.issue_GET('/user/dummy-user')
 
@@ -127,11 +112,6 @@ class MigServerGrid_openid(MigTestCase, HttpAssertMixin):
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_POST_user__bad_input_data(self):
-        flask_app = None
-
-        self.server_addr = ('localhost', 4567)
-        self.server_thread = self._make_server(
-            self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
 
         status, content = self.issue_POST('/user', request_json={
@@ -146,11 +126,6 @@ class MigServerGrid_openid(MigTestCase, HttpAssertMixin):
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_POST_user(self):
-        flask_app = None
-
-        self.server_addr = ('localhost', 4567)
-        self.server_thread = self._make_server(
-            self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
 
         status, content = self.issue_POST('/user', response_encoding='textual', request_json=dict(
@@ -164,7 +139,8 @@ class MigServerGrid_openid(MigTestCase, HttpAssertMixin):
         ))
 
         self.assertEqual(status, 201)
-        self.assertEqual(content, 'hello client!')
+        self.assertIsInstance(content, dict)
+        self.assertIn('unique_id', content)
 
     def _make_configuration(self, test_logger, server_addr):
         configuration = self.configuration
@@ -195,9 +171,6 @@ class MigServerGrid_openid(MigTestCase, HttpAssertMixin):
 
 class MigServerGrid_openid__existing_user(MigTestCase, HttpAssertMixin):
     def before_each(self):
-        self.server_addr = None
-        self.server_thread = None
-
         ensure_dirs_needed_by_create_user(self.configuration)
 
         user_dict = {
@@ -212,6 +185,10 @@ class MigServerGrid_openid__existing_user(MigTestCase, HttpAssertMixin):
         create_user(user_dict, self.configuration,
                     keyword_auto, default_renew=True)
 
+        self.server_addr = ('localhost', 4567)
+        self.server_thread = self._make_server(
+            self.configuration, self.logger, self.server_addr)
+
     def _provide_configuration(self):
         return 'testconfig'
 
@@ -221,11 +198,6 @@ class MigServerGrid_openid__existing_user(MigTestCase, HttpAssertMixin):
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_GET_openid_user_find(self):
-        flask_app = None
-
-        self.server_addr = ('localhost', 4567)
-        self.server_thread = self._make_server(
-            self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
 
         status, content = self._issue_GET(self.server_addr, '/user/find', {

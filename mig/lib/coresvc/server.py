@@ -37,6 +37,7 @@ from socketserver import ThreadingMixIn
 import base64
 from collections import defaultdict, namedtuple
 from flask import Flask, request, Response
+import json
 import os
 import sys
 import threading
@@ -60,12 +61,28 @@ def http_error_from_status_code(http_status_code, http_url, description=None):
     return httpexceptions_by_code[http_status_code](description)
 
 
-def _create_user(user_dict, conf_path, **kwargs):
+def json_reponse_from_status_code(http_status_code, content):
+    json_content = json.dumps(content)
+    return Response(json_content, http_status_code, { 'Content-Type': 'application/json' })
+
+
+def _create_user(configuration, payload):
+    user_dict = canonical_user(
+        configuration, payload, _REQUEST_ARGS_POST_USER._fields)
+    fill_user(user_dict)
+    force_native_str_rec(user_dict)
+
     try:
-        useradm_create_user(user_dict, conf_path, keyword_auto, **kwargs)
-    except Exception as exc:
-        return 1
-    return 0
+        useradm_create_user(user_dict, configuration, keyword_auto, default_renew=True)
+    except:
+        raise http_error_from_status_code(500, None)
+    user_email = user_dict['email']
+    objects = search_users(configuration, {
+        'email': user_email
+    })
+    if len(objects) != 1:
+        raise http_error_from_status_code(400, None)
+    return objects[0]
 
 
 def search_users(configuration, search_filter):
@@ -102,21 +119,12 @@ def _create_and_expose_server(server, configuration):
         payload = request.get_json()
 
         try:
-            validated = _REQUEST_ARGS_POST_USER.ensure(payload)
+            payload = _REQUEST_ARGS_POST_USER.ensure(payload)
         except PayloadException as vr:
             return http_error_from_status_code(400, None, vr.serialize())
 
-        user_dict = canonical_user(
-            configuration, validated, _REQUEST_ARGS_POST_USER._fields)
-        fill_user(user_dict)
-        force_native_str_rec(user_dict)
-
-        ret = _create_user(user_dict, configuration, default_renew=True)
-        if ret != 0:
-            raise http_error_from_status_code(400, None)
-
-        greeting = 'hello client!'
-        return Response(greeting, 201)
+        user = _create_user(configuration, payload)
+        return json_reponse_from_status_code(201, user)
 
     return app
 
