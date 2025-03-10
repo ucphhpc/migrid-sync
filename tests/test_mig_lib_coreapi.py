@@ -1,3 +1,5 @@
+import codecs
+import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from tests.support import MigTestCase, testmain
@@ -10,17 +12,20 @@ class TestRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         test_server = self.server
 
-        programmed_error = test_server._programmed_error
-        if programmed_error:
-            status, content = programmed_error
-            self.send_response(status)
-            self.end_headers()
-            self.wfile.write(content)
+        if test_server._programmed_response:
+            status, content = test_server._programmed_response
+        elif test_server._programmed_error:
+            status, content = test_server._programmed_error
+
+        self.send_response(status)
+        self.end_headers()
+        self.wfile.write(content)
 
 
 class TestHTTPServer(HTTPServer):
     def __init__(self, addr, **kwargs):
         self._programmed_error = None
+        self._programmed_response = None
         self._on_start = kwargs.pop('on_start', lambda _: None)
 
         HTTPServer.__init__(self, addr, TestRequestHandler, **kwargs)
@@ -29,8 +34,17 @@ class TestHTTPServer(HTTPServer):
         self._programmed_error = None
 
     def set_programmed_error(self, status, content):
+        assert self._programmed_response is None
         assert isinstance(content, bytes)
         self._programmed_error = (status, content)
+
+    def set_programmed_response(self, status, content):
+        assert self._programmed_error is None
+        assert isinstance(content, bytes)
+        self._programmed_response = (status, content)
+
+    def set_programmed_json_response(self, status, content):
+        self.set_programmed_response(status, codecs.encode(json.dumps(content), 'utf8'))
 
     def server_activate(self):
         HTTPServer.server_activate(self)
@@ -48,12 +62,32 @@ class TestMigLibCoreapi(MigTestCase):
         if server:
             server.stop()
 
-    def test_true(self):
+    def test_raises_in_the_absence_of_success(self):
         self.server.start_wait_until_ready()
         self.server.set_programmed_error(418, b'tea; earl grey; hot')
         instance = CoreApiClient("http://%s:%s/" % self.server_addr)
 
-        status, content = instance.createUser({
+        with self.assertRaises(Exception):
+            instance.createUser({
+                'full_name': "Test User",
+                'organization': "Test Org",
+                'state': "NA",
+                'country': "DK",
+                'email': "user@example.com",
+                'comment': "This is the create comment",
+                'password': "password",
+            })
+
+    def test_returs_a_user_object(self):
+        test_content = {
+            'foo': 1,
+            'bar': True
+        }
+        self.server.start_wait_until_ready()
+        self.server.set_programmed_json_response(201, test_content)
+        instance = CoreApiClient("http://%s:%s/" % self.server_addr)
+
+        content = instance.createUser({
             'full_name': "Test User",
             'organization': "Test Org",
             'state': "NA",
@@ -63,8 +97,8 @@ class TestMigLibCoreapi(MigTestCase):
             'password': "password",
         })
 
-        self.assertEqual(status, 418)
-
+        self.assertIsInstance(content, dict)
+        self.assertEqual(content, test_content)
 
 if __name__ == '__main__':
     testmain()

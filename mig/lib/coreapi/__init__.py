@@ -1,5 +1,6 @@
 import codecs
 import json
+import werkzeug.exceptions as httpexceptions
 
 from tests.support._env import PY2
 
@@ -12,6 +13,10 @@ else:
     from urllib.request import urlopen, Request
 
 from mig.lib.coresvc.payloads import PAYLOAD_POST_USER
+
+
+httpexceptions_by_code = {
+    exc.code: exc for exc in httpexceptions.__dict__.values() if hasattr(exc, 'code')}
 
 
 def attempt_to_decode_response_data(data, response_encoding=None):
@@ -29,6 +34,10 @@ def attempt_to_decode_response_data(data, response_encoding=None):
     else:
         raise AssertionError(
             'issue_POST: unknown response_encoding "%s"' % (response_encoding,))
+
+
+def http_error_from_status_code(http_status_code, description=None):
+    return httpexceptions_by_code[http_status_code](description)
 
 
 class CoreApiClient:
@@ -94,4 +103,8 @@ class CoreApiClient:
     def createUser(self, user_dict):
         payload = PAYLOAD_POST_USER.ensure(user_dict)
 
-        return self._issue_POST('/user', request_json=dict(payload))
+        status, output = self._issue_POST('/user', request_json=dict(payload))
+        if status != 201:
+            description = output if isinstance(output, str) else None
+            raise http_error_from_status_code(status, description)
+        return output
