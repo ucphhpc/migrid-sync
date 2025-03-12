@@ -43,4 +43,8 @@ PYTHONPATH=${PYTHONPATH:-"$MIG_BASE"}
 # default any variables for local development
 MIG_ENV=${MIG_ENV:-'local'}
 
-PYTHONPATH="$PYTHONPATH" MIG_ENV="$MIG_ENV" "$PYTHON_BIN" "$@"
+# arrange for an explicit python cache hierarhy - this is primarily done for
+# consistency with the dpython script where it is necessary to avoid conflict
+PYTHONPYCACHEPREFIX="$PYTHONPATH/envhelp/output/__pycache.${MIG_ENV}__"
+
+PYTHONPATH="$PYTHONPATH" PYTHONPYCACHEPREFIX="$PYTHONPYCACHEPREFIX" MIG_ENV="$MIG_ENV" "$PYTHON_BIN" "$@"

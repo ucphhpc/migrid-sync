@@ -37,7 +37,7 @@ if [ -n "${PY}" ]; then
     DOCKER_FILE_SUFFIX="$PYTHON_SUFFIX"
 elif [ -n "${PYVER}" ]; then
     PY=3
-    PYTHON_SUFFIX="pyver-$PYVER"
+    PYTHON_SUFFIX="pyver_$PYVER"
     DOCKER_FILE_SUFFIX="pyver"
 else
     echo "No python version specified - please supply a PY env var"
@@ -60,6 +60,10 @@ PYTHONPATH='/usr/src/app'
 
 # default any variables for container development
 MIG_ENV=${MIG_ENV:-'docker'}
+
+# arrange for an explicit python cache hierarhy such that running different
+# containers with potentially radically different python APIs do not conflict
+PYTHONPYCACHEPREFIX="$PYTHONPATH/envhelp/output/__pycache.${PYTHON_SUFFIX}__"
 
 # determine if the image has changed
 echo -n "validating python $PY container.. "
@@ -84,5 +88,6 @@ echo "using image id $IMAGEID"
 ${DOCKER_BIN} run -it --rm \
     --mount "type=bind,source=$MIG_BASE,target=/usr/src/app" \
     --env "PYTHONPATH=$PYTHONPATH" \
+    --env "PYTHONPYCACHEPREFIX=$PYTHONPYCACHEPREFIX" \
     --env "MIG_ENV=$MIG_ENV" \
     "$IMAGEID" python$PY $@
