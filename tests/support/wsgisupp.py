@@ -108,7 +108,7 @@ def create_wsgi_environ(configuration, wsgi_url, method='GET', query=None, heade
                 # Content-* headers must not be prefixed in WSGI
                 pass
             else:
-                header_key = "HTTP_%s" % (header_key),
+                header_key = "HTTP_%s" % (header_key,)
             environ[header_key] = v
 
     return environ
