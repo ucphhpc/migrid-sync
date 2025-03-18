@@ -581,6 +581,7 @@
     "V2",
     "V3"
   ],
+  "user_janitor_log": "janitor.log",
   "user_messages": "",
   "user_mig_cert_title": "",
   "user_mig_oid_provider": "",
