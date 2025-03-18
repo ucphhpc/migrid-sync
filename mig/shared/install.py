@@ -365,6 +365,7 @@ def generate_confs(
     enable_seafile=False,
     enable_duplicati=False,
     enable_crontab=True,
+    enable_janitor=False,
     enable_notify=False,
     enable_imnotify=False,
     enable_dev_accounts=False,
@@ -687,6 +688,7 @@ def _generate_confs_prepare(
     enable_seafile,
     enable_duplicati,
     enable_crontab,
+    enable_janitor,
     enable_notify,
     enable_imnotify,
     enable_dev_accounts,
@@ -941,6 +943,7 @@ def _generate_confs_prepare(
     user_dict['__ENABLE_SEAFILE__'] = "%s" % enable_seafile
     user_dict['__ENABLE_DUPLICATI__'] = "%s" % enable_duplicati
     user_dict['__ENABLE_CRONTAB__'] = "%s" % enable_crontab
+    user_dict['__ENABLE_JANITOR__'] = "%s" % enable_janitor
     user_dict['__ENABLE_NOTIFY__'] = "%s" % enable_notify
     user_dict['__ENABLE_IMNOTIFY__'] = "%s" % enable_imnotify
     user_dict['__ENABLE_DEV_ACCOUNTS__'] = "%s" % enable_dev_accounts
@@ -1734,7 +1737,7 @@ cert, oid and sid based https!
     else:
         user_dict['__APACHE_SUFFIX__'] = ""
 
-    # Helpers for the migstatecleanup cron job
+    # Helpers for the migstatecleanup cron job or janitor service
     user_dict['__CRON_VERBOSE_CLEANUP__'] = '1'
     user_dict['__CRON_EVENT_CLEANUP__'] = '1'
     if 'migoid' in signup_methods or 'migcert' in signup_methods:
@@ -2473,6 +2476,7 @@ You can install them with:
 chmod 755 %(destination)s/mig{stateclean,errors,sftpmon,importdoi,notifyexpire}
 sudo cp %(destination)s/mig{stateclean,errors,sftpmon,importdoi,notifyexpire} \\
         /etc/cron.daily/
+until the janitor service is ready to take care of those tasks.
 
 The migcheckssl, migverifyarchives and migacctexpire files are cron scripts to
 automatically check for LetsEncrypt certificate renewal, run pending archive
