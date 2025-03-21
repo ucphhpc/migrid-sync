@@ -4,11 +4,14 @@ import shutil
 from tests.support import MigTestCase, testmain, \
     MIG_BASE, TEST_DATA_DIR, TEST_OUTPUT_DIR
 
-from mig.lib.templates import TemplateStore, template_dirs, \
+from mig.lib.templates import TemplateStore, _global_template_dirs, \
     init_global_templates
+
 
 TEST_CACHE_DIR = os.path.join(TEST_OUTPUT_DIR, '__template_cache__')
 TEST_TMPL_DIR = os.path.join(TEST_DATA_DIR, 'templates')
+TEST_TMPL_COUNT = len(list(x for x in os.listdir(
+    TEST_TMPL_DIR) if not x.startswith('.')))
 
 
 class TestMigSharedTemplates_instance(MigTestCase):
@@ -19,22 +22,31 @@ class TestMigSharedTemplates_instance(MigTestCase):
         return 'testconfig'
 
     def test_the_creation_of_a_template_store(self):
-        store = TemplateStore.populated(TEST_TMPL_DIR, cache_dir=TEST_CACHE_DIR)
+        store = TemplateStore.populated(
+            TEST_TMPL_DIR, cache_dir=TEST_CACHE_DIR)
         self.assertIsInstance(store, TemplateStore)
 
     def test_a_listing_all_templates(self):
-        store = TemplateStore.populated(TEST_TMPL_DIR, cache_dir=TEST_CACHE_DIR)
-        self.assertEqual(len(store.list_templates()), 2)
+        store = TemplateStore.populated(
+            TEST_TMPL_DIR, cache_dir=TEST_CACHE_DIR)
+        self.assertEqual(len(store.list_templates()), TEST_TMPL_COUNT)
 
     def test_grab_template(self):
-        store = TemplateStore.populated(TEST_TMPL_DIR, cache_dir=TEST_CACHE_DIR)
+        store = TemplateStore.populated(
+            TEST_TMPL_DIR, cache_dir=TEST_CACHE_DIR)
         template = store.grab_template('other', 'test', 'html')
         pass
 
     def test_variables_for_remplate_ref(self):
-        store = TemplateStore.populated(TEST_TMPL_DIR, cache_dir=TEST_CACHE_DIR)
+        store = TemplateStore.populated(
+            TEST_TMPL_DIR, cache_dir=TEST_CACHE_DIR)
         template_vars = store.extract_variables('test_something.html.jinja')
         self.assertEqual(template_vars, set(['content']))
+
+    def test_translated_template(self):
+        store = TemplateStore.populated(
+            TEST_TMPL_DIR, cache_dir=TEST_CACHE_DIR)
+        store.extract_translations('test_translated.html.jinja')
 
 
 class TestMigSharedTemplates_global(MigTestCase):

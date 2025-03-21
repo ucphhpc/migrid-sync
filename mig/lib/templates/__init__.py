@@ -57,7 +57,7 @@ def cache_dir():
     return TEMPLATES_CACHE_DIR
 
 
-def template_dirs():
+def _global_template_dirs():
     return _all_template_dirs
 
 
@@ -65,7 +65,6 @@ class _BonundTemplate:
     def __init__(self, template, template_args):
         self.tmpl = template
         self.args = template_args
-
 
     def render(self):
         return self.tmpl.render(**self.args)
@@ -95,10 +94,12 @@ class TemplateStore:
         self._cache_dir = cache_dir
         self._template_globals = extra_globals
         self._template_environment = Environment(
+            extensions=['jinja2.ext.i18n'],
             loader=FileSystemLoader(template_dirs),
             bytecode_cache=FileSystemBytecodeCache(cache_dir, '%s'),
             autoescape=select_autoescape()
         )
+        self._template_environment.install_null_translations()
 
     @property
     def cache_dir(self):
@@ -111,6 +112,11 @@ class TemplateStore:
     def _get_template(self, template_fqname):
         return self._template_environment.get_template(template_fqname)
 
+    def _get_template_source(self, template_fqname):
+        template = self._template_environment.get_template(template_fqname)
+        with open(template.filename) as f:
+            return f.read()
+
     def grab_template(self, template_name, template_group, output_format, template_globals=None, **kwargs):
         template_fqname = "%s_%s.%s.jinja" % (
             template_group, template_name, output_format)
@@ -119,10 +125,12 @@ class TemplateStore:
     def list_templates(self):
         return [t for t in self._template_environment.list_templates() if t.endswith('.jinja')]
 
+    def extract_translations(self, template_fqname):
+        template_source = self._get_template_source(template_fqname)
+        return self._template_environment.extract_translations(template_source)
+
     def extract_variables(self, template_fqname):
-        template = self._template_environment.get_template(template_fqname)
-        with open(template.filename) as f:
-            template_source = f.read()
+        template_source = self._get_template_source(template_fqname)
         ast = self._template_environment.parse(template_source)
         return jinja2_meta.find_undeclared_variables(ast)
 
@@ -145,7 +153,7 @@ class TemplateStore:
         return store
 
 
-def init_global_templates(configuration, _templates_dirs=template_dirs):
+def init_global_templates(configuration, _templates_dirs=_global_template_dirs):
     _context = configuration.context()
 
     try:

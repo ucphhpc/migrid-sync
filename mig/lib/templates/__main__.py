@@ -25,21 +25,30 @@
 # -- END_HEADER ---
 #
 
-from types import SimpleNamespace
+from __future__ import print_function
 import os
 import sys
 
-from mig.lib.templates import init_global_templates
+from mig.lib.templates import init_global_templates, _global_template_dirs
+from mig.shared.compat import SimpleNamespace
 from mig.shared.conf import get_configuration_object
 
 
 def warn(message):
-    print(message, file=sys.stderr, flush=True)
+    print(message, sys.stderr, True)
 
 
 def main(args, _print=print):
-    configuration = get_configuration_object(config_file=args.config_file)
-    template_store = init_global_templates(configuration)
+    configuration = get_configuration_object(
+        config_file=args.config_file, skip_log=True, disable_auth_log=True)
+
+    if args.tmpldir:
+        def _template_dirs(): return [args.tmpldir]
+    else:
+        _template_dirs = _global_template_dirs
+
+    template_store = init_global_templates(
+        configuration, _templates_dirs=_template_dirs)
 
     command = args.command
     if command == 'show':
@@ -52,6 +61,38 @@ def main(args, _print=print):
 
         for template_fqname in template_store.list_templates():
             template_store._get_template(template_fqname)
+    elif command == 'translations':
+        try:
+            os.mkdir(template_store.cache_dir)
+        except FileExistsError:
+            pass
+
+        for template_fqname in template_store.list_templates():
+            extracted_tuples = list(
+                template_store.extract_translations(template_fqname))
+            if len(extracted_tuples) == 0:
+                continue
+            _print("<%s>" % (template_fqname,))
+            for _, __, string in template_store.extract_translations(template_fqname):
+                _print('  "%s"' % (string,))
+            _print("</%s>" % (template_fqname,))
+
+
+    elif command == 'translations-mo':
+        try:
+            os.mkdir(template_store.cache_dir)
+        except FileExistsError:
+            pass
+
+        import polib
+        pofile = polib.POFile()
+        for template_fqname in template_store.list_templates():
+            for _, __, string in template_store.extract_translations(template_fqname):
+                poentry = polib.POEntry(msgid=string, msgstr=string)
+                pofile.append(poentry)
+
+        _print(pofile)
+
     elif command == 'vars':
         for template_ref in template_store.list_templates():
             _print("<%s>" % (template_ref,))
@@ -67,6 +108,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', dest='config_file', default=None)
+    parser.add_argument('--template-dir', dest='tmpldir')
     parser.add_argument('command')
     args = parser.parse_args()
 
