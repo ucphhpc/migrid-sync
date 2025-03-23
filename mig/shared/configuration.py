@@ -716,6 +716,7 @@ class Configuration:
                  disable_auth_log=False):
         self.config_file = config_file
         self.mig_server_id = None
+        self._context = None
 
         configuration_options = copy.deepcopy(_CONFIGURATION_DEFAULTS)
 
@@ -726,6 +727,23 @@ class Configuration:
             self.reload_config(verbose, skip_log,
                                disable_auth_log=disable_auth_log,
                                _config_file=config_file)
+
+    def context(self, namespace=None):
+        if self._context is None:
+            self._context = {}
+        if namespace is None:
+            return self._context
+        try:
+            return self._context[namespace]
+        except KeyError:
+            raise
+
+    def context_set(self, value, namespace=None):
+        assert namespace is not None
+
+        context = self.context()
+        context[namespace] = value
+        return value
 
     def reload_config(self, verbose, skip_log=False, disable_auth_log=False,
                       _config_file=None):
