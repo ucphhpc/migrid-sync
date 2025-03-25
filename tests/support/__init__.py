@@ -46,6 +46,21 @@ from tests.support.suppconst import MIG_BASE, TEST_BASE, TEST_FIXTURE_DIR, \
 
 from tests.support._env import MIG_ENV, PY2
 
+# Alow the use of SimpleNamespace on PY2.
+
+if PY2:
+    class SimpleNamespace(dict):
+        """Bare minimum SimpleNamespace for Python 2."""
+
+        def __getattribute__(self, name):
+            if name == '__dict__':
+                return dict(**self)
+
+            return self[name]
+else:
+    from types import SimpleNamespace
+
+
 # Provide access to a configuration file for the active environment.
 
 if MIG_ENV in ('local', 'docker'):
@@ -237,6 +252,9 @@ class MigTestCase(TestCase):
         self._register_check(check_callable)
         return assert_over
 
+    def temppath(self, relative_path, **kwargs):
+        return temppath(relative_path, self, **kwargs)
+
     # custom assertions available for common use
 
     def assertFileContentIdentical(self, file_actual, file_expected):
@@ -295,6 +313,69 @@ included:
         assert not relative_path.startswith('..')
         return relative_path
 
+    def prepareFixtureAssert(self, fixture_relpath, fixture_format=None):
+        """Prepare to assert a value against a fixture."""
+
+        fixture_data, fixture_path = fixturefile(
+            fixture_relpath, fixture_format)
+        return SimpleNamespace(
+            assertAgainstFixture=lambda val: MigTestCase._assertAgainstFixture(
+                self,
+                fixture_format,
+                fixture_data,
+                fixture_path,
+                value=val
+            ),
+            copy_as_temp=lambda prefix: self._fixture_copy_as_temp(
+                self,
+                fixture_format,
+                fixture_data,
+                fixture_path,
+                prefix=prefix
+            )
+        )
+
+    @staticmethod
+    def _assertAgainstFixture(testcase, fixture_format, fixture_data, fixture_path, value=None):
+        """Compare a value against fixture data ensuring that in the case of
+        failure the location of the fixture is prepended to the diff."""
+
+        assert value is not None
+        originalMaxDiff = testcase.maxDiff
+        testcase.maxDiff = None
+
+        raised_exception = None
+        try:
+            testcase.assertEqual(value, fixture_data)
+        except AssertionError as diffexc:
+            raised_exception = diffexc
+        finally:
+            testcase.maxDiff = originalMaxDiff
+        if raised_exception:
+            message = "value differed from fixture stored at %s\n\n%s" % (
+                _to_display_path(fixture_path), raised_exception)
+            raise AssertionError(message)
+
+    @staticmethod
+    def _fixture_copy_as_temp(testcase, fixture_format, fixture_data, fixture_path, prefix=None):
+        """Copy a fixture to temporary file at the given path prefix."""
+
+        assert prefix is not None
+        fixture_basename = os.path.basename(fixture_path)
+        fixture_name = fixture_basename[0:-len(fixture_format) - 1]
+        normalised_path = fixturefile_normname(fixture_name, prefix=prefix)
+        copied_fixture_file = testcase.temppath(normalised_path)
+        shutil.copyfile(fixture_path, copied_fixture_file)
+        return copied_fixture_file
+
+
+def _to_display_path(value):
+    """Convert a relative path to one to be shown as part of test output."""
+    display_path = os.path.relpath(value, MIG_BASE)
+    if not display_path.startswith('.'):
+        return "./" + display_path
+    return display_path
+
 
 def is_path_within(path, start=None, _msg=None):
     """Check if path is within start directory"""
@@ -316,7 +397,7 @@ def ensure_dirs_exist(absolute_dir):
     return absolute_dir
 
 
-def fixturefile(relative_path, fixture_format=None, include_path=False):
+def fixturefile(relative_path, fixture_format=None):
     """Support function for loading fixtures from their serialised format.
 
     Doing so is a little more involved than it may seem because serialisation
@@ -347,7 +428,7 @@ def fixturefile(relative_path, fixture_format=None, include_path=False):
         raise AssertionError(
             "unsupported fixture format: %s" % (fixture_format,))
 
-    return (data, tmp_path) if include_path else data
+    return data, tmp_path
 
 
 def fixturefile_normname(relative_path, prefix=''):
