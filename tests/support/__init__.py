@@ -32,7 +32,6 @@ from configparser import ConfigParser
 import difflib
 import errno
 import io
-import json
 import logging
 import os
 import shutil
@@ -41,7 +40,7 @@ import sys
 from unittest import TestCase, main as testmain
 
 from tests.support.configsupp import FakeConfiguration
-from tests.support.suppconst import MIG_BASE, TEST_BASE, TEST_FIXTURE_DIR, \
+from tests.support.suppconst import MIG_BASE, TEST_BASE, \
     TEST_DATA_DIR, TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR
 
 from tests.support._env import MIG_ENV, PY2
@@ -237,6 +236,9 @@ class MigTestCase(TestCase):
         self._register_check(check_callable)
         return assert_over
 
+    def temppath(self, relative_path, **kwargs):
+        return temppath(relative_path, self, **kwargs)
+
     # custom assertions available for common use
 
     def assertFileContentIdentical(self, file_actual, file_expected):
@@ -314,81 +316,6 @@ def ensure_dirs_exist(absolute_dir):
         if oserr.errno != errno.EEXIST:
             raise
     return absolute_dir
-
-
-def fixturefile(relative_path, fixture_format=None, include_path=False):
-    """Support function for loading fixtures from their serialised format.
-
-    Doing so is a little more involved than it may seem because serialisation
-    formats may not capture various nuances of the python data they represent.
-    For this reason each supported format defers to a format specific function
-    which can then, for example, load hints about deserialization.
-    """
-
-    assert fixture_format is not None, "fixture format must be specified"
-    assert not os.path.isabs(
-        relative_path), "fixture is not relative to fixture folder"
-    relative_path_with_ext = "%s.%s" % (relative_path, fixture_format)
-    tmp_path = os.path.join(TEST_FIXTURE_DIR, relative_path_with_ext)
-    assert os.path.isfile(tmp_path), \
-        "fixture file for format is not present: %s" % \
-        (relative_path_with_ext,)
-    #_, extension = os.path.splitext(os.path.basename(tmp_path))
-    #assert fixture_format == extension, "fixture file does not match format"
-
-    data = None
-
-    if fixture_format == 'binary':
-        with open(tmp_path, 'rb') as binfile:
-            data = binfile.read()
-    elif fixture_format == 'json':
-        data = _fixturefile_json(tmp_path)
-    else:
-        raise AssertionError(
-            "unsupported fixture format: %s" % (fixture_format,))
-
-    return (data, tmp_path) if include_path else data
-
-
-def fixturefile_normname(relative_path, prefix=''):
-    """Grab normname from relative_path and optionally add a path prefix"""
-    normname, _ = relative_path.split('--')
-    if prefix:
-        return os.path.join(prefix, normname)
-    return normname
-
-
-_FIXTUREFILE_HINTAPPLIERS = {
-    'array_of_tuples': lambda value: [tuple(x) for x in value]
-}
-
-
-def _fixturefile_json(json_path):
-    hints = ConfigParser()
-
-    # let's see if there are loading hints
-    try:
-        hints_path = "%s.ini" % (json_path,)
-        with open(hints_path) as hints_file:
-            hints.read_file(hints_file)
-    except FileNotFoundError:
-        pass
-
-    with io.open(json_path) as json_file:
-        json_object = json.load(json_file)
-
-        for item_name, item_hint in hints['DEFAULT'].items():
-            loaded_value = json_object[item_name]
-            value_from_loaded_value = _FIXTUREFILE_HINTAPPLIERS[item_hint]
-            json_object[item_name] = value_from_loaded_value(loaded_value)
-
-        return json_object
-
-
-def fixturepath(relative_path):
-    """Get absolute fixture path for relative_path"""
-    tmp_path = os.path.join(TEST_FIXTURE_DIR, relative_path)
-    return tmp_path
 
 
 def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):

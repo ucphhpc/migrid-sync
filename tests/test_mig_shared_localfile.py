@@ -36,7 +36,8 @@ import sys
 sys.path.append(os.path.realpath(
     os.path.join(os.path.dirname(__file__), "..")))
 
-from tests.support import MigTestCase, fixturepath, temppath, testmain
+from tests.support import MigTestCase, temppath, testmain
+from tests.support.fixturesupp import fixturepath
 from mig.shared.serverfile import LOCK_EX
 from mig.shared.localfile import LocalFile
 

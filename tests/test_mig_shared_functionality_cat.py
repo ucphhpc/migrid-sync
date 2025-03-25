@@ -35,7 +35,8 @@ import sys
 import unittest
 
 from tests.support import MIG_BASE, PY2, TEST_DATA_DIR, MigTestCase, testmain, \
-    fixturefile, fixturefile_normname, ensure_dirs_exist, temppath
+    temppath, ensure_dirs_exist
+from tests.support.fixturesupp import FixtureAssertMixin
 
 from mig.shared.base import client_id_dir
 from mig.shared.functionality.cat import _main as submain, main as realmain
@@ -60,7 +61,7 @@ def _only_output_objects(output_objects, with_object_type=None):
     return [o for o in output_objects if o['object_type'] == with_object_type]
 
 
-class MigSharedFunctionalityCat(MigTestCase):
+class MigSharedFunctionalityCat(MigTestCase, FixtureAssertMixin):
     """Wrap unit tests for the corresponding module"""
 
     TEST_CLIENT_ID = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
@@ -78,13 +79,12 @@ class MigSharedFunctionalityCat(MigTestCase):
 
         conf_user_db_home = ensure_dirs_exist(self.configuration.user_db_home)
         temppath(conf_user_db_home, self)
-        db_fixture, db_fixture_file = fixturefile('MiG-users.db--example',
-                                                  fixture_format='binary',
-                                                  include_path=True)
-        test_db_file = temppath(fixturefile_normname('MiG-users.db--example',
-                                                     prefix=conf_user_db_home),
-                                self)
-        shutil.copyfile(db_fixture_file, test_db_file)
+        prepared_fixture = self.prepareFixtureAssert(
+            'MiG-users.db--example',
+            fixture_format='binary',
+        )
+
+        test_db_file = prepared_fixture.copy_as_temp(prefix=conf_user_db_home)
 
         # create the test user home directory
         self.test_user_dir = ensure_dirs_exist(test_user_dir)

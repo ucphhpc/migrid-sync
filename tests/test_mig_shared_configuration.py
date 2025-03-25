@@ -31,7 +31,8 @@ import inspect
 import os
 import unittest
 
-from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain, fixturefile
+from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain
+from tests.support.fixturesupp import FixtureAssertMixin
 from mig.shared.configuration import Configuration
 
 
@@ -44,7 +45,7 @@ def _to_dict(obj):
             if not (k.startswith('__') or _is_method(v))}
 
 
-class MigSharedConfiguration(MigTestCase):
+class MigSharedConfiguration(MigTestCase, FixtureAssertMixin):
     """Wrap unit tests for the corresponding module"""
 
     def test_argument_storage_protocols(self):
@@ -71,7 +72,7 @@ class MigSharedConfiguration(MigTestCase):
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_default_object(self):
-        expected_values = fixturefile(
+        prepared_fixture = self.prepareFixtureAssert(
             'mig_shared_configuration--new', fixture_format='json')
 
         configuration = Configuration(None)
@@ -84,8 +85,7 @@ class MigSharedConfiguration(MigTestCase):
 
         actual_values = _to_dict(configuration)
 
-        self.maxDiff = None
-        self.assertEqual(actual_values, expected_values)
+        prepared_fixture.assertAgainstFixture(value=actual_values)
 
     def test_object_isolation(self):
         configuration_1 = Configuration(None)
