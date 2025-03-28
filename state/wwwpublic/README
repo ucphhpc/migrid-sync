@@ -3,14 +3,17 @@ the root on the plain HTTP virtual host and through /public/ on the HTTPS
 virtual hosts.
 
 For UI V3 support in About, Support and Status popups on user pages it is
-necessary to add about-snippet.html, faq-snippet.html and
-quickstart-snippet.html files or symlinks to the sample site files with a
-similar prefix.
+necessary to add about-snippet.html, support-snippet.html and tips-snippet.html
+files or symlinks to the sample site files with a similar prefix.
+Same applies for the common terms of use which may be added or symlinked to
+the site file with similar name.
 
 In order to support the standard security reporting framework 
 https://securitytxt.org/
-one should also add a security.txt file in the .well-known/ folder or symlink
-it to one of the existing site specific files there.
+one should also add a security.txt file in the .well-known/ sub-folder or
+symlink it to one of the existing site specific files there. Additional
+references to responsible disclosure policy and gpg pub keys can be added or
+symlinked in as well.
 
 The letsencrypt symlink and the .well-known/acme-challenge are used for the
 optional LetsEncrypt certificate setup.
