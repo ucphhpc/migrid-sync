@@ -774,7 +774,7 @@ integration for data analysis:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
-                   --openssh_version=7.3 \
+                   --openssh_version=7.4 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
