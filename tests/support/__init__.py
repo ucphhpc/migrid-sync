@@ -46,7 +46,7 @@ from tests.support.suppconst import MIG_BASE, TEST_BASE, TEST_FIXTURE_DIR, \
 
 from tests.support._env import MIG_ENV, PY2
 
-# Alow the use of SimpleNamespace on PY2.
+# Allow the use of SimpleNamespace on PY2.
 
 if PY2:
     class SimpleNamespace(dict):
@@ -75,7 +75,7 @@ if MIG_ENV in ('local', 'docker'):
 
     # adjust the link through which confs are accessed to suit the environment
     _conf_link = os.path.join(_output_dir, 'testconfs')
-    assert os.path.lexists(_conf_link) # it must already exist
+    assert os.path.lexists(_conf_link)  # it must already exist
     os.remove(_conf_link)              # blow it away
     os.symlink(_conf_dir, _conf_link)  # recreate it using the active MIG_BASE
 else:
