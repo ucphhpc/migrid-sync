@@ -29,6 +29,7 @@
   "ca_smtp": "",
   "ca_user": "mig-ca",
   "certs_path": "/some/place/certs",
+  "cloud_services": [],
   "config_file": null,
   "cputime_for_empty_jobs": 0,
   "default_page": [
@@ -130,6 +131,7 @@
   "min_seconds_between_live_update_requests": 0,
   "mrsl_files_dir": "",
   "myfiles_py_location": "",
+  "new_user_default_ui": "V2",
   "notify_home": "",
   "openid_store": "",
   "paraview_home": "",
@@ -154,6 +156,7 @@
   "sessid_to_jupyter_mount_link_home": "",
   "sessid_to_mrsl_link_home": "",
   "sharelink_home": "",
+  "short_title": "MiG",
   "site_advanced_vgrid_links": [],
   "site_autolaunch_page": "",
   "site_cloud_access": [
@@ -187,6 +190,7 @@
     "extcert"
   ],
   "site_skin": "",
+  "site_user_id_format": "X509",
   "site_vgrid_creators": [
     [
       "distinguished_name",
