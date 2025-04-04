@@ -67,7 +67,7 @@ class InstrumentedAssertOver(AssertOver):
 
 
 class SupportTestCase(MigTestCase):
-    """Coverage of base Support helpers"""
+    """Coverage of the basic behaviour of a MiG Testcase"""
 
     def _class_attribute(self, name, **kwargs):
         cls = type(self)
@@ -76,16 +76,12 @@ class SupportTestCase(MigTestCase):
         else:
             return getattr(cls, name, None)
 
-    def test_provides_a_fake_configuration(self):
-        configuration = self.configuration
-
-        self.assertIsInstance(configuration, FakeConfiguration)
-
-    def test_provides_a_fake_configuration_for_the_duration_of_the_test(self):
-        c1 = self.configuration
-        c2 = self.configuration
-
-        self.assertIs(c2, c1)
+    def test_requires_requesting_a_configuration(self):
+        with self.assertRaises(AssertionError) as raised:
+            self.configuration
+        theexception = raised.exception
+        self.assertEqual(str(theexception),
+            "configuration access but testcase did not request it")
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_unclosed_files_are_recorded(self):
@@ -139,8 +135,26 @@ class SupportTestCase(MigTestCase):
         self.assertTrue(attempt_wrapper.was_check_callable_called())
 
 
-class SupportTestCase_overridden_configuration(MigTestCase):
-    """Coverage of base Support helpers extension with configuration override"""
+class SupportTestCase_using_fakeconfig(MigTestCase):
+    """Coverage of a MiG Testcase hat requests a fakeconfig"""
+
+    def _provide_configuration(self):
+        return 'fakeconfig'
+
+    def test_provides_a_fake_configuration(self):
+        configuration = self.configuration
+
+        self.assertIsInstance(configuration, FakeConfiguration)
+
+    def test_provides_a_fake_configuration_for_the_duration_of_the_test(self):
+        c1 = self.configuration
+        c2 = self.configuration
+
+        self.assertIs(c2, c1)
+
+
+class SupportTestCase_using_testconfig(MigTestCase):
+    """Coverage of a MiG Testcase that requests a testconfig"""
 
     def _provide_configuration(self):
         return 'testconfig'
