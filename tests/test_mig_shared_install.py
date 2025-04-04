@@ -39,8 +39,9 @@ import sys
 from tests.support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
     testmain, temppath, cleanpath, fixturepath, is_path_within
 
+from mig.install.generateconfs import _GENERATE_CONFS_PARAMETERS
 from mig.shared.defaults import keyword_auto
-from mig.shared.install import determine_timezone, generate_confs
+from mig.shared.install import determine_timezone, generate_confs, _DEFAULTS
 
 
 class DummyPwInfo:
@@ -62,6 +63,14 @@ def noop(*args, **kwargs):
     if args:
         return args[0]
     return None
+
+
+class MigSharedInstall(MigTestCase):
+    def test_consistent_parameters(self):
+        install_defaults_keys = set(_DEFAULTS.__dict__.keys())
+        mismatched = _GENERATE_CONFS_PARAMETERS - install_defaults_keys
+        self.assertEqual(len(mismatched), 0,
+                         "install defaults do not match generate_confs()")
 
 
 class MigSharedInstall__determine_timezone(MigTestCase):

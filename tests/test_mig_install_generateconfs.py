@@ -35,6 +35,8 @@ import sys
 
 from tests.support import MIG_BASE, MigTestCase, testmain, cleanpath
 
+from mig.install.generateconfs import _PARAMETERS
+from mig.shared.install import generate_confs, _GENERATE_CONFS_PARAMETERS
 
 def _import_generateconfs():
     """Internal helper to work around non-package import location"""
@@ -63,6 +65,13 @@ def create_fake_generate_confs(return_dict=None):
 
 def noop(*args):
     pass
+
+
+class MigInstallGenerateconfs(MigTestCase):
+    def test_consistent_parameters(self):
+        mismatched = _GENERATE_CONFS_PARAMETERS - set(_PARAMETERS)
+        self.assertEqual(len(mismatched), 0,
+                         "defined parameters do not match generate_confs()")
 
 
 class MigInstallGenerateconfs__main(MigTestCase):
