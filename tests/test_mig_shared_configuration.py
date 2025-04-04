@@ -32,7 +32,8 @@ import os
 import unittest
 
 from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain, fixturefile
-from mig.shared.configuration import Configuration
+from mig.shared.configuration import Configuration, \
+    _CONFIGURATION_ARGUMENTS, _CONFIGURATION_DEFAULTS
 
 
 def _is_method(value):
@@ -46,6 +47,13 @@ def _to_dict(obj):
 
 class MigSharedConfiguration(MigTestCase):
     """Wrap unit tests for the corresponding module"""
+
+    def test_consistent_parameters(self):
+        configuration_defaults_keys = set(_CONFIGURATION_DEFAULTS.keys())
+        mismatched = _CONFIGURATION_ARGUMENTS - configuration_defaults_keys
+
+        self.assertEqual(len(mismatched), 0,
+                         "configuration defaults do not match arguments")
 
     def test_argument_storage_protocols(self):
         test_conf_file = os.path.join(

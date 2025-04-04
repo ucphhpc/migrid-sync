@@ -29,19 +29,46 @@
 
 from tests.support.loggersupp import FakeLogger
 
+from mig.shared.compat import SimpleNamespace
+from mig.shared.configuration import _without_noforward_keys, \
+    _CONFIGURATION_ARGUMENTS, _CONFIGURATION_DEFAULTS
 
-class FakeConfiguration:
-    """A simple helper to pretend we have a real Configuration object with any
-    required attributes explicitly passed.
+
+def _generate_namespace_kwargs():
+    d = dict(_CONFIGURATION_DEFAULTS)
+    d['logger'] = None
+    return d
+
+
+def _ensure_only_configuration_keys(d):
+    """Check the dictionary arguments contains only premitted keys."""
+
+    unknown_keys = set(d.keys()) - set(_CONFIGURATION_ARGUMENTS)
+    assert len(unknown_keys) == 0, \
+        "non-Configuration keys: %s" % (', '.join(unknown_keys),)
+
+
+class FakeConfiguration(SimpleNamespace):
+    """A simple helper to pretend we have a Configuration object populated
+    with defaults overlaid with any explicitly supplied attributes.
+
     Automatically attaches a FakeLogger instance if no logger is provided in
     kwargs.
     """
 
     def __init__(self, **kwargs):
-        """Initialise instance attributes to be any named args provided and a
-        FakeLogger instance attached if not provided.
+        """Initialise instance attributes based on the defaults plus any
+        supplied additional options.
         """
-        self.__dict__.update(kwargs)
-        if not 'logger' in self.__dict__:
-            dummy_logger = FakeLogger()
-            self.__dict__.update({'logger': dummy_logger})
+
+        SimpleNamespace.__init__(self, **_generate_namespace_kwargs())
+
+        if kwargs:
+            _ensure_only_configuration_keys(kwargs)
+            self.__dict__.update(kwargs)
+
+        if 'logger' not in kwargs:
+            self.logger = FakeLogger()
+
+    def to_dict(self):
+        return _without_noforward_keys(self.__dict__)
