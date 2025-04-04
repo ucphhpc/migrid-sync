@@ -35,7 +35,7 @@ import sys
 import unittest
 
 from tests.support import MIG_BASE, PY2, TEST_DATA_DIR, MigTestCase, testmain, \
-    fixturefile, fixturefile_normname, ensure_dirs_exist, temppath
+    temppath, ensure_dirs_exist
 
 from mig.shared.base import client_id_dir
 from mig.shared.functionality.cat import _main as submain, main as realmain
@@ -78,13 +78,12 @@ class MigSharedFunctionalityCat(MigTestCase):
 
         conf_user_db_home = ensure_dirs_exist(self.configuration.user_db_home)
         temppath(conf_user_db_home, self)
-        db_fixture, db_fixture_file = fixturefile('MiG-users.db--example',
-                                                  fixture_format='binary',
-                                                  include_path=True)
-        test_db_file = temppath(fixturefile_normname('MiG-users.db--example',
-                                                     prefix=conf_user_db_home),
-                                self)
-        shutil.copyfile(db_fixture_file, test_db_file)
+        prepared_fixture = self.prepareFixtureAssert(
+            'MiG-users.db--example',
+            fixture_format='binary',
+        )
+
+        test_db_file = prepared_fixture.copy_as_temp(prefix=conf_user_db_home)
 
         # create the test user home directory
         self.test_user_dir = ensure_dirs_exist(test_user_dir)
