@@ -59,6 +59,7 @@ else:
 # NOTE: protect migrid import from autopep8 reordering
 try:
     from mig.shared.base import force_native_str
+    from mig.shared.compat import inspect_args
     from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
         CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
         POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, cert_field_order, \
@@ -71,6 +72,17 @@ try:
     from mig.shared.fileio import read_file, load_json, write_file
 except ImportError as ioe:
     print("could not import migrid modules")
+
+
+_CONFIGURATION_NOFORWARD_KEYS = set([
+    'self',
+    'config_file',
+    'mig_server_id',
+    'disable_auth_log',
+    'skip_log',
+    'verbose',
+    'logger',
+])
 
 
 def expand_external_sources(logger, val):
@@ -392,6 +404,10 @@ def fix_missing(config_file, verbose=True):
         fd.close()
 
 
+def _without_noforward_keys(d):
+    return { k: v for k, v in d.items() if k not in _CONFIGURATION_NOFORWARD_KEYS }
+
+
 class NativeConfigParser(ConfigParser):
     """Wraps configparser.ConfigParser to force get method to return native
     string instead of always returning unicode.
@@ -426,6 +442,7 @@ _CONFIGURATION_DEFAULTS = {
     'ca_smtp': '',
     'ca_user': 'mig-ca',
     'resource_home': '',
+    'short_title': 'MiG',
     'vgrid_home': '',
     'vgrid_public_base': '',
     'vgrid_private_base': '',
@@ -470,6 +487,7 @@ _CONFIGURATION_DEFAULTS = {
     'workflows_vgrid_patterns_home': '',
     'workflows_vgrid_recipes_home': '',
     'workflows_vgrid_history_home': '',
+    'site_user_id_format': DEFAULT_USER_ID_FORMAT,
     'site_prefer_python3': False,
     'site_autolaunch_page': '',
     'site_landing_page': '',
@@ -681,6 +699,7 @@ _CONFIGURATION_DEFAULTS = {
     'expire_peer': 600,
     'language': ['English'],
     'user_interface': ['V2', 'V3'],
+    'new_user_default_ui': 'V2',
     'submitui': ['fields', 'textarea', 'files'],
     # Init user default page with no selection to use site landing page
     'default_page': [''],
@@ -703,6 +722,8 @@ _CONFIGURATION_DEFAULTS = {
     # fyrgrid, benedict. Otherwise, ldap://bla.bla:2135/...
 
     'arc_clusters': [],
+
+    'cloud_services': [],
 }
 
 
@@ -893,8 +914,6 @@ location.""" % self.config_file)
             self.site_title = "Minimum intrusion Grid"
         if config.has_option('SITE', 'short_title'):
             self.short_title = config.get('SITE', 'short_title')
-        else:
-            self.short_title = "MiG"
         if config.has_option('SITE', 'user_interface'):
             self.user_interface = config.get(
                 'SITE', 'user_interface').split()
@@ -904,8 +923,6 @@ location.""" % self.config_file)
         if config.has_option('SITE', 'new_user_default_ui'):
             self.new_user_default_ui = config.get(
                 'SITE', 'new_user_default_ui').strip()
-        else:
-            self.new_user_default_ui = self.user_interface[0]
 
         if config.has_option('GLOBAL', 'state_path'):
             self.state_path = config.get('GLOBAL', 'state_path')
@@ -1682,7 +1699,6 @@ location.""" % self.config_file)
                                               for option in
                                               config.options(section)})
 
-        self.cloud_services = []
         # List of service options with default and override map
         override_map_keys = ['service_user', 'service_max_user_instances',
                              'service_image_alias', 'service_allowed_images',
@@ -1693,6 +1709,7 @@ location.""" % self.config_file)
                              'service_jumphost_address',
                              'service_jumphost_user',
                              'service_jumphost_key']
+
         # Load generated cloud sections
         for section in config.sections():
             if 'CLOUD_' in section:
@@ -1913,8 +1930,6 @@ location.""" % self.config_file)
                 logger.warning("invalid user_id_format %r - using default" %
                                self.site_user_id_format)
                 self.site_user_id_format = DEFAULT_USER_ID_FORMAT
-        else:
-            self.site_user_id_format = DEFAULT_USER_ID_FORMAT
         if config.has_option('SITE', 'autolaunch_page'):
             self.site_autolaunch_page = config.get('SITE', 'autolaunch_page')
         else:
@@ -2741,6 +2756,14 @@ location.""" % self.config_file)
         logger.info('Added %d peer(s) from %s', len(peers_dict),
                     peerfile)
         return peers_dict
+
+    @staticmethod
+    def as_dict(thing):
+        assert isinstance(thing, Configuration)
+        return _without_noforward_keys(thing.__dict__)
+
+
+_CONFIGURATION_ARGUMENTS = set(_CONFIGURATION_DEFAULTS.keys()) - _CONFIGURATION_NOFORWARD_KEYS
 
 
 if '__main__' == __name__:
