@@ -163,9 +163,9 @@ start_monitor() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/monitor.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: monitor not started."
+    [ $RET2 -ne 0 ] && echo "Warning: monitor not started."
     echo
 }
 start_sshmux() {
@@ -178,9 +178,9 @@ start_sshmux() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/sshmux.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: sshmux not started."
+    [ $RET2 -ne 0 ] && echo "Warning: sshmux not started."
     echo
 }
 start_events() {
@@ -194,9 +194,9 @@ start_events() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/events.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: events not started."
+    [ $RET2 -ne 0 ] && echo "Warning: events not started."
     echo
 }
 start_cron() {
@@ -210,9 +210,9 @@ start_cron() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/cron.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: cron not started."
+    [ $RET2 -ne 0 ] && echo "Warning: cron not started."
     echo
 }
 start_transfers() {
@@ -225,9 +225,9 @@ start_transfers() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/transfers.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: transfers not started."
+    [ $RET2 -ne 0 ] && echo "Warning: transfers not started."
     echo
 }
 start_openid() {
@@ -240,9 +240,9 @@ start_openid() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/openid.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: openid not started."
+    [ $RET2 -ne 0 ] && echo "Warning: openid not started."
     echo
 }
 start_sftp() {
@@ -255,9 +255,9 @@ start_sftp() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/sftp.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: sftp not started."
+    [ $RET2 -ne 0 ] && echo "Warning: sftp not started."
     echo
 }
 start_webdavs() {
@@ -270,9 +270,9 @@ start_webdavs() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/webdavs.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: webdavs not started."
+    [ $RET2 -ne 0 ] && echo "Warning: webdavs not started."
     echo
 }
 start_ftps() {
@@ -285,9 +285,9 @@ start_ftps() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/ftps.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: ftps not started."
+    [ $RET2 -ne 0 ] && echo "Warning: ftps not started."
     echo
 }
 start_notify() {
@@ -300,9 +300,9 @@ start_notify() {
        "${DAEMON_PATH} >> ${MIG_LOG}/notify.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: notify not started."
+    [ $RET2 -ne 0 ] && echo "Warning: notify not started."
     echo
 }
 start_imnotify() {
@@ -315,9 +315,9 @@ start_imnotify() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/imnotify.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: imnotify not started."
+    [ $RET2 -ne 0 ] && echo "Warning: imnotify not started."
     echo
 }
 start_vmproxy() {
@@ -330,9 +330,9 @@ start_vmproxy() {
 	   "${DAEMON_PATH} >> ${MIG_LOG}/vmproxy.out 2>&1 &"
     fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: vmproxy not started."
+    [ $RET2 -ne 0 ] && echo "Warning: vmproxy not started."
     echo
 }
 start_sftpsubsys() {
@@ -342,9 +342,9 @@ start_sftpsubsys() {
     echo -n "Starting MiG sftpsubsys daemon: $SHORT_NAME"
     ${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}
     RET2=$?
-    [ $RET2 ] && success
+    [ $RET2 -eq 0 ] && success
     echo
-    [ $RET2 ] || echo "Warning: sftpsubsys not started."
+    [ $RET2 -ne 0 ] && echo "Warning: sftpsubsys not started."
     echo
     # NOTE: sftp subsys workers start automatically
 }
