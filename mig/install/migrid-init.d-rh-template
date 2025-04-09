@@ -516,6 +516,7 @@ stop_sftpsubsys_workers() {
     echo -n "Shutting down MiG sftpsubsys workers: $SHORT_NAME "
     # Proc only running if one or more clients are connected
     pkill -f ${DAEMON_PATH} || true
+    success
     echo
 }
 stop_sftpsubsys() {
@@ -524,6 +525,9 @@ stop_sftpsubsys() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     echo -n "Shutting down MiG sftpsubsys: $SHORT_NAME "
     pkill -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+    RET2=$?
+    [ $RET2 -eq 0 ] && success
+    [ $RET2 -ne 0 ] && failure
     echo
     # Workers don't react to parent stop and hang on to mount point etc. 
     sleep 1
@@ -674,6 +678,7 @@ reload_sftpsubsys_workers() {
     echo -n "Reloading MiG sftpsubsys workers: $SHORT_NAME "
     # Proc only running if one or more clients are connected
     pkill -HUP -f ${DAEMON_PATH} || true
+    success
     echo
 }
 reload_sftpsubsys() {
@@ -682,6 +687,9 @@ reload_sftpsubsys() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     echo -n "Reloading MiG sftpsubsys: $SHORT_NAME "
     pkill -HUP -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+    RET2=$?
+    [ $RET2 -eq 0 ] && success
+    [ $RET2 -ne 0 ] && failure
     echo
     # Workers don't react to parent reload and hang on to mount point etc. 
     sleep 1
@@ -819,14 +827,23 @@ status_vmproxy() {
 status_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
-    pgrep -f ${DAEMON_PATH} > /dev/null
+    PIDS=$(pgrep -f ${DAEMON_PATH}) || true
+    [ -n "$PIDS" ] && echo "$SHORT_NAME: (pids: $PIDS) is running..."
 }
 status_sftpsubsys() {
     check_enabled "sftp_subsys" || return
+    status_sftpsubsys_workers
     DAEMON_PATH=${MIG_SFTPSUBSYS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
-    pgrep -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}" > /dev/null
-    status_sftpsubsys_workers
+    COMMAND_PATH="${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+    PID=$(pgrep -f "${COMMAND_PATH}")
+    if [ -n "$PID" ]; then
+        echo "${COMMAND_PATH}: (pid: $PID) is running..."
+        return 0
+    else
+        echo "${COMMAND_PATH} is stopped"
+        return 3
+    fi
 }
 
 status_all() {
