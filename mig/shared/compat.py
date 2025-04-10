@@ -34,6 +34,7 @@ from __future__ import absolute_import
 from past.builtins import basestring
 
 import codecs
+import inspect
 import io
 import sys
 # NOTE: StringIO is only available in python2
@@ -55,6 +56,9 @@ if PY2:
                 return dict(**self)
 
             return self[name]
+
+        def __setattr__(self, name, value):
+            self[name] = value
 else:
     from types import SimpleNamespace
 
@@ -91,6 +95,15 @@ def ensure_native_string(string_or_bytes):
     else:
         textual_output = string_or_bytes
     return textual_output
+
+
+def inspect_args(func):
+    """Wrapper to return the arguments of a function."""
+
+    if PY2:
+        return inspect.getargspec(func).args
+    else:
+        return inspect.getfullargspec(func).args
 
 
 def NativeStringIO(initial_value=''):
