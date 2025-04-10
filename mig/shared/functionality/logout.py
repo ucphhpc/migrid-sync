@@ -36,7 +36,7 @@ from mig.shared.auth import expire_twofactor_session
 from mig.shared.base import requested_backend
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, \
-    AUTH_EXT_OIDC
+    AUTH_EXT_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.gdp.all import project_logout, get_client_id_from_project_client_id
 from mig.shared.httpsclient import extract_client_id, detect_client_auth, \
@@ -199,7 +199,8 @@ the %s Admins if it happens repeatedly.
             return_page = build_logout_url(configuration, environ)
             terminate_query = urlencode({'logout': return_page})
             reentry_page = terminate_session_url + '?%s' % terminate_query
-            logger.debug("send %s to %s for logout" % (client_id, reentry_page))
+            logger.debug("send %s to %s for logout" % (client_id,
+                                                       reentry_page))
             success, found, remaining = True, True, []
         elif auth_type == AUTH_CERTIFICATE:
             logger.info("no manual cleanup needed for %s session of %s" %
