@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # logout - force-expire local login session(s)
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -43,6 +43,7 @@ from mig.shared.httpsclient import extract_client_id, detect_client_auth, \
     require_twofactor_setup, build_logout_url, extract_client_openid
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.useradm import expire_oid_sessions, find_oid_sessions
+from mig.shared.url import urlencode
 
 
 def signature():
@@ -115,13 +116,25 @@ browser. Please refer to your browser and system documentation for details.
                                     if i in ['setup', 'logout']]
         title_entry['user_menu'] = []
 
-    # OpenID requires logout on provider and in local mod-auth-openid database.
+    # NOTE: actual logout is done in reverse order of login. Namely, start with
+    # any gdp project logout, then 2FA session removal and finally complete any
+    # IDP logout.
+
+    # NOTE: OpenID 2.0 requires logout on provider and in local mod-auth-openid
+    # database.
     # IMPORTANT: some browsers like Firefox may inadvertently renew the local
     # OpenID session while loading the resources for this page (in parallel).
     # User clicks logout at OpenID provider, which sends her back here to
     # finish the local logout.
+    # NOTE: OpenID Connect on the other hand cannot return after logout and
+    # must complete gdp and 2FA session clean up before calling remote logout.
 
     if do_logout:
+        if configuration.site_enable_gdp:
+            logger.debug("close any open GDP project for %s" % client_id)
+            project_logout(configuration, 'https', environ['REMOTE_ADDR'],
+                           client_id)
+
         if configuration.site_enable_twofactor:
             real_user = client_id
             addr_filter = environ['REMOTE_ADDR']
@@ -131,6 +144,7 @@ browser. Please refer to your browser and system documentation for details.
                 real_user = get_client_id_from_project_client_id(configuration,
                                                                  client_id)
                 addr_filter = None
+            logger.debug("expire twofactor session for %s" % client_id)
             if real_user and not expire_twofactor_session(configuration,
                                                           real_user, environ,
                                                           allow_missing=True,
@@ -144,7 +158,28 @@ There was a potential problem with 2-factor session termination. Please contact
 the %s Admins if it happens repeatedly.
 </p>""" % configuration.short_title
                      })
+
         if auth_type == AUTH_OPENID_V2:
+            if auth_flavor == AUTH_MIG_OID:
+                reentry_page = configuration.migserver_https_mig_oid_url
+            elif auth_flavor == AUTH_EXT_OID:
+                reentry_page = configuration.migserver_https_ext_oid_url
+        elif auth_type == AUTH_OPENID_CONNECT:
+            if auth_flavor == AUTH_MIG_OIDC:
+                reentry_page = configuration.migserver_https_mig_oidc_url
+            elif auth_flavor == AUTH_EXT_OIDC:
+                reentry_page = configuration.migserver_https_ext_oidc_url
+        elif auth_type == AUTH_CERTIFICATE:
+            if auth_flavor == AUTH_MIG_CERT:
+                reentry_page = configuration.migserver_https_mig_cert_url
+            elif auth_flavor == AUTH_EXT_CERT:
+                reentry_page = configuration.migserver_https_ext_cert_url
+        else:
+            reentry_page = "https://%s" % configuration.server_fqdn
+
+        if auth_type == AUTH_OPENID_V2:
+            # TODO: truncate open_id_session_id instead as suggested in the FAQ?
+            #       https://findingscience.com/mod_auth_openid/faq.html
             (oid_db, identity) = extract_client_openid(configuration, environ,
                                                        lookup_dn=False)
             logger.info("expiring active sessions for %s in %s" % (identity,
@@ -155,6 +190,18 @@ the %s Admins if it happens repeatedly.
                 configuration, oid_db, identity)
         elif auth_type == AUTH_OPENID_CONNECT:
             # NOTE: mod auth oidc handles local logout automatically
+            logger.debug("pass through local %s auth module for %s session end"
+                         % (auth_type, identity))
+            # NOTE: OpenID Connect module handles remote logout on vanity url
+            terminate_session_url = '/dynamic/redirect_uri'
+            # NOTE: upstream currently requires fixed logout callback url
+            # TODO: change return_page to reentry_page when upstream allows it
+            return_page = build_logout_url(configuration, environ)
+            terminate_query = urlencode({'logout': return_page})
+            reentry_page = terminate_session_url + '?%s' % terminate_query
+            logger.debug("send %s to %s for logout" % (client_id, reentry_page))
+            success, found, remaining = True, True, []
+        elif auth_type == AUTH_CERTIFICATE:
             logger.info("no manual cleanup needed for %s session of %s" %
                         (auth_type, identity))
             success, found, remaining = True, True, []
@@ -170,34 +217,13 @@ documentation for details.""" % (configuration.short_title, auth_type)})
             return (output_objects, status)
 
         if success and found and not remaining:
-            if configuration.site_enable_gdp:
-                reentry_page = "https://%s" % configuration.server_fqdn
-                if auth_type == AUTH_OPENID_V2:
-                    if auth_flavor == AUTH_MIG_OID:
-                        reentry_page = configuration.migserver_https_mig_oid_url
-                    elif auth_flavor == AUTH_EXT_OID:
-                        reentry_page = configuration.migserver_https_ext_oid_url
-                elif auth_type == AUTH_OPENID_CONNECT:
-                    if auth_flavor == AUTH_MIG_OIDC:
-                        reentry_page = configuration.migserver_https_mig_oidc_url
-                    elif auth_flavor == AUTH_EXT_OIDC:
-                        reentry_page = configuration.migserver_https_ext_oidc_url
-                project_logout(
-                    configuration, 'https', environ['REMOTE_ADDR'], client_id)
-                html = """
-                <a id='gdp_logout' href='%s'></a>
+            # TODO: switch to 'window.location = reentry_page' ?
+            html = """
+                <a id='finish_logout' href='%s'></a>
                 <script type='text/javascript'>
-                    document.getElementById('gdp_logout').click();
+                    document.getElementById('finish_logout').click();
                 </script>""" % reentry_page
-                output_objects.append(
-                    {'object_type': 'html_form', 'text': html})
-            else:
-                output_objects.append(
-                    {'object_type': 'text', 'text':
-                     """You are now logged out of %s locally - you may want to
-close your web browser to finish""" % configuration.short_title})
-                title_entry['skipmenu'] = True
-
+            output_objects.append({'object_type': 'html_form', 'text': html})
         else:
             logger.error("remaining active sessions for %s: %s" % (identity,
                                                                    remaining))
@@ -218,6 +244,7 @@ log out of %s?""" % configuration.short_title})
             {'object_type': 'link',
              'destination': 'javascript:history.back();',
              'class': 'genericbutton greenBtn', 'text': "No, go back"})
+
     # sub-container end
     output_objects.append({'object_type': 'html_form', 'text': '''
             </div>
