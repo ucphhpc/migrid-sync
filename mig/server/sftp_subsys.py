@@ -259,7 +259,7 @@ if __name__ == '__main__':
                     # Join with 1s timeout to stay responsive but catch finish
                     sftp_server.join(1)
                     # Check alive to decide if join succeeded or timed out
-                    if not sftp_server.isAlive():
+                    if not sftp_server.is_alive():
                         # logger.debug(
                         #     '(%d) Joined sftp subsys server worker' % pid)
                         configuration.daemon_conf['stop_running'].set()

@@ -97,7 +97,7 @@ def time_out_jobs(stop_event):
         # Keep running until main sends stop signal
 
         counter = 0
-        while not stop_event.isSet():
+        while not stop_event.is_set():
             counter = (counter + 1) % 60
 
             # Responsive sleep for 60 seconds
@@ -1706,7 +1706,7 @@ while True:
     elif cap_line.find('CHECKTIMEOUTTHREAD') == 0:
         logger.info('--- CHECKING TIME OUT THREAD ---')
         logger.info('--- TIME OUT THREAD IS ALIVE: %s ---'
-                    % job_time_out_thread.isAlive())
+                    % job_time_out_thread.is_alive())
     elif cap_line.find('RELOADCONFIG') == 0:
         logger.info('--- RELOADING CONFIGURATION ---')
         configuration.reload_config(True)
@@ -1727,11 +1727,11 @@ while True:
 
     # TMP: Auto restart time out thread until we find the death cause
 
-    if not job_time_out_thread.isAlive():
+    if not job_time_out_thread.is_alive():
         logger.warning('--- TIME OUT THREAD DIED: %s %s %s---'
                        % (job_time_out_thread,
-                           job_time_out_thread.isAlive(),
-                           job_time_out_stop.isSet()))
+                           job_time_out_thread.is_alive(),
+                           job_time_out_stop.is_set()))
         logger.info('ressurect time out thread with executing queue:')
         logger.info('%s' % executing_queue.show_queue(['ALL']))
         job_time_out_stop.clear()

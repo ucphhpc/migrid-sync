@@ -334,7 +334,7 @@ comma-separated recipients.
                             logger.debug('check done %s' % invite_list[i])
                             notify = threads[i]
                             notify.join(3)
-                            notify_done[i] = not notify.isAlive()
+                            notify_done[i] = not notify.is_alive()
                 notify_sent, notify_failed = [], []
                 for i in range(len(invite_list)):
                     if notify_done[i]:

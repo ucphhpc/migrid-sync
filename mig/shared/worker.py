@@ -47,7 +47,7 @@ def dummy_test(delay):
 
 def throttle_max_concurrent(workers, concurrent=__max_concurrent):
     """Wait until at most max_concurrent workers are active"""
-    while len([w for w in workers if w.isAlive()]) >= concurrent:
+    while len([w for w in workers if w.is_alive()]) >= concurrent:
         time.sleep(1)
     return
 
