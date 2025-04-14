@@ -51,6 +51,7 @@ MIG_MONITOR=${MIG_CODE}/server/grid_monitor.py
 MIG_SSHMUX=${MIG_CODE}/server/grid_sshmux.py
 MIG_EVENTS=${MIG_CODE}/server/grid_events.py
 MIG_CRON=${MIG_CODE}/server/grid_cron.py
+MIG_JANITOR=${MIG_CODE}/server/grid_janitor.py
 MIG_TRANSFERS=${MIG_CODE}/server/grid_transfers.py
 MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
@@ -67,7 +68,7 @@ MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
     echo "where daemon is left out for all or given along with DAEMON as one of the following"
-    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)"
 }
 
 check_enabled() {
@@ -148,6 +149,19 @@ start_cron() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     # NOTE: cron jobs can be quite heavy so we lower sched prio a bit
     log_daemon_msg "Starting MiG cron daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --chuid ${MIG_USER} --nicelevel 10 --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+start_janitor() {
+    check_enabled "janitor" || return 0
+    DAEMON_PATH=${MIG_JANITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    # NOTE: janitor tasks can be quite heavy so we lower sched prio a bit
+    log_daemon_msg "Starting MiG janitor daemon" ${SHORT_NAME} || true
     if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --chuid ${MIG_USER} --nicelevel 10 --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
@@ -267,6 +281,7 @@ start_all() {
     start_sshmux
     start_events
     start_cron
+    start_janitor
     start_transfers
     start_openid
     start_sftp
@@ -358,6 +373,28 @@ stop_cron() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG cron" ${SHORT_NAME} || true
+    # Try graceful shutdown so that state is properly saved
+    start-stop-daemon --stop --signal INT --quiet --oknodo --pidfile ${PID_FILE}
+    for delay in 1 2 3; do
+	status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} || break
+	sleep $delay
+    done
+    # Force kill if still running
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && \
+	start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE}
+    if ! status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}; then
+	rm -f ${PID_FILE}
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+stop_janitor() {
+    check_enabled "janitor" || return 0
+    DAEMON_PATH=${MIG_JANITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG janitor" ${SHORT_NAME} || true
     # Try graceful shutdown so that state is properly saved
     start-stop-daemon --stop --signal INT --quiet --oknodo --pidfile ${PID_FILE}
     for delay in 1 2 3; do
@@ -515,6 +552,7 @@ stop_all() {
     stop_sshmux
     stop_events
     stop_cron
+    stop_janitor
     stop_transfers
     stop_openid
     stop_sftp
@@ -583,6 +621,18 @@ reload_cron() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Reloading MiG cron" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_janitor() {
+    check_enabled "janitor" || return 0
+    DAEMON_PATH=${MIG_JANITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG janitor" ${SHORT_NAME} || true
     if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
 	log_end_msg 0 || true
     else
@@ -726,6 +776,7 @@ reload_all() {
     reload_sshmux
     reload_events
     reload_cron
+    reload_janitor
     reload_transfers
     reload_openid
     reload_sftp
@@ -773,6 +824,13 @@ status_events() {
 status_cron() {
     check_enabled "crontab" || return 0
     DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
+}
+status_janitor() {
+    check_enabled "janitor" || return 0
+    DAEMON_PATH=${MIG_JANITOR}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
@@ -860,6 +918,7 @@ status_all() {
     status_sshmux
     status_events
     status_cron
+    status_janitor
     status_transfers
     status_openid
     status_sftp
@@ -881,7 +940,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)
         TARGET="$2"
 	;;
     '')

@@ -303,6 +303,7 @@ def fix_missing(config_file, verbose=True):
         'user_vmproxy_log': 'vmproxy.log',
         'user_events_log': 'events.log',
         'user_cron_log': 'cron.log',
+        'user_janitor_log': 'janitor.log',
         'user_transfers_log': 'transfers.log',
         'user_notify_log': 'notify.log',
         'user_auth_log': 'auth.log',
@@ -561,6 +562,7 @@ _CONFIGURATION_DEFAULTS = {
     'user_vmproxy_log': 'vmproxy.log',
     'user_events_log': 'events.log',
     'user_cron_log': 'cron.log',
+    'user_janitor_log': 'janitor.log',
     'user_transfers_log': 'transfers.log',
     'user_notify_log': 'notify.log',
     'user_auth_log': 'auth.log',
@@ -1407,6 +1409,13 @@ location.""" % self.config_file)
             self.site_enable_crontab = False
         if config.has_option('GLOBAL', 'user_cron_log'):
             self.user_cron_log = config.get('GLOBAL', 'user_cron_log')
+        if config.has_option('SITE', 'enable_janitor'):
+            self.site_enable_janitor = config.getboolean(
+                'SITE', 'enable_janitor')
+        else:
+            self.site_enable_janitor = False
+        if config.has_option('GLOBAL', 'user_janitor_log'):
+            self.user_janitor_log = config.get('GLOBAL', 'user_janitor_log')
         if config.has_option('SITE', 'enable_notify'):
             self.site_enable_notify = config.getboolean(
                 'SITE', 'enable_notify')
@@ -2558,10 +2567,10 @@ location.""" % self.config_file)
                          'user_openid_log', 'user_monitor_log',
                          'user_sshmux_log', 'user_vmproxy_log',
                          'user_events_log', 'user_cron_log',
-                         'user_transfers_log', 'user_notify_log',
-                         'user_imnotify_log', 'user_auth_log',
-                         'user_chkuserroot_log', 'user_chksidroot_log',
-                         'user_quota_log'):
+                         'user_janitor_log', 'user_transfers_log',
+                         'user_notify_log', 'user_imnotify_log',
+                         'user_auth_log', 'user_chkuserroot_log',
+                         'user_chksidroot_log', 'user_quota_log'):
             _log_path = getattr(self, _log_var)
             if not os.path.isabs(_log_path):
                 setattr(self, _log_var, os.path.join(self.log_dir, _log_path))
