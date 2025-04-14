@@ -1027,7 +1027,9 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
     format as a first step.
     """
 
-    if conf_path:
+    if isinstance(conf_path, Configuration):
+        configuration = conf_path
+    elif conf_path:
         if isinstance(conf_path, basestring):
 
             # has been checked for accessibility above...
@@ -2318,7 +2320,9 @@ def search_users(search_filter, conf_path, db_path,
     fnmatch for.
     """
 
-    if conf_path:
+    if isinstance(conf_path, Configuration):
+        configuration = conf_path
+    elif conf_path:
         if isinstance(conf_path, basestring):
             configuration = Configuration(conf_path)
         else:
