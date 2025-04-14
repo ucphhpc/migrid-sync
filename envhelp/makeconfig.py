@@ -33,15 +33,17 @@ from __future__ import print_function
 import os
 import sys
 
-sys.path.append(os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "..")))
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_LOCAL_MIG_BASE = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
+
+sys.path.append(_LOCAL_MIG_BASE)
 
 from mig.shared.install import MIG_BASE, generate_confs
 
-_LOCAL_MIG_BASE = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), ".."))
 _LOCAL_ENVHELP_OUTPUT_DIR = os.path.join(_LOCAL_MIG_BASE, "envhelp/output")
 _MAKECONFIG_ALLOWED = ["local", "test"]
+_USERADM_PATH_KEYS = ('user_cache', 'user_db_home', 'user_home',
+                      'user_settings', 'mrsl_files_dir', 'resource_pending')
 
 
 def _at(sequence, index=-1, default=None):
@@ -50,6 +52,18 @@ def _at(sequence, index=-1, default=None):
         return sequence[index]
     except IndexError:
         return default
+
+
+def _ensure_dirs_needed_for_userdb(configuration):
+    """Provision the basic directories needed for the operation of the
+     userdb deriving paths from the supplied configuration object."""
+
+    for config_key in _USERADM_PATH_KEYS:
+        dir_path = getattr(configuration, config_key)[0:-1]
+        try:
+            os.makedirs(dir_path)
+        except OSError as exc:
+            pass
 
 
 def write_testconfig(env_name, is_docker=False):
@@ -83,6 +97,15 @@ def write_testconfig(env_name, is_docker=False):
     print('generating "%s" configuration ...' % (confs_name,))
 
     generate_confs(_LOCAL_ENVHELP_OUTPUT_DIR, **overrides)
+
+    # now that a valid configuration was written, we need to ensure a handful
+    # of essential state directories are available for basic userdb operation
+    from mig.shared.conf import get_configuration_object
+    written_config_file = os.path.join(
+        overrides['destination'], 'MiGserver.conf')
+    written_configuration = get_configuration_object(
+        written_config_file, skip_log=True, disable_auth_log=True)
+    _ensure_dirs_needed_for_userdb(written_configuration)
 
     confs_destination = ''.join(
         [overrides['destination'], overrides['destination_suffix']])
