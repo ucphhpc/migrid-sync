@@ -40,7 +40,7 @@
     "url": "http://github.com/meltingice/CamanJS.git"
   },
   "dependencies": {
-    "canvas": "*",
+    "canvas": ">= 1.6.11",
     "fibers": "*"
   },
   "devDependencies": {
@@ -51,7 +51,7 @@
     "mocha": "*",
     "chai": "*",
     "servedir": "*",
-    "cli": "*",
+    "cli": ">= 1.0.0",
     "cli-table": "*"
   },
   "scripts": {
