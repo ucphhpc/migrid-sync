@@ -749,7 +749,7 @@ Key name:<br/>
         # NOTE: all path validation is done at run-time in grid_transfers
         transfer_dict = transfer_map.get(transfer_id, {})
         if action == 'deltransfer':
-            if transfer_dict is None:
+            if not transfer_dict:
                 output_objects.append(
                     {'object_type': 'error_text',
                      'text': 'existing transfer_id is required for delete'})
@@ -758,7 +758,7 @@ Key name:<br/>
                                                     transfer_id, transfer_map)
             desc = "delete"
         elif action == 'redotransfer':
-            if transfer_dict is None:
+            if not transfer_dict:
                 output_objects.append(
                     {'object_type': 'error_text',
                      'text': 'existing transfer_id is required for reschedule'
