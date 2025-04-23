@@ -38,6 +38,7 @@ _LOCAL_MIG_BASE = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
 
 sys.path.append(_LOCAL_MIG_BASE)
 
+from mig.shared.conf import get_configuration_object
 from mig.shared.install import MIG_BASE, generate_confs
 
 _LOCAL_ENVHELP_OUTPUT_DIR = os.path.join(_LOCAL_MIG_BASE, "envhelp/output")
@@ -59,7 +60,7 @@ def _ensure_dirs_needed_for_userdb(configuration):
      userdb deriving paths from the supplied configuration object."""
 
     for config_key in _USERADM_PATH_KEYS:
-        dir_path = getattr(configuration, config_key)[0:-1]
+        dir_path = getattr(configuration, config_key).rstrip(os.path.sep)
         try:
             os.makedirs(dir_path)
         except OSError as exc:
@@ -100,7 +101,6 @@ def write_testconfig(env_name, is_docker=False):
 
     # now that a valid configuration was written, we need to ensure a handful
     # of essential state directories are available for basic userdb operation
-    from mig.shared.conf import get_configuration_object
     written_config_file = os.path.join(
         overrides['destination'], 'MiGserver.conf')
     written_configuration = get_configuration_object(
