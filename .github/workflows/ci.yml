@@ -41,7 +41,7 @@ jobs:
           make PYTHON_BIN=python3 unittest
 
   python3-rocky9:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container:
       image: rockylinux/rockylinux:9
     steps:
@@ -58,7 +58,7 @@ jobs:
           make unittest
 
   python3-rocky8:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     container:
       image: rockylinux/rockylinux:8
     steps:

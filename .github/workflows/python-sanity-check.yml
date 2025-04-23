@@ -13,6 +13,9 @@ on:
       - experimental
       - next
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
 permissions:
   contents: read
 
@@ -51,7 +54,7 @@ jobs:
     #    pytest
 
   lint-python3-rocky9:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container:
       image: rockylinux/rockylinux:9
     steps:
