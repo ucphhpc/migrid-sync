@@ -59,15 +59,16 @@ jobs:
       - name: Lint with pylint
         run: |
           # NOTE: we only run pylint error check for changed python files to limit noise
-          pwd
-          ls -la
+          #pwd
+          #ls -la
           git --version
-          git config --global --add safe.directory /__w/migrid-sync/migrid-sync
+          #git config --global --add safe.directory $PWD/__w/migrid-sync/migrid-sync
+          git config --global --add safe.directory "$PWD"
           git status
           BRANCH="edge"
           #CHANGED_FILES="$(git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$')"
           #[ -z "${CHANGED_FILES}" ] || pylint -E ${CHANGED_FILES}
-          git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$' | xargs pylint -E
+          git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$' | xargs -r pylint -E
         # TODO: prepare and enable pytest
      #- name: Test with pytest
      #  run: |
