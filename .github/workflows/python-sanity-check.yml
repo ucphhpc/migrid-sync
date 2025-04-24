@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         python2 -m pip install --upgrade pip
-        pip2 install flake8 pytest
+        pip2 install flake8 pylint pytest
         if [ -f requirements.txt ]; then pip2 install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
@@ -50,6 +50,10 @@ jobs:
         # E721 compare type instead of isinstance, W293 blank line with space,
         # C901 too complex get
         #flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --ignore=E501,E402,E722,F401,F502,E713,F841,C901 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Lint with pylint
+      run: |
+        # NOTE: we only run pylint error check for changed python files to limit noise
+        pylint -E $(git ls-files '*.py')
     # TODO: prepare and enable pytest
     #- name: Test with pytest
     #  run: |
