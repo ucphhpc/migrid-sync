@@ -20,11 +20,9 @@ permissions:
   contents: read
 
 jobs:
-  lint-python2-rocky8:
-    name: Sanity Check Python Code on Rocky8 with Linters
+  code-changes:
+    name: Find Python Code Changes
     runs-on: ubuntu-latest
-    container:
-      image: rockylinux/rockylinux:8
     steps:
       - name: Check out source repository
         uses: actions/checkout@v4
@@ -33,6 +31,14 @@ jobs:
       - name: Get changed python files between base and head
         run: >
           echo "CHANGED_FILES=$(echo $(git diff  --diff-filter=ACMRTB --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep -E '\.py$'))" >> $GITHUB_ENV
+
+  lint-python2-rocky8:
+    name: Sanity Check Python Code on Rocky8 with Linters
+    runs-on: ubuntu-latest
+    needs: code-changes
+    container:
+      image: rockylinux/rockylinux:8
+    steps:
       - name: Set up Python 2.7 with DNF and link to default
         if: ${{ env.CHANGED_FILES }}
         run: |
