@@ -23,11 +23,10 @@ jobs:
   lint-python2-rocky8:
     name: Sanity Check Python Code on Rocky8 with Linters
     runs-on: ubuntu-latest
-    needs: code-changes
     container:
       image: rockylinux/rockylinux:8
     steps:
-      - name: Set up Python 2.7 with DNF and link to default
+      - name: Set up Git and Python 2.7 with DNF and link it to default
         run: |
           dnf install -y python2 python2-pip git
       - name: Install dependencies
