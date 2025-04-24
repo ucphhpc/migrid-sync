@@ -26,6 +26,10 @@ jobs:
     container:
       image: rockylinux/rockylinux:8
     steps:
+      - name: Check out source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # This is necessary to get the commits
       - name: Set up Git and Python 2.7 with DNF and link it to default
         run: |
           dnf install -y python2 python2-pip git
