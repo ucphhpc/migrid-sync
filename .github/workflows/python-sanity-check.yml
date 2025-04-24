@@ -40,17 +40,17 @@ jobs:
       image: rockylinux/rockylinux:8
     steps:
       - name: Set up Python 2.7 with DNF and link to default
-        if: ${{ env.CHANGED_FILES }}
+        #if: ${{ env.CHANGED_FILES }}
         run: |
           dnf install -y python2 python2-pip
       - name: Install dependencies
-        if: ${{ env.CHANGED_FILES }}
+        #if: ${{ env.CHANGED_FILES }}
         run: |
           python2 -m pip install --upgrade pip
           pip2 install flake8 pylint pytest
           if [ -f requirements.txt ]; then pip2 install -r requirements.txt; fi
       - name: Lint with flake8
-        if: ${{ env.CHANGED_FILES }}
+        #if: ${{ env.CHANGED_FILES }}
         run: |
           # TODO: fix unittest dir and remove from excludes
           # TODO: fix or migrate legacy grsfs-fuse dir and remove from excludes
@@ -73,6 +73,6 @@ jobs:
           pylint -E ${{ env.CHANGED_FILES }}
         # TODO: prepare and enable pytest
      #- name: Test with pytest
-     #  if: ${{ env.CHANGED_FILES }}
+     #  #if: ${{ env.CHANGED_FILES }}
      #  run: |
      #    pytest
