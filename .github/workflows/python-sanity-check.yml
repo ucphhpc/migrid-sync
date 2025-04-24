@@ -61,9 +61,12 @@ jobs:
           # NOTE: we only run pylint error check for changed python files to limit noise
           pwd
           ls -la
+          git --version
+          git status
           BRANCH="edge"
-          CHANGED_FILES="$(git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$')"
-          [ -z "${CHANGED_FILES}" ] || pylint -E ${CHANGED_FILES}
+          #CHANGED_FILES="$(git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$')"
+          #[ -z "${CHANGED_FILES}" ] || pylint -E ${CHANGED_FILES}
+          git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$' | xargs pylint -E
         # TODO: prepare and enable pytest
      #- name: Test with pytest
      #  run: |
