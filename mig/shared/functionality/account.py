@@ -171,14 +171,20 @@ def html_tmpl(configuration, client_id, environ, title_entry):
             peers_full_name = user_dict.get("peers_full_name", "")
             peers_email = user_dict.get("peers_email", "")
             peers_list = user_dict.get("peers", [])
-            if peers_list or (peers_full_name and peers_email):
+            if peers_full_name and peers_email:
+                show_peers = "%s &lt;%s&gt;" % (peers_full_name, peers_email)
+            elif peers_list:
+                show_peers = ', '.join(peers_list)
+            else:
+                show_peers = ''
+            if show_peers:
                 fill_helpers['peer_acceptance_notice'] = """
-Apparently %(peers_full_name)s &lt;%(peers_email)s&gt; accepted you as a peer
+Apparently % accepted you as a peer
 and if that peer appointment has not yet ended you can renew your access here
 without further operator or peer contact involvement. Otherwise you may need to
 obtain or await explicit extension or peer assignment from someone else before
 your access renewal can proceed.
-                """ % user_dict
+                """ % show_peers
             else:
                 fill_helpers['peer_acceptance_notice'] = """
 It looks like you may need someone with authority to appoint you as their peer
