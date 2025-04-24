@@ -40,6 +40,7 @@ jobs:
           if [ -f requirements.txt ]; then pip2 install -r requirements.txt; fi
       - name: Lint with flake8
         run: |
+          pwd
           # TODO: fix unittest dir and remove from excludes
           # TODO: fix or migrate legacy grsfs-fuse dir and remove from excludes
           # TODO: should tests be included here - currently fail on py3-only FileNotFoundError, etc.
@@ -57,6 +58,8 @@ jobs:
       - name: Lint with pylint
         run: |
           # NOTE: we only run pylint error check for changed python files to limit noise
+          pwd
+          ls -la
           BRANCH="edge"
           CHANGED_FILES="$(git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$')"
           [ -z "${CHANGED_FILES}" ] || pylint -E ${CHANGED_FILES}
