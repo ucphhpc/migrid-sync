@@ -44,11 +44,11 @@ jobs:
           # NOTE: we only run pylint error check for changed python files to limit noise
           # NOTE: perms are not right inside container so repeat what checkout module does.
           git config --global --add safe.directory "$PWD"
-          #git status
           BRANCH="edge"
-          #CHANGED_FILES="$(git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$')"
-          #[ -z "${CHANGED_FILES}" ] || pylint -E ${CHANGED_FILES}
-          git diff --diff-filter=ACMRTB --name-only origin/${BRANCH} -- | grep -E '\.py$' | xargs -r pylint -E
+          # TMP: for debug
+          git diff --diff-filter=ACMRTB --name-only origin/${BRANCH} -- | grep -E '\.py$' | grep -E -v 'tests/.*'
+          # NOTE: unit tests are only targetted at py3 so skip here
+          git diff --diff-filter=ACMRTB --name-only origin/${BRANCH} -- | grep -E '\.py$' | grep -E -v 'tests/.*' | xargs -r pylint -E
       - name: Lint with flake8
         run: |
           # TODO: fix unittest dir and remove from excludes
