@@ -28,11 +28,11 @@ jobs:
     steps:
       - name: Set up Git, FindUtils and Python 2.7 with DNF and link it to default
         run: |
-          dnf install -y python2 python2-pip git findutils
+          dnf install -y git findutils python2 python2-pip
       - name: Install dependencies
         run: |
           python2 -m pip install --upgrade pip
-          pip2 install flake8 pylint pytest
+          pip2 install flake8 pylint #pytest
           if [ -f requirements.txt ]; then pip2 install -r requirements.txt; fi
       # We need git installed to get a full repo clone rather than unpacked archive
       - name: Check out source repository
@@ -48,10 +48,9 @@ jobs:
           BRANCH="edge"
           #CHANGED_FILES="$(git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$')"
           #[ -z "${CHANGED_FILES}" ] || pylint -E ${CHANGED_FILES}
-          git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$' | xargs -r pylint -E
+          git diff --diff-filter=ACMRTB --name-only origin/${BRANCH} -- | grep -E '\.py$' | xargs -r pylint -E
       - name: Lint with flake8
         run: |
-          pwd
           # TODO: fix unittest dir and remove from excludes
           # TODO: fix or migrate legacy grsfs-fuse dir and remove from excludes
           # TODO: should tests be included here - currently fail on py3-only FileNotFoundError, etc.
@@ -66,7 +65,7 @@ jobs:
           # E721 compare type instead of isinstance, W293 blank line with space,
           # C901 too complex get
           #flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --ignore=E501,E402,E722,F401,F502,E713,F841,C901 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-     # TODO: prepare and enable pytest
-     #- name: Test with pytest
-     #  run: |
-     #    pytest
+      # TODO: prepare and enable pytest
+      #- name: Test with pytest
+      #  run: |
+      #    pytest
