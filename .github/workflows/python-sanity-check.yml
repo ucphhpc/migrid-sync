@@ -48,7 +48,9 @@ jobs:
           echo "pylint -E on filtered output from:"
           echo "git diff --diff-filter=ACMRTB --name-only HEAD^1 --"
           git diff --diff-filter=ACMRTB --name-only HEAD^1 --
+          echo "$(git diff --diff-filter=ACMRTB --name-only HEAD^1 --)"
           # NOTE: unit tests are only targetted at py3 so skip here
+          echo "$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | grep -E -v '^tests/.*' | xargs -r pylint -E)"
           git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | grep -E -v '^tests/.*' | xargs -r pylint -E
       - name: Lint with flake8
         run: |
