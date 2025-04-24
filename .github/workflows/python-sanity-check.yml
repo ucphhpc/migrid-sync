@@ -21,20 +21,27 @@ permissions:
 
 jobs:
   lint-python2-rocky8:
+    name: Sanity Check Python Code on Rocky8 with Linters
     runs-on: ubuntu-latest
     container:
       image: rockylinux/rockylinux:8
     steps:
     - uses: actions/checkout@v4
+    - name: Get changed python files between base and head
+      run: >
+        echo "CHANGED_FILES=$(echo $(git diff  --diff-filter=ACMRTB --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep -E '\.py$'))" >> $GITHUB_ENV
     - name: Set up Python 2.7 with DNF and link to default
+      - if: ${{ env.CHANGED_FILES }}
       run: |
         dnf install -y python2 python2-pip
     - name: Install dependencies
+      - if: ${{ env.CHANGED_FILES }}
       run: |
         python2 -m pip install --upgrade pip
         pip2 install flake8 pylint pytest
         if [ -f requirements.txt ]; then pip2 install -r requirements.txt; fi
     - name: Lint with flake8
+      - if: ${{ env.CHANGED_FILES }}
       run: |
         # TODO: fix unittest dir and remove from excludes
         # TODO: fix or migrate legacy grsfs-fuse dir and remove from excludes
@@ -51,10 +58,12 @@ jobs:
         # C901 too complex get
         #flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --ignore=E501,E402,E722,F401,F502,E713,F841,C901 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Lint with pylint
+      - if: ${{ env.CHANGED_FILES }}
       run: |
         # NOTE: we only run pylint error check for changed python files to limit noise
         pylint -E $(git ls-files '*.py')
     # TODO: prepare and enable pytest
     #- name: Test with pytest
+    #  - if: ${{ env.CHANGED_FILES }}
     #  run: |
     #    pytest
