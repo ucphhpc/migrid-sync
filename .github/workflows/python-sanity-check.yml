@@ -46,7 +46,7 @@ jobs:
           git config --global --add safe.directory "$PWD"
           BRANCH="edge"
           # TMP: for debug
-          git diff --diff-filter=ACMRTB --name-only origin/${BRANCH} -- | grep -E '\.py$' | grep -E -v 'tests/.*'
+          git diff --diff-filter=ACMRTB --name-only origin/${BRANCH} -- | grep -E '\.py$' | grep -E -v 'tests/.*' | xargs -r echo pylint -E
           # NOTE: unit tests are only targetted at py3 so skip here
           git diff --diff-filter=ACMRTB --name-only origin/${BRANCH} -- | grep -E '\.py$' | grep -E -v 'tests/.*' | xargs -r pylint -E
       - name: Lint with flake8
