@@ -46,7 +46,7 @@ jobs:
           git config --global --add safe.directory "$PWD"
           # TMP: for debug
           echo "pylint -E on filtered output from:"
-          echo "git diff --diff-filter=ACMRTB --name-only origin/${BRANCH} --"  
+          echo "git diff --diff-filter=ACMRTB --name-only HEAD^1 --"  
           git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | grep -E -v '^tests/.*' | xargs echo
           # NOTE: unit tests are only targetted at py3 so skip here
           git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | grep -E -v '^tests/.*' | xargs -r pylint -E
