@@ -39,6 +39,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # This is necessary to get the commits
+      - name: Lint with pylint
+        run: |
+          # NOTE: we only run pylint error check for changed python files to limit noise
+          # NOTE: perms are not right inside container so repeat what checkout module does.
+          git config --global --add safe.directory "$PWD"
+          #git status
+          BRANCH="edge"
+          #CHANGED_FILES="$(git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$')"
+          #[ -z "${CHANGED_FILES}" ] || pylint -E ${CHANGED_FILES}
+          git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$' | xargs -r pylint -E
       - name: Lint with flake8
         run: |
           pwd
@@ -56,20 +66,7 @@ jobs:
           # E721 compare type instead of isinstance, W293 blank line with space,
           # C901 too complex get
           #flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --ignore=E501,E402,E722,F401,F502,E713,F841,C901 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      - name: Lint with pylint
-        run: |
-          # NOTE: we only run pylint error check for changed python files to limit noise
-          #pwd
-          #ls -la
-          git --version
-          #git config --global --add safe.directory $PWD/__w/migrid-sync/migrid-sync
-          git config --global --add safe.directory "$PWD"
-          git status
-          BRANCH="edge"
-          #CHANGED_FILES="$(git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$')"
-          #[ -z "${CHANGED_FILES}" ] || pylint -E ${CHANGED_FILES}
-          git diff --diff-filter=ACMRTB --name-only $BRANCH -- | grep -E '\.py$' | xargs -r pylint -E
-        # TODO: prepare and enable pytest
+     # TODO: prepare and enable pytest
      #- name: Test with pytest
      #  run: |
      #    pytest
