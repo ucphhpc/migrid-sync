@@ -26,9 +26,9 @@ jobs:
     container:
       image: rockylinux/rockylinux:8
     steps:
-      - name: Set up Git and Python 2.7 with DNF and link it to default
+      - name: Set up Git, FindUtils and Python 2.7 with DNF and link it to default
         run: |
-          dnf install -y python2 python2-pip git
+          dnf install -y python2 python2-pip git findutils
       - name: Install dependencies
         run: |
           python2 -m pip install --upgrade pip
