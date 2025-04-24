@@ -26,22 +26,23 @@ jobs:
     container:
       image: rockylinux/rockylinux:8
     steps:
-      - name: Get changed python files between base and head
+      - name: Check out source repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # This is necessary to get the commits
+      - name: Get changed python files between base and head
         run: >
           echo "CHANGED_FILES=$(echo $(git diff  --diff-filter=ACMRTB --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep -E '\.py$'))" >> $GITHUB_ENV
-      - name: Set up Python 2.7 with DNF and link to default
-        - if: ${{ env.CHANGED_FILES }}
+      - if: ${{ env.CHANGED_FILES }}
+        name: Set up Python 2.7 with DNF and link to default
         run: |
           dnf install -y python2 python2-pip
-      - name: Install dependencies
-        - if: ${{ env.CHANGED_FILES }}
+        name: Install dependencies
         run: |
           python2 -m pip install --upgrade pip
           pip2 install flake8 pylint pytest
           if [ -f requirements.txt ]; then pip2 install -r requirements.txt; fi
-      - name: Lint with flake8
-        - if: ${{ env.CHANGED_FILES }}
+        name: Lint with flake8
         run: |
           # TODO: fix unittest dir and remove from excludes
           # TODO: fix or migrate legacy grsfs-fuse dir and remove from excludes
@@ -57,13 +58,11 @@ jobs:
           # E721 compare type instead of isinstance, W293 blank line with space,
           # C901 too complex get
           #flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --ignore=E501,E402,E722,F401,F502,E713,F841,C901 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      - name: Lint with pylint
-        - if: ${{ env.CHANGED_FILES }}
+        name: Lint with pylint
         run: |
           # NOTE: we only run pylint error check for changed python files to limit noise
           pylint -E ${{ env.CHANGED_FILES }}
-      # TODO: prepare and enable pytest
-      #- name: Test with pytest
-      #  - if: ${{ env.CHANGED_FILES }}
-      #  run: |
-      #    pytest
+        # TODO: prepare and enable pytest
+        #name: Test with pytest
+        #run: |
+        #  pytest
