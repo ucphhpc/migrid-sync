@@ -179,7 +179,7 @@ def html_tmpl(configuration, client_id, environ, title_entry):
                 show_peers = ''
             if show_peers:
                 fill_helpers['peer_acceptance_notice'] = """
-Apparentliy % accepted you as a peer 
+Apparently %s accepted you as a peer
 and if that peer appointment has not yet ended you can renew your access here
 without further operator or peer contact involvement. Otherwise you may need to
 obtain or await explicit extension or peer assignment from someone else before
