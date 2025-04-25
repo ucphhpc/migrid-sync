@@ -6,6 +6,23 @@ name: Python Style Checks
 on:
   # Triggers the workflow on push or pull request events but only for this git branch
   push:
+    paths-ignore:
+      - 'README'
+      - 'COPYING'
+      - 'NEWS'
+      - '*.txt'
+      - 'doc/**'
+      - 'doc-src/**'
+      - 'user-projects/**'
+      - 'state/**'
+      - 'certs/**'
+      - 'MiG-certificates/**'
+      - 'mig/images/**'
+      - 'mig/assets/**'
+      - 'mig/src/**'
+      - 'mig/apache/**'
+      - 'mig/bin/**'
+      - 'mig/java-bin/**'
     branches:
       - edge
       - main
@@ -16,6 +33,23 @@ on:
       - reopened
       - synchronize
       - ready_for_review
+    paths-ignore:
+      - 'README'
+      - 'COPYING'
+      - 'NEWS'
+      - '*.txt'
+      - 'doc/**'
+      - 'doc-src/**'
+      - 'user-projects/**'
+      - 'state/**'
+      - 'certs/**'
+      - 'MiG-certificates/**'
+      - 'mig/images/**'
+      - 'mig/assets/**'
+      - 'mig/src/**'
+      - 'mig/apache/**'
+      - 'mig/bin/**'
+      - 'mig/java-bin/**'
     branches:
       - edge
       - main
