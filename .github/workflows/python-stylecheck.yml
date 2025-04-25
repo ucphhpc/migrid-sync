@@ -1,18 +1,32 @@
+# This workflow will install Python dependencies and style check with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
 name: Python Style Checks
 
 on:
+  # Triggers the workflow on push or pull request events but only for this git branch
   push:
     branches:
       - edge
       - main
+
   pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
     branches:
       - edge
       - main
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+
 jobs:
   stylecheckpython:
-    name: Style Check Python with Lint
+    name: Style check python and annotate
     runs-on: ubuntu-latest
     steps:
       - name: Check out source repository
