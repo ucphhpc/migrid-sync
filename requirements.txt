@@ -1,5 +1,6 @@
 # migrid core dependencies on a format suitable for pip install as described on
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
+flask
 future
 
 # cgi was removed from the standard library in Python 3.13
