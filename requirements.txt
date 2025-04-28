@@ -2,6 +2,8 @@
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 future
 
+chainmap;python_version < "3.3"
+
 # cgi was removed from the standard library in Python 3.13
 legacy-cgi;python_version >= "3.13"
 
@@ -25,6 +27,10 @@ dnspython<2;python_version < "3"
 email-validator;python_version >= "3.7"
 email-validator<2.0;python_version >= "3" and python_version < "3.7"
 email-validator<1.3;python_version < "3"
+
+jinja2<3;python_version < "3"
+jinja2==3.0.*;python_version >= "3" and python_version < "3.7"
+jinja2;python_version >= "3.7"
 
 # NOTE: additional optional dependencies depending on site conf are listed
 #       in recommended.txt and can be installed in the same manner by pointing

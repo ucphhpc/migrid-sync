@@ -41,7 +41,7 @@ def _is_method(value):
 
 def _to_dict(obj):
     return {k: v for k, v in inspect.getmembers(obj)
-            if not (k.startswith('__') or _is_method(v))}
+            if not (k.startswith('_') or _is_method(v))}
 
 
 class MigSharedConfiguration(MigTestCase):

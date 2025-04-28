@@ -43,6 +43,7 @@ import sys
 import time
 import traceback
 
+from mig.lib.templates import init_global_templates
 from mig.shared import returnvalues
 from mig.shared.bailout import bailout_title, crash_helper, \
     filter_output_objects
@@ -746,6 +747,15 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     for i in out_obj:
         if i['object_type'] == 'start':
             pass
+        elif i['object_type'] == 'template':
+            store = init_global_templates(configuration)
+            template = store.grab_template(
+                i['template_name'],
+                i['template_group'],
+                'html',
+            )
+            bound = store.context.extend(template, i['template_args'])
+            lines.append(bound.render())
         elif i['object_type'] == 'error_text':
             msg = "%(text)s" % i
             if i.get('exc', False):
@@ -2821,7 +2831,7 @@ def format_output(
     logger = configuration.logger
     #logger.debug("format output to %s" % outputformat)
     valid_formats = get_valid_outputformats()
-    (val_ret, val_msg) = validate(out_obj)
+    (val_ret, val_msg) = validate(out_obj, configuration)
     if not val_ret:
         logger.error("%s formatting failed: %s (%s)" %
                      (outputformat, val_msg, val_ret))
