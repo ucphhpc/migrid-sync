@@ -84,6 +84,8 @@ jobs:
           fetch-depth: 0  # This is necessary to get the commits
       - name: Lint with pylint
         run: |
+          # Make sure we can find migrid modules
+          export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run pylint error check for changed python files to limit noise
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$')"
           git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs -r pylint -E
