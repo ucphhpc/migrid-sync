@@ -61,6 +61,35 @@ except ImportError as ioe:
     print("could not import migrid modules")
 
 
+def include_section_contents(logger, config, section, load_path):
+    """Include additional section contents from load_path in config."""
+    logger.debug("include any %s section from %s in config" % (section,
+                                                               load_path))
+    print("load %s section from %s" % (section, load_path))
+    if not os.path.exists(load_path):
+        logger.error("no such %s section config in %s" % (section, load_path))
+        return False
+
+    print("include %s section from %s" % (section, load_path))
+    section_config = ConfigParser()
+    section_config.read([load_path])
+    if not section in section_config.sections():
+        logger.error("no %s section in section config %s" % (section,
+                                                             load_path))
+        return False
+    if not section in config.sections():
+        print("add section %s" % section)
+        logger.debug("add %s section to main config" % section)
+        config.add_section(section)
+    for (key, val) in section_config.items(section):
+        print("add key %s" % key)
+        logger.debug("add %s option to %s section of main config" % (key,
+                                                                     section))
+        config.set(section, key, val)
+    logger.debug("done including %s section to main config" % section)
+    return True
+
+
 def expand_external_sources(logger, val):
     """Expand a string containing ENV::NAME, FILE::PATH or FILE::PATH$$CACHE
     references to fill in the content of the corresponding environment, file or
@@ -1646,15 +1675,12 @@ location.""" % self.config_file)
         self.jupyter_services = []
         # Load generated jupyter sections
         for section in config.sections():
-            if 'JUPYTER_' in section:
+            if section.startswith('JUPYTER_'):
                 # Allow service_desc to be a file that should be read
                 if config.has_option(section, 'service_desc'):
-                    service_desc = config.get(section, 'service_desc')
-                    if os.path.exists(service_desc) \
-                            and os.path.isfile(service_desc):
-                        content = read_file(service_desc, logger)
-                        if content:
-                            config.set(section, 'service_desc', content)
+                    content = expand_external_sources(
+                        logger, config.get(section, 'service_desc'))
+                    config.set(section, 'service_desc', content)
 
                 self.jupyter_services.append({option: config.get(section,
                                                                  option)
@@ -1674,15 +1700,20 @@ location.""" % self.config_file)
                              'service_jumphost_key']
         # Load generated cloud sections
         for section in config.sections():
-            if 'CLOUD_' in section:
+            if section.startswith('CLOUD_'):
+                # Allow cloud spec included from file
+                if config.has_option(section, 'include_path'):
+                    section_path = config.get(section, 'include_path')
+                    logger.debug("including %s section contents from %s" %
+                                 (section, section_path))
+                    include_section_contents(logger, config, section,
+                                             section_path)
+
                 # Allow service_desc to be a file that should be read
                 if config.has_option(section, 'service_desc'):
-                    service_desc = config.get(section, 'service_desc')
-                    if os.path.exists(service_desc) \
-                            and os.path.isfile(service_desc):
-                        content = read_file(service_desc, logger)
-                        if content:
-                            config.set(section, 'service_desc', content)
+                    content = expand_external_sources(
+                        logger, config.get(section, 'service_desc'))
+                    config.set(section, 'service_desc', content)
 
                 service = {option: config.get(section, option) for option in
                            config.options(section)}
