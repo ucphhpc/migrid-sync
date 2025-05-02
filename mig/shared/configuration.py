@@ -685,15 +685,15 @@ _CONFIGURATION_DEFAULTS = {
 
 
 class Configuration:
-
-    """Server configuration in parsed form"""
-
-    # constructor
+    """Server configuration in parsed form."""
 
     def __init__(self, config_file, verbose=False, skip_log=False,
                  disable_auth_log=False):
         self.config_file = config_file
         self.mig_server_id = None
+        self.default_page = None
+        self.auth_logger_obj = None
+        self.gdp_logger_obj = None
 
         configuration_options = copy.deepcopy(_CONFIGURATION_DEFAULTS)
 
