@@ -69,9 +69,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - name: Set up git, findutils with apt
+      - name: Set up git, findutils and make with apt
         run: |
-          sudo apt install -y git findutils
+          sudo apt install -y git findutils make
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -118,9 +118,9 @@ jobs:
     container:
       image: rockylinux/rockylinux:9
     steps:
-      - name: Set up git, findutils and python3 with dnf and make the latter default
+      - name: Set up git, findutils, make and python3 with dnf and make the latter default
         run: |
-          dnf install -y git findutils python3 python3-pip python-unversioned-command
+          dnf install -y git findutils make python3 python3-pip python-unversioned-command
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
