@@ -320,6 +320,9 @@ to permanently delete""" % relative_path})
                 trash_relative_path = \
                     trash_relative_path.replace(
                         configuration.vgrid_files_home, '')
+                trash_relative_path = \
+                    trash_relative_path.replace(
+                        configuration.vgrid_files_writable, '')
                 gdp_iolog_paths.append(trash_relative_path)
             try:
                 gdp_iolog(configuration,
