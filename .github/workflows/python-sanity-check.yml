@@ -82,7 +82,7 @@ jobs:
           fetch-depth: 0  # This is necessary to get the commits
       - name: Setup environment
         run: |
-          make PYTHON_BIN=python2 dependencies
+          make PYTHON_BIN=python PY=2 dependencies
       - name: Lint with pylint
         run: |
           # NOTE: we only run pylint error check for changed python files to limit noise
