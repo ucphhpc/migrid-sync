@@ -1,86 +1,164 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Python application
+name: Python Sanity Checks
 
 on:
+  # Triggers the workflow on push or pull request events but only for this git branch
   push:
+    paths-ignore:
+      - 'README'
+      - 'COPYING'
+      - 'NEWS'
+      - '*.txt'
+      - 'doc/**'
+      - 'doc-src/**'
+      - 'user-projects/**'
+      - 'state/**'
+      - 'certs/**'
+      - 'MiG-certificates/**'
+      - 'mig/images/**'
+      - 'mig/assets/**'
+      - 'mig/src/**'
+      - 'mig/apache/**'
+      - 'mig/bin/**'
+      - 'mig/java-bin/**'
     branches:
       - experimental
       - next
+
   pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    paths-ignore:
+      - 'README'
+      - 'COPYING'
+      - 'NEWS'
+      - '*.txt'
+      - 'doc/**'
+      - 'doc-src/**'
+      - 'user-projects/**'
+      - 'state/**'
+      - 'certs/**'
+      - 'MiG-certificates/**'
+      - 'mig/images/**'
+      - 'mig/assets/**'
+      - 'mig/src/**'
+      - 'mig/apache/**'
+      - 'mig/bin/**'
+      - 'mig/java-bin/**'
     branches:
       - experimental
       - next
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   lint-python3-latest:
+    name: Sanity check code in latest stable python3
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up latest stable Python 3.x
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.x"
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
-      run: |
-        # TODO: fix unittest dir and remove from excludes
-        # TODO: fix or migrate legacy grsfs-fuse dir and remove from excludes
-        # NOTE: include tests here as they should be fully python3 compatible
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --exclude=state,envhelp,fixture,output,unittest,grsfs-fuse,irclib.py,seafile-seahub_settings-template.py --count --select=E9,F63,F7,F82 --ignore=F824 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --exclude=state,envhelp,fixture,output,unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-        # NOTE: for interactive clean up one can use current ignores
-        # E501 Ignore long lines, E402 imports below top, E722 bare except,
-        # F401 unused imports, F502 explicit list in str expand, F841 unused var,
-        # E721 compare type instead of isinstance, W293 blank line with space,
-        # C901 too complex get
-        #flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --ignore=E501,E402,E722,F401,F502,E713,F841,C901 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    # TODO: prepare and enable pytest
-    #- name: Test with pytest
-    #  run: |
-    #    pytest
+      - name: Set up latest stable python 3.x
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Set up git, findutils and make with apt
+        run: |
+          sudo apt install -y git findutils make
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pylint #pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      # We may need git installed to get a full repo clone rather than unpacked archive
+      - name: Check out source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # This is necessary to get the commits
+      - name: Setup environment
+        run: |
+          make PYTHON_BIN=python3 dependencies
+      - name: Lint with pylint
+        run: |
+          # Make sure we can find migrid modules
+          export PYTHONPATH="$PWD:$PYTHONPATH"
+          # NOTE: we only run pylint error check for changed python files to limit noise
+          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$')"
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs -r pylint -E
+      - name: Lint with flake8
+        run: |
+          # TODO: fix unittest dir and remove from excludes
+          # TODO: fix or migrate legacy grsfs-fuse dir and remove from excludes
+          # NOTE: include tests here as they should be fully python3 compatible
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --exclude=state,envhelp,fixture,output,unittest,grsfs-fuse,irclib.py,seafile-seahub_settings-template.py --count --select=E9,F63,F7,F82 --ignore=F824 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --exclude=state,envhelp,fixture,output,unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          # NOTE: for interactive clean up one can use current ignores
+          # E501 Ignore long lines, E402 imports below top, E722 bare except,
+          # F401 unused imports, F502 explicit list in str expand, F841 unused var,
+          # E721 compare type instead of isinstance, W293 blank line with space,
+          # C901 too complex get
+          #flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --ignore=E501,E402,E722,F401,F502,E713,F841,C901 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      # TODO: prepare and enable pytest
+      #- name: Test with pytest
+      #  run: |
+      #    pytest
 
   lint-python3-rocky9:
-    runs-on: ubuntu-22.04
+    name: Sanity check code in default python3 on Rocky9
+    runs-on: ubuntu-latest
     container:
       image: rockylinux/rockylinux:9
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3 with DNF
-      run: |
-        dnf install -y python3 python3-pip python-unversioned-command
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
-      run: |
-        # TODO: fix unittest dir and remove from excludes
-        # TODO: fix or migrate legacy grsfs-fuse dir and remove from excludes
-        # NOTE: include tests here as they should be fully python3 compatible
-        # TODO: fix e.g. '`global logger` is unused' and remove F824 from ignores
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --exclude=state,envhelp,fixture,output,unittest,grsfs-fuse,irclib.py,seafile-seahub_settings-template.py --count --select=E9,F63,F7,F82 --ignore=F824 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --exclude=state,envhelp,fixture,output,unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-        # NOTE: for interactive clean up one can use current ignores
-        # E501 Ignore long lines, E402 imports below top, E722 bare except,
-        # F401 unused imports, F502 explicit list in str expand, F841 unused var,
-        # E721 compare type instead of isinstance, W293 blank line with space,
-        # C901 too complex get
-        #flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --ignore=E501,E402,E722,F401,F502,E713,F841,C901 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    # TODO: prepare and enable pytest
-    #- name: Test with pytest
-    #  run: |
-    #    pytest
+      - name: Set up git, findutils, make and python3 with dnf and make the latter default
+        run: |
+          dnf install -y git findutils make python3 python3-pip python-unversioned-command
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pylint #pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      # We need git installed to get a full repo clone rather than unpacked archive
+      - name: Check out source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # This is necessary to get the commits
+      - name: Setup environment
+        run: |
+          make PYTHON_BIN=python3 dependencies
+      - name: Lint with pylint
+        run: |
+          # NOTE: we only run pylint error check for changed python files to limit noise
+          # NOTE: perms are not right inside container so repeat what checkout module does.
+          # NOTE: include tests here as they should be fully python3 compatible
+          git config --global --add safe.directory "$PWD"
+          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$')"
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs -r pylint -E
+      - name: Lint with flake8
+        run: |
+          # TODO: fix unittest dir and remove from excludes
+          # TODO: fix or migrate legacy grsfs-fuse dir and remove from excludes
+          # NOTE: include tests here as they should be fully python3 compatible
+          # TODO: fix e.g. '`global logger` is unused' and remove F824 from ignores
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --exclude=state,envhelp,fixture,output,unittest,grsfs-fuse,irclib.py,seafile-seahub_settings-template.py --count --select=E9,F63,F7,F82 --ignore=F824 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --exclude=state,envhelp,fixture,output,unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          # NOTE: for interactive clean up one can use current ignores
+          # E501 Ignore long lines, E402 imports below top, E722 bare except,
+          # F401 unused imports, F502 explicit list in str expand, F841 unused var,
+          # E721 compare type instead of isinstance, W293 blank line with space,
+          # C901 too complex get
+          #flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --ignore=E501,E402,E722,F401,F502,E713,F841,C901 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      # TODO: prepare and enable pytest
+      #- name: Test with pytest
+      #  run: |
+      #    pytest
