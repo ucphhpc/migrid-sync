@@ -180,6 +180,9 @@ def __update_quota(configuration,
     if quota_type == 'vgrid':
         default_quota_limit = configuration.quota_vgrid_limit
         data_basepath = configuration.vgrid_files_writable
+        # NOTE: Old vgrids stored data directly in 'vgrid_files_home'
+        if not os.path.isdir(os.path.join(data_basepath, quota_name)):
+            data_basepath = configuration.vgrid_files_home
     else:
         default_quota_limit = configuration.quota_user_limit
         data_basepath = configuration.user_home
