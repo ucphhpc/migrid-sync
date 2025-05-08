@@ -317,9 +317,11 @@ to permanently delete""" % relative_path})
                     get_trash_location(configuration, abs_path, True)
                 trash_relative_path = \
                     trash_base_path.replace(configuration.user_home, '')
+                # Legacy vgrids use 'vgrid_files_home' as data storage
                 trash_relative_path = \
                     trash_relative_path.replace(
                         configuration.vgrid_files_home, '')
+                # Current vgrids use 'vgrid_files_writable' as data storage
                 trash_relative_path = \
                     trash_relative_path.replace(
                         configuration.vgrid_files_writable, '')
