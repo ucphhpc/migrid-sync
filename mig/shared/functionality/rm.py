@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rm - backend to remove files/directories in user home
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -317,9 +317,14 @@ to permanently delete""" % relative_path})
                     get_trash_location(configuration, abs_path, True)
                 trash_relative_path = \
                     trash_base_path.replace(configuration.user_home, '')
+                # Legacy vgrids use 'vgrid_files_home' as data storage
                 trash_relative_path = \
                     trash_relative_path.replace(
                         configuration.vgrid_files_home, '')
+                # Current vgrids use 'vgrid_files_writable' as data storage
+                trash_relative_path = \
+                    trash_relative_path.replace(
+                        configuration.vgrid_files_writable, '')
                 gdp_iolog_paths.append(trash_relative_path)
             try:
                 gdp_iolog(configuration,

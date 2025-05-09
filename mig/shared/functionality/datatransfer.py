@@ -29,22 +29,18 @@
 
 from __future__ import absolute_import
 
-import datetime
-import glob
 import os
 import socket
 import time
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, mask_creds, hexlify
-from mig.shared.conf import get_resource_exe
-from mig.shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
-    csrf_field, protocol_aliases
+from mig.shared.base import client_id_dir, mask_creds, hexlify, requested_backend
+from mig.shared.defaults import default_pager_entries, csrf_field, protocol_aliases
 from mig.shared.fileio import read_tail_lines
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import initialize_main_variables, find_entry, make_title_entry, make_start_entry
 from mig.shared.parseflags import quiet
 from mig.shared.pwcrypto import make_digest, make_encrypt
 from mig.shared.transferfunctions import build_transferitem_object, \
@@ -72,9 +68,9 @@ valid_proto_list = ["http", "https", "ftp", "ftps", "webdav", "webdavs", "sftp",
 valid_proto = [(proto, protocol_aliases[proto]) for proto in valid_proto_list
                if proto in protocol_aliases]
 valid_proto_map = dict(valid_proto)
-warn_anon = [i for (i, _) in valid_proto if not i in ('http', 'https', 'ftp',
+warn_anon = [i for (i, _) in valid_proto if i not in ('http', 'https', 'ftp',
                                                       'rsyncd')]
-warn_key = [i for (i, _) in valid_proto if not i in ('sftp', 'rsyncssh')]
+warn_key = [i for (i, _) in valid_proto if i not in ('sftp', 'rsyncssh')]
 
 # TODO: consider adding a start time or cron-like field to transfers
 
@@ -92,12 +88,36 @@ def signature():
     return ['text', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None):
+    """Main function wrapper used by front end"""
+
+    if environ is None:
+        environ = os.environ
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
-    client_dir = client_id_dir(client_id)
+        initialize_main_variables(client_id)
+
+    return _main(configuration, logger, environ, op_name=op_name,
+                 output_objects=output_objects, client_id=client_id,
+                 user_arguments_dict=user_arguments_dict)
+
+
+def _main(configuration, logger, environ, op_name='', output_objects=None, client_id=None,
+          user_arguments_dict=None):
+    """Actual main function to generate contents for the front end"""
+
+    assert environ is not None, "required arg: environ"
+
+    if logger is None:
+        logger = configuration.logger
+
+    # Create new output_objects list with start entry if None was supplied
+    if output_objects is None:
+        output_objects = [make_start_entry()]
+        if not op_name:
+            op_name = requested_backend()
+        output_objects.append(make_title_entry('%s' % op_name))
+
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -295,9 +315,12 @@ def main(client_id, user_arguments_dict):
         $(".datatransfer-tabs").tabs();
         $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
     ''' % (pre_ready, add_ready)
-    title_entry['script']['advanced'] += add_import
-    title_entry['script']['init'] += add_init
-    title_entry['script']['ready'] += add_ready
+    if 'advanced' in title_entry['script']:
+        title_entry['script']['advanced'] += add_import
+    if 'init' in title_entry['script']:
+        title_entry['script']['init'] += add_init
+    if 'ready' in title_entry['script']:
+        title_entry['script']['ready'] += add_ready
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
@@ -313,7 +336,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
 
     logger.info('datatransfer %s from %s' % (action, client_id))
 
-    if not action in valid_actions:
+    if action not in valid_actions:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Invalid action "%s" (supported: %s)' %
                                (action, ', '.join(valid_actions))})
@@ -321,7 +344,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
 
     if action in post_actions:
         if not safe_handler(configuration, 'post', op_name, client_id,
-                            get_csrf_limit(configuration), accepted):
+                            get_csrf_limit(configuration), accepted, environ=environ):
             output_objects.append(
                 {'object_type': 'error_text', 'text': '''Only accepting
                 CSRF-filtered POST requests to prevent unintended updates'''
@@ -359,7 +382,7 @@ else, so the public key can be inserted in your authorized_keys file as:
             transfer_item = build_transferitem_object(configuration,
                                                       transfer_dict)
             transfer_item['status'] = transfer_item.get('status', 'NEW')
-            if not 'src' in transfer_item or not 'dst' in transfer_item:
+            if 'src' not in transfer_item or 'dst' not in transfer_item:
                 # IMPORTANT: do NOT log credentials
                 logger.warning("skip invalid transfer missing src or dst: %s"
                                % mask_creds(transfer_item))
@@ -749,7 +772,7 @@ Key name:<br/>
         # NOTE: all path validation is done at run-time in grid_transfers
         transfer_dict = transfer_map.get(transfer_id, {})
         if action == 'deltransfer':
-            if transfer_dict is None:
+            if not transfer_dict:
                 output_objects.append(
                     {'object_type': 'error_text',
                      'text': 'existing transfer_id is required for delete'})
@@ -758,7 +781,7 @@ Key name:<br/>
                                                     transfer_id, transfer_map)
             desc = "delete"
         elif action == 'redotransfer':
-            if transfer_dict is None:
+            if not transfer_dict:
                 output_objects.append(
                     {'object_type': 'error_text',
                      'text': 'existing transfer_id is required for reschedule'
