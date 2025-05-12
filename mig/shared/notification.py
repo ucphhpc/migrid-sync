@@ -427,23 +427,24 @@ The %s Admins
         header = '%s account expire for %s' % (short_title, user_name)
         txt += """This is a reminder that your %s account access will expire on %s.
 
-To ensure uninterrupted access, please renew your account access before that
-expiration date as explained below.
-""" % (short_title, expire)
+To ensure uninterrupted access, please extend your access before then.""" % \
+        (short_title, expire)
         if "migoid" in affected or "migcert" in affected:
             if "migoid" in affected:
-                auth_migreq_url = auth_migoid_url
+                auth_access_url = auth_migoid_url
                 req_name = "reqoid"
-                user_credentials = "username %s" % user_email
+                user_credentials = "%s credentials" % user_email
+                extend_days = configuration.oid_valid_days
             else:
-                auth_migreq_url = auth_migcert_url
+                auth_access_url = auth_migcert_url
                 req_name = "reqcert"
                 user_credentials = "%s certificate" % from_id
-            txt += """Until that date you can always simply log on with
-your %s
-and request renewal in the Account section found from the user menu at the
-bottom left. That will instantly renew your access if you still have valid peer
-acceptance.
+                extend_days = configuration.cert_valid_days
+            txt += """
+Until that date you can do so by simply logging on to your %s account at
+%s with your %s and request renewal in
+the Account section. That will instantly extend your access with up to %d days
+if you still have valid peer acceptance.
 
 If you do not react before then you will temporarily lose all account access.
 To restore access after that point or to renew with approval from a different
@@ -451,8 +452,8 @@ peer please submit the semi-filled account request page at
 %s/cgi-sid/%s.py?%s
 using your EXISTING password as proof of account ownership.
 
-Please use the 'Forgot password'-link at the login page in case you no longer
-remember your password.
+You can use the 'Forgot password'-link at the login page first in case you no
+longer remember your chosen account password.
 
 To ensure efficient resource management, accounts that expired and remain
 unused for a significant time may eventually be suspended or permanently
@@ -460,7 +461,8 @@ deleted. We will attempt to notify you again before taking any such action.
 
 Regards,
 The %s Admins
-""" % (user_credentials, anon_migreq_url, req_name, id_query, short_title)
+""" % (short_title, auth_access_url, user_credentials, extend_days,
+       anon_migreq_url, req_name, id_query, short_title)
         else:
             if "extoid" in affected:
                 extend_days = oid_auto_extend_days
