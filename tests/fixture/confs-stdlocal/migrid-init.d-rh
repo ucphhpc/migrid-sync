@@ -26,6 +26,7 @@
 # processname: grid_sshmux.py
 # processname: grid_events.py
 # processname: grid_cron.py
+# processname: grid_janitor.py
 # processname: grid_transfers.py
 # processname: grid_openid.py
 # processname: grid_sftp.py
@@ -81,6 +82,7 @@ MIG_MONITOR=${MIG_CODE}/server/grid_monitor.py
 MIG_SSHMUX=${MIG_CODE}/server/grid_sshmux.py
 MIG_EVENTS=${MIG_CODE}/server/grid_events.py
 MIG_CRON=${MIG_CODE}/server/grid_cron.py
+MIG_JANITOR=${MIG_CODE}/server/grid_janitor.py
 MIG_TRANSFERS=${MIG_CODE}/server/grid_transfers.py
 MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
@@ -97,7 +99,7 @@ MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
     echo "where daemon is left out for all or given along with DAEMON as one of the following"
-    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)"
 }
 
 check_enabled() {
@@ -213,6 +215,22 @@ start_cron() {
     [ $RET2 -eq 0 ] && success
     echo
     [ $RET2 -ne 0 ] && echo "Warning: cron not started."
+    echo
+}
+start_janitor() {
+    check_enabled "janitor" || return
+    DAEMON_PATH=${MIG_JANITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    # NOTE: janitor tasks can be quite heavy so we lower sched prio a bit
+    echo -n "Starting MiG janitor daemon: $SHORT_NAME"
+    daemon +10 --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/janitor.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: janitor not started."
     echo
 }
 start_transfers() {
@@ -356,6 +374,7 @@ start_all() {
     start_sshmux
     start_events
     start_cron
+    start_janitor
     start_transfers
     start_openid
     start_sftp
@@ -423,6 +442,21 @@ stop_cron() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     echo -n "Shutting down MiG cron: $SHORT_NAME "
+    # Try graceful shutdown so that state is properly saved
+    killproc ${DAEMON_PATH} -INT
+    for delay in 1 2 3; do
+        status ${DAEMON_PATH} || break
+        sleep $delay
+    done
+    echo
+    status ${DAEMON_PATH} && killproc ${DAEMON_PATH}
+}
+stop_janitor() {
+    check_enabled "janitor" || return
+    DAEMON_PATH=${MIG_JANITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG janitor: $SHORT_NAME "
     # Try graceful shutdown so that state is properly saved
     killproc ${DAEMON_PATH} -INT
     for delay in 1 2 3; do
@@ -542,6 +576,7 @@ stop_all() {
     stop_sshmux
     stop_events
     stop_cron
+    stop_janitor
     stop_transfers
     stop_openid
     stop_sftp
@@ -597,6 +632,15 @@ reload_cron() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     echo -n "Reloading MiG cron: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_janitor() {
+    check_enabled "janitor" || return
+    DAEMON_PATH=${MIG_JANITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG janitor: $SHORT_NAME "
     killproc ${DAEMON_PATH} -HUP
     echo
 }
@@ -717,6 +761,7 @@ reload_all() {
     reload_sshmux
     reload_events
     reload_cron
+    reload_janitor
     reload_transfers
     reload_openid
     reload_sftp
@@ -764,6 +809,13 @@ status_events() {
 status_cron() {
     check_enabled "crontab" || return
     DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_janitor() {
+    check_enabled "janitor" || return
+    DAEMON_PATH=${MIG_JANITOR}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status ${DAEMON_PATH}
@@ -852,6 +904,7 @@ status_all() {
     status_sshmux
     status_events
     status_cron
+    status_janitor
     status_transfers
     status_openid
     status_sftp
@@ -873,7 +926,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)
         TARGET="$2"
 	;;
     '')
