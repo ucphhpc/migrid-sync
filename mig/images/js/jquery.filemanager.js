@@ -1081,11 +1081,11 @@ if (jQuery) (function($){
                     /* Path may contain URL-unfriendly characters */
                     var download_url = 'cat.py?path=' +
                         encodeURIComponent(path)+'&output_format=file';
-                    window.open(download_url, "_self");
+                    downloadWrapper(el, '#cmd_dialog', download_url);
                 }
                 else {
                     var path_enc = encodeURI(path);
-                    window.open('/cert_redirect/'+path_enc, "_self");
+                    window.open('/cert_redirect/'+path_enc);
                 }
             },
             download:   function (action, el, pos) {
@@ -1096,7 +1096,13 @@ if (jQuery) (function($){
 
                   NOTE: For GDP we always use 'cat' as we need to log file access
                 */
-                var max_stream_size = options.maxStreamSize;
+                var max_stream_size;
+                if (options.enableGDP) {
+                    max_stream_size = Number.MAX_SAFE_INTEGER;
+                }
+                else {
+                    max_stream_size = options.maxStreamSize;
+                }
                 var file_size = $("div.bytes", el).text();
                 //console.info("File size "+file_size+" vs stream size "+max_stream_size);
                 
@@ -1104,12 +1110,7 @@ if (jQuery) (function($){
 
                 if (!options.enableGDP && file_size > max_stream_size) {
                     var path_enc = encodeURI(path);
-                    window.open('/cert_redirect/'+path_enc, "_self");
-                } else if (options.enableGDP && file_size > max_stream_size) {
-                    /* Path may contain URL-unfriendly characters */
-                    var download_url = 'cat.py?path=' +
-                        encodeURIComponent(path)+'&output_format=file';
-                    window.open(download_url, "_self");
+                    window.open('/cert_redirect/'+path_enc);
                 } else {
                     /* Path may contain URL-unfriendly characters */
                     var download_url = 'cat.py?path=' +
