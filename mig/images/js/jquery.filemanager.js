@@ -1034,7 +1034,7 @@ if (jQuery) (function($){
                 },
                 success: function(blob) {
                     console.info("Starting download of "+file_name)
-                    stopProgress("");
+                    stopProgress();
                     window.open(download_url, "_self");
                 },
                 error: function(xhr, textStatus, errorThrown) {
