@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mig_lustre_quota - MiG lustre quota manager
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -190,6 +190,7 @@ def __update_quota(configuration,
     # Load quota if it exists otherwise new quota
 
     quota_filepath = os.path.join(configuration.quota_home,
+                                  configuration.quota_backend,
                                   quota_type,
                                   "%s.pck" % quota_name)
 
@@ -325,6 +326,7 @@ def __update_quota(configuration,
     # Save current quota
 
     new_quota_basepath = os.path.join(configuration.quota_home,
+                                      configuration.quota_backend,
                                       quota_type,
                                       str(timestamp))
     if not os.path.exists(new_quota_basepath) \
@@ -381,7 +383,8 @@ def update_quota(configuration,
     # Load lustre quota settings
 
     lustre_setting_filepath = os.path.join(configuration.quota_home,
-                                           'lustre.pck')
+                                           '%s.pck'
+                                           % configuration.quota_backend)
     if os.path.exists(lustre_setting_filepath):
         lustre_setting = unpickle(lustre_setting_filepath,
                                   logger)
@@ -548,12 +551,12 @@ def main():
 
     # Perform update
 
-    status = update_quota(configuration,
+    retval = update_quota(configuration,
                           valid_lustre_basepath,
                           gocryptfs_sock,
                           verbose,
                           quiet)
-    return status
+    return retval
 
 
 if __name__ == "__main__":
