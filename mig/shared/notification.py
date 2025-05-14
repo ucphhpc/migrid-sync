@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notification - instant message and email notification helpers
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -424,68 +424,47 @@ The %s Admins
                                              req_fields)
         # Mark ID fields as readonly in the form to limit errors
         user_req['ro_fields'] = keyword_auto
-        # Extract and pass saved peer fields even in the signed-in case
-        peers_fields = ['peers_%s' % i
-                        for i in configuration.site_peers_explicit_fields]
-        peers_req = dict([i for i in user_req.items() if i[0] in peers_fields])
-        peers_query = '%s' % urlencode(peers_req)
         id_query = '%s' % urlencode(user_req)
         user_dict.update(user_req)
-        id_lines = """Full name: %(full_name)s
-Email address: %(email)s
-Organization: %(organization)s
-Two letter country-code: %(country)s
-State: %(state)s""" % user_dict
         header = '%s account expire for %s' % (short_title, user_name)
-        txt += """This is an automatic account access expire warning from %s.
+        txt += """This is a reminder that your %s account access will expire on %s.
 
-Basically you need to renew your account before %s if you want to
-preserve full account access. """ % (short_title, expire)
+To ensure uninterrupted access, please extend your access before then.""" % \
+        (short_title, expire)
         if "migoid" in affected or "migcert" in affected:
             if "migoid" in affected:
-                auth_migreq_url = auth_migoid_url
+                auth_access_url = auth_migoid_url
                 req_name = "reqoid"
-                user_credentials = "username %s" % user_email
+                user_credentials = "%s credentials" % user_email
+                extend_days = configuration.oid_valid_days
             else:
-                auth_migreq_url = auth_migcert_url
+                auth_access_url = auth_migcert_url
                 req_name = "reqcert"
                 user_credentials = "%s certificate" % from_id
-            txt += """Until that date you can always simply log on with
-your %s
-and request semi-automatic renewal, only filling the password and comment
-fields at
-%s/cgi-bin/%s.py?%s
-In that way you can also choose a new password if you like.
+                extend_days = configuration.cert_valid_days
+            txt += """
+Until that date you can do so by simply logging on to your %s account at
+%s with your %s and request renewal in
+the Account section. That will instantly extend your access with up to %d days
+if you still have valid peer acceptance.
 
-After account access expiry you will temporarily lose ALL access and can only
-regain it by submitting another account request matching your original one.
-I.e. open the semi-filled account request page at
+If you do not react before then you will temporarily lose all account access.
+To restore access after that point or to renew with approval from a different
+peer please submit the semi-filled account request page at
 %s/cgi-sid/%s.py?%s
-or manually fill it all on
-%s/cgi-sid/%s.py
-For already expired accounts the form MUST be filled with the exact values
-you're signed up with - including your EXISTING password!
-In case you use the last link you need to enter your ID values:
-%s
+using your EXISTING password as proof of account ownership.
 
-In either case please ALWAYS enter a few lines of comment about why you still
-need access and who your main on-site employed contacts are (name AND email).
-Names of the specific collaboration projects or courses you need access for
-may also be helpful to speed up our verification and renewal process.
+You can use the 'Forgot password'-link at the login page first in case you no
+longer remember your chosen account password.
 
-We reserve the right to eventually suspend or even permanently delete accounts
-that have remained expired and unused for a prolonged period of time. We will
-first try to contact you again on email in that case.
-
-Please contact the %s admins in case you should ever lose or forget your
-password. The same applies if you suspect or know that someone may have gotten
-hold of your login.
+To ensure efficient resource management, accounts that expired and remain
+unused for a significant time may eventually be suspended or permanently
+deleted. We will attempt to notify you again before taking any such action.
 
 Regards,
 The %s Admins
-""" % (user_credentials, auth_migreq_url, req_name, peers_query,
-                anon_migreq_url, req_name, id_query, anon_migreq_url, req_name,
-                id_lines, short_title, short_title)
+""" % (short_title, auth_access_url, user_credentials, extend_days,
+       anon_migreq_url, req_name, id_query, short_title)
         else:
             if "extoid" in affected:
                 extend_days = oid_auto_extend_days
