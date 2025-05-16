@@ -53,12 +53,45 @@ try:
         default_css_filename, keyword_any, keyword_auto, keyword_all, \
         keyword_file, keyword_env, cert_valid_days, oid_valid_days, \
         generic_valid_days, DEFAULT_USER_ID_FORMAT, valid_user_id_formats, \
-        valid_filter_methods, default_twofactor_auth_apps
+        valid_filter_methods, default_twofactor_auth_apps, \
+        mig_conf_section_dirname
     from mig.shared.logger import Logger, SYSLOG_GDP
     from mig.shared.htmlgen import menu_items, vgrid_items
     from mig.shared.fileio import read_file, load_json, write_file
 except ImportError as ioe:
     print("could not import migrid modules")
+
+
+def include_section_contents(logger, config, section, load_path, verbose=False):
+    """Include additional section contents from load_path in config."""
+    logger.debug("include %s section in config from %s" % (section, load_path))
+    if verbose:
+        print("load %s section from %s" % (section, load_path))
+    if not os.path.exists(load_path):
+        logger.error("no such %s section config in %s" % (section, load_path))
+        return False
+
+    if verbose:
+        print("include %s section from %s" % (section, load_path))
+    section_config = ConfigParser()
+    section_config.read([load_path])
+    if not section in section_config.sections():
+        logger.error("no %s section in section config %s" % (section,
+                                                             load_path))
+        return False
+    if not section in config.sections():
+        if verbose:
+            print("add config section %s" % section)
+        logger.debug("add %s section to main config" % section)
+        config.add_section(section)
+    for (key, val) in section_config.items(section):
+        if verbose:
+            print("add config key %s in %s section" % (key, section))
+        logger.debug("add %s option to %s section of main config" % (key,
+                                                                     section))
+        config.set(section, key, val)
+    logger.debug("done including %s section to main config" % section)
+    return True
 
 
 def expand_external_sources(logger, val):
@@ -900,6 +933,33 @@ location.""" % self.config_file)
         else:
             self.user_db_home = os.path.join(self.state_path, 'user_db_home')
 
+        # Allow section confs included from file
+        if config.has_option('GLOBAL', 'include_sections'):
+            self.include_sections = config.get('GLOBAL', 'include_sections')
+        else:
+            self.include_sections = os.path.join(self.mig_server_home,
+                                                 mig_conf_section_dirname)
+
+        if os.path.isdir(self.include_sections):
+            logger.debug("include config sections from %s" %
+                         self.include_sections)
+            if verbose:
+                print("add config sections from %s" % self.include_sections)
+            for section_filename in os.listdir(self.include_sections):
+                # skip dotfiles and non-confs
+                if section_filename.startswith('.'):
+                    continue
+                if not section_filename.endswith('.conf'):
+                    continue
+                section_path = os.path.join(self.include_sections,
+                                            section_filename)
+                section = section_filename.replace('.conf', '').upper()
+                if verbose:
+                    print("insert %s section from %s" %
+                          (section, section_path))
+                include_section_contents(logger, config, section, section_path,
+                                         verbose)
+
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
             admins = config.get('GLOBAL', 'admin_list')
@@ -1646,15 +1706,12 @@ location.""" % self.config_file)
         self.jupyter_services = []
         # Load generated jupyter sections
         for section in config.sections():
-            if 'JUPYTER_' in section:
+            if section.startswith('JUPYTER_'):
                 # Allow service_desc to be a file that should be read
                 if config.has_option(section, 'service_desc'):
-                    service_desc = config.get(section, 'service_desc')
-                    if os.path.exists(service_desc) \
-                            and os.path.isfile(service_desc):
-                        content = read_file(service_desc, logger)
-                        if content:
-                            config.set(section, 'service_desc', content)
+                    content = expand_external_sources(
+                        logger, config.get(section, 'service_desc'))
+                    config.set(section, 'service_desc', content)
 
                 self.jupyter_services.append({option: config.get(section,
                                                                  option)
@@ -1674,15 +1731,12 @@ location.""" % self.config_file)
                              'service_jumphost_key']
         # Load generated cloud sections
         for section in config.sections():
-            if 'CLOUD_' in section:
+            if section.startswith('CLOUD_'):
                 # Allow service_desc to be a file that should be read
                 if config.has_option(section, 'service_desc'):
-                    service_desc = config.get(section, 'service_desc')
-                    if os.path.exists(service_desc) \
-                            and os.path.isfile(service_desc):
-                        content = read_file(service_desc, logger)
-                        if content:
-                            config.set(section, 'service_desc', content)
+                    content = expand_external_sources(
+                        logger, config.get(section, 'service_desc'))
+                    config.set(section, 'service_desc', content)
 
                 service = {option: config.get(section, option) for option in
                            config.options(section)}
