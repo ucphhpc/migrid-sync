@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_configuration - unit test of configuration
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -68,6 +68,16 @@ class MigSharedConfiguration(MigTestCase):
             test_conf_file, skip_log=True, disable_auth_log=True)
 
         self.assertEqual(configuration.wwwserve_max_bytes, 43211234)
+
+    def test_argument_include_sections(self):
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--customised.conf')
+
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        self.assertEqual(configuration.include_sections,
+                         '/home/mig/mig/server/MiGserver.d')
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_default_object(self):
