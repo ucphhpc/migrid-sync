@@ -194,10 +194,8 @@ the %s Admins if it happens repeatedly.
                          % (auth_type, identity))
             # NOTE: OpenID Connect module handles remote logout on vanity url
             terminate_session_url = '/dynamic/redirect_uri'
-            # NOTE: upstream currently requires fixed logout callback url
-            # TODO: change return_page to reentry_page when upstream allows it
-            return_page = build_logout_url(configuration, environ)
-            terminate_query = urlencode({'logout': return_page})
+            # NOTE: we request return to reentry_page after logout
+            terminate_query = urlencode({'logout': reentry_page})
             reentry_page = terminate_session_url + '?%s' % terminate_query
             logger.debug("send %s to %s for logout" % (client_id,
                                                        reentry_page))
