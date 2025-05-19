@@ -64,33 +64,35 @@ except ImportError as ioe:
 
 def include_section_contents(logger, config, section, load_path, verbose=False):
     """Include additional section contents from load_path in config."""
-    logger.debug("include %s section in config from %s" % (section, load_path))
-    if verbose:
-        print("load %s section from %s" % (section, load_path))
     if not os.path.exists(load_path):
-        logger.error("no such %s section config in %s" % (section, load_path))
+        msg = "no such %r section config in %s" % (section, load_path)
+        if verbose:
+            print(msg)
+        logger.error(msg)
         return False
 
-    if verbose:
-        print("include %s section from %s" % (section, load_path))
+    logger.debug("include %r section from %s" % (section, load_path))
     section_config = ConfigParser()
     section_config.read([load_path])
-    if not section in section_config.sections():
-        logger.error("no %s section in section config %s" % (section,
-                                                             load_path))
-        return False
-    if not section in config.sections():
+    if section not in section_config.sections():
+        msg = "missing required %r section in config %s" % (section, load_path)
         if verbose:
-            print("add config section %s" % section)
-        logger.debug("add %s section to main config" % section)
+            print(msg)
+        logger.error(msg)
+        return False
+    other_sections = [i for i in section_config.sections() if not i == section]
+    if other_sections:
+        msg = "only %r section will be read from %s" % (section, load_path)
+        if verbose:
+            print(msg)
+        logger.warning(msg)
+    if section not in config.sections():
+        logger.debug("add %r section to main config" % section)
         config.add_section(section)
     for (key, val) in section_config.items(section):
-        if verbose:
-            print("add config key %s in %s section" % (key, section))
-        logger.debug("add %s option to %s section of main config" % (key,
-                                                                     section))
+        logger.debug("add config key %r in %r section" % (key, section))
         config.set(section, key, val)
-    logger.debug("done including %s section to main config" % section)
+    logger.debug("done including %r section to main config" % section)
     return True
 
 
@@ -940,23 +942,35 @@ location.""" % self.config_file)
             self.include_sections = os.path.join(self.mig_server_home,
                                                  mig_conf_section_dirname)
 
+        # NOTE: for simplicity we do NOT allow overrides in GLOBAL section
+        no_override_sections = ['GLOBAL']
+        self.include_sections = os.path.normpath(self.include_sections)
         if os.path.isdir(self.include_sections):
-            logger.debug("include config sections from %s" %
-                         self.include_sections)
+            msg = "read extra config sections from %s" % self.include_sections
             if verbose:
-                print("add config sections from %s" % self.include_sections)
+                print(msg)
+            logger.info(msg)
             for section_filename in os.listdir(self.include_sections):
                 # skip dotfiles and non-confs
                 if section_filename.startswith('.'):
                     continue
                 if not section_filename.endswith('.conf'):
+                    msg = "%r is not on required sectionname.conf form" % \
+                        section_filename
+                    if verbose:
+                        print(msg)
+                    logger.warning(msg)
                     continue
                 section_path = os.path.join(self.include_sections,
                                             section_filename)
                 section = section_filename.replace('.conf', '').upper()
-                if verbose:
-                    print("insert %s section from %s" %
-                          (section, section_path))
+                if section in no_override_sections:
+                    msg = "skip unsupported %r section override in %r" % \
+                        (section, section_filename)
+                    if verbose:
+                        print(msg)
+                    logger.warning(msg)
+                    continue
                 include_section_contents(logger, config, section, section_path,
                                          verbose)
 
