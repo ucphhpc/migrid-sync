@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migcore - a library of core selenium-based web helpers
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -168,10 +168,8 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
             login_elem = driver.find_element(by_what('name'), "user")
             pass_elem = driver.find_element(by_what('name'), "pwd")
         elif auth_flavor == AUTH_OPENID_CONNECT:
-            login_elem = driver.find_element(
-                by_what('id'), "inputUsername")
-            pass_elem = driver.find_element(
-                by_what('id'), "inputPassword")
+            login_elem = driver.find_element(by_what('id'), "inputUsername")
+            pass_elem = driver.find_element(by_what('id'), "inputPassword")
         else:
             # Fall back to sane defaults
             login_elem = driver.find_element(by_what('name'), "username")
@@ -190,8 +188,8 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
         # NOTE: the standard request source footer is also of class alert
         #       so be specific here to avoid slow page load confusion
         try:
-            error_elem = driver.find_element(
-                by_what('class_name'), "alert-warning")
+            error_elem = driver.find_element(by_what('class_name'),
+                                             "alert-warning")
             if error_elem:
                 print("UCPH %s login error: %s" %
                       (auth_flavor, error_elem.text))
@@ -249,8 +247,8 @@ def mig_login(driver, url, login, passwd, callbacks={}):
             pass_elem.submit()
         # Check for login error msg to return proper status
         try:
-            error_elem = driver.find_element(
-                by_what('class_name'), "errortext")
+            error_elem = driver.find_element(by_what('class_name'),
+                                             "errortext")
             if error_elem:
                 print("MiG %s login error: %s" %
                       (auth_flavor, error_elem.text))
@@ -282,8 +280,7 @@ def shared_twofactor(driver, url, twofactor_key, callbacks={},
     past_twofactor = False
     if past_twofactor_class:
         try:
-            driver.find_element(by_what(
-                'class_name'), past_twofactor_class)
+            driver.find_element(by_what('class_name'), past_twofactor_class)
             # print("DEBUG: found %s element - past twofactor login" %
             #      past_twofactor_class)
             past_twofactor = True
@@ -338,8 +335,7 @@ def get_nav_link(driver, url, nav_class):
     try:
         menu = driver.find_element(by_what('id'), USERMENU_ID)
         link = menu.find_element(by_what('class_name'), nav_class)
-        menubutton = driver.find_element(
-            by_what('id'), USERMENUBUTTON_ID)
+        menubutton = driver.find_element(by_what('id'), USERMENUBUTTON_ID)
         # Make sure menu link item is visible for callee
         if menu and link and menubutton:
             menubutton.click()
@@ -376,13 +372,26 @@ def shared_logout(driver, url, login, passwd, callbacks={}):
 
     if do_logout:
         print("Confirm logout")
-        confirm_elem = driver.find_element(by_what('link_text'), "Yes")
-        # print "DEBUG: found confirm elem: %s" % confirm_elem
+        confirm_elem = driver.find_element(by_what('link_text'), 'Yes')
+        # print("DEBUG: found confirm elem: %s" % confirm_elem)
         state = 'logout-confirm'
         if callbacks.get(state, None):
             callbacks[state](driver, state)
-        # print "DEBUG: click confirm elem: %s" % confirm_elem
+        # print("DEBUG: click confirm elem: %s" % confirm_elem)
         confirm_elem.click()
+        # Upstream OID(C) may have additional logout step
+        print("Confirm logout again")
+        try:
+            confirm_elem = driver.find_element(by_what('xpath'),
+                                               "//button[@value='Yes']")
+            # print("DEBUG: found confirm elem: %s" % confirm_elem)
+            state = 'logout-confirm-upstream'
+            if callbacks.get(state, None):
+                callbacks[state](driver, state)
+            # print("DEBUG: click confirm elem: %s" % confirm_elem)
+            confirm_elem.click()
+        except Exception as exc:
+            print("WARNING: failed in secondary logout: %s" % exc)
     else:
         status = False
         print("Confirm login NOT found")
