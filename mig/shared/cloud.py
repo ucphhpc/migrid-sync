@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cloud - Helper functions for the cloud service
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -1176,7 +1176,7 @@ You can connect with ssh as user %s on host %s and port %d.
 """ % (label, fqdn, username)
     if jump_host['fqdn']:
         msg += jump_msg % jump_host
-        jump_opt = "-J%(user)s@%(fqdn)s" % jump_host
+        jump_opt = "-J %(user)s@%(fqdn)s" % jump_host
         ssh_config += """    ProxyJump %(hostalias)s
 
 Host %(hostalias)s %(fqdn)s

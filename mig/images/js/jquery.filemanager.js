@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.filemanager - jquery based file manager
-  # Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
   #
   # This file is part of MiG.
   #
@@ -1028,21 +1028,14 @@ if (jQuery) (function($){
             $.ajax({
                 url: download_url,
                 dataType: 'binary',
-                method: 'GET',
+                method: 'HEAD',
                 xhrFields: {
                     responseType: 'blob' // Set the response type to 'blob'
                 },
                 success: function(blob) {
                     console.info("Starting download of "+file_name)
-                    let fileURL = URL.createObjectURL(blob);
-                    var link = document.createElement('a');
-                    link.href = fileURL;
-                    /* downloaded filename */
-                    link.download = file_name;
-                    document.body.appendChild(link);
-                    link.click();
-                    URL.revokeObjectURL(fileURL);
-                    stopProgress("");
+                    stopProgress();
+                    window.open(download_url, "_self");
                 },
                 error: function(xhr, textStatus, errorThrown) {
                     console.error('Error downloading', file_name, ":", textStatus, ":", errorThrown);

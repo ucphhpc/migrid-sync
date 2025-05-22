@@ -836,14 +836,22 @@ status_vmproxy() {
 status_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
-    pgrep -f ${DAEMON_PATH} > /dev/null
+    PIDS=$(pgrep -f ${DAEMON_PATH}) || true
+    [ -n "$PIDS" ] && echo "$SHORT_NAME: (pids: $PIDS) is running..."
 }
 status_sftpsubsys() {
     check_enabled "sftp_subsys" || return 0
+    status_sftpsubsys_workers
     DAEMON_PATH=${MIG_SFTPSUBSYS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
-    pgrep -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}" > /dev/null
-    status_sftpsubsys_workers
+    COMMAND_PATH="${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+    PID=$(pgrep -f "${COMMAND_PATH}")
+    if [ -n "$PID" ]; then  
+       echo "${COMMAND_PATH}: (pid: $PID) is running..."
+       return 0
+    else
+       echo "${COMMAND_PATH} is stopped"
+       return 3
 }
 
 status_all() {

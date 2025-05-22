@@ -674,7 +674,7 @@ additional web apps and OpenID 2.0 + Connect on CentOS:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
-                   --openssh_version=7.4 \
+                   --openssh_version=8.4 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
@@ -745,7 +745,7 @@ additional web apps and OpenID 2.0 + Connect on CentOS:
                    --imnotify_username="FILE::/home/mig/state/secrets/imnotify_username.txt" \
                    --imnotify_password="FILE::/home/mig/state/secrets/imnotify_password.txt" \
                    --ca_fqdn=ca.migrid.org --ca_user=mig-ca --ca_smtp=migrid.science \
-                   --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
+                   --secscan_addr="130.225.104.199 130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, WebDAVS FTPS, Data Transfers, external Seafile integration,
@@ -774,7 +774,7 @@ integration for data analysis:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
-                   --openssh_version=7.3 \
+                   --openssh_version=7.4 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
@@ -846,7 +846,7 @@ integration for data analysis:
                    --status_system_match="ERDA IDMC SIF ALL" \
                    --digest_salt="FILE::/home/mig/state/secrets/digest_salt.hex" \
                    --crypto_salt="FILE::/home/mig/state/secrets/crypto_salt.hex" \
-                   --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
+                   --secscan_addr="130.225.104.199 130.226.158.3 130.225.213.72 192.38.10.137"
 
 Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, WebDAVS, strict access control and extensive logging to comply
@@ -882,7 +882,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
-                   --openssh_version=7.4 \
+                   --openssh_version=8.4 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
@@ -963,7 +963,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --distro=centos \
                    --skin=sif-ucph-science \
                    --wsgi_procs=25 \
-                   --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137" \
+                   --secscan_addr="130.225.104.199 130.226.158.3 130.225.213.72 192.38.10.137" \
                    --public_sec_fqdn=sif.ku.dk \
                    --enable_peers=True \
                    --peers_mandatory=True \

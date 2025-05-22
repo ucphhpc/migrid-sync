@@ -316,6 +316,7 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
                 username, ip_addr, auth_msg,
                 notify=notify, hint=session_hint)
     elif invalid_username:
+        # Drop as this is publicly known to be an invalid user
         disconnect = True
         if re.match(CRACK_USERNAME_REGEX, username) is not None:
             auth_msg = "Crack username detected"
@@ -332,7 +333,8 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
         authlog(configuration, authlog_lvl, protocol, authtype,
                 username, ip_addr, auth_msg, notify=notify)
     elif invalid_user:
-        disconnect = True
+        # Do not indirectly give away information about user non-existence
+        disconnect = False
         auth_msg = "Invalid user"
         log_msg = auth_msg + " %s from %s" % (username, ip_addr)
         if tcp_port > 0:
