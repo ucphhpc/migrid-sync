@@ -7,11 +7,10 @@ security monitoring as well as the national DK-Cert monitoring. So we
 do NOT have a bug/vulnerability reward program. Yet, we are of course
 grateful for any bug or security reports, which might improve our
 services or prevent abuse.
-
-If you disclose a bug/vulnerability of value, we will make sure
-to mention your contribution in our release notes, when possible.
-We develop the underlying platform as Free Software, so actual
-mentions will be available for everyone online to see.
+If you report such a bug/vulnerability of significance, we will make
+sure to accredit your contribution in our corresponding release notes.
+We develop the underlying platform as Free and Open Source Software,
+so such mentions will be available for everyone online to see.
 
 Like e.g. Google we do NOT consider the presence of version
 information a security vulnerability in itself. Flaws affecting only
