@@ -43,12 +43,16 @@ except:
     print("Failed to import future module - missing install?")
     exit(1)
 
-from urllib.parse import urlparse
 import getpass
 import os
 import sys
 import time
 import traceback
+
+if sys.version_info[0] >= 3:
+    from urllib.parse import urlparse
+else:
+    from urlparse import urlparse
 
 try:
     from mig.user.selenium.migcore import init_driver, ucph_login, mig_login, \
