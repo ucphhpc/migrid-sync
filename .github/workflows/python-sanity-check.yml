@@ -77,6 +77,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pylint #pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f recommended.txt ]; then pip install -r recommended.txt; fi
       # We may need git installed to get a full repo clone rather than unpacked archive
       - name: Check out source repository
         uses: actions/checkout@v4
@@ -126,6 +127,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pylint #pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f recommended.txt ]; then pip install -r recommended.txt; fi
       # We need git installed to get a full repo clone rather than unpacked archive
       - name: Check out source repository
         uses: actions/checkout@v4
