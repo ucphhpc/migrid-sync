@@ -31,7 +31,8 @@ import inspect
 import os
 import unittest
 
-from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain, fixturefile
+from tests.support import MigTestCase, TEST_DATA_DIR, TEST_OUTPUT_DIR, PY2, \
+    testmain, fixturefile
 from mig.shared.configuration import Configuration
 
 
@@ -78,6 +79,55 @@ class MigSharedConfiguration(MigTestCase):
 
         self.assertEqual(configuration.include_sections,
                          '/home/mig/mig/server/MiGserver.d')
+
+    def test_argument_custom_include_sections(self):
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--customised-include_sections.conf')
+        test_conf_section_dir = os.path.join('tests', 'data', 'MiGserver.d')
+
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        self.assertEqual(configuration.include_sections,
+                         test_conf_section_dir)
+
+    def test_argument_include_sections_quota(self):
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--customised-include_sections.conf')
+        test_conf_section_dir = os.path.join('tests', 'data', 'MiGserver.d')
+        test_conf_section_file = os.path.join(test_conf_section_dir,
+                                              'quota.conf')
+
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        self.assertEqual(configuration.include_sections, test_conf_section_dir)
+        self.assertEqual(configuration.quota_backend, 'dummy')
+        self.assertEqual(configuration.quota_user_limit, 4242)
+        self.assertEqual(configuration.quota_vgrid_limit, 4242424242)
+
+    def test_argument_include_sections_cloud_misty(self):
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--customised-include_sections.conf')
+        test_conf_section_dir = os.path.join('tests', 'data', 'MiGserver.d')
+        test_conf_section_file = os.path.join(test_conf_section_dir,
+                                              'cloud_misty.conf')
+
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        self.assertEqual(configuration.include_sections, test_conf_section_dir)
+        self.assertIsInstance(configuration.cloud_services, list)
+        self.assertTrue(configuration.cloud_services)
+        self.assertIsInstance(configuration.cloud_services[0], dict)
+        self.assertTrue(configuration.cloud_services[0].get('service_name',
+                                                            False))
+        self.assertEqual(configuration.cloud_services[0]['service_name'],
+                         'MISTY')
+        self.assertEqual(configuration.cloud_services[0]['service_desc'],
+                         'MISTY service')
+        self.assertEqual(configuration.cloud_services[0]['service_provider_flavor'],
+                         'nostack')
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_default_object(self):
