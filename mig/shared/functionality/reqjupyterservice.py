@@ -53,6 +53,7 @@ import time
 import shutil
 import random
 import requests
+from urllib.parse import urljoin
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, extract_field
@@ -265,6 +266,23 @@ def jupyter_host(configuration, output_objects, user, url):
     return (output_objects, returnvalues.OK)
 
 
+def jupyterhub_session_post_request(session, url, params=None, **kwargs):
+    """
+    Sends a post request to an url
+    :param session: the session object that can be used to conduct the post request
+    :param url: the designated URL that the post request is sent to
+    :param params: parameters to pass to the post request
+    :return: the response object from the post request
+    """
+    if not params:
+        params = {}
+
+    if "_xsrf" in session.cookies:
+        params = {"_xsrf": session.cookies['_xsrf']}
+
+    return session.post(url, params=params, **kwargs)
+
+
 def reset(configuration):
     """Helper function to clean up all jupyter directories and mounts
     :param configuration: the MiG Configuration object
@@ -434,10 +452,10 @@ def main(client_id, user_arguments_dict):
     # Make sure ssh daemon does not complain
     tighten_key_perms(configuration, client_id)
 
-    url_base = '/' + service['service_name']
-    url_home = url_base + '/home'
-    url_auth = host + url_base + '/hub/login'
-    url_data = host + url_base + '/hub/set-user-data'
+    url_base = urljoin(host, service['service_name'])
+    url_home = urljoin(url_base, '/home')
+    url_auth = urljoin(url_base, '/hub/login')
+    url_data = urljoin(url_base, '/hub/set-user-data')
 
     # Does the client home dir contain an active mount key
     # If so just keep on using it.
@@ -509,15 +527,12 @@ def main(client_id, user_arguments_dict):
 
         with requests.session() as session:
             # Refresh cookies
-            session.get(url_auth)
-            auth_params = {}
-            if "_xsrf" in session.cookies:
-                auth_params = {"_xsrf": session.cookies['_xsrf']}
+            session.get(url_base)
             # Authenticate and submit data
-            response = session.post(url_auth, headers=auth_header, params=auth_params)
+            response = jupyterhub_session_post_request(session, url_auth, headers=auth_header)
             if response.status_code == 200:
                 for user_data_type, user_data in user_post_data.items():
-                    response = session.post(url_data, json={user_data_type: user_data}, params=auth_params)
+                    response = jupyterhub_session_post_request(url_data, json={user_data_type: user_data})
                     if response.status_code != 200:
                         logger.error(
                             "Jupyter: User %s failed to submit data %s to %s"
@@ -615,15 +630,12 @@ def main(client_id, user_arguments_dict):
     # First login
     with requests.session() as session:
         # Refresh cookies
-        session.get(url_auth)
-        auth_params = {}
-        if "_xsrf" in session.cookies:
-            auth_params = {"_xsrf": session.cookies['_xsrf']}
+        session.get(url_base)
         # Authenticate
-        response = session.post(url_auth, headers=auth_header, params=auth_params)
+        response = jupyterhub_session_post_request(session, url_auth, headers=auth_header)
         if response.status_code == 200:
             for user_data_type, user_data in user_post_data.items():
-                response = session.post(url_data, json={user_data_type: user_data}, params=auth_params)
+                response = jupyterhub_session_post_request(session, url_data, json={user_data_type: user_data})
                 if response.status_code != 200:
                     logger.error("Jupyter: User %s failed to submit data %s to %s"
                                 % (client_id, user_data, url_data))
