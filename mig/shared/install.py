@@ -2279,6 +2279,7 @@ def _generate_confs_writefiles(options, user_dict, insert_list=[], cleanup_list=
         ("trac-MiG-template.ini", "trac.ini"),
         ("logrotate-MiG-template", "logrotate-migrid"),
         ("MiGserver-template.conf", "MiGserver.conf"),
+        ("MiGserver-cloud_misty-template.conf", "MiGserver-cloud_misty.conf"),
         ("static-skin-template.css", "static-skin.css"),
         ("index-template.html", "index.html"),
         ("openssh-MiG-sftp-subsys-template.conf",
@@ -2403,6 +2404,15 @@ sudo cp %(destination)s/MiG-jupyter-rewrite.conf %(apache_etc)s/conf.extras.d
 
 and if Trac is enabled, the generated trac.ini to %(mig_code)s/server/:
 cp %(destination)s/trac.ini %(mig_code)s/server/
+
+If standalone configuration sections are useful to your site you can
+additionally create a suitable per-section include folder and put appropriately
+named section conf files there as shown here for the generated CLOUD_MISTY
+section in the generated MiGserver-cloud_misty.conf example:
+mkdir -p %(mig_code)s/MiGserver.d
+cp %(destination_dir)s/MiGserver-cloud_misty.conf \
+    %(mig_code)s/MiGserver.d/cloud_misty.conf
+such section conf files must accordingly match the lower-cased section name.
 
 On a Debian/Ubuntu MiG developer server the dedicated apache init script is
 added with:

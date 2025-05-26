@@ -65,12 +65,47 @@ try:
         default_css_filename, keyword_any, keyword_auto, keyword_all, \
         keyword_file, keyword_env, cert_valid_days, oid_valid_days, \
         generic_valid_days, DEFAULT_USER_ID_FORMAT, valid_user_id_formats, \
-        valid_filter_methods, default_twofactor_auth_apps
+        valid_filter_methods, default_twofactor_auth_apps, \
+        mig_conf_section_dirname
     from mig.shared.logger import Logger, SYSLOG_GDP
     from mig.shared.htmlgen import menu_items, vgrid_items
     from mig.shared.fileio import read_file, load_json, write_file
 except ImportError as ioe:
     print("could not import migrid modules")
+
+
+def include_section_contents(logger, config, section, load_path, verbose=False):
+    """Include additional section contents from load_path in config."""
+    if not os.path.exists(load_path):
+        msg = "no such %r section config in %s" % (section, load_path)
+        if verbose:
+            print(msg)
+        logger.error(msg)
+        return False
+
+    logger.debug("include %r section from %s" % (section, load_path))
+    section_config = ConfigParser()
+    section_config.read([load_path])
+    if section not in section_config.sections():
+        msg = "missing required %r section in config %s" % (section, load_path)
+        if verbose:
+            print(msg)
+        logger.error(msg)
+        return False
+    other_sections = [i for i in section_config.sections() if not i == section]
+    if other_sections:
+        msg = "only %r section will be read from %s" % (section, load_path)
+        if verbose:
+            print(msg)
+        logger.warning(msg)
+    if section not in config.sections():
+        logger.debug("add %r section to main config" % section)
+        config.add_section(section)
+    for (key, val) in section_config.items(section):
+        logger.debug("add config key %r in %r section" % (key, section))
+        config.set(section, key, val)
+    logger.debug("done including %r section to main config" % section)
+    return True
 
 
 def expand_external_sources(logger, val):
@@ -923,6 +958,45 @@ location.""" % self.config_file)
         else:
             self.user_db_home = os.path.join(self.state_path, 'user_db_home')
 
+        # Allow section confs included from file
+        if config.has_option('GLOBAL', 'include_sections'):
+            self.include_sections = config.get('GLOBAL', 'include_sections')
+        else:
+            self.include_sections = os.path.join(self.mig_server_home,
+                                                 mig_conf_section_dirname)
+
+        # NOTE: for simplicity we do NOT allow overrides in GLOBAL section
+        no_override_sections = ['GLOBAL']
+        self.include_sections = os.path.normpath(self.include_sections)
+        if os.path.isdir(self.include_sections):
+            msg = "read extra config sections from %s" % self.include_sections
+            if verbose:
+                print(msg)
+            logger.info(msg)
+            for section_filename in os.listdir(self.include_sections):
+                # skip dotfiles and non-confs
+                if section_filename.startswith('.'):
+                    continue
+                if not section_filename.endswith('.conf'):
+                    msg = "%r is not on required sectionname.conf form" % \
+                        section_filename
+                    if verbose:
+                        print(msg)
+                    logger.warning(msg)
+                    continue
+                section_path = os.path.join(self.include_sections,
+                                            section_filename)
+                section = section_filename.replace('.conf', '').upper()
+                if section in no_override_sections:
+                    msg = "skip unsupported %r section override in %r" % \
+                        (section, section_filename)
+                    if verbose:
+                        print(msg)
+                    logger.warning(msg)
+                    continue
+                include_section_contents(logger, config, section, section_path,
+                                         verbose)
+
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
             admins = config.get('GLOBAL', 'admin_list')
@@ -1669,15 +1743,12 @@ location.""" % self.config_file)
         self.jupyter_services = []
         # Load generated jupyter sections
         for section in config.sections():
-            if 'JUPYTER_' in section:
+            if section.startswith('JUPYTER_'):
                 # Allow service_desc to be a file that should be read
                 if config.has_option(section, 'service_desc'):
-                    service_desc = config.get(section, 'service_desc')
-                    if os.path.exists(service_desc) \
-                            and os.path.isfile(service_desc):
-                        content = read_file(service_desc, logger)
-                        if content:
-                            config.set(section, 'service_desc', content)
+                    content = expand_external_sources(
+                        logger, config.get(section, 'service_desc'))
+                    config.set(section, 'service_desc', content)
 
                 self.jupyter_services.append({option: config.get(section,
                                                                  option)
@@ -1697,15 +1768,12 @@ location.""" % self.config_file)
                              'service_jumphost_key']
         # Load generated cloud sections
         for section in config.sections():
-            if 'CLOUD_' in section:
+            if section.startswith('CLOUD_'):
                 # Allow service_desc to be a file that should be read
                 if config.has_option(section, 'service_desc'):
-                    service_desc = config.get(section, 'service_desc')
-                    if os.path.exists(service_desc) \
-                            and os.path.isfile(service_desc):
-                        content = read_file(service_desc, logger)
-                        if content:
-                            config.set(section, 'service_desc', content)
+                    content = expand_external_sources(
+                        logger, config.get(section, 'service_desc'))
+                    config.set(section, 'service_desc', content)
 
                 service = {option: config.get(section, option) for option in
                            config.options(section)}

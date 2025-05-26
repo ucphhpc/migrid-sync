@@ -220,6 +220,7 @@ auth_openid_ext_db = 'mod_auth_openid-ext-users.db'
 
 exe_leader_name = "execution-leader"
 
+mig_conf_section_dirname = "MiGserver.d"
 htaccess_filename = '.htaccess'
 welcome_filename = 'welcome.txt'
 default_mrsl_filename = '.default.mrsl'
