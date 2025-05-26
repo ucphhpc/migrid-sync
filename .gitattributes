@@ -1,6 +1,6 @@
 # This is used to filter the contents of generated source zip and tar files
 # when a release is minted on github.
-# Exclude .gitignore and similar from the generated tarball
+# Exclude .gitignore and similar internal git helpers.
 .git* export-ignore
 # Exclude internal helper scripts only relevant for development
 bugweed.py export-ignore
