@@ -351,11 +351,8 @@ def main(client_id, user_arguments_dict):
              'The required sftp service is not enabled on the system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    if configuration.site_enable_sftp:
-        sftp_port = configuration.user_sftp_port
-
-    if configuration.site_enable_sftp_subsys:
-        sftp_port = configuration.user_sftp_subsys_port
+    if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
+        sftp_port = configuration.user_sftp_show_port
 
     requested_service = accepted['service'][-1]
     service = {k: v for options in configuration.jupyter_services
