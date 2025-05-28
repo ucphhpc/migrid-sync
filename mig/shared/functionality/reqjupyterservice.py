@@ -56,7 +56,7 @@ import requests
 from urllib.parse import urljoin
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, extract_field
+from mig.shared.base import client_id_dir, extract_field, force_native_str
 from mig.shared.defaults import session_id_bytes
 from mig.shared.fileio import make_symlink, pickle, unpickle, write_file, \
     delete_symlink, delete_file
@@ -369,11 +369,8 @@ def main(client_id, user_arguments_dict):
              'The required sftp service is not enabled on the system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    if configuration.site_enable_sftp:
-        sftp_port = configuration.user_sftp_port
-
-    if configuration.site_enable_sftp_subsys:
-        sftp_port = configuration.user_sftp_subsys_port
+    if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
+        sftp_port = configuration.user_sftp_show_port
 
     requested_service = accepted['service'][-1]
     service = {k: v for options in configuration.jupyter_services
@@ -555,6 +552,10 @@ def main(client_id, user_arguments_dict):
     (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair(
         encode_utf8=True)
 
+    logger.debug("User: %s - Creating a new jupyter mount keyset - "
+                 "private_key: %s public_key: %s "
+                 % (client_id, mount_private_key, mount_public_key))
+
     # Known hosts
     sftp_addresses = socket.gethostbyname_ex(
         configuration.user_sftp_show_address or socket.getfqdn())
@@ -566,15 +567,20 @@ def main(client_id, user_arguments_dict):
         restrict_opts = 'no-agent-forwarding,no-port-forwarding,no-pty,'
         restrict_opts += 'no-user-rc,no-X11-forwarding'
         restrictions = '%s' % restrict_opts
-        auth_content.append('%s %s\n' % (restrictions, mount_public_key))
+        try:
+            str_mount_public_key = force_native_str(mount_public_key)
+        except ValueError as err:
+            logger.error("Jupyter: User %s failed to turn their public mount key into a string type: %s" % err)
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                'Failed to properly generate the credentials used for accessing your personal files'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        auth_content.append('%s %s\n' % (restrictions, str_mount_public_key))
         # Write auth file
         write_file('\n'.join(auth_content),
                    os.path.join(subsys_path, session_id
                                 + '.authorized_keys'), logger, umask=0o27)
-
-    logger.debug("User: %s - Creating a new jupyter mount keyset - "
-                 "private_key: %s public_key: %s "
-                 % (client_id, mount_private_key, mount_public_key))
 
     jupyter_dict = {
         'MOUNT_HOST': configuration.short_title,
