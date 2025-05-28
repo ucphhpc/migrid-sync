@@ -449,10 +449,13 @@ def main(client_id, user_arguments_dict):
     # Make sure ssh daemon does not complain
     tighten_key_perms(configuration, client_id)
 
+    url_service = urljoin('/', service['service_name'])
+    url_home = urljoin(url_service + "/", 'home')
+
     url_base = urljoin(host, service['service_name'])
-    url_home = urljoin(url_base, '/home')
-    url_auth = urljoin(url_base, '/hub/login')
-    url_data = urljoin(url_base, '/hub/set-user-data')
+    url_hub = urljoin(url_base + "/", 'hub')
+    url_auth = urljoin(url_hub + "/", 'login')
+    url_data = urljoin(url_hub + "/", 'set-user-data')
 
     # Does the client home dir contain an active mount key
     # If so just keep on using it.
@@ -524,12 +527,12 @@ def main(client_id, user_arguments_dict):
 
         with requests.session() as session:
             # Refresh cookies
-            session.get(url_base)
+            session.get(url_hub)
             # Authenticate and submit data
             response = jupyterhub_session_post_request(session, url_auth, headers=auth_header)
             if response.status_code == 200:
                 for user_data_type, user_data in user_post_data.items():
-                    response = jupyterhub_session_post_request(url_data, json={user_data_type: user_data})
+                    response = jupyterhub_session_post_request(session, url_data, json={user_data_type: user_data})
                     if response.status_code != 200:
                         logger.error(
                             "Jupyter: User %s failed to submit data %s to %s"
@@ -636,7 +639,7 @@ def main(client_id, user_arguments_dict):
     # First login
     with requests.session() as session:
         # Refresh cookies
-        session.get(url_base)
+        session.get(url_hub)
         # Authenticate
         response = jupyterhub_session_post_request(session, url_auth, headers=auth_header)
         if response.status_code == 200:
