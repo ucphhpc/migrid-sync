@@ -53,7 +53,10 @@ import time
 import shutil
 import random
 import requests
-from urllib.parse import urljoin
+if sys.version_info[0] >= 3:
+    from urllib.parse import urljoin
+else:
+    from urlparse import urljoin
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, extract_field, force_native_str
