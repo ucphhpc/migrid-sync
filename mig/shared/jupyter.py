@@ -34,7 +34,8 @@ from past.builtins import basestring
 
 from past.builtins import basestring
 def gen_balancer_proxy_template(url, define, name, member_hosts,
-                                ws_member_hosts, timeout=600):
+                                ws_member_hosts, timeout=600, ssl_enabled=False,
+                                ssl_proxy_ca_certificate_file=None):
     """ Generates an apache proxy balancer configuration section template
      for a particular jupyter service. Relies on the
      https://httpd.apache.org/docs/2.4/mod/mod_proxy_balancer.html module to
@@ -48,12 +49,17 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
      in websocket balancer member defitions.
     """
 
+    if not ssl_proxy_ca_certificate_file:
+        ssl_proxy_ca_certificate_file = ''
+
     assert isinstance(url, basestring)
     assert isinstance(define, basestring)
     assert isinstance(name, basestring)
     assert isinstance(member_hosts, list)
     assert isinstance(ws_member_hosts, list)
     assert isinstance(timeout, int)
+    assert isinstance(ssl_enabled, bool)
+    assert isinstance(ssl_proxy_ca_certificate_file, basestring)
 
     fill_helpers = {
         'url': url,
@@ -66,7 +72,8 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         'ws_hosts': '',
         'timeout': timeout,
         'referer_fqdn': name.upper() + "_PROXY_FQDN=$1",
-        'referer_url': '%{' + name.upper() + "_PROXY_PROTOCOL}e://%{" + name.upper() + "_PROXY_FQDN}e/" + name + "/hub"
+        'referer_url': '%{' + name.upper() + "_PROXY_PROTOCOL}e://%{" + name.upper() + "_PROXY_FQDN}e/" + name + "/hub",
+        'ssl_template': ''
     }
 
     for host in member_hosts:
@@ -77,33 +84,45 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     print("filling in jupyter gen_balancer_proxy_template with helper: (%s)" %
           fill_helpers)
 
+    if ssl_enabled:
+        ssl_template = """
+            SSLProxyCACertificateFile %(ssl_proxy_ca_certificate_file)s
+            SSLProxyVerify require
+            SSLProxyCheckPeerCN on
+            SSLProxyCheckPeerName on
+        """ % ssl_proxy_ca_certificate_file
+        fill_helpers["ssl_template"] = ssl_template
+
     template = """
 <IfDefine %(define)s>
     Header add Set-Cookie "%(route_cookie)s=%(balancer_worker_env)s; path=%(url)s" env=BALANCER_ROUTE_CHANGED
-    SetEnvIf Host (.*) %(referer_fqdn)s
 
     ProxyTimeout %(timeout)s
     <Proxy balancer://%(name)s_hosts>
+        %(ssl_template)s
+
 %(hosts)s
         ProxySet stickysession=%(route_cookie)s
     </Proxy>
     # Websocket cluster
     <Proxy balancer://ws_%(name)s_hosts>
+        %(ssl_template)s
+
 %(ws_hosts)s
         ProxySet stickysession=%(route_cookie)s
     </Proxy>
     <Location %(url)s>
-        ProxyPreserveHost on
         ProxyPass balancer://%(name)s_hosts%(url)s
         ProxyPassReverse balancer://%(name)s_hosts%(url)s
         RequestHeader set Remote-User %(remote_user_env)s
-        RequestHeader set Referer %(referer_url)s
+        RequestHeader set "X-Forwarded-Proto" expr=%{REQUEST_SCHEME}
     </Location>
     <LocationMatch "%(url)s/(user/[^/]+)/(api/kernels/[^/]+/channels|terminals/websocket|api/events/subscribe)(/?|)">
         ProxyPass   balancer://ws_%(name)s_hosts
         ProxyPassReverse    balancer://ws_%(name)s_hosts
     </LocationMatch>
 </IfDefine>""" % fill_helpers
+
     return template
 
 
