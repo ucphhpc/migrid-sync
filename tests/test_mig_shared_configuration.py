@@ -31,8 +31,8 @@ import inspect
 import os
 import unittest
 
-from tests.support import MigTestCase, TEST_DATA_DIR, TEST_OUTPUT_DIR, PY2, \
-    testmain, fixturefile
+from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain, \
+    fixturefile
 from mig.shared.configuration import Configuration
 
 
@@ -71,6 +71,7 @@ class MigSharedConfiguration(MigTestCase):
         self.assertEqual(configuration.wwwserve_max_bytes, 43211234)
 
     def test_argument_include_sections(self):
+        """Test that include_sections path default is set"""
         test_conf_file = os.path.join(
             TEST_DATA_DIR, 'MiGserver--customised.conf')
 
@@ -81,10 +82,12 @@ class MigSharedConfiguration(MigTestCase):
                          '/home/mig/mig/server/MiGserver.d')
 
     def test_argument_custom_include_sections(self):
+        """Test that include_sections path override is correctly applied"""
         test_conf_file = os.path.join(
             TEST_DATA_DIR, 'MiGserver--customised-include_sections.conf')
         test_conf_section_dir = os.path.join('tests', 'data', 'MiGserver.d')
 
+        self.assertTrue(os.path.isdir(test_conf_section_dir))
         configuration = Configuration(
             test_conf_file, skip_log=True, disable_auth_log=True)
 
@@ -92,12 +95,14 @@ class MigSharedConfiguration(MigTestCase):
                          test_conf_section_dir)
 
     def test_argument_include_sections_quota(self):
+        """Test that QUOTA conf section overrides are correctly applied"""
         test_conf_file = os.path.join(
             TEST_DATA_DIR, 'MiGserver--customised-include_sections.conf')
         test_conf_section_dir = os.path.join('tests', 'data', 'MiGserver.d')
         test_conf_section_file = os.path.join(test_conf_section_dir,
                                               'quota.conf')
 
+        self.assertTrue(os.path.isfile(test_conf_section_file))
         configuration = Configuration(
             test_conf_file, skip_log=True, disable_auth_log=True)
 
@@ -107,12 +112,14 @@ class MigSharedConfiguration(MigTestCase):
         self.assertEqual(configuration.quota_vgrid_limit, 4242424242)
 
     def test_argument_include_sections_cloud_misty(self):
+        """Test that CLOUD_MISTY conf section is correctly applied"""
         test_conf_file = os.path.join(
             TEST_DATA_DIR, 'MiGserver--customised-include_sections.conf')
         test_conf_section_dir = os.path.join('tests', 'data', 'MiGserver.d')
         test_conf_section_file = os.path.join(test_conf_section_dir,
                                               'cloud_misty.conf')
 
+        self.assertTrue(os.path.isfile(test_conf_section_file))
         configuration = Configuration(
             test_conf_file, skip_log=True, disable_auth_log=True)
 
@@ -128,6 +135,79 @@ class MigSharedConfiguration(MigTestCase):
                          'MISTY service')
         self.assertEqual(configuration.cloud_services[0]['service_provider_flavor'],
                          'nostack')
+
+    def test_argument_include_sections_global_rejected(self):
+        """Test that GLOBAL conf overrides are rejected (policy)"""
+
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--customised-include_sections.conf')
+        test_conf_section_dir = os.path.join('tests', 'data', 'MiGserver.d')
+        test_conf_section_file = os.path.join(test_conf_section_dir,
+                                              'global.conf')
+
+        self.assertTrue(os.path.isfile(test_conf_section_file))
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        self.assertEqual(configuration.include_sections, test_conf_section_dir)
+        self.assertNotEqual(configuration.loglevel, 'error')
+        self.assertEqual(configuration.loglevel, 'info')
+
+    def test_argument_include_sections_with_invalid_conf_filename(self):
+        """Test that conf snippet with missing .conf extension gets ignored"""
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--customised-include_sections.conf')
+        test_conf_section_dir = os.path.join('tests', 'data', 'MiGserver.d')
+        test_conf_section_file = os.path.join(test_conf_section_dir,
+                                              'dummy')
+
+        self.assertTrue(os.path.isfile(test_conf_section_file))
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        # Conf only contains SETTINGS section which is ignored due to mismatch
+        self.assertEqual(configuration.include_sections, test_conf_section_dir)
+        self.assertIsInstance(configuration.language, list)
+        self.assertFalse('Pig Latin' in configuration.language)
+        self.assertEqual(configuration.language, ['English'])
+
+    def test_argument_include_sections_with_section_name_mismatch(self):
+        """Test that conf section must match filename"""
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--customised-include_sections.conf')
+        test_conf_section_dir = os.path.join('tests', 'data', 'MiGserver.d')
+        test_conf_section_file = os.path.join(test_conf_section_dir,
+                                              'section-mismatch.conf')
+
+        self.assertTrue(os.path.isfile(test_conf_section_file))
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        # Conf only contains SETTINGS section which is ignored due to mismatch
+        self.assertEqual(configuration.include_sections, test_conf_section_dir)
+        self.assertIsInstance(configuration.language, list)
+        self.assertFalse('Pig Latin' in configuration.language)
+        self.assertEqual(configuration.language, ['English'])
+
+    def test_argument_include_sections_multi_ignores_other_sections(self):
+        """Test that conf section must match filename and others are ignored"""
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--customised-include_sections.conf')
+        test_conf_section_dir = os.path.join('tests', 'data', 'MiGserver.d')
+        test_conf_section_file = os.path.join(test_conf_section_dir,
+                                              'multi.conf')
+
+        self.assertTrue(os.path.isfile(test_conf_section_file))
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        # Conf contains MULTI and SETTINGS sections and latter must be ignored
+        self.assertEqual(configuration.include_sections, test_conf_section_dir)
+        self.assertIsInstance(configuration.language, list)
+        self.assertFalse('Spanglish' in configuration.language)
+        self.assertEqual(configuration.language, ['English'])
+        # TODO: rename file to valid section name we can check and enable next?
+        #self.assertEqual(configuration.multi, 'blabla')
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_default_object(self):
