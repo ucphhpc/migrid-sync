@@ -62,7 +62,8 @@ except ImportError as ioe:
     print("could not import migrid modules")
 
 
-def include_section_contents(logger, config, section, load_path, verbose=False):
+def include_section_contents(logger, config, section, load_path, verbose=False,
+                             reject_overrides=[]):
     """Include additional section contents from load_path in config."""
     if not os.path.exists(load_path):
         msg = "no such %r section config in %s" % (section, load_path)
@@ -90,6 +91,10 @@ def include_section_contents(logger, config, section, load_path, verbose=False):
         logger.debug("add %r section to main config" % section)
         config.add_section(section)
     for (key, val) in section_config.items(section):
+        if key in reject_overrides:
+            logger.warning("reject override core option %r in %r section" %
+                           (key, section))
+            continue
         logger.debug("add config key %r in %r section" % (key, section))
         config.set(section, key, val)
     logger.debug("done including %r section to main config" % section)
@@ -108,7 +113,7 @@ def expand_external_sources(logger, val):
     if val.find('::') == -1:
         # logger.debug("nothing to expand in %r" % val)
         return val
-    #logger.debug("expand any ENV and FILE content in %r" % val)
+    # logger.debug("expand any ENV and FILE content in %r" % val)
     env_pattern = "[a-zA-Z][a-zA-Z0-9_]+"
     cache_pattern = file_pattern = "[^ ]+"
     expanded = val
@@ -138,7 +143,7 @@ def expand_external_sources(logger, val):
                     #    "reading conf content from file in %r" % cache)
                     content = read_file(path, logger)
                     if cache and content:
-                        #logger.debug("caching conf content salt in %r" % cache)
+                        # logger.debug("caching conf content salt in %r" % cache)
                         write_file(content, cache, logger)
                 if not content:
                     logger.warning("salt file not found or empty: %s" % path)
@@ -942,8 +947,27 @@ location.""" % self.config_file)
             self.include_sections = os.path.join(self.mig_server_home,
                                                  mig_conf_section_dirname)
 
-        # NOTE: for simplicity we do NOT allow overrides in GLOBAL section
-        no_override_sections = ['GLOBAL']
+        # NOTE: for simplicity we do NOT allow core overrides in GLOBAL section
+        no_override_section_options = {
+            'GLOBAL': ['mig_path', 'state_path', 'certs_path', 'server_fqdn',
+                       'migserver_public_url',
+                       'migserver_public_alias_url',
+                       'migserver_http_url',
+                       'migserver_https_url',
+                       'migserver_https_mig_oid_url',
+                       'migserver_https_ext_oid_url',
+                       'migserver_https_mig_oidc_url',
+                       'migserver_https_ext_oidc_url',
+                       'migserver_https_mig_cert_url',
+                       'migserver_https_ext_cert_url',
+                       'migserver_https_sid_url',
+                       'user_openid_address', 'user_openid_port',
+                       'user_davs_address', 'user_davs_port',
+                       'user_sftp_address', 'user_sftp_port',
+                       'user_sftp_subsys_port',
+                       'user_ftps_address', 'user_ftps_ctrl_port',
+                       'user_ftps_pasv_ports']
+        }
         self.include_sections = os.path.normpath(self.include_sections)
         if os.path.isdir(self.include_sections):
             msg = "read extra config sections from %s" % self.include_sections
@@ -964,15 +988,16 @@ location.""" % self.config_file)
                 section_path = os.path.join(self.include_sections,
                                             section_filename)
                 section = section_filename.replace('.conf', '').upper()
-                if section in no_override_sections:
-                    msg = "skip unsupported %r section override in %r" % \
-                        (section, section_filename)
+                reject_overrides = []
+                if section in no_override_section_options:
+                    reject_overrides = no_override_section_options[section]
+                    msg = "filter %r section override in %r for %s" % \
+                        (section, section_filename, reject_overrides)
                     if verbose:
                         print(msg)
-                    logger.warning(msg)
-                    continue
+                    logger.debug(msg)
                 include_section_contents(logger, config, section, section_path,
-                                         verbose)
+                                         verbose, reject_overrides)
 
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
@@ -1417,7 +1442,7 @@ location.""" % self.config_file)
             protos = [i for i in plain_val.split() if i]
             # Append missing supported protocols for AUTO and filter invalid
             if keyword_auto in protos:
-                protos = [i for i in protos if i != keyword_auto] +\
+                protos = [i for i in protos if i != keyword_auto] + \
                          [i for i in allowed_protos if i not in protos]
             valid_protos = [i for i in protos if i in allowed_protos]
             if protos != valid_protos:
@@ -1696,7 +1721,7 @@ location.""" % self.config_file)
             protos = [i for i in plain_val.split() if i]
             # Append missing supported protocols for AUTO and filter invalid
             if keyword_auto in protos:
-                protos = [i for i in protos if i != keyword_auto] +\
+                protos = [i for i in protos if i != keyword_auto] + \
                          [i for i in allowed_protos if i not in protos]
             valid_protos = [i for i in protos if i in allowed_protos]
             if protos != valid_protos:
