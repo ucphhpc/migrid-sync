@@ -834,7 +834,12 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'include_sections'):
             self.include_sections = config.get('GLOBAL', 'include_sections')
         else:
-            self.include_sections = os.path.join(self.mig_server_home,
+            # Fall back to config section dir along with actual conf
+            if config.has_option('GLOBAL', 'mig_server_home'):
+                _config_file_dir = config.get('GLOBAL', 'mig_server_home')
+            else:
+                _config_file_dir = os.path.dirname(_config_file)
+            self.include_sections = os.path.join(_config_file_dir,
                                                  mig_conf_section_dirname)
 
         # NOTE: for simplicity we do NOT allow core overrides in GLOBAL and
@@ -842,8 +847,10 @@ location.""" % self.config_file)
         #       and service daemons as that might interfere with external
         #       dependencies e.g. in the apache web server.
         no_override_section_options = {
-            'GLOBAL': ['include_sections', 'mig_path', 'state_path',
-                       'certs_path', 'logfile', 'loglevel', 'server_fqdn',
+            'GLOBAL': ['include_sections', 'mig_path', 'mig_server_home',
+                       'state_path', 'certs_path',
+                       'logfile', 'loglevel',
+                       'server_fqdn',
                        'migserver_public_url',
                        'migserver_public_alias_url',
                        'migserver_http_url',
