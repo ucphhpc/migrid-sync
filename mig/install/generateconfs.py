@@ -99,6 +99,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'ftps_pasv_ports',
         'davs_address',
         'jupyter_services',
+        'jupyter_services_proxy_config',
         'jupyter_services_desc',
         'cloud_fqdn',
         'cloud_services',

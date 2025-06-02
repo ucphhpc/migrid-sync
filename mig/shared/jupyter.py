@@ -32,9 +32,9 @@ from __future__ import absolute_import
 from past.builtins import basestring
 
 
-from past.builtins import basestring
 def gen_balancer_proxy_template(url, define, name, member_hosts,
-                                ws_member_hosts, timeout=600, ssl_enabled=False,
+                                ws_member_hosts, timeout=600,
+                                enable_proxy_ssl=False,
                                 ssl_proxy_ca_certificate_file=None):
     """ Generates an apache proxy balancer configuration section template
      for a particular jupyter service. Relies on the
@@ -47,6 +47,9 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
      in balancer member defitions.
     ws_member_hosts: The list of unique identifiers that should be used to fill
      in websocket balancer member defitions.
+    enable_proxy_ssl: Whether or not to enable SSL/TLS proxying.
+    ssl_proxy_ca_certificate_file: The path to the CA certificate file for
+     verifying the client certificate. If None, no verification is done.
     """
 
     if not ssl_proxy_ca_certificate_file:
@@ -58,7 +61,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     assert isinstance(member_hosts, list)
     assert isinstance(ws_member_hosts, list)
     assert isinstance(timeout, int)
-    assert isinstance(ssl_enabled, bool)
+    assert isinstance(enable_proxy_ssl, bool)
     assert isinstance(ssl_proxy_ca_certificate_file, basestring)
 
     fill_helpers = {
@@ -84,7 +87,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     print("filling in jupyter gen_balancer_proxy_template with helper: (%s)" %
           fill_helpers)
 
-    if ssl_enabled:
+    if enable_proxy_ssl:
         ssl_template = """
             SSLProxyCACertificateFile %(ssl_proxy_ca_certificate_file)s
             SSLProxyVerify require
