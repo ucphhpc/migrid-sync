@@ -1521,7 +1521,7 @@ cert, oid and sid based https!
                   'formatting is correct, a dictionary formatted string is expected.')
             sys.exit(1)
 
-        jupyter_services_descs = transform_str_to_dict(jupyter_services_proxy_config)
+        jupyter_services_descs = transform_str_to_dict(jupyter_services_desc)
         if not jupyter_services_descs:
             print('Error: jupyter_services_desc '
                   'could not be intepreted correctly. Double check that your '
