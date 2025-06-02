@@ -118,7 +118,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         ProxyPass balancer://%(name)s_hosts%(url)s
         ProxyPassReverse balancer://%(name)s_hosts%(url)s
         RequestHeader set Remote-User %(remote_user_env)s
-        RequestHeader set "X-Forwarded-Proto" expr=%{REQUEST_SCHEME}
+        RequestHeader set "X-Forwarded-Proto" expr=%%{REQUEST_SCHEME}
     </Location>
     <LocationMatch "%(url)s/(user/[^/]+)/(api/kernels/[^/]+/channels|terminals/websocket|api/events/subscribe)(/?|)">
         ProxyPass   balancer://ws_%(name)s_hosts
