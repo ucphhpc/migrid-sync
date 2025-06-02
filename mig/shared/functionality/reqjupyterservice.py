@@ -556,7 +556,8 @@ def main(client_id, user_arguments_dict):
 
     # Generate private/public keys
     (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair(
-        encode_utf8=True)
+        encode_utf8=True
+    )
 
     logger.debug("User: %s - Creating a new jupyter mount keyset - "
                  "private_key: %s public_key: %s "
@@ -566,27 +567,25 @@ def main(client_id, user_arguments_dict):
     sftp_addresses = socket.gethostbyname_ex(
         configuration.user_sftp_show_address or socket.getfqdn())
 
+    # Write the authorization file
+    auth_content = []
+    str_mount_public_key = force_native_str(mount_public_key)
     # Subsys sftp support
     if configuration.site_enable_sftp_subsys:
         # Restrict possible mount agent
-        auth_content = []
         restrict_opts = 'no-agent-forwarding,no-port-forwarding,no-pty,'
         restrict_opts += 'no-user-rc,no-X11-forwarding'
         restrictions = '%s' % restrict_opts
-        try:
-            str_mount_public_key = force_native_str(mount_public_key)
-        except ValueError as err:
-            logger.error("Jupyter: User %s failed to turn their public mount key into a string type: %s" % err)
-            output_objects.append(
-                {'object_type': 'error_text', 'text':
-                'Failed to properly generate the credentials used for accessing your personal files'})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-
         auth_content.append('%s %s\n' % (restrictions, str_mount_public_key))
-        # Write auth file
-        write_file('\n'.join(auth_content),
-                   os.path.join(subsys_path, session_id
-                                + '.authorized_keys'), logger, umask=0o27)
+    else:
+        auth_content.append('%s\n' % str_mount_public_key)
+
+    # Write auth file
+    write_file(
+        '\n'.join(auth_content),
+        os.path.join(subsys_path, session_id + '.authorized_keys'),
+        logger, umask=0o27
+    )
 
     jupyter_dict = {
         'MOUNT_HOST': configuration.short_title,
