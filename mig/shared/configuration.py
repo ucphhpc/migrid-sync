@@ -96,6 +96,7 @@ def include_section_contents(logger, config, section, load_path, verbose=False,
                                                                     section)
             if verbose:
                 print(msg)
+            logger.warning(msg)
             continue
         logger.debug("add config key %r in %r section" % (key, section))
         config.set(section, key, val)
@@ -883,7 +884,7 @@ location.""" % self.config_file)
             msg = "read extra config sections from %s" % self.include_sections
             if verbose:
                 print(msg)
-            logger.info(msg)
+            logger.debug(msg)
             for section_filename in os.listdir(self.include_sections):
                 # skip dotfiles and non-confs
                 if section_filename.startswith('.'):
