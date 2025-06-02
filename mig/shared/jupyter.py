@@ -84,16 +84,17 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
 
     for ws_host in ws_member_hosts:
         fill_helpers['ws_hosts'] += ''.join(['        ', ws_host])
-    print("filling in jupyter gen_balancer_proxy_template with helper: (%s)" %
-          fill_helpers)
 
     if enable_proxy_ssl:
+        ssl_template_kwargs = {
+            'ssl_proxy_ca_certificate_file': ssl_proxy_ca_certificate_file
+        }
         ssl_template = """
             SSLProxyCACertificateFile %(ssl_proxy_ca_certificate_file)s
             SSLProxyVerify require
             SSLProxyCheckPeerCN on
             SSLProxyCheckPeerName on
-        """ % ssl_proxy_ca_certificate_file
+        """ % ssl_template_kwargs
         fill_helpers["ssl_template"] = ssl_template
 
     template = """
@@ -103,14 +104,12 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     ProxyTimeout %(timeout)s
     <Proxy balancer://%(name)s_hosts>
         %(ssl_template)s
-
 %(hosts)s
         ProxySet stickysession=%(route_cookie)s
     </Proxy>
     # Websocket cluster
     <Proxy balancer://ws_%(name)s_hosts>
         %(ssl_template)s
-
 %(ws_hosts)s
         ProxySet stickysession=%(route_cookie)s
     </Proxy>
