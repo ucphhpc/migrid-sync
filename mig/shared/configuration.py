@@ -92,8 +92,10 @@ def include_section_contents(logger, config, section, load_path, verbose=False,
         config.add_section(section)
     for (key, val) in section_config.items(section):
         if key in reject_overrides:
-            logger.warning("reject override core option %r in %r section" %
-                           (key, section))
+            msg = "reject override core option %r in %r section" % (key,
+                                                                    section)
+            if verbose:
+                print(msg)
             continue
         logger.debug("add config key %r in %r section" % (key, section))
         config.set(section, key, val)
@@ -828,6 +830,78 @@ location.""" % self.config_file)
         # print "logger initialized (level " + logger_obj.loglevel() + ")"
         # logger.debug("logger initialized")
 
+        # Allow section confs included from file
+        if config.has_option('GLOBAL', 'include_sections'):
+            self.include_sections = config.get('GLOBAL', 'include_sections')
+        else:
+            self.include_sections = os.path.join(self.mig_server_home,
+                                                 mig_conf_section_dirname)
+
+        # NOTE: for simplicity we do NOT allow core overrides in GLOBAL and
+        #       SITE sections. Especially the options affecting base paths
+        #       and service daemons as that might interfere with external
+        #       dependencies e.g. in the apache web server.
+        no_override_section_options = {
+            'GLOBAL': ['include_sections', 'mig_path', 'state_path',
+                       'certs_path', 'logfile', 'loglevel', 'server_fqdn',
+                       'migserver_public_url',
+                       'migserver_public_alias_url',
+                       'migserver_http_url',
+                       'migserver_https_url',
+                       'migserver_https_mig_oid_url',
+                       'migserver_https_ext_oid_url',
+                       'migserver_https_mig_oidc_url',
+                       'migserver_https_ext_oidc_url',
+                       'migserver_https_mig_cert_url',
+                       'migserver_https_ext_cert_url',
+                       'migserver_https_sid_url',
+                       'user_openid_address', 'user_openid_port',
+                       'user_openid_key', 'user_openid_log',
+                       'user_davs_address', 'user_davs_port',
+                       'user_davs_key', 'user_davs_log',
+                       'user_sftp_address', 'user_sftp_port',
+                       'user_sftp_key', 'user_sftp_log',
+                       'user_sftp_subsys_address', 'user_sftp_subsys_port',
+                       'user_sftp_subsys_log',
+                       'user_ftps_address', 'user_ftps_ctrl_port',
+                       'user_ftps_pasv_ports',
+                       'user_ftps_key', 'user_ftps_log'],
+            'SITE': ['enable_openid', 'enable_davs', 'enable_ftps',
+                     'enable_sftp', 'enable_sftp_subsys', 'enable_crontab',
+                     'enable_events', 'enable_notify', 'enable_imnotify',
+                     'enable_transfers']
+        }
+        self.include_sections = os.path.normpath(self.include_sections)
+        if os.path.isdir(self.include_sections):
+            msg = "read extra config sections from %s" % self.include_sections
+            if verbose:
+                print(msg)
+            logger.info(msg)
+            for section_filename in os.listdir(self.include_sections):
+                # skip dotfiles and non-confs
+                if section_filename.startswith('.'):
+                    continue
+                if not section_filename.endswith('.conf'):
+                    msg = "%r is not on required sectionname.conf form" % \
+                        section_filename
+                    if verbose:
+                        print(msg)
+                    logger.warning(msg)
+                    continue
+                section_path = os.path.join(self.include_sections,
+                                            section_filename)
+                section = section_filename.replace('.conf', '').upper()
+                reject_overrides = []
+                if section in no_override_section_options:
+                    reject_overrides = no_override_section_options[section]
+                    msg = "filter %r section override in %r for %s" % \
+                        (section, section_filename, reject_overrides)
+                    if verbose:
+                        print(msg)
+                    logger.debug(msg)
+                include_section_contents(logger, config, section, section_path,
+                                         verbose, reject_overrides)
+
         # Mandatory options first
 
         try:
@@ -939,65 +1013,6 @@ location.""" % self.config_file)
             self.user_db_home = config.get('GLOBAL', 'user_db_home')
         else:
             self.user_db_home = os.path.join(self.state_path, 'user_db_home')
-
-        # Allow section confs included from file
-        if config.has_option('GLOBAL', 'include_sections'):
-            self.include_sections = config.get('GLOBAL', 'include_sections')
-        else:
-            self.include_sections = os.path.join(self.mig_server_home,
-                                                 mig_conf_section_dirname)
-
-        # NOTE: for simplicity we do NOT allow core overrides in GLOBAL section
-        no_override_section_options = {
-            'GLOBAL': ['mig_path', 'state_path', 'certs_path', 'server_fqdn',
-                       'migserver_public_url',
-                       'migserver_public_alias_url',
-                       'migserver_http_url',
-                       'migserver_https_url',
-                       'migserver_https_mig_oid_url',
-                       'migserver_https_ext_oid_url',
-                       'migserver_https_mig_oidc_url',
-                       'migserver_https_ext_oidc_url',
-                       'migserver_https_mig_cert_url',
-                       'migserver_https_ext_cert_url',
-                       'migserver_https_sid_url',
-                       'user_openid_address', 'user_openid_port',
-                       'user_davs_address', 'user_davs_port',
-                       'user_sftp_address', 'user_sftp_port',
-                       'user_sftp_subsys_port',
-                       'user_ftps_address', 'user_ftps_ctrl_port',
-                       'user_ftps_pasv_ports']
-        }
-        self.include_sections = os.path.normpath(self.include_sections)
-        if os.path.isdir(self.include_sections):
-            msg = "read extra config sections from %s" % self.include_sections
-            if verbose:
-                print(msg)
-            logger.info(msg)
-            for section_filename in os.listdir(self.include_sections):
-                # skip dotfiles and non-confs
-                if section_filename.startswith('.'):
-                    continue
-                if not section_filename.endswith('.conf'):
-                    msg = "%r is not on required sectionname.conf form" % \
-                        section_filename
-                    if verbose:
-                        print(msg)
-                    logger.warning(msg)
-                    continue
-                section_path = os.path.join(self.include_sections,
-                                            section_filename)
-                section = section_filename.replace('.conf', '').upper()
-                reject_overrides = []
-                if section in no_override_section_options:
-                    reject_overrides = no_override_section_options[section]
-                    msg = "filter %r section override in %r for %s" % \
-                        (section, section_filename, reject_overrides)
-                    if verbose:
-                        print(msg)
-                    logger.debug(msg)
-                include_section_contents(logger, config, section, section_path,
-                                         verbose, reject_overrides)
 
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
