@@ -74,7 +74,8 @@ except ImportError as ioe:
     print("could not import migrid modules")
 
 
-def include_section_contents(logger, config, section, load_path, verbose=False):
+def include_section_contents(logger, config, section, load_path, verbose=False,
+                             reject_overrides=[]):
     """Include additional section contents from load_path in config."""
     if not os.path.exists(load_path):
         msg = "no such %r section config in %s" % (section, load_path)
@@ -102,6 +103,13 @@ def include_section_contents(logger, config, section, load_path, verbose=False):
         logger.debug("add %r section to main config" % section)
         config.add_section(section)
     for (key, val) in section_config.items(section):
+        if key in reject_overrides:
+            msg = "reject override core option %r in %r section" % (key,
+                                                                    section)
+            if verbose:
+                print(msg)
+            logger.warning(msg)
+            continue
         logger.debug("add config key %r in %r section" % (key, section))
         config.set(section, key, val)
     logger.debug("done including %r section to main config" % section)
@@ -120,7 +128,7 @@ def expand_external_sources(logger, val):
     if val.find('::') == -1:
         # logger.debug("nothing to expand in %r" % val)
         return val
-    #logger.debug("expand any ENV and FILE content in %r" % val)
+    # logger.debug("expand any ENV and FILE content in %r" % val)
     env_pattern = "[a-zA-Z][a-zA-Z0-9_]+"
     cache_pattern = file_pattern = "[^ ]+"
     expanded = val
@@ -150,7 +158,7 @@ def expand_external_sources(logger, val):
                     #    "reading conf content from file in %r" % cache)
                     content = read_file(path, logger)
                     if cache and content:
-                        #logger.debug("caching conf content salt in %r" % cache)
+                        # logger.debug("caching conf content salt in %r" % cache)
                         write_file(content, cache, logger)
                 if not content:
                     logger.warning("salt file not found or empty: %s" % path)
@@ -846,6 +854,85 @@ location.""" % self.config_file)
         # print "logger initialized (level " + logger_obj.loglevel() + ")"
         # logger.debug("logger initialized")
 
+        # Allow section confs included from file
+        if config.has_option('GLOBAL', 'include_sections'):
+            self.include_sections = config.get('GLOBAL', 'include_sections')
+        else:
+            # Fall back to config section dir along with actual conf
+            if config.has_option('GLOBAL', 'mig_server_home'):
+                _config_file_dir = config.get('GLOBAL', 'mig_server_home')
+            else:
+                _config_file_dir = os.path.dirname(_config_file)
+            self.include_sections = os.path.join(_config_file_dir,
+                                                 mig_conf_section_dirname)
+
+        # NOTE: for simplicity we do NOT allow core overrides in GLOBAL and
+        #       SITE sections. Especially the options affecting base paths
+        #       and service daemons as that might interfere with external
+        #       dependencies e.g. in the apache web server.
+        no_override_section_options = {
+            'GLOBAL': ['include_sections', 'mig_path', 'mig_server_home',
+                       'state_path', 'certs_path',
+                       'logfile', 'loglevel',
+                       'server_fqdn',
+                       'migserver_public_url',
+                       'migserver_public_alias_url',
+                       'migserver_http_url',
+                       'migserver_https_url',
+                       'migserver_https_mig_oid_url',
+                       'migserver_https_ext_oid_url',
+                       'migserver_https_mig_oidc_url',
+                       'migserver_https_ext_oidc_url',
+                       'migserver_https_mig_cert_url',
+                       'migserver_https_ext_cert_url',
+                       'migserver_https_sid_url',
+                       'user_openid_address', 'user_openid_port',
+                       'user_openid_key', 'user_openid_log',
+                       'user_davs_address', 'user_davs_port',
+                       'user_davs_key', 'user_davs_log',
+                       'user_sftp_address', 'user_sftp_port',
+                       'user_sftp_key', 'user_sftp_log',
+                       'user_sftp_subsys_address', 'user_sftp_subsys_port',
+                       'user_sftp_subsys_log',
+                       'user_ftps_address', 'user_ftps_ctrl_port',
+                       'user_ftps_pasv_ports',
+                       'user_ftps_key', 'user_ftps_log'],
+            'SITE': ['enable_openid', 'enable_davs', 'enable_ftps',
+                     'enable_sftp', 'enable_sftp_subsys', 'enable_crontab',
+                     'enable_events', 'enable_notify', 'enable_imnotify',
+                     'enable_transfers']
+        }
+        self.include_sections = os.path.normpath(self.include_sections)
+        if os.path.isdir(self.include_sections):
+            msg = "read extra config sections from %s" % self.include_sections
+            if verbose:
+                print(msg)
+            logger.debug(msg)
+            for section_filename in os.listdir(self.include_sections):
+                # skip dotfiles and non-confs
+                if section_filename.startswith('.'):
+                    continue
+                if not section_filename.endswith('.conf'):
+                    msg = "%r is not on required sectionname.conf form" % \
+                        section_filename
+                    if verbose:
+                        print(msg)
+                    logger.warning(msg)
+                    continue
+                section_path = os.path.join(self.include_sections,
+                                            section_filename)
+                section = section_filename.replace('.conf', '').upper()
+                reject_overrides = []
+                if section in no_override_section_options:
+                    reject_overrides = no_override_section_options[section]
+                    msg = "filter %r section override in %r for %s" % \
+                        (section, section_filename, reject_overrides)
+                    if verbose:
+                        print(msg)
+                    logger.debug(msg)
+                include_section_contents(logger, config, section, section_path,
+                                         verbose, reject_overrides)
+
         # Mandatory options first
 
         try:
@@ -957,45 +1044,6 @@ location.""" % self.config_file)
             self.user_db_home = config.get('GLOBAL', 'user_db_home')
         else:
             self.user_db_home = os.path.join(self.state_path, 'user_db_home')
-
-        # Allow section confs included from file
-        if config.has_option('GLOBAL', 'include_sections'):
-            self.include_sections = config.get('GLOBAL', 'include_sections')
-        else:
-            self.include_sections = os.path.join(self.mig_server_home,
-                                                 mig_conf_section_dirname)
-
-        # NOTE: for simplicity we do NOT allow overrides in GLOBAL section
-        no_override_sections = ['GLOBAL']
-        self.include_sections = os.path.normpath(self.include_sections)
-        if os.path.isdir(self.include_sections):
-            msg = "read extra config sections from %s" % self.include_sections
-            if verbose:
-                print(msg)
-            logger.info(msg)
-            for section_filename in os.listdir(self.include_sections):
-                # skip dotfiles and non-confs
-                if section_filename.startswith('.'):
-                    continue
-                if not section_filename.endswith('.conf'):
-                    msg = "%r is not on required sectionname.conf form" % \
-                        section_filename
-                    if verbose:
-                        print(msg)
-                    logger.warning(msg)
-                    continue
-                section_path = os.path.join(self.include_sections,
-                                            section_filename)
-                section = section_filename.replace('.conf', '').upper()
-                if section in no_override_sections:
-                    msg = "skip unsupported %r section override in %r" % \
-                        (section, section_filename)
-                    if verbose:
-                        print(msg)
-                    logger.warning(msg)
-                    continue
-                include_section_contents(logger, config, section, section_path,
-                                         verbose)
 
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
@@ -1440,7 +1488,7 @@ location.""" % self.config_file)
             protos = [i for i in plain_val.split() if i]
             # Append missing supported protocols for AUTO and filter invalid
             if keyword_auto in protos:
-                protos = [i for i in protos if i != keyword_auto] +\
+                protos = [i for i in protos if i != keyword_auto] + \
                          [i for i in allowed_protos if i not in protos]
             valid_protos = [i for i in protos if i in allowed_protos]
             if protos != valid_protos:
@@ -1719,7 +1767,7 @@ location.""" % self.config_file)
             protos = [i for i in plain_val.split() if i]
             # Append missing supported protocols for AUTO and filter invalid
             if keyword_auto in protos:
-                protos = [i for i in protos if i != keyword_auto] +\
+                protos = [i for i in protos if i != keyword_auto] + \
                          [i for i in allowed_protos if i not in protos]
             valid_protos = [i for i in protos if i in allowed_protos]
             if protos != valid_protos:
