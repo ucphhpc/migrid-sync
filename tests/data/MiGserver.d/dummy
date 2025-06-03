@@ -1,0 +1,3 @@
+# Dummy conf section with missing conf extension
+[SETTINGS]
+language = Pig Latin
