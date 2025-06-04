@@ -56,6 +56,7 @@ import requests
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, extract_field
+from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import session_id_bytes
 from mig.shared.fileio import make_symlink, pickle, unpickle, write_file, \
     delete_symlink, delete_file
@@ -350,9 +351,7 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'error_text', 'text':
              'The required sftp service is not enabled on the system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
-
-    if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
-        sftp_port = configuration.user_sftp_show_port
+    sftp_port = configuration.user_sftp_show_port
 
     requested_service = accepted['service'][-1]
     service = {k: v for options in configuration.jupyter_services
@@ -650,7 +649,6 @@ def main(client_id, user_arguments_dict):
 
 
 if __name__ == "__main__":
-    from mig.shared.conf import get_configuration_object
     if not os.environ.get('MIG_CONF', ''):
         conf_path = os.path.join(os.path.dirname(sys.argv[0]),
                                  '..', '..', 'server', 'MiGserver.conf')
