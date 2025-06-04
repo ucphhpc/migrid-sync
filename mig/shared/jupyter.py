@@ -48,6 +48,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
      in balancer member defitions.
     ws_member_hosts: The list of unique identifiers that should be used to fill
      in websocket balancer member defitions.
+    timeout: The proxy timeout in seconds.
     enable_proxy_https: Whether or not to enable SSL/TLS proxying.
     proxy_balancer_template_kwargs: The optional extra apache config options that is used to
      generate the proxy balancer templates. This for instance can be used to pass SSL options
