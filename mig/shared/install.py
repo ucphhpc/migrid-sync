@@ -1517,14 +1517,14 @@ cert, oid and sid based https!
         jupyter_services_proxy_configs = transform_str_to_dict(jupyter_services_proxy_config)
         if not isinstance(jupyter_services_proxy_configs, dict):
             print('Error: jupyter_services_proxy_config '
-                  'could not be intepreted correctly. Double check that your '
+                  'could not be interpreted correctly. Double check that your '
                   'formatting is correct, a dictionary formatted string is expected.')
             sys.exit(1)
 
         jupyter_services_descs = transform_str_to_dict(jupyter_services_desc)
         if not isinstance(jupyter_services_descs, dict):
             print('Error: jupyter_services_desc '
-                  'could not be intepreted correctly. Double check that your '
+                  'could not be interpreted correctly. Double check that your '
                   'formatting is correct, a dictionary formatted string is expected.')
             sys.exit(1)
 
