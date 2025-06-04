@@ -88,7 +88,7 @@ def transform_str_to_dict(input_str):
     """
     Transforms a string input into a Python literal or container.
     The function will only return the transformed object if it becomes a dictionary.
-    input_str: The input string that is expected to be in
+    input_str: The input string that is expected to be
      structured as a dictionary. A valid input_str for example could be '{'hello': 'world'}'.
     """
     try:
