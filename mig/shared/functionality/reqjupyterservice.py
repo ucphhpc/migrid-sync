@@ -54,12 +54,8 @@ import shutil
 import random
 try:
     import requests
-except ImportError as err:
+except ImportError:
     requests = None
-if sys.version_info[0] >= 3:
-    from urllib.parse import urljoin
-else:
-    from urlparse import urljoin
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, extract_field, force_native_str
@@ -72,6 +68,7 @@ from mig.shared.httpsclient import unescape
 from mig.shared.init import initialize_main_variables
 from mig.shared.pwcrypto import generate_random_ascii
 from mig.shared.ssh import generate_ssh_rsa_key_pair, tighten_key_perms
+from mig.shared.url import urljoin
 from mig.shared.workflows import create_workflow_session_id, \
     get_workflow_session_id
 
@@ -287,7 +284,7 @@ def jupyter_host(configuration, output_objects, user, url):
 
 def jupyterhub_session_post_request(session, url, params=None, **kwargs):
     """
-    Sends a post request to an url
+    Sends a post request to a URL
     :param session: the session object that can be used to conduct the post request
     :param url: the designated URL that the post request is sent to
     :param params: parameters to pass to the post request
@@ -297,7 +294,7 @@ def jupyterhub_session_post_request(session, url, params=None, **kwargs):
         params = {}
 
     if "_xsrf" in session.cookies:
-        params = {"_xsrf": session.cookies['_xsrf']}
+        params["_xsrf"] = session.cookies['_xsrf']
 
     return session.post(url, params=params, **kwargs)
 

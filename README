@@ -799,7 +799,7 @@ integration for data analysis:
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_notify=True --enable_jupyter=True \
                    --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://dag100.science' \
-                   --jupyter_services_proxy_config="{'DAG': {'ssl_proxy_ca_certificate_file': 'path/to/ca-bundle.pem', 'enable_proxy_ssl': True}}"
+                   --jupyter_services_proxy_config="{'DAG': {'ssl_proxy_ca_certificate_file': '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem', 'enable_proxy_ssl': True}, 'MODI': {'ssl_proxy_ca_certificate_file': '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem', 'enable_proxy_ssl': True}}"
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --enable_cloud=True --enable_migadmin=True \
                    --enable_peers=True --peers_mandatory=True \
