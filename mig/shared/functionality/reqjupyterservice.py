@@ -52,7 +52,10 @@ import sys
 import time
 import shutil
 import random
-import requests
+try:
+    import requests
+except ImportError as err:
+    requests = None
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, extract_field
@@ -67,6 +70,18 @@ from mig.shared.pwcrypto import generate_random_ascii
 from mig.shared.ssh import generate_ssh_rsa_key_pair, tighten_key_perms
 from mig.shared.workflows import create_workflow_session_id, \
     get_workflow_session_id
+
+
+def __bail_out_requests(*args, **kwargs):
+    """Helper for dynamic bail out on actual use"""
+    raise Exception("jupyter functions require requests")
+
+
+def __require_requests(func):
+    """Internal helper to verify requests module availability on use"""
+    if requests is None:
+        return __bail_out_requests
+    return func
 
 
 def is_active(pickle_state, timeout=7200):
@@ -213,7 +228,7 @@ def get_newest_mount(jupyter_mounts):
             old_mounts.append(mount)
     return latest, old_mounts
 
-
+@__require_requests
 def get_host_from_service(configuration, service, base_url=None):
     """
     Returns a URL from one of the services available hosts,
@@ -319,7 +334,7 @@ def signature():
     }
     return ['', defaults]
 
-
+@__require_requests
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
     (configuration, logger, output_objects, op_name) = \
