@@ -334,6 +334,7 @@ def generate_confs(
     ftps_address='',
     davs_address='',
     jupyter_services='',
+    jupyter_services_enable_proxy_https=True,
     jupyter_services_proxy_config='{}',
     jupyter_services_desc='{}',
     cloud_services='',
@@ -657,6 +658,7 @@ def _generate_confs_prepare(
     ftps_address,
     davs_address,
     jupyter_services,
+    jupyter_services_enable_proxy_https,
     jupyter_services_proxy_config,
     jupyter_services_desc,
     cloud_services,
@@ -1640,7 +1642,8 @@ cert, oid and sid based https!
             # Get proxy template and append to template conf
             proxy_template = gen_balancer_proxy_template(
                 url, def_name, name, hosts, ws_hosts,
-                **service_proxy_config_kwargs
+                enable_proxy_https=jupyter_services_enable_proxy_https,
+                proxy_balancer_template_kwargs=service_proxy_config_kwargs
             )
             jupyter_proxies.append(proxy_template)
 

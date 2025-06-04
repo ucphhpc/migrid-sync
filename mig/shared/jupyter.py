@@ -33,9 +33,10 @@ from past.builtins import basestring
 
 
 def gen_balancer_proxy_template(url, define, name, member_hosts,
-                                ws_member_hosts, timeout=600,
-                                enable_proxy_ssl=False,
-                                ssl_proxy_ca_certificate_file=None):
+                                ws_member_hosts,
+                                timeout=600,
+                                enable_proxy_https=True,
+                                proxy_balancer_template_kwargs=None):
     """ Generates an apache proxy balancer configuration section template
      for a particular jupyter service. Relies on the
      https://httpd.apache.org/docs/2.4/mod/mod_proxy_balancer.html module to
@@ -47,13 +48,16 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
      in balancer member defitions.
     ws_member_hosts: The list of unique identifiers that should be used to fill
      in websocket balancer member defitions.
-    enable_proxy_ssl: Whether or not to enable SSL/TLS proxying.
-    ssl_proxy_ca_certificate_file: The path to the CA certificate file for
-     verifying the client certificate. If None, no verification is done.
+    enable_proxy_https: Whether or not to enable SSL/TLS proxying.
+    proxy_balancer_template_kwargs: The optional extra apache config options that is used to
+     generate the proxy balancer templates. This for instance can be used to pass SSL options
+    such as a custom self-signed CA that should be used to establish a
+    trusted SSL/TLS connection to the designated jupyter service.
+    An example of this could be {'SSLProxyCACertificateFile': 'path/to/local/ca-certificate.pem'}.
     """
 
-    if not ssl_proxy_ca_certificate_file:
-        ssl_proxy_ca_certificate_file = ''
+    if not proxy_balancer_template_kwargs:
+        proxy_balancer_template_kwargs = {}
 
     assert isinstance(url, basestring)
     assert isinstance(define, basestring)
@@ -61,8 +65,8 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     assert isinstance(member_hosts, list)
     assert isinstance(ws_member_hosts, list)
     assert isinstance(timeout, int)
-    assert isinstance(enable_proxy_ssl, bool)
-    assert isinstance(ssl_proxy_ca_certificate_file, basestring)
+    assert isinstance(enable_proxy_https, bool)
+    assert isinstance(proxy_balancer_template_kwargs, dict)
 
     fill_helpers = {
         'url': url,
@@ -76,7 +80,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         'timeout': timeout,
         'referer_fqdn': name.upper() + "_PROXY_FQDN=$1",
         'referer_url': '%{' + name.upper() + "_PROXY_PROTOCOL}e://%{" + name.upper() + "_PROXY_FQDN}e/" + name + "/hub",
-        'ssl_template': ''
+        'proxy_balancer_template': ''
     }
 
     for host in member_hosts:
@@ -85,17 +89,22 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     for ws_host in ws_member_hosts:
         fill_helpers['ws_hosts'] += ''.join(['        ', ws_host])
 
-    if enable_proxy_ssl:
-        ssl_template_kwargs = {
-            'ssl_proxy_ca_certificate_file': ssl_proxy_ca_certificate_file
-        }
-        ssl_template = """
-            SSLProxyCACertificateFile %(ssl_proxy_ca_certificate_file)s
-            SSLProxyVerify require
-            SSLProxyCheckPeerCN on
-            SSLProxyCheckPeerName on
-        """ % ssl_template_kwargs
-        fill_helpers["ssl_template"] = ssl_template
+    proxy_balancer_template = ""
+    if enable_proxy_https:
+        ssl_proxy_template_options = {}
+        if "SSLProxyVerify" not in proxy_balancer_template_kwargs:
+            ssl_proxy_template_options["SSLProxyVerify"] = "require"
+        if "SSLProxyCheckPeerCN" not in proxy_balancer_template_kwargs:
+            ssl_proxy_template_options["SSLProxyCheckPeerCN"] = "on"
+        if "SSLProxyCheckPeerName" not in proxy_balancer_template_kwargs
+            ssl_proxy_template_options["SSLProxyCheckPeerName"] = "on"
+        for key, value in proxy_balancer_template_kwargs.items():
+            ssl_proxy_template_options[key] = value
+
+        for key, value in ssl_proxy_template_options.items():
+            proxy_balancer_template += "%s %s\n" % (key, value)
+
+    fill_helpers["proxy_balancer_template"] = proxy_balancer_template
 
     template = """
 <IfDefine %(define)s>
@@ -103,13 +112,13 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
 
     ProxyTimeout %(timeout)s
     <Proxy balancer://%(name)s_hosts>
-        %(ssl_template)s
+        %(proxy_balancer_template)s
 %(hosts)s
         ProxySet stickysession=%(route_cookie)s
     </Proxy>
     # Websocket cluster
     <Proxy balancer://ws_%(name)s_hosts>
-        %(ssl_template)s
+        %(proxy_balancer_template)s
 %(ws_hosts)s
         ProxySet stickysession=%(route_cookie)s
     </Proxy>
