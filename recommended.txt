@@ -1,4 +1,4 @@
-# migrid core dependencies on a format suitable for pip install as described on
+# migrid full dependencies on a format suitable for pip install as described on
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 future
 # NOTE: python-3.6 and earlier versions require older pyotp, whereas 3.7+
@@ -51,6 +51,9 @@ psutil
 # sslkeylog requires libssl-dev or similar system package to build
 #sslkeylog
 pyenchant
+
+# Screenshoot helper requires selenium
+selenium
 
 # NOTE: core dependencies are listed in requirements.txt and can be installed
 #       by pointing pip there 
