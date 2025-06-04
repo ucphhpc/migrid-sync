@@ -96,7 +96,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
             ssl_proxy_template_options["SSLProxyVerify"] = "require"
         if "SSLProxyCheckPeerCN" not in proxy_balancer_template_kwargs:
             ssl_proxy_template_options["SSLProxyCheckPeerCN"] = "on"
-        if "SSLProxyCheckPeerName" not in proxy_balancer_template_kwargs
+        if "SSLProxyCheckPeerName" not in proxy_balancer_template_kwargs:
             ssl_proxy_template_options["SSLProxyCheckPeerName"] = "on"
         for key, value in proxy_balancer_template_kwargs.items():
             ssl_proxy_template_options[key] = value
