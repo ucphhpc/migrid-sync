@@ -90,20 +90,20 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     for ws_host in ws_member_hosts:
         fill_helpers['ws_hosts'] += ''.join(['        ', ws_host])
 
-    proxy_balancer_template = ""
+    proxy_balancer_options, proxy_balancer_template = {}, ""
     if enable_proxy_https:
-        ssl_proxy_template_options = {}
         if "SSLProxyVerify" not in proxy_balancer_template_kwargs:
-            ssl_proxy_template_options["SSLProxyVerify"] = "require"
+            proxy_balancer_options["SSLProxyVerify"] = "require"
         if "SSLProxyCheckPeerCN" not in proxy_balancer_template_kwargs:
-            ssl_proxy_template_options["SSLProxyCheckPeerCN"] = "on"
+            proxy_balancer_options["SSLProxyCheckPeerCN"] = "on"
         if "SSLProxyCheckPeerName" not in proxy_balancer_template_kwargs:
-            ssl_proxy_template_options["SSLProxyCheckPeerName"] = "on"
-        for key, value in proxy_balancer_template_kwargs.items():
-            ssl_proxy_template_options[key] = value
+            proxy_balancer_options["SSLProxyCheckPeerName"] = "on"
 
-        for key, value in ssl_proxy_template_options.items():
-            proxy_balancer_template += "%s %s\n" % (key, value)
+    for key, value in proxy_balancer_template_kwargs.items():
+        proxy_balancer_options[key] = value
+
+    for key, value in proxy_balancer_options.items():
+        proxy_balancer_template += "%s %s\n" % (key, value)
 
     fill_helpers["proxy_balancer_template"] = proxy_balancer_template
 
