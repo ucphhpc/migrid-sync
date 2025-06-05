@@ -345,11 +345,12 @@ def get_nav_link(driver, url, nav_class):
     return link
 
 
-def shared_logout(driver, url, login, passwd, callbacks={}):
+def shared_logout(driver, url, double_confirm, login, passwd, callbacks={}):
     """Logout through the shared logout navmenu entry and confirm. Optionally
     execute any provided callbacks for confirm states. The callbacks dictionary
     should contain state names bound to functions accepting driver and state
     name like do_stuff(driver, state) .
+    The double_confirm arg specifies if one or two confirm steps are needed.
     """
     status = True
     do_logout = False
@@ -380,21 +381,40 @@ def shared_logout(driver, url, login, passwd, callbacks={}):
         # print("DEBUG: click confirm elem: %s" % confirm_elem)
         confirm_elem.click()
         # Upstream OID(C) may have additional logout step
-        print("Confirm logout again")
-        try:
-            confirm_elem = driver.find_element(by_what('xpath'),
-                                               "//button[@value='Yes']")
-            # print("DEBUG: found confirm elem: %s" % confirm_elem)
-            state = 'logout-confirm-upstream'
-            if callbacks.get(state, None):
-                callbacks[state](driver, state)
-            # print("DEBUG: click confirm elem: %s" % confirm_elem)
-            confirm_elem.click()
-        except Exception as exc:
-            print("WARNING: failed in secondary logout: %s" % exc)
+        if double_confirm:
+            print("Confirm logout again")
+            try:
+                confirm_elem = driver.find_element(by_what('xpath'),
+                                                   "//button[@value='Yes']")
+                # print("DEBUG: found confirm elem: %s" % confirm_elem)
+                state = 'logout-confirm-upstream'
+                if callbacks.get(state, None):
+                    callbacks[state](driver, state)
+                # print("DEBUG: click confirm elem: %s" % confirm_elem)
+                confirm_elem.click()
+            except Exception as exc:
+                print("WARNING: failed in secondary logout: %s" % exc)
     else:
         status = False
         print("Confirm login NOT found")
 
     print("Finished logout: %s" % status)
     return status
+
+
+def mig_logout(driver, url, login, passwd, callbacks={}):
+    """Logout through the shared logout navmenu entry and confirm once. Optionally
+    execute any provided callbacks for confirm states. The callbacks dictionary
+    should contain state names bound to functions accepting driver and state
+    name like do_stuff(driver, state) .
+    """
+    return shared_logout(driver, url, False, login, passwd, callbacks)
+
+
+def ucph_logout(driver, url, login, passwd, callbacks={}):
+    """Logout through the shared logout navmenu entry and try to confirm twice.
+    Optionally execute any provided callbacks for confirm states. The callbacks
+    dictionary should contain state names bound to functions accepting driver
+    and state name like do_stuff(driver, state) .
+    """
+    return shared_logout(driver, url, True, login, passwd, callbacks)
