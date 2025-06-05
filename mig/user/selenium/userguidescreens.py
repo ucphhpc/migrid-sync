@@ -56,8 +56,9 @@ else:
 
 try:
     from mig.user.selenium.migcore import init_driver, ucph_login, mig_login, \
-        shared_twofactor, shared_logout, save_screen, scroll_to_elem, \
-        doubleclick_elem, select_item_by_index, get_nav_link, by_what
+        shared_twofactor, ucph_logout, mig_logout, save_screen, \
+        scroll_to_elem, doubleclick_elem, select_item_by_index, get_nav_link, \
+        by_what
 except ImportError:
     print("Failed to import migrid modules - missing PYTHONPATH=$MIG_ROOT?")
     exit(1)
@@ -1033,7 +1034,13 @@ def main():
                 time.sleep(1)
 
         print("Log out before exit")
-        status = shared_logout(driver, url, login, passwd, logout_calls)
+        if openid.lower() == 'ucph':
+            status = ucph_logout(driver, url, login, passwd, ucph_calls)
+        elif openid.lower() == 'mig':
+            status = mig_logout(driver, url, login, passwd, mig_calls)
+        else:
+            print("No such OpenID handler: %s" % openid)
+            status = False
 
         print("Now you can proceed using the browser or interrupt with Ctrl-C")
         while True:
