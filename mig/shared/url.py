@@ -43,11 +43,11 @@ import sys
 #       once we have unicode/bytecode mix-up sorted out.
 if sys.version_info[0] >= 3:
     from urllib.parse import quote, unquote, urlencode, parse_qs, parse_qsl, \
-        urlsplit, urlparse
+        urlsplit, urlparse, urljoin
     from urllib.request import urlopen, FancyURLopener
 else:
     from urllib import quote, unquote, urlencode, urlopen, FancyURLopener
-    from urlparse import parse_qs, parse_qsl, urlsplit, urlparse
+    from urlparse import parse_qs, parse_qsl, urlsplit, urlparse, urljoin
 
 try:
     from mig.shared.defaults import csrf_field
