@@ -90,7 +90,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     for ws_host in ws_member_hosts:
         fill_helpers['ws_hosts'] += ''.join(['        ', ws_host])
 
-    proxy_balancer_options, proxy_balancer_template = {}, ""
+    proxy_balancer_options, proxy_balancer_template = {}, ''
     if enable_proxy_https:
         if "SSLProxyVerify" not in proxy_balancer_template_kwargs:
             proxy_balancer_options["SSLProxyVerify"] = "require"
@@ -103,7 +103,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         proxy_balancer_options[key] = value
 
     for key, value in proxy_balancer_options.items():
-        proxy_balancer_template += "%s %s\n" % (key, value)
+        proxy_balancer_template += ''.join(['        ', '%s %s\n' % (key, value)])
 
     fill_helpers["proxy_balancer_template"] = proxy_balancer_template
 
@@ -113,13 +113,13 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
 
     ProxyTimeout %(timeout)s
     <Proxy balancer://%(name)s_hosts>
-        %(proxy_balancer_template)s
+%(proxy_balancer_template)s
 %(hosts)s
         ProxySet stickysession=%(route_cookie)s
     </Proxy>
     # Websocket cluster
     <Proxy balancer://ws_%(name)s_hosts>
-        %(proxy_balancer_template)s
+%(proxy_balancer_template)s
 %(ws_hosts)s
         ProxySet stickysession=%(route_cookie)s
     </Proxy>
