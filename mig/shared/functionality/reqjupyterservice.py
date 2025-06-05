@@ -54,11 +54,11 @@ import shutil
 import random
 try:
     import requests
-except ImportError as err:
+except ImportError:
     requests = None
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, extract_field
+from mig.shared.base import client_id_dir, extract_field, force_native_str
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import session_id_bytes
 from mig.shared.fileio import make_symlink, pickle, unpickle, write_file, \
@@ -68,6 +68,7 @@ from mig.shared.httpsclient import unescape
 from mig.shared.init import initialize_main_variables
 from mig.shared.pwcrypto import generate_random_ascii
 from mig.shared.ssh import generate_ssh_rsa_key_pair, tighten_key_perms
+from mig.shared.url import urljoin
 from mig.shared.workflows import create_workflow_session_id, \
     get_workflow_session_id
 
@@ -281,6 +282,23 @@ def jupyter_host(configuration, output_objects, user, url):
     return (output_objects, returnvalues.OK)
 
 
+def jupyterhub_session_post_request(session, url, params=None, **kwargs):
+    """
+    Sends a post request to a URL
+    :param session: the session object that can be used to conduct the post request
+    :param url: the designated URL that the post request is sent to
+    :param params: parameters to pass to the post request
+    :return: the response object from the post request
+    """
+    if not params:
+        params = {}
+
+    if "_xsrf" in session.cookies:
+        params["_xsrf"] = session.cookies['_xsrf']
+
+    return session.post(url, params=params, **kwargs)
+
+
 def reset(configuration):
     """Helper function to clean up all jupyter directories and mounts
     :param configuration: the MiG Configuration object
@@ -445,10 +463,13 @@ def main(client_id, user_arguments_dict):
     # Make sure ssh daemon does not complain
     tighten_key_perms(configuration, client_id)
 
-    url_base = '/' + service['service_name']
-    url_home = url_base + '/home'
-    url_auth = host + url_base + '/hub/login'
-    url_data = host + url_base + '/hub/set-user-data'
+    url_service = urljoin('/', service['service_name'])
+    url_home = urljoin(url_service + "/", 'home')
+
+    url_base = urljoin(host, service['service_name'])
+    url_hub = urljoin(url_base + "/", 'hub')
+    url_auth = urljoin(url_hub + "/", 'login')
+    url_data = urljoin(url_hub + "/", 'set-user-data')
 
     # Does the client home dir contain an active mount key
     # If so just keep on using it.
@@ -520,15 +541,12 @@ def main(client_id, user_arguments_dict):
 
         with requests.session() as session:
             # Refresh cookies
-            session.get(url_auth)
-            auth_params = {}
-            if "_xsrf" in session.cookies:
-                auth_params = {"_xsrf": session.cookies['_xsrf']}
+            session.get(url_hub)
             # Authenticate and submit data
-            response = session.post(url_auth, headers=auth_header, params=auth_params)
+            response = jupyterhub_session_post_request(session, url_auth, headers=auth_header)
             if response.status_code == 200:
                 for user_data_type, user_data in user_post_data.items():
-                    response = session.post(url_data, json={user_data_type: user_data}, params=auth_params)
+                    response = jupyterhub_session_post_request(session, url_data, json={user_data_type: user_data})
                     if response.status_code != 200:
                         logger.error(
                             "Jupyter: User %s failed to submit data %s to %s"
@@ -549,28 +567,36 @@ def main(client_id, user_arguments_dict):
 
     # Generate private/public keys
     (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair(
-        encode_utf8=True)
+        encode_utf8=True
+    )
+
+    logger.debug("User: %s - Creating a new jupyter mount keyset - "
+                 "private_key: %s public_key: %s "
+                 % (client_id, mount_private_key, mount_public_key))
 
     # Known hosts
     sftp_addresses = socket.gethostbyname_ex(
         configuration.user_sftp_show_address or socket.getfqdn())
 
+    # Write the authorization file
+    auth_content = []
+    str_mount_public_key = force_native_str(mount_public_key)
     # Subsys sftp support
     if configuration.site_enable_sftp_subsys:
         # Restrict possible mount agent
-        auth_content = []
         restrict_opts = 'no-agent-forwarding,no-port-forwarding,no-pty,'
         restrict_opts += 'no-user-rc,no-X11-forwarding'
         restrictions = '%s' % restrict_opts
-        auth_content.append('%s %s\n' % (restrictions, mount_public_key))
-        # Write auth file
-        write_file('\n'.join(auth_content),
-                   os.path.join(subsys_path, session_id
-                                + '.authorized_keys'), logger, umask=0o27)
+        auth_content.append('%s %s\n' % (restrictions, str_mount_public_key))
+    else:
+        auth_content.append('%s\n' % str_mount_public_key)
 
-    logger.debug("User: %s - Creating a new jupyter mount keyset - "
-                 "private_key: %s public_key: %s "
-                 % (client_id, mount_private_key, mount_public_key))
+    # Write auth file
+    write_file(
+        '\n'.join(auth_content),
+        os.path.join(subsys_path, session_id + '.authorized_keys'),
+        logger, umask=0o27
+    )
 
     jupyter_dict = {
         'MOUNT_HOST': configuration.short_title,
@@ -626,15 +652,12 @@ def main(client_id, user_arguments_dict):
     # First login
     with requests.session() as session:
         # Refresh cookies
-        session.get(url_auth)
-        auth_params = {}
-        if "_xsrf" in session.cookies:
-            auth_params = {"_xsrf": session.cookies['_xsrf']}
+        session.get(url_hub)
         # Authenticate
-        response = session.post(url_auth, headers=auth_header, params=auth_params)
+        response = jupyterhub_session_post_request(session, url_auth, headers=auth_header)
         if response.status_code == 200:
             for user_data_type, user_data in user_post_data.items():
-                response = session.post(url_data, json={user_data_type: user_data}, params=auth_params)
+                response = jupyterhub_session_post_request(session, url_data, json={user_data_type: user_data})
                 if response.status_code != 200:
                     logger.error("Jupyter: User %s failed to submit data %s to %s"
                                 % (client_id, user_data, url_data))

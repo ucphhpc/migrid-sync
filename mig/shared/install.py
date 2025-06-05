@@ -84,6 +84,22 @@ def abspath(path, start):
         return path
     return os.path.normpath(os.path.join(start, path))
 
+def transform_str_to_dict(input_str):
+    """
+    Transforms a string input into a Python literal or container.
+    The function will only return the transformed object if it becomes a dictionary.
+    input_str: The input string that is expected to be
+     structured as a dictionary. A valid input_str for example could be '{'hello': 'world'}'.
+    """
+    try:
+        output_dict = ast.literal_eval(input_str)
+    except SyntaxError as err:
+        return False
+
+    if not isinstance(output_dict, dict):
+        return False
+    return output_dict
+
 
 def determine_timezone(_environ=os.environ, _path_exists=os.path.exists, _print=print):
     """Attempt to detect the timezone in various known portable ways."""
@@ -318,6 +334,8 @@ def generate_confs(
     ftps_address='',
     davs_address='',
     jupyter_services='',
+    jupyter_services_enable_proxy_https=True,
+    jupyter_services_proxy_config='{}',
     jupyter_services_desc='{}',
     cloud_services='',
     cloud_services_desc='{}',
@@ -640,6 +658,8 @@ def _generate_confs_prepare(
     ftps_address,
     davs_address,
     jupyter_services,
+    jupyter_services_enable_proxy_https,
+    jupyter_services_proxy_config,
     jupyter_services_desc,
     cloud_services,
     cloud_services_desc,
@@ -1496,17 +1516,18 @@ cert, oid and sid based https!
         jupyter_openids, jupyter_oidcs, jupyter_rewrites = [], [], []
         services = user_dict['__JUPYTER_SERVICES__'].split()
 
-        try:
-            descs = ast.literal_eval(jupyter_services_desc)
-        except SyntaxError as err:
-            print('Error: jupyter_services_desc '
-                  'could not be intepreted correctly. Double check that your '
+        jupyter_services_proxy_configs = transform_str_to_dict(jupyter_services_proxy_config)
+        if not isinstance(jupyter_services_proxy_configs, dict):
+            print('Error: jupyter_services_proxy_config '
+                  'could not be interpreted correctly. Double check that your '
                   'formatting is correct, a dictionary formatted string is expected.')
             sys.exit(1)
 
-        if not isinstance(descs, dict):
-            print('Error: %s was incorrectly formatted,'
-                  ' expects a string formatted as a dictionary' % descs)
+        jupyter_services_descs = transform_str_to_dict(jupyter_services_desc)
+        if not isinstance(jupyter_services_descs, dict):
+            print('Error: jupyter_services_desc '
+                  'could not be interpreted correctly. Double check that your '
+                  'formatting is correct, a dictionary formatted string is expected.')
             sys.exit(1)
 
         service_hosts = {}
@@ -1560,8 +1581,8 @@ cert, oid and sid based https!
                 '__JUPYTER_%s_HOSTS__' % u_name: ' '.join(values['hosts'])
             }
 
-            if name in descs:
-                desc_value = descs[name] + "\n"
+            if name in jupyter_services_descs:
+                desc_value = jupyter_services_descs[name] + "\n"
             else:
                 desc_value = "\n"
 
@@ -1599,8 +1620,7 @@ cert, oid and sid based https!
                 ws_host = host.replace(
                     "https://", "wss://").replace("http://", "ws://")
                 member_def = "Define JUPYTER_%s %s" % (name_index, host)
-                ws_member_def = "Define WS_JUPYTER_%s %s" % (name_index,
-                                                             ws_host)
+                ws_member_def = "Define WS_JUPYTER_%s %s" % (name_index, ws_host)
 
                 # No user supplied port, assign based on url prefix
                 if len(host.split(":")) < 3:
@@ -1617,9 +1637,14 @@ cert, oid and sid based https!
                     ws_member_def += ":%s\n" % port
 
                 jupyter_defs.extend([member_def, ws_member_def])
+
+            service_proxy_config_kwargs = jupyter_services_proxy_configs.get(name, {})
             # Get proxy template and append to template conf
-            proxy_template = gen_balancer_proxy_template(url, def_name, name,
-                                                         hosts, ws_hosts)
+            proxy_template = gen_balancer_proxy_template(
+                url, def_name, name, hosts, ws_hosts,
+                enable_proxy_https=jupyter_services_enable_proxy_https,
+                proxy_balancer_template_kwargs=service_proxy_config_kwargs
+            )
             jupyter_proxies.append(proxy_template)
 
         user_dict['__JUPYTER_DEFS__'] = '\n'.join(jupyter_defs)
