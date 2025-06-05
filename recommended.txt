@@ -47,7 +47,10 @@ nbformat
 more-itertools
 nbconvert
 papermill
-notebook_parameterizer
+# NOTE: python-2.7 and possibly early python-3 version require older
+# notebook_parameterizer, whereas 3.6+ should work with later versions.
+notebook_parameterizer;python_version >= "3.6"
+notebook_parameterizer<0.0.4;python_version < "3.6"
 psutil
 # sslkeylog requires libssl-dev or similar system package to build
 #sslkeylog
