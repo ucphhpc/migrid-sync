@@ -81,9 +81,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # This is necessary to get the commits
-      - name: Setup environment
+      - name: Setup environment with full recommended dependencies
         run: |
-          make PYTHON_BIN=python2 PY=2 dependencies
+          make PYTHON_BIN=python2 PY=2 ALLDEPS=1 dependencies
       - name: Lint with pylint
         run: |
           # NOTE: we only run pylint error check for changed python files to limit noise
