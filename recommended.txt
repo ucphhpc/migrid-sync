@@ -34,7 +34,8 @@ pyftpdlib<2.0;python_version <= "3.6"
 watchdog
 scandir
 python-openid
-irclib; python_version < '3.0'
+# NOTE: this used to be called irclib and is untested for any recent versions 
+irc
 jsonrpclib
 requests
 # cracklib requires libcrack2-dev or similar system package to build
