@@ -74,7 +74,7 @@ jobs:
           sudo apt install -y git findutils make
       - name: Install dependencies
         run: |
-          dnf install -y enchant cracklib openssl-devel
+          sudo apt install -y libenchant-2-dev libcrack2-dev libssl-dev
           python -m pip install --upgrade pip
           pip install flake8 pylint #pytest
       # We may need git installed to get a full repo clone rather than unpacked archive
