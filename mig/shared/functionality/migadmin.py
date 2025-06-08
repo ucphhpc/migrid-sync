@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,7 @@ from mig.shared import returnvalues
 from mig.shared.accountreq import build_accountreqitem_object, \
     list_account_reqs, get_account_req, accept_account_req, \
     peer_account_req, reject_account_req
-from mig.shared.base import force_utf8_rec, force_native_str
+from mig.shared.base import force_native_str_rec, force_native_str
 from mig.shared.defaults import default_pager_entries, csrf_field, \
     keyword_any, keyword_auto, AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT
@@ -420,16 +420,16 @@ provide access to e.g. managing the grid job queues.
 </ul>
 """})
 
-    output_objects.append({'object_type': 'html_form', 'text':  '''
+    output_objects.append({'object_type': 'html_form', 'text': '''
 <div id="serverstatus-tab">
 '''})
     output_objects.append({'object_type': 'html_form', 'text': html})
-    output_objects.append({'object_type': 'html_form', 'text':  '''
+    output_objects.append({'object_type': 'html_form', 'text': '''
     </div>
 '''})
 
     html = ''
-    output_objects.append({'object_type': 'html_form', 'text':  '''
+    output_objects.append({'object_type': 'html_form', 'text': '''
 <div id="accountreqs-tab">
 '''})
     output_objects.append(
@@ -514,10 +514,10 @@ provide access to e.g. managing the grid job queues.
                            'accountreqs': accountreqs})
 
     output_objects.append({'object_type': 'html_form', 'text': html})
-    output_objects.append({'object_type': 'html_form', 'text':  '''
+    output_objects.append({'object_type': 'html_form', 'text': '''
     </div>
 '''})
-    output_objects.append({'object_type': 'html_form', 'text':  '''
+    output_objects.append({'object_type': 'html_form', 'text': '''
     <div id="sitestats-tab">
 '''})
     html = ''
@@ -540,7 +540,7 @@ provide access to e.g. managing the grid job queues.
             stats = all_stats[prefix] = all_stats.get(prefix, {})
             if not stats:
                 stats = load(path, serializer=file_format)
-                all_stats[prefix].update(force_utf8_rec(stats))
+                all_stats[prefix].update(force_native_str_rec(stats))
 
         sorted_stats = list(all_stats.items())
         sorted_stats.sort()
@@ -554,7 +554,7 @@ provide access to e.g. managing the grid job queues.
         html += '<span class="warningtext">Site stats not available</span>'
 
     output_objects.append({'object_type': 'html_form', 'text': html})
-    output_objects.append({'object_type': 'html_form', 'text':  '''
+    output_objects.append({'object_type': 'html_form', 'text': '''
     </div>
 '''})
 
