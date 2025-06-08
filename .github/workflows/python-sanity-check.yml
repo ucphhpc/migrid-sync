@@ -72,6 +72,7 @@ jobs:
           dnf install -y git findutils make python2 python2-pip
       - name: Install dependencies
         run: |
+          dnf install -y enchant cracklib-devel openssl-devel
           python2 -m pip install --upgrade pip
           pip2 install flake8 pylint #pytest
           if [ -f requirements.txt ]; then pip2 install -r requirements.txt; fi
