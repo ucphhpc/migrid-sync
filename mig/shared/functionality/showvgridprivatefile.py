@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridprivatefile - View VGrid private files for owners and members
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -36,8 +36,10 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
+from mig.shared.fileio import read_file, read_file_lines
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import initialize_main_variables, find_entry, \
+    start_download
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import vgrid_is_owner_or_member
 
@@ -53,7 +55,8 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+        initialize_main_variables(client_id, op_title=False, op_header=False,
+                                  op_menu=False)
     defaults = signature()[1]
     label = configuration.site_vgrid_label
     # NOTE: no title or header here since output is usually raw
@@ -86,6 +89,8 @@ access the private files.''' % (vgrid_name, label)})
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_private_base,
                                             vgrid_name)) + os.sep
 
+    start_entry = find_entry(output_objects, 'start')
+
     # Strip leading slashes to avoid join() throwing away prefix
 
     rel_path = path.lstrip(os.sep)
@@ -97,22 +102,26 @@ access the private files.''' % (vgrid_name, label)})
 private files dir.''' % label})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    # NOTE: we use a simplified version of the cat.py handling here and simply
+    #       return anything but html and txt as downloads.
+    if abs_path.endswith('.html') or abs_path.endswith('.txt'):
+        force_file = False
+        src_mode = "r"
+    else:
+        force_file = True
+        src_mode = "rb"
+
+    output_lines = []
     try:
-        # TODO: port to read_file
-        private_fd = open(abs_path, 'rb')
-        entry = {'object_type': 'binary',
-                 'data': private_fd.read()}
-        # Serve web pages directly with default html content type but cut away
-        # all the usual web page formatting to show only contents otherwise
-        if abs_path.endswith('.html'):
-            headers = []
+        if force_file:
+            content = read_file(abs_path, logger, mode=src_mode)
+            lines = [content]
         else:
-            headers = [('Content-Disposition', 'attachment; filename="%s";' %
-                        os.path.basename(abs_path))]
-        output_objects = [{'object_type': 'start', 'headers': headers}, entry,
-                          {'object_type': 'script_status'},
-                          {'object_type': 'end'}]
-        private_fd.close()
+            content = lines = read_file_lines(abs_path, logger,
+                                              mode=src_mode)
+        if content is None:
+            raise Exception("could not read file")
+        output_lines += lines
     except Exception as exc:
         logger.error("reading private file %s failed: %s" % (abs_path, exc))
         output_objects.append({'object_type': 'error_text', 'text':
@@ -120,4 +129,17 @@ private files dir.''' % label})
                                                                      path)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    entry = {'object_type': 'file_output',
+             'lines': output_lines,
+             'wrap_binary': force_file,
+             'verbatim': not force_file,
+             'wrap_targets': ['lines']}
+    # Inject download marker when force_file is set
+    if force_file:
+        download_marker = start_download(configuration, abs_path,
+                                         output_lines)
+        start_entry.update(download_marker)
+    output_objects.append(entry)
+    # Don't append status or timing info
+    output_objects.append({'object_type': 'script_status'})
     return (output_objects, returnvalues.OK)
