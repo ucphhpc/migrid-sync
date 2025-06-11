@@ -1292,9 +1292,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'file_output':
             if 'path' in i:
                 lines.append('File: %s<br />' % i['path'])
-            # NOTE: we shouldn't expect user file contents to be safe here
-            lines.append('<pre>%s</pre><br />' %
-                         html_escape(''.join(i['lines'])))
+            if i.get('verbatim', False):
+                lines.append(''.join(i['lines']))
+            else:
+                # NOTE: we shouldn't expect user file contents to be safe here
+                lines.append('<pre>%s</pre><br />' %
+                             html_escape(''.join(i['lines'])))
         elif i['object_type'] == 'list':
             lines.append('<ul>')
             for list_item in i['list']:
