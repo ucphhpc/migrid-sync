@@ -25,7 +25,7 @@ MIG_DEFAULTS=-D'MIG_UID=$(shell id -u mig)' \
 	-D'JOBSIDMOUNT_LENGTH=64' \
 	-D'JUPYTERSIDMOUNT_HOME="$(shell ~mig/mig/server/readconfval.py sessid_to_jupyter_mount_link_home)"' \
 	-D'JUPYTERSIDMOUNT_LENGTH=64' \
-	-D'USERNAME_REGEX="^[a-zA-Z0-9][a-zA-Z0-9.@_ -]{0,127}$$"'
+	-D'USERNAME_REGEX="^[a-zA-Z0-9][-a-zA-Z0-9.@_ ]{0,127}$$"'
 ### End of MiG site variables
 
 #### Start of compiler configuration section ### 
