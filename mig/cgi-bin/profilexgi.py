@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# profilexgi - profile a xgi backend request
+# profilexgi - profile an xgi functionality backend request
 # Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -55,9 +55,9 @@ from mig.shared.url import parse_qs
 
 
 def usage():
-    """Basic usage help."""
-    print(
-        'Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS] [REMOTE_USER] [REMOTE_ADDR] [AUTO_CSRF]' % sys.argv[0])
+    """Show basic usage help."""
+    print('Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS] ' % sys.argv[0] +
+          '[REMOTE_USER] [REMOTE_ADDR] [AUTO_CSRF]')
 
 
 if len(sys.argv) < 2:
@@ -67,7 +67,7 @@ if len(sys.argv) < 2:
 script = sys.argv[1]
 query = ''
 method = 'GET'
-run_as_dn = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Test User/emailAddress=nosuch@bogusdomain.net'
+run_as_dn = '/C=DK/ST=NA/L=NA/O=ACME/OU=NA/CN=User/emailAddress=user@acme.org'
 auto_csrf = False
 remote_user = ''
 remote_addr = ''
@@ -157,6 +157,7 @@ try:
 except Exception as err:
     print("could not import %r (%s): %s" % (backend, module_path, err))
     sys.exit(2)
+(output_objects, (ret_code, ret_msg)) = (None, (None, None))
 try:
     user_arguments_dict = parse_qs(query)
     (output_objects, (ret_code, ret_msg)) = main(client_id, user_arguments_dict)
@@ -166,8 +167,12 @@ except Exception as err:
     sys.exit(3)
 
 profiler.disable()
+print("completed execution with %d output elements and result %s %s" %
+      (len(output_objects), ret_code, ret_msg))
+print()
 s = io.StringIO()
 stats = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
-# Print top 20 functions
-stats.print_stats(20)
+show_lines = 20
+print("Top %d functions from profiling:" % show_lines)
+stats.print_stats(show_lines)
 print(s.getvalue())
