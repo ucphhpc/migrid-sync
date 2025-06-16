@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# fakecgi - fake a cgi request
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# profilexgi - profile a xgi backend request
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -29,10 +29,13 @@
 # It should only be accessible from the command line to avoid
 # unauthenticated user access to CGI scripts.
 
-"""This is a simple wrapper to fake actual CGI GET/POST execution of a
-script. Some of the MiG cgi scripts may require the provided RUNAS user
-to exist for actions to work.
+"""This is a simple wrapper to profile execution of an Xgi backend.
+
+It works similarly to the fakecgi helper but instead of running the actual CGI
+script as a user it executes the corresponding functionality backend with
+cProfiler attached for profiling where the execution spends call and time.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -53,7 +56,8 @@ from mig.shared.url import parse_qs
 
 def usage():
     """Basic usage help."""
-    print('Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS] [REMOTE_USER] [REMOTE_ADDR] [AUTO_CSRF]' % sys.argv[0])
+    print(
+        'Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS] [REMOTE_USER] [REMOTE_ADDR] [AUTO_CSRF]' % sys.argv[0])
 
 
 if len(sys.argv) < 2:
