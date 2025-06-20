@@ -161,6 +161,7 @@ Where VERIFY_OPTIONS may be one or more of:
    -h                  Show this help
    -I CERT_DN          Filter to Archives of user ID (distinguished name pattern)
    -n ARCHIVE_NAME     Filter to specific Archive name(s) (pattern)
+   -s REQUIRED_STATE   Fail if Archive is not in REQUIRED_STATE (default is ANY)
    -v                  Verbose output
 """ % {'name': name})
 
