@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # verifyarchives - Search for missing files in user Archives
-# Copyright (C) 2021-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -30,19 +30,18 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-import datetime
 import fnmatch
 import getopt
 import os
-import pickle
 import sys
 import time
 
 from mig.shared.base import client_dir_id, distinguished_name_to_user
 from mig.shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     public_archive_index, public_archive_files, public_archive_doi, \
-    keyword_pending, keyword_final
+    keyword_pending, keyword_final, keyword_any
 from mig.shared.freezefunctions import sorted_hash_algos, checksum_file
+from mig.shared.serial import load
 
 
 def fuzzy_match(i, j, offset=2.0):
@@ -54,7 +53,8 @@ def fuzzy_match(i, j, offset=2.0):
     return (i - offset < j and j < i + offset)
 
 
-def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
+def check_archive_integrity(configuration, user_id, freeze_path,
+                            required_state=keyword_any, verbose=False):
     """Inspect Archives in freeze_path and compare contents to pickled cache.
     The cache is a list with one dictionary per file using the format:
     {'sha512sum': '...', 'name': 'relpath/to/file.ext',
@@ -62,6 +62,8 @@ def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
     'sha1sum': '...', 'size': 123247} and where the checksums are only actually
     informative if the user requested them on showfreeze. Thus, just check
     timestamp and size in general.
+    If required_state argument is passed a given archive state the check also
+    fails if the archive is in any other state.
     """
     if verbose:
         print("Compare cache and contents for %s" % freeze_path)
@@ -81,15 +83,16 @@ def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
             return True
 
     try:
-        cache_fd = open(cache_path)
-        cache = pickle.load(cache_fd)
-        cache_fd.close()
-        meta_fd = open(meta_path)
-        meta = pickle.load(meta_fd)
-        meta_fd.close()
+        cache = load(cache_path)
+        meta = load(meta_path)
     except Exception as exc:
         print("Could not open archive helpers %s and %s for verification: %s" %
               (cache_path, meta_path, exc))
+        return False
+    meta_state = meta.get('STATE', keyword_pending)
+    if required_state != keyword_any and meta_state != required_state:
+        print("Archive in %s is in %r state but check demanded state %r" %
+              (freeze_path, meta_state, required_state))
         return False
     for entry in cache:
         if entry['name'] in ignore_files:
@@ -100,7 +103,6 @@ def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
             archived_size = archived_stat.st_size
             archived_created = archived_stat.st_ctime
             archived_modified = archived_stat.st_mtime
-            meta_state = meta.get('STATE', keyword_pending)
             if archived_size != entry['size']:
                 if meta_state == keyword_final:
                     print("Archive entry %s has wrong size %d (expected %d)" %
@@ -166,11 +168,12 @@ Where VERIFY_OPTIONS may be one or more of:
 if '__main__' == __name__:
     conf_path = None
     verbose = False
-    opt_args = 'A:B:c:hI:n:v'
+    opt_args = 'A:B:c:hI:n:s:v'
     now = int(time.time())
     created_after, created_before = 0, now
     distinguished_name = '*'
     archive_name = '*'
+    required_state = keyword_any
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
     except getopt.GetoptError as err:
@@ -206,6 +209,8 @@ if '__main__' == __name__:
             distinguished_name = val
         elif opt == '-n':
             archive_name = val
+        elif opt == '-s':
+            required_state = val
         elif opt == '-v':
             verbose = True
         else:
@@ -233,7 +238,9 @@ if '__main__' == __name__:
             continue
 
         for freeze_name in os.listdir(base_path):
-            if not fnmatch.fnmatch(freeze_name, "archive-??????"):
+            # NOTE: tempfile increased random part from 6 to 8 chars in py3
+            if not fnmatch.fnmatch(freeze_name, "archive-??????") and \
+               not fnmatch.fnmatch(freeze_name, "archive-????????"):
                 continue
             if not fnmatch.fnmatch(freeze_name, archive_name):
                 if verbose:
@@ -257,7 +264,7 @@ if '__main__' == __name__:
     for (user_id, archive_list) in archive_hits.items():
         for freeze_path in archive_list:
             verified = check_archive_integrity(
-                configuration, user_id, freeze_path, verbose)
+                configuration, user_id, freeze_path, required_state, verbose)
             if verified:
                 print("%s [PASS]" % freeze_path)
             else:
