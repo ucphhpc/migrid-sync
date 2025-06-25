@@ -29,7 +29,7 @@ MIG_DEFAULTS=-D'MIG_UID=$(shell id -u mig)' \
 	-D'PASSWORD_MIN_CLASSES=3' \
 	-D'SHARELINK_HOME="$(shell ~mig/mig/server/readconfval.py sharelink_home)"' \
 	-D'SHARELINK_LENGTH=10' \
-	-D'USERNAME_REGEX="^[a-zA-Z0-9][a-zA-Z0-9.@_\\-\\ ]{0,127}$$"'
+	-D'USERNAME_REGEX="^[a-zA-Z0-9][-a-zA-Z0-9.@_ ]{0,127}$$"'
 ### End of MiG site variables
 
 #### Start of compiler configuration section ### 
