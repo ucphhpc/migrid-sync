@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # verifyarchives - Search for missing files in user Archives
-# Copyright (C) 2021-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -34,7 +34,6 @@ import datetime
 import fnmatch
 import getopt
 import os
-import pickle
 import sys
 import time
 
@@ -43,6 +42,7 @@ from mig.shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     public_archive_index, public_archive_files, public_archive_doi, \
     keyword_pending, keyword_final
 from mig.shared.freezefunctions import sorted_hash_algos, checksum_file
+from mig.shared.serial import load
 
 
 def fuzzy_match(i, j, offset=2.0):
@@ -81,12 +81,8 @@ def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
             return True
 
     try:
-        cache_fd = open(cache_path)
-        cache = pickle.load(cache_fd)
-        cache_fd.close()
-        meta_fd = open(meta_path)
-        meta = pickle.load(meta_fd)
-        meta_fd.close()
+        cache = load(cache_path)
+        meta = load(meta_path)
     except Exception as exc:
         print("Could not open archive helpers %s and %s for verification: %s" %
               (cache_path, meta_path, exc))
