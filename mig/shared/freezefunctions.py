@@ -41,10 +41,11 @@ from mig.shared.base import client_id_dir, distinguished_name_to_user, \
     brief_list, pretty_format_user, get_site_base_url
 from mig.shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     wwwpublic_alias, public_archive_dir, public_archive_index, \
-    public_archive_files, public_archive_doi, freeze_flavors, keyword_final, \
-    keyword_pending, keyword_updating, keyword_auto, keyword_any, \
-    keyword_all, max_freeze_files, archives_cache_filename, \
-    freeze_on_tape_filename, archive_marks_dir, csrf_field
+    public_archive_files, public_archive_doi, public_archive_updates, \
+    freeze_flavors, keyword_final, keyword_pending, keyword_updating, \
+    keyword_auto, keyword_any, keyword_all, max_freeze_files, \
+    archives_cache_filename, freeze_on_tape_filename, archive_marks_dir, \
+    csrf_field
 from mig.shared.fileio import checksum_file, write_file, copy_file, copy_rec, \
     move_file, move_rec, remove_rec, delete_file, delete_symlink, \
     makedirs_rec, make_symlink, make_temp_dir, acquire_file_lock, \
@@ -67,7 +68,7 @@ __public_meta = [('AUTHOR', 'Author(s)'), ('NAME', 'Title'),
                  ('DESCRIPTION', 'Description')]
 __meta_archive_internals = [freeze_meta_filename, freeze_lock_filename]
 __public_archive_internals = [public_archive_index, public_archive_files,
-                              public_archive_doi]
+                              public_archive_doi, public_archive_updates]
 
 
 def brief_freeze(freeze_dict):
@@ -158,10 +159,12 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
     if freeze_state not in (keyword_updating, keyword_final):
         show_finalize = True
     register_doi = False
+    assign_updates = False
     if freeze_state == keyword_final and flavor != 'backup' and \
             configuration.site_freeze_doi_url and \
             freeze_dict.get('PUBLISH_URL', ''):
         register_doi = True
+        assign_updates = True
 
     if summary:
         freeze_files = len(freeze_dict.get('FILES', []))
@@ -291,6 +294,18 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
             'text': 'Request archive DOI',
         }
         freeze_obj['registerdoi_link'] = registerdoi_link
+    if assign_updates:
+        assignupdates_link = {
+            'object_type': 'link',
+            'destination':
+            "javascript: confirmDialog(%s, '%s');" %
+            ('assignfreezeupdates', 'Really assign archive updates for %s?' % freeze_id),
+            'class': 'assignarchiveupdateslink iconspace genericbutton',
+            'title': 'Assign an update for %s archive %s' % (flavor, freeze_id),
+            'text': 'Assign archive replacement or supplementary archive material',
+        }
+        # TODO: implement backend to handle assigment to published-updates.json
+        freeze_obj['assignupdates_link'] = assignupdates_link
 
     return freeze_obj
 
@@ -311,9 +326,9 @@ def parse_time_delta(str_value):
     elif unit == 'h':
         multiplier = 60
     elif unit == 'd':
-        multiplier = 24*60
+        multiplier = 24 * 60
     elif unit == 'w':
-        multiplier = 7*24*60
+        multiplier = 7 * 24 * 60
     minutes = multiplier * count
     return datetime.timedelta(minutes=minutes)
 
@@ -974,6 +989,8 @@ def write_landing_page(freeze_dict, arch_dir, frozen_files, cached,
     arch_url = published_url(freeze_dict, configuration)
     files_url = published_url(freeze_dict, configuration, public_archive_files)
     doi_url = published_url(freeze_dict, configuration, public_archive_doi)
+    updates_url = published_url(
+        freeze_dict, configuration, public_archive_updates)
     freeze_dict['PUBLISH_URL'] = arch_url
     _logger.debug("create landing page for %s on %s" % (freeze_id, arch_url))
     publish_preamble = ""
@@ -1134,11 +1151,93 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
             }
         });
     }
-    """ % (sorted_hash_algos, files_url, doi_url)
+    function ajax_showupdates() {
+        var url = lookup_url('%s');
+        console.debug('loading archive updates data from '+url+' ...');
+        $('#updatescontents').html('Loading archive updates data ...');
+        $('#updatescontents').addClass('spinner iconleftpad');
+        var updates_req = $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            success: function(jsonRes, textStatus) {
+                console.debug('got response from updates lookup: '+textStatus);
+                console.debug(jsonRes);
+                var updates_data = '';
+                var updates_url = jsonRes.id;
+                /* Users can assign archive updates to a published archive.
+                   If so the result here is a dict with the following contents:
+                   * replaces_id: ID of another archive that this replaces
+                   * replaces_url: URL of another archive that this replaces
+                   * replaced_by_id: ID of another archive replacing this
+                   * replaced_by_url: URL of another archive replacing this
+
+                   Planned but still pending additional fields for references are
+                   * supplements_id: ID of another archive that this supplements
+                   * supplements_url: URL of another archive that this supplements
+                   * supplemented_by_id: ID of another archive supplementing this
+                   * supplemented_by_url: URL of another archive supplementing this
+                   We could make it supplements lists but it quickly gets hairy.
+                */
+                var updates = jsonRes.updates;
+                if (updates !== undefined) {
+                    updates_data += '<div class="archive-update-header">';
+                    var replaced_by_id = updates.replaced_by_id;
+                    var replaced_by_url = updates.replaced_by_url;
+                    if (replaced_by_id !== undefined && replaced_by_url !== undefined) {
+                        updates_data += '<h4>Replacement Available!</h4>';
+                        updates_data += '<p class="archive-replaced-info"">';
+                        updates_data += 'The author(s) of this archive has created the new ';
+                        updates_data += 'public <a class=\"iconleftpad replacingarchivelink\" href=\"';
+                        updates_data += replaced_by_url + '\">'+replaced_by_id+'</a> archive ';
+                        updates_data += 'as a replacement for this archive. Please refer to ';
+                        updates_data += 'that linked new archive for additional information ';
+                        updates_data + ='about the update and changes.</p><br/>';
+                    } else {
+                        console.debug('no archive replaced by data');
+                    }
+                    var replaces_id = updates.replaces_id;
+                    var replaces_url = updates.replaces_url;
+                    if (replaces_id !== undefined && replaces_url !== undefined) {
+                        updates_data += '<h4>Replacement Archive</h4>';
+                        updates_data += '<p class="archive-replaced-by-info"">';
+                        updates_data += 'The author(s) of the previously published ';
+                        updates_data += '<a class=\"iconleftpad replacedarchivelink\" href=\"';
+                        updates_data += replaces_url + '\">'+replaces_id+'</a> archive ';
+                        updates_data += 'created this archive to replace it. Please see ';
+                        updates_data += 'that linked old archive for additional details ';
+                        updates_data + ='about the original publication.</p><br/>';
+                    } else {
+                        console.debug('no archive replaces data');
+                    }
+
+                    /* TODO: Add handling of supplement archives here */
+
+                    updates_data += '</div>';
+                    $('#updatescontents').html(updates_data);
+                } else {
+                    updates_data = 'No archive updates data found';
+                    $('#updatescontents').html(updates_data);
+                }
+                $('#updatescontents').removeClass('spinner iconleftpad');
+                $('#updatestoggle').show();
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.info('No archive updates data found')
+                console.debug('Archive updates request said: '+ \
+                              textStatus+' : '+errorThrown);
+                updates_data = 'No archive updates data found';
+                $('#updatescontents').html(updates_data);
+                $('#updatescontents').removeClass('spinner iconleftpad');
+            }
+        });
+    }
+    """ % (sorted_hash_algos, files_url, doi_url, updates_url)
     add_ready += """
     ajax_showdoi('%s');
+    ajax_showupdates('%s');
     %s;
-    """ % (freeze_id, refresh_call)
+    """ % (freeze_id, freeze_id, refresh_call)
     # Fake manager themed style setup for tablesorter layout with site style
     style_entry = themed_styles(configuration, user_settings={})
     base_style = style_entry.get("base", "")
@@ -1175,6 +1274,9 @@ on %(created_timestamp)s by %(creator)s.""" % auto_map
     contents += """
 %s
 <div class='archive-header'>
+<div class='archive-updatesdata'>
+    <div id='updatescontents'><!-- filled by AJAX call--></div>
+</div>
 <p class='archive-autometa archive-box'>%s
 </p>
 </div>
@@ -1638,7 +1740,7 @@ def delete_frozen_archive(freeze_dict, client_id, configuration):
             _logger.error(web_res)
             return (False, web_res)
 
-    if not delete_file(arch_dir+CACHE_EXT, _logger, allow_missing=True) \
+    if not delete_file(arch_dir + CACHE_EXT, _logger, allow_missing=True) \
             or not remove_rec(arch_dir, configuration):
         _logger.error("could not remove archive dir for %s" %
                       brief_freeze(freeze_dict))
