@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cgiscriptstub - cgi wrapper functions for functionality backends
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -79,6 +79,18 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
     """Shared finalization"""
 
     logger = configuration.logger
+    # TODO: refactor this start+output_format code shared with migwsgi
+    start_entry = None
+    for entry in output_objs:
+        if entry['object_type'] == 'start':
+            start_entry = entry
+    if not start_entry:
+        start_entry = {'object_type': 'start', 'headers': []}
+        output_objs = [start_entry] + output_objs
+    elif not start_entry.get('headers', False):
+        start_entry['headers'] = []
+    # NOTE: refresh_format and delay_format for is handled up front here
+    # Now fill headers to match output format
     default_content = 'text/html'
     if 'json' == output_format:
         default_content = 'application/json'
@@ -86,16 +98,9 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
         default_content = 'application/octet-stream'
     elif 'html' != output_format:
         default_content = 'text/plain'
-    default_headers = [('Content-Type', default_content)]
-    start_entry = None
-    for entry in output_objs:
-        if entry['object_type'] == 'start':
-            start_entry = entry
-    if not start_entry:
-        start_entry = {'object_type': 'start', 'headers': default_headers}
-        output_objs = [start_entry] + output_objs
-    elif not start_entry.get('headers', []):
-        start_entry['headers'] = default_headers
+    if not start_entry['headers']:
+        start_entry['headers'].append(('Content-Type', default_content))
+
     headers = start_entry['headers']
 
     output = format_output(configuration, backend, ret_code, ret_msg,
@@ -168,7 +173,7 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
 
     # default to html output
 
-    output_format = user_arguments_dict.get('output_format', ['html'])[-1]
+    output_format = user_arguments_dict.get('output_format', ['html'])[0]
 
     # TODO: add environ arg support to all main backends and use here
 
@@ -191,8 +196,14 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     after_time = time.time()
     out_obj.append({'object_type': 'timing_info', 'text':
                     "done in %.3fs" % (after_time - before_time)})
-    if delay_format:
-        output_format = user_arguments_dict.get('output_format', ['html'])[-1]
+
+    # TODO: refactor and drop the delay_format for shared refresh_format marker
+    refresh_format = False
+    if [i for i in out_obj if i.get('object_type', None) == 'start' and \
+        i.get('refresh_format', False)]:
+        refresh_format = True
+    if delay_format or refresh_format:
+        output_format = user_arguments_dict.get('output_format', ['html'])[0]
 
     finish_cgi_script(configuration, backend, output_format,
                       ret_code, ret_msg, out_obj)

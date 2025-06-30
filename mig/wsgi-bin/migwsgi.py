@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -346,24 +346,31 @@ def application(environ, start_response, configuration=None,
 
     (ret_code, ret_msg) = ret_val
 
+    # TODO: refactor this start+output_format code shared with cgiscriptstub
+    start_entry = None
+    for entry in output_objs:
+        if entry['object_type'] == 'start':
+            start_entry = entry
+    if not start_entry:
+        start_entry = {'object_type': 'start', 'headers': []}
+        output_objs = [start_entry] + output_objs
+    elif not start_entry.get('headers', False):
+        start_entry['headers'] = []
+    # NOTE: mimic delay_format for now
+    refresh_format = start_entry.get('refresh_format', False)
+    if 'output_format' in user_arguments_dict and refresh_format:
+        output_format = user_arguments_dict['output_format'][0]
+    # Now fill headers to match output format
+    default_content = 'text/html'
     if 'json' == output_format:
         default_content = 'application/json'
     elif 'file' == output_format:
         default_content = 'application/octet-stream'
     elif 'html' != output_format:
         default_content = 'text/plain'
-    default_headers = [('Content-Type', default_content)]
-    start_entry = None
-    for entry in output_objs:
-        if entry['object_type'] == 'start':
-            start_entry = entry
-    if not start_entry:
-        # _logger.debug("WSGI adding explicit headers: %s" % default_headers)
-        start_entry = {'object_type': 'start', 'headers': default_headers}
-        output_objs = [start_entry] + output_objs
-    elif not start_entry.get('headers', []):
-        # _logger.debug("WSGI adding missing headers: %s" % default_headers)
-        start_entry['headers'] = default_headers
+    if not start_entry['headers']:
+        start_entry['headers'].append(('Content-Type', default_content))
+
     response_headers = start_entry['headers']
 
     # Pass wsgi info and helpers for optional use in output delivery
