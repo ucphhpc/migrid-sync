@@ -117,8 +117,8 @@ private files dir.''' % label})
             content = read_file(abs_path, logger, mode=src_mode)
             lines = [content]
             # Force delivery of binary as file download
-            user_arguments_dict['output_format'] =  ['file']
-            start_entry['refresh_format'] = True
+            user_arguments_dict['output_format'] = ['file']
+            start_entry['override_format'] = True
         else:
             content = lines = read_file_lines(abs_path, logger,
                                               mode=src_mode)

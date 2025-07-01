@@ -1,0 +1,8 @@
+= Modernization and Clean Up =
+We will radually move code here in the on-going modedrnization and clean up
+process.
+That also means that any code placed here must comply with the project style
+guide, be lint clean and have decent unit test coverage of all functions.
+
+You may want to use autopep8, pylint, ruff or any available make lint target
+to help verify.
