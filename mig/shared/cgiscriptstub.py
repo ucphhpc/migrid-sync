@@ -42,8 +42,8 @@ try:
 except:
     pass
 
-from mig.lib.xgicore import get_output_format, override_output_format, \
-    fill_start_headers
+from mig.lib.xgicore import fill_start_headers, get_output_format, \
+    override_output_format
 from mig.shared.bailout import crash_helper
 from mig.shared.base import requested_backend, allow_script, \
     is_default_str_coding, force_default_str_coding_rec

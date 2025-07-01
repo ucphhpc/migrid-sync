@@ -30,7 +30,7 @@
 import os
 import sys
 
-from tests.support import MigTestCase, FakeConfiguration, temppath, testmain
+from tests.support import MigTestCase, FakeConfiguration, testmain
 
 from mig.lib.xgicore import *
 

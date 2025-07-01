@@ -28,15 +28,18 @@
 """Shared helpers for CGI+WSGI interface to functionality backends."""
 
 
-def get_output_format(configuration, user_args, default_format='html'):
+def get_output_format(configuration, user_args, default_format="html"):
     """Get output_format from user_args."""
-    return user_args.get('output_format', [default_format])[0]
+    return user_args.get("output_format", [default_format])[0]
 
 
 def override_output_format(configuration, user_args, out_objs, out_format):
     """Override output_format if requested in start entry of output_objs."""
-    if not [i for i in out_objs if i.get('object_type', None) == 'start' and
-            i.get('override_format', False)]:
+    if not [
+        i
+        for i in out_objs
+        if i.get("object_type", None) == "start" and i.get("override_format", False)
+    ]:
         return out_format
     return get_output_format(configuration, user_args)
 
@@ -45,21 +48,21 @@ def fill_start_headers(configuration, out_objs, out_format):
     """Make sure out_objs has start entry with basic content headers."""
     start_entry = None
     for entry in out_objs:
-        if entry['object_type'] == 'start':
+        if entry["object_type"] == "start":
             start_entry = entry
     if not start_entry:
-        start_entry = {'object_type': 'start', 'headers': []}
+        start_entry = {"object_type": "start", "headers": []}
         out_objs.insert(0, start_entry)
-    elif not start_entry.get('headers', False):
-        start_entry['headers'] = []
+    elif not start_entry.get("headers", False):
+        start_entry["headers"] = []
     # Now fill headers to match output format
-    default_content = 'text/html'
-    if 'json' == out_format:
-        default_content = 'application/json'
-    elif 'file' == out_format:
-        default_content = 'application/octet-stream'
-    elif 'html' != out_format:
-        default_content = 'text/plain'
-    if not start_entry['headers']:
-        start_entry['headers'].append(('Content-Type', default_content))
+    default_content = "text/html"
+    if "json" == out_format:
+        default_content = "application/json"
+    elif "file" == out_format:
+        default_content = "application/octet-stream"
+    elif "html" != out_format:
+        default_content = "text/plain"
+    if not start_entry["headers"]:
+        start_entry["headers"].append(("Content-Type", default_content))
     return start_entry

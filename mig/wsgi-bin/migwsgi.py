@@ -34,8 +34,8 @@ import os
 import sys
 import time
 
-from mig.lib.xgicore import get_output_format, override_output_format, \
-    fill_start_headers
+from mig.lib.xgicore import fill_start_headers, get_output_format, \
+    override_output_format
 from mig.shared import returnvalues
 from mig.shared.bailout import bailout_helper, crash_helper, compact_string
 from mig.shared.base import requested_backend, allow_script, \
