@@ -1,8 +1,10 @@
 = Modernization and Clean Up =
-We will gradually move code here in the on-going modedrnization and clean up
+We will gradually move code here in the on-going modernization and clean up
 efforts.
 That also means that any code placed here MUST comply with the project style
 guides, be lint clean, documented and have decent unit test coverage.
 
 You may want to use autopep8, pylint, ruff or any available make lint targets
 to help verify.
+The black code formatter and isort may also come in handy. You can see usage
+hints in `.github/workflows/python-stylecheck.yml`.
