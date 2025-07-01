@@ -38,7 +38,8 @@ def override_output_format(configuration, user_args, out_objs, out_format):
     if not [
         i
         for i in out_objs
-        if i.get("object_type", None) == "start" and i.get("override_format", False)
+        if i.get("object_type", None) == "start"
+        and i.get("override_format", False)
     ]:
         return out_format
     return get_output_format(configuration, user_args)
