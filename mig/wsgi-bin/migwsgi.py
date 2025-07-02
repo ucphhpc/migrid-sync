@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,8 @@ import os
 import sys
 import time
 
+from mig.lib.xgicore import fill_start_headers, get_output_format, \
+    override_output_format
 from mig.shared import returnvalues
 from mig.shared.bailout import bailout_helper, crash_helper, compact_string
 from mig.shared.base import requested_backend, allow_script, \
@@ -271,11 +273,7 @@ def application(environ, start_response, configuration=None,
     from mig.shared.httpsclient import extract_client_id
     client_id = extract_client_id(configuration, environ)
 
-    # Default to html output
-
-    default_content = 'text/html'
-    output_format = 'html'
-
+    output_format = "UNSET"
     backend = "UNKNOWN"
     output_objs = []
     fieldstorage = None
@@ -316,8 +314,7 @@ def application(environ, start_response, configuration=None,
         fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
                                         environ=environ)
         user_arguments_dict = fieldstorage_to_dict(fieldstorage)
-        if 'output_format' in user_arguments_dict:
-            output_format = user_arguments_dict['output_format'][0]
+        output_format = get_output_format(configuration, user_arguments_dict)
 
         module_path = 'mig.shared.functionality.%s' % backend
         (allow, msg) = allow_script(configuration, script_name, client_id)
@@ -346,24 +343,10 @@ def application(environ, start_response, configuration=None,
 
     (ret_code, ret_msg) = ret_val
 
-    if 'json' == output_format:
-        default_content = 'application/json'
-    elif 'file' == output_format:
-        default_content = 'application/octet-stream'
-    elif 'html' != output_format:
-        default_content = 'text/plain'
-    default_headers = [('Content-Type', default_content)]
-    start_entry = None
-    for entry in output_objs:
-        if entry['object_type'] == 'start':
-            start_entry = entry
-    if not start_entry:
-        # _logger.debug("WSGI adding explicit headers: %s" % default_headers)
-        start_entry = {'object_type': 'start', 'headers': default_headers}
-        output_objs = [start_entry] + output_objs
-    elif not start_entry.get('headers', []):
-        # _logger.debug("WSGI adding missing headers: %s" % default_headers)
-        start_entry['headers'] = default_headers
+    # NOTE: optional output_format override if backend requests it in start
+    output_format = override_output_format(configuration, user_arguments_dict,
+                                           output_objs, output_format)
+    start_entry = fill_start_headers(configuration, output_objs, output_format)
     response_headers = start_entry['headers']
 
     # Pass wsgi info and helpers for optional use in output delivery

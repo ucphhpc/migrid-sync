@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cgiscriptstub - cgi wrapper functions for functionality backends
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -42,6 +42,8 @@ try:
 except:
     pass
 
+from mig.lib.xgicore import fill_start_headers, get_output_format, \
+    override_output_format
 from mig.shared.bailout import crash_helper
 from mig.shared.base import requested_backend, allow_script, \
     is_default_str_coding, force_default_str_coding_rec
@@ -79,23 +81,7 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
     """Shared finalization"""
 
     logger = configuration.logger
-    default_content = 'text/html'
-    if 'json' == output_format:
-        default_content = 'application/json'
-    elif 'file' == output_format:
-        default_content = 'application/octet-stream'
-    elif 'html' != output_format:
-        default_content = 'text/plain'
-    default_headers = [('Content-Type', default_content)]
-    start_entry = None
-    for entry in output_objs:
-        if entry['object_type'] == 'start':
-            start_entry = entry
-    if not start_entry:
-        start_entry = {'object_type': 'start', 'headers': default_headers}
-        output_objs = [start_entry] + output_objs
-    elif not start_entry.get('headers', []):
-        start_entry['headers'] = default_headers
+    start_entry = fill_start_headers(configuration, output_objs, output_format)
     headers = start_entry['headers']
 
     output = format_output(configuration, backend, ret_code, ret_msg,
@@ -166,9 +152,7 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     logger.debug("handling cgi request with python %s from %s  (%s)" %
                  (sys.version_info, client_id, environ))
 
-    # default to html output
-
-    output_format = user_arguments_dict.get('output_format', ['html'])[-1]
+    output_format = get_output_format(configuration, user_arguments_dict)
 
     # TODO: add environ arg support to all main backends and use here
 
@@ -191,8 +175,14 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     after_time = time.time()
     out_obj.append({'object_type': 'timing_info', 'text':
                     "done in %.3fs" % (after_time - before_time)})
+
+    # TODO: drop delay_format and rely on shared override_format marker instead
     if delay_format:
-        output_format = user_arguments_dict.get('output_format', ['html'])[-1]
+        output_format = get_output_format(configuration, user_arguments_dict)
+
+    # NOTE: optional output_format override if backend requests it in start
+    output_format = override_output_format(configuration, user_arguments_dict,
+                                           out_obj, output_format)
 
     finish_cgi_script(configuration, backend, output_format,
                       ret_code, ret_msg, out_obj)
