@@ -575,6 +575,20 @@ and owner automatically assigned.
             driver.get(url)
 
 
+def account_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "Account"
+    nav_class = "link-account"
+    link = get_nav_link(driver, url, nav_class)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    # ajax_wait(driver, nav_name)
+    state = 'account-ready'
+    if callbacks.get(state, None):
+        print("INFO: callback for: %s" % state)
+        callbacks[state](driver, state)
+
+
 def settings_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Settings"
@@ -930,6 +944,7 @@ def main():
             ('Files', files_actions),
             ('Workgroups', workgroups_actions),
             ('Archives', archives_actions),
+            ('Account', account_actions),
             ('Settings', settings_actions),
             ('Setup', setup_actions),
             ('Jupyter', jupyter_actions),
@@ -957,7 +972,8 @@ def main():
                         'files-ready', 'workgroups-ready', 'archives-ready',
                         'archive-empty', 'archive-fileman', 'archive-filled',
                         'archive-submitted', 'archive-finalized', 'archive-view',
-                        'archive-register', 'settings-ready', 'setup-ready']
+                        'archive-register', 'account-ready', 'settings-ready',
+                        'setup-ready']
     callback_targets += ['setup-%s-ready' %
                          sub for (sub, _) in setup_sections + extra_setup_sections]
     callback_targets += ['peers-%s-ready' %
@@ -988,7 +1004,8 @@ def main():
 
     driver = init_driver(browser)
     # Make sure the screenshots have a suitable size
-    driver.set_window_size(1400, 900)
+    #driver.set_window_size(1400, 900)
+    driver.set_window_size(1680, 1080)
     try:
         driver.get(url)
         if openid.lower() == 'ucph':
