@@ -463,7 +463,8 @@ STRONG_TLS_CURVES = "prime256v1:secp384r1:secp521r1"
 # to allow in OpenSSH and native Paramiko SFTP daemons (on OpenSSH format).
 # NOTE: harden in line with Mozilla recommendations for modern versions:
 # https://wiki.mozilla.org/Security/Guidelines/OpenSSH#Configuration
-# Additional hardening based on https://github.com/arthepsy/ssh-audit
+# Additional hardening based on https://github.com/arthepsy/ssh-audit and
+# https://www.sshaudit.com/hardening_guides.html
 # Please note that the DH GroupX KexAlgorithms require OpenSSH 7.3+, but that
 # older versions can relatively safely fall back to instead use the
 # diffie-hellman-group-exchange-sha256 as long as the moduli tuning from
@@ -480,16 +481,16 @@ STRONG_TLS_CURVES = "prime256v1:secp384r1:secp521r1"
 STRONG_SSH_HOSTKEYALGOS = "ssh-ed25519,rsa-sha2-512,rsa-sha2-256"
 LEGACY_SSH_HOSTKEYALGOS = ",".join([STRONG_SSH_HOSTKEYALGOS, "ssh-rsa"])
 FALLBACK_SSH_HOSTKEYALGOS = LEGACY_SSH_HOSTKEYALGOS
-STRONG_SSH_KEXALGOS = "curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group16-sha512"
+STRONG_SSH_KEXALGOS = "sntrup761x25519-sha512@openssh.com,curve25519-sha256@libssh.org,curve25519-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512"
 # NOTE: fall back to relatively safe DH group-exchange-sha256 on old paramiko etc.
 LEGACY_SSH_KEXALGOS = ",".join([STRONG_SSH_KEXALGOS,
                                 "diffie-hellman-group-exchange-sha256"])
 FALLBACK_SSH_KEXALGOS = LEGACY_SSH_KEXALGOS
-STRONG_SSH_CIPHERS = "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
+STRONG_SSH_CIPHERS = "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-gcm@openssh.com,aes128-ctr"
 # NOTE: avoid chacha20-poly1305@openssh.com to mitigate Terrapin issue on old servers
-LEGACY_SSH_CIPHERS = "aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
+LEGACY_SSH_CIPHERS = "aes256-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-gcm@openssh.com,aes128-ctr"
 FALLBACK_SSH_CIPHERS = LEGACY_SSH_CIPHERS
-STRONG_SSH_MACS = "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com"
+STRONG_SSH_MACS = "hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,umac-128-etm@openssh.com"
 LEGACY_SSH_MACS = STRONG_SSH_MACS
 # NOTE: fall back to safe MACS with the best possible alternatives on ancient paramiko
 #       to avoid falling back to really bad ones
