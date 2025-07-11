@@ -52,9 +52,11 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 try:
     from selenium.webdriver.firefox.service import Service as FirefoxService
-    from webdriver_manager.firefox import GeckoDriverManager
 except ImportError:
     FirefoxService = None
+try:
+    from webdriver_manager.firefox import GeckoDriverManager
+except ImportError:
     GeckoDriverManager = None
 
 
@@ -86,6 +88,18 @@ for the automatic firefox installer mode.
         driver = webdriver.Remote(webdriver_service.service_url,
                                   options=options,
                                   browser_profile=profile)
+    elif browser.lower() == 'firefox-snap':
+        if FirefoxService is None:
+            print("FATAL: FirefoxService is required for firefox-snap mode.")
+            exit(1)
+        # With snap the current firefox is ALWAYS symlinked in this system path
+        firefox_path = '/snap/firefox/current/usr/lib/firefox/firefox'
+        geckodriver_path = '/snap/firefox/current/usr/lib/firefox/geckodriver'
+        options = webdriver.FirefoxOptions()
+        options.binary_location = firefox_path
+        profile = webdriver.FirefoxProfile()
+        driver = webdriver.Firefox(service=FirefoxService(geckodriver_path),
+                                   options=options)
     elif browser.lower() == 'safari':
         driver = webdriver.Safari()
     elif browser.lower() == 'ie':
@@ -285,7 +299,7 @@ def shared_twofactor(driver, url, twofactor_key, callbacks={},
             #      past_twofactor_class)
             past_twofactor = True
         except Exception as exc:
-            #print("DEBUG: not past twofactor login: %s" % exc)
+            # print("DEBUG: not past twofactor login: %s" % exc)
             pass
 
     if not past_twofactor:
