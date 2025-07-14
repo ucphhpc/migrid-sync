@@ -31,28 +31,13 @@ Goes through a number of steps described in the user guide and grabs the
 corresponding screenshots.
 """
 
-from __future__ import print_function
-
-from builtins import input
-from builtins import range
-
-try:
-    from future import standard_library
-    standard_library.install_aliases()
-except:
-    print("Failed to import future module - missing install?")
-    exit(1)
-
 import getpass
 import os
 import sys
 import time
 import traceback
 
-if sys.version_info[0] >= 3:
-    from urllib.parse import urlparse
-else:
-    from urlparse import urlparse
+from urllib.parse import urlparse
 
 try:
     from mig.user.selenium.migcore import init_driver, ucph_login, mig_login, \
@@ -321,7 +306,7 @@ and owner automatically assigned.
     add_button.click()
     # TODO: figure out why this ajax_wait fails with V3
     # Wait for fileman popup to accept click handlers
-    #ajax_wait(driver, nav_name + " file select", "ui-progressbar")
+    # ajax_wait(driver, nav_name + " file select", "ui-progressbar")
     state = 'archive-fileman'
     if callbacks.get(state, None):
         print("INFO: callback for: %s" % state)
@@ -333,12 +318,12 @@ and owner automatically assigned.
     for select_file in files_area.find_elements(by_what('class_name'),
                                                 "ext_txt"):
         try:
-            #print("DEBUG: scroll to file elem: %s" % select_file)
+            # print("DEBUG: scroll to file elem: %s" % select_file)
             scroll_to_elem(driver, select_file)
 
             # TODO: figure out how to get this dclick working
             # NOTE: dclick on same target hits a dir here after scroll!?
-            #print("DEBUG: double click file elem: %s" % select_file)
+            # print("DEBUG: double click file elem: %s" % select_file)
             doubleclick_elem(driver, select_file)
             selected = True
         except Exception as exc:
@@ -349,7 +334,7 @@ and owner automatically assigned.
     if not selected:
         # NOTE: as a workaround we save path, cancel and manually fill for now
         file_path = select_file.text
-        #print("DEBUG: found file path: %s" % file_path)
+        # print("DEBUG: found file path: %s" % file_path)
         # Use parent of unique filechooser to find the right dialog among many
         filechooser_elem = driver.find_element(by_what('id'), "fm_filechooser")
         filechooser_dialog = filechooser_elem.parent
@@ -357,13 +342,13 @@ and owner automatically assigned.
         #      (filechooser_elem, filechooser_dialog))
         close_button = filechooser_dialog.find_element(
             by_what('class_name'), "ui-dialog-titlebar-close")
-        #print("DEBUG: found close button: %s" % close_button)
+        # print("DEBUG: found close button: %s" % close_button)
         close_button.click()
         # dialog_buttons = filechooser_dialog.find_element(by_what('class_name'),
         #    "ui-dialog-buttonset")
         # action_buttons = dialog_buttons.find_elements(by_what('class_name'),
         #    "ui-button")
-        #print("DEBUG: found action buttons: %s" % action_buttons)
+        # print("DEBUG: found action buttons: %s" % action_buttons)
         # for button in action_buttons:
         #    print("DEBUG: checking action button: %s" % button)
         #    if button.text == 'Cancel':
@@ -389,7 +374,7 @@ and owner automatically assigned.
 
     submit_button = driver.find_element(by_what('xpath'),
                                         "//input[@type='submit' and @value='Save and Preview']")
-    #print("DEBUG: click submit: %s" % submit_button)
+    # print("DEBUG: click submit: %s" % submit_button)
     submit_button.click()
 
     state = 'archive-submitted'
@@ -404,11 +389,11 @@ and owner automatically assigned.
 
     finalize_button = driver.find_element(by_what('class_name'),
                                           "finalizearchivelink")
-    #print("DEBUG: click finalize button: %s" % finalize_button)
+    # print("DEBUG: click finalize button: %s" % finalize_button)
     finalize_button.click()
 
     # TMP! while testing
-    #do_finalize = True
+    # do_finalize = True
     do_finalize = False
     finalized = False
     confirm_elem = driver.find_element(by_what('id'), "confirm_dialog")
@@ -421,11 +406,11 @@ and owner automatically assigned.
                                                    "ui-button")
     for button in confirm_buttons:
         if do_finalize and button.text == 'Yes':
-            #print("DEBUG: click confirm button: %s" % button.text)
+            # print("DEBUG: click confirm button: %s" % button.text)
             button.click()
             finalized = True
         if button.text == 'No':
-            #print("DEBUG: click confirm button: %s" % button.text)
+            # print("DEBUG: click confirm button: %s" % button.text)
             button.click()
         # else:
         #    print("DEBUG: ignore confirm button: %s" % button.text)
@@ -434,7 +419,7 @@ and owner automatically assigned.
         print("WARNING: failed to confirm finalize - force close dialog")
         close_button = confirm_dialog.find_element(by_what('class_name'),
                                                    "ui-dialog-titlebar-close")
-        #print("DEBUG: found close button: %s" % close_button)
+        # print("DEBUG: found close button: %s" % close_button)
         close_button.click()
 
     state = 'archive-finalized'
@@ -443,7 +428,7 @@ and owner automatically assigned.
         callbacks[state](driver, state)
 
     view_button = driver.find_element(by_what('class_name'), "viewarchivelink")
-    #print("DEBUG: click view button: %s" % view_button)
+    # print("DEBUG: click view button: %s" % view_button)
     view_button.click()
     ajax_wait(driver, nav_name)
     state = 'archive-view'
@@ -454,7 +439,7 @@ and owner automatically assigned.
     if finalized:
         register_button = driver.find_element(by_what('class_name'),
                                               "registerarchivelink")
-        #print("DEBUG: click register button: %s" % register_button)
+        # print("DEBUG: click register button: %s" % register_button)
         register_button.click()
 
         dialog_buttons = driver.find_element(by_what('class_name'),
@@ -474,7 +459,7 @@ and owner automatically assigned.
             print("WARNING: failed to confirm register doi - force close dialog")
             close_button = confirm_dialog.find_element(
                 by_what('class_name'), "ui-dialog-titlebar-close")
-            #print("DEBUG: found close button: %s" % close_button)
+            # print("DEBUG: found close button: %s" % close_button)
             close_button.click()
 
         # Redirecting to KU-IT DOI service where login may be required
@@ -484,7 +469,7 @@ and owner automatically assigned.
             # Maybe need KU-IT DOI service login if requested
             try:
                 logon_button = driver.find_element(by_what('id'), "cmdLogon")
-                #print("DEBUG: click logon: %s" % logon_button)
+                # print("DEBUG: click logon: %s" % logon_button)
                 logon_button.click()
             except Exception as exc:
                 pass
@@ -498,7 +483,7 @@ and owner automatically assigned.
                 password_field.send_keys(passwd)
                 submit_button = driver.find_element(by_what('id'),
                                                     "submitButton")
-                #print("DEBUG: click submit: %s" % submit_button)
+                # print("DEBUG: click submit: %s" % submit_button)
                 time.sleep(1)
                 submit_button.click()
                 login_done = True
@@ -525,7 +510,7 @@ and owner automatically assigned.
                         break
                 # Then find and click accept button
                 if popup_dialog.is_displayed():
-                    #print("DEBUG: found visible popup dialog")
+                    # print("DEBUG: found visible popup dialog")
                     popup_found = True
                     popup_buttons = popup_dialog.find_elements(
                         by_what('class_name'), "btn")
@@ -555,7 +540,7 @@ and owner automatically assigned.
                 # print "DEBUG: found DOI identifier: %s" % doi_idenfier
                 break
             except Exception as exc:
-                #print("DEBUG: DOI page not ready: %s" % exc)
+                # print("DEBUG: DOI page not ready: %s" % exc)
                 pass
 
             # Keep trying until we get through login and usage accept
@@ -624,7 +609,7 @@ def setup_actions(driver, url, login, passwd, callbacks):
     # else:
     #    print("DEBUG: use sif setup sections: %s" % active_setup_sections)
 
-    #print("DEBUG: run through setup section: %s" % active_setup_sections)
+    # print("DEBUG: run through setup section: %s" % active_setup_sections)
     for (key, name) in active_setup_sections:
         # print("DEBUG: open setup section: %s" % name)
         # Search inside page content to avoid Seafile nav menu interference
@@ -731,7 +716,7 @@ def peers_actions(driver, url, login, passwd, callbacks):
         return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
-    #ajax_wait(driver, nav_name)
+    # ajax_wait(driver, nav_name)
     state = 'peers-ready'
     if callbacks.get(state, None):
         print("INFO: callback for: %s" % state)
@@ -1004,7 +989,7 @@ def main():
 
     driver = init_driver(browser)
     # Make sure the screenshots have a suitable size
-    #driver.set_window_size(1400, 900)
+    # driver.set_window_size(1400, 900)
     driver.set_window_size(1680, 1080)
     try:
         driver.get(url)

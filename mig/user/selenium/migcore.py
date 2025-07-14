@@ -52,9 +52,11 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 try:
     from selenium.webdriver.firefox.service import Service as FirefoxService
-    from webdriver_manager.firefox import GeckoDriverManager
 except ImportError:
     FirefoxService = None
+try:
+    from webdriver_manager.firefox import GeckoDriverManager
+except ImportError:
     GeckoDriverManager = None
 
 
@@ -83,9 +85,22 @@ for the automatic firefox installer mode.
         webdriver_service.start()
         options = webdriver.FirefoxOptions()
         profile = webdriver.FirefoxProfile()
+        options.profile = profile
         driver = webdriver.Remote(webdriver_service.service_url,
-                                  options=options,
-                                  browser_profile=profile)
+                                  options=options)
+    elif browser.lower() == 'firefox-snap':
+        if FirefoxService is None:
+            print("FATAL: FirefoxService is required for firefox-snap mode.")
+            exit(1)
+        # With snap the current firefox is ALWAYS symlinked in this system path
+        firefox_path = '/snap/firefox/current/usr/lib/firefox/firefox'
+        geckodriver_path = '/snap/firefox/current/usr/lib/firefox/geckodriver'
+        options = webdriver.FirefoxOptions()
+        options.binary_location = firefox_path
+        profile = webdriver.FirefoxProfile()
+        options.profile = profile
+        driver = webdriver.Firefox(service=FirefoxService(geckodriver_path),
+                                   options=options)
     elif browser.lower() == 'safari':
         driver = webdriver.Safari()
     elif browser.lower() == 'ie':
@@ -93,13 +108,20 @@ for the automatic firefox installer mode.
     elif browser.lower() == 'edge':
         driver = webdriver.Edge()
     elif browser.lower() == 'phantomjs':
-        driver = webdriver.PhantomJS()
+        # NOTE: PhantomJS was discontinued and we haven't used it much anyway
+        #       https://github.com/ariya/phantomjs/
+        #    driver = webdriver.PhantomJS()
+        print("FATAL: PhantomJS is discontinued and no longer supported.")
+        exit(2)
     else:
         print("ERROR: Browser NOT supported: %s" % browser)
         driver = None
     # Add a little slack for pages to load when finding elems
     if driver:
         driver.implicitly_wait(5)
+    else:
+        print("ERROR: cannot proceed without a valid driver")
+        exit(42)
     return driver
 
 
@@ -285,7 +307,7 @@ def shared_twofactor(driver, url, twofactor_key, callbacks={},
             #      past_twofactor_class)
             past_twofactor = True
         except Exception as exc:
-            #print("DEBUG: not past twofactor login: %s" % exc)
+            # print("DEBUG: not past twofactor login: %s" % exc)
             pass
 
     if not past_twofactor:
