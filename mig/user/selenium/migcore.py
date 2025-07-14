@@ -85,9 +85,9 @@ for the automatic firefox installer mode.
         webdriver_service.start()
         options = webdriver.FirefoxOptions()
         profile = webdriver.FirefoxProfile()
+        options.profile = profile
         driver = webdriver.Remote(webdriver_service.service_url,
-                                  options=options,
-                                  browser_profile=profile)
+                                  options=options)
     elif browser.lower() == 'firefox-snap':
         if FirefoxService is None:
             print("FATAL: FirefoxService is required for firefox-snap mode.")
@@ -98,6 +98,7 @@ for the automatic firefox installer mode.
         options = webdriver.FirefoxOptions()
         options.binary_location = firefox_path
         profile = webdriver.FirefoxProfile()
+        options.profile = profile
         driver = webdriver.Firefox(service=FirefoxService(geckodriver_path),
                                    options=options)
     elif browser.lower() == 'safari':
@@ -107,13 +108,20 @@ for the automatic firefox installer mode.
     elif browser.lower() == 'edge':
         driver = webdriver.Edge()
     elif browser.lower() == 'phantomjs':
-        driver = webdriver.PhantomJS()
+        # NOTE: PhantomJS was discontinued and we haven't used it much anyway
+        #       https://github.com/ariya/phantomjs/
+        #    driver = webdriver.PhantomJS()
+        print("FATAL: PhantomJS is discontinued and no longer supported.")
+        exit(2)
     else:
         print("ERROR: Browser NOT supported: %s" % browser)
         driver = None
     # Add a little slack for pages to load when finding elems
     if driver:
         driver.implicitly_wait(5)
+    else:
+        print("ERROR: cannot proceed without a valid driver")
+        exit(42)
     return driver
 
 
