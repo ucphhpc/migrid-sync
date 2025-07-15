@@ -29,6 +29,16 @@ if [ ! -d "$archivestaging" ]; then
     exit 42
 fi
 
+pidfile="/home/mig/state/mig_system_run/migverifyarchives.pid"
+if [ -e "$pidfile" ]; then
+    RUN_PID=$(/bin/cat $pidfile)
+    if /bin/pgrep -f migverifyarchives | /bin/grep "${RUN_PID}" ; then
+        echo "Warning: an existing instance of $0 is already active"
+        exit 1
+    fi
+fi
+echo $$ > $pidfile
+
 # Monthly long range search for pending finalized files, otherwise only look for today
 today=$(date +%Y%m%d)
 day_of_month=$(date +%d)
@@ -89,5 +99,7 @@ for archivelist in $(/bin/find "$archivestaging" -type f -regex "$marker_pattern
     totalcount=$((totalcount+verifycount))
     totalfailed=$((totalfailed+verifyfailed))
 done
+
+/bin/rm -f $pidfile
 
 exit $totalfailed
