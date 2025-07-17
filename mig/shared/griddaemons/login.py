@@ -38,7 +38,7 @@ import time
 from mig.shared.base import client_dir_id, client_id_dir, client_alias, \
     force_utf8, get_short_id
 from mig.shared.defaults import dav_domain, X509_USER_ID_FORMAT, \
-    UUID_USER_ID_FORMAT
+    UUID_USER_ID_FORMAT, READ_WRITE_ACCESS, READ_ONLY_ACCESS, WRITE_ONLY_ACCESS
 from mig.shared.fileio import unpickle
 from mig.shared.gdp.all import get_project_from_user_id
 from mig.shared.sharelinks import extract_mode_id
@@ -76,6 +76,7 @@ class Login(object):
                  digest=None,
                  public_key=None,
                  chroot=True,
+                 access=None,
                  ip_addr=None,
                  user_dict=None):
         self.username = username
@@ -83,6 +84,7 @@ class Login(object):
         self.digest = digest
         self.public_key = public_key
         self.chroot = chroot
+        self.access = access
         self.ip_addr = ip_addr
         self.user_dict = user_dict
         self.last_update = time.time()
@@ -266,6 +268,7 @@ def add_user_object(configuration,
                     digest=None,
                     pubkey=None,
                     chroot=True,
+                    access=None,
                     user_dict=None):
     """Add a single Login object to active user list"""
     conf = configuration.daemon_conf
@@ -278,6 +281,7 @@ def add_user_object(configuration,
                  digest=digest,
                  public_key=pubkey,
                  chroot=chroot,
+                 access=access,
                  user_dict=user_dict)
     # logger.debug("Adding user login:\n%s" % user)
     if creds_lock:
@@ -294,6 +298,7 @@ def add_job_object(configuration,
                    digest=None,
                    pubkey=None,
                    chroot=True,
+                   access=None,
                    ip_addr=None):
     """Add a single Login object to active jobs list"""
     conf = configuration.daemon_conf
@@ -306,6 +311,7 @@ def add_job_object(configuration,
                 digest=digest,
                 public_key=pubkey,
                 chroot=chroot,
+                access=access,
                 ip_addr=ip_addr)
     # logger.debug("Adding job login:\n%s" % job)
     if creds_lock:
@@ -316,7 +322,7 @@ def add_job_object(configuration,
 
 
 def add_share_object(configuration, login, home, password=None, digest=None,
-                     pubkey=None, chroot=True, ip_addr=None):
+                     pubkey=None, chroot=True, access=None, ip_addr=None):
     """Add a single Login object to active shares list"""
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
@@ -328,6 +334,7 @@ def add_share_object(configuration, login, home, password=None, digest=None,
                   digest=digest,
                   public_key=pubkey,
                   chroot=chroot,
+                  access=access,
                   ip_addr=ip_addr)
     # logger.debug("Adding share login:\n%s" % share)
     if creds_lock:
@@ -338,7 +345,7 @@ def add_share_object(configuration, login, home, password=None, digest=None,
 
 
 def add_jupyter_object(configuration, login, home, password=None, digest=None,
-                       pubkey=None, chroot=True, ip_addr=None):
+                       pubkey=None, chroot=True, access=None, ip_addr=None):
     """Add a single Login object to active jupyter mount list"""
     conf = configuration.daemon_conf
     logger = conf.get('logger', logging.getLogger())
@@ -350,6 +357,7 @@ def add_jupyter_object(configuration, login, home, password=None, digest=None,
                           digest=digest,
                           public_key=pubkey,
                           chroot=chroot,
+                          access=access,
                           ip_addr=ip_addr)
     # logger.debug("Adding jupyter login:\n%s" % jupyter_mount)
     if creds_lock:
@@ -445,17 +453,20 @@ def update_user_objects(configuration, auth_file, path, user_vars, auth_protos,
                            (user_key, user_id, exc))
             continue
         for login_id in user_id_list:
-            add_user_object(configuration, login_id, user_dir, pubkey=user_key)
+            add_user_object(configuration, login_id, user_dir, pubkey=user_key,
+                            access=READ_WRITE_ACCESS)
     for user_password in all_passwords:
         user_password = user_password.strip()
         for login_id in user_id_list:
             add_user_object(configuration, login_id, user_dir,
-                            password=user_password, user_dict=user_dict)
+                            password=user_password, access=READ_WRITE_ACCESS,
+                            user_dict=user_dict)
     for user_digest in all_digests:
         user_digest = user_digest.strip()
         for login_id in user_id_list:
             add_user_object(configuration, login_id, user_dir,
-                            digest=user_digest, user_dict=user_dict)
+                            digest=user_digest, access=READ_WRITE_ACCESS,
+                            user_dict=user_dict)
     # logger.debug("after update users list is:\n%s" %
     #              '\n'.join(["%s" % i for i in conf['users']]))
 
@@ -665,6 +676,7 @@ def refresh_job_creds(configuration, protocol, username):
                            user_alias,
                            user_dir,
                            pubkey=user_key,
+                           access=READ_WRITE_ACCESS,
                            ip_addr=user_ip)
             changed_jobs.append(user_alias)
 
@@ -682,7 +694,7 @@ def refresh_job_creds(configuration, protocol, username):
 
 
 def refresh_share_creds(configuration, protocol, username,
-                        share_modes=['read-write']):
+                        share_modes=[READ_WRITE_ACCESS]):
     """Reload sharelink credentials for username (SHARE_ID) if they changed on
     disk. That is, add user entries in configuration.daemon_conf['shares'] for
     any corresponding active sharelinks.
@@ -694,6 +706,7 @@ def refresh_share_creds(configuration, protocol, username,
     have guards in place to support read-only or write-only mode in daemons.
     NOTE: we further limit to directory sharelinks for chroot'ing.
     """
+    _valid_modes = [READ_WRITE_ACCESS, READ_ONLY_ACCESS, WRITE_ONLY_ACCESS]
     # Must end in sep
     base_dir = configuration.user_home.rstrip(os.sep) + os.sep
     changed_shares = []
@@ -704,7 +717,7 @@ def refresh_share_creds(configuration, protocol, username,
     if not protocol in ('sftp', 'davs', 'ftps', ):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_shares)
-    if [kind for kind in share_modes if kind != 'read-write']:
+    if [kind for kind in share_modes if kind not in _valid_modes]:
         logger.error("invalid share_modes: %s" % share_modes)
         return (conf, changed_shares)
     if not possible_sharelink_id(configuration, username):
@@ -799,14 +812,16 @@ def refresh_share_creds(configuration, protocol, username,
                          user_alias,
                          user_dir,
                          password=user_password,
-                         digest=user_digest)
+                         digest=user_digest,
+                         access=mode)
         logger.info("Adding key login(s) for share %s: %s" %
                     (user_alias, user_pubkeys))
         for share_pubkey in user_pubkeys:
             add_share_object(configuration,
                              user_alias,
                              user_dir,
-                             pubkey=share_pubkey)
+                             pubkey=share_pubkey,
+                             access=mode)
         changed_shares.append(user_alias)
 
     # Share was removed: remove from logins and mark as changed
@@ -882,7 +897,8 @@ def refresh_jupyter_creds(configuration, protocol, username):
 
             # Add the new valid keyset that gives access to user_dir
             add_jupyter_object(configuration, user_alias,
-                               user_dir, pubkey=user_key)
+                               user_dir, pubkey=user_key,
+                               access=READ_WRITE_ACCESS)
             active_jupyter_creds.append(user_alias)
 
     if creds_lock:

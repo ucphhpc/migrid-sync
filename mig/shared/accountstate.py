@@ -42,7 +42,8 @@ from mig.shared.defaults import expire_marks_dir, status_marks_dir, \
     valid_account_status, oid_auto_extend_days, oidc_auto_extend_days, \
     cert_auto_extend_days, attempt_auto_extend_days, AUTH_GENERIC, \
     AUTH_CERTIFICATE, AUTH_OPENID_V2, AUTH_OPENID_CONNECT, \
-    X509_USER_ID_FORMAT, UUID_USER_ID_FORMAT
+    X509_USER_ID_FORMAT, UUID_USER_ID_FORMAT, READ_WRITE_ACCESS, \
+    READ_ONLY_ACCESS, WRITE_ONLY_ACCESS
 from mig.shared.filemarks import get_filemark, update_filemark, reset_filemark
 from mig.shared.gdp.userid import get_base_client_id
 from mig.shared.userdb import load_user_dict, default_db_path, update_user_dict
@@ -381,7 +382,9 @@ def detect_special_login(configuration, username, proto):
     try:
         if proto in ('sftp', 'sftp-subsys', 'ftps', 'davs') and \
                 possible_sharelink_id(configuration, username):
-            for mode in ['read-write']:
+            _valid_modes = [READ_WRITE_ACCESS, READ_ONLY_ACCESS,
+                            WRITE_ONLY_ACCESS]
+            for mode in _valid_modes:
                 real_path = os.path.realpath(os.path.join(
                     configuration.sharelink_home, mode, username))
                 if os.path.exists(real_path):

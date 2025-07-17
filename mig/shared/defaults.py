@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -436,6 +436,10 @@ io_session_stale = {'davs': 120,
                     'sftp': 120,
                     'ftps': 120,
                     }
+
+READ_ONLY_ACCESS = "read-only"
+WRITE_ONLY_ACCESS = "write-only"
+READ_WRITE_ACCESS = "read-write"
 
 # Strong SSL/TLS ciphers and curves to allow in Apache and other SSL/TLS-based
 # daemons (on Apache/OpenSSL format).
