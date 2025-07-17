@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelinks - share link helper functions
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,8 @@ from random import SystemRandom
 
 from mig.shared.base import client_id_dir, extract_field
 from mig.shared.defaults import sharelinks_filename, csrf_field, \
-    share_mode_charset, share_id_charset
+    share_mode_charset, share_id_charset, READ_WRITE_ACCESS, READ_ONLY_ACCESS, \
+    WRITE_ONLY_ACCESS
 from mig.shared.fileio import makedirs_rec, make_symlink, delete_symlink
 from mig.shared.serial import load, dump
 
@@ -49,8 +50,8 @@ __mode_len = len(share_mode_charset) // 3
 __ro_mode_chars = share_mode_charset[:__mode_len]
 __rw_mode_chars = share_mode_charset[__mode_len:2 * __mode_len]
 __wo_mode_chars = share_mode_charset[2 * __mode_len:]
-mode_chars_map = {'read-only': __ro_mode_chars, 'read-write': __rw_mode_chars,
-                  'write-only': __wo_mode_chars}
+mode_chars_map = {READ_ONLY_ACCESS: __ro_mode_chars, READ_WRITE_ACCESS: __rw_mode_chars,
+                  WRITE_ONLY_ACCESS: __wo_mode_chars}
 
 __bool_map = {True: 'Yes', False: 'No'}
 
@@ -465,11 +466,11 @@ def modify_share_links(action, share_dict, client_id, configuration,
     rel_path = share_dict['path'].lstrip(os.sep)
     access = share_dict['access']
     if 'read' in access and 'write' in access:
-        access_dir = 'read-write'
+        access_dir = READ_WRITE_ACCESS
     elif 'read' in access:
-        access_dir = 'read-only'
+        access_dir = READ_ONLY_ACCESS
     elif 'write' in access:
-        access_dir = 'write-only'
+        access_dir = WRITE_ONLY_ACCESS
     else:
         logger.error("modify_share_links invalid access: %s" % access)
         return (load_status, share_map)
