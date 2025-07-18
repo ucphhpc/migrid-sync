@@ -115,8 +115,14 @@
 #ifndef SHARELINK_LENGTH
 #define SHARELINK_LENGTH 42
 #endif
-#ifndef SHARELINK_SUBDIR
-#define SHARELINK_SUBDIR "read-write"
+#ifndef SHARELINK_RW_DIR
+#define SHARELINK_RW_DIR "read-write"
+#endif
+#ifndef SHARELINK_RO_DIR
+#define SHARELINK_RO_DIR "read-only"
+#endif
+#ifndef SHARELINK_WO_DIR
+#define SHARELINK_WO_DIR "write-only"
 #endif
 #endif                          /* !DISABLE_SHARELINK */
 

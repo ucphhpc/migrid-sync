@@ -717,27 +717,36 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 #ifdef ENABLE_SHARELINK
     /* Optional anonymous share link access:
        - username must have fixed length matching get_sharelink_length()
-       - get_sharelink_home()/SHARELINK_SUBDIR/username must exist as a symlink
+       - get_sharelink_home()/SHARELINK_X_DIR/username must exist as a symlink
        - username and password must be identical if we get here (key skips PAM)
      */
     WRITELOGMESSAGE(LOG_DEBUG, "Checking for sharelink: %s\n", pUsername);
     if (strlen(pUsername) == get_sharelink_length()) {
         char share_path[MAX_PATH_LENGTH];
+
+        char sharelink_modes[][10] = { SHARELINK_RW_DIR, SHARELINK_RO_DIR, SHARELINK_WO_DIR };
+        for (size_t i = 0; i < sizeof(sharelink_modes) / sizeof(sharelink_modes[0]); i++)
+        {
+
+        memset(share_path, 0, MAX_PATH_LENGTH);
+
         if (MAX_PATH_LENGTH <=
             snprintf(share_path, MAX_PATH_LENGTH, "%s/%s/%s",
-                     get_sharelink_home(), SHARELINK_SUBDIR, pUsername)) {
+                     get_sharelink_home(), sharelink_modes[i], pUsername)) {
             WRITELOGMESSAGE(LOG_WARNING,
                             "Path construction failed for: %s/%s/%s\n",
-                            get_sharelink_home(), SHARELINK_SUBDIR, pUsername);
+                            get_sharelink_home(), sharelink_modes[i], pUsername);
             return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
         }
         /* NSS lookup assures sharelink target is valid and inside user home */
         /* Just check simple access here to make sure it is a share link */
         if (access(share_path, R_OK) == 0) {
             WRITELOGMESSAGE(LOG_DEBUG,
-                            "Checking sharelink id %s password\n", pUsername);
+                            "Checking %s sharelink id %s password\n", sharelink_modes[i],
+                            pUsername);
             if (strcmp(pUsername, pPassword) == 0) {
-                WRITELOGMESSAGE(LOG_DEBUG, "Return sharelink success\n");
+                WRITELOGMESSAGE(LOG_DEBUG, "Return %s sharelink success\n",
+                                sharelink_modes[i]);
 #ifdef ENABLE_AUTHHANDLER
                 if (false == mig_reg_auth_attempt(MIG_SKIP_TWOFA_CHECK
                                                    | MIG_SKIP_NOTIFY
@@ -768,11 +777,18 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 #endif                          /* ENABLE_AUTHHANDLER */
                 return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
             }
+        } else if (i < sizeof(sharelink_modes) - 1) {
+            WRITELOGMESSAGE(LOG_DEBUG,
+                            "Ignore no match on %s sharelink: %s\n", sharelink_modes[i],
+                            pUsername);
         } else {
             WRITELOGMESSAGE(LOG_DEBUG,
                             "No matching sharelink: %s. Try next auth.\n",
                             share_path);
         }
+
+        }
+
     } else {
         WRITELOGMESSAGE(LOG_DEBUG,
                         "Not a sharelink username: %s. Try next auth.\n",

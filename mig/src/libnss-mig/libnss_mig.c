@@ -185,18 +185,23 @@ _nss_mig_getpwnam_r(const char *name,
 #ifdef ENABLE_SHARELINK
     /* Optional anonymous share link access:
        - username must have fixed length matching get_sharelink_length()
-       - get_sharelink_home()/SHARELINK_SUBDIR/username must exist as a symlink
+       - get_sharelink_home()/SHARELINK_X_DIR/username must exist as a symlink
        - username and password must be identical or pub key fit authorized_keys
      */
     if (keep_trying && name_len == get_sharelink_length()) {
         WRITELOGMESSAGE(LOG_DEBUG, "Checking for sharelink: %s\n", name);
+
+        char sharelink_modes[][10] = { SHARELINK_RW_DIR, SHARELINK_RO_DIR, SHARELINK_WO_DIR };
+        for (size_t i = 0; i < sizeof(sharelink_modes) / sizeof(sharelink_modes[0]); i++)
+        {
+
         memset(pathbuf, 0, PATH_BUF_LEN);
         if (PATH_BUF_LEN <=
             snprintf(pathbuf, PATH_BUF_LEN, "%s/%s/%s",
-                     get_sharelink_home(), SHARELINK_SUBDIR, name)) {
+                     get_sharelink_home(), sharelink_modes[i], name)) {
             WRITELOGMESSAGE(LOG_WARNING,
                             "Path construction overflow for: %s/%s/%s\n",
-                            get_sharelink_home(), SHARELINK_SUBDIR, name);
+                            get_sharelink_home(), sharelink_modes[i], name);
             return NSS_STATUS_NOTFOUND;
         }
         /* Make sure prefix of direct sharelink target is user home */
@@ -230,8 +235,12 @@ _nss_mig_getpwnam_r(const char *name,
             is_share = 1;
             pathlen =
                 strlen(get_sharelink_home()) +
-                strlen(SHARELINK_SUBDIR) + name_len + 2;
+                strlen(sharelink_modes[i]) + name_len + 2;
+            break;
         }
+
+        }
+
     }
     WRITELOGMESSAGE(LOG_DEBUG, "Detect sharelink: %d\n", is_share);
 #endif                          /* ENABLE_SHARELINK */
