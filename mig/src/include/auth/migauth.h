@@ -178,7 +178,7 @@
     fprintf(stderr, #priority ": " __FILE__"("TOSTRING(__LINE__)"): " format, ##__VA_ARGS__)
 #else                           /* DEBUG_LOG_STDERR */
 #define WRITELOGMESSAGE(priority, format, ...) \
-    openlog("pam_mig", LOG_PID, LOG_AUTHPRIV); \
+    openlog("nss-pam_mig", LOG_PID, LOG_AUTHPRIV); \
     syslog(priority, #priority ": " __FILE__"("TOSTRING(__LINE__)"): " format, ##__VA_ARGS__);
 #endif                          /* DEBUG_LOG_STDERR */
 #else                           /* DEBUG || DEBUG_LOG_STDERR */
@@ -194,7 +194,7 @@
 */
 #define WRITELOGMESSAGE(priority, ...) \
     if (priority != LOG_DEBUG) { \
-        openlog("pam_mig", LOG_PID, LOG_AUTHPRIV); \
+        openlog("nss-pam_mig", LOG_PID, LOG_AUTHPRIV); \
         syslog(priority, ##__VA_ARGS__); \
     }
 #endif                          /* DEBUG || DEBUG_LOG_STDERR */
