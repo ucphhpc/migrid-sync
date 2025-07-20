@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -118,6 +118,9 @@ configuration, logger = None, None
 
 class SFTPHandle(paramiko.SFTPHandle):
     """Override default SFTPHandle"""
+
+    # Inherit parent name for use in logs
+    __name__ = paramiko.SFTPHandle.__name__
 
     # Init internal args so that they can be overriden on class before init
 
