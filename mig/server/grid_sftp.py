@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -118,6 +118,9 @@ configuration, logger = None, None
 
 class SFTPHandle(paramiko.SFTPHandle):
     """Override default SFTPHandle"""
+
+    # Inherit parent name for use in logs
+    __name__ = paramiko.SFTPHandle.__name__
 
     # Init internal args so that they can be overriden on class before init
 
@@ -272,7 +275,7 @@ class SFTPHandle(paramiko.SFTPHandle):
                     except Exception as exc:
                         result = None
                         msg = "(%d:%d): %s" \
-                            % (offset, offset+length, exc)
+                            % (offset, offset + length, exc)
                         logger.error("%s failed: '%s': %s"
                                      % (operation, path, msg))
                         project_log(configuration,
@@ -358,7 +361,7 @@ class SFTPHandle(paramiko.SFTPHandle):
     def read(self, offset, length):
         """Handle operations of same name"""
         path = getattr(self, "path", "unknown")
-        #self.logger.debug("read %db @%d of %s" % (length, offset, [path]))
+        # self.logger.debug("read %db @%d of %s" % (length, offset, [path]))
         try:
             return super(SFTPHandle, self).read(offset, length)
         except Exception as exc:
@@ -371,7 +374,7 @@ class SFTPHandle(paramiko.SFTPHandle):
     def write(self, offset, data):
         """Handle operations of same name"""
         path = getattr(self, "path", "unknown")
-        #self.logger.debug("write %db @%d of %s" % (len(data), offset, [path]))
+        # self.logger.debug("write %db @%d of %s" % (len(data), offset, [path]))
         try:
             return super(SFTPHandle, self).write(offset, data)
         except Exception as exc:
@@ -532,7 +535,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # TODO: merge sftp and sftp-subsys auth validation into single helper?
         # NOTE: proto == 'sftp' is handled in _validate_authentication
         if proto == 'sftp-subsys':
-            #logger.debug("sftp-subsys env is: %s" % os.environ)
+            # logger.debug("sftp-subsys env is: %s" % os.environ)
             # TODO: can we extract actual auth method somehow instead of this
             #       dummy 'session' workaround when auth is handled by sshd?
             authtype = os.environ.get('AUTHTYPE', 'session')
@@ -800,7 +803,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('chattr on read-only path %s :: %s' %
                                 ([path], [real_path]))
             return paramiko.SFTP_PERMISSION_DENIED
-        #self.logger.debug("_chattr %s activate" % [path])
+        # self.logger.debug("_chattr %s activate" % [path])
         if sftphandle is not None:
             active = getattr(sftphandle, 'active')
             file_obj = getattr(sftphandle, active)
@@ -1019,7 +1022,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             # self.logger.debug("list_folder for %s" % filename)
             if invisible_path(filename):
                 continue
-            #full_name = ("%s/%s" % (real_path, filename)).replace("//", "/")
+            # full_name = ("%s/%s" % (real_path, filename)).replace("//", "/")
             full_name = os.path.join(real_path,
                                      filename.lstrip(os.sep)).replace("//", "/")
             self.logger.debug("list_folder stat %s" % [full_name])
@@ -1398,13 +1401,13 @@ class SimpleSSHServer(paramiko.ServerInterface):
         elif not default_username_validator(configuration, username):
             invalid_username = True
         else:
+            hash_cache = daemon_conf['hash_cache']
             if key is not None:
                 update_key_map = True
                 key_offered = key.get_base64()
                 hashed_secret = key_offered
             if password is not None:
                 update_password_map = True
-                hash_cache = daemon_conf['hash_cache']
                 # NOTE: keep password on native form in general
                 password_offered = force_native_str(password)
                 # IMPORTANT: pass a hash of password to register_auth_attempt
@@ -1427,6 +1430,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
             elif check_account_accessible(configuration, username, 'sftp'):
                 account_accessible = True
             for entry in login_map:
+                password_allowed, key_allowed = False, False
                 if password is not None and entry.password is not None:
                     password_enabled = True
                     # NOTE: make sure allowed value is native string as well
