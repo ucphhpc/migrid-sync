@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - grid daemon login helper functions
-# Copyright (C) 2010-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -551,7 +551,9 @@ def refresh_user_creds(configuration, protocol, username):
             # then build user_home from there as link may be just the name
             user_dir = os.path.basename(os.readlink(user_home))
             user_home = os.path.join(configuration.user_home, user_dir)
-
+        else:
+            raise ValueError("invalid user ID format requested: %s" %
+                             configuration.site_user_id_format)
         # Check that user home exists
         if not os.path.exists(user_home):
             logger.warning("Skipping user without home %s" % user_home)
@@ -617,7 +619,7 @@ def refresh_job_creds(configuration, protocol, username):
         # logger.debug("No job creds changes for %s" % username)
         return (conf, changed_jobs)
 
-    job_dict = None
+    job_dict, sessionid = None, None
     if os.path.islink(link_path) and os.path.exists(link_path) and \
             last_update < os.path.getmtime(link_path):
         sessionid = username
@@ -844,7 +846,7 @@ def refresh_jupyter_creds(configuration, protocol, username):
     # logger.debug("jupyter linkpath: %s jupyter path exists: %s" % \
     #                 (os.path.islink(link_path), os.path.exists(link_path)))
 
-    jupyter_dict = None
+    jupyter_dict, sessionid = None, None
     if os.path.islink(link_path) and os.path.exists(link_path):
         sessionid = username
         jupyter_dict = unpickle(link_path, logger)
