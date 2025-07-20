@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountstate - various user account state helpers
-# Copyright (C) 2020-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -452,6 +452,9 @@ def check_account_accessible(configuration, username, proto, environ=None,
         elif configuration.site_user_id_format == UUID_USER_ID_FORMAT:
             # Only follow first username -> client_id_dir symlink with UUID
             expanded_home = os.readlink(home_dir)
+        else:
+            raise ValueError("invalid user ID format requested: %s" %
+                             configuration.site_user_id_format)
         real_id = os.path.basename(expanded_home)
         client_id = client_dir_id(real_id)
 
