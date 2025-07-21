@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # usagestats - Collect and report various central usage stats for the site
-# Copyright (C) 2020-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,7 @@ import os
 import sys
 import time
 
-from mig.shared.base import extract_field
+from mig.shared.base import extract_field, force_native_str
 from mig.shared.defaults import freeze_meta_filename, keyword_auto
 from mig.shared.fileio import unpickle, walk
 from mig.shared.notification import send_email
@@ -297,7 +297,8 @@ if '__main__' == __name__:
                             env=cmd_env)
     proc.wait()
     for line in proc.stdout.readlines():
-        site_stats['disk']['use'].append(line.strip().split())
+        # NOTE: output is system native encoding and we need native string
+        site_stats['disk']['use'].append(force_native_str(line.strip()).split())
     if verbose:
         print("=== Disk Use ===")
         print('\n'.join(['\t'.join(i) for i in site_stats['disk']['use']]))
@@ -308,7 +309,8 @@ if '__main__' == __name__:
     proc = subprocess_popen(['mount'] + mount_opts, stdout=subprocess_pipe)
     proc.wait()
     for line in proc.stdout.readlines():
-        site_stats['disk']['mounts'].append(line.strip().split())
+        # NOTE: output is system native encoding and we need native string
+        site_stats['disk']['mounts'].append(force_native_str(line.strip()).split())
     if verbose:
         print("=== Disk Mounts ===")
         print('\n'.join(['\t'.join(i) for i in site_stats['disk']['mounts']]))
