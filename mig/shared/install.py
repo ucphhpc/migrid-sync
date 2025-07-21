@@ -2524,7 +2524,7 @@ The migcheckssl, migverifyarchives, migstats, migacctexpire and miglustrequota
 files are cron scripts to automatically check for LetsEncrypt certificate
 renewal, run pending archive verification before sending a copy to tape, save
 various usage stats, generate account expire stats and create/update lustre
- quota.
+quota.
 You can install them with:
 chmod 700 %(destination)s/migcheckssl
 sudo cp %(destination)s/migcheckssl /etc/cron.daily/
