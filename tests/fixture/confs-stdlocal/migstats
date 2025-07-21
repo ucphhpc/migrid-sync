@@ -1,0 +1,9 @@
+#!/bin/bash
+#
+# Run usagestats as mig user to generate stats for Server Admin
+
+# We default to include disk use for gluster and lustre mounts and write
+# reports in various file formats
+su - mig -c "PYTHONPATH=/home/mig mig/server/usagestats.py -t 'fuse.glusterfs lustre' -s AUTO  -o 'txt json pickle csv'"
+
+exit 0
