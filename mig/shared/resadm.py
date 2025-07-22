@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadm - Resource administration functions mostly for remote command execution
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -30,14 +30,15 @@
 from __future__ import absolute_import
 
 from builtins import range
+import datetime
+import fcntl
 import os
 import tempfile
-import fcntl
 import time
-import datetime
 
 # MiG imports
 
+from mig.shared.base import force_native_str
 from mig.shared.conf import get_resource_configuration, get_resource_exe, \
     get_resource_store, get_configuration_object
 from mig.shared.fileio import unpickle, pickle
@@ -364,7 +365,7 @@ def fill_frontend_script(
     except Exception as err:
         msg = 'Error: could not write frontend script file'
         # NOTE: no logger available here
-        #logger.error("%s: %s" % (msg, err))
+        # logger.error("%s: %s" % (msg, err))
         return (False, msg)
 
 
@@ -470,7 +471,7 @@ def fill_exe_node_script(
     except Exception as err:
         msg = 'could not write exe node script file'
         # NOTE: no logger available here
-        #logger.error("%s: %s" % (msg, err))
+        # logger.error("%s: %s" % (msg, err))
         return (False, msg)
 
 
@@ -599,7 +600,8 @@ def check_mounted(target, logger):
     if os.path.ismount(target):
         return True
     mount_line = ' on %s type fuse.sshfs ' % target
-    mount_out = subprocess_check_output(['mount'])
+    # NOTE: we need output on str format for find below
+    mount_out = force_native_str(subprocess_check_output(['mount']))
     logger.debug("check_mounted out: %s vs %s" % (mount_out, mount_line))
     return (mount_out.find(mount_line) != -1)
 
