@@ -678,8 +678,8 @@ def vgrid_list_parents(vgrid_name, configuration):
 
     result_list = []
     parts = vgrid_name.split(os.sep)
-    for i in range(len(parts)-1):
-        vgrid = (os.sep).join(parts[:i+1])
+    for i in range(len(parts) - 1):
+        vgrid = (os.sep).join(parts[:i + 1])
         result_list.append(vgrid)
     return result_list
 
@@ -1590,7 +1590,7 @@ def vgrid_add_workflow_jobs(configuration, vgrid_name, id_list, rank=None):
         _logger.error(msg)
     else:
         if len(jobs) > JOB_QUEUE_COUNT + len(id_list):
-            first_jobs = jobs[:len(jobs)-JOB_QUEUE_COUNT+len(id_list)]
+            first_jobs = jobs[:len(jobs) - JOB_QUEUE_COUNT + len(id_list)]
             vgrid_remove_workflow_jobs(configuration, vgrid_name, first_jobs)
 
     return vgrid_add_entities(configuration, vgrid_name, 'jobqueue',
@@ -1774,7 +1774,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     except Exception as exc:
         status = False
         msg = "could not set %s for %s: %s" % (kind, vgrid_name, exc)
-        #import traceback
+        # import traceback
         # _logger.error("failed in set %s for %s: %s\n%s" %
         #              (kind, vgrid_name, exc, traceback.format_exc()))
     finally:
@@ -2098,8 +2098,10 @@ def vgrid_rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir):
                      'permission', 'remove', admin_id, 'TRAC_ADMIN']
         _logger.info('remove admin rights from owner: %s' % perms_cmd)
         # NOTE: we use command list here to avoid shell requirement
+        # NOTE: we want utf8-encoded output as text str for find below
         proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
-                                stderr=subprocess_stdout, env=admin_env)
+                                stderr=subprocess_stdout, env=admin_env,
+                                text=True)
         retval = proc.wait()
         if retval != 0:
             out = proc.stdout.read()
