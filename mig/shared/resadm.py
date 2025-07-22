@@ -38,7 +38,6 @@ import time
 
 # MiG imports
 
-from mig.shared.base import force_native_str
 from mig.shared.conf import get_resource_configuration, get_resource_exe, \
     get_resource_store, get_configuration_object
 from mig.shared.fileio import unpickle, pickle
@@ -600,8 +599,8 @@ def check_mounted(target, logger):
     if os.path.ismount(target):
         return True
     mount_line = ' on %s type fuse.sshfs ' % target
-    # NOTE: we need output on str format for find below
-    mount_out = force_native_str(subprocess_check_output(['mount']))
+    # NOTE: we want utf8-encoded output as text str for find below
+    mount_out = subprocess_check_output(['mount'], text=True)
     logger.debug("check_mounted out: %s vs %s" % (mount_out, mount_line))
     return (mount_out.find(mount_line) != -1)
 
