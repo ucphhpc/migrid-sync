@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridowner - add one or more vgrid owners
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -90,13 +90,15 @@ def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
                      'permission', 'add', admin_id, 'TRAC_ADMIN']
         _logger.info('provide admin rights to owner: %s' % perms_cmd)
         # NOTE: We already verified command variables to be shell-safe
+        # NOTE: we want utf8-encoded output as text str for find below
         proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
-                                stderr=subprocess_stdout, env=admin_env)
-        proc.wait()
-        if proc.returncode != 0:
+                                stderr=subprocess_stdout, text=True,
+                                env=admin_env)
+        retval = proc.wait()
+        if retval != 0:
+            out = proc.stdout.read()
             raise Exception("tracker permissions %s failed: %s (%d)" %
-                            (perms_cmd, proc.stdout.read(),
-                             proc.returncode))
+                            (perms_cmd, out, retval))
         return True
     except Exception as exc:
         _logger.error("failed to give %s tracker admin rights: %s" % (cert_id,
