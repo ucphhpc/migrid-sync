@@ -2100,8 +2100,8 @@ def vgrid_rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir):
         # NOTE: we use command list here to avoid shell requirement
         # NOTE: we want utf8-encoded output as text str for find below
         proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
-                                stderr=subprocess_stdout, env=admin_env,
-                                text=True)
+                                stderr=subprocess_stdout, text=True,
+                                env=admin_env)
         retval = proc.wait()
         if retval != 0:
             out = proc.stdout.read()
