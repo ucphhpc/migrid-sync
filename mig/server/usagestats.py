@@ -35,7 +35,7 @@ import os
 import sys
 import time
 
-from mig.shared.base import extract_field, force_native_str
+from mig.shared.base import extract_field
 from mig.shared.defaults import freeze_meta_filename, keyword_auto
 from mig.shared.fileio import unpickle, walk
 from mig.shared.notification import send_email
@@ -293,12 +293,12 @@ if '__main__' == __name__:
     # NOTE: df expects multiple file system types as individual options
     for fs_type in only_fs_types:
         df_opts += ['-t', fs_type]
+    # NOTE: we want utf8-encoded output as text str for concat below
     proc = subprocess_popen(['/bin/df'] + df_opts, stdout=subprocess_pipe,
-                            env=cmd_env)
+                            text=True, env=cmd_env)
     proc.wait()
     for line in proc.stdout.readlines():
-        # NOTE: output is system native encoding and we need native string
-        site_stats['disk']['use'].append(force_native_str(line.strip()).split())
+        site_stats['disk']['use'].append(line.strip().split())
     if verbose:
         print("=== Disk Use ===")
         print('\n'.join(['\t'.join(i) for i in site_stats['disk']['use']]))
@@ -306,11 +306,12 @@ if '__main__' == __name__:
     # NOTE: mount expects multiple file system types as single comma-sep arg
     mount_opts = []
     mount_opts += ['-t', ','.join(only_fs_types)]
-    proc = subprocess_popen(['mount'] + mount_opts, stdout=subprocess_pipe)
+    # NOTE: we want utf8-encoded output as text str for concat below
+    proc = subprocess_popen(['mount'] + mount_opts, stdout=subprocess_pipe,
+                            text=True)
     proc.wait()
     for line in proc.stdout.readlines():
-        # NOTE: output is system native encoding and we need native string
-        site_stats['disk']['mounts'].append(force_native_str(line.strip()).split())
+        site_stats['disk']['mounts'].append(line.strip().split())
     if verbose:
         print("=== Disk Mounts ===")
         print('\n'.join(['\t'.join(i) for i in site_stats['disk']['mounts']]))
