@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeeval - Safe evaluation of expressions and commands
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -290,7 +290,7 @@ def math_expr_eval(expr):
 
 
 def subprocess_check_output(command, stdin=None, stdout=None, stderr=None,
-                            env=None, cwd=None,
+                            env=None, text=None, cwd=None,
                             only_sanitized_variables=False):
     """Safe execution of command with output returned as byte string.
     The optional only_sanitized_variables option is used to override the
@@ -299,12 +299,15 @@ def subprocess_check_output(command, stdin=None, stdout=None, stderr=None,
     command comes from user-provided variables or file names that may contain
     control characters.
     """
-    return subprocess.check_output(command, stdin=stdin, env=env, cwd=cwd,
+    # NOTE: python3.7 added text arg previously known as universal_newlines
+    # TODO: rename universal_newlines to text once we drop python3.6 support
+    return subprocess.check_output(command, stdin=stdin, env=env,
+                                   universal_newlines=text, cwd=cwd,
                                    shell=only_sanitized_variables)
 
 
 def subprocess_call(command, stdin=None, stdout=None, stderr=None, env=None,
-                    cwd=None, only_sanitized_variables=False):
+                    text=None, cwd=None, only_sanitized_variables=False):
     """Safe execution of command.
     The optional only_sanitized_variables option is used to override the
     default execution without shell interpretation of control characters.
@@ -312,12 +315,15 @@ def subprocess_call(command, stdin=None, stdout=None, stderr=None, env=None,
     command comes from user-provided variables or file names that may contain
     control characters.
     """
+    # NOTE: python3.7 added text arg previously known as universal_newlines
+    # TODO: rename universal_newlines to text once we drop python3.6 support
     return subprocess.call(command, stdin=stdin, stdout=stdout, stderr=stderr,
-                           env=env, cwd=cwd, shell=only_sanitized_variables)
+                           env=env, universal_newlines=text, cwd=cwd,
+                           shell=only_sanitized_variables)
 
 
 def subprocess_popen(command, stdin=None, stdout=None, stderr=None, env=None,
-                     cwd=None, only_sanitized_variables=False):
+                     text=None, cwd=None, only_sanitized_variables=False):
     """Safe execution of command with full process control.
     The optional only_sanitized_variables option is used to override the
     default execution without shell interpretation of control characters.
@@ -326,8 +332,11 @@ def subprocess_popen(command, stdin=None, stdout=None, stderr=None, env=None,
     control characters.
     Returns a subprocess Popen object with wait method, returncode and so on.
     """
+    # NOTE: python3.7 added text arg previously known as universal_newlines
+    # TODO: rename universal_newlines to text once we drop python3.6 support
     return subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr,
-                            env=env, cwd=cwd, shell=only_sanitized_variables)
+                            env=env, universal_newlines=text, cwd=cwd,
+                            shell=only_sanitized_variables)
 
 
 def subprocess_list2cmdline(command):
