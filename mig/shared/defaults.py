@@ -497,10 +497,11 @@ FALLBACK_SSH_MACS = ",".join([LEGACY_SSH_MACS, "hmac-sha2-512,hmac-sha2-256"])
 
 # Detect and ban cracking attempts and unauthorized vulnerability scans
 # A pattern to match usernames unambiguously identifying cracking attempts
-CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|superadmin|localadmin|mysqladmin|lp|operator|controller|ftp|irc|nobody|sys|pi|guest|financeiro|Management|www|www-data|mysql|postgres|oracle|mongodb|sybase|redis|hadoop|zimbra|cpanel|plesk|openhabian|tomcat|exim|postfix|sendmail|mailnull|postmaster|mail|uucp|news|teamspeak|git|svn|cvs|user|ftpuser|ubuntu|ubnt|supervisor|csgoserver|device|laboratory|deploy|lighthouse|TO BE ANNOUNCED|support|info|test[0-9]*|user[0-9]*|[0-9]+|root;[a-z0-9]+)'
+# NOTE: use raw strings to avoid escapes causing SyntaxError on recent python
+CRACK_USERNAME_REGEX = r'(root|bin|daemon|adm|admin|administrator|superadmin|localadmin|mysqladmin|lp|operator|controller|ftp|irc|nobody|sys|pi|guest|financeiro|Management|www|www-data|mysql|postgres|oracle|mongodb|sybase|redis|hadoop|zimbra|cpanel|plesk|openhabian|tomcat|exim|postfix|sendmail|mailnull|postmaster|mail|uucp|news|teamspeak|git|svn|cvs|user|ftpuser|ubuntu|ubnt|supervisor|csgoserver|device|laboratory|deploy|lighthouse|TO BE ANNOUNCED|support|info|test[0-9]*|user[0-9]*|[0-9]+|root;[a-z0-9]+)'
 # A pattern to match failed web access prefixes unambiguously identifying
 # unauthorized vulnerability scans
-CRACK_WEB_REGEX = '((HNAP1|GponForm|provisioning|provision|prov|polycom|yealink|CertProv|phpmyadmin|admin|cfg|wp|wordpress|cms|blog|old|new|test|dev|tmp|temp|remote|mgmt|properties|authenticate|tmui|ddem|a2billing|vtigercrm|secure|rpc|recordings|dana-na)(/.*|)|.*(Login|login|logon|configuration|header|admin|index)\.(php|jsp|asp)|(api/v1/pods|Telerik.Web.UI.WebResource.axd))'
+CRACK_WEB_REGEX = r'((HNAP1|GponForm|provisioning|provision|prov|polycom|yealink|CertProv|phpmyadmin|admin|cfg|wp|wordpress|cms|blog|old|new|test|dev|tmp|temp|remote|mgmt|properties|authenticate|tmui|ddem|a2billing|vtigercrm|secure|rpc|recordings|dana-na)(/.*|)|.*(Login|login|logon|configuration|header|admin|index)\.(php|jsp|asp)|(api/v1/pods|Telerik.Web.UI.WebResource.axd))'
 
 # GDP mode settings
 gdp_distinguished_field = "GDP"
