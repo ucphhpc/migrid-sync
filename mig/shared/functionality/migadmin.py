@@ -37,7 +37,7 @@ from mig.shared import returnvalues
 from mig.shared.accountreq import build_accountreqitem_object, \
     list_account_reqs, get_account_req, accept_account_req, \
     peer_account_req, reject_account_req
-from mig.shared.base import force_native_str_rec, force_native_str
+from mig.shared.base import force_native_str_rec
 from mig.shared.defaults import default_pager_entries, csrf_field, \
     keyword_any, keyword_auto, AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT
@@ -359,12 +359,13 @@ provide access to e.g. managing the grid job queues.
             '/sbin/sshd -f /etc/ssh/sshd_config-MiG-sftp-subsys')
     for proc in daemon_names:
         # NOTE: we use command list here to avoid shell requirement
+        # NOTE: we want utf8-encoded output as text str for status below
         pgrep_proc = subprocess_popen(['pgrep', '-f', proc],
                                       stdout=subprocess_pipe,
-                                      stderr=subprocess_stdout)
+                                      stderr=subprocess_stdout,
+                                      text=True)
         pgrep_proc.wait()
-        # NOTE: output is system native encoding and we need native string
-        ps_out = force_native_str(pgrep_proc.stdout.read().strip())
+        ps_out = pgrep_proc.stdout.read().strip()
         if pgrep_proc.returncode == 0:
             daemons += "<div class='status_online'>%s running (pid %s)</div>" \
                        % (proc, ps_out)
@@ -559,7 +560,7 @@ provide access to e.g. managing the grid job queues.
 '''})
 
     # Finish tabs wrap
-    output_objects.append({'object_type': 'html_form', 'text':  '''
+    output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 '''})
 
