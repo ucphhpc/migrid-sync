@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 # grid_transfers - transfer handler to run background data transfers
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -47,7 +46,7 @@ import sys
 import time
 import traceback
 
-from mig.shared.base import client_dir_id, client_id_dir, force_native_str
+from mig.shared.base import client_dir_id, client_id_dir
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import datatransfers_filename, transfers_log_size, \
     transfers_log_cnt, user_keys_dir, _user_invisible_paths
@@ -104,7 +103,7 @@ def __transfer_log(configuration, client_id, msg, level='info'):
     transfers_logger = logging.getLogger('background-transfer')
     transfers_logger.setLevel(logging.INFO)
     handler = logging.handlers.RotatingFileHandler(
-        log_path, maxBytes=transfers_log_size, backupCount=transfers_log_cnt-1)
+        log_path, maxBytes=transfers_log_size, backupCount=transfers_log_cnt - 1)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler.setFormatter(formatter)
     transfers_logger.addHandler(handler)
@@ -336,7 +335,7 @@ def get_cmd_map():
     for target in ("read", "write"):
         sftp_buf_str += ";set sftp:size-%s %%(lftp_sftp_block_size)d" % target
     # TODO: switch to GET/PUT rather than PROPFIND/MKCOL for basic HTTP(S)?
-    #http_tweak_str = "set http:use-propfind off;set http:use-mkcol off"
+    # http_tweak_str = "set http:use-propfind off;set http:use-mkcol off"
     http_tweak_str = ""
     webdav_tweak_str = "set http:use-propfind on;set http:use-mkcol on"
     base_ssl_str = "%(ssl_auth)s"
@@ -563,7 +562,7 @@ def run_transfer(configuration, client_id, transfer_dict):
     # Use private known hosts file for ssh transfers as explained above
     # NOTE: known_hosts containing '=' silently leads to rest getting ignored!
     #       use /dev/null to skip host key verification completely for now.
-    #run_dict['known_hosts'] = os.path.join(base_dir, '.ssh', 'known_hosts')
+    # run_dict['known_hosts'] = os.path.join(base_dir, '.ssh', 'known_hosts')
     run_dict['known_hosts'] = '/dev/null'
     # Make sure password is set to empty string as default
     run_dict['password'] = run_dict.get('password', '')
@@ -650,9 +649,11 @@ def run_transfer(configuration, client_id, transfer_dict):
         # NOTE: we wrap list entries in quotes for usable log line
         blind_str = subprocess_list2cmdline(blind_list)
         logger.info('run %s on behalf of %s' % (blind_str, client_id))
+        # NOTE: we want utf8-encoded output as text str for mangling below
         transfer_proc = subprocess_popen(command_list,
                                          stdout=subprocess_pipe,
-                                         stderr=subprocess_pipe)
+                                         stderr=subprocess_pipe,
+                                         text=True)
         # Save transfer_proc.pid for use in clean up during shutdown
         # in that way we can resume pretty smoothly in next run.
         sub_pid = transfer_proc.pid
@@ -662,8 +663,6 @@ def run_transfer(configuration, client_id, transfer_dict):
         add_sub_pid(configuration, sub_pid_map, client_id, transfer_id,
                     sub_pid)
         out, err = transfer_proc.communicate()
-        # NOTE: process output is on system bytecode format and we need string
-        out, err = force_native_str(out), force_native_str(err)
         exit_code = transfer_proc.wait()
         status |= exit_code
         del_sub_pid(configuration, sub_pid_map, client_id, transfer_id,
@@ -801,7 +800,7 @@ def handle_transfer(configuration, client_id, transfer_dict):
 
     try:
         # Switch to foreground here for easier debugging
-        #foreground_transfer(configuration, client_id, transfer_dict)
+        # foreground_transfer(configuration, client_id, transfer_dict)
         background_transfer(configuration, client_id, transfer_dict)
     except Exception as exc:
         logger.error('failed to run %s %s from %s: %s (%s)'
@@ -843,7 +842,7 @@ def manage_transfers(configuration):
 
     for (client_id, transfers) in all_transfers.items():
         for (transfer_id, transfer_dict) in transfers.items():
-            #logger.debug('inspecting transfer:\n%s' % blind_pw(transfer_dict))
+            # logger.debug('inspecting transfer:\n%s' % blind_pw(transfer_dict))
             transfer_status = transfer_dict['status']
             if transfer_status in ("DONE", "FAILED", "PAUSED"):
                 # logger.debug('skip %(status)s transfer %(transfer_id)s' % \
