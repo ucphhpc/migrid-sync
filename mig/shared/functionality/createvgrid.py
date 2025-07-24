@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createvgrid - create a vgrid with all the collaboration components
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -369,12 +369,15 @@ repository.dir = %s
             # if the stdout/err is not handled (Popen vs call)
             logger.info('create tracker project: %s' % create_cmd)
             # NOTE: we use command list here to avoid shell requirement
+            # NOTE: we want utf8-encoded output as text str for use below
             proc = subprocess_popen(create_cmd, stdout=subprocess_pipe,
-                                    stderr=subprocess_stdout, env=admin_env)
+                                    stderr=subprocess_stdout, text=True,
+                                    env=admin_env)
             retval = proc.wait()
             if retval != 0:
+                out = proc.stdout.read()
                 raise Exception("tracker creation %s failed: %s (%d)" %
-                                (create_cmd, proc.stdout.read(), retval))
+                                (create_cmd, out, retval))
 
             # We want to customize generated project trac.ini with project info
 
@@ -433,12 +436,15 @@ repository.dir = %s
                            'upgrade']
             logger.info('upgrade project tracker database: %s' % upgrade_cmd)
             # NOTE: we use command list here to avoid shell requirement
+            # NOTE: we want utf8-encoded output as text str for use below
             proc = subprocess_popen(upgrade_cmd, stdout=subprocess_pipe,
-                                    stderr=subprocess_stdout, env=admin_env)
+                                    stderr=subprocess_stdout, text=True,
+                                    env=admin_env)
             retval = proc.wait()
             if retval != 0:
+                out = proc.stdout.read()
                 raise Exception("tracker 1st upgrade db %s failed: %s (%d)" %
-                                (upgrade_cmd, proc.stdout.read(), retval))
+                                (upgrade_cmd, out, retval))
 
             # Create cgi-bin with scripts using trac-admin command:
             # trac-admin tracker_dir deploy target_tracker_bin
@@ -446,12 +452,15 @@ repository.dir = %s
                           'deploy', target_tracker_deploy]
             logger.info('deploy tracker project: %s' % deploy_cmd)
             # NOTE: we use command list here to avoid shell requirement
+            # NOTE: we want utf8-encoded output as text str for use below
             proc = subprocess_popen(deploy_cmd, stdout=subprocess_pipe,
-                                    stderr=subprocess_stdout, env=admin_env)
+                                    stderr=subprocess_stdout, text=True,
+                                    env=admin_env)
             retval = proc.wait()
             if retval != 0:
+                out = proc.stdout.read()
                 raise Exception("tracker deployment %s failed: %s (%d)" %
-                                (deploy_cmd, proc.stdout.read(), retval))
+                                (deploy_cmd, out, retval))
 
         if not repair or not os.path.isdir(target_tracker_cgi_link):
             os.chmod(target_tracker_var, 0o755)
@@ -483,12 +492,15 @@ repository.dir = %s
                          'permission', 'add', admin_id, 'TRAC_ADMIN']
             logger.info('provide admin rights to creator: %s' % perms_cmd)
             # NOTE: we use command list here to avoid shell requirement
+            # NOTE: we want utf8-encoded output as text str for use below
             proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
-                                    stderr=subprocess_stdout, env=admin_env)
+                                    stderr=subprocess_stdout, text=True,
+                                    env=admin_env)
             retval = proc.wait()
             if retval != 0:
+                out = proc.stdout.read()
                 raise Exception("tracker permissions %s failed: %s (%d)" %
-                                (perms_cmd, proc.stdout.read(), retval))
+                                (perms_cmd, out, retval))
 
             # Customize Wiki front page using trac-admin commands:
             # trac-admin tracker_dir wiki export WikiStart tracinfo.txt
@@ -497,7 +509,7 @@ repository.dir = %s
             # trac-admin tracker_dir wiki import SiteStyle style.txt
 
             settings = {'vgrid_name': vgrid_name, 'kind': kind, 'cap_kind':
-                        kind.capitalize(), 'server_url':  server_url,
+                        kind.capitalize(), 'server_url': server_url,
                         'css_wikipage': 'SiteStyle', '_label': label}
             if kind == 'public':
                 settings['access_limit'] = "public"
@@ -613,13 +625,15 @@ body {
                             'wiki', act, page, path]
                 logger.info('wiki %s %s: %s' % (act, page, wiki_cmd))
                 # NOTE: we use command list here to avoid shell requirement
+                # NOTE: we want utf8-encoded output as text str for use below
                 proc = subprocess_popen(wiki_cmd, stdout=subprocess_pipe,
-                                        stderr=subprocess_stdout,
+                                        stderr=subprocess_stdout, text=True,
                                         env=admin_env)
                 retval = proc.wait()
                 if retval != 0:
+                    out = proc.stdout.read()
                     raise Exception("tracker wiki %s failed: %s (%d)" %
-                                    (perms_cmd, proc.stdout.read(), retval))
+                                    (perms_cmd, out, retval))
 
             wiki_fd.close()
 
@@ -634,15 +648,18 @@ body {
                        'upgrade']
         logger.info('upgrade project tracker database: %s' % upgrade_cmd)
         # NOTE: we use command list here to avoid shell requirement
+        # NOTE: we want utf8-encoded output as text str for use below
         proc = subprocess_popen(upgrade_cmd, stdout=subprocess_pipe,
-                                stderr=subprocess_stdout, env=admin_env)
+                                stderr=subprocess_stdout, text=True,
+                                env=admin_env)
         retval = proc.wait()
         if repair and os.path.isfile(target_tracker_conf_file):
             os.chmod(target_tracker_conf, 0o555)
             os.chmod(target_tracker_conf_file, 0o444)
         if retval != 0:
+            out = proc.stdout.read()
             raise Exception("tracker 2nd upgrade db %s failed: %s (%d)" %
-                            (upgrade_cmd, proc.stdout.read(), retval))
+                            (upgrade_cmd, out, retval))
 
         if repair:
             # Touch WSGI scripts to force reload of running instances
