@@ -210,10 +210,12 @@ class MigTestCase(TestCase):
     @staticmethod
     def _make_configuration_instance(testcase, configuration_to_make):
         if configuration_to_make == 'fakeconfig':
-            return FakeConfiguration(logger=testcase.logger)
+            fake_configuration = FakeConfiguration(logger=testcase.logger)
+            from mig.shared.conf import RuntimeConfiguration
+            return RuntimeConfiguration(fake_configuration)
         elif configuration_to_make == 'testconfig':
             from mig.shared.conf import get_configuration_object
-            configuration = get_configuration_object(skip_log=True, 
+            configuration = get_configuration_object(skip_log=True,
                                                      disable_auth_log=True)
             configuration.logger = testcase.logger
             return configuration
