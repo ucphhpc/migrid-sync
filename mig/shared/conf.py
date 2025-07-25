@@ -32,6 +32,7 @@ from __future__ import absolute_import
 import os
 import sys
 
+from mig.shared.configuration import RuntimeConfiguration
 from mig.shared.defaults import MIG_ENV
 from mig.shared.fileio import unpickle
 
@@ -42,7 +43,6 @@ def get_configuration_object(config_file=None, skip_log=False,
     and disable_auth_log arguments are passed on to allow skipping the default
     log initialization and disabling auth log for unit tests.
     """
-    from mig.shared.configuration import Configuration
     if config_file:
         _config_file = config_file
     elif os.environ.get('MIG_CONF', None):
@@ -63,7 +63,7 @@ def get_configuration_object(config_file=None, skip_log=False,
         skip_log = True
         disable_auth_log = True
 
-    configuration = Configuration(_config_file, False, skip_log,
+    configuration = RuntimeConfiguration(_config_file, False, skip_log,
                                   disable_auth_log)
     return configuration
 

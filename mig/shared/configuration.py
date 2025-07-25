@@ -2855,6 +2855,47 @@ location.""" % self.config_file)
         return peers_dict
 
 
+class RuntimeConfiguration(Configuration):
+    """A more specific version of the Configuration which additionally supports
+    the notion of a context.
+
+    Contextual information that is relevant to the duration of a request is
+    required in certain cases e.g. to support templating. Given Configuration
+    objects are threaded into and throough almost all the necessary codepaths
+    to make this information available, they are an attractive place to put
+    this - but a Configuration is currently loaded from static per-site data.
+
+    Resolv this ambiguity with this subclass - a raw Confioguration will
+    continute to represent the static data while a specialised but entirely
+    compatible object is handed to request processing codepaths.
+    """
+
+    def __init__(self, config_file, verbose=False, skip_log=False,
+                 disable_auth_log=False):
+        super().__init__(config_file, verbose, skip_log, disable_auth_log)
+        self._context = None
+
+    def context(self, namespace=None):
+        """Retrieve the context or a previously registered namespace.
+        """
+
+        if self._context is None:
+            self._context = {}
+        if namespace is None:
+            return self._context
+        # allow the KeyError to escape if the registered namespace is missing
+        return self._context[namespace]
+
+    def context_set(self, value, namespace=None):
+        """Attach a value as named namespace within the active congifuration.
+        """
+        assert namespace is not None
+
+        context = self.context()
+        context[namespace] = value
+        return value
+
+
 if '__main__' == __name__:
     conf = Configuration(os.path.expanduser('~/mig/server/MiGserver.conf'),
                          True)
