@@ -34,94 +34,27 @@ from __future__ import absolute_import
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
-from flask import Flask, request, Response
+from collections import namedtuple
+from flask import Flask, current_app
 import json
 import os
 import sys
 import threading
 import time
-import werkzeug.exceptions as httpexceptions
 from wsgiref.simple_server import WSGIRequestHandler
 
-from mig.lib.coresvc.payloads import PayloadException, \
-    PAYLOAD_POST_USER
-from mig.shared.base import canonical_user, keyword_auto, force_native_str_rec
-from mig.shared.useradm import fill_user, \
-    create_user as useradm_create_user, search_users as useradm_search_users
 
-
-httpexceptions_by_code = {
-    exc.code: exc for exc in httpexceptions.__dict__.values() if hasattr(exc, 'code')}
-
-
-def http_error_from_status_code(http_status_code, http_url, description=None):
-    return httpexceptions_by_code[http_status_code](description)
-
-
-def json_reponse_from_status_code(http_status_code, content):
-    json_content = json.dumps(content)
-    return Response(json_content, http_status_code, { 'Content-Type': 'application/json' })
-
-
-def _create_user(configuration, payload):
-    user_dict = canonical_user(
-        configuration, payload, PAYLOAD_POST_USER._fields)
-    fill_user(user_dict)
-    force_native_str_rec(user_dict)
-
-    try:
-        useradm_create_user(user_dict, configuration, keyword_auto, default_renew=True)
-    except:
-        raise http_error_from_status_code(500, None)
-    user_email = user_dict['email']
-    objects = search_users(configuration, {
-        'email': user_email
-    })
-    if len(objects) != 1:
-        raise http_error_from_status_code(400, None)
-    return objects[0]
-
-
-def search_users(configuration, search_filter):
-    _, hits = useradm_search_users(search_filter, configuration, keyword_auto)
-    return list((obj for _, obj in hits))
+MigCtx = namedtuple('MigCtx', ['configuration'])
 
 
 def _create_and_expose_server(server, configuration):
     app = Flask('coreapi')
 
-    @app.get('/user')
-    def GET_user():
-        raise http_error_from_status_code(400, None)
+    with app.app_context():
+        current_app.migctx = MigCtx(configuration=configuration)
 
-    @app.get('/user/<username>')
-    def GET_user_username(username):
-        return 'FOOBAR'
-
-    @app.get('/user/find')
-    def GET_user_find():
-        query_params = request.args
-
-        objects = search_users(configuration, {
-            'email': query_params['email']
-        })
-
-        if len(objects) != 1:
-            raise http_error_from_status_code(404, None)
-
-        return dict(objects=objects)
-
-    @app.post('/user')
-    def POST_user():
-        payload = request.get_json()
-
-        try:
-            payload = PAYLOAD_POST_USER.ensure(payload)
-        except PayloadException as vr:
-            return http_error_from_status_code(400, None, vr.serialize())
-
-        user = _create_user(configuration, payload)
-        return json_reponse_from_status_code(201, user)
+    from .routes import user
+    app.register_blueprint(user.bp)
 
     return app
 
