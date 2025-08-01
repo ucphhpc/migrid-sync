@@ -62,7 +62,7 @@ def _ensure_dirs_needed_for_userdb(configuration):
     for config_key in _USERADM_PATH_KEYS:
         dir_path = getattr(configuration, config_key).rstrip(os.path.sep)
         try:
-            os.makedirs(dir_path)
+            os.makedirs(dir_path, exist_ok=True)
         except OSError as exc:
             pass
 
