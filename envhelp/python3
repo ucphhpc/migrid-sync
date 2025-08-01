@@ -30,4 +30,4 @@ set -e
 SCRIPT_PATH=$(realpath "$0")
 SCRIPT_BASE=$(dirname -- "$SCRIPT_PATH")
 
-PY=3 $SCRIPT_BASE/dpython "$@"
+$SCRIPT_BASE/dpython "$@"
