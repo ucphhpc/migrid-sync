@@ -1,16 +1,9 @@
 import codecs
 import json
+from urllib.error import HTTPError
+from urllib.parse import urlencode
+from urllib.request import urlopen, Request
 import werkzeug.exceptions as httpexceptions
-
-from tests.support._env import PY2
-
-if PY2:
-    from urllib2 import HTTPError, Request, urlopen
-    from urllib import urlencode
-else:
-    from urllib.error import HTTPError
-    from urllib.parse import urlencode
-    from urllib.request import urlopen, Request
 
 from mig.lib.coresvc.payloads import PAYLOAD_POST_USER
 
