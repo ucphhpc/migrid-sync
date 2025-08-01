@@ -76,7 +76,9 @@ jobs:
         run: |
           sudo apt install -y libenchant-2-dev libcrack2-dev libssl-dev
           python -m pip install --upgrade pip
-          pip install flake8 pylint #pytest
+          if [ -f local-requirements.txt ]; then pip install -r local-requirements.txt; fi
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f recommended.txt ]; then pip install -r recommended.txt; fi
       # We may need git installed to get a full repo clone rather than unpacked archive
       - name: Check out source repository
         uses: actions/checkout@v4
@@ -125,7 +127,7 @@ jobs:
         run: |
           dnf install -y enchant cracklib openssl-devel
           python -m pip install --upgrade pip
-          pip install flake8 pylint #pytest
+          if [ -f local-requirements.txt ]; then pip install -r local-requirements.txt; fi
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f recommended.txt ]; then pip install -r recommended.txt; fi
       # We need git installed to get a full repo clone rather than unpacked archive
