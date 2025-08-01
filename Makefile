@@ -10,8 +10,6 @@ LOCAL_PYTHON_BIN = './envhelp/lpython'
 
 ifdef PYTHON_BIN
 	LOCAL_PYTHON_BIN = $(PYTHON_BIN)
-else ifeq ($(PY),2)
-	PYTHON_BIN = './envhelp/python2'
 else
 	PYTHON_BIN = './envhelp/python3'
 endif
@@ -28,7 +26,7 @@ info:
 	@echo "The following should help you get started:"
 	@echo
 	@echo "'make test'      - run the test suite (default python 3)"
-	@echo "'make PY=2 test' - run the test suite (default python 2)"
+	@echo "'make PYVER=X.Y' - run the test suite (python version X.Y)"
 	@echo "'make unittest'  - execute tests locally for development"
 
 .PHONY: fmt
@@ -41,7 +39,6 @@ endif
 
 .PHONY: clean
 clean:
-	@rm -f ./envhelp/py2.imageid
 	@rm -f ./envhelp/py3.imageid
 	@rm -f ./envhelp/local.depends
 
@@ -61,11 +58,7 @@ unittest: dependencies testconfig
 	@$(LOCAL_PYTHON_BIN) -m unittest discover -s tests/
 
 .PHONY: dependencies
-ifeq ($(PY),2)
-dependencies: ./envhelp/local.depends
-else
 dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/local.depends
-endif
 
 .PHONY: testconfig
 testconfig: ./envhelp/output/testconfs
