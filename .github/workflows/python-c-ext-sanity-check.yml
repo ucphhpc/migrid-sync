@@ -128,7 +128,7 @@ jobs:
           dnf install -y python3-devel nss-devel pam-devel #splint
           wget https://www.splint.org/downloads/binaries/splint-3.1.1.Linux.tgz
           tar -xzf splint-3.1.1.Linux.tgz
-          cp splint-3.1.1/bin/splint /usr/local/bin/
+          cp splint-3.1.1/bin/splint /usr/bin/
           rm -rf splint-3.1.1.Linux.tgz splint-3.1.1
       # We need git installed to get a full repo clone rather than unpacked archive
       - name: Check out source repository
@@ -142,5 +142,6 @@ jobs:
           # NOTE: include tests here as they should be fully python3 compatible
           git config --global --add safe.directory "$PWD"
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
+          echo "with splint from $(which splint)"
           # TODO: enable once we have figured out how to instal splint on rocky
           git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list
