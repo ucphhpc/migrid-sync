@@ -1,6 +1,6 @@
 /*
  * migauth.h - PAM and NSS helpers for MiG user authentication
- * Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
  *
  * This file is part of MiG
  *
@@ -83,6 +83,14 @@
 #ifndef PASSWORD_MIN_CLASSES
 /* Default fall-back value used unless given */
 #define PASSWORD_MIN_CLASSES 2
+#endif
+#ifndef INTEGER_MAX_LENGTH
+/* Default fall-back value used unless given */
+/* This size is based on long long integer size i.e. LLONG_MAX in C and
+ * sys.maxsize in python, which should always fit in at most 21 bytes even
+ * when optional sign ('-') and the terminating null-byte is included.
+ */
+#define INTEGER_MAX_LENGTH 21
 #endif
 
 /* Various settings used by ordinary user access */
@@ -257,13 +265,26 @@ static const int get_runtime_var_int(const char *env_name,
                                      const int define_val)
 {
     /* NOTE: tedious but required juggling between string and integer */
-    char val_str[4];
+
+    /* IMPORTANT: when constructing strings from unknown input we must use
+     * snprintf with the actual buffer size as max size parameter and check
+     * that the returned value was smaller than that size. Any bigger return
+     * value means that the buffer was written but the input truncated when
+     * it attempted to write the returned number of bytes.
+     * https://pubs.opengroup.org/onlinepubs/9799919799/functions/snprintf.html
+     */
+
+    char val_str[INTEGER_MAX_LENGTH];
     /* Convert define_val int to '\0'-terminated string */
-    snprintf(val_str, 3, "%d", define_val);
-    val_str[3] = 0;
+    memset(val_str, 0, INTEGER_MAX_LENGTH);
+    if (INTEGER_MAX_LENGTH <=
+        snprintf(val_str, INTEGER_MAX_LENGTH, "%d", define_val)) {
+        WRITELOGMESSAGE(LOG_ERR, "Overflow in get runtime int var %s: %s\n",
+                        env_name, define_val);
+        return -42;
+    }
     /* Convert lookup back to int */
     return atoi(get_runtime_var(env_name, conf_name, val_str));
-
 }
 
 static const int get_runtime_var_size_t(const char *env_name,
