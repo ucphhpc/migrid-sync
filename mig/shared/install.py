@@ -1745,15 +1745,6 @@ cert, oid and sid based https!
     else:
         user_dict['__DUPLICATI_COMMENTED__'] = '#'
 
-    # Enable Paraview integration only if explicitly requested
-    if user_dict['__ENABLE_PREVIEW__'].lower() == 'true':
-        user_dict['__PREVIEW_COMMENTED__'] = ''
-        # Paraview requires websockets and http proxy
-        user_dict['__WEBSOCKETS_COMMENTED__'] = ''
-        user_dict['__PROXY_HTTP_COMMENTED__'] = ''
-    else:
-        user_dict['__PREVIEW_COMMENTED__'] = '#'
-
     dev_suffix = '$(echo ${APACHE_CONFDIR} | sed "s@/etc/${APACHE_DAEMON}@@")'
     if user_dict['__ENABLE_DEV_ACCOUNTS__'].lower() == "true":
         user_dict['__APACHE_SUFFIX__'] = dev_suffix
