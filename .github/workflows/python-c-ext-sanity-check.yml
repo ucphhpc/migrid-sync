@@ -93,6 +93,7 @@ jobs:
 
   lint-c-ext-python3-ubuntu-lts:
     name: Sanity check c-extension module code in latest Ubuntu LTS python3
+    if: ${{ false }} # Disabled now that the above job works
     runs-on: ubuntu-24.04
     steps:
       - name: Set up git, findutils and make with apt
