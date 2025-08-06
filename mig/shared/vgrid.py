@@ -536,7 +536,7 @@ def vgrid_is_entity_in_list(
 ):
     """Return True if specified entity_id is in group
     ('owners', 'members', 'resources', 'triggers', 'settings', 'sharelinks',
-    'imagesettings', 'jobqueue') of vgrid.
+    'jobqueue') of vgrid.
     If recursive is True the entities from parent vgrids will be included. The
     optional dict_field is used to check against the trigger case where entries
     are dicts rather than raw strings.
@@ -655,17 +655,6 @@ def vgrid_is_sharelink(vgrid_name, option_id, configuration, recursive=True,
                                    allow_missing)
 
 
-def vgrid_is_imagesetting(vgrid_name, imagesetting_id, configuration, recursive=True,
-                          allow_missing=True):
-    """Check if option_id is a imagesetting in vgrid_name. We allow missing
-    parent pickle to support autonomous multi-frontend systems.
-    """
-
-    return vgrid_is_entity_in_list(vgrid_name, imagesetting_id, 'imagesettings',
-                                   configuration, recursive, 'imagesetting_id',
-                                   allow_missing)
-
-
 def vgrid_list_subvgrids(vgrid_name, configuration):
     """Return list of subvgrids of vgrid_name"""
 
@@ -766,9 +755,6 @@ def init_vgrid_script_add_rem(
     elif subject_type in ('sharelinks', ):
         # No direct access to vgrid sharelinks (implicit with create/remove)
         pass
-    elif subject_type in ('imagesettings', ):
-        # No direct access to vgrid imagesettings (implicit with create/remove)
-        pass
     else:
         msg += 'unknown subject type in init_vgrid_script_add_rem'
         return (False, msg, [])
@@ -817,7 +803,7 @@ def init_vgrid_script_list(vgrid_name, client_id, configuration):
                                     configuration):
         msg += 'Failure: You must be an owner or member of '\
             + vgrid_name\
-            + ' vgrid to get a list of members/owners/resources/triggers/settings/sharelinks/imagesettings'
+            + ' vgrid to get a list of members/owners/resources/triggers/settings/sharelinks'
         return (False, msg, None)
 
     return (True, msg, [])
@@ -1068,8 +1054,6 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
         name = configuration.vgrid_workflow_job_queue
     elif group == 'sharelinks':
         name = configuration.vgrid_sharelinks
-    elif group == 'imagesettings':
-        name = configuration.vgrid_imagesettings
     else:
         return (False, "vgrid_list: unknown group: '%s'" % group)
     if recursive:
@@ -1184,13 +1168,6 @@ def vgrid_sharelinks(vgrid_name, configuration, recursive=True,
                      allow_missing=True):
     """Extract sharelinks list for a vgrid"""
     return vgrid_list(vgrid_name, 'sharelinks', configuration, recursive,
-                      allow_missing)
-
-
-def vgrid_imagesettings(vgrid_name, configuration, recursive=True,
-                        allow_missing=True):
-    """Extract imagesettings list for a vgrid"""
-    return vgrid_list(vgrid_name, 'imagesettings', configuration, recursive,
                       allow_missing)
 
 
@@ -1442,12 +1419,6 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
                 raise ValueError(
                     "invalid entry '%s' in jobqueue. Invalid because: %s"
                     % (entry, msg))
-    elif kind == 'imagesettings':
-        for i in id_list:
-            if not isinstance(i, dict):
-                raise ValueError("invalid %s entry for %s: %s" %
-                                 (kind, vgrid_name, i))
-        # TODO: add detailed field validation based on keywords like above
     else:
         raise ValueError("unknown kind: '%s'" % kind)
 
@@ -1491,8 +1462,6 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
         entity_filename = configuration.vgrid_workflow_job_queue
     elif kind == 'sharelinks':
         entity_filename = configuration.vgrid_sharelinks
-    elif kind == 'imagesettings':
-        entity_filename = configuration.vgrid_imagesettings
     else:
         return (False, "vgrid_add_entities: unknown kind: '%s'" % kind)
 
@@ -1604,13 +1573,6 @@ def vgrid_add_sharelinks(configuration, vgrid_name, id_list, update_id=None,
                               id_list, update_id, rank)
 
 
-def vgrid_add_imagesettings(configuration, vgrid_name, id_list, update_id=None,
-                            rank=None):
-    """Append id_list to pickled list of imagesettings for vgrid_name"""
-    return vgrid_add_entities(configuration, vgrid_name, 'imagesettings',
-                              id_list, update_id, rank)
-
-
 def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
                           allow_empty, dict_field=False):
     """Remove list of IDs from pickled list of kind for vgrid_name.
@@ -1634,8 +1596,6 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
         entity_filename = configuration.vgrid_workflow_job_queue
     elif kind == 'sharelinks':
         entity_filename = configuration.vgrid_sharelinks
-    elif kind == 'imagesettings':
-        entity_filename = configuration.vgrid_imagesettings
     else:
         return (False, "vgrid_remove_entities: unknown kind: '%s'" % kind)
 
@@ -1728,13 +1688,6 @@ def vgrid_remove_sharelinks(configuration, vgrid_name, id_list,
                                  id_list, allow_empty, dict_field='share_id')
 
 
-def vgrid_remove_imagesettings(configuration, vgrid_name, id_list,
-                               allow_empty=True):
-    """Remove id_list from pickled list of imagesettings for vgrid_name"""
-    return vgrid_remove_entities(configuration, vgrid_name, 'imagesettings',
-                                 id_list, allow_empty, dict_field='imagesetting_id')
-
-
 def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     """Set kind list to provided id_list for given vgrid. The allow_empty
     argument cam be used to e.g. prevent empty owners lists.
@@ -1754,8 +1707,6 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
         entity_filename = configuration.vgrid_workflow_job_queue
     elif kind == 'sharelinks':
         entity_filename = configuration.vgrid_sharelinks
-    elif kind == 'imagesettings':
-        entity_filename = configuration.vgrid_imagesettings
     else:
         return (False, "vgrid_set_entities: unknown kind: '%s'" % kind)
 
@@ -1833,13 +1784,6 @@ def vgrid_set_sharelinks(configuration, vgrid_name, id_list,
                          allow_empty=False):
     """Set list of sharelinks for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'sharelinks',
-                              id_list, allow_empty)
-
-
-def vgrid_set_imagesettings(configuration, vgrid_name, id_list,
-                            allow_empty=False):
-    """Set list of imagesettings for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'imagesettings',
                               id_list, allow_empty)
 
 

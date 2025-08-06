@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_events - event handler to monitor files and trigger actions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -1344,9 +1344,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                     # IMPORTANT: keep this vgrid access check last!
                     # It is far more computationally expensive than the simple
-                    # checks above. We particularly want to filter the common
-                    # storm of events from the system_imagesettings_dir_deleted
-                    # trigger for '*' but only on dirs, before it gets here.
+                    # checks above.
 
                     # User may have been removed from vgrid - log and ignore
 

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # htmlgen - html generator helper functions
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -926,8 +926,6 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
 <!-- Fancy file uploader and dependencies -->
 <!-- The Templates plugin is included to render the upload/download listings -->
 <script type="text/javascript" src="/images/js/tmpl.min.js"></script>
-<!-- The Load Image plugin is included for the preview images and image resizing functionality -->
-<script type="text/javascript" src="/images/js/load-image.min.js"></script>
 <!-- The Iframe Transport is required for browsers without support for XHR file uploads -->
 <script type="text/javascript" src="/images/js/jquery.iframe-transport.js"></script>
 <!-- The basic File Upload plugin -->

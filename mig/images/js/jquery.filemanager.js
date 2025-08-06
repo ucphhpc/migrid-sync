@@ -577,9 +577,6 @@ if (jQuery) (function($){
                         buttonSpacing: buttonSpacing
                     }
                 };
-            if (options['imagesettings']) {
-                layout = preview.update_fm_layout(layout);
-            }
             return layout;
         }
 
@@ -609,14 +606,6 @@ if (jQuery) (function($){
 
             console.debug('refresh_fm_layout returning');
             return layout;
-        }
-
-        function clickEvent(el) {
-            if (!options['imagesettings']) {
-                console.debug('clickEvent: imagesettings is false');
-            } else {
-                preview.open($(el).attr(pathAttribute));
-            }
         }
 
         function doubleClickEvent(el) {
@@ -1691,11 +1680,6 @@ if (jQuery) (function($){
                 });
                 $("#import_freeze_dialog").dialog('open');
                 $("#import_freeze_form input[name='freeze_id']").focus();
-            },
-            imagesettings: function(action, el, pos) {
-                var rel_path = $(el).attr(pathAttribute);
-                var open_dialog = mig_imagesettings_init("imagesettings_dialog", rel_path, options);
-                open_dialog("Image Settings");
             }
         };
 
@@ -1722,7 +1706,6 @@ if (jQuery) (function($){
             refreshLayoutOnInit: false,
             enableSubmit: true,
             selectOnly: false,
-            imagesettings: false,
             enableGDP: false,
             maxStreamSize: 64*1024*1024
         };
@@ -1739,40 +1722,13 @@ if (jQuery) (function($){
             } */
         });
 
-        // Initiate preview
-        
-        var preview = null;
-        if (options['imagesettings']) {
-            preview = new Preview(
-                                get_fm_layout,
-                                options,
-                                enable_debug);
-        }
-
-        $.fn.refresh_fm_layout = refresh_fm_layout;
-
         // Define window behavior
 
         $(window).on("resize", function() {
-            if (options['imagesettings']) {
-                preview.set_visibility('hidden');
-            }
             console.debug("refresh layout on resize");
             $.fn.refresh_fm_layout();
         });
 
-        $(window).on("debouncedresize", function() {
-            if (options['imagesettings']) {
-                preview.refresh();
-            }
-
-        });
-
-        $(window).on('beforeunload', function(){
-            if (options['imagesettings']) {
-                preview.close();
-            }
-        });
 
         // reestablish defaults for undefined actions:
         $.each(callbacks, function(name, fct) {
@@ -2263,8 +2219,6 @@ if (jQuery) (function($){
                     "sep2": "---------",
                     "rename": {name: "Rename", icon: "rename"},
                     "sep3": "---------",
-                    "imagesettings": {name: "Image Settings", icon: "edit"},
-                    "sep4": "---------",
                     "sharelinks": {"name": "Share Link", icon: "sharelink", 
                                    "items": {"createsharelink": {name: "Create", icon: "createsharelink"},
                                              "importsharelink": {name: "Import", icon: "importsharelink"}
@@ -2349,10 +2303,6 @@ if (jQuery) (function($){
                         }
                     }
                 };
-                if (!options["imagesettings"]) {
-                    delete directory_menu["imagesettings"];
-                    delete directory_menu["sep4"];
-                }
                 if (!options["enableSubmit"]) {
                     delete file_menu["submit-sep"];
                     delete file_menu["submit"];
@@ -2455,13 +2405,6 @@ if (jQuery) (function($){
 
             function bindHandlers(folder_pane) {
                 bindContextMenus();
-
-                console.debug("add click handler");
-                 $.fn.fmSelect("").on("click",
-                                        "tr.file",
-                                        function(event) {
-                                            clickEvent(this);
-                                        });
 
                 console.debug("add dblclick handler");
                 //$.fn.fmSelect("").off("dblclick", "tr.file, tr.directory");
@@ -2606,15 +2549,6 @@ if (jQuery) (function($){
             bindHandlers(folder_pane);
 
             showBranch(folder_pane, encodeURI(options.root));
-
-            /*
-             * Bind preview buttons
-             */
-
-            if (options['imagesettings']) {
-                preview.bind_buttons();
-            }
-
             
             /**
              * Bind handlers for forms. This is ridiculous and tedious repetitive code.
@@ -2913,7 +2847,6 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
          datatransfersbutton: false,
          datasafetypopup: false,
          refreshLayoutOnInit: true,
-         imagesettings: false,
          selectOnly: true
         },
         // doubleclick callback action
@@ -3438,515 +3371,6 @@ function mig_fancyuploadchunked_init(name, options, callback) {
             });
         });
 
-    };
-
-    return do_d;
-}
-
-/* Image settings dialog */
-
-function mig_imagesettings_init(name, path, options) {
-    var edit_form_values = { 
-            extension: '',
-            settings_status: '',
-            settings_recursive: '',
-            image_type: '',
-            data_type: '',
-            volume_slice_filepattern: '',
-            offset: 0,
-            x_dimension: 0,
-            y_dimension: 0,
-            z_dimension: 0,
-            preview_cutoff_min: 0.0,
-            preview_cutoff_max: 0.0,
-        };
-
-    init_html_and_handlers();
-
-    $("#" + name).dialog(
-        // see http://jqueryui.com/docs/dialog/ for options
-        {
-            autoOpen: false,
-            modal: true,
-            width: 480,
-            position: { my: "top", at: "top+100px", of: window},
-            buttons: dialog_list_buttons()
-        });
-
-    function dialog_list_buttons() {
-        return {
-            'New': function() {
-                edit(null);
-            },
-            'Clear': function() {
-                remove_all();
-            },
-            'Refresh': function() {
-                show_list();
-            },
-            'Close': function() {
-                $("#" + name).dialog("close");
-            }
-        };
-    }
-
-    function dialog_new_buttons() {
-        return {
-            'Create': function() {
-                $("#imagesettings_form").submit();
-            },
-            'Cancel': function() {
-                show_list();
-            },
-            'Close': function() {
-                $("#" + name).dialog("close");
-            }
-        };
-    }
-
-    function dialog_edit_buttons() {
-        return {
-            'Update': function() {
-                $("#imagesettings_form").submit();
-            },
-            'Remove': function() {
-                remove();
-            },
-            'Back': function() {
-                show_list();
-            },
-            'Close': function() {
-                $("#" + name).dialog("close");
-            }
-        };
-    }
-
-    // Initializes html and handlers
-
-    function init_html_and_handlers() {
-        $("#imagesettings_edit").hide();
-        $("#imagesettings_edit_tabs").hide();
-
-        // Handle image settings file form submit
-
-        $("#imagesettings_form").ajaxForm({
-            target: '#imagesettings_output', dataType: 'json',
-            success: function(responseObject, statusText) {
-                var msg;
-                var errors = $(this).renderError(responseObject);
-                var warnings = $(this).renderWarning(responseObject);
-                if (errors.length > 0) {
-                    msg = errors;
-                    console.debug(errors);
-                } else if (warnings.length > 0) {
-                    msg = warnings;
-                    console.debug(warnings);
-                } else {
-                    msg = 'Image file settings updated';
-                }
-                show_list(msg);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error("imagesettings_form error: "+ textStatus);
-                console.debug("imagesettings_form error: "+ errorThrown);
-            }
-        });
-
-        // Changes based on image_type
-
-        $("#imagesettings_form select[name='image_type']").on('change', function() {
-            var image_type_value = $("#imagesettings_form select[name='image_type']").val();
-            var data_type_value = $("#imagesettings_form select[name='data_type']").val();
-
-            // Set data_type based on image_type
-            
-            if (image_type_value === 'tiff') {
-                data_type_value = 'uint16';
-            } 
-            else {
-                data_type_value = edit_form_values['data_type'];
-            }            
-            $("#imagesettings_form select[name='data_type']").val(data_type_value).prop('selected', true);
-
-            // Only display options for raw data if 'raw' is selected'
-
-            if (image_type_value === 'raw') {
-                $("#imagesettings_edit_image_type_raw").show({duration: options.expandSpeed, 
-                                                              easing: options.expandEasing });
-            }
-            else {
-                $("#imagesettings_edit_image_type_raw").hide({duration: options.expandSpeed, 
-                                                              easing: options.expandEasing });
-            }
-        });
-
-        // Change Sub-folder checkbox value when checked/unchecked
-
-        $("#imagesettings_form input[name='settings_recursive']").on('change', function() {
-            if ($("#imagesettings_form input[name='settings_recursive']").prop("checked")) {
-                $("#imagesettings_form input[name='settings_recursive']").val('True');
-            }
-            else {
-                $("#imagesettings_form input[name='settings_recursive']").val('False');
-            }
-        });
-    }
-
-    function show_list(output_msg) {
-
-        // Generate image extension list
-        var html_out;
-
-        if (output_msg === undefined) {
-            html_out = '';
-        }
-        else {
-            html_out = '<p>' + output_msg + '</p>';
-        }
-        $("#imagesettings_output").html(html_out);
-        $("#imagesettings_list").hide(({duration: options.expandSpeed,
-                                        easing: options.expandEasing }));
-        $("#imagesettings_edit_tabs").hide(({duration: options.expandSpeed, 
-                                             easing: options.expandEasing }));
-
-        // Retrieve image settings list
-
-        $.ajax({
-            url: 'imagepreview.py',
-            data: { path: path,
-                    output_format: 'json' ,
-                    action: 'list_settings'},
-            type: "GET",
-            dataType: "json",
-            cache: false,
-            success: function (jsonRes) {
-                var errors = $(this).renderError(jsonRes);
-                var warnings = $(this).renderWarning(jsonRes);
-                if (errors.length > 0) {
-                    console.debug(errors);
-                } else if (warnings.length > 0) {
-                    console.debug(warnings);
-                }
-
-                var i;
-                var extension_list = [];
-                var image_settings_status_list = [];
-                var image_settings_progress_list = [];
-                var image_count_list = [];
-                var volume_settings_status_list = [];
-                var volume_settings_progress_list = [];
-                var volume_count_list = [];
-                
-                // Generate extension, status, progress and count lists for each entry
-
-                for (i = 0; i < jsonRes.length; i++) {
-                    if (jsonRes[i].object_type === 'image_settings_list') {
-                        extension_list = extension_list.concat(jsonRes[i].extension_list);
-                        image_settings_status_list = image_settings_status_list.concat(jsonRes[i].image_settings_status_list);
-                        image_settings_progress_list = image_settings_progress_list.concat(jsonRes[i].image_settings_progress_list);
-                        image_count_list = image_count_list.concat(jsonRes[i].image_count_list);
-                        volume_settings_status_list = image_settings_status_list.concat(jsonRes[i].image_settings_status_list);
-                        volume_settings_progress_list = volume_settings_progress_list.concat(jsonRes[i].volume_settings_progress_list);
-                        volume_count_list = volume_count_list.concat(jsonRes[i].volume_count_list);
-                    }
-                }
-
-                // Generate html for each entry
-
-                var html_out = '<p><b>Image file extensions:</b></p>';
-                if (image_settings_status_list.length === 0) {
-                    html_out += '<p>-- No folder image settings configured --</p>';
-                }
-
-                for (i = 0; i < image_settings_status_list.length; i++) {
-                    if (image_settings_status_list[i].toLowerCase() === 'ready' ||
-                        image_settings_status_list[i].toLowerCase() === 'failed') {
-                        html_out += '<ul class="edit">';
-                        html_out += '<li title="Edit" ';
-                    }
-                    else if (image_settings_status_list[i].toLowerCase() === 'pending') {
-                        html_out += '<ul class="pending">';
-                        html_out += '<li title="Pending" ';
-                    }
-                    else if (image_settings_status_list[i].toLowerCase() === 'updating') {
-                        html_out += '<ul class="updating">';
-                        console.debug('mig_imagesettings_init: extension_list[' +i+ ']: ' + extension_list[i] + ' <- updating');
-                        html_out += '<li title="Updating" ';
-                    }
-                    html_out += 'extension="' + extension_list[i] + '">';
-                    html_out += '<span style="top:-2px; position:relative;">';
-                    html_out +=  extension_list[i];
-                    if (image_settings_status_list[i].toLowerCase() === 'ready') {
-                        html_out += ' (Files: ' + image_count_list[i];
-                        if (volume_count_list[i] !== 0) {
-                            html_out += ', Volumes: ' + volume_count_list[i];
-                        }
-                        html_out += ')';
-                    }
-                    else if (image_settings_status_list[i].toLowerCase() === 'updating' ) {
-                        html_out +=  ' (Files: ' + image_settings_progress_list[i];
-                        if (volume_settings_progress_list[i] !== '' && 
-                            volume_settings_progress_list[i] !== 'None') {
-                                html_out += ', Volumes: ' + volume_settings_progress_list[i];
-                        }
-                        html_out += ')';
-                    }                        
-                    else if (image_settings_status_list[i].toLowerCase() === 'failed' ) {
-                        html_out +=  '<span style="color:red"> (Failed)</span>';
-                    }                        
-                    
-                    html_out += '</li></scan></ul>'; 
-                }
-                $("#imagesettings_list").html(html_out);
-
-                // Attach 'edit' handler to each list element
-
-                $("#imagesettings_list ul.edit li").click(function() {
-                    edit($(this).attr('extension'));
-                });
-
-                // Show list
-
-                $("#imagesettings_list").show(({duration: options.expandSpeed,
-                                                easing: options.expandEasing}));
-
-                // Set dialog buttons
-
-                $("#" + name).dialog('option', 'buttons', dialog_list_buttons());
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error("image settings -> show_list error: " + textStatus);
-                console.debug("image settings -> show_list error: " + errorThrown);
-                /* TODO: add $.fn.handleAjaxError fallback using #imagesettings_output here? */
-            }
-        });
-    }
-
-    // Removes all element from list
-
-    function remove_all() {
-        var call_args = { path: path,
-                          output_format: 'json' ,
-                          action: 'remove_setting'};
-        call_args[csrf_field] = csrf_map['imagepreview'];
-        $.ajax({
-            url: 'imagepreview.py',
-            data: call_args,
-            type: "POST",
-            dataType: "json",
-            cache: false,
-            success: function (jsonRes) {
-                console.debug('imagesettings edit jsonRes.length: ' + jsonRes.length);
-                var i;
-                var errors = $(this).renderError(jsonRes);
-                var warnings = $(this).renderWarning(jsonRes);
-                var msg = '';
-
-                if (errors.length > 0) {
-                    msg = errors;
-                    console.debug(msg);
-                } else if (warnings.length > 0) {
-                    msg = warnings;
-                    console.debug(msg);
-                } else {
-                    msg = 'Image Settings Cleared';
-                }
-                show_list(msg);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error("image settings -> remove_all error: " + textStatus);
-                console.debug("image settings -> remove_all error: " + errorThrown);
-                /* TODO: add $.fn.handleAjaxError fallback using #imagesettings_output here? */
-            }
-        });
-    }
-
-    // Remove an element from list
-
-    function remove() {
-        var extension = $("#imagesettings_form input[name='extension']").val();
-        var call_args = { path: path,
-                          output_format: 'json' ,
-                          action: 'remove_setting',
-                          extension: extension};
-        call_args[csrf_field] = csrf_map['imagepreview'];
-        $.ajax({
-            url: 'imagepreview.py',
-            data: call_args,
-            type: "POST",
-            dataType: "json",
-            cache: false,
-            success: function (jsonRes) {
-                var i;
-                var errors = $(this).renderError(jsonRes);
-                var warnings = $(this).renderWarning(jsonRes);
-                var msg = '';
-
-                if (errors.length > 0) {
-                    msg = errors;
-                    console.debug(msg);
-                } else if (warnings.length > 0) {
-                    msg = warnings;
-                    console.debug(msg);
-                } else {
-                    msg = "Image setting for: '" + extension + "'' removed";
-                }
-                show_list(msg);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error("image settings -> remove error: " + textStatus);
-                console.debug("image settings -> remove error: " + errorThrown);
-                /* TODO: add $.fn.handleAjaxError fallback using #imagesettings_output here? */
-            }
-        });
-    }
-
-    function hide_edit_tabs() {
-        return;
-    }
-
-    function show_edit_tabs() {
-        return;
-    }
-
-    // Prepare edit image setting data
-
-    function edit(extension) {
-        if (extension === null) {
-            edit_form_values['extension'] = '';
-            edit_form_values['settings_status'] = 'Pending';
-            edit_form_values['settings_recursive'] = 'False';
-            edit_form_values['image_type'] = 'raw';
-            edit_form_values['data_type'] = 'float32';
-            edit_form_values['volume_slice_filepattern'] = '';
-            edit_form_values['offset'] = 0;
-            edit_form_values['x_dimension'] = 0;
-            edit_form_values['y_dimension'] = 0;
-            edit_form_values['z_dimension'] = 0;
-            edit_form_values['preview_cutoff_min'] = 0;
-            edit_form_values['preview_cutoff_max'] = 0;
-            do_edit();
-        } else {
-            $.ajax({
-                url: 'imagepreview.py',
-                data: { extension: extension,
-                        path: path,
-                        output_format: 'json',
-                        action: 'get_setting'},
-                type: "GET",
-                dataType: "json",
-                cache: false,
-                success:function (jsonRes) {
-                    console.debug('imagesettings edit jsonRes.length: ' + jsonRes.length);
-                    var i;
-                    var errors = $(this).renderError(jsonRes);
-                    var warnings = $(this).renderWarning(jsonRes);
-
-                    if (errors.length > 0) {
-                        $("#imagesettings_output").html(errors);
-                        console.debug(errors);
-                    } else if (warnings.length > 0) {
-                        $("#imagesettings_output").html(warnings);
-                        console.debug(warnings);
-                    }
-
-                    for (i = 0; i < jsonRes.length; i++) {
-                        if (jsonRes[i].object_type === 'image_setting') {
-                            edit_form_values['extension'] = jsonRes[i]['extension'];
-                            edit_form_values['settings_recursive'] = jsonRes[i]['settings_recursive'];
-                            edit_form_values['image_type'] = jsonRes[i]['image_type'];
-                            edit_form_values['data_type'] = jsonRes[i]['data_type'];
-                            edit_form_values['volume_slice_filepattern']  = jsonRes[i]['volume_slice_filepattern'];
-                            edit_form_values['offset'] = jsonRes[i]['offset'];
-                            edit_form_values['x_dimension'] = jsonRes[i]['x_dimension'];
-                            edit_form_values['y_dimension'] = jsonRes[i]['y_dimension'];
-                            edit_form_values['z_dimension'] = jsonRes[i]['z_dimension'];
-                            edit_form_values['preview_cutoff_min'] = jsonRes[i]['preview_cutoff_min'];
-                            edit_form_values['preview_cutoff_max'] = jsonRes[i]['preview_cutoff_max'];
-                        }
-                    }
-                    do_edit();
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    console.error("image settings edit-> remove error: " + textStatus);
-                    console.debug("image settings edit-> remove error: " + errorThrown);
-                    /* TODO: add $.fn.handleAjaxError fallback using #imagesettings_output here? */
-                }
-            });
-        }
-    }
-
-    // Handle edit image setting
-
-    function do_edit() {
-        $("#imagesettings_output").html('');
-
-        $("#imagesettings_list").hide(({duration: options.expandSpeed,
-                                        easing: options.expandEasing }));
-        $("#imagesettings_edit_file_tab").hide(({duration: options.expandSpeed, 
-                                                 easing: options.expandEasing }));
-        $("#imagesettings_edit_volume_tab").hide({duration: options.expandSpeed, 
-                                             easing: options.expandEasing });
-
-        // Fill edit html form
-
-        $("#imagesettings_form input[name='path']").val(path);
-        $("#imagesettings_form input[name='action']").val('create_setting');
-        $("#imagesettings_form input[name='settings_status']").val(edit_form_values['image_settings_status']);
-        $("#imagesettings_form input[name='extension']").val(edit_form_values['extension']);
-        if (edit_form_values['extension'] !== '') {
-            $("#imagesettings_form input[name='extension']").attr("readonly", true);
-        }
-        else {
-            $("#imagesettings_form input[name='extension']").attr("readonly", false);
-        }
-        if (edit_form_values['settings_recursive'] === 'True') {
-            $("#imagesettings_form input[name='settings_recursive']").prop('checked', true).change();
-        }
-        else {
-            $("#imagesettings_form input[name='settings_recursive']").prop('checked', false).change();
-        }
-        $("#imagesettings_form select[name='image_type']").val(edit_form_values['image_type']).prop('selected', true).change();
-        if (edit_form_values['data_type'] !== 'None') {
-            $("#imagesettings_form select[name='data_type']").val(edit_form_values['data_type']).prop('selected', true);
-        }
-        $("#imagesettings_form input[name='volume_slice_filepattern']").val(edit_form_values['volume_slice_filepattern']);
-        $("#imagesettings_form input[name='offset']").val(edit_form_values['offset']);
-        $("#imagesettings_form input[name='x_dimension']").val(edit_form_values['x_dimension']);
-        $("#imagesettings_form input[name='y_dimension']").val(edit_form_values['y_dimension']);
-        $("#imagesettings_form input[name='z_dimension']").val(edit_form_values['z_dimension']);
-        $("#imagesettings_form input[name='preview_cutoff_min']").val(edit_form_values['preview_cutoff_min']);
-        $("#imagesettings_form input[name='preview_cutoff_max']").val(edit_form_values['preview_cutoff_max']);
-
-        // Show edit file html form and tab
-
-        $("#imagesettings_edit_file_tab").show({duration: options.expandSpeed, 
-                                       easing: options.expandEasing});
-
-        $("#imagesettings_edit_tabs").show({duration: options.expandSpeed, 
-                                             easing: options.expandEasing });
-
-
-        $('#imagesettings_edit_tabs').tabs({ active: 0 });
-
-        // Set dialog buttons
-
-        if (edit_form_values['extension'] === '') {
-            $("#" + name).dialog('option', 'buttons', dialog_new_buttons());
-        }
-        else {
-            $("#" + name).dialog('option', 'buttons', dialog_edit_buttons());
-        }
-    }
-
-    // Initial function used for when opening dialog
-
-    var do_d = function(text) {
-
-        console.debug('mig_imagesettings dialog: ' + name + ', ' + text + ', ' + path);
-        $("#" + name).dialog("open");
-
-        show_list();
     };
 
     return do_d;

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridworkflows - data-driven workflows for owners and members
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -45,7 +45,7 @@ from mig.shared.base import client_id_dir
 from mig.shared.cmdapi import get_usage_map
 from mig.shared.defaults import keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
-    workflows_log_cnt, pending_states, final_states, img_trigger_prefix
+    workflows_log_cnt, pending_states, final_states
 from mig.shared.events import get_path_expand_map
 from mig.shared.fileio import unpickle, makedirs_rec, move_file
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -229,8 +229,7 @@ access the workflows.'''
                                trigger_rule['rule_id'], 'path': trigger_path,
                                'action': trigger_action, 'time': trigger_time,
                                'status': serverjob['STATUS']}
-                        if not job['rule_id'].startswith(img_trigger_prefix) \
-                                or verbose(flags):
+                        if verbose(flags):
                             trigger_jobs.append(job)
                     elif serverjob['STATUS'] in final_states:
                         src_path = os.path.join(trigger_job_pending_dir,
@@ -267,8 +266,6 @@ access the workflows.'''
         # Only include system triggers in verbose mode
         if verbose(flags):
             system_filter = []
-        else:
-            system_filter = [('rule_id', '%s_.*' % img_trigger_prefix)]
         (init_status, oobjs) = vgrid_add_remove_table(
             client_id,
             vgrid_name,

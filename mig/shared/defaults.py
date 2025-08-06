@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -318,7 +318,6 @@ edit_lock_timeout = 600
 valid_trigger_changes = ['created', 'modified', 'deleted']
 valid_trigger_actions = ['submit', 'command'] + ['trigger-%s' % i for i in
                                                  valid_trigger_changes]
-img_trigger_prefix = 'system_imagesettings'
 
 workflows_log_name = 'workflow.log'
 # 64M = 67108864

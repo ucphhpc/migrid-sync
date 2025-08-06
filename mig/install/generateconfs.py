@@ -276,7 +276,6 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'enable_freeze',
         'enable_sandboxes',
         'enable_vmachines',
-        'enable_preview',
         'enable_jupyter',
         'enable_cloud',
         'enable_gdp',

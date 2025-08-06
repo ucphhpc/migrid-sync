@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -173,16 +173,8 @@ Please contact the %s site support (%s) if you think it should be enabled.
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
-<!-- The preview image plugin -->
-<script type="text/javascript" src="/images/js/preview.js"></script>
-<!-- The image manipulation CamanJS plugin used by the preview image plugin -->
-<script type="text/javascript" src="/images/lib/CamanJS/dist/caman.full.js"></script>
-<!-- The nouislider plugin used by the preview image plugin -->
-<script type="text/javascript" src="/images/lib/noUiSlider/jquery.nouislider.all.js"></script>
     '''
     add_init += '''
-Caman.DEBUG = false
-
 var copy_fields = 0;
 var upload_fields = 0;
 var open_file_chooser;

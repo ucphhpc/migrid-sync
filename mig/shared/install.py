@@ -378,7 +378,6 @@ def generate_confs(
     enable_freeze=True,
     enable_sandboxes=False,
     enable_vmachines=False,
-    enable_preview=False,
     enable_jupyter=False,
     enable_cloud=False,
     enable_hsts=True,
@@ -702,7 +701,6 @@ def _generate_confs_prepare(
     enable_freeze,
     enable_sandboxes,
     enable_vmachines,
-    enable_preview,
     enable_jupyter,
     enable_cloud,
     enable_hsts,
@@ -956,7 +954,6 @@ def _generate_confs_prepare(
     user_dict['__ENABLE_FREEZE__'] = "%s" % enable_freeze
     user_dict['__ENABLE_SANDBOXES__'] = "%s" % enable_sandboxes
     user_dict['__ENABLE_VMACHINES__'] = "%s" % enable_vmachines
-    user_dict['__ENABLE_PREVIEW__'] = "%s" % enable_preview
     user_dict['__ENABLE_JUPYTER__'] = "%s" % enable_jupyter
     user_dict['__ENABLE_CLOUD__'] = "%s" % enable_cloud
     user_dict['__ENABLE_HSTS__'] = "%s" % enable_hsts

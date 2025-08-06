@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileman - File manager UI for browsing and manipulating files and folders
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -115,10 +115,6 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         </div>
         <div class="fm_addressbar">
             <input type="hidden" value="/" name="fm_current_path" />
-        </div>
-        <div id="fm_previews" class="fm_previews">
-            <!-- this is a placeholder for contents: do not remove! -->
-            <!-- filled by preview.js : init_html -->
         </div>
         <div class="fm_folders col-lg-3">
             <ul class="jqueryFileTree">
@@ -411,111 +407,6 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     %(import_freeze_form)s
     <div id="import_freeze_output"><!-- dynamic --></div>
     </div>
-
-    <div id="imagesettings_dialog" title="Image Settings" style="display: none;">
-    <fieldset>
-    <div id="imagesettings_list" class="fm_metaio_list"></div>
-    <div id="imagesettings_edit_tabs">
-        <form id="imagesettings_form" method="post" action="imagepreview.py">
-        <input type="hidden" name="%(csrf_field)s" value="%(imagepreview_csrf_token)s" />
-        <input type="hidden" name="output_format" value="json" />
-        <input type="hidden" name="flags" value="" />
-        <input type="hidden" name="action" value="" />
-        <input type="hidden" name="path" value="" />
-        <input type="hidden" name="settings_status" value="" />
-        <ul>
-            <li><a href="#imagesettings_edit_file_tab">File</a></li>
-            <li><a href="#imagesettings_edit_volume_tab">Volume</a></li>
-        </ul>
-        <div id="imagesettings_edit_file_tab">
-            <table class="fm_metaio_edit_table">
-            <tr><td>
-                <label class="halffield">-- Image --</label>
-            </td></tr>
-            <tr><td>
-                <label class="halffield" for="extension">Extension:</label>
-                <input type="text" name="extension" value="" />
-            </td></tr>
-            <tr><td>
-                <label class="halffield" for="setting_recursive">Apply to sub-folders:</label>
-                <input type="checkbox" name="settings_recursive" value="False" />
-            </td></tr>
-            <tr><td>
-                <label class="halffield" for="image_type">Type:</label>
-                <select name="image_type">
-                    <option value="raw">Raw</option>
-                    <option value="tiff">Tiff</option>
-                </select>
-            </td></tr>
-            </table>
-            <div id="imagesettings_edit_image_type_raw">
-                <table class="fm_metaio_edit_table">
-                <tr><td>
-                    <label class="halffield" for="data_type">Data type:</label>
-                    <select name="data_type">
-                        <option value="float32">float32</option>
-                        <option value="float64">float64</option>
-                        <option value="uint8">uint8</option>
-                        <option value="uint16">uint16</option>
-                        <option value="uint32">uint32</option>
-                        <option value="uint64">uint64</option>
-                        <option value="int8">int8</option>
-                        <option value="int16">int16</option>
-                        <option value="int32">int32</option>
-                        <option value="int64">int64</option>
-                    </select>
-                </td></tr>
-                <tr><td>
-                    <label class="halffield" for="offset">Offset:</label>
-                    <input type="text" name="offset" value="" />
-                </td></tr>
-                <tr><td>
-                    <label class="halffield" for="x_dimension">Width:</label>
-                    <input type="text" name="x_dimension" value="" />
-                </td></tr>
-                <tr><td>
-                    <label class="halffield" for="y_dimension">Height:</label>
-                    <input type="text" name="y_dimension" value="" />
-                </td></tr>
-                </table>
-            </div>
-            <table class="fm_metaio_edit_table">
-            <tr><td>
-            </td></tr>
-            <tr><td>
-                <label class="halffield" for="dummy">-- Preview --</label>
-                <input type="hidden" name="dummy" value="" />
-            </td></tr>
-            <tr><td>
-                <label class="halffield" for="preview_cutoff_min">Cutoff min value:</label>
-                <input type="text" name="preview_cutoff_min" value="" />
-            </td></tr>
-            <tr><td>
-                <label class="halffield" for="preview_cutoff_max">Cutoff max value:</label>
-                <input type="text" name="preview_cutoff_max" value="" />
-            </td></tr>
-            </table>
-        </div>
-        <div id="imagesettings_edit_volume_tab">
-            <table class="fm_metaio_edit_table">
-            <tr><td>
-                <label class="halffield">-- Volume --</label>
-            </td></tr>
-            <tr><td>
-                <label class="halffield" for="volume_slice_filepattern">Slice file pattern:</label>
-                <input type="text" name="volume_slice_filepattern" value="" />
-            </td></tr>
-            <tr><td>
-                <label class="halffield" for="z_dimension">Number of slices:</label>
-                <input type="text" name="z_dimension" value="" />
-            </td></tr>
-            </table>
-        </div>
-        </form>
-    </div>
-    </fieldset>
-    <div id="imagesettings_output"><!-- dynamic --></div>
-    </div>
     '''
     html += '''
     <div id="editor_dialog" title="Editor" style="display: none;">
@@ -545,13 +436,6 @@ def css_tmpl(configuration, user_settings={}):
                             'fileupload-ui.custom.css',
                             'xbreadcrumbs.custom.css'],
                         user_settings=user_settings)
-
-    css['advanced'] += '''
-<link href="/images/lib/noUiSlider/jquery.nouislider.css"  rel="stylesheet"
-    type="text/css" />
-<link href="/images/lib/ParaView/Visualizer/main.css" rel="stylesheet"
-    type="text/css" />
-'''
     css['advanced'] += advanced_editor_css_deps()
     return css
 
@@ -559,7 +443,6 @@ def css_tmpl(configuration, user_settings={}):
 def js_tmpl_parts(configuration,
                   entry_path='/',
                   enable_submit='true',
-                  preview='true',
                   legacy_buttons=True,
                   csrf_map={},
                   chroot=''):
@@ -572,7 +455,6 @@ def js_tmpl_parts(configuration,
         'csrf_field': csrf_field,
         'enable_submit': enable_submit.lower(),
         'entry_path': entry_path,
-        'preview': preview.lower(),
         'datasafety_popup':
             ('%s' % (configuration.site_datasafety_link.strip() != '')).lower(),
         'enable_sharelinks':
@@ -608,24 +490,9 @@ csrf_map["%s"] = "%s";
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
 <!-- Smart resize debounce resize events -->
 <script type="text/javascript" src="/images/js/jquery.debouncedresize.js"></script>
-<!-- The preview image plugin -->
-<script type="text/javascript" src="/images/js/preview.js"></script>
-<!-- The paraview rendering plugin -->
-<script type="text/javascript" src="/images/js/preview-paraview.js" load="core, pv-preview-visualizer"></script>
-<!-- The image manipulation CamanJS plugin used by the preview image plugin -->
-<script type="text/javascript" src="/images/js/preview-caman.js"></script>
-<script type="text/javascript" src="/images/lib/CamanJS/dist/caman.full.js"></script>
-<script type="text/javascript">
-       Caman.DEBUG = false
-</script>
-<!-- The nouislider plugin used by the preview image plugin -->
-<script type="text/javascript" src="/images/lib/noUiSlider/jquery.nouislider.all.js"></script>
-
 <!-- Fancy file uploader and dependencies -->
 <!-- The Templates plugin is included to render the upload/download listings -->
 <script type="text/javascript" src="/images/js/tmpl.min.js"></script>
-<!-- The Load Image plugin is included for the preview images and image resizing functionality -->
-<script type="text/javascript" src="/images/js/load-image.min.js"></script>
 <!-- Bootstrap JS is not required, but included for the responsive demo navigation -->
 <!-- The Iframe Transport is required for browsers without support for XHR file uploads -->
 <script type="text/javascript" src="/images/js/jquery.iframe-transport.js"></script>
@@ -740,7 +607,6 @@ csrf_map["%s"] = "%s";
                                              uploadspace: true,
                                              enableSubmit: %(enable_submit)s,
                                              subPath: "%(entry_path)s",
-                                             imagesettings: %(preview)s, 
                                              sharelinksbutton: %(enable_sharelinks)s,
                                              datatransfersbutton: %(enable_datatransfers)s,
                                              datasafetypopup: %(datasafety_popup)s,
@@ -767,15 +633,13 @@ csrf_map["%s"] = "%s";
 def js_tmpl(configuration,
             entry_path='/',
             enable_submit='true',
-            preview='true',
             legacy_buttons=True,
             csrf_map={},
             chroot=''):
     """Javascript to include in the page header"""
     (js_import, js_init, js_ready) = js_tmpl_parts(configuration, entry_path,
-                                                   enable_submit, preview,
-                                                   legacy_buttons, csrf_map,
-                                                   chroot)
+                                                   enable_submit, legacy_buttons,
+                                                   csrf_map, chroot)
     js = '''
 %s
     
@@ -849,8 +713,7 @@ def main(client_id, user_arguments_dict):
                                               target_op, client_id, limit)
     (add_import, add_init, add_ready) = js_tmpl_parts(
         configuration, entry_path, enable_submit,
-        "%s" % configuration.site_enable_preview, legacy_buttons,
-        csrf_map, chroot)
+        legacy_buttons, csrf_map, chroot)
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
