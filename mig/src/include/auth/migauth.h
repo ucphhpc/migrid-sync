@@ -287,7 +287,7 @@ static const int get_runtime_var_int(const char *env_name,
     return atoi(get_runtime_var(env_name, conf_name, val_str));
 }
 
-static const int get_runtime_var_size_t(const char *env_name,
+static const size_t get_runtime_var_size_t(const char *env_name,
                                      const char *conf_name,
                                      const int define_val)
 {
