@@ -91,7 +91,7 @@ jobs:
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
           git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list $(python3-config --includes)
 
-  lint-c-ext-python3-ubuntu24.04:
+  lint-c-ext-python3-ubuntu-lts:
     name: Sanity check c-extension module code in latest Ubuntu LTS python3
     runs-on: ubuntu-24.04
     steps:
