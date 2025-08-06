@@ -4,6 +4,6 @@
 
 # We default to include disk use for gluster and lustre mounts and write
 # reports in various file formats
-su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/usagestats.py -t 'fuse.glusterfs lustre' -s AUTO -o 'txt json pickle csv'"
+su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/usagestats.py -q -t 'ext4 xfs fuse.glusterfs lustre' -s AUTO -o 'txt json pickle csv'"
 
 exit 0

@@ -63,6 +63,7 @@ Where OPTIONS may be one or more of:
    -s SITE_STATS       Save collected stats in SITE_STATS (AUTO for conf value)
    -t FS_TYPE          Limit disk stats to mounts of given FS_TYPE
    -v                  Verbose output
+   -q                  Quiet mode e.g. for cron use
 """ % {'name': name})
 
 
@@ -215,11 +216,12 @@ if '__main__' == __name__:
     expire = None
     force = False
     verbose = False
+    quiet = False
     sitestats_home = None
     output_formats = []
     search_filter = default_search()
     expire_before, expire_after = None, None
-    opt_args = 'a:b:c:d:fho:s:t:u:v'
+    opt_args = 'a:b:c:d:fho:qs:t:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -247,12 +249,16 @@ if '__main__' == __name__:
                     output_formats.append(ext)
                 else:
                     print("Error: unsupported output format: %s" % ext)
+        elif opt == '-q':
+            quiet = True
+            verbose = False
         elif opt == '-s':
             sitestats_home = val
         elif opt == '-t':
             only_fs_types += val.split()
         elif opt == '-v':
             verbose = True
+            quiet = False
         else:
             print('Error: %s not supported!' % opt)
             sys.exit(1)
@@ -283,8 +289,9 @@ if '__main__' == __name__:
         sitestats_path = os.path.join(sitestats_home, 'usagestats-%d' % now)
         if not output_formats:
             output_formats = ['json']
-        print("Writing collected site stats in %s.{%s}" % (
-            sitestats_path, ','.join(output_formats)))
+        if not quiet:
+            print("Writing collected site stats in %s.{%s}" %
+                  (sitestats_path, ','.join(output_formats)))
 
     if not verbose and sitestats_path is None:
         print("Neither verbose nor writing site stats - boring!")
