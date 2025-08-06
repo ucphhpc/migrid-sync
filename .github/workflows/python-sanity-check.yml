@@ -19,10 +19,10 @@ on:
       - 'MiG-certificates/**'
       - 'mig/images/**'
       - 'mig/assets/**'
-      - 'mig/src/**'
       - 'mig/apache/**'
       - 'mig/bin/**'
       - 'mig/java-bin/**'
+      - 'mig/src/**'
     branches:
       - experimental
       - next
@@ -46,10 +46,10 @@ on:
       - 'MiG-certificates/**'
       - 'mig/images/**'
       - 'mig/assets/**'
-      - 'mig/src/**'
       - 'mig/apache/**'
       - 'mig/bin/**'
       - 'mig/java-bin/**'
+      - 'mig/src/**'
     branches:
       - experimental
       - next

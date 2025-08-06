@@ -1,0 +1,119 @@
+# This workflow will install Python C-extension dependencies, run tests and
+# lint with a single version of Python
+# For more information see:
+¤ https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python C-Extension Sanity Checks
+
+on:
+  # Triggers the workflow on push or pull request events but only for this git branch
+  push:
+    paths-ignore:
+      - 'README'
+      - 'COPYING'
+      - 'NEWS'
+      - '*.txt'
+      - 'doc/**'
+      - 'doc-src/**'
+      - 'user-projects/**'
+      - 'state/**'
+      - 'certs/**'
+      - 'MiG-certificates/**'
+      - 'mig/images/**'
+      - 'mig/assets/**'
+      - 'mig/apache/**'
+      - 'mig/bin/**'
+      - 'mig/java-bin/**'
+      - '**/*.py'
+      - '**/*.js'
+    branches:
+      - experimental
+      - next
+
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    paths-ignore:
+      - 'README'
+      - 'COPYING'
+      - 'NEWS'
+      - '*.txt'
+      - 'doc/**'
+      - 'doc-src/**'
+      - 'user-projects/**'
+      - 'state/**'
+      - 'certs/**'
+      - 'MiG-certificates/**'
+      - 'mig/images/**'
+      - 'mig/assets/**'
+      - 'mig/apache/**'
+      - 'mig/bin/**'
+      - 'mig/java-bin/**'
+      - '**/*.py'
+      - '**/*.js'
+    branches:
+      - experimental
+      - next
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-c-ext-python3-latest:
+    name: Sanity check c-extension module code in latest stable python3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up latest stable python 3.x
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Set up git, findutils and make with apt
+        run: |
+          sudo apt install -y git findutils make
+      - name: Install dependencies
+        run: |
+          sudo apt install -y python3-dev libnss3-dev libpam-dev splint
+      # We may need git installed to get a full repo clone rather than unpacked archive
+      - name: Check out source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # This is necessary to get the commits
+      - name: Lint with splint
+        run: |
+          # NOTE: we only run splint error check for changed c files to limit noise
+          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list
+
+  lint-python3-rocky9:
+    name: Sanity check c-extension module code in default python3 on Rocky9
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux/rockylinux:9
+    steps:
+      - name: Set up git, findutils, make and python3 with dnf and make the latter default
+        run: |
+          dnf install -y git findutils make python3 python3-pip python-unversioned-command
+      - name: Install dependencies
+        # TODO: figure out how to install splint which is not included in rocky repos
+        run: |
+          dnf install -y python3-devel nss-devel pam-devel #splint
+      # We need git installed to get a full repo clone rather than unpacked archive
+      - name: Check out source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # This is necessary to get the commits
+      - name: Lint with splint
+        run: |
+          # NOTE: we only run splint error check for changed c files to limit noise
+          # NOTE: perms are not right inside container so repeat what checkout module does.
+          # NOTE: include tests here as they should be fully python3 compatible
+          git config --global --add safe.directory "$PWD"
+          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
+          # TODO: enable once we have figured out how to instal splint on rocky
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r echo splint +posixlib -D__gnuc_va_list=va_list
