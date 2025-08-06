@@ -704,7 +704,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     if (encpw_size >= MAX_DIGEST_SIZE) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "Cannot build hash from password of extreme length: %d\n",
-                        (uint)strlen(pPassword));
+                        (uint64_t)strlen(pPassword));
         return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
     }
     b64_encode((const uint8_t *)pPassword, encpw_size, (uint8_t *) & encpw);
@@ -725,7 +725,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         char share_path[MAX_PATH_LENGTH];
 
         char sharelink_modes[3][11] = { SHARELINK_RW_DIR, SHARELINK_RO_DIR, SHARELINK_WO_DIR };
-        for (uint i = 0; i < 3; i++)
+        for (uint8_t i = 0; i < 3; i++)
         {
 
         memset(share_path, 0, MAX_PATH_LENGTH);
