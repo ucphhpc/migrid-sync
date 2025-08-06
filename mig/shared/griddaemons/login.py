@@ -694,7 +694,7 @@ def refresh_job_creds(configuration, protocol, username):
 
 
 def refresh_share_creds(configuration, protocol, username,
-                        share_modes=[READ_WRITE_ACCESS]):
+                        share_modes=(READ_WRITE_ACCESS, )):
     """Reload sharelink credentials for username (SHARE_ID) if they changed on
     disk. That is, add user entries in configuration.daemon_conf['shares'] for
     any corresponding active sharelinks.
@@ -702,11 +702,12 @@ def refresh_share_creds(configuration, protocol, username,
     too. The protocol argument specifies which auth files to use.
     Returns a tuple with the updated daemon_conf and the list of changed share
     IDs.
-    NOTE: we limit share_modes to read-write sharelinks for now since we don't
-    have guards in place to support read-only or write-only mode in daemons.
+    NOTE: by default we limit share_modes to read-write sharelinks for now
+    since we don't have guards in place to support read-only or write-only mode
+    in all daemons, yet.
     NOTE: we further limit to directory sharelinks for chroot'ing.
     """
-    _valid_modes = [READ_WRITE_ACCESS, READ_ONLY_ACCESS, WRITE_ONLY_ACCESS]
+    _valid_modes = (READ_WRITE_ACCESS, READ_ONLY_ACCESS, WRITE_ONLY_ACCESS)
     # Must end in sep
     base_dir = configuration.user_home.rstrip(os.sep) + os.sep
     changed_shares = []
