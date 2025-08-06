@@ -123,6 +123,7 @@ _write_ops = ['mkdir', 'rmdir', 'remove', 'rename', 'chmod', 'chown',
 _filter_ops = ['chattr', 'lstat', 'stat']
 _other_ops = ['close']
 
+
 def list_attr_changes(configuration, path, attr):
     """Decipher actual attribute changes requested in attr on path"""
     _logger = configuration.logger
@@ -130,12 +131,13 @@ def list_attr_changes(configuration, path, attr):
     changes = []
     for field in ('st_size', 'st_uid', 'st_gid', 'st_mode', 'st_atime',
                   'st_mtime'):
-        #_logger.debug("checking path %s attr %s" % (path, field))
+        # _logger.debug("checking path %s attr %s" % (path, field))
         val = getattr(attr, field, None)
         if val is not None:
             _logger.debug("found %s attr %s value %s" % (path, field, val))
             changes.append(field)
     return changes
+
 
 def filter_data_access(configuration, path, access_mode, operation, args=[]):
     """Filter access to what operation is allowed to do based on path, args
@@ -160,7 +162,7 @@ def filter_data_access(configuration, path, access_mode, operation, args=[]):
             return True
         # NOTE: allow non-changing chattr
         # TODO: allow non-changing chown and chmod, too?
-        if operation  == 'chattr' and args:
+        if operation == 'chattr' and args:
             if not list_attr_changes(configuration, path, args[0]):
                 return True
 
@@ -176,6 +178,7 @@ def filter_data_access(configuration, path, access_mode, operation, args=[]):
         _logger.warning("invalid %s operation on %s in %s session" %
                         (operation, path, access_mode))
         return False
+
 
 def check_data_access(configuration, user_id, path, access_mode, operation,
                       args=[]):
@@ -908,7 +911,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         path = force_native_str(path)
         self.logger.debug("_chattr %r %r" % (path, attr))
         try:
-            real_path = self._get_fs_path(path, operation='chattr', args=[attr])
+            real_path = self._get_fs_path(path, operation='chattr',
+                                          args=[attr])
         except AccessError as aer:
             self.logger.warning('chattr %s: %s' % ([path], [aer]))
             return paramiko.SFTP_PERMISSION_DENIED
@@ -1048,7 +1052,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             open_flavor = 'open+read'
 
         try:
-            real_path = self._get_fs_path(path, operation=open_flavor, args=[flags])
+            real_path = self._get_fs_path(path, operation=open_flavor,
+                                          args=[flags])
         except ValueError as err:
             self.logger.warning('open %s: %s' % ([path], [err]))
             return paramiko.SFTP_PERMISSION_DENIED
@@ -1122,7 +1127,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         """Handle operations of same name"""
         # self.logger.debug('list_folder %s' % [path])
         try:
-            real_path = self._get_fs_path(path, operation='list_folder', args=[])
+            real_path = self._get_fs_path(path, operation='list_folder',
+                                          args=[])
         except ValueError as err:
             self.logger.warning('list_folder %s: %s' % ([path], [err]))
             return paramiko.SFTP_PERMISSION_DENIED
@@ -1268,7 +1274,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # newpath = force_utf8(newpath)
         # self.logger.debug("rename %s %s" % (oldpath, newpath))
         try:
-            real_oldpath = self._get_fs_path(oldpath, operation='rename', args=[])
+            real_oldpath = self._get_fs_path(oldpath, operation='rename',
+                                             args=[])
         except ValueError as err:
             self.logger.warning('rename %s %s: %s' % (oldpath, newpath, err))
             return paramiko.SFTP_PERMISSION_DENIED
@@ -1684,8 +1691,8 @@ def update_sftp_login_map(daemon_conf, username, password=False, key=False):
             _, changed_users = refresh_user_creds(configuration,
                                                   'sftp', username)
         if possible_sharelink_id(configuration, username):
-            allow_modes = [READ_WRITE_ACCESS, READ_ONLY_ACCESS,
-                           WRITE_ONLY_ACCESS]
+            allow_modes = (READ_WRITE_ACCESS, READ_ONLY_ACCESS,
+                           WRITE_ONLY_ACCESS)
             _, changed_shares = refresh_share_creds(configuration,
                                                     'sftp', username,
                                                     share_modes=allow_modes)
