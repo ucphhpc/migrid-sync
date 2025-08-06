@@ -115,20 +115,26 @@ jobs:
 
   lint-c-ext-python3-rocky9:
     name: Sanity check c-extension module code in default python3 on Rocky9
+    # TODO: figure out how to get splint installed on rocky where it's not in repos
+    #       - ancient upstream static binary doesn't work ('no such file')
+    #       - installing fedora rpm fails with glibc incompatibility
+    #       - building from git clone fails (autoconf and configure failures)
+    # TODO: enable once we have figured out how to instal splint on rocky
+    if: ${{ false }} # Disabled until we figure out how to run splint on rocky
     runs-on: ubuntu-latest
     container:
       image: rockylinux/rockylinux:9
     steps:
-      - name: Set up wget, tar, git, findutils, make and python3 with dnf and make the latter default
+      - name: Set up git, findutils, make and python3 with dnf and make the latter default
         run: |
-          dnf install -y wget tar git findutils make python3 python3-pip python-unversioned-command
+          dnf install -y git findutils make python3 python3-pip python-unversioned-command
       - name: Install dependencies
-        # NOTE: manually download and install splint which is not included in rocky repos
         run: |
-          dnf install -y python3-devel nss-devel pam-devel #splint
+          dnf install -y python3-devel nss-devel pam-devel
           wget https://www.splint.org/downloads/binaries/splint-3.1.1.Linux.tgz
           tar -xzf splint-3.1.1.Linux.tgz
-          cp splint-3.1.1/bin/splint /usr/bin/
+          cp splint-3.1.1/bin/splint /bin/
+          chmod 755 /bin/splint
           rm -rf splint-3.1.1.Linux.tgz splint-3.1.1
       # We need git installed to get a full repo clone rather than unpacked archive
       - name: Check out source repository
@@ -143,5 +149,5 @@ jobs:
           git config --global --add safe.directory "$PWD"
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
           echo "with splint from $(which splint)"
-          # TODO: enable once we have figured out how to instal splint on rocky
+          ls -l /bin/splint
           git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list
