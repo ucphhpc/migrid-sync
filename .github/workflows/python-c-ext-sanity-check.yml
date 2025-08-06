@@ -119,13 +119,17 @@ jobs:
     container:
       image: rockylinux/rockylinux:9
     steps:
-      - name: Set up git, findutils, make and python3 with dnf and make the latter default
+      - name: Set up tar, git, findutils, make and python3 with dnf and make the latter default
         run: |
-          dnf install -y git findutils make python3 python3-pip python-unversioned-command
+          dnf install -y tar git findutils make python3 python3-pip python-unversioned-command
       - name: Install dependencies
-        # TODO: figure out how to install splint which is not included in rocky repos
+        # NOTE: manually download and install splint which is not included in rocky repos
         run: |
           dnf install -y python3-devel nss-devel pam-devel #splint
+          wget https://www.splint.org/downloads/binaries/splint-3.1.1.Linux.tgz
+          tar -xzf splint-3.1.1.Linux.tgz
+          cp splint-3.1.1/bin/splint /usr/local/bin/
+          rm -rf splint-3.1.1.Linux.tgz splint-3.1.1
       # We need git installed to get a full repo clone rather than unpacked archive
       - name: Check out source repository
         uses: actions/checkout@v4
@@ -139,4 +143,4 @@ jobs:
           git config --global --add safe.directory "$PWD"
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
           # TODO: enable once we have figured out how to instal splint on rocky
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r echo splint +posixlib -D__gnuc_va_list=va_list
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list
