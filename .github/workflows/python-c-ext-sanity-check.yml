@@ -119,9 +119,9 @@ jobs:
     container:
       image: rockylinux/rockylinux:9
     steps:
-      - name: Set up tar, git, findutils, make and python3 with dnf and make the latter default
+      - name: Set up wget, tar, git, findutils, make and python3 with dnf and make the latter default
         run: |
-          dnf install -y tar git findutils make python3 python3-pip python-unversioned-command
+          dnf install -y wget tar git findutils make python3 python3-pip python-unversioned-command
       - name: Install dependencies
         # NOTE: manually download and install splint which is not included in rocky repos
         run: |
