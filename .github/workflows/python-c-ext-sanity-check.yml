@@ -87,8 +87,9 @@ jobs:
       - name: Lint with splint
         run: |
           # NOTE: we only run splint error check for changed c files to limit noise
+          # NOTE: point splint to Ubuntu's custom /usr/include/python3.x for Python.h
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list $(python3-config --includes)
 
   lint-python3-rocky9:
     name: Sanity check c-extension module code in default python3 on Rocky9
