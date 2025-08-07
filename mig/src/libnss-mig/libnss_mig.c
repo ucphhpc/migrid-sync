@@ -191,8 +191,9 @@ _nss_mig_getpwnam_r(const char *name,
     if (keep_trying && name_len == get_sharelink_length()) {
         WRITELOGMESSAGE(LOG_DEBUG, "Checking for sharelink: %s\n", name);
 
+        uint8_t i;
         char sharelink_modes[3][11] = { SHARELINK_RW_DIR, SHARELINK_RO_DIR, SHARELINK_WO_DIR };
-        for (uint8_t i = 0; i < 3; i++)
+        for (i = 0; i < 3; i++)
         {
 
         memset(pathbuf, 0, PATH_BUF_LEN);
