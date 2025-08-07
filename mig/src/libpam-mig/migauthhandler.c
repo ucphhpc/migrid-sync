@@ -368,7 +368,8 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
         /* We don't exit hard here to make sure other auth types may follow */
         return false;
     }
-    char pycmd[MAX_PYCMD_LENGTH] =
+    /* NOTE: Allocate space for string termination '\0' added by strncat */
+    char pycmd[MAX_PYCMD_LENGTH+1] =
         "(authorized, disconnect) = validate_auth_attempt(configuration, 'sftp-subsys', ";
     char pytmp[MAX_PYCMD_LENGTH];
     /* Always password auth here as mentioned in the above comment */
@@ -380,7 +381,7 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
     strncat(&pycmd[0], address, MAX_PYCMD_LENGTH - strlen(pycmd));
     strncat(&pycmd[0], "', ", MAX_PYCMD_LENGTH - strlen(pycmd));
     if (secret != NULL) {
-        sprintf(&pytmp[0], "secret='%s', ", secret);
+        snprintf(&pytmp[0], MAX_PYCMD_LENGTH, "secret='%s', ", secret);
         strncat(&pycmd[0], &pytmp[0], MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_INVALID_USERNAME) {
