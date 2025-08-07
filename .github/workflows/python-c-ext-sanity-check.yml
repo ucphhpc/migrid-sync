@@ -90,7 +90,7 @@ jobs:
           # NOTE: point splint to Ubuntu's custom /usr/include/python3.x for Python.h
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
           # NOTE: show splint warnings but don't fail unless it found critical errors
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list $(python3-config --includes) -check &> splint.log || true
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib +unixlib +gnuextensions -D__gnuc_va_list=va_list -DNATIVE_TSS_KEY_T=char $(python3-config --includes) -check &> splint.log || true
           cat splint.log
           grep '*** Cannot continue' splint.log && false
 
@@ -116,7 +116,7 @@ jobs:
           # NOTE: point splint to Ubuntu's custom /usr/include/python3.x for Python.h
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
           # NOTE: show splint warnings but don't fail unless it found critical errors
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list $(python3-config --includes) -check &> splint.log || true
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib +unixlib +gnuextensions -D__gnuc_va_list=va_list -DNATIVE_TSS_KEY_T=char $(python3-config --includes) -check &> splint.log || true
           cat splint.log
           grep '*** Cannot continue' splint.log && false
 
@@ -157,6 +157,6 @@ jobs:
           echo "with splint from $(which splint)"
           ls -l /bin/splint
           # NOTE: show splint warnings but don't fail unless it found critical errors
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list -check &> splint.log || true
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib +unixlib +gnuextensions -D__gnuc_va_list=va_list -DNATIVE_TSS_KEY_T=char -check &> splint.log || true
           cat splint.log
           grep '*** Cannot continue' splint.log && false
