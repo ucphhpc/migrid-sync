@@ -416,7 +416,8 @@ static int validate_username(const char *username)
     }
 
     regex_res = regcomp(&validator, username_regex, REG_EXTENDED | REG_NOSUB);
-    if (regex_res) {
+    if (regex_res != 0) {
+        /* Failure in regex compilation */
         if (regex_res == REG_ESPACE) {
             WRITELOGMESSAGE(LOG_ERR,
                             "Memory error in username validation: %s\n",
