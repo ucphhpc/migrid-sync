@@ -139,7 +139,7 @@ def list_attr_changes(configuration, path, attr):
     return changes
 
 
-def filter_data_access(configuration, path, access_mode, operation, args=[]):
+def filter_data_access(configuration, path, access_mode, operation, args):
     """Filter access to what operation is allowed to do based on path, args
     and access_mode.
     In read-write mode all operations are allowed to proceed path checks.
@@ -181,7 +181,7 @@ def filter_data_access(configuration, path, access_mode, operation, args=[]):
 
 
 def check_data_access(configuration, user_id, path, access_mode, operation,
-                      args=[]):
+                      args):
     """A simple helper to check if user_id has access to execute operation on path
     under the constraints set by access_mode. Namely, check if operation
     could potentially modify data in a read-only session or lookup/read data
@@ -408,7 +408,7 @@ class SFTPHandle(paramiko.SFTPHandle):
                         % endpos \
                         + " file endpos: %s, '%s'" % \
                         (file_endpos, self.sftpserver._get_fs_path(
-                            path, operation=method.__name__, args=[]))
+                            path, operation=method.__name__))
                     logger.warning(msg)
 
             # close
@@ -856,8 +856,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     # Use shared daemon fs helper functions
 
-    def _get_fs_path(self, sftp_path, operation=None, args=[]):
+    # NOTE: avoid mutable default arguments with delayed init on None-pattern
+    # https://docs.python-guide.org/writing/gotchas/#mutable-default-arguments
+    def _get_fs_path(self, sftp_path, operation=None, args=None):
         """Wrap helper"""
+        if args is None:
+            args = []
         # self.logger.debug("get_fs_path: check access to %s" % [sftp_path])
         if not check_data_access(configuration, self.user_name, sftp_path,
                                  self.access, operation, args):
@@ -1127,8 +1131,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         """Handle operations of same name"""
         # self.logger.debug('list_folder %s' % [path])
         try:
-            real_path = self._get_fs_path(path, operation='list_folder',
-                                          args=[])
+            real_path = self._get_fs_path(path, operation='list_folder')
         except ValueError as err:
             self.logger.warning('list_folder %s: %s' % ([path], [err]))
             return paramiko.SFTP_PERMISSION_DENIED
@@ -1176,7 +1179,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # path = force_utf8(path)
         # self.logger.debug('stat %s' % path)
         try:
-            real_path = self._get_fs_path(path, operation='stat', args=[])
+            real_path = self._get_fs_path(path, operation='stat')
         except ValueError as err:
             self.logger.warning('stat %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
@@ -1204,7 +1207,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # path = force_utf8(path)
         # self.logger.debug('lstat %s' % path)
         try:
-            real_path = self._get_fs_path(path, operation='lstat', args=[])
+            real_path = self._get_fs_path(path, operation='lstat')
         except ValueError as err:
             self.logger.warning('lstat %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
@@ -1228,7 +1231,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # path = force_utf8(path)
         # self.logger.debug("remove %s" % path)
         try:
-            real_path = self._get_fs_path(path, operation='remove', args=[])
+            real_path = self._get_fs_path(path, operation='remove')
         except ValueError as err:
             self.logger.warning('remove %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
@@ -1274,8 +1277,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # newpath = force_utf8(newpath)
         # self.logger.debug("rename %s %s" % (oldpath, newpath))
         try:
-            real_oldpath = self._get_fs_path(oldpath, operation='rename',
-                                             args=[])
+            real_oldpath = self._get_fs_path(oldpath, operation='rename')
         except ValueError as err:
             self.logger.warning('rename %s %s: %s' % (oldpath, newpath, err))
             return paramiko.SFTP_PERMISSION_DENIED
@@ -1301,7 +1303,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('move on read-only old path %s :: %s' %
                                 (oldpath, real_oldpath))
             return paramiko.SFTP_PERMISSION_DENIED
-        real_newpath = self._get_fs_path(newpath, operation='rename', args=[])
+        real_newpath = self._get_fs_path(newpath, operation='rename')
         if not check_write_access(real_newpath, parent_dir=True):
             self.logger.warning('move on read-only new path %s :: %s' %
                                 (newpath, real_newpath))
@@ -1359,7 +1361,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # path = force_utf8(path)
         # self.logger.debug("rmdir %s" % path)
         try:
-            real_path = self._get_fs_path(path, operation='rmdir', args=[])
+            real_path = self._get_fs_path(path, operation='rmdir')
         except ValueError as err:
             self.logger.warning('rmdir %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
@@ -1412,7 +1414,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # path = force_utf8(path)
         # self.logger.debug("readlink %s" % path)
         try:
-            real_path = self._get_fs_path(path, operation='readlink', args=[])
+            real_path = self._get_fs_path(path, operation='readlink')
         except ValueError as err:
             self.logger.warning('readlink %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
