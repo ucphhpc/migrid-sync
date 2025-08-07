@@ -95,8 +95,8 @@ jobs:
           grep '*** Cannot continue' splint.log && false
 
   lint-c-ext-python3-ubuntu-lts:
+    # Mainly fallback when the above job doesn't work
     name: Sanity check c-extension module code in latest Ubuntu LTS python3
-    if: ${{ false }} # Disabled now that the above job works
     runs-on: ubuntu-24.04
     steps:
       - name: Set up git, findutils and make with apt
