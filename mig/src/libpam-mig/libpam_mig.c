@@ -236,8 +236,9 @@ static int converse(pam_handle_t * pamh, int nargs,
 /* this function frees PAM response structures */
 static void free_pam_response(struct pam_response *resp, int nargs)
 {
+    int i;
     if (resp != NULL) {
-        for (int i = 0; i < nargs; i++) {
+        for (i = 0; i < nargs; i++) {
             if (resp[i].resp != NULL) {
                 free(resp[i].resp);
                 resp[i].resp = NULL;
