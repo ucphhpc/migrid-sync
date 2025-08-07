@@ -526,6 +526,14 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
     /* Basic validation of username before use anywhere in paths or python */
 
+    /* IMPORTANT: when constructing strings from unknown input we must use
+     * snprintf with the actual buffer size as max size parameter and check
+     * that the returned value was smaller than that size. Any bigger return
+     * value means that the buffer was written but the input truncated when
+     * it attempted to write the returned number of bytes.
+     * https://pubs.opengroup.org/onlinepubs/9799919799/functions/snprintf.html
+     */
+
     /* Since we rely on mapping the username to a path on disk,
        double check that the name does not contain path traversal attempts
        after basic input validation for only safe characters. */
@@ -539,7 +547,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     } else {
         valid_username = true;
         /* pUsername is validated enough to be safely used in python calls */
-        if (USERNAME_MAX_LENGTH ==
+        if (USERNAME_MAX_LENGTH <=
             snprintf(safeUsername, USERNAME_MAX_LENGTH, "%s", pUsername)) {
             WRITELOGMESSAGE(LOG_WARNING,
                             "Safe username construction failed for: %s\n",
@@ -714,7 +722,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     WRITELOGMESSAGE(LOG_DEBUG, "Checking for sharelink: %s\n", pUsername);
     if (strlen(pUsername) == get_sharelink_length()) {
         char share_path[MAX_PATH_LENGTH];
-        if (MAX_PATH_LENGTH ==
+        if (MAX_PATH_LENGTH <=
             snprintf(share_path, MAX_PATH_LENGTH, "%s/%s/%s",
                      get_sharelink_home(), SHARELINK_SUBDIR, pUsername)) {
             WRITELOGMESSAGE(LOG_WARNING,
@@ -780,7 +788,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     WRITELOGMESSAGE(LOG_DEBUG, "Checking for jobsidmount: %s\n", pUsername);
     if (strlen(pUsername) == get_jobsidmount_length()) {
         char share_path[MAX_PATH_LENGTH];
-        if (MAX_PATH_LENGTH ==
+        if (MAX_PATH_LENGTH <=
             snprintf(share_path, MAX_PATH_LENGTH, "%s/%s",
                      get_jobsidmount_home(), pUsername)) {
             WRITELOGMESSAGE(LOG_WARNING,
@@ -860,7 +868,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     WRITELOGMESSAGE(LOG_DEBUG, "Checking for jupytersidmount: %s\n", pUsername);
     if (strlen(pUsername) == get_jupytersidmount_length()) {
         char share_path[MAX_PATH_LENGTH];
-        if (MAX_PATH_LENGTH ==
+        if (MAX_PATH_LENGTH <=
             snprintf(share_path, MAX_PATH_LENGTH, "%s/%s",
                      get_jupytersidmount_home(), pUsername)) {
             WRITELOGMESSAGE(LOG_WARNING,
@@ -952,7 +960,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     }
 
     char auth_filename[MAX_PATH_LENGTH];
-    if (MAX_PATH_LENGTH ==
+    if (MAX_PATH_LENGTH <=
         snprintf(auth_filename, MAX_PATH_LENGTH, "%s/.%s/%s", pw->pw_dir,
                  get_service_dir(pService), PASSWORD_FILENAME)) {
         WRITELOGMESSAGE(LOG_WARNING,

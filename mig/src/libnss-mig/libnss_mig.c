@@ -2,7 +2,7 @@
  * --- BEGIN_HEADER ---
  *
  * libnss_mig - NSS module for MiG user authentication
- * Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
  *
  * This file is part of MiG
  *
@@ -174,6 +174,14 @@ _nss_mig_getpwnam_r(const char *name,
      */
     int keep_trying = 1;
 
+    /* IMPORTANT: when constructing strings from unknown input we must use
+     * snprintf with the actual buffer size as max size parameter and check
+     * that the returned value was smaller than that size. Any bigger return
+     * value means that the buffer was written but the input truncated when
+     * it attempted to write the returned number of bytes.
+     * https://pubs.opengroup.org/onlinepubs/9799919799/functions/snprintf.html
+     */
+
 #ifdef ENABLE_SHARELINK
     /* Optional anonymous share link access:
        - username must have fixed length matching get_sharelink_length()
@@ -183,7 +191,7 @@ _nss_mig_getpwnam_r(const char *name,
     if (keep_trying && name_len == get_sharelink_length()) {
         WRITELOGMESSAGE(LOG_DEBUG, "Checking for sharelink: %s\n", name);
         memset(pathbuf, 0, PATH_BUF_LEN);
-        if (PATH_BUF_LEN ==
+        if (PATH_BUF_LEN <=
             snprintf(pathbuf, PATH_BUF_LEN, "%s/%s/%s",
                      get_sharelink_home(), SHARELINK_SUBDIR, name)) {
             WRITELOGMESSAGE(LOG_WARNING,
@@ -237,7 +245,7 @@ _nss_mig_getpwnam_r(const char *name,
     if (keep_trying && name_len == get_jobsidmount_length()) {
         WRITELOGMESSAGE(LOG_DEBUG, "Checking for jobsidmount: %s\n", name);
         memset(pathbuf, 0, PATH_BUF_LEN);
-        if (PATH_BUF_LEN ==
+        if (PATH_BUF_LEN <=
             snprintf(pathbuf, PATH_BUF_LEN, "%s/%s",
                      get_jobsidmount_home(), name)) {
             WRITELOGMESSAGE(LOG_WARNING,
@@ -290,7 +298,7 @@ _nss_mig_getpwnam_r(const char *name,
     if (keep_trying && name_len == get_jupytersidmount_length()) {
         WRITELOGMESSAGE(LOG_DEBUG, "Checking for jupytersidmount: %s\n", name);
         memset(pathbuf, 0, PATH_BUF_LEN);
-        if (PATH_BUF_LEN ==
+        if (PATH_BUF_LEN <=
             snprintf(pathbuf, PATH_BUF_LEN, "%s/%s",
                      get_jupytersidmount_home(), name)) {
             WRITELOGMESSAGE(LOG_WARNING,
