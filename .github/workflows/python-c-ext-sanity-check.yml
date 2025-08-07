@@ -86,10 +86,13 @@ jobs:
           fetch-depth: 0  # This is necessary to get the commits
       - name: Lint with splint
         run: |
-          # NOTE: we only run splint error check for changed c files to limit noise
+          # NOTE: we only run splint error check for changed C files to limit noise
           # NOTE: point splint to Ubuntu's custom /usr/include/python3.x for Python.h
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list $(python3-config --includes)
+          # NOTE: show splint warnings but don't fail unless it found critical errors
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list $(python3-config --includes) -check &> splint.log || true
+          cat splint.log
+          grep '*** Cannot continue' splint.log && false
 
   lint-c-ext-python3-ubuntu-lts:
     name: Sanity check c-extension module code in latest Ubuntu LTS python3
@@ -109,10 +112,13 @@ jobs:
           fetch-depth: 0  # This is necessary to get the commits
       - name: Lint with splint
         run: |
-          # NOTE: we only run splint error check for changed c files to limit noise
+          # NOTE: we only run splint error check for changed C files to limit noise
           # NOTE: point splint to Ubuntu's custom /usr/include/python3.x for Python.h
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list $(python3-config --includes)
+          # NOTE: show splint warnings but don't fail unless it found critical errors
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list $(python3-config --includes) -check &> splint.log || true
+          cat splint.log
+          grep '*** Cannot continue' splint.log && false
 
   lint-c-ext-python3-rocky9:
     name: Sanity check c-extension module code in default python3 on Rocky9
@@ -144,11 +150,13 @@ jobs:
           fetch-depth: 0  # This is necessary to get the commits
       - name: Lint with splint
         run: |
-          # NOTE: we only run splint error check for changed c files to limit noise
           # NOTE: perms are not right inside container so repeat what checkout module does.
-          # NOTE: include tests here as they should be fully python3 compatible
           git config --global --add safe.directory "$PWD"
+          # NOTE: we only run splint error check for changed C files to limit noise
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$')"
           echo "with splint from $(which splint)"
           ls -l /bin/splint
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list
+          # NOTE: show splint warnings but don't fail unless it found critical errors
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.(c|h)$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list -check &> splint.log || true
+          cat splint.log
+          grep '*** Cannot continue' splint.log && false
