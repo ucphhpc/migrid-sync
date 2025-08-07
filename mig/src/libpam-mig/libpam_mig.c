@@ -724,8 +724,9 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     if (strlen(pUsername) == get_sharelink_length()) {
         char share_path[MAX_PATH_LENGTH];
 
+        uint8_t i;
         char sharelink_modes[3][11] = { SHARELINK_RW_DIR, SHARELINK_RO_DIR, SHARELINK_WO_DIR };
-        for (uint8_t i = 0; i < 3; i++)
+        for (i = 0; i < 3; i++)
         {
 
         memset(share_path, 0, MAX_PATH_LENGTH);
