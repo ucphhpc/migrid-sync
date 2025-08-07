@@ -67,6 +67,8 @@ permissions:
 jobs:
   lint-c-ext-python3-latest:
     name: Sanity check c-extension module code in latest stable python3
+    # TODO: enable once we have figured out how to install matching headers here
+    if: ${{ false }} # Disabled until we figure out how to fix system headers
     runs-on: ubuntu-latest
     steps:
       - name: Set up latest stable python 3.x
@@ -95,7 +97,7 @@ jobs:
           [ ! -e splint.log ] || ! grep -q ' Cannot continue' splint.log
 
   lint-c-ext-python3-ubuntu-lts:
-    # Mainly fallback when the above job doesn't work
+    # For a consistent python and header environment when the above job doesn't work
     name: Sanity check c-extension module code in latest Ubuntu LTS python3
     runs-on: ubuntu-24.04
     steps:
@@ -127,7 +129,7 @@ jobs:
     #       - ancient upstream static binary doesn't work ('no such file')
     #       - installing fedora rpm fails with glibc incompatibility
     #       - building from git clone fails (autoconf and configure failures)
-    # TODO: enable once we have figured out how to instal splint on rocky
+    # TODO: enable once we have figured out how to install splint on rocky
     if: ${{ false }} # Disabled until we figure out how to run splint on rocky
     runs-on: ubuntu-latest
     container:
