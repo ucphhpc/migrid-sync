@@ -445,7 +445,12 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
                 MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     strncat(&pycmd[0], ")", MAX_PYCMD_LENGTH - strlen(pycmd));
-    /* Execute python command if and only if it didn't overflow */
+    /* Execute python command if and only if it didn't overflow 
+     * NOTE: Since we can't check if pycmd was truncated by strncat 
+     *       or if we actually got a command string length of MAX_PYCMD_LENGTH
+     *       we cap the maximum allowed command string length to MAX_PYCMD_LENGTH-1
+     *       (MAX_PYCMD_LENGTH including the terminator '\0')
+    */
     if (MAX_PYCMD_LENGTH > strlen(pycmd)) {
         pyrun(&pycmd[0]);
         PyObject *py_authorized = PyObject_GetAttrString(py_main, "authorized");
