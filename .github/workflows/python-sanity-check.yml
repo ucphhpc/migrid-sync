@@ -140,6 +140,8 @@ jobs:
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
       - name: Lint with pylint
         run: |
+          # Make sure we can find migrid modules
+          export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run pylint error check for changed python files to limit noise
           # NOTE: perms are not right inside container so repeat what checkout module does.
           # NOTE: include tests here as they should be fully python3 compatible
