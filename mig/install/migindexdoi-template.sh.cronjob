@@ -2,7 +2,34 @@
 #
 # run indexdoi as mig user
 
+# Force bash to handle uninitialized variables and errors
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+# NOTE: 'set -eE' exits on failure, which is good when we handle all errors
+set -eEuo pipefail
+
+
 # No more edits below
-su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/indexdoi.py"
+check_enabled() {
+    su - mig -c "PYTHONPATH=__MIG_BASE__ __MIG_CODE__/server/chkenabled.py $1" >& /dev/null
+}
+check_set() {
+    VALUE=$(su - mig -c "PYTHONPATH=__MIG_BASE__ __MIG_CODE__/server/readconfval.py $1")
+    if [ -z "$VALUE" ]; then
+         #echo "DEBUG: $1 not set in MiGserver conf - skipping"
+         return 1
+    fi
+    return 0
+}
+
+if ! check_enabled "freeze" ; then
+    #echo "DEBUG: nothing to do with freeze disabled"
+    exit 0
+fi
+if ! check_set "site_freeze_doi_url" ; then
+    #echo "DEBUG: nothing to do with freeze doi url disabled"
+    exit 0
+fi
+
+su - mig -c "PYTHONPATH=__MIG_BASE__ __MIG_CODE__/server/indexdoi.py"
 
 exit 0
