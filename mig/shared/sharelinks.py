@@ -347,9 +347,15 @@ def invite_share_link_form(configuration, client_id, share_dict, output_format,
         <h4>Send Share Link Invitations</h4>
         <p>
         After creating a share link you can manually give the link to anyone
-        you want to share the data with and/or use this form to send
-        invitations on email. Please note that abuse of this service to send
-        out spam mail is strictly prohibited and will be sanctioned.
+        you want to share the data with. Either by handing them the URL<br/>
+        %(share_url)s<br/>
+        or by letting them scan this QR code:
+        </p>
+        <canvas id="sharelink_qr"><!-- filled by script --></canvas>
+        <p>
+        Alternatively you can use this form to send invitations on email.
+        Please note that abuse of this service to send out spam mail is
+        strictly prohibited and will be sanctioned.
         </p>
         <table>
         <tr><td colspan=2>
@@ -389,6 +395,19 @@ def invite_share_link_form(configuration, client_id, share_dict, output_format,
 ''' % fill_helpers
     return html
 
+def show_share_link_qr(configuration, share_id):
+    """Generate QR code for sharelinks"""
+    fill_helpers = {}
+    fill_helpers['share_url'] = "%s/sharelink/%s" % \
+                                (configuration.migserver_https_sid_url,
+                                 share_id)
+    return '''
+         var qr = new QRious({
+                       element: document.getElementById("sharelink_qr"),
+                       value: "%(share_url)s",
+                       size: 200
+                             });
+    ''' % fill_helpers
 
 def load_share_links(configuration, client_id):
     """Find all share links owned by user"""

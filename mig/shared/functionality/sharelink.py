@@ -46,7 +46,7 @@ from mig.shared.pwcrypto import make_hash
 from mig.shared.sharelinks import build_sharelinkitem_object, load_share_links, \
     create_share_link, update_share_link, delete_share_link, \
     create_share_link_form, invite_share_link_form, \
-    invite_share_link_message, generate_sharelink_id
+    invite_share_link_message, show_share_link_qr, generate_sharelink_id
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import in_vgrid_share, vgrid_is_owner, vgrid_settings, \
     vgrid_add_sharelinks, vgrid_remove_sharelinks
@@ -111,8 +111,13 @@ def main(client_id, user_arguments_dict):
                                                     [table_spec],
                                                     {'width': 600})
     title_entry['script']['advanced'] += add_import
+    title_entry['script']['advanced'] += '''
+<script type="text/javascript" src="/images/js/qrious.js"></script>
+    '''
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
+    title_entry['script']['ready'] += show_share_link_qr(configuration,
+                                                         share_id)
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
