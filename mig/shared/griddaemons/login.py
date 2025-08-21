@@ -55,8 +55,10 @@ from mig.shared.validstring import possible_sharelink_id, possible_job_id, \
 # NOTE: auth keys file may easily contain only blank lines, so we decide to
 #       consider any such file of less than a 64 bytes invalid. ED25519 pub
 #       keys are typically around 80 bytes be careful not to go there.
+#       Hashed passwords are typically just short of 70 bytes.
 
-min_pub_key_bytes = 64
+min_authpasswords_bytes = min_authdigests_bytes = 64
+min_authkeys_bytes = 64
 
 
 class Login(object):
@@ -145,7 +147,7 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
                 first.last_update = os.path.getmtime(authkeys_path)
                 changed_paths.append(authkeys_path)
         elif os.path.exists(authkeys_path) and \
-                os.path.getsize(authkeys_path) >= min_pub_key_bytes and \
+                os.path.getsize(authkeys_path) >= min_authkeys_bytes and \
                 os.path.getmtime(authkeys_path) > any_last_update:
             # logger.debug("found changed pub keys for %s" % username)
             changed_paths.append(authkeys_path)
@@ -209,10 +211,12 @@ def get_job_changes(conf, username, mrsl_path):
     return changed_paths
 
 
-def get_share_changes(conf, username, sharelink_path, authkeys_path):
+def get_share_changes(conf, username, sharelink_path, authkeys_path,
+                      authpasswords_path, authdigests_path):
     """Check if sharelink changed for username using the provided
-    sharelink_path file, authkeys_path file and the saved time stamp from
-    shares embedded in conf.
+    sharelink_path file, authkeys_path file, authpasswords_path file,
+    authdigests_path file and the saved time stamp from shares embedded in
+    conf.
     Returns a list of changed sharelink files with the empty list if none
     changed.
     """
@@ -222,6 +226,8 @@ def get_share_changes(conf, username, sharelink_path, authkeys_path):
         creds_lock.acquire()
     old_users = [i for i in conf['shares'] if i.username == username]
     old_key_users = [i for i in old_users if i.public_key]
+    old_pw_users = [i for i in old_users if i.password]
+    old_digest_users = [i for i in old_users if i.digest]
     if creds_lock:
         creds_lock.release()
     # We do not save share entry for key files without proper pub keys, so to
@@ -232,6 +238,10 @@ def get_share_changes(conf, username, sharelink_path, authkeys_path):
         any_last_update = old_users[0].last_update
     if old_key_users:
         any_last_update = max(any_last_update, old_key_users[0].last_update)
+    if old_pw_users:
+        any_last_update = max(any_last_update, old_pw_users[0].last_update)
+    if old_digest_users:
+        any_last_update = max(any_last_update, old_digest_users[0].last_update)
     changed_paths = []
     if old_users:
         first = old_users[0]
@@ -252,10 +262,36 @@ def get_share_changes(conf, username, sharelink_path, authkeys_path):
                 first.last_update = os.path.getmtime(authkeys_path)
                 changed_paths.append(authkeys_path)
         elif os.path.exists(authkeys_path) and \
-                os.path.getsize(authkeys_path) >= min_pub_key_bytes and \
+                os.path.getsize(authkeys_path) >= min_authkeys_bytes and \
                 os.path.getmtime(authkeys_path) > any_last_update:
             # logger.debug("found changed pub keys for %s" % username)
             changed_paths.append(authkeys_path)
+    if conf["allow_password"]:
+        if old_pw_users:
+            first = old_pw_users[0]
+            if not os.path.exists(authpasswords_path):
+                changed_paths.append(authpasswords_path)
+            elif os.path.getmtime(authpasswords_path) > first.last_update:
+                first.last_update = os.path.getmtime(authpasswords_path)
+                changed_paths.append(authpasswords_path)
+        elif os.path.exists(authpasswords_path) and \
+                os.path.getsize(authpasswords_path) >= min_authpasswords_bytes and \
+                os.path.getmtime(authpasswords_path) > any_last_update:
+            # logger.debug("found changed passwords for %s" % username)
+            changed_paths.append(authpasswords_path)
+    if conf["allow_digest"]:
+        if old_digest_users:
+            first = old_digest_users[0]
+            if not os.path.exists(authdigests_path):
+                changed_paths.append(authdigests_path)
+            elif os.path.getmtime(authdigests_path) > first.last_update:
+                first.last_update = os.path.getmtime(authdigests_path)
+                changed_paths.append(authdigests_path)
+        elif os.path.exists(authdigests_path) and \
+                os.path.getsize(authdigests_path) >= min_authdigests_bytes and \
+                os.path.getmtime(authdigests_path) > any_last_update:
+            # logger.debug("found changed digests for %s" % username)
+            changed_paths.append(authdigests_path)
     return changed_paths
 
 
@@ -698,7 +734,6 @@ def refresh_share_creds(configuration, protocol, username,
     base_dir = configuration.user_home.rstrip(os.sep) + os.sep
     changed_shares = []
     conf = configuration.daemon_conf
-    last_update = conf['time_stamp']
     logger = conf.get("logger", logging.getLogger())
     creds_lock = conf.get('creds_lock', None)
     if not protocol in ('sftp', 'davs', 'ftps', ):
@@ -723,21 +758,38 @@ def refresh_share_creds(configuration, protocol, username,
 
     if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
         proto_authkeys = ssh_authkeys
+        proto_authpasswords = ssh_authpasswords
+        proto_authdigests = ssh_authdigests
     elif protocol in ('dav', 'davs'):
         proto_authkeys = davs_authkeys
+        proto_authpasswords = davs_authpasswords
+        proto_authdigests = davs_authdigests
     elif protocol in ('ftp', 'ftps'):
         proto_authkeys = ftps_authkeys
+        proto_authpasswords = ftps_authpasswords
+        proto_authdigests = ftps_authdigests
+    elif protocol in ('https', 'openid'):
+        private_auth_file = False
+        proto_authkeys = https_authkeys
+        proto_authpasswords = https_authpasswords
+        proto_authdigests = https_authdigests
     else:
-        logger.error("invalid protocol: %s" % protocol)
+        logger.error("Invalid protocol: %s" % protocol)
         return (conf, changed_shares)
 
     # logger.debug("Updating share creds for %s" % username)
     link_path = os.path.join(configuration.sharelink_home, mode, username)
-    # NOTE: accept any pub keys in standard authorized_keys location, too
+    # NOTE: accept any pub keys in standard authorized_keys location
     authkeys_path = os.path.realpath(os.path.join(link_path, proto_authkeys))
+    # NOTE: accept password in standard authorized password/digest location
+    authpasswords_path = os.path.realpath(os.path.join(link_path,
+                                                       proto_authpasswords))
+    authdigests_path = os.path.realpath(os.path.join(link_path,
+                                                     proto_authdigests))
     # logger.debug("Checking share creds changes for %s (%s)" %
     #              (username, authkeys_path))
-    changed_paths = get_share_changes(conf, username, link_path, authkeys_path)
+    changed_paths = get_share_changes(conf, username, link_path, authkeys_path,
+                                      authpasswords_path, authdigests_path)
     if not changed_paths:
         # logger.debug("No share creds changes for %s" % username)
         return (conf, changed_shares)
@@ -761,13 +813,23 @@ def refresh_share_creds(configuration, protocol, username,
         #       Otherwise it would choke on shares with trailing slash in path.
         share_root = link_dest.replace(base_dir, '').strip(os.sep)
         share_pw_hash, share_pw_digest = None, None
-        # NOTE: just use share_id as static password/digest for now
+        # NOTE: just use share_id as static password/digest if unset. Empty or
+        #       invalid file disables password/digest login leaving only key.
         if conf['allow_password']:
-            share_pw_hash = generate_password_hash(configuration, share_id)
+            if os.path.exists(authpasswords_path):
+                # Empty or invalid password file disables password login
+                if os.path.getsize(authpasswords_path) >= min_authpasswords_bytes:
+                    share_pw_hash = get_authpasswords(authpasswords_path)
+            else:
+                share_pw_hash = generate_password_hash(configuration, share_id)
         if conf['allow_digest']:
-            share_pw_digest = generate_password_digest(
-                configuration, dav_domain, share_id, share_id,
-                configuration.site_digest_salt)
+            if os.path.exists(authdigests_path):
+                if os.path.getsize(authdigests_path) >= min_authdigests_bytes:
+                    share_pw_digest = get_authpasswords(authdigests_path)
+            else:
+                share_pw_digest = generate_password_digest(
+                    configuration, dav_domain, share_id, share_id,
+                    configuration.site_digest_salt)
         all_keys = []
         if conf['allow_publickey'] and os.path.exists(authkeys_path):
             all_keys = get_authkeys(authkeys_path)
