@@ -1723,12 +1723,11 @@ if (jQuery) (function($){
         });
 
         // Define window behavior
-
+        $.fn.refresh_fm_layout = refresh_fm_layout;
         $(window).on("resize", function() {
             console.debug("refresh layout on resize");
             $.fn.refresh_fm_layout();
         });
-
 
         // reestablish defaults for undefined actions:
         $.each(callbacks, function(name, fct) {
