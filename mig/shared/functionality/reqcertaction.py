@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcertaction - handle certificate account requests and send email to admins
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,7 @@ import tempfile
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import existing_country_code, forced_org_email_match, \
-    user_manage_commands, save_account_request
+    prefilter_potential_peers, user_manage_commands, save_account_request
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     generate_https_urls, fill_distinguished_name
@@ -187,6 +187,21 @@ line with the ISO-3166 standard.
         output_objects.append(
             {'object_type': 'link',
              'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    peers_list = []
+    for (peer_name, peer_email) in zip(peers_full_name_list, peers_email_list):
+        peers_list.append({'full_name': peer_name, 'email': peer_email})
+    valid_peers = prefilter_potential_peers(peers_list, configuration)
+    if not valid_peers:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Invalid peers specification:
+Please read and follow the sign up help and instructions on the request page!
+You may also read more about the Peers system in the site documentation.
+'''})
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
              'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 

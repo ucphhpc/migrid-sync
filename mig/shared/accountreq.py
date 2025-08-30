@@ -1173,6 +1173,15 @@ def list_country_codes(configuration):
     return country_list
 
 
+def prefilter_potential_peers(peers_list, configuration):
+    """Return entries from peers_list that fit local prefilter policy"""
+    potential_peers = []
+    for peer_dict in peers_list:
+        if peers_prefilter_allowed(configuration, peer_dict):
+            potential_peers.append(peer_dict)
+    return potential_peers
+
+
 def forced_org_email_match(org, email, configuration):
     """Check that email and organization follow the required policy"""
 
@@ -1321,6 +1330,16 @@ def auto_add_user_allowed_with_peer(configuration, user_dict):
 
     return __auto_add_user_allowed(configuration, user_dict,
                                    configuration.auto_add_user_with_peer)
+
+def peers_prefilter_allowed(configuration, user_dict):
+    """Check if user with user_dict is potentially allowed to manage peers
+    soleley based on optional configuration prefilter.
+    Please use peers_permit_allowed too before actually allowing user as peer.
+    """
+    for (key, val) in configuration.site_peers_prefilter:
+        if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
+            return False
+    return True
 
 
 def peers_permit_allowed(configuration, user_dict):
