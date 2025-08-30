@@ -447,6 +447,7 @@ def generate_confs(
     daemon_pubkey_from_dns=False,
     daemon_show_address='',
     alias_field='',
+    peers_prefilter='email:.*',
     peers_permit='distinguished_name:.*',
     vgrid_creators='distinguished_name:.*',
     vgrid_managers='distinguished_name:.*',
@@ -771,6 +772,7 @@ def _generate_confs_prepare(
     daemon_pubkey_from_dns,
     daemon_show_address,
     alias_field,
+    peers_prefilter,
     peers_permit,
     vgrid_creators,
     vgrid_managers,
@@ -1056,6 +1058,7 @@ def _generate_confs_prepare(
     user_dict['__SEAFILE_RO_ACCESS__'] = "%s" % seafile_ro_access
     user_dict['__PUBLIC_USE_HTTPS__'] = "%s" % public_use_https
     user_dict['__ALIAS_FIELD__'] = alias_field
+    user_dict['__PEERS_PREFILTER__'] = peers_prefilter
     user_dict['__PEERS_PERMIT__'] = peers_permit
     user_dict['__VGRID_CREATORS__'] = vgrid_creators
     user_dict['__VGRID_MANAGERS__'] = vgrid_managers
