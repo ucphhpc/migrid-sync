@@ -529,7 +529,7 @@ _CONFIGURATION_DEFAULTS = {
     'site_signup_methods': ['extcert'],
     'site_login_methods': ['extcert'],
     'site_signup_hint': "",
-    'site_peers_prefilter': [('email', '.*')],
+    'site_peers_prefilter': [('peers_email', '.*')],
     'site_peers_permit': [('distinguished_name', '.*')],
     'site_peers_notice': "",
     # TODO: switch to CSRF_FULL when rpc and scripts are ready?
