@@ -183,7 +183,7 @@
   ],
   "site_peers_prefilter": [
     [
-      "email",
+      "peers_email",
       ".*"
     ]
   ],

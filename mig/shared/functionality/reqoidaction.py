@@ -200,7 +200,8 @@ line with the ISO-3166 standard.
 
     peers_list = []
     for (peer_name, peer_email) in zip(peers_full_name_list, peers_email_list):
-        peers_list.append({'full_name': peer_name, 'email': peer_email})
+        peers_list.append({'peers_full_name': peer_name,
+                           'peers_email': peer_email})
     valid_peers = prefilter_potential_peers(peers_list, configuration)
     if not valid_peers:
         output_objects.append({'object_type': 'error_text', 'text':

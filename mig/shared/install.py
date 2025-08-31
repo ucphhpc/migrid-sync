@@ -84,6 +84,7 @@ def abspath(path, start):
         return path
     return os.path.normpath(os.path.join(start, path))
 
+
 def transform_str_to_dict(input_str):
     """
     Transforms a string input into a Python literal or container.
@@ -447,7 +448,7 @@ def generate_confs(
     daemon_pubkey_from_dns=False,
     daemon_show_address='',
     alias_field='',
-    peers_prefilter='email:.*',
+    peers_prefilter='peers_email:.*',
     peers_permit='distinguished_name:.*',
     vgrid_creators='distinguished_name:.*',
     vgrid_managers='distinguished_name:.*',
@@ -1519,7 +1520,8 @@ cert, oid and sid based https!
         jupyter_openids, jupyter_oidcs, jupyter_rewrites = [], [], []
         services = user_dict['__JUPYTER_SERVICES__'].split()
 
-        jupyter_services_proxy_configs = transform_str_to_dict(jupyter_services_proxy_config)
+        jupyter_services_proxy_configs = transform_str_to_dict(
+            jupyter_services_proxy_config)
         if not isinstance(jupyter_services_proxy_configs, dict):
             print('Error: jupyter_services_proxy_config '
                   'could not be interpreted correctly. Double check that your '
@@ -1623,7 +1625,8 @@ cert, oid and sid based https!
                 ws_host = host.replace(
                     "https://", "wss://").replace("http://", "ws://")
                 member_def = "Define JUPYTER_%s %s" % (name_index, host)
-                ws_member_def = "Define WS_JUPYTER_%s %s" % (name_index, ws_host)
+                ws_member_def = "Define WS_JUPYTER_%s %s" % (name_index,
+                                                             ws_host)
 
                 # No user supplied port, assign based on url prefix
                 if len(host.split(":")) < 3:
@@ -1641,7 +1644,8 @@ cert, oid and sid based https!
 
                 jupyter_defs.extend([member_def, ws_member_def])
 
-            service_proxy_config_kwargs = jupyter_services_proxy_configs.get(name, {})
+            service_proxy_config_kwargs = jupyter_services_proxy_configs.get(
+                name, {})
             # Get proxy template and append to template conf
             proxy_template = gen_balancer_proxy_template(
                 url, def_name, name, hosts, ws_hosts,
