@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -271,60 +271,6 @@ def freezedb_usage_function(lang, extension):
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
-    s += end_function(lang, 'usage')
-
-    return s
-
-
-def imagepreview_usage_function(lang, extension):
-    """Generate usage help for the corresponding script"""
-
-    # Extract op from function name
-
-    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
-
-    usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION PATH [ARG ...]' % (mig_prefix,
-                                                                    op, extension)
-    s = ''
-    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
-    s += basic_usage_options(usage_str, lang)
-    action_usage_string = 'ACTION\t\tlist_settings : List imagepreview settings for directory PATH'
-    action_usage_string2 = '\t\tcreate_setting : Create imagepreview setting for directory PATH with extension=EXT'
-    action_usage_string3 = '\t\tupdate_setting : Update imagepreview setting for directory PATH with extension=EXT'
-    action_usage_string4 = '\t\tremove_setting : Remove imagepreview setting for directory PATH with extension=EXT'
-    action_usage_string5 = '\t\treset_setting : Reset imagepreview setting for directory PATH with extension=EXT'
-    action_usage_string6 = '\t\tget_setting : Get imagepreview setting for directory PATH with extension=EXT'
-    action_usage_string7 = '\t\tget : Get imagepreview for file PATH'
-    action_usage_string8 = '\t\tremove : Remove imagepreview for file PATH'
-    action_usage_string9 = '\t\tclean : Delete all imagepreview system components for directory PATH'
-    action_usage_string10 = '\t\tcleanrecursive : Recursively delete all imagepreview system components for directory PATH'
-    action_usage_string11 = '\t\trefresh : Update imagepreview system components for directory PATH'
-    image_usage_string = '-i\t\tDisplay imagepreviews'
-
-    if lang == 'sh':
-        s += '\n    echo "%s"' % action_usage_string
-        s += '\n    echo "%s"' % action_usage_string2
-        s += '\n    echo "%s"' % action_usage_string3
-        s += '\n    echo "%s"' % action_usage_string4
-        s += '\n    echo "%s"' % action_usage_string5
-        s += '\n    echo "%s"' % action_usage_string6
-        s += '\n    echo "%s"' % action_usage_string7
-        s += '\n    echo "%s"' % action_usage_string8
-        s += '\n    echo "%s"' % action_usage_string9
-        s += '\n    echo "%s"' % action_usage_string10
-        s += '\n    echo "%s"' % action_usage_string11
-    elif lang == 'python':
-        s += '\n    print "%s"' % action_usage_string
-        s += '\n    print "%s"' % action_usage_string2
-        s += '\n    print "%s"' % action_usage_string3
-        s += '\n    print "%s"' % action_usage_string4
-        s += '\n    print "%s"' % action_usage_string5
-        s += '\n    print "%s"' % action_usage_string6
-        s += '\n    print "%s"' % action_usage_string7
-        s += '\n    print "%s"' % action_usage_string8
-        s += '\n    print "%s"' % action_usage_string9
-        s += '\n    print "%s"' % action_usage_string10
-        s += '\n    print "%s"' % action_usage_string11
     s += end_function(lang, 'usage')
 
     return s
@@ -1377,43 +1323,6 @@ def freezedb_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         curl_flags,
     )
     s += end_function(lang, 'freeze_db')
-    return s
-
-
-def imagepreview_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
-    """Call the corresponding cgi script with path, action and key=val pairs
-    as arguments.
-    """
-
-    relative_url = '"%s/imagepreview.py"' % get_xgi_bin(configuration)
-    query = '""'
-    # TODO: is arg_list really a list here?
-    if lang == 'sh':
-        post_data = '"$default_args&flags=$server_flags&action=$action"'
-        urlenc_data = '("path=$path" "${arg_list[@]}")'
-    elif lang == 'python':
-        post_data = "'%s&flags=%s&action=%s' % (default_args, server_flags, action)"
-        urlenc_data = '["path=" + path] + arg_list'
-
-    else:
-        print('Error: %s not supported!' % lang)
-        return ''
-
-    s = ''
-    s += begin_function(lang, 'imagepreview', ['action', 'path', 'arg_list'],
-                        'Execute the corresponding server operation')
-    s += auth_check_init(lang)
-    s += timeout_check_init(lang)
-    s += curl_perform(
-        lang,
-        relative_url,
-        post_data,
-        urlenc_data,
-        query,
-        curl_cmd,
-        curl_flags,
-    )
-    s += end_function(lang, 'imagepreview')
     return s
 
 
@@ -3614,51 +3523,6 @@ sys.exit(status)
     return s
 
 
-def imagepreview_main(lang):
-    """
-    Generate main part of corresponding scripts.
-
-    lang specifies which script language to generate in.
-    """
-
-    s = ''
-    s += basic_main_init(lang)
-    s += parse_options(lang, None, None)
-    s += arg_count_check(lang, 2, None)
-    s += check_conf_readable(lang)
-    s += configure(lang)
-    if lang == 'sh':
-        s += """
-# Build the arg string used directly:
-# action=$1 path=$2 ("arg=$3" ... "arg=$N")
-declare -a arg_list
-orig_args=(\"$@\")
-action=\"$1\"
-shift
-path=\"$1\"
-shift
-arg_list=(\"$@\")
-shift $#
-imagepreview \"$action\" \"$path\" \"${arg_list[@]}\"
-"""
-    elif lang == 'python':
-        s += """
-# Build the arg string used directly:
-# action=$1 path=$2 ['abc=$3', ..., 'xyz=$N']
-action = \"%s\" % sys.argv[1]
-path = \"%s\" % sys.argv[2]
-arg_list = [i for i in sys.argv[3:]]
-(status, out) = imagepreview(action, path, arg_list)
-# Trailing comma to prevent double newlines
-print ''.join(out),
-sys.exit(status)
-"""
-    else:
-        print('Error: %s not supported!' % lang)
-
-    return s
-
-
 def get_main(lang):
     """
     Generate main part of corresponding scripts.
@@ -5608,34 +5472,6 @@ def generate_freezedb(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_imagepreview(configuration, scripts_languages, dest_dir='.'):
-    """Generate the corresponding script"""
-
-    # Extract op from function name
-
-    op = sys._getframe().f_code.co_name.replace('generate_', '')
-
-    # Generate op script for each of the languages in scripts_languages
-
-    for (lang, interpreter, extension) in scripts_languages:
-        verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                                                               lang))
-        script_name = '%s%s.%s' % (mig_prefix, op, extension)
-
-        script = ''
-        script += init_script(op, lang, interpreter)
-        script += version_function(lang)
-        script += lookup_userscript_function(op, 'usage_function')(lang,
-                                                                   extension)
-        script += check_var_function(lang)
-        script += read_conf_function(lang)
-        script += lookup_userscript_function(op, 'function')(configuration,
-                                                             lang, curl_cmd)
-        script += lookup_userscript_function(op, 'main')(lang)
-
-        write_script(script, dest_dir + os.sep + script_name)
-
-
 def generate_get(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
 
@@ -6658,7 +6494,6 @@ script_ops = [
     'datatransfer',
     'doc',
     'freezedb',
-    'imagepreview',
     'get',
     'grep',
     'head',

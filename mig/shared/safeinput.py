@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -2056,20 +2056,6 @@ def guess_type(name):
                     'redirect_url',
                     ):
             __type_map[key] = valid_url
-
-        # Image meta data (imagemeta.py)
-
-        for key in ('image_type', 'data_type'):
-            __type_map[key] = valid_alphanumeric
-
-        for key in ('offset', 'x_dimension', 'y_dimension', 'z_dimension'):
-            __type_map[key] = valid_numeric
-
-        for key in ('preview_cutoff_min', 'preview_cutoff_max'):
-            __type_map[key] = valid_float
-
-        for key in ('volume_slice_filepattern', ):
-            __type_map[key] = valid_path_pattern
 
         # GDP
 

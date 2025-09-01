@@ -248,7 +248,6 @@ def fix_missing(config_file, verbose=True):
         'sharelink_home': '~/state/sharelink_home',
         'seafile_mount': '~/state/seafile_mount',
         'openid_store': '~/state/openid_store/',
-        'paraview_home': '~/state/paraview_home/',
         'sitestats_home': '~/state/sitestats_home/',
         'quota_home': '~/state/quota_home/',
         'public_key_file': '',
@@ -482,7 +481,6 @@ _CONFIGURATION_DEFAULTS = {
     'vgrid_settings': 'settings',
     'vgrid_workflow_job_queue': 'workflowjobqueue',
     'vgrid_sharelinks': 'sharelinks',
-    'vgrid_imagesettings': 'imagesettings',
     'vgrid_monitor': 'monitor',
     'resource_pending': '',
     'user_pending': '',
@@ -506,7 +504,6 @@ _CONFIGURATION_DEFAULTS = {
     'notify_home': '',
     'seafile_mount': '',
     'openid_store': '',
-    'paraview_home': '',
     'sitestats_home': '',
     'quota_home': '',
     'workflows_vgrid_tasks_home': '',
@@ -1152,8 +1149,6 @@ location.""" % self.config_file)
             self.seafile_mount = config.get('GLOBAL', 'seafile_mount')
         if config.has_option('GLOBAL', 'openid_store'):
             self.openid_store = config.get('GLOBAL', 'openid_store')
-        if config.has_option('GLOBAL', 'paraview_home'):
-            self.paraview_home = config.get('GLOBAL', 'paraview_home')
         if config.has_option('GLOBAL', 'sitestats_home'):
             self.sitestats_home = config.get('GLOBAL', 'sitestats_home')
         if config.has_option('GLOBAL', 'quota_home'):
@@ -1849,9 +1844,6 @@ location.""" % self.config_file)
             self.vgrid_settings = config.get('GLOBAL', 'vgrid_settings')
         if config.has_option('GLOBAL', 'vgrid_sharelinks'):
             self.vgrid_sharelinks = config.get('GLOBAL', 'vgrid_sharelinks')
-        if config.has_option('GLOBAL', 'vgrid_imagesettings'):
-            self.vgrid_imagesettings = config.get(
-                'GLOBAL', 'vgrid_imagesettings')
         if config.has_option('GLOBAL', 'vgrid_monitor'):
             self.vgrid_monitor = config.get('GLOBAL', 'vgrid_monitor')
         # Needed for read-only vgrids, but optional
@@ -2262,11 +2254,6 @@ location.""" % self.config_file)
                                                    'freeze_doi_text')
         else:
             self.site_freeze_doi_text = ''
-        if config.has_option('SITE', 'enable_preview'):
-            self.site_enable_preview = config.getboolean(
-                'SITE', 'enable_preview')
-        else:
-            self.site_enable_preview = False
         if config.has_option('SITE', 'enable_sharelinks'):
             self.site_enable_sharelinks = config.getboolean('SITE',
                                                             'enable_sharelinks')
@@ -2613,7 +2600,6 @@ location.""" % self.config_file)
             self.site_enable_jobs = False
             self.site_enable_live_jobs = False
             self.site_enable_sshmux = False
-            self.site_enable_preview = False
             self.site_enable_vmachines = False
             self.site_enable_sandboxes = False
             # NOTE: every operation must be clearly logged with explicit actor

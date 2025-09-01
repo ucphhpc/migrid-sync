@@ -379,7 +379,6 @@ def generate_confs(
     enable_freeze=True,
     enable_sandboxes=False,
     enable_vmachines=False,
-    enable_preview=False,
     enable_jupyter=False,
     enable_cloud=False,
     enable_hsts=True,
@@ -704,7 +703,6 @@ def _generate_confs_prepare(
     enable_freeze,
     enable_sandboxes,
     enable_vmachines,
-    enable_preview,
     enable_jupyter,
     enable_cloud,
     enable_hsts,
@@ -959,7 +957,6 @@ def _generate_confs_prepare(
     user_dict['__ENABLE_FREEZE__'] = "%s" % enable_freeze
     user_dict['__ENABLE_SANDBOXES__'] = "%s" % enable_sandboxes
     user_dict['__ENABLE_VMACHINES__'] = "%s" % enable_vmachines
-    user_dict['__ENABLE_PREVIEW__'] = "%s" % enable_preview
     user_dict['__ENABLE_JUPYTER__'] = "%s" % enable_jupyter
     user_dict['__ENABLE_CLOUD__'] = "%s" % enable_cloud
     user_dict['__ENABLE_HSTS__'] = "%s" % enable_hsts
@@ -1754,15 +1751,6 @@ cert, oid and sid based https!
         user_dict['__DUPLICATI_COMMENTED__'] = ''
     else:
         user_dict['__DUPLICATI_COMMENTED__'] = '#'
-
-    # Enable Paraview integration only if explicitly requested
-    if user_dict['__ENABLE_PREVIEW__'].lower() == 'true':
-        user_dict['__PREVIEW_COMMENTED__'] = ''
-        # Paraview requires websockets and http proxy
-        user_dict['__WEBSOCKETS_COMMENTED__'] = ''
-        user_dict['__PROXY_HTTP_COMMENTED__'] = ''
-    else:
-        user_dict['__PREVIEW_COMMENTED__'] = '#'
 
     dev_suffix = '$(echo ${APACHE_CONFDIR} | sed "s@/etc/${APACHE_DAEMON}@@")'
     if user_dict['__ENABLE_DEV_ACCOUNTS__'].lower() == "true":

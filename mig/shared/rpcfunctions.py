@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rpcfunctions - Backend for XMLRPC and JSONRPC interfaces over CGI
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -385,12 +385,6 @@ def datatransfer(user_arguments_dict):
     """Wrap backend of same name"""
 
     return stub('shared.functionality.datatransfer', user_arguments_dict)
-
-
-def imagepreview(user_arguments_dict):
-    """Wrap backend of same name"""
-
-    return stub('shared.functionality.imagepreview', user_arguments_dict)
 
 
 def sharelink(user_arguments_dict):
@@ -909,7 +903,6 @@ expose_functions = [object_type_info,
                     liveio,
                     mqueue,
                     datatransfer,
-                    imagepreview,
                     sharelink,
                     crontab,
                     lscrontab,

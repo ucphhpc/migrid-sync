@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # objecttypes - output object types and validation
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -320,79 +320,7 @@ table_pager = {'object_type': 'table_pager', 'required': ['entry_name'],
                'optional': ['id_prefix', 'default_entries']}
 object_types = {'object_type': 'object_types',
                 'required_list': [('object_types', 'objects')]}
-image_meta = {'object_type': 'image_meta', 'required': [
-    'image_type',
-    'preview_image_url',
-    'preview_histogram',
-    'base_path',
-    'path',
-    'name',
-    'extension',
-    'offset',
-    'x_dimension',
-    'y_dimension',
-    'preview_x_dimension',
-    'preview_y_dimension',
-    'preview_cutoff_min',
-    'preview_cutoff_max',
-    'preview_image_scale',
-    'mean_value',
-    'median_value',
-    'file_md5sum',
-    'data_type',
-], 'optional': []}
-volume_meta = {'object_type': 'volume_meta', 'required': [
-    'image_type',
-    'volume_type',
-    'preview_histogram',
-    'base_path',
-    'path',
-    'name',
-    'extension',
-    'offset',
-    'x_dimension',
-    'y_dimension',
-    'z_dimension',
-    'preview_x_dimension',
-    'preview_y_dimension',
-    'preview_z_dimension',
-    'preview_cutoff_min',
-    'preview_cutoff_max',
-    'mean_value',
-    'median_value',
-    'file_md5sum',
-    'data_type',
-], 'optional': []}
 
-image_settings_list = {'object_type': 'image_settings_list',
-                       'required':
-                       ['extension_list', 'image_settings_status_list',
-                        'volume_settings_status_list',
-                        'image_settings_progress_list',
-                        'volume_settings_progress_list',
-                        'image_count_list', 'volume_count_list'],
-                       'optional': []}
-image_setting = {'object_type': 'image_setting', 'required': [
-    'image_type',
-    'extension',
-    'image_settings_status',
-    'image_settings_update_progress',
-    'volume_settings_status',
-    'volume_settings_update_progress',
-    'settings_recursive',
-    'image_count',
-    'volume_slice_filepattern',
-    'offset',
-    'x_dimension',
-    'y_dimension',
-    'z_dimension',
-    'preview_x_dimension',
-    'preview_y_dimension',
-    'preview_z_dimension',
-    'preview_cutoff_min',
-    'preview_cutoff_max',
-    'data_type',
-], 'optional': []}
 valid_types_list = [
     start,
     end,
@@ -493,10 +421,6 @@ valid_types_list = [
     service,
     services,
     table_pager,
-    image_meta,
-    volume_meta,
-    image_setting,
-    image_settings_list,
 ]
 
 # valid_types_dict = {"title":title, "link":link, "header":header}

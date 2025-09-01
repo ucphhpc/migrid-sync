@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cmdapi - shared backend command line access helper functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -90,10 +90,6 @@ def get_command_map(configuration):
     if configuration.site_enable_transfers:
         cmd_map.update({
             'datatransfer': ['transfer_id', 'action'],
-        })
-    if configuration.site_enable_preview:
-        cmd_map.update({
-            'imagepreview': ['flags', 'action', 'path', 'extension'],
         })
     if configuration.site_enable_freeze:
         # NOTE: createbackup is a one-shot create+finalize backup helper.
