@@ -35,6 +35,7 @@ import io
 import json
 import logging
 import os
+import pickle
 import shutil
 import stat
 import sys
@@ -257,6 +258,25 @@ class MigTestCase(TestCase):
 
     # custom assertions available for common use
 
+    def assertDirEmpty(self, relative_path):
+        """Make sure the supplied path is an empty directory"""
+        path_kind = self.assertPathExists(relative_path)
+        assert path_kind == "dir", "expected a directory but found %s" % (
+            path_kind, )
+        absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+        entries = os.listdir(absolute_path)
+        assert not entries, "directory is not empty"
+
+    def assertDirNotEmpty(self, relative_path):
+        """Make sure the supplied path is a non-empty directory"""
+        path_kind = self.assertPathExists(relative_path)
+        assert path_kind == "dir", "expected a directory but found %s" % (
+            path_kind, )
+        absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+        entries = os.listdir(absolute_path)
+        assert entries, "directory is empty"
+        return [os.path.join(absolute_path, entry) for entry in entries]
+
     def assertFileContentIdentical(self, file_actual, file_expected):
         """Make sure file_actual and file_expected are identical"""
         with io.open(file_actual) as f_actual, io.open(file_expected) as f_expected:
@@ -285,9 +305,11 @@ included:
 
     def assertPathExists(self, relative_path):
         """Make sure file in relative_path exists"""
-        assert not os.path.isabs(
-            relative_path), "expected relative path within output folder"
-        absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+        if os.path.isabs(relative_path):
+            self.assertPathWithin(relative_path, start=TEST_OUTPUT_DIR)
+            absolute_path = relative_path
+        else:
+            absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
         return MigTestCase._absolute_path_kind(absolute_path)
 
     @staticmethod
@@ -368,6 +390,34 @@ included:
         shutil.copyfile(fixture_path, copied_fixture_file)
         return copied_fixture_file
 
+    @staticmethod
+    def _provision_test_user(self, distinguished_name):
+        """Provide a means to fabricate a useable test user on demand.
+        """
+
+        # ensure a user home directory for our test user
+        conf_user_home = os.path.normpath(self.configuration.user_home)
+        from mig.shared.base import client_id_dir
+        test_client_dir_name = client_id_dir(distinguished_name)
+        test_user_dir = os.path.join(conf_user_home, test_client_dir_name)
+
+        # ensure a user db that includes our test user
+        conf_user_db_home = ensure_dirs_exist(self.configuration.user_db_home)
+        prepared_fixture = self.prepareFixtureAssert(
+            'MiG-users.db--example',
+            fixture_format='pickle',
+        )
+
+        test_db_file = prepared_fixture.copy_as_temp(prefix=conf_user_db_home)
+
+        # create the test user home directory
+        ensure_dirs_exist(test_user_dir)
+        # create the test user settings directory
+        user_settings_dir = os.path.join(self.configuration.user_settings, test_client_dir_name)
+        ensure_dirs_exist(user_settings_dir)
+
+        return test_user_dir
+
 
 def _to_display_path(value):
     """Convert a relative path to one to be shown as part of test output."""
@@ -419,7 +469,7 @@ def fixturefile(relative_path, fixture_format=None):
 
     data = None
 
-    if fixture_format == 'binary':
+    if fixture_format == 'binary' or fixture_format == 'pickle':
         with open(tmp_path, 'rb') as binfile:
             data = binfile.read()
     elif fixture_format == 'json':
@@ -427,6 +477,9 @@ def fixturefile(relative_path, fixture_format=None):
     else:
         raise AssertionError(
             "unsupported fixture format: %s" % (fixture_format,))
+
+    if fixture_format == 'pickle':
+        data = pickle.loads(data)
 
     return data, tmp_path
 

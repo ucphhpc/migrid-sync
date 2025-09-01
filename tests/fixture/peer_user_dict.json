@@ -1,0 +1,14 @@
+{
+  "full_name": "Test Peer User",
+  "organization": "Test Org",
+  "state": "NA",
+  "country": "DK",
+  "email": "peer@example.com",
+  "comment": "test@example.com",
+  "locality": "",
+  "organizational_unit": "",
+  "expire": 1758970812,
+  "created": 1727434813.0792377,
+  "openid_names": [],
+  "distinguished_name": "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com"
+}
