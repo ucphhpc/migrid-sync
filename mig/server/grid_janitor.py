@@ -214,85 +214,104 @@ def handle_session_cleanup(configuration, now=time.time()):
         logger.debug("no pending session cleanups")
     return handled
 
+def manage_single_req(configuration, req_id, req_path, db_path, now):
+    """Inspect single request in req_path and take care of it if it does not
+    require operator interaction. That is, accept or reject password reset
+    depending on reset token validity, renew account if the complete peer
+    acceptance is in place and reject request if obviously invalid.
+    """
+    req_dict = load(req_path)
+    client_id = get_user_id(configuration, req_dict)
+    # NOTE: use timestamp from saved request file if available
+    req_timestamp = req_dict.get('accepted_terms', now)
+    user_dict = load_user_dict(logger, client_id, db_path)
+    req_invalid = req_dict.get('invalid', None)
+    reset_token = req_dict.get('reset_token', '')
+    req_auth = req_dict.get('auth', ['migoid'])[-1]
+    auth_type = req_auth.lstrip('mig').lstrip('ext')
+    user_copy = True
+    admin_copy = True
+    default_renew = False
+    if req_invalid:
+        logger.info("%r made an invalid account request"% client_id)
+        # NOTE: 'invalid' is a list of validation error strings if set
+        reason = 'invalid request: %s.' % '. '.join(req_invalid)
+        if not reject_account_req(req_id, configuration, reason,
+                                  user_copy=user_copy,
+                                  admin_copy=admin_copy,
+                                  auth_type=auth_type):
+            logger.warning("failed to reject invalid %r account request"
+                           % client_id)
+        else:
+            logger.info("rejected invalid %r account request" % \
+                        client_id)
+    elif reset_token:
+        valid_reset = verify_reset_token(configuration,
+                                         user_dict,
+                                         reset_token,
+                                         req_auth,
+                                         req_timestamp)
+        if valid_reset:
+            logger.info("%r requested and authorized password reset" % \
+                        client_id)
+            peer_id = user_dict.get('peers', [None])[0]
+            if not accept_account_req(req_id, configuration, peer_id,
+                                      user_copy=user_copy,
+                                      admin_copy=admin_copy,
+                                      auth_type=auth_type,
+                                      default_renew=default_renew):
+                logger.warning("failed to accept %r password reset" % \
+                               client_id)
+            else:
+                logger.info("accepted %r password reset" % client_id)
+        else:
+            logger.warning("%r requested password reset with bad token"
+                           % client_id)
+            reason = 'invalid password reset token'
+            if not reject_account_req(req_id, configuration, reason,
+                                      user_copy=user_copy,
+                                      admin_copy=admin_copy,
+                                      auth_type=auth_type):
+                logger.warning("failed to reject %r password reset" % \
+                               client_id)
+            else:
+                logger.info("rejected %r password reset" % client_id)
+    elif user_dict:
+        logger.info("%r requested access renewal" % client_id)
+        # TODO: renew if trivial with valid peer
+    else:
+        logger.info("%r requested a new account requiring operator" % \
+                    client_id)
+
 def manage_trivial_user_requests(configuration, now=time.time()):
     """Inspect user_pending dir and take care of any request, which do not
-    require operator interaction. That is, accept any requests for password
-    change or renewals with complete peer acceptance and reject any obviously
-    invalid requests.
+    require operator interaction. That is, accept or reject any password reset
+    requests depending on reset token validity, renew any with complete peer
+    acceptance and reject any obviously invalid requests.
     Returns the number of actual actions taken for central throttle handling.
     """
+    # TODO: add simple logic to mark invalid requests already during submit?
+    #       could e.g. be
+    #       * non-existant, unauthorized or invalid peer
+    #       * unauthorized password change
+    #       * single word in full name
+    #       ...
+    #       Then use the invalid marker to reject in manage_single_req
     handled = 0
     now = time.time()
+    db_path = default_db_path(configuration)
     for filename in listdir(configuration.user_pending):
         if filename.startswith('.'):
             continue
         req_id = filename
         req_path = os.path.join(configuration.user_pending, req_id)
         logger.debug("checking if account request in %r is trivial" % req_path)
-        req_timestamp =  os.path.getmtime(req_path)
-        req_age = now - req_timestamp
+        req_age = now - os.path.getmtime(req_path)
         req_age_minutes = req_age / SECS_PER_MINUTE
         if req_age_minutes > MANAGE_TRIVIAL_REQ_MINUTES:
             logger.info("found pending account request in %r : %dm" % \
                         (req_path, req_age_minutes))
-            req_dict = load(req_path)
-            client_id = get_user_id(configuration, req_dict)
-            user_dict = load_user_dict(logger, client_id,
-                                       default_db_path(configuration))
-            # TODO: add simple logic to mark invalid requests during post?
-            #       could e.g. be
-            #       * non-existant, unauthorized or invalid peer
-            #       * unauthorized password change
-            #       * single word in full name
-            #       ...
-            req_invalid = req_dict.get('invalid', False)
-            reset_token = req_dict.get('reset_token', '')
-            auth_type = reset_auth_type = req_dict.get('auth', ['migoid'])[-1]
-            if req_invalid:
-                logger.info("%r made an invalid account request"% client_id)
-                # TODO: reject invalid req
-            elif reset_token:
-                peer_id = user_dict.get('peers', [None])[0]
-                reason = 'invalid password reset token'
-                user_copy = True
-                admin_copy = True
-                auth_type = auth_type.replace('ext', '').replace('mig', '')
-                default_renew = False
-                valid_reset = verify_reset_token(configuration,
-                                                 user_dict,
-                                                 reset_token,
-                                                 reset_auth_type,
-                                                 req_timestamp)
-                if valid_reset:
-                    logger.info("%r requested and authorized password reset" % \
-                                client_id)
-                    if not accept_account_req(req_id, configuration, peer_id,
-                                              user_copy=user_copy,
-                                              admin_copy=admin_copy,
-                                              auth_type=auth_type,
-                                              default_renew=default_renew):
-                        logger.warning("failed to accept %r password reset" % \
-                                       client_id)
-                    else:
-                        logger.info("accepted %r password reset" % client_id)
-                else:
-                    logger.warning("%r requested password reset with bad token"
-                                   % client_id)
-                    if not reject_account_req(req_id, configuration, reason,
-                                              user_copy=user_copy,
-                                              admin_copy=admin_copy,
-                                              auth_type=auth_type):
-                        logger.warning("failed to reject %r password reset" % \
-                                       client_id)
-                    else:
-                        logger.info("rejected %r password reset" % client_id)
-            elif user_dict:
-                logger.info("%r requested access renewal" % client_id)
-                # TODO: renew if trivial with valid peer
-            else:
-                logger.info("%r requested a new account requiring operator" % \
-                            client_id)
-            # TODO: actually check and accept user request if trivial
+            manage_single_req(configuration, req_id, req_path, db_path, now)
             handled += 1
     logger.debug("handled %d trivial user account request action(s)" % handled)
     return handled
@@ -307,19 +326,36 @@ def remind_and_expire_user_pending(configuration, now=time.time()):
     for filename in listdir(configuration.user_pending):
         if filename.startswith('.'):
             continue
-        req_path = os.path.join(configuration.user_pending, filename)
+        req_id = filename
+        req_path = os.path.join(configuration.user_pending, req_id)
         logger.debug("checking account request in %r" % req_path)
         req_age = now - os.path.getmtime(req_path)
         req_age_days = req_age / SECS_PER_DAY
+        req_dict = load(req_path)
+        client_id = get_user_id(configuration, req_dict)
+        req_auth = req_dict.get('auth', ['migoid'])[-1]
+        auth_type = req_auth.lstrip('mig').lstrip('ext')
         if req_age_days > REMIND_REQ_DAYS:
             logger.info("found stale account request in %r : %dd" % \
                         (req_path, req_age_days))
             # TODO: actually remind operator and user that request is pending
+            #       ... possibly with copy to peers if pending acceptance.
             handled += 1
         if req_age_days > EXPIRE_REQ_DAYS:
-            logger.info("found expired account request in %r : %dd" % \
-                        (req_path, req_age_days))
-            # TODO: actually expire request and inform user
+            logger.info("found expired account request from %r in %s : %dd" % \
+                        (client_id, req_path, req_age_days))            
+            reason = 'failed to be verified and accepted within %d day limit' \
+                     % EXPIRE_REQ_DAYS
+            user_copy = True
+            admin_copy = True
+            if not reject_account_req(req_id, configuration, reason,
+                                      user_copy=user_copy,
+                                      admin_copy=admin_copy,
+                                      auth_type=auth_type):
+                logger.warning("failed to expire %s request from %r" % \
+                               (req_id, client_id))
+            else:
+                logger.info("expired %s request from %r" % (req_id, client_id))
             handled += 1
     logger.debug("handled %d user account request action(s)" % handled)
     return handled
