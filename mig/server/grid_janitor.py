@@ -38,9 +38,14 @@ import signal
 import sys
 import time
 
+from mig.shared.accountreq import accept_account_req, reject_account_req
+from mig.shared.base import get_user_id
 from mig.shared.conf import get_configuration_object
 from mig.shared.fileio import listdir, delete_file
 from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.pwcrypto import verify_reset_token
+from mig.shared.serial import load
+from mig.shared.userdb import load_user_dict, default_db_path
 
 # TODO: adjust short to subsecond and long to e.g a minute for production use
 #SHORT_THROTTLE_SECS = 0.5
@@ -50,20 +55,23 @@ LONG_THROTTLE_SECS = 30.0
 
 REMIND_REQ_DAYS = 5
 EXPIRE_REQ_DAYS = 30
+MANAGE_TRIVIAL_REQ_MINUTES = 5
 
 EXPIRE_STATE_DAYS = 30
 EXPIRE_DUMMY_JOBS_DAYS = 7
 EXPIRE_TWOFACTOR_DAYS = 1
 
-SECS_PER_DAY = 86400
-SECS_PER_HOUR = 3600
 SECS_PER_MINUTE = 60
+SECS_PER_HOUR = 60 * SECS_PER_MINUTE
+SECS_PER_DAY =24 * SECS_PER_HOUR
 
 stop_running = multiprocessing.Event()
 (configuration, logger) = (None, None)
 
 task_triggers = {}
 
+
+# TODO: add a signal handler to force run pending tasks right away
 
 def stop_handler(sig, frame):
     """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
@@ -88,7 +96,7 @@ def _update_last_run(configuration, target, stamp):
     task timestamp in UN*X epoch.
     Returns the same updated timestamp for the task.
     """
-    # TODO: add a more persistent marker e.g. in mig_system_run or _files to
+    # TODO: add a more persistent marker e.g. in mig system run or files to
     #      remember last status across restarts and reboots?
     task_triggers[target] = stamp
     return task_triggers[target]
@@ -97,20 +105,22 @@ def _update_last_run(configuration, target, stamp):
 def _clean_stale_state_files(configuration, target_dir, filename_patterns,
                              expire_days, now, include_dotfiles=False):
     """Inspect and clean up stale state files matching any of filename_pattern
-    in target_dir if they are at least expire_days old. Where filename_pattern is
-    a list of wildcard strings checked with fnmatch. Dot-files are excluded
-    from matching unless include_dotfiles is set.
+    in target_dir if they are at least expire_days old. Where filename_pattern
+    is a list of wildcard strings checked with fnmatch. Dot-files are excluded
+    from matching unless include_dotfiles is set. Directories are just skipped.
     Returns the number of actual actions taken for central throttle handling.
     """
     handled = 0
     logger.debug("clean files matching %r in %r if older than %dd" % \
                  (filename_patterns, target_dir, expire_days))
     for filename in listdir(target_dir):
+        tmp_path = os.path.join(target_dir, filename)
         if not include_dotfiles and filename.startswith('.'):
+            continue
+        if os.path.isdir(tmp_path):
             continue
         tmp_age = -1
         for pattern in filename_patterns:
-            tmp_path = os.path.join(target_dir, filename)
             if fnmatch.fnmatch(filename, pattern):
                 logger.debug("checking if state file %r is stale" % tmp_path)
                 tmp_age = now - os.path.getmtime(tmp_path)
@@ -204,6 +214,89 @@ def handle_session_cleanup(configuration, now=time.time()):
         logger.debug("no pending session cleanups")
     return handled
 
+def manage_trivial_user_requests(configuration, now=time.time()):
+    """Inspect user_pending dir and take care of any request, which do not
+    require operator interaction. That is, accept any requests for password
+    change or renewals with complete peer acceptance and reject any obviously
+    invalid requests.
+    Returns the number of actual actions taken for central throttle handling.
+    """
+    handled = 0
+    now = time.time()
+    for filename in listdir(configuration.user_pending):
+        if filename.startswith('.'):
+            continue
+        req_id = filename
+        req_path = os.path.join(configuration.user_pending, req_id)
+        logger.debug("checking if account request in %r is trivial" % req_path)
+        req_timestamp =  os.path.getmtime(req_path)
+        req_age = now - req_timestamp
+        req_age_minutes = req_age / SECS_PER_MINUTE
+        if req_age_minutes > MANAGE_TRIVIAL_REQ_MINUTES:
+            logger.info("found pending account request in %r : %dm" % \
+                        (req_path, req_age_minutes))
+            req_dict = load(req_path)
+            client_id = get_user_id(configuration, req_dict)
+            user_dict = load_user_dict(logger, client_id,
+                                       default_db_path(configuration))
+            # TODO: add simple logic to mark invalid requests during post?
+            #       could e.g. be
+            #       * non-existant, unauthorized or invalid peer
+            #       * unauthorized password change
+            #       * single word in full name
+            #       ...
+            req_invalid = req_dict.get('invalid', False)
+            reset_token = req_dict.get('reset_token', '')
+            auth_type = reset_auth_type = req_dict.get('auth', ['migoid'])[-1]
+            if req_invalid:
+                logger.info("%r made an invalid account request"% client_id)
+                # TODO: reject invalid req
+            elif reset_token:
+                peer_id = user_dict.get('peers', [None])[0]
+                reason = 'invalid password reset token'
+                user_copy = True
+                admin_copy = True
+                auth_type = auth_type.replace('ext', '').replace('mig', '')
+                default_renew = False
+                valid_reset = verify_reset_token(configuration,
+                                                 user_dict,
+                                                 reset_token,
+                                                 reset_auth_type,
+                                                 req_timestamp)
+                if valid_reset:
+                    logger.info("%r requested and authorized password reset" % \
+                                client_id)
+                    if not accept_account_req(req_id, configuration, peer_id,
+                                              user_copy=user_copy,
+                                              admin_copy=admin_copy,
+                                              auth_type=auth_type,
+                                              default_renew=default_renew):
+                        logger.warning("failed to accept %r password reset" % \
+                                       client_id)
+                    else:
+                        logger.info("accepted %r password reset" % client_id)
+                else:
+                    logger.warning("%r requested password reset with bad token"
+                                   % client_id)
+                    if not reject_account_req(req_id, configuration, reason,
+                                              user_copy=user_copy,
+                                              admin_copy=admin_copy,
+                                              auth_type=auth_type):
+                        logger.warning("failed to reject %r password reset" % \
+                                       client_id)
+                    else:
+                        logger.info("rejected %r password reset" % client_id)
+            elif user_dict:
+                logger.info("%r requested access renewal" % client_id)
+                # TODO: renew if trivial with valid peer
+            else:
+                logger.info("%r requested a new account requiring operator" % \
+                            client_id)
+            # TODO: actually check and accept user request if trivial
+            handled += 1
+    logger.debug("handled %d trivial user account request action(s)" % handled)
+    return handled
+
 def remind_and_expire_user_pending(configuration, now=time.time()):
     """Inspect user_pending dir and inform about pending but aging account
     requests that need operator or user action.
@@ -237,12 +330,13 @@ def handle_pending_requests(configuration, now=time.time()):
     """
     handled = 0
     logger.debug("handle pending requests")
+    handled += manage_trivial_user_requests(configuration, now)
     handled += remind_and_expire_user_pending(configuration, now)
     # TODO: actually handle more requests like resources and peers
     if handled > 0:
         logger.info("handled %d pending requests" % handled)
     else:
-        logger.debug("no pending state cleanups")
+        logger.debug("no pending requests")
     return handled
 
 def handle_cache_updates(configuration, now=time.time()):
@@ -273,9 +367,9 @@ def handle_janitor_tasks(configuration, now=time.time()):
     if _lookup_last_run(configuration, 'session-cleanup') + SECS_PER_HOUR < now:
         tasks_completed += handle_session_cleanup(configuration, now)
         _update_last_run(configuration, 'state-cleanup', now)
-    if _lookup_last_run(configuration, 'pending-requests') + SECS_PER_HOUR < now:
+    if _lookup_last_run(configuration, 'pending-reqs') + SECS_PER_MINUTE < now:
         tasks_completed += handle_pending_requests(configuration, now)
-        _update_last_run(configuration, 'pending-requests', now)
+        _update_last_run(configuration, 'pending-reqs', now)
     if _lookup_last_run(configuration, 'cache-updates') + SECS_PER_MINUTE < now:
         tasks_completed += handle_cache_updates(configuration, now)
         _update_last_run(configuration, 'cache-updates', now)
