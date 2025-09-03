@@ -191,6 +191,12 @@
   "site_signup_methods": [
     "extcert"
   ],
+  "site_signup_prefilter": [
+    [
+      "email",
+      ".*"
+    ]
+  ],
   "site_skin": "",
   "site_vgrid_creators": [
     [

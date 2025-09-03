@@ -29,15 +29,16 @@
 
 from __future__ import absolute_import
 
-# TODO: this backend is horribly KU/UCPH-specific, should move that to conf
+# TODO: this backend is somewhat KU/UCPH-specific, should move that to conf
 
 import os
 import time
 import tempfile
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import existing_country_code, forced_org_email_match, \
-    prefilter_potential_peers, user_manage_commands, save_account_request
+from mig.shared.accountreq import existing_country_code, \
+    prefilter_potential_peers, save_account_request, signup_prefilter_allowed, \
+    user_manage_commands
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     generate_https_urls, fill_distinguished_name
@@ -111,6 +112,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
     country = accepted['country'][-1].strip()
     state = accepted['state'][-1].strip()
     org = accepted['org'][-1].strip()
+    # NOTE: safeinput thoroughly checks that emails are on valid form
     email = accepted['email'][-1].strip()
     password = accepted['password'][-1]
     verifypassword = accepted['verifypassword'][-1]
@@ -206,23 +208,6 @@ You may also read more about the Peers system in the site documentation.
              'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # TODO: move this check to conf?
-
-    if not forced_org_email_match(org, email, configuration):
-        output_objects.append({'object_type': 'error_text', 'text':
-                               '''Illegal email and organization combination:
-Please read and follow the instructions in red on the request page!
-If you are a student with only a @*.ku.dk address please just use KU as
-organization. As long as you state that you want the account for course
-purposes in the comment field, you will be given access to the necessary
-resources anyway.
-'''})
-        output_objects.append(
-            {'object_type': 'link',
-             'destination': 'javascript:history.back();',
-             'class': 'genericbutton', 'text': "Try again"})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     raw_user = {
         'full_name': cert_name,
         'organization': org,
@@ -246,6 +231,19 @@ resources anyway.
     # Title name, lowercase email, uppercase country and state, etc.
     user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     fill_distinguished_name(user_dict)
+
+    if not signup_prefilter_allowed(configuration, raw_user):
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Invalid sign up request:
+Please read and follow the sign up help and instructions on the request page!
+Namely, make sure to use the correct sign up based on your organizational
+affiliation. You may also read more about sign up in the site documentation.
+'''})
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     user_id = user_dict['distinguished_name']
     user_dict['authorized'] = (user_id == client_id)
     if configuration.user_openid_providers and configuration.user_openid_alias:
@@ -285,7 +283,7 @@ User certificate requests are not supported on this site!"""})
     helper_commands = user_manage_commands(configuration, mig_user, req_path,
                                            user_id, user_dict, 'cert')
     user_dict.update(helper_commands)
-    user_dict['site'] = configuration.short_title
+    user_dict['site'] = short_title
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})

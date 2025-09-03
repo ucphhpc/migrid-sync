@@ -1182,51 +1182,6 @@ def prefilter_potential_peers(peers_list, configuration):
     return potential_peers
 
 
-def forced_org_email_match(org, email, configuration):
-    """Check that email and organization follow the required policy"""
-
-    logger = configuration.logger
-    # Policy regexps: prioritized order with most general last
-    force_org_email = [('DIKU', ['^[a-zA-Z0-9_.+-]+@diku.dk$',
-                                 '^[a-zA-Z0-9_.+-]+@di.ku.dk$']),
-                       ('NBI', ['^[a-zA-Z0-9_.+-]+@nbi.ku.dk$',
-                                '^[a-zA-Z0-9_.+-]+@nbi.dk$',
-                                '^[a-zA-Z0-9_.+-]+@fys.ku.dk$']),
-                       ('IMF', ['^[a-zA-Z0-9_.+-]+@math.ku.dk$']),
-                       # Keep this KU catch-all last and do not generalize it!
-                       ('KU', ['^[a-zA-Z0-9_.+-]+@(alumni.|)ku.dk$']),
-                       ]
-    force_org_email_dict = dict(force_org_email)
-    is_forced_email = False
-    is_forced_org = False
-    if org.upper() in force_org_email_dict:
-        is_forced_org = True
-        # Consistent casing
-        org = org.upper()
-    email_hit = '__BOGUS__'
-    for (forced_org, forced_email_list) in force_org_email:
-        for forced_email in forced_email_list:
-            # Consistent casing
-            if re.match(forced_email, email.lower()):
-                is_forced_email = True
-                email_hit = forced_email
-                logger.debug('email match on %s vs %s' % (email, forced_email))
-                break
-
-        # Use first hit to avoid catch-all overriding specific hits
-        if is_forced_email or is_forced_org and org == forced_org:
-            break
-    if is_forced_org != is_forced_email or \
-            not email_hit in force_org_email_dict.get(org, ['__BOGUS__']):
-        logger.error('Illegal email and organization combination: %s' %
-                     ([email, org, is_forced_org, is_forced_email,
-                       email_hit, force_org_email_dict.get(org,
-                                                           ['__BOGUS__'])]))
-        return False
-    else:
-        return True
-
-
 def save_account_request(configuration, req_dict):
     """Save req_dict account request as pickle in configured user_pending
     location.
@@ -1330,6 +1285,17 @@ def auto_add_user_allowed_with_peer(configuration, user_dict):
 
     return __auto_add_user_allowed(configuration, user_dict,
                                    configuration.auto_add_user_with_peer)
+
+
+def signup_prefilter_allowed(configuration, user_dict):
+    """Check if user with user_dict is potentially allowed to sign up in forms
+    soleley based on optional configuration prefilter.
+    """
+    for (key, val) in configuration.site_signup_prefilter:
+        if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
+            return False
+    return True
+
 
 def peers_prefilter_allowed(configuration, user_dict):
     """Check if user with user_dict is potentially allowed to manage peers
