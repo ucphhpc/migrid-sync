@@ -142,6 +142,30 @@ class MigSharedAccountreq__peers(MigTestCase):
 
         self.assertTrue(success)
 
+    def test_signup_prefilter_email_accept(self):
+        accept = ['john@doe.org', 'a@b.c.org', 'a@ku.dk.com', 'a@sci.ku.dk.org',
+                  'a@diku.dk', 'a@nbi.dk']
+        self.configuration.site_signup_prefilter = [
+            ('email', r'^.+(?<!(@|\.)ku\.dk)$')]
+        for addr in accept:
+            user = {'email': addr}
+            check = accountreq.signup_prefilter_allowed(
+                self.configuration, user)
+            print("check %r: %s" % (addr, check))
+            self.assertTrue(check)
+
+    def test_signup_prefilter_email_reject(self):
+        reject = ['john.doe@science.ku.dk',
+                  'abc123@ku.dk', 'john.doe@a.b.c.ku.dk']
+        self.configuration.site_signup_prefilter = [
+            ('email', r'.+(?<!(@|\.)ku\.dk)$')]
+        for addr in reject:
+            user = {'email': addr}
+            check = accountreq.signup_prefilter_allowed(
+                self.configuration, user)
+            print("check %r: %s" % (addr, check))
+            self.assertFalse(check)
+
 
 if __name__ == '__main__':
     testmain()
