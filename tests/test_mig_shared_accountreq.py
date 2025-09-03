@@ -164,8 +164,6 @@ class MigSharedAccountreq__peers(MigTestCase):
                                                         user)
             self.assertFalse(check)
 
-            print("check %r: %s" % (addr, check))
-
     def test_peers_prefilter_email_accept(self):
         accept = ['john.doe@science.ku.dk', 'abc123@ku.dk',
                   'john.doe@a.b.c.ku.dk']
@@ -177,7 +175,7 @@ class MigSharedAccountreq__peers(MigTestCase):
                                                        user)
             self.assertTrue(check)
 
-    def test_signup_prefilter_email_reject(self):
+    def test_peers_prefilter_email_reject(self):
         reject = ['john@doe.org', 'a@b.c.org', 'a@ku.dk.com',
                   'a@sci.ku.dk.org']
         self.configuration.site_peers_prefilter = [
