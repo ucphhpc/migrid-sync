@@ -75,10 +75,13 @@ class MigSharedAccountreq__peers(MigTestCase):
         """Fabricate a peer acceptance record in a particular user settings dir.
         """
 
-        test_user_accepted_peers_file = os.path.join(self.user_settings_dir, test_client_dir_name, "peers")
-        expire_tomorrow =  datetime.date.today() + datetime.timedelta(days=1)
+        test_user_accepted_peers_file = os.path.join(
+            self.user_settings_dir, test_client_dir_name, "peers")
+        expire_tomorrow = datetime.date.today() + datetime.timedelta(days=1)
         with open(test_user_accepted_peers_file, "wb") as test_user_accepted_peers:
-            pickle.dump({peer_distinguished_name:{'expire': str(expire_tomorrow) }}, test_user_accepted_peers)
+            pickle.dump({peer_distinguished_name:
+                         {'expire': str(expire_tomorrow)}},
+                        test_user_accepted_peers)
 
     def _provide_configuration(self):
         return 'testconfig'
@@ -95,7 +98,8 @@ class MigSharedAccountreq__peers(MigTestCase):
         self.assertDirEmpty(self.configuration.user_pending)
         request_dict = self._peer_dict_from_fixture()
 
-        success, _ = accountreq.save_account_request(self.configuration, request_dict)
+        success, _ = accountreq.save_account_request(self.configuration,
+                                                     request_dict)
 
         # check that we have an output directory now
         absolute_files = self.assertDirNotEmpty(self.user_pending_dir)
@@ -115,8 +119,10 @@ class MigSharedAccountreq__peers(MigTestCase):
         self.assertTrue(success)
         self.assertEqual(len(listing), 1)
         # check the fabricated peer was listed
-        peer_temp_file_name = listing[0]  # sadly listing returns _relative_ dirs
-        peer_pickle_file = os.path.join(self.user_pending_dir, peer_temp_file_name)
+        # sadly listing returns _relative_ dirs
+        peer_temp_file_name = listing[0]
+        peer_pickle_file = os.path.join(self.user_pending_dir,
+                                        peer_temp_file_name)
         peer_pickle = self._load_saved_peer(peer_pickle_file)
         self.assertEqual(peer_pickle['distinguished_name'], self.TEST_PEER_DN)
 
@@ -126,10 +132,13 @@ class MigSharedAccountreq__peers(MigTestCase):
         self._record_peer_acceptance(test_client_dir_name, self.TEST_PEER_DN)
         self.assertDirEmpty(self.user_pending_dir)
         request_dict = self._peer_dict_from_fixture()
-        success, req_path = accountreq.save_account_request(self.configuration, request_dict)
+        success, req_path = accountreq.save_account_request(self.configuration,
+                                                            request_dict)
         arranged_req_id = os.path.basename(req_path)
 
-        success, message = accountreq.accept_account_req(arranged_req_id, self.configuration, keyword_auto)
+        success, message = accountreq.accept_account_req(arranged_req_id,
+                                                         self.configuration,
+                                                         keyword_auto)
 
         self.assertTrue(success)
 
