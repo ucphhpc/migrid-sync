@@ -526,6 +526,7 @@ _CONFIGURATION_DEFAULTS = {
     'site_signup_methods': ['extcert'],
     'site_login_methods': ['extcert'],
     'site_signup_hint': "",
+    'site_signup_prefilter': [('email', '.*')],
     'site_peers_prefilter': [('peers_email', '.*')],
     'site_peers_permit': [('distinguished_name', '.*')],
     'site_peers_notice': "",
@@ -2131,6 +2132,9 @@ location.""" % self.config_file)
             self.site_login_methods = self.site_signup_methods
         if config.has_option('SITE', 'signup_hint'):
             self.site_signup_hint = config.get('SITE', 'signup_hint').strip()
+        if config.has_option('SITE', 'signup_prefilter'):
+            req = config.get('SITE', 'signup_prefilter').split()
+            self.site_signup_prefilter = [i.split(':', 2) for i in req]
         if config.has_option('SITE', 'peers_prefilter'):
             req = config.get('SITE', 'peers_prefilter').split()
             self.site_peers_prefilter = [i.split(':', 2) for i in req]
