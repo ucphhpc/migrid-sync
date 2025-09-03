@@ -893,7 +893,7 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
     if not delete_file(req_path, _logger):
         err_msg = 'failed to clean up request %s after user %s' % \
                   (req_path, operation_type)
-        _logger.errors(err_msg)
+        _logger.error(err_msg)
         return (False, err_msg)
     return (True, '')
 
