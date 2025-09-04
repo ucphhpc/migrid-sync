@@ -38,14 +38,15 @@ import signal
 import sys
 import time
 
-from mig.shared.accountreq import accept_account_req, reject_account_req
+from mig.shared.accountreq import accept_account_req, existing_user_collision, \
+    reject_account_req
 from mig.shared.base import get_user_id
 from mig.shared.conf import get_configuration_object
 from mig.shared.fileio import listdir, delete_file
 from mig.shared.logger import daemon_logger, register_hangup_handler
 from mig.shared.pwcrypto import verify_reset_token
 from mig.shared.serial import load
-from mig.shared.userdb import load_user_dict, default_db_path
+from mig.shared.userdb import default_db_path, load_user_dict
 
 # TODO: adjust short to subsecond and long to e.g a minute for production use
 #SHORT_THROTTLE_SECS = 0.5
@@ -224,6 +225,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
     client_id = get_user_id(configuration, req_dict)
     # NOTE: use timestamp from saved request file if available
     req_timestamp = req_dict.get('accepted_terms', now)
+    req_expire = req_dict.get('expire', now)
     user_dict = load_user_dict(logger, client_id, db_path)
     req_invalid = req_dict.get('invalid', None)
     reset_token = req_dict.get('reset_token', '')
@@ -233,7 +235,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
     admin_copy = True
     default_renew = False
     if req_invalid:
-        logger.info("%r made an invalid account request"% client_id)
+        logger.info("%r made an invalid account request" % client_id)
         # NOTE: 'invalid' is a list of validation error strings if set
         reason = 'invalid request: %s.' % '. '.join(req_invalid)
         if not reject_account_req(req_id, configuration, reason,
@@ -276,9 +278,31 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
                                client_id)
             else:
                 logger.info("rejected %r password reset" % client_id)
+    elif req_expire < now:
+        #  NOTE: probably should no longer happen after initial auto clean
+        logger.warning("%r request is now past expire" % client_id)
+        reason = 'expired request - please re-request if still relevant'
+        if not reject_account_req(req_id, configuration, reason,
+                                  user_copy=user_copy,
+                                  admin_copy=admin_copy,
+                                  auth_type=auth_type):
+            logger.warning("failed to reject expired %r request" % client_id)
+        else:
+            logger.info("rejected %r request now past expire" % client_id)
+    elif existing_user_collision(configuration, req_dict, client_id):
+        logger.warning('ID collision in request from %r' % client_id)
+        reason = 'ID collision - please re-request with *existing* ID fields'
+        if not reject_account_req(req_id, configuration, reason,
+                                  user_copy=user_copy,
+                                  admin_copy=admin_copy,
+                                  auth_type=auth_type):
+            logger.warning("failed to reject %r request with ID collision" % \
+                           client_id)
+        else:
+            logger.info("rejected %r request with ID collision" % client_id)
     elif user_dict:
         logger.info("%r requested access renewal" % client_id)
-        # TODO: renew if trivial with valid peer
+        # TODO: renew if trivial with existing valid peer
     else:
         logger.info("%r requested a new account requiring operator" % \
                     client_id)
@@ -288,18 +312,15 @@ def manage_trivial_user_requests(configuration, now=time.time()):
     require operator interaction. That is, accept or reject any password reset
     requests depending on reset token validity, renew any with complete peer
     acceptance and reject any obviously invalid requests.
+    Relies on various checks taking place during account request to detect but
+    silently mark e.g. invalid password change and invalid peers to avoid
+    password guessing and information disclosure.
     Returns the number of actual actions taken for central throttle handling.
     """
-    # TODO: add simple logic to mark invalid requests already during submit?
-    #       could e.g. be
-    #       * non-existant, unauthorized or invalid peer
-    #       * unauthorized password change
-    #       * single word in full name
-    #       ...
-    #       Then use the invalid marker to reject in manage_single_req
     handled = 0
     now = time.time()
     db_path = default_db_path(configuration)
+    # TODO: handle duplicate requests here, too?
     for filename in listdir(configuration.user_pending):
         if filename.startswith('.'):
             continue
@@ -343,7 +364,7 @@ def remind_and_expire_user_pending(configuration, now=time.time()):
             handled += 1
         if req_age_days > EXPIRE_REQ_DAYS:
             logger.info("found expired account request from %r in %s : %dd" % \
-                        (client_id, req_path, req_age_days))            
+                        (client_id, req_path, req_age_days))
             reason = 'failed to be verified and accepted within %d day limit' \
                      % EXPIRE_REQ_DAYS
             user_copy = True
