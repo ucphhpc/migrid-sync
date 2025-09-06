@@ -34,6 +34,7 @@ import unittest
 from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain, \
     fixturefile
 from mig.shared.configuration import Configuration
+from mig.shared.logger import null_logger
 
 
 def _is_method(value):
@@ -42,7 +43,7 @@ def _is_method(value):
 
 def _to_dict(obj):
     return {k: v for k, v in inspect.getmembers(obj)
-            if not (k.startswith('__') or _is_method(v))}
+            if not (k.startswith('_') or k.startswith('logger') or _is_method(v))}
 
 
 class MigSharedConfiguration(MigTestCase):
@@ -320,6 +321,9 @@ class MigSharedConfiguration(MigTestCase):
             'mig_shared_configuration--new', fixture_format='json')
 
         configuration = Configuration(None)
+        # attach a null logger to sidestep the useful logger before available
+        # assertion which would otherwise blow when the object is inspected
+        configuration.logger = null_logger("test_configuration")
         # TODO: the following work-around default values set for these on the
         #       instance that no longer make total sense but fiddling with them
         #       is better as a follow-up.

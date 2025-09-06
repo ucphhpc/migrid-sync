@@ -37,6 +37,7 @@ import base64
 import copy
 import datetime
 import functools
+import inspect
 import os
 import pwd
 import re
@@ -67,7 +68,7 @@ try:
         generic_valid_days, DEFAULT_USER_ID_FORMAT, valid_user_id_formats, \
         valid_filter_methods, default_twofactor_auth_apps, \
         mig_conf_section_dirname
-    from mig.shared.logger import Logger, SYSLOG_GDP
+    from mig.shared.logger import Logger, BareLoggerAdapter, SYSLOG_GDP
     from mig.shared.htmlgen import menu_items, vgrid_items
     from mig.shared.fileio import read_file, load_json, write_file
 except ImportError as ioe:
@@ -693,7 +694,6 @@ _CONFIGURATION_DEFAULTS = {
     'logfile': '',
     'loglevel': '',
     'logger_obj': None,
-    'logger': None,
     'gdp_logger_obj': None,
     'gdp_logger': None,
     'auth_logger_obj': None,
@@ -757,6 +757,13 @@ class Configuration:
         # Explicitly init a few helpers hot-plugged and used in ways where it's
         # less obvious if they are always guaranteed to already be initialized.
         self.default_page = None
+
+        # internal state
+        self._loaded = False
+
+        # logging related
+        self.logger_obj = None
+        self._logger = None
         self.auth_logger_obj = None
         self.gdp_logger_obj = None
 
@@ -769,6 +776,34 @@ class Configuration:
             self.reload_config(verbose, skip_log,
                                disable_auth_log=disable_auth_log,
                                _config_file=config_file)
+
+    @property
+    def logger(self):
+        assert self._logger, "logging attempt prior to logger availability"
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        """Setter method that correctly sets logger related properties."""
+
+        # attempt to determine what type of objetc we were given - this logic
+        # exists to deal with some fallout from having both logger_obj and
+        # logger properties and which of them should be set
+
+        if inspect.ismethod(getattr(logger, 'reopen', None)):
+            # we have a logger_obj, not a plain logger
+            # record it that way to ensure it could be corrctly reopened where
+            # otherwise refefences to the object that has it may be lost and it
+            # may not occur
+            self.logger_obj = logger
+            self._logger = logger.logger
+        elif inspect.ismethod(getattr(logger, 'info', None)):
+            # we have a bare logger object based on the sanity check
+            self._logger = logger
+            self.logger_obj = BareLoggerAdapter(logger)
+        else:
+            raise AssertionError("attempted assignment of unsupported logger")
+
 
     def reload_config(self, verbose, skip_log=False, disable_auth_log=False,
                       _config_file=None):
@@ -785,12 +820,6 @@ class Configuration:
 
         _config_file = _config_file or self.config_file
         assert _config_file is not None
-
-        try:
-            if self.logger:
-                self.logger.info('reloading configuration and reopening log')
-        except:
-            pass
 
         try:
             config_file_is_path = os.path.isfile(_config_file)
@@ -841,13 +870,17 @@ location.""" % self.config_file)
 
         # reopen or initialize logger
 
-        if self.logger_obj:
+        if self._loaded:
+            self.logger.info('reloading configuration and reopening log')
             self.logger_obj.reopen()
         else:
-            self.logger_obj = Logger(self.loglevel, logfile=self.log_path)
+            self.logger = Logger(self.loglevel, logfile=self.log_path)
+            self.logger.info('loading configuration and opening log')
 
-        logger = self.logger_obj.logger
-        self.logger = logger
+            # record that the object has been populated
+            self._loaded = True
+
+        logger = self.logger
 
         # print "logger initialized (level " + logger_obj.loglevel() + ")"
         # logger.debug("logger initialized")

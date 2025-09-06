@@ -104,8 +104,6 @@
   ],
   "log_dir": "",
   "logfile": "",
-  "logger": null,
-  "logger_obj": null,
   "loglevel": "",
   "lrmstypes": [],
   "mig_code_base": "",

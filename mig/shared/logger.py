@@ -67,6 +67,23 @@ def _name_to_format(name):
     return formats[name]
 
 
+class BareLoggerAdapter:
+    """Small wrapper to adapt an arbitrary bare logger to the MiG Logger API"""
+
+    def __init__(self, logger):
+        self._logger = logger
+
+    @property
+    def logger(self):
+        return self._logger
+
+    def reopen(self):
+        pass
+
+    def shutdown(self):
+        pass
+
+
 class SysLogLibHandler(logging.Handler):
     """A logging handler that emits messages to syslog.syslog."""
 
