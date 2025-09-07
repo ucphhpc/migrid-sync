@@ -35,7 +35,7 @@ import os
 import sys
 import time
 
-from mig.lib.daemon import stop_running, check_stop, register_stop_handler
+from mig.lib.daemon import check_stop, register_stop_handler, stop_running
 from mig.lib.janitor import handle_janitor_tasks
 from mig.shared.conf import get_configuration_object
 from mig.shared.logger import daemon_logger, register_hangup_handler
@@ -59,8 +59,7 @@ if __name__ == "__main__":
 
     # Use separate logger
 
-    logger = daemon_logger(
-        "janitor", configuration.user_janitor_log, log_level)
+    logger = daemon_logger("janitor", configuration.user_janitor_log, log_level)
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
