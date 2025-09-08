@@ -26,7 +26,7 @@
 #
 
 """This file is needed to tell python that this dir is a package
-so that all modules can call, say, import mig.shared.base
+so that all modules can call, say, import mig.lib.daemon
 Please refer e.g. to
 https://docs.python.org/3/tutorial/modules.html#packages
 and
