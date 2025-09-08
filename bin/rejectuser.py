@@ -1,0 +1,1 @@
+../mig/server/rejectuser.py

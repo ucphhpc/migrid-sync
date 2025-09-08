@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
 #
-# __init__ - [insert a few words of module description on this line]
-# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
+# __init__ - package init
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -19,16 +19,18 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 # -- END_HEADER ---
 #
 
-
 """This file is needed to tell python that this dir is a package
-so that other modules can call, say, import shared.editing
-Please refer to http://www.network-theory.co.uk/docs/pytut/tut_51.html
+so that all modules can call, say, import mig.shared.base
+Please refer e.g. to
+https://docs.python.org/3/tutorial/modules.html#packages
+and
+https://www.python.org/dev/peps/pep-0008/#imports
 for details
 """
 
@@ -36,4 +38,3 @@ __dummy = True
 
 # above line is only to make python tidy behave and not
 # move module doc string inside header
-

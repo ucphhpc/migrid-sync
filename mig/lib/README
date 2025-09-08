@@ -4,7 +4,11 @@ efforts.
 That also means that any code placed here MUST comply with the project style
 guides, be lint clean, documented and have decent unit test coverage.
 
-You may want to use autopep8, pylint, ruff or any available make lint targets
-to help verify.
-The black code formatter and isort may also come in handy. You can see usage
-hints in `.github/workflows/python-stylecheck.yml`.
+You may want to use autopep8, pylint, flake8, ruff or 'make lint' targets once
+available to help verify.
+The black code formatter and isort may also come in handy. To apply them on
+the code in $TARGET file please run:
+black --line-length=80 $TARGET
+isort --line-length=80 -m=HANGING_INDENT $TARGET
+in that order on code files to preserve our existing hanging indent imports
+instead of the exotic black import style with parentheses.
