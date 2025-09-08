@@ -42,7 +42,7 @@ from mig.shared.htmlgen import get_xgi_html_header, get_xgi_html_footer, \
     themed_styles, themed_scripts
 
 
-def extract_imported_doi_dicts(configurationi):
+def extract_imported_doi_dicts(configuration):
     """Search published archives for imported DOI info and return a list of DOI
     registrations sorted by registration date. The contents are based on the
     downloaded DataCite JSON entry on their DOI search page.
