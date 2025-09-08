@@ -2282,7 +2282,7 @@ location.""" % self.config_file)
             self.user_transfers_log = config.get(
                 'GLOBAL', 'user_transfers_log')
         if config.has_option('GLOBAL', 'user_notify_log'):
-            self.user_transfers_log = config.get(
+            self.user_notify_log = config.get(
                 'GLOBAL', 'user_notify_log')
         if config.has_option('GLOBAL', 'user_auth_log'):
             self.user_auth_log = config.get('GLOBAL', 'user_auth_log')
