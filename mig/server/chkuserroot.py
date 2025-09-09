@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # chkuserroot - Simple Apache httpd user chroot helper daemon
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -114,9 +114,9 @@ unless it is available in mig/server/MiGserver.conf
             if match:
                 client_ip = match.group(1)
                 raw_path = path = match.group(2)
-            logger.info("chkuserroot from %s got path: %s" % (client_ip, path))
+            logger.info("chkuserroot from %s got path: %r" % (client_ip, path))
             if not os.path.isabs(path):
-                logger.error("not an absolute path from %s: %s" %
+                logger.error("not an absolute path from %s: %r" %
                              (client_ip, path))
                 print(INVALID_MARKER)
                 continue
@@ -125,7 +125,7 @@ unless it is available in mig/server/MiGserver.conf
             root = configuration.user_home.rstrip(os.sep) + os.sep
             if not path.startswith(root):
                 # Only warn to avoid excessive noise from scanners
-                logger.warning("got path from %s with invalid root: %s" %
+                logger.warning("got path from %s with invalid root: %r" %
                                (client_ip, path))
                 print(INVALID_MARKER)
                 continue
@@ -141,30 +141,30 @@ unless it is available in mig/server/MiGserver.conf
             # outside home, which is checked later.
             path = os.path.abspath(path)
             if not path.startswith(home_path):
-                logger.error("got path from %s outside user home: %s" %
+                logger.error("got path from %s outside user home: %r" %
                              (client_ip, raw_path))
                 print(INVALID_MARKER)
                 continue
 
             real_path = os.path.realpath(path)
-            logger.debug("check path %s in home %s or chroot" % (path,
+            logger.debug("check path %r in home %s or chroot" % (path,
                                                                  home_path))
             # Exact match to user home does not make sense as we expect a file
             # IMPORTANT: use path and not real_path here in order to test both
             if not valid_user_path(configuration, path, home_path,
                                    allow_equal=False, apache_scripts=True):
-                logger.error("path from %s outside user chroot %s: %s (%s)" %
+                logger.error("path from %s outside user chroot %s: %r (%r)" %
                              (client_ip, home_path, raw_path, real_path))
                 print(INVALID_MARKER)
                 continue
             elif not check_account_accessible(configuration, user_id, 'https'):
                 # Only warn to avoid excessive noise from scanners
-                logger.warning("path from %s in inaccessible %s account: %s (%s)"
+                logger.warning("path from %s in inaccessible %s account: %r (%r)"
                                % (client_ip, user_id, raw_path, real_path))
                 print(INVALID_MARKER)
                 continue
 
-            logger.info("found valid user chroot path from %s: %s" %
+            logger.info("found valid user chroot path from %s: %r" %
                         (client_ip, real_path))
             print(real_path)
 

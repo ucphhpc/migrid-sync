@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # chksidroot - Simple Apache httpd SID chroot helper daemon
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -113,9 +113,9 @@ unless it is available in mig/server/MiGserver.conf
             if match:
                 client_ip = match.group(1)
                 raw_path = path = match.group(2)
-            logger.info("chksidroot from %s got path: %s" % (client_ip, path))
+            logger.info("chksidroot from %s got path: %r" % (client_ip, path))
             if not os.path.isabs(path):
-                logger.error("not an absolute path from %s: %s" %
+                logger.error("not an absolute path from %s: %r" %
                              (client_ip, path))
                 print(INVALID_MARKER)
                 continue
@@ -137,7 +137,7 @@ unless it is available in mig/server/MiGserver.conf
                 root = session_prefix.rstrip(os.sep) + os.sep
             else:
                 # Only warn to avoid excessive noise from scanners
-                logger.warning("got path from %s with invalid root: %s" %
+                logger.warning("got path from %s with invalid root: %r" %
                                (client_ip, path))
                 print(INVALID_MARKER)
                 continue
@@ -152,7 +152,7 @@ unless it is available in mig/server/MiGserver.conf
             # outside base, which is checked later.
             path = os.path.abspath(path)
             if not path.startswith(full_prefix):
-                logger.error("got path from %s outside sid base: %s" %
+                logger.error("got path from %s outside sid base: %r" %
                              (client_ip, path))
                 print(INVALID_MARKER)
                 continue
@@ -185,7 +185,7 @@ unless it is available in mig/server/MiGserver.conf
                 real_target = None
             if not link_target or not os.path.exists(link_path):
                 # Only warn to avoid excessive noise from scanners
-                logger.warning("not a valid link from %s for path %s: %s" %
+                logger.warning("not a valid link from %s for path %r: %r" %
                                (client_ip, path, link_path))
                 print(INVALID_MARKER)
                 continue
@@ -199,7 +199,7 @@ unless it is available in mig/server/MiGserver.conf
                     link_target.startswith(configuration.mig_system_files):
                 base_path = configuration.mig_system_files.rstrip(os.sep)
             else:
-                logger.error("unexpected link target from %s for path %s: %s"
+                logger.error("unexpected link target from %s for path %r: %r"
                              % (client_ip, path, link_target))
                 print(INVALID_MARKER)
                 continue
@@ -209,34 +209,34 @@ unless it is available in mig/server/MiGserver.conf
                 is_file = not os.path.isdir(real_target)
                 base_path = real_target
             else:
-                logger.warning("could not narrow down base root link from %s: %s" %
+                logger.warning("could not narrow down base root link from %s: %r" %
                                (client_ip, link_target))
 
             # We manually expand sid base.
-            logger.debug("found target %s for link %s" % (link_target,
+            logger.debug("found target %r for link %r" % (link_target,
                                                           link_path))
             # Single file sharelinks use direct link to file. If so we
             # manually expand to direct target. Otherwise we only replace
             # that prefix of path to translate it to a sharelink dir path.
             if is_file:
-                logger.debug("found single file link: %s" % path)
+                logger.debug("found single file link: %r" % path)
                 path = link_target
             else:
-                logger.debug("found directory link: %s" % path)
+                logger.debug("found directory link: %r" % path)
                 path = path.replace(full_prefix, link_target, 1)
 
             real_path = os.path.realpath(path)
-            logger.info("check path from %s in base %s or chroot: %s" %
+            logger.info("check path from %s in base %s or chroot: %r" %
                         (client_ip, base_path, path))
             # Exact match to sid dir does not make sense as we expect a file
             # IMPORTANT: use path and not real_path here in order to test both
             if not valid_user_path(configuration, path, base_path,
                                    allow_equal=is_file, apache_scripts=True):
-                logger.error("request from %s is outside sid chroot %s: %s (%s)" %
+                logger.error("request from %s is outside sid chroot %s: %r (%r)" %
                              (client_ip, base_path, raw_path, real_path))
                 print(INVALID_MARKER)
                 continue
-            logger.info("found valid sid chroot path from %s: %s" %
+            logger.info("found valid sid chroot path from %s: %r" %
                         (client_ip, real_path))
             print(real_path)
 
