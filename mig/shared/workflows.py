@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# workflows.py - Collection of workflows related functions
+# --- BEGIN_HEADER ---
 #
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# workflows.py - Collection of workflows related functions
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -3396,7 +3397,7 @@ def __create_task_parameter_file(configuration, vgrid, pattern,
     except Exception as err:
         msg = "Failed to create the task parameter " \
               "file: %s, data: %s, err: %s" % (path, parameter_dict, err)
-        _logger.warn(msg)
+        _logger.warning(msg)
         return (False, msg)
 
     return (True, '')
@@ -3610,7 +3611,7 @@ def get_workflow_trigger(configuration, vgrid, rule_id=None, recursive=False):
     if not status:
         msg = "Failed to find triggers in vgrid '%s', err '%s'" % (vgrid,
                                                                    triggers)
-        _logger.warn(msg)
+        _logger.warning(msg)
         return (False, msg)
 
     if rule_id:
