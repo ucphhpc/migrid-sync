@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridaccess - user access in VGrids
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -107,7 +107,7 @@ def load_entity_map(configuration, kind, do_lock, caching):
         _logger.info("after %s map load from %s" % (kind, map_path))
         map_stamp = os.path.getmtime(map_path)
     except IOError:
-        _logger.warn("No %s map to load" % kind)
+        _logger.warning("No %s map to load" % kind)
         entity_map = {}
         map_stamp = -1
     if do_lock:
@@ -1204,8 +1204,8 @@ def fill_placeholder_cache(configuration, cache, vgrid_list):
             continue
         for parent in [os.path.join(*parts[:i]) for i in range(1, len(parts))]:
             cache[parent] = parent
-            #_logger.debug("found parent %r for %r in cache" % (parent, name))
-    #_logger.debug("filled placeholder cache: %s" % cache)
+            # _logger.debug("found parent %r for %r in cache" % (parent, name))
+    # _logger.debug("filled placeholder cache: %s" % cache)
     return cache
 
 
@@ -1413,16 +1413,16 @@ if "__main__" == __name__:
     user_access_stores = user_allowed_res_stores(conf, user_id)
     print("%s can access resources: %s" %
           (user_id, ', '.join(list(user_access_confs))))
-    #(user_id, ', '.join([i for (i, j) in user_access_confs.items() if j]))
+    # (user_id, ', '.join([i for (i, j) in user_access_confs.items() if j]))
     print("%s can access exes: %s" %
           (user_id, ', '.join(list(user_access_exes))))
-    #(user_id, ', '.join([i for (i, j) in user_access_exes.items() if j]))
+    # (user_id, ', '.join([i for (i, j) in user_access_exes.items() if j]))
     print("%s can access stores: %s" %
           (user_id, ', '.join(list(user_access_stores))))
-    #(user_id, ', '.join([i for (i, j) in user_access_stores.items() if j]))
+    # (user_id, ', '.join([i for (i, j) in user_access_stores.items() if j]))
     user_owned_confs = user_owned_res_confs(conf, user_id)
-    #user_owned_exes = user_owned_res_exes(conf, user_id)
-    #user_owned_stores = user_owned_res_stores(conf, user_id)
+    # user_owned_exes = user_owned_res_exes(conf, user_id)
+    # user_owned_stores = user_owned_res_stores(conf, user_id)
     print("%s owns: %s" %
           (user_id, ', '.join(list(user_owned_confs))))
     user_visible_confs = user_visible_res_confs(conf, user_id)

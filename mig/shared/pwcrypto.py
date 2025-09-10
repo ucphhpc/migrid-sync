@@ -3,9 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-#
 # pwcrypto - helpers for password and crypto including for encryption and hashing
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -721,8 +720,8 @@ def verify_reset_token(configuration, user_dict, token, auth_type,
     try:
         assure_reset_supported(configuration, user_dict, auth_type)
     except ValueError as vae:
-        _logger.warn("verify %s reset token %s failed: %s" % (auth_type, token,
-                                                              vae))
+        _logger.warning("verify %s reset token %s failed: %s" % (auth_type,
+                                                                 token, vae))
         return False
 
     token_stamp, token_hash = parse_reset_token(configuration, token,
