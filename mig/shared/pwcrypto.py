@@ -443,7 +443,7 @@ def _aesgcm_aad_helper(prefix, date_format=AAD_DEFAULT_STAMP, size=32):
     """
     crypt_counter = datetime.datetime.now().strftime(date_format)
     # NOTE: keep all parts on byte-form here
-    val = b' '*size + b'%s' % force_utf8(prefix)
+    val = b' ' * size + b'%s' % force_utf8(prefix)
     val += b'%s' % force_utf8(crypt_counter)
     return val[-size:]
 
@@ -568,7 +568,7 @@ def make_encrypt(configuration, password, secret=keyword_auto, algo="fernet"):
         # NOTE: a constant output version of AESGCM relying on a fixed init
         #       vector for each value. Please beware of the potentially reduced
         #       security of this method.
-        scrambled_pw = make_scramble(pw, best_crypt_salt(configuration))
+        scrambled_pw = make_scramble(password, best_crypt_salt(configuration))
         pw_iv = make_safe_hash(scrambled_pw, False)
         return aesgcm_encrypt_password(configuration, password, secret,
                                        init_vector=pw_iv)
