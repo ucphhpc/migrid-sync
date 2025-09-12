@@ -54,7 +54,7 @@ class MigSharedFileio__write_chunk(MigTestCase):
     # TODO: Add docstrings to this class and its methods
     def setUp(self):
         super(MigSharedFileio__write_chunk, self).setUp()
-        self.tmp_path = temppath(DUMMY_FILE_WRITECHUNK, self, skip_clean=True)
+        self.tmp_path = temppath(DUMMY_FILE_WRITECHUNK, self)
         cleanpath(os.path.dirname(DUMMY_FILE_WRITECHUNK), self)
 
     def test_return_false_on_invalid_data(self):
@@ -140,7 +140,7 @@ class MigSharedFileio__write_chunk(MigTestCase):
 class MigSharedFileio__write_file(MigTestCase):
     def setUp(self):
         super(MigSharedFileio__write_file, self).setUp()
-        self.tmp_path = temppath(DUMMY_FILE_WRITEFILE, self, skip_clean=True)
+        self.tmp_path = temppath(DUMMY_FILE_WRITEFILE, self)
         cleanpath(os.path.dirname(DUMMY_FILE_WRITEFILE), self)
 
     def test_return_false_on_invalid_data(self):
