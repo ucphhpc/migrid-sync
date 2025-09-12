@@ -126,6 +126,26 @@ logging.basicConfig(stream=BLACKHOLE_STREAM)
 logging.captureWarnings(True)
 
 
+def _empty_dir(absolute_dir):
+    assert os.path.isabs(absolute_dir)
+
+    for item in os.listdir(absolute_dir):
+        path = os.path.join(absolute_dir, item)
+
+        if os.path.islink(path):
+            os.remove(path)
+        elif os.path.isdir(path):
+            try:
+                shutil.rmtree(path)
+            except Exception as exc:
+                print(path)
+                raise
+        elif os.path.exists(path):
+            os.remove(path)
+        else:
+            pass
+
+
 class MigTestCase(TestCase):
     """Embellished base class for MiG test cases. Provides additional commonly
     used assertions as well as some basics for the standardised and idiomatic
@@ -139,7 +159,6 @@ class MigTestCase(TestCase):
     def __init__(self, *args):
         super(MigTestCase, self).__init__(*args)
         self._cleanup_checks = list()
-        self._cleanup_paths = set()
         self._configuration = None
         self._logger = None
         self._skip_logging = False
@@ -148,6 +167,12 @@ class MigTestCase(TestCase):
         """Init before tests"""
         if not self._skip_logging:
             self._reset_logging(stream=self.logger)
+
+        # clear the output directory uncondtionally to enforce tests always
+        # run in isolation - if a file must be there for a test to exercise
+        # a condition it is the responbility of the test case to arrange it
+        _empty_dir(TEST_OUTPUT_DIR)
+
         self.before_each()
 
     def tearDown(self):
@@ -164,19 +189,14 @@ class MigTestCase(TestCase):
         if self._logger is not None:
             self._reset_logging(stream=BLACKHOLE_STREAM)
 
-        for path in self._cleanup_paths:
-            if os.path.islink(path):
-                os.remove(path)
-            elif os.path.isdir(path):
-                try:
-                    shutil.rmtree(path)
-                except Exception as exc:
-                    print(path)
-                    raise
-            elif os.path.exists(path):
-                os.remove(path)
-            else:
-                continue
+    @classmethod
+    def tearDownClass(cls):
+        if MIG_ENV == 'docker':
+            # the permissions story wrt running inside docker containers is
+            # such that we can end up with files from previous test runs left
+            # around that might subsequently cause spurious permissions errors
+            # once running locally again, so opt to simply avoid this
+            _empty_dir(TEST_OUTPUT_DIR)
 
     # hooks
     def after_each(self):
@@ -189,11 +209,6 @@ class MigTestCase(TestCase):
 
     def _register_check(self, check_callable):
         self._cleanup_checks.append(check_callable)
-
-    def _register_path(self, cleanup_path):
-        assert os.path.isabs(cleanup_path)
-        self._cleanup_paths.add(cleanup_path)
-        return cleanup_path
 
     def _reset_logging(self, stream):
         root_logger = logging.getLogger()
@@ -230,10 +245,10 @@ class MigTestCase(TestCase):
         if configuration_to_make == 'testconfig':
             # use the paths defined by the loaded configuration to create
             # the directories which are expected to be present by the code
-            os.mkdir(self._register_path(configuration_instance.certs_path))
-            os.mkdir(self._register_path(configuration_instance.state_path))
+            os.mkdir(configuration_instance.certs_path)
+            os.mkdir(configuration_instance.state_path)
             log_path = os.path.join(configuration_instance.state_path, "log")
-            os.mkdir(self._register_path(log_path))
+            os.mkdir(log_path)
 
         self._configuration = configuration_instance
 
@@ -525,7 +540,7 @@ def fixturepath(relative_path):
     return tmp_path
 
 
-def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):
+def temppath(relative_path, test_case, ensure_dir=False):
     """Register relative_path as a temp path and schedule automatic clean up
     after unit tests unless skip_clean is set. Anchors the temp path in
     internal test output dir unless skip_output_anchor is set. Returns
@@ -557,8 +572,6 @@ def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):
             if oserr.errno == errno.EEXIST:
                 raise AssertionError(
                     "ABORT: use of unclean output path: %s" % tmp_path)
-    if not skip_clean:
-        test_case._cleanup_paths.add(tmp_path)
     return tmp_path
 
 
