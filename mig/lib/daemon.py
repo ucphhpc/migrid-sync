@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -39,7 +40,9 @@ def stop_running():
 
 
 def check_stop():
-    """A simple test to see if stop marker was set after some signal was received"""
+    """A simple test to see if stop marker was set after some signal was
+    received.
+    """
     return _stop_event.is_set()
 
 
