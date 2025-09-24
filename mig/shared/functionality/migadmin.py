@@ -470,12 +470,23 @@ provide access to e.g. managing the grid job queues.
         output_objects.append({'object_type': 'html_form', 'text': helper})
         dialog_help = "Really accept account request %s? Optionally provide a specific user as Peer below or %s to auto-extract from request." % (
             req_id, keyword_auto)
-        req_item['createaccountreqlink'] = {
-            'object_type': 'link', 'destination':
-            "javascript: confirmDialog(%s, '%s', '%s', '', '%s');" %
-            (js_name, dialog_help, 'request_text', keyword_auto),
-            'class': 'addlink iconspace', 'title': 'Accept request %s' %
-            req_id, 'text': ''}
+        reject_reason = keyword_auto
+        invalid = req_dict.get('invalid')
+        invalid_reasons = '. '.join(invalid)
+        if invalid:
+            reject_reason = invalid_reasons
+            req_item['createaccountreqlink'] = {
+                'object_type': 'link', 'destination':
+                "javascript: alert('invalid request: %s');" % invalid_reasons,
+                'class': 'warning iconspace', 'title': 'Invalid request %s' %
+                req_id, 'text': ''}
+        else:
+            req_item['createaccountreqlink'] = {
+                'object_type': 'link', 'destination':
+                "javascript: confirmDialog(%s, '%s', '%s', '', '%s');" %
+                (js_name, dialog_help, 'request_text', keyword_auto),
+                'class': 'addlink iconspace', 'title': 'Accept request %s' %
+                req_id, 'text': ''}
         # TODO: support checkboxes with notify user and perhaps admin copy
         js_name = 'peer%s' % req_id
         helper = html_post_helper(js_name, '%s.py' % target_op,
@@ -501,7 +512,7 @@ provide access to e.g. managing the grid job queues.
         req_item['rejectaccountreqlink'] = {
             'object_type': 'link', 'destination':
             "javascript: confirmDialog(%s, '%s', '%s', '', '%s');" %
-            (js_name, dialog_help, 'request_text', keyword_auto),
+            (js_name, dialog_help, 'request_text', reject_reason),
             'class': 'rejectlink iconspace', 'title': 'Reject request %s' % req_id,
             'text': ''}
 
