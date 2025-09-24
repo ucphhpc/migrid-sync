@@ -43,22 +43,23 @@ except ImportError:
     iso3166 = None
 
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import force_utf8, force_native_str_rec, canonical_user, \
+from mig.shared.base import auth_type_description, canonical_user, \
     client_id_dir, distinguished_name_to_user, fill_distinguished_name, \
-    fill_user, auth_type_description, mask_creds
+    fill_user, force_utf8, force_native_str_rec, get_user_id, mask_creds
 from mig.shared.defaults import peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
     gdp_distinguished_field
 from mig.shared.fileio import delete_file, make_temp_file
 from mig.shared.notification import notify_user
+from mig.shared.pwcrypto import check_hash
 # Expose some helper variables for functionality backends
 from mig.shared.safeinput import name_extras, password_extras, \
     password_min_len, password_max_len, valid_password_chars, \
     valid_name_chars, dn_max_len, html_escape, validated_input, REJECT_UNSET
 from mig.shared.serial import load, dump, dumps
 from mig.shared.useradm import user_request_reject, user_account_notify, \
-    default_search, search_users, create_user, load_user_dict
-from mig.shared.userdb import default_db_path
+    default_search, search_users, create_user
+from mig.shared.userdb import default_db_path, load_user_dict
 from mig.shared.validstring import valid_email_addresses
 
 
@@ -1062,8 +1063,9 @@ def reject_account_req(req_id, configuration, reject_reason,
                        user_copy=True, admin_copy=True, auth_type='oid'):
     """Helper to reject a pending account request"""
     _logger = configuration.logger
-    _logger.info('reject account request %s with msg %s' %
-                 (req_id, reject_reason))
+    # NOTE: we strip newlines to avoid multi-line log entries
+    _logger.info('reject account request %s with reason: %r' %
+                 (req_id, reject_reason.strip('\n')))
     # NOTE: conf_path accepts configuration object
     conf_path = configuration
     db_path = default_db_path(configuration)
@@ -1171,6 +1173,103 @@ def list_country_codes(configuration):
         # logger.debug("found country %s for code %s" % (name, code))
         country_list.append((name, code))
     return country_list
+
+
+def existing_user_collision(configuration, raw_request, client_id):
+    """Check if raw_request has collisions with existing users in user DB.
+    Mainly if email is already bound to another user with different full name,
+    organization, country or state.
+    """
+    logger = configuration.logger
+    db_path = default_db_path(configuration)
+    search_filter = default_search()
+    search_filter['email'] = raw_request.get('email', 'UNSET')
+    (_, hits) = search_users(search_filter, configuration, db_path)
+    collisions = [user_id for (user_id, _) in hits if user_id != client_id]
+    if collisions:
+        logger.warning('one or more ID collisions in request from %r: %s' % \
+                       (client_id, ', '.join(collisions)))
+        return True
+    else:
+        return False
+
+def early_validation_checks(configuration, raw_request, service, username,
+                            password):
+    """Early validation checks including e.g. password check when change is not
+    authorized. Useful to allow janitor to request invalid requests with
+    sufficient delay to render various user enumeration, email and password
+    guessing scenarios infeasible"""
+    logger = configuration.logger
+    illegal_pw_change = """invalid password in renewal request.
+Please use your existing password when renewing to prove account ownership. You
+can use the 'Forgot password' link on the login page to securely reset it first
+if needed"""
+    renewal_blocked = """account status blocks renewal request.
+Please contact support if you haven't been informed why this might be and think
+your account access should be renewed"""
+    id_collision = """invalid ID in account creation request.
+An existing user has overlapping but not identical ID fields. You must reuse
+your exact existing ID to renew account access. Please contact support if you
+want corrections or affiliation changes in your site registration"""
+    invalid_full_name = """invalid full name in account creation request.
+You must provide your full name to get account access due to various legal
+requirements e.g. in relation to account abuse. Please contact support if you
+have questions in that regard"""
+    missing_peers_info = """missing peer info in account creation request.
+You must point to one or more persons allowed to invite peers with their full
+name and email address they have used for site registration. You can ask them
+to invite you instead if that is easier"""
+    # Lazy init
+    raw_request['invalid'] = raw_request.get('invalid', [])
+
+    client_id = get_user_id(configuration, raw_request)
+    db_path = default_db_path(configuration)
+    user_dict = load_user_dict(configuration, client_id, db_path)
+    if user_dict:
+        # Renewal or password change
+        authorized = raw_request.get('authorized', None)
+        reset_token = raw_request.get('reset_token', None)
+        account_status = raw_request.get('status', 'active')
+        if not authorized and not reset_token:
+            hashed = user_dict.get('password_hash', None)
+            if not check_hash(configuration, service, username, password,
+                              hashed):
+                logger.warning('illegal password change in request from %r' % \
+                               client_id)
+                raw_request['invalid'].append(illegal_pw_change)
+        elif account_status not in ('temporal', 'active', 'inactive'):
+            logger.warning('existing account for %r is %s and not renewable' \
+                           % (client_id, account_status))
+            raw_request['invalid'].append(renewal_blocked)
+        else:
+            logger.debug('account renewal from %r looks alright' % client_id)
+    elif existing_user_collision(configuration, raw_request, client_id):
+        # TODO: drop and rely solely on live check in janitor to avoid races?
+        logger.warning('ID collision in request from %r' % client_id)
+        raw_request['invalid'].append(id_collision)
+    else:
+        # New user account
+        peers_full_name = raw_request.get('peers_full_name', None)
+        peers_email = raw_request.get('peers_email', None)
+        full_name = raw_request.get('full_name', 'UNSET')
+        if configuration.site_enable_peers and \
+               ('email' in configuration.site_peers_explicit_fields and \
+               not peers_email or \
+                'full_name' in configuration.site_peers_explicit_fields and \
+               not peers_full_name):
+            logger.warning('missing peers field in request from %r: %r %r' % \
+                           (client_id, peers_full_name, peers_email))
+            raw_request['invalid'].append(missing_peers_info)
+        elif len(full_name.split(' ')) < 2:
+            # TODO: prevent this at the source instead - sign up and peers
+            logger.warning('invalid single word full name in request from %r' \
+                           % client_id)
+            raw_request['invalid'].append(invalid_full_name)
+        # TODO: check that specified peers have accounts and can act as peers
+        # TODO: check for other obvious signup errors ?
+        else:
+            logger.debug('account request from %r looks alright' % client_id)
+    return raw_request
 
 
 def prefilter_potential_peers(peers_list, configuration):

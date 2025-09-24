@@ -33,12 +33,11 @@ from __future__ import absolute_import
 
 import os
 import time
-import tempfile
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import existing_country_code, \
-    prefilter_potential_peers, save_account_request, signup_prefilter_allowed, \
-    user_manage_commands
+from mig.shared.accountreq import early_validation_checks,  \
+    existing_country_code, prefilter_potential_peers, save_account_request, \
+    signup_prefilter_allowed, user_manage_commands
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     generate_https_urls, fill_distinguished_name
@@ -106,7 +105,6 @@ Please contact the %s site support (%s) if you think it should be enabled.
     support_email = configuration.support_email
     admin_email = configuration.admin_email
     smtp_server = configuration.smtp_server
-    user_pending = os.path.abspath(configuration.user_pending)
 
     cert_name = accepted['cert_name'][-1].strip()
     country = accepted['country'][-1].strip()
@@ -204,7 +202,8 @@ Please read and follow the sign up help and instructions on the request page!
 You may also read more about the Peers system in the site documentation.
 '''})
         output_objects.append(
-            {'object_type': 'link', 'destination': 'javascript:history.back();',
+            {'object_type': 'link',
+             'destination': 'javascript:history.back();',
              'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -249,11 +248,13 @@ affiliation. You may also read more about sign up in the site documentation.
     if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'] += \
             [user_dict[configuration.user_openid_alias]]
+    # Do simple early validation to reduce load on support team
+    user_dict = early_validation_checks(configuration, user_dict, 'https',
+                                        email, password)
     # IMPORTANT: do NOT log credentials
     logger.info('got account request from reqcert: %s' % mask_creds(user_dict))
 
     # For testing only
-
     if cert_name.upper().find('DO NOT SEND') != -1:
         output_objects.append(
             {'object_type': 'text', 'text': "Test request ignored!"})
