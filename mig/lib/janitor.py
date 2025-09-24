@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -375,7 +376,8 @@ def manage_trivial_user_requests(configuration, now=time.time()):
             continue
         req_id = filename
         req_path = os.path.join(configuration.user_pending, req_id)
-        _logger.debug("checking if account request in %r is trivial" % req_path)
+        _logger.debug("checking if account request in %r is trivial" %
+                      req_path)
         req_age = now - os.path.getmtime(req_path)
         req_age_minutes = req_age / SECS_PER_MINUTE
         if req_age_minutes > MANAGE_TRIVIAL_REQ_MINUTES:
@@ -385,7 +387,8 @@ def manage_trivial_user_requests(configuration, now=time.time()):
             )
             manage_single_req(configuration, req_id, req_path, db_path, now)
             handled += 1
-    _logger.debug("handled %d trivial user account request action(s)" % handled)
+    _logger.debug("handled %d trivial user account request action(s)" %
+                  handled)
     return handled
 
 
@@ -436,11 +439,11 @@ def remind_and_expire_user_pending(configuration, now=time.time()):
                 admin_copy=admin_copy,
                 auth_type=auth_type,
             ):
-                _logger.warning(
-                    "failed to expire %s request from %r" % (req_id, client_id)
-                )
+                _logger.warning("failed to expire %s request from %r" %
+                                (req_id, client_id))
             else:
-                _logger.info("expired %s request from %r" % (req_id, client_id))
+                _logger.info("expired %s request from %r" % (req_id,
+                                                             client_id))
             handled += 1
     _logger.debug("handled %d user account request action(s)" % handled)
     return handled
