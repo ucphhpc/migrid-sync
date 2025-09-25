@@ -1196,10 +1196,15 @@ def existing_user_collision(configuration, raw_request, client_id):
 
 def early_validation_checks(configuration, raw_request, service, username,
                             password):
-    """Early validation checks including e.g. password check when change is not
-    authorized. Useful to allow janitor to request invalid requests with
-    sufficient delay to render various user enumeration, email and password
-    guessing scenarios infeasible"""
+    """Early validation checks including e.g. ID collision and password check
+    in requests where change is not authorized. Only marks such requests
+    invalid on disk and leaves the decision for the operator/janitor to reject
+    clearly invalid requests upon next inspection. This setup is on purpose to
+    introduce sufficient delay to render various user enumeration, email and
+    password guessing scenarios infeasible.
+    The Server Admin page highlights invalid requests based on the saved
+    information to aid operators decide further actions.
+    """
     logger = configuration.logger
     # NOTE: carefully avoid single quotes in text here to avoid js quote errors
     illegal_pw_change = """invalid password in renewal request.

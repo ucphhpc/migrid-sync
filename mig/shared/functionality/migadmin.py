@@ -142,7 +142,7 @@ def main(client_id, user_arguments_dict, environ=None):
 ''' % configuration.sleep_secs
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s administration panel' % configuration.short_title
-    title_entry['container_class'] = 'fillwidth',
+    title_entry['container_class'] = 'fillwidth'
     title_entry['meta'] = meta
 
     # jquery support for tablesorter and confirmation on "remove"
