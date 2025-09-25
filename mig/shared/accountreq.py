@@ -1187,11 +1187,12 @@ def existing_user_collision(configuration, raw_request, client_id):
     (_, hits) = search_users(search_filter, configuration, db_path)
     collisions = [user_id for (user_id, _) in hits if user_id != client_id]
     if collisions:
-        logger.warning('one or more ID collisions in request from %r: %s' % \
+        logger.warning('one or more ID collisions in request from %r: %s' %
                        (client_id, ', '.join(collisions)))
         return True
     else:
         return False
+
 
 def early_validation_checks(configuration, raw_request, service, username,
                             password):
@@ -1200,13 +1201,14 @@ def early_validation_checks(configuration, raw_request, service, username,
     sufficient delay to render various user enumeration, email and password
     guessing scenarios infeasible"""
     logger = configuration.logger
+    # NOTE: carefully avoid single quotes in text here to avoid js quote errors
     illegal_pw_change = """invalid password in renewal request.
 Please use your existing password when renewing to prove account ownership. You
-can use the 'Forgot password' link on the login page to securely reset it first
+can use the *Forgot your password?* link on the login page to securely reset it first
 if needed"""
     renewal_blocked = """account status blocks renewal request.
-Please contact support if you haven't been informed why this might be and think
-your account access should be renewed"""
+Please contact support if you have not been informed why this might be and
+think your account access should be renewed"""
     id_collision = """invalid ID in account creation request.
 An existing user has overlapping but not identical ID fields. You must reuse
 your exact existing ID to renew account access. Please contact support if you
@@ -1234,11 +1236,11 @@ to invite you instead if that is easier"""
             hashed = user_dict.get('password_hash', None)
             if not check_hash(configuration, service, username, password,
                               hashed):
-                logger.warning('illegal password change in request from %r' % \
+                logger.warning('illegal password change in request from %r' %
                                client_id)
                 raw_request['invalid'].append(illegal_pw_change)
         elif account_status not in ('temporal', 'active', 'inactive'):
-            logger.warning('existing account for %r is %s and not renewable' \
+            logger.warning('existing account for %r is %s and not renewable'
                            % (client_id, account_status))
             raw_request['invalid'].append(renewal_blocked)
         else:
@@ -1253,16 +1255,16 @@ to invite you instead if that is easier"""
         peers_email = raw_request.get('peers_email', None)
         full_name = raw_request.get('full_name', 'UNSET')
         if configuration.site_enable_peers and \
-               ('email' in configuration.site_peers_explicit_fields and \
-               not peers_email or \
-                'full_name' in configuration.site_peers_explicit_fields and \
-               not peers_full_name):
-            logger.warning('missing peers field in request from %r: %r %r' % \
+            ('email' in configuration.site_peers_explicit_fields and
+                not peers_email or
+                'full_name' in configuration.site_peers_explicit_fields and
+                not peers_full_name):
+            logger.warning('missing peers field in request from %r: %r %r' %
                            (client_id, peers_full_name, peers_email))
             raw_request['invalid'].append(missing_peers_info)
         elif len(full_name.split(' ')) < 2:
             # TODO: prevent this at the source instead - sign up and peers
-            logger.warning('invalid single word full name in request from %r' \
+            logger.warning('invalid single word full name in request from %r'
                            % client_id)
             raw_request['invalid'].append(invalid_full_name)
         # TODO: check that specified peers have accounts and can act as peers
