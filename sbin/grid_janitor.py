@@ -71,8 +71,6 @@ if __name__ == "__main__":
     # Allow clean shutdown on SIGINT only to main process
     register_stop_handler(configuration)
 
-    # TODO: add a signal handler to force run pending tasks right away
-
     if not configuration.site_enable_janitor:
         err_msg = "Janitor support is disabled in configuration!"
         logger.error(err_msg)
