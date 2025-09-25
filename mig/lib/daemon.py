@@ -30,8 +30,57 @@
 
 import multiprocessing
 import signal
+import time
 
-_stop_event = multiprocessing.Event()
+_run_event, _stop_event = multiprocessing.Event(), multiprocessing.Event()
+
+
+def _reset_event(evt):
+    """A simple helper to reset evt marker after it was set"""
+    return evt.clear()
+
+
+def reset_run():
+    """A simple helper to reset run marker after it was set"""
+    return _reset_event(_run_event)
+
+
+def do_run():
+    """A simple helper to set run marker after some signal was received"""
+    return _run_event.set()
+
+
+def check_run():
+    """A simple test to see if run marker was set after some signal was
+    received.
+    """
+    return _run_event.is_set()
+
+
+def run_handler(sig, frame):
+    """A simple signal handler to trigger run on continue signal in main"""
+    do_run()
+
+
+def register_run_handler(configuration, run_signal=signal.SIGCONT):
+    """Set up run next handler to react on provided run_signal"""
+    reset_run()
+    signal.signal(run_signal, run_handler)
+
+
+def interruptible_sleep(configuration, max_secs, break_checks, nap_secs=0.1):
+    """Idle loop for max_secs or until one or more break_checks succeed"""
+    assert max_secs >= nap_secs, "Invalid max_secs value smaller than nap_secs"
+    for _ in range(int(max_secs / nap_secs)):
+        for check in break_checks:
+            if check():
+                return
+        time.sleep(nap_secs)
+
+
+def reset_stop():
+    """A simple helper to reset stop marker after it was set"""
+    return _reset_event(_stop_event)
 
 
 def stop_running():
@@ -55,4 +104,5 @@ def stop_handler(sig, frame):
 
 def register_stop_handler(configuration, stop_signal=signal.SIGINT):
     """Set up stop handler to react on provided stop_signal"""
+    reset_stop()
     signal.signal(stop_signal, stop_handler)
