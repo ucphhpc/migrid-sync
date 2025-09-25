@@ -59,9 +59,6 @@ SECS_PER_DAY = 24 * SECS_PER_HOUR
 task_triggers = {}
 
 
-# TODO: add a signal handler to force run pending tasks right away
-
-
 def _lookup_last_run(configuration, target):
     """Check if target task is pending using internal accounting for task.
     Returns the timestamp when the task was last run in UN*X epoch.
