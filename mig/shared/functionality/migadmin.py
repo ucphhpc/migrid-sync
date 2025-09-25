@@ -471,16 +471,20 @@ provide access to e.g. managing the grid job queues.
         dialog_help = "Really accept account request %s? Optionally provide a specific user as Peer below or %s to auto-extract from request." % (
             req_id, keyword_auto)
         reject_reason = keyword_auto
-        invalid = req_dict.get('invalid')
-        invalid_reasons = '. '.join(invalid)
+        invalid = req_dict.get('invalid', [])
+        # We need to append space to newlines to prevent too greedy html merge
+        invalid_reasons = '. '.join(invalid).replace('\n', '\n ')
         if invalid:
             reject_reason = invalid_reasons
+            logger.info("request %s has invalid markers: %s" %
+                        (req_id, reject_reason))
             req_item['createaccountreqlink'] = {
                 'object_type': 'link', 'destination':
                 "javascript: alert('invalid request: %s');" % invalid_reasons,
-                'class': 'warning iconspace', 'title': 'Invalid request %s' %
-                req_id, 'text': ''}
+                'class': 'warn iconspace', 'title': 'Request is invalid: %s' %
+                invalid_reasons, 'text': ''}
         else:
+            logger.debug("request %s looks valid")
             req_item['createaccountreqlink'] = {
                 'object_type': 'link', 'destination':
                 "javascript: confirmDialog(%s, '%s', '%s', '', '%s');" %
