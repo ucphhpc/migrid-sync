@@ -35,14 +35,13 @@ import os
 import sys
 import time
 
-from mig.lib.daemon import check_stop, register_stop_handler, stop_running
+from mig.lib.daemon import check_run, check_stop, interruptible_sleep, \
+    register_run_handler, register_stop_handler, reset_run, stop_running
 from mig.lib.janitor import handle_janitor_tasks
 from mig.shared.conf import get_configuration_object
 from mig.shared.logger import daemon_logger, register_hangup_handler
 
-# TODO: adjust short to subsecond and long to e.g a minute for production use
-# SHORT_THROTTLE_SECS = 0.5
-# LONG_THROTTLE_SECS = 60.0
+# Delay after handling tasks and when nothing done respectively
 SHORT_THROTTLE_SECS = 5.0
 LONG_THROTTLE_SECS = 30.0
 
@@ -59,11 +58,15 @@ if __name__ == "__main__":
 
     # Use separate logger
 
-    logger = daemon_logger("janitor", configuration.user_janitor_log, log_level)
+    logger = daemon_logger("janitor", configuration.user_janitor_log,
+                           log_level)
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
     register_hangup_handler(configuration)
+
+    # Allow trigger next run on SIGCONT to main process
+    register_run_handler(configuration)
 
     # Allow clean shutdown on SIGINT only to main process
     register_stop_handler(configuration)
@@ -95,9 +98,12 @@ unless it is available in mig/server/MiGserver.conf
         try:
             now = time.time()
             if handle_janitor_tasks(configuration, now) <= 0:
-                time.sleep(LONG_THROTTLE_SECS)
+                interruptible_sleep(configuration, LONG_THROTTLE_SECS,
+                                    (check_run, check_stop))
             else:
-                time.sleep(SHORT_THROTTLE_SECS)
+                interruptible_sleep(configuration, SHORT_THROTTLE_SECS,
+                                    (check_run, check_stop))
+            reset_run()
         except KeyboardInterrupt:
             stop_running()
             # NOTE: we can't be sure if SIGINT was sent to only main process
