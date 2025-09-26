@@ -52,7 +52,7 @@ class MigLibDaemon(MigTestCase):
         signal.alarm(3)
         time.sleep(1)
         do_run()
-        self.assertTrue(check_run)
+        self.assertTrue(check_run())
 
     def test_register_run_handler_signal(self):
         """Register a run handler and verify it can be used to trigger run"""
@@ -64,7 +64,7 @@ class MigLibDaemon(MigTestCase):
         self.assertFalse(check_run())
         signal.alarm(1)
         time.sleep(1)
-        self.assertTrue(check_run)
+        self.assertTrue(check_run())
 
     def test_interruptible_sleep(self):
         """Register a run handler and verify it can be used for interruptible
@@ -80,7 +80,7 @@ class MigLibDaemon(MigTestCase):
         start = time.time()
         signal.alarm(1)
         interruptible_sleep(configuration, max_secs, (check_run, ))
-        self.assertTrue(check_run)
+        self.assertTrue(check_run())
         end = time.time()
         self.assertTrue(end < start + max_secs)
 
@@ -97,7 +97,7 @@ class MigLibDaemon(MigTestCase):
         signal.alarm(3)
         time.sleep(1)
         stop_running()
-        self.assertTrue(check_stop)
+        self.assertTrue(check_stop())
 
     def test_register_stop_handler_signal(self):
         """Register a stop handler and verify it can be used to mark stop upon
@@ -111,4 +111,4 @@ class MigLibDaemon(MigTestCase):
         self.assertFalse(check_stop())
         signal.alarm(1)
         time.sleep(1)
-        self.assertTrue(check_stop)
+        self.assertTrue(check_stop())
