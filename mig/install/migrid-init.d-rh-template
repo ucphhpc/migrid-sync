@@ -388,6 +388,7 @@ start_all() {
     return 0
 }
 
+# TODO: should we use PID_FILE in all stop_X handlers like in deb version?
 stop_script() {
     check_enabled "jobs" || return
     DAEMON_PATH=${MIG_SCRIPT}
