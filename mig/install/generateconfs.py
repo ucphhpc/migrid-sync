@@ -285,6 +285,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'enable_seafile',
         'enable_duplicati',
         'enable_crontab',
+        'enable_janitor',
         'enable_notify',
         'enable_imnotify',
         'enable_dev_accounts',
