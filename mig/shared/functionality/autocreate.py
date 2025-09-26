@@ -202,7 +202,7 @@ def handle_proxy(proxy_string, client_id, config):
     # provide information about the uploaded proxy
 
     try:
-        session_ui = arcwrapper.Ui(proxy_dir)
+        session_ui = arcwrapper.Ui(configuration, proxy_dir)
         proxy = session_ui.getProxy()
         if proxy.IsExpired():
 

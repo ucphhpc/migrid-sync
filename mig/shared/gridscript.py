@@ -598,7 +598,7 @@ def clean_arc_job(
     # clean up in ARC
     try:
         userdir = os.path.join(configuration.user_home, client_dir)
-        arcsession = arcwrapper.Ui(userdir)
+        arcsession = arcwrapper.Ui(configuration, userdir)
     except Exception as err:
         logger.error('Error cleaning up ARC job: %s' % err)
         logger.debug('Job was: %s' % job_dict)

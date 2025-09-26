@@ -2227,7 +2227,7 @@ value="%(default_authpassword)s" />
         # provide information about the available proxy, offer upload
         try:
             home_dir = os.path.normpath(base_dir)
-            session_Ui = arcwrapper.Ui(home_dir, require_user_proxy=True)
+            session_Ui = arcwrapper.Ui(configuration, home_dir, require_user_proxy=True)
             proxy = session_Ui.getProxy()
             if proxy.IsExpired():
                 # can rarely happen, constructor will throw exception
@@ -2247,6 +2247,9 @@ value="%(default_authpassword)s" />
             output_objects.append({'object_type': 'warning',
                                    'text': 'No proxy certificate to load: %s'
                                    % err.what()})
+        except arcwrapper.ARCWrapperError as err:
+            output_objects.append({'object_type': 'error_text',
+                        'text': err.what()})
 
         output_objects = output_objects + arcwrapper.askProxy()
 

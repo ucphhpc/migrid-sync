@@ -51,31 +51,49 @@ from mig.shared.safeeval import subprocess_popen, subprocess_pipe
 
 # MiG utilities:
 from mig.shared.conf import get_configuration_object
-config = get_configuration_object()
-logger = config.logger
-
-# Avoid massive log spam when unconditionally importing arcwrapper in other
-# modules like jobstatus and jobscriptgenerator
-if not config.arc_clusters:
-    raise Exception('ignoring arcwrapper import without ARC enabled!')
 
 # to make this succeed:
 # install nordugrid-arc-client and nordugrid-arc-python
 # set LD_LIBRARY_PATH="$NORDUGRID_LOCATION/lib:$GLOBUS_LOCATION/lib
 #     PYTHONPATH="$NORDUGRID_LOCATION/lib/python2.4/site-packages"
+
+_acrlib_import_error = None
+
 try:
     import arclib
 except:
-    logger.error('problems importing arclib... trying workaround')
+    _acrlib_import_error = 'problems importing arclib... trying workaround'
+
     try:
-        logger.debug('Current sys.path is %s' % sys.path)
         sys.path.append(os.environ['NORDUGRID_LOCATION']
                         + '/lib/python2.4/site-packages')
         import arclib
     except:
-        raise Exception('arclib not found - no problem unless using ARC')
+        _acrlib_import_error = 'unable to import a working arclib'
 
 # (trivially inheriting) exception class of our own
+
+
+if _acrlib_import_error:
+    # the code statically relies on definitions in the library which, if it
+    # was not loaded, will not exist. Make this code importable in the absence
+    # of the library by siply defining wrappers and attempt to construct the
+    # Ui object that we use error instead.
+
+    from types import SimpleNamespace
+
+    class Certificate(SimpleNamespace):
+        pass
+
+    class ARCLibError(RuntimeError):
+        def what(self):
+            return self.__str__()
+
+    arclib = SimpleNamespace(
+        ARCLibError=ARCLibError,
+        Certificate=Certificate,
+        URL=lambda _: None,
+    )
 
 
 class ARCWrapperError(arclib.ARCLibError):
@@ -259,8 +277,14 @@ class Ui(object):
     # hard-wired: expected proxy name
     proxy_name = '.proxy.pem'
 
-    def __init__(self, userdir, require_user_proxy=False):
+    def __init__(self, configuration, userdir, require_user_proxy=False):
         """Class constructor"""
+
+        if _acrlib_import_error:
+            raise ARCWrapperError(_acrlib_import_error)
+
+        if not config.arc_clusters:
+            raise ARCWrapperError('ignoring arcwrapper import without ARC enabled!')
 
         # would be nice to hold the Ui instance and have the resources
         # set up on instantiation. but several problems arise:

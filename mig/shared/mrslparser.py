@@ -307,7 +307,7 @@ environment '%s', therefore the job can not be run on any resources.""" %
         logger.debug('Received job for ARC.')
         user_home = os.path.join(configuration.user_home, client_dir)
         try:
-            session = arcwrapper.Ui(user_home)
+            session = arcwrapper.Ui(configuration, user_home)
             timeleft = session.getProxy().getTimeleft()
             req_time = int(global_dict.get('CPUTIME', '0'))
             logger.debug('CPU time (%s), proxy lifetime (%s)'

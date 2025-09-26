@@ -221,7 +221,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
                                'No ARC support!'})
         return (output_objects, returnvalues.ERROR)
     try:
-        session = arcwrapper.Ui(user_dir)
+        session = arcwrapper.Ui(configration, user_dir)
         queues = session.getQueues()
 
     except arcwrapper.NoProxyError as err:

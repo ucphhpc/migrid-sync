@@ -261,7 +261,7 @@ contact the site admins.''' % configuration.short_title})
                 and job_dict['STATUS'] == 'EXECUTING':
             try:
                 home = os.path.join(configuration.user_home, client_dir)
-                arcsession = arcwrapper.Ui(home)
+                arcsession = arcwrapper.Ui(configuration, home)
                 arcstatus = arcsession.jobStatus(job_dict['EXE'])
                 job_obj['status'] = arcstatus['status']
             except arcwrapper.ARCWrapperError as err:
