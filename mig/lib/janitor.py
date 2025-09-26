@@ -134,10 +134,12 @@ def _clean_stale_state_files(
     return handled
 
 
-def clean_mig_system_files(configuration, now=time.time()):
+def clean_mig_system_files(configuration, now=None):
     """Inspect and clean up stale state files in mig_system_run.
     Returns the number of actual actions taken for central throttle handling.
     """
+    if now is None:
+        now = time.time()
     return _clean_stale_state_files(
         configuration,
         configuration.mig_system_files,
@@ -147,10 +149,12 @@ def clean_mig_system_files(configuration, now=time.time()):
     )
 
 
-def clean_sessid_to_mrls_link_home(configuration, now=time.time()):
+def clean_sessid_to_mrls_link_home(configuration, now=None):
     """Inspect and clean up stale state files in sessid_to_mrsl_link_home.
     Returns the number of actual actions taken for central throttle handling.
     """
+    if now is None:
+        now = time.time()
     return _clean_stale_state_files(
         configuration,
         configuration.sessid_to_mrsl_link_home,
@@ -160,10 +164,12 @@ def clean_sessid_to_mrls_link_home(configuration, now=time.time()):
     )
 
 
-def clean_webserver_home(configuration, now=time.time()):
+def clean_webserver_home(configuration, now=None):
     """Inspect and clean up stale state files in webserver_home.
     Returns the number of actual actions taken for central throttle handling.
     """
+    if now is None:
+        now = time.time()
     return _clean_stale_state_files(
         configuration,
         configuration.webserver_home,
@@ -173,10 +179,12 @@ def clean_webserver_home(configuration, now=time.time()):
     )
 
 
-def clean_no_job_helpers(configuration, now=time.time()):
+def clean_no_job_helpers(configuration, now=None):
     """Inspect and clean up stale state empty job helpers inside user_home.
     Returns the number of actual actions taken for central throttle handling.
     """
+    if now is None:
+        now = time.time()
     dummy_job_path = os.path.join(
         configuration.user_home, "no_grid_jobs_in_grid_scheduler"
     )
@@ -185,10 +193,12 @@ def clean_no_job_helpers(configuration, now=time.time()):
     )
 
 
-def clean_twofactor_sessions(configuration, now=time.time()):
+def clean_twofactor_sessions(configuration, now=None):
     """Inspect and clean up stale state files in twofactor_home.
     Returns the number of actual actions taken for central throttle handling.
     """
+    if now is None:
+        now = time.time()
     return _clean_stale_state_files(
         configuration,
         configuration.twofactor_home,
@@ -198,11 +208,13 @@ def clean_twofactor_sessions(configuration, now=time.time()):
     )
 
 
-def handle_state_cleanup(configuration, now=time.time()):
+def handle_state_cleanup(configuration, now=None):
     """Inspect various state dirs to clean up general stale old temporay files.
     Returns the number of actual actions taken for central throttle handling.
     """
     _logger = configuration.logger
+    if now is None:
+        now = time.time()
     handled = 0
     _logger.debug("handle pending state cleanups")
     handled += clean_mig_system_files(configuration, now)
@@ -217,11 +229,13 @@ def handle_state_cleanup(configuration, now=time.time()):
     return handled
 
 
-def handle_session_cleanup(configuration, now=time.time()):
+def handle_session_cleanup(configuration, now=None):
     """Inspect various state dirs to clean up stale session files specifically.
     Returns the number of actual actions taken for central throttle handling.
     """
     _logger = configuration.logger
+    if now is None:
+        now = time.time()
     handled = 0
     _logger.debug("handle pending session cleanups")
     if configuration.site_enable_jobs:
@@ -353,7 +367,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         )
 
 
-def manage_trivial_user_requests(configuration, now=time.time()):
+def manage_trivial_user_requests(configuration, now=None):
     """Inspect user_pending dir and take care of any request, which do not
     require operator interaction. That is, accept or reject any password reset
     requests depending on reset token validity, renew any with complete peer
@@ -364,6 +378,8 @@ def manage_trivial_user_requests(configuration, now=time.time()):
     Returns the number of actual actions taken for central throttle handling.
     """
     _logger = configuration.logger
+    if now is None:
+        now = time.time()
     handled = 0
     now = time.time()
     db_path = default_db_path(configuration)
@@ -389,12 +405,14 @@ def manage_trivial_user_requests(configuration, now=time.time()):
     return handled
 
 
-def remind_and_expire_user_pending(configuration, now=time.time()):
+def remind_and_expire_user_pending(configuration, now=None):
     """Inspect user_pending dir and inform about pending but aging account
     requests that need operator or user action.
     Returns the number of actual actions taken for central throttle handling.
     """
     _logger = configuration.logger
+    if now is None:
+        now = time.time()
     handled = 0
     now = time.time()
     for filename in listdir(configuration.user_pending):
@@ -446,11 +464,13 @@ def remind_and_expire_user_pending(configuration, now=time.time()):
     return handled
 
 
-def handle_pending_requests(configuration, now=time.time()):
+def handle_pending_requests(configuration, now=None):
     """Inspect various state dirs to remind or clean up stale requests.
     Returns the number of actual actions taken for central throttle handling.
     """
     _logger = configuration.logger
+    if now is None:
+        now = time.time()
     handled = 0
     _logger.debug("handle pending requests")
     handled += manage_trivial_user_requests(configuration, now)
@@ -463,12 +483,14 @@ def handle_pending_requests(configuration, now=time.time()):
     return handled
 
 
-def handle_cache_updates(configuration, now=time.time()):
+def handle_cache_updates(configuration, now=None):
     """Inspect internal cache update markers and handle any corresponding cache
     updates in one place to avoid thrashing.
     Returns the number of actual actions taken for central throttle handling.
     """
     _logger = configuration.logger
+    if now is None:
+        now = time.time()
     handled = 0
     _logger.debug("handle pending cache updates")
     # TODO: actually handle vgrid/user/resource/... cache updates
@@ -479,13 +501,15 @@ def handle_cache_updates(configuration, now=time.time()):
     return handled
 
 
-def handle_janitor_tasks(configuration, now=time.time()):
+def handle_janitor_tasks(configuration, now=None):
     """A wrapper to take care of all regular janitor tasks like clean up and
     cache updates.
     Returns the number of actual tasks completed to let the main thread know if
     it should throttle down or continue next run right away.
     """
     _logger = configuration.logger
+    if now is None:
+        now = time.time()
     tasks_completed = 0
     _logger.info("handle any pending janitor tasks")
     if _lookup_last_run(configuration, "state-cleanup") + SECS_PER_DAY < now:
