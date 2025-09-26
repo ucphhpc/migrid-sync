@@ -80,7 +80,7 @@ class MigSharedFunctionalityDataTransfer(MigTestCase):
     def test_default_disabled_site_transfer(self):
         self.assertFalse(self.configuration.site_enable_transfers)
 
-        result = realmain(self.TEST_CLIENT_ID, {})
+        result = realmain(self.TEST_CLIENT_ID, {}, self.test_environ)
         (output_objects, status) = result
         self.assertEqual(status, returnvalues.OK)
 
