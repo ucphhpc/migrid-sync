@@ -494,6 +494,7 @@ def handle_cache_updates(configuration, now=None):
     handled = 0
     _logger.debug("handle pending cache updates")
     # TODO: actually handle vgrid/user/resource/... cache updates
+    # TODO: rip out the previous client-driven cache updates ones implemented
     if handled > 0:
         _logger.info("handled %d pending cache updates" % handled)
     else:
