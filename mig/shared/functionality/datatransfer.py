@@ -126,6 +126,7 @@ def _main(configuration, logger, environ, op_name='', output_objects=None, clien
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         # NOTE: 'accepted' is a non-sensitive error string here

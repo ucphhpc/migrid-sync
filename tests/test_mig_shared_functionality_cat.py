@@ -184,7 +184,7 @@ class MigSharedFunctionalityCat(MigTestCase):
     @unittest.skipIf(PY2, "Python 3 only")
     def test_main_passes_environ(self):
         try:
-            result = realmain(self.TEST_CLIENT_ID, {}, None)
+            result = realmain(self.TEST_CLIENT_ID, {}, self.test_environ)
         except Exception as unexpectedexc:
             raise AssertionError(
                 "saw unexpected exception: %s" % (unexpectedexc,))
