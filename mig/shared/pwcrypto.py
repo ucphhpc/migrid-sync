@@ -606,7 +606,6 @@ def check_encrypt(configuration, service, username, password, encrypted,
     accepted. Use only during active log in checks.
     """
     _logger = configuration.logger
-    password = force_utf8(password)
     if isinstance(encrypt_cache, dict) and \
             encrypt_cache.get(password, None) == encrypted:
         # print("got cached encrypt: %s" % encrypt_cache.get(password, None))
