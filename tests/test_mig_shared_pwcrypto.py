@@ -25,24 +25,62 @@
 # --- END_HEADER ---
 #
 
-"""Unit test pwcrypto functions"""
+"""Unit tests for the migrid module pointed to in the filename"""
 
 import os
 import sys
 
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
+from tests.support import MigTestCase, FakeConfiguration, \
+    cleanpath, temppath, testmain
 
-from support import MigTestCase, temppath, testmain
-
+from mig.shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
+    POLICY_HIGH, POLICY_MODERN, POLICY_CUSTOM, PASSWORD_POLICIES
 from mig.shared.pwcrypto import *
 
-class MigSharedPwcrypto_make_hash(MigTestCase):
-    def test_pickle_string(self):
-        expected = "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$epib2rEg/HYTQZFnCp7hmIGZ6rzHnViy"
 
-        actual = make_hash('foobar', _urandom=lambda vlen: b'0' * vlen)
+DUMMY_USER = "dummy-user"
+DUMMY_ID = "dummy-id"
+DUMMY_PW = 'foobar'
+DUMMY_PW_HASH = \
+    "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$epib2rEg/HYTQZFnCp7hmIGZ6rzHnViy"
+DUMMY_HOME_DIR = 'dummy_user_home'
+DUMMY_SETTINGS_DIR = 'dummy_user_settings'
+DUMMY_SERVICE = 'svc'
 
-        self.assertEqual(actual, expected, "mismatch pickling string")
+
+class MigSharedPwCrypto(MigTestCase):
+    """Wrap unit tests for the corresponding module"""
+
+    def before_each(self):
+        test_user_home = temppath(DUMMY_HOME_DIR, self, ensure_dir=True)
+        test_user_settings = cleanpath(
+            DUMMY_SETTINGS_DIR, self, ensure_dir=True)
+        # make two requisite root folders for the dummy user
+        os.mkdir(os.path.join(test_user_home, DUMMY_USER))
+        os.mkdir(os.path.join(test_user_settings, DUMMY_USER))
+        # now create a configuration
+        self.dummy_conf = FakeConfiguration(
+            user_home=test_user_home, user_settings=test_user_settings,
+            site_password_policy=POLICY_HIGH,
+            site_password_legacy_policy=POLICY_MEDIUM,
+            site_password_cracklib=False)
+
+    def test_make_hash_constant_string(self):
+        """Test basic hashing of a fixed string to be constant for a fixed
+        random seed.
+        """
+        actual = make_hash(DUMMY_PW, _urandom=lambda vlen: b'0' * vlen)
+        self.assertEqual(actual, DUMMY_PW_HASH, "mismatch hashing string")
+
+    def test_check_hash(self):
+        """Test basic hash checking of a fixed string"""
+
+        random_pw = generate_random_password(self.dummy_conf)
+        expected = make_hash(random_pw)
+        result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
+                            random_pw, expected)
+
+        self.assertTrue(result, "mismatch in hash check")
 
 
 if __name__ == '__main__':
