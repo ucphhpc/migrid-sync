@@ -46,11 +46,16 @@ DUMMY_MEDIUM_PW = 'QZFnCp7h'
 DUMMY_HIGH_PW = 'QZFnp7I-GZ'
 DUMMY_MODERN_PW = 'QZFnCp7hmI1G'
 DUMMY_WEAK_PW_MD5 = "3858f62230ac3c915f300c664312c63f"
+DUMMY_WEAK_PW_SHA256 = \
+    "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
 DUMMY_WEAK_PW_PBKDF2 = \
     "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$epib2rEg/HYTQZFnCp7hmIGZ6rzHnViy"
 DUMMY_HOME_DIR = 'dummy_user_home'
 DUMMY_SETTINGS_DIR = 'dummy_user_settings'
-DUMMY_SERVICE = 'dummy-svc'
+# TODO: adjust password reset token helpers to handle configured services
+#       it currently silently fails if not in migoid(c) or migcert
+# DUMMY_SERVICE = 'dummy-svc'
+DUMMY_SERVICE = 'migoid'
 DUMMY_REALM = 'dummy-realm'
 DUMMY_SALT = base64.b16encode(os.urandom(16))
 
@@ -74,6 +79,7 @@ class MigSharedPwCrypto(MigTestCase):
             site_crypto_salt=DUMMY_SALT,
             site_password_salt=DUMMY_SALT,
             site_digest_salt=DUMMY_SALT,
+            site_login_methods=[DUMMY_SERVICE],
         )
 
     def test_best_crypt_salt(self):
@@ -97,6 +103,15 @@ class MigSharedPwCrypto(MigTestCase):
             pass
         self.assertTrue(actual is None, "best crypt salt failed to err")
 
+    def test_valid_login_password(self):
+        """Test valid login password checker which assures password strength"""
+        allow_weak = valid_login_password(self.dummy_conf, DUMMY_WEAK_PW)
+        self.assertFalse(allow_weak, "allowed login with weak pw")
+        allow_medium = valid_login_password(self.dummy_conf, DUMMY_MEDIUM_PW)
+        self.assertTrue(allow_medium, "refused login with medium pw")
+        allow_modern = valid_login_password(self.dummy_conf, DUMMY_MODERN_PW)
+        self.assertTrue(allow_modern, "refused login with modern pw")
+
     def test_make_simple_hash_fixed_seed(self):
         """Test basic hashing of a fixed string to be constant"""
         expected = DUMMY_WEAK_PW_MD5
@@ -111,6 +126,21 @@ class MigSharedPwCrypto(MigTestCase):
         first = make_simple_hash(DUMMY_WEAK_PW)
         second = make_simple_hash(DUMMY_WEAK_PW)
         self.assertEqual(first, second, "simple hashing is not constant")
+
+    def test_make_safe_hash_fixed_seed(self):
+        """Test basic hashing of a fixed string to be constant"""
+        expected = DUMMY_WEAK_PW_SHA256
+        actual = make_safe_hash(DUMMY_WEAK_PW)
+        self.assertEqual(actual, expected, "mismatch safe hash string")
+
+    def test_make_safe_hash_constant_string(self):
+        """Test basic hashing of a fixed string to be constant for a particular
+        random seed. I.e. the value may differ across interpreter invocations
+        but remains constant in same interpreter.
+        """
+        first = make_safe_hash(DUMMY_WEAK_PW)
+        second = make_safe_hash(DUMMY_WEAK_PW)
+        self.assertEqual(first, second, "safe hashing is not constant")
 
     def test_make_hash_fixed_seed(self):
         """Test basic hashing of a fixed string to be constant for a fixed
@@ -212,7 +242,98 @@ class MigSharedPwCrypto(MigTestCase):
                               DUMMY_SALT)
         self.assertTrue(result, "mismatch in digest check")
 
-   # TODO: migrate inline checks from module here instead
+    def test_check_scramble(self):
+        """Test basic scramble checking of a random string"""
+        random_pw = generate_random_password(self.dummy_conf)
+        expected = make_scramble(DUMMY_MODERN_PW, DUMMY_SALT)
+        result = check_scramble(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
+                                DUMMY_MODERN_PW, expected, DUMMY_SALT)
+        self.assertTrue(result, "mismatch in scramble check")
+
+    def test_fernet_encrypt_decrypt(self):
+        """Test basic fernet password encrypt and decrypt on a random string"""
+        random_pw = generate_random_password(self.dummy_conf)
+        expected = fernet_encrypt_password(self.dummy_conf, random_pw)
+        result = fernet_decrypt_password(self.dummy_conf, expected)
+        self.assertEqual(random_pw, result, "failed fernet enc+dec")
+
+    def test_aesgcm_encrypt_decrypt(self):
+        """Test basic aesgcm password encrypt and decrypt on a random string"""
+        random_pw = generate_random_password(self.dummy_conf)
+        expected = aesgcm_encrypt_password(self.dummy_conf, random_pw)
+        result = aesgcm_decrypt_password(self.dummy_conf, expected)
+        self.assertEqual(random_pw, result, "failed aesgcm enc+dec")
+
+    def test_aesgcm_encrypt_decrypt_static_iv(self):
+        """Test basic aesgcm password encrypt and decrypt on a random string
+        with a fixed initialization vector.
+        """
+        random_pw = generate_random_password(self.dummy_conf)
+        entropy = make_safe_hash(random_pw, False)
+        static_iv = prepare_aesgcm_iv(self.dummy_conf, iv_entropy=entropy)
+        expected = aesgcm_encrypt_password(self.dummy_conf, random_pw,
+                                           init_vector=static_iv)
+        result = aesgcm_decrypt_password(self.dummy_conf, expected,
+                                         init_vector=static_iv)
+        self.assertEqual(random_pw, result, "failed aesgcm static iv enc+dec")
+
+    def test_make_encrypt_decrypt(self):
+        """Test default make encrypt and decrypt on a random string"""
+        random_pw = generate_random_password(self.dummy_conf)
+        expected = make_encrypt(self.dummy_conf, random_pw)
+        result = make_decrypt(self.dummy_conf, expected)
+        self.assertEqual(random_pw, result, "failed default enc+dec")
+
+    def test_make_encrypt_variation(self):
+        """Test make encrypt output variation on a random string"""
+        random_pw = generate_random_password(self.dummy_conf)
+        # IMPORTANT: only aesgcm_static generates constant enc value!
+        first = make_encrypt(self.dummy_conf, random_pw, algo="fernet")
+        second = make_encrypt(self.dummy_conf, random_pw, algo="fernet")
+        self.assertNotEqual(first, second, "aesgcm enc must not be constant")
+        first = make_encrypt(self.dummy_conf, random_pw, algo="aesgcm")
+        second = make_encrypt(self.dummy_conf, random_pw, algo="aesgcm")
+        self.assertNotEqual(first, second, "fernet enc must not be constant")
+        first = make_encrypt(self.dummy_conf, random_pw, algo="aesgcm_static")
+        second = make_encrypt(self.dummy_conf, random_pw, algo="aesgcm_static")
+        self.assertEqual(first, second, "aesgcm_static enc must be constant")
+
+    def test_check_encrypt(self):
+        """Test basic password simple encrypt and decrypt on a random string"""
+        random_pw = generate_random_password(self.dummy_conf)
+        # IMPORTANT: only aesgcm_static generates constant enc value!
+        encrypted = make_encrypt(self.dummy_conf, random_pw,
+                                 algo="fernet")
+        result = check_encrypt(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
+                               random_pw, encrypted, algo='fernet')
+        self.assertFalse(result, "invalid match in fernet encrypt check")
+        encrypted = make_encrypt(self.dummy_conf, random_pw, algo="aesgcm")
+        result = check_encrypt(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
+                               random_pw, encrypted, algo='aesgcm')
+        self.assertFalse(result, "invalid match in aesgcm encrypt check")
+        encrypted = make_encrypt(self.dummy_conf, random_pw,
+                                 algo="aesgcm_static")
+        result = check_encrypt(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
+                               random_pw, encrypted, algo='aesgcm_static')
+        self.assertTrue(result, "mismatch in aesgcm_static encrypt check")
+
+    def test_password_reset_token(self):
+        """Test basic password reset token handling on a random string"""
+        random_pw = generate_random_password(self.dummy_conf)
+        hashed_pw = make_hash(random_pw)
+        dummy_user = {'distinguished_name': DUMMY_USER}
+        dummy_user['password_hash'] = hashed_pw
+        timestamp = 42
+        expected = generate_reset_token(self.dummy_conf, dummy_user,
+                                        DUMMY_SERVICE, timestamp)
+        parsed = parse_reset_token(self.dummy_conf, expected, DUMMY_SERVICE)
+        self.assertEqual(parsed[0], timestamp, "failed parse token time")
+        self.assertEqual(parsed[1], hashed_pw, "failed parse token hash")
+        result = verify_reset_token(self.dummy_conf, dummy_user, expected,
+                                    DUMMY_SERVICE, timestamp)
+        self.assertTrue(result, "failed password reset token handling")
+
+   # TODO: migrate remaining inline checks from module here instead
 
 
 if __name__ == '__main__':
