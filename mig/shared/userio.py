@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userio - wrappers to keep user file I/O in a single replaceable module
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from builtins import range
+import bz2
+import gzip
 import os
 import shutil
 import sys
@@ -102,19 +104,36 @@ def _check_access(configuration, action, target_list):
             raise ValueError('contains special files/folders')
 
 
-def _build_changes_path(configuration, changeset, pending=False):
+def _get_compression_helpers(configuration, algo="gzip"):
+    """Helper to supply the transparent compression module and matching file
+    extension.
+    """
+    if algo == "gzip":
+        return (gzip.open, '.gz')
+    elif algo == "bz2":
+        return (bz2.open, '.bz2')
+    else:
+        return (open, '')
+
+
+def _build_changes_path(configuration, changeset, pending=False, compress=None):
     """Shared helper to build changes event path for changeset.
     The optional pending flag is used to build the temporary path rather than
     the final destination.
+    The optional compress argument is used to request transparent compression
+    of written changes to file.
     """
     filename = "%s-%s" % (configuration.mig_server_id, changeset)
     if pending:
         filename = ".%s-pending" % filename
+    _, file_ext = _get_compression_helpers(configuration, compress)
+    if file_ext:
+        filename += "%s" % file_ext
     changes_path = os.path.join(configuration.events_home, filename)
     return changes_path
 
 
-def _fill_changes(configuration, changeset, action, target_list):
+def _fill_changes(configuration, changeset, action, target_list, compress=None):
     """Helper to fill events file for a future user I/O action. Used internally
     by prepare_changes for building the event set during recursive traversal.
     The target_list argument may be a list of single path entries or (src, dst)
@@ -132,14 +151,17 @@ def _fill_changes(configuration, changeset, action, target_list):
         os.makedirs(configuration.events_home)
     except:
         pass
-    pending_path = _build_changes_path(configuration, changeset, pending=True)
+
+    open_helper, _ = _get_compression_helpers(configuration, compress)
+    pending_path = _build_changes_path(configuration, changeset, pending=True,
+                                       compress=compress)
 
     if os.path.exists(pending_path):
         mode = "a"
     else:
         mode = "w"
     try:
-        cfd = open(pending_path, mode)
+        cfd = open_helper(pending_path, mode)
         for target in target_list:
             cfd.write("%s:%s\n" % (action, target))
         cfd.close()
@@ -151,7 +173,7 @@ def _fill_changes(configuration, changeset, action, target_list):
 
 
 def prepare_changes(configuration, operation, changeset, action, path,
-                    recursive):
+                    recursive, compress=None):
     """Prepare events file for a future user I/O action as a part of named
     operation.
     The path argument may be a list of single path entries or (src, dst)
@@ -161,6 +183,8 @@ def prepare_changes(configuration, operation, changeset, action, path,
     operation, like e.g. a recursive copy or move.
     The recursive argument can be used to automatically traverse any sub
     directories in move or copy operations.
+    The compress argument can be used to apply transparent compression on
+    files written.
     Returns a handle to a temporary file with the saved events or raises an
     exception in case changes would violate MiG file restrictions.
     """
@@ -172,7 +196,8 @@ def prepare_changes(configuration, operation, changeset, action, path,
     # First act on path itself
     target_list = [path]
     _check_access(configuration, action, target_list)
-    pending_path = _fill_changes(configuration, changeset, action, target_list)
+    pending_path = _fill_changes(configuration, changeset, action, target_list,
+                                 compress)
     # Use walk for recursive dir path - silently ignored for file path
     if not recursive or not os.path.isdir(path):
         return pending_path
@@ -186,15 +211,18 @@ def prepare_changes(configuration, operation, changeset, action, path,
                 _check_access(configuration, action, target_list)
                 _logger.debug('%s user sub %s: %s' % (operation, kind,
                                                       target_list))
-                _fill_changes(configuration, changeset, action, target_list)
+                _fill_changes(configuration, changeset, action, target_list,
+                              compress)
     return pending_path
 
 
-def commit_changes(configuration, changeset):
+def commit_changes(configuration, changeset, compress=None):
     """Actually commit events file after applying user I/O action. Used
     after building the event set with one or more calls to prepare_changes.
     The changeset argument is used to deduct the path to the pending and final
     events files.
+    The compress argument can be used to apply transparent compression on
+    files written.
     Returns a handle to the file with the committed events or None on error.
     """
     _logger = configuration.logger
@@ -204,8 +232,10 @@ def commit_changes(configuration, changeset):
         os.makedirs(configuration.events_home)
     except:
         pass
-    changeset_path = _build_changes_path(configuration, changeset)
-    pending_path = _build_changes_path(configuration, changeset, pending=True)
+    changeset_path = _build_changes_path(configuration, changeset,
+                                         compress=compress)
+    pending_path = _build_changes_path(configuration, changeset, pending=True,
+                                       compress=compress)
     try:
         os.rename(pending_path, changeset_path)
         return changeset_path
@@ -215,14 +245,15 @@ def commit_changes(configuration, changeset):
         return None
 
 
-def abort_changes(configuration, changeset):
+def abort_changes(configuration, changeset, compress=None):
     """Abort prepared events in changeset upon early failure of any user I/O
     action. The temporary events file path created by any corresponding
     prepare_changes call(s) is automatically deducted from the changeset.
     """
     _logger = configuration.logger
     _logger.debug("abort %s events" % changeset)
-    pending_path = _build_changes_path(configuration, changeset, pending=True)
+    pending_path = _build_changes_path(configuration, changeset, pending=True,
+                                       compress=compress)
     if not os.path.exists(pending_path):
         return True
     try:
@@ -235,12 +266,13 @@ def abort_changes(configuration, changeset):
         return None
 
 
-def delete_path(configuration, path):
+def delete_path(configuration, path, compress='gzip'):
     """Wrapper to handle direct deletion of user file(s) in path. This version
     skips the user-friendly intermediate step of really just moving path to
     the trash folder in the user home or in the vgrid-special home, depending
     on the location of path.
-    Automatically applies recursively for directories.
+    Automatically applies recursively for directories and compresses with gzip
+    by default.
     """
     _logger = configuration.logger
     _logger.info('delete user path: %s' % path)
@@ -260,7 +292,7 @@ def delete_path(configuration, path):
     try:
         _logger.info('prepare delete user path %s' % path)
         pending_path = prepare_changes(configuration, 'delete', changeset,
-                                       DELETE, path, True)
+                                       DELETE, path, True, compress)
         _logger.info('actually deleting user path %s' % path)
         if os.path.isdir(path):
             shutil.rmtree(path)
@@ -274,18 +306,19 @@ def delete_path(configuration, path):
         _logger.error("trace: %s" % traceback.format_exc())
 
     if result:
-        commit_changes(configuration, changeset)
+        commit_changes(configuration, changeset, compress)
     else:
-        abort_changes(configuration, changeset)
+        abort_changes(configuration, changeset, compress)
     return (result, errors)
 
 
-def remove_path(configuration, path):
+def remove_path(configuration, path, compress='gzip'):
     """Wrapper to handle removal of user file(s) in path. This version uses the
     default behaviour of really just moving path to the trash folder in the
     corresponding user home or vgrid-special home, depending on the location
     of path.
-    Automatically applies recursively for directories.
+    Automatically applies recursively for directories and compresses with gzip
+    by default.
     """
     _logger = configuration.logger
     _logger.info('remove user path: %s' % path)
@@ -328,7 +361,7 @@ def remove_path(configuration, path):
     try:
         _logger.info('prepare remove user path %s' % path)
         pending_path = prepare_changes(configuration, 'remove', changeset,
-                                       DELETE, path, True)
+                                       DELETE, path, True, compress)
         # Find free destination dir and remove last if necessary
         for suffix in [''] + ['.%d' % i for i in range(2, 100)]:
             sub_path = os.path.basename(path) + suffix
@@ -345,13 +378,13 @@ def remove_path(configuration, path):
         errors.append("%s" % err)
 
     if result:
-        commit_changes(configuration, changeset)
+        commit_changes(configuration, changeset, compress)
     else:
-        abort_changes(configuration, changeset)
+        abort_changes(configuration, changeset, compress)
     return (result, errors)
 
 
-def touch_path(configuration, path, timestamp=None):
+def touch_path(configuration, path, timestamp=None, compress='gzip'):
     """Create path if it doesn't exist and set/update timestamp"""
     _logger = configuration.logger
     _logger.info('touch user path: %s (timestamp: %s)' % (path, timestamp))
@@ -360,7 +393,7 @@ def touch_path(configuration, path, timestamp=None):
     try:
         if not os.path.exists(path):
             prepare_changes(configuration, 'touch', changeset, CREATE, path,
-                            False)
+                            False, compress)
             open(path, 'w').close()
 
         if timestamp is None:
@@ -369,9 +402,9 @@ def touch_path(configuration, path, timestamp=None):
         # set timestamp to supplied value
 
         prepare_changes(configuration, 'touch', changeset, MODIFY, path,
-                        False)
+                        False, compress)
         os.utime(path, (timestamp, timestamp))
-        commit_changes(configuration, changeset)
+        commit_changes(configuration, changeset, compress)
     except Exception as err:
         _logger.error("could not touch %s: %s" % (path, err))
         result = False
@@ -408,12 +441,12 @@ def gdp_iolog(configuration,
     for path in paths:
         if path != project_name and not path.startswith(project_name + '/'):
             raise GDPIOLogError("Invalid GDP path: '%s'" % path)
-    src_path = paths[0][len(project_name)+1:]
+    src_path = paths[0][len(project_name) + 1:]
     dst_path = None
     if not src_path:
         src_path = '/'
     if len(paths) == 2:
-        dst_path = paths[1][len(project_name)+1:]
+        dst_path = paths[1][len(project_name) + 1:]
         if not dst_path:
             dst_path = '/'
     status = project_log(configuration,
@@ -461,7 +494,8 @@ def __clean_test_files(configuration, test_path):
         pass
 
 
-if __name__ == "__main__":
+def main(_exit=sys.exit, _print=print):
+    """Run module self-tests"""
     from mig.shared.base import client_id_dir
     from mig.shared.conf import get_configuration_object
     from mig.shared.defaults import htaccess_filename
@@ -497,3 +531,7 @@ if __name__ == "__main__":
             print("Run %s on %s" % (del_func, real_target))
             print(del_func(configuration, real_target))
             __clean_test_files(configuration, real_tmp)
+
+
+if __name__ == "__main__":
+    main()
