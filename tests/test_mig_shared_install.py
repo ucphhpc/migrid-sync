@@ -37,7 +37,8 @@ import pwd
 import sys
 
 from tests.support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
-    testmain, temppath, cleanpath, fixturepath, is_path_within
+    testmain, temppath, cleanpath, is_path_within
+from tests.support.fixturesupp import fixturepath
 
 from mig.shared.defaults import keyword_auto
 from mig.shared.install import determine_timezone, generate_confs

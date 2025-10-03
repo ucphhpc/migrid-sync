@@ -42,7 +42,8 @@ import sys
 from unittest import TestCase, main as testmain
 
 from tests.support.configsupp import FakeConfiguration
-from tests.support.suppconst import MIG_BASE, TEST_BASE, TEST_FIXTURE_DIR, \
+from tests.support.fixturesupp import _PreparedFixture
+from tests.support.suppconst import MIG_BASE, TEST_BASE, \
     TEST_DATA_DIR, TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR
 
 from tests.support._env import MIG_ENV, PY2
@@ -350,61 +351,6 @@ included:
         assert not relative_path.startswith('..')
         return relative_path
 
-    def prepareFixtureAssert(self, fixture_relpath, fixture_format=None):
-        """Prepare to assert a value against a fixture."""
-
-        fixture_data, fixture_path = fixturefile(
-            fixture_relpath, fixture_format)
-        return SimpleNamespace(
-            assertAgainstFixture=lambda val: MigTestCase._assertAgainstFixture(
-                self,
-                fixture_format,
-                fixture_data,
-                fixture_path,
-                value=val
-            ),
-            copy_as_temp=lambda prefix: self._fixture_copy_as_temp(
-                self,
-                fixture_format,
-                fixture_data,
-                fixture_path,
-                prefix=prefix
-            )
-        )
-
-    @staticmethod
-    def _assertAgainstFixture(testcase, fixture_format, fixture_data, fixture_path, value=None):
-        """Compare a value against fixture data ensuring that in the case of
-        failure the location of the fixture is prepended to the diff."""
-
-        assert value is not None
-        originalMaxDiff = testcase.maxDiff
-        testcase.maxDiff = None
-
-        raised_exception = None
-        try:
-            testcase.assertEqual(value, fixture_data)
-        except AssertionError as diffexc:
-            raised_exception = diffexc
-        finally:
-            testcase.maxDiff = originalMaxDiff
-        if raised_exception:
-            message = "value differed from fixture stored at %s\n\n%s" % (
-                _to_display_path(fixture_path), raised_exception)
-            raise AssertionError(message)
-
-    @staticmethod
-    def _fixture_copy_as_temp(testcase, fixture_format, fixture_data, fixture_path, prefix=None):
-        """Copy a fixture to temporary file at the given path prefix."""
-
-        assert prefix is not None
-        fixture_basename = os.path.basename(fixture_path)
-        fixture_name = fixture_basename[0:-len(fixture_format) - 1]
-        normalised_path = fixturefile_normname(fixture_name, prefix=prefix)
-        copied_fixture_file = testcase.temppath(normalised_path)
-        shutil.copyfile(fixture_path, copied_fixture_file)
-        return copied_fixture_file
-
     @staticmethod
     def _provision_test_user(self, distinguished_name):
         """Provide a means to fabricate a useable test user on demand.
@@ -418,7 +364,10 @@ included:
 
         # ensure a user db that includes our test user
         conf_user_db_home = ensure_dirs_exist(self.configuration.user_db_home)
-        prepared_fixture = self.prepareFixtureAssert(
+        # note: this is a non-standard direct use of fixture preparation due
+        #       to this being bootstrap code and should not be used elsewhere
+        prepared_fixture = _PreparedFixture.from_relpath(
+            self,
             'MiG-users.db--example',
             fixture_format='pickle',
         )
@@ -460,84 +409,6 @@ def ensure_dirs_exist(absolute_dir):
         if oserr.errno != errno.EEXIST:
             raise
     return absolute_dir
-
-
-def fixturefile(relative_path, fixture_format=None):
-    """Support function for loading fixtures from their serialised format.
-
-    Doing so is a little more involved than it may seem because serialisation
-    formats may not capture various nuances of the python data they represent.
-    For this reason each supported format defers to a format specific function
-    which can then, for example, load hints about deserialization.
-    """
-
-    assert fixture_format is not None, "fixture format must be specified"
-    assert not os.path.isabs(
-        relative_path), "fixture is not relative to fixture folder"
-    relative_path_with_ext = "%s.%s" % (relative_path, fixture_format)
-    tmp_path = os.path.join(TEST_FIXTURE_DIR, relative_path_with_ext)
-    assert os.path.isfile(tmp_path), \
-        "fixture file for format is not present: %s" % \
-        (relative_path_with_ext,)
-    #_, extension = os.path.splitext(os.path.basename(tmp_path))
-    #assert fixture_format == extension, "fixture file does not match format"
-
-    data = None
-
-    if fixture_format == 'binary' or fixture_format == 'pickle':
-        with open(tmp_path, 'rb') as binfile:
-            data = binfile.read()
-    elif fixture_format == 'json':
-        data = _fixturefile_json(tmp_path)
-    else:
-        raise AssertionError(
-            "unsupported fixture format: %s" % (fixture_format,))
-
-    if fixture_format == 'pickle':
-        data = pickle.loads(data)
-
-    return data, tmp_path
-
-
-def fixturefile_normname(relative_path, prefix=''):
-    """Grab normname from relative_path and optionally add a path prefix"""
-    normname, _ = relative_path.split('--')
-    if prefix:
-        return os.path.join(prefix, normname)
-    return normname
-
-
-_FIXTUREFILE_HINTAPPLIERS = {
-    'array_of_tuples': lambda value: [tuple(x) for x in value]
-}
-
-
-def _fixturefile_json(json_path):
-    hints = ConfigParser()
-
-    # let's see if there are loading hints
-    try:
-        hints_path = "%s.ini" % (json_path,)
-        with open(hints_path) as hints_file:
-            hints.read_file(hints_file)
-    except FileNotFoundError:
-        pass
-
-    with io.open(json_path) as json_file:
-        json_object = json.load(json_file)
-
-        for item_name, item_hint in hints['DEFAULT'].items():
-            loaded_value = json_object[item_name]
-            value_from_loaded_value = _FIXTUREFILE_HINTAPPLIERS[item_hint]
-            json_object[item_name] = value_from_loaded_value(loaded_value)
-
-        return json_object
-
-
-def fixturepath(relative_path):
-    """Get absolute fixture path for relative_path"""
-    tmp_path = os.path.join(TEST_FIXTURE_DIR, relative_path)
-    return tmp_path
 
 
 def temppath(relative_path, test_case, ensure_dir=False):
