@@ -33,7 +33,8 @@ import pickle
 import sys
 import unittest
 
-from tests.support import MigTestCase, testmain, fixturefile, ensure_dirs_exist
+from tests.support import MigTestCase, testmain, ensure_dirs_exist
+from tests.support.fixturesupp import FixtureAssertMixin
 
 import mig.shared.accountreq as accountreq
 from mig.shared.base import canonical_user, distinguished_name_to_user, \
@@ -41,7 +42,7 @@ from mig.shared.base import canonical_user, distinguished_name_to_user, \
 from mig.shared.defaults import keyword_auto
 
 
-class MigSharedAccountreq__peers(MigTestCase):
+class MigSharedAccountreq__peers(MigTestCase, FixtureAssertMixin):
     """Unit tests for peers related functions within the accountreq module"""
 
     TEST_PEER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com'
@@ -68,7 +69,8 @@ class MigSharedAccountreq__peers(MigTestCase):
         return {_string_if_bytes(x): _string_if_bytes(y) for x, y in value.items()}
 
     def _peer_dict_from_fixture(self):
-        fixture_data, _ = fixturefile("peer_user_dict", fixture_format="json")
+        prepared_fixture = self.prepareFixtureAssert("peer_user_dict", fixture_format="json")
+        fixture_data = prepared_fixture.fixture_data
         assert fixture_data["distinguished_name"] == self.TEST_PEER_DN
         return fixture_data
 
