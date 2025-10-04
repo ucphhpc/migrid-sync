@@ -47,6 +47,9 @@ from mig.shared.vgrid import in_vgrid_legacy_share, in_vgrid_writable, \
 
 ACTIONS = (CREATE, MODIFY, MOVE, DELETE) = "create", "modify", "move", "delete"
 
+# Automatically apply this compression to the events files in events_home
+DEFAULT_COMPRESS = 'bz2'
+
 
 def get_home_location(configuration, path):
     """Find the proper home folder for path. I.e. the corresponding user home,
@@ -104,19 +107,22 @@ def _check_access(configuration, action, target_list):
             raise ValueError('contains special files/folders')
 
 
-def _get_compression_helpers(configuration, algo="gzip"):
-    """Helper to supply the transparent compression module and matching file
-    extension.
+def _get_compression_helpers(configuration, algo):
+    """Helper to supply the requested transparent compression module and
+    matching file extension.
     """
-    if algo == "gzip":
+    if algo is None:
+        return (open, '')
+    elif algo == "gzip":
         return (gzip.open, '.gz')
     elif algo == "bz2":
         return (bz2.open, '.bz2')
     else:
-        return (open, '')
+        raise ValueError("unsupported compression algo: %s" % algo)
 
 
-def _build_changes_path(configuration, changeset, pending=False, compress=None):
+def _build_changes_path(configuration, changeset, pending=False,
+                        compress=DEFAULT_COMPRESS):
     """Shared helper to build changes event path for changeset.
     The optional pending flag is used to build the temporary path rather than
     the final destination.
@@ -133,7 +139,8 @@ def _build_changes_path(configuration, changeset, pending=False, compress=None):
     return changes_path
 
 
-def _fill_changes(configuration, changeset, action, target_list, compress=None):
+def _fill_changes(configuration, changeset, action, target_list,
+                  compress=DEFAULT_COMPRESS):
     """Helper to fill events file for a future user I/O action. Used internally
     by prepare_changes for building the event set during recursive traversal.
     The target_list argument may be a list of single path entries or (src, dst)
@@ -173,7 +180,7 @@ def _fill_changes(configuration, changeset, action, target_list, compress=None):
 
 
 def prepare_changes(configuration, operation, changeset, action, path,
-                    recursive, compress=None):
+                    recursive, compress):
     """Prepare events file for a future user I/O action as a part of named
     operation.
     The path argument may be a list of single path entries or (src, dst)
@@ -184,7 +191,7 @@ def prepare_changes(configuration, operation, changeset, action, path,
     The recursive argument can be used to automatically traverse any sub
     directories in move or copy operations.
     The compress argument can be used to apply transparent compression on
-    files written.
+    event records written.
     Returns a handle to a temporary file with the saved events or raises an
     exception in case changes would violate MiG file restrictions.
     """
@@ -216,13 +223,13 @@ def prepare_changes(configuration, operation, changeset, action, path,
     return pending_path
 
 
-def commit_changes(configuration, changeset, compress=None):
+def commit_changes(configuration, changeset, compress):
     """Actually commit events file after applying user I/O action. Used
     after building the event set with one or more calls to prepare_changes.
     The changeset argument is used to deduct the path to the pending and final
     events files.
     The compress argument can be used to apply transparent compression on
-    files written.
+    events records written.
     Returns a handle to the file with the committed events or None on error.
     """
     _logger = configuration.logger
@@ -245,7 +252,7 @@ def commit_changes(configuration, changeset, compress=None):
         return None
 
 
-def abort_changes(configuration, changeset, compress=None):
+def abort_changes(configuration, changeset, compress):
     """Abort prepared events in changeset upon early failure of any user I/O
     action. The temporary events file path created by any corresponding
     prepare_changes call(s) is automatically deducted from the changeset.
@@ -266,13 +273,13 @@ def abort_changes(configuration, changeset, compress=None):
         return None
 
 
-def delete_path(configuration, path, compress='gzip'):
+def delete_path(configuration, path, compress=DEFAULT_COMPRESS):
     """Wrapper to handle direct deletion of user file(s) in path. This version
     skips the user-friendly intermediate step of really just moving path to
     the trash folder in the user home or in the vgrid-special home, depending
     on the location of path.
-    Automatically applies recursively for directories and compresses with gzip
-    by default.
+    Automatically applies recursively for directories and compresses events
+    records by default.
     """
     _logger = configuration.logger
     _logger.info('delete user path: %s' % path)
@@ -312,13 +319,13 @@ def delete_path(configuration, path, compress='gzip'):
     return (result, errors)
 
 
-def remove_path(configuration, path, compress='gzip'):
+def remove_path(configuration, path, compress=DEFAULT_COMPRESS):
     """Wrapper to handle removal of user file(s) in path. This version uses the
     default behaviour of really just moving path to the trash folder in the
     corresponding user home or vgrid-special home, depending on the location
     of path.
-    Automatically applies recursively for directories and compresses with gzip
-    by default.
+    Automatically applies recursively for directories and compresses events
+    records by default.
     """
     _logger = configuration.logger
     _logger.info('remove user path: %s' % path)
@@ -384,8 +391,10 @@ def remove_path(configuration, path, compress='gzip'):
     return (result, errors)
 
 
-def touch_path(configuration, path, timestamp=None, compress='gzip'):
-    """Create path if it doesn't exist and set/update timestamp"""
+def touch_path(configuration, path, timestamp=None, compress=DEFAULT_COMPRESS):
+    """Create path if it doesn't exist and set/update timestamp. Automatically
+    compresses events records by default.
+    """
     _logger = configuration.logger
     _logger.info('touch user path: %s (timestamp: %s)' % (path, timestamp))
     result, errors = True, []
@@ -521,16 +530,23 @@ def main(_exit=sys.exit, _print=print):
     for (dirs, files, links) in [basic_test, rec_test, invisible_test,
                                  link_test]:
         real_target = os.path.join(real_tmp, (dirs + files + links)[0])
-        for edit_func in (touch_path, ):
-            __make_test_files(configuration, real_tmp, dirs, files, links)
-            print("Run %s on %s" % (edit_func, real_target))
-            print(edit_func(configuration, real_target))
-            __clean_test_files(configuration, real_tmp)
-        for del_func in (delete_path, remove_path):
-            __make_test_files(configuration, real_tmp, dirs, files, links)
-            print("Run %s on %s" % (del_func, real_target))
-            print(del_func(configuration, real_target))
-            __clean_test_files(configuration, real_tmp)
+        for compress in (None, 'gzip', 'bz2'):
+            for edit_func in (touch_path, ):
+                __make_test_files(configuration, real_tmp, dirs, files, links)
+                print("Run %s on %s" % (edit_func, real_target))
+                print(edit_func(configuration, real_target, compress=compress))
+                __clean_test_files(configuration, real_tmp)
+            for del_func in (delete_path, remove_path):
+                __make_test_files(configuration, real_tmp, dirs, files, links)
+                print("Run %s on %s" % (del_func, real_target))
+                print(del_func(configuration, real_target, compress=compress))
+                __clean_test_files(configuration, real_tmp)
+    events_files = os.listdir(configuration.events_home)
+    events_files.sort()
+    print("committed changes in %s" % ', '.join(events_files))
+    for name in events_files:
+        events_path = os.path.join(configuration.events_home, name)
+        print("%s : %db" % (name, os.stat(events_path).st_size))
 
 
 if __name__ == "__main__":
