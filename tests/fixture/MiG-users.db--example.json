@@ -1,0 +1,24 @@
+{
+  "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com": {
+    "full_name": "Test User",
+    "organization": "Test Org",
+    "state": "NA",
+    "country": "DK",
+    "email": "test@example.com",
+    "comment": "This is the create comment",
+    "password": "",
+    "password_hash": "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM2134uix",
+    "distinguished_name": "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com",
+    "locality": "",
+    "organizational_unit": "",
+    "expire": {
+      "_FixtureHint": true,
+      "hint": "today_relative",
+      "modifier": "days|+5",
+      "value": 0
+    },
+    "created": 1759921716.5731237,
+    "unique_id": "8txp5j0lxVL5xiWp0N4pxzeswIVWlkEuqubucyubWiSaSGZeH0bZDbHQr46FQoBT",
+    "openid_names": []
+  }
+}
