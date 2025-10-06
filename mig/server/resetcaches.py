@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resetcaches - (re)set vgrid/user/resource map caches in state mig_system_X
-# Copyright (C) 2003-2025  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -37,37 +37,36 @@ from mig.shared.base import client_id_dir
 from mig.shared.conf import get_configuration_object
 from mig.shared.fileio import delete_file
 from mig.shared.vgridaccess import refresh_vgrid_map, refresh_user_map, \
-        refresh_resource_map
+    refresh_resource_map
 
 
-def refresh_maps(configuration, map_list, verbose, force=False):
+def refresh_maps(configuration, map_list, verbose, force=False, allow_missing=True):
     """Make sure one or more of vgrid, user and resource maps are refreshed"""
     _logger = configuration.logger
     status = True
-    allow_missing = False
-    if force:
-        allow_missing = True
 
     for map_name in map_list:
-       for root in (configuration.mig_system_files, configuration.mig_system_run):
-           for ext in ('map', 'lock', 'modified'):
-               sub_path = os.path.join(root, "%s.%s" % (map_name, ext))
-               if verbose:
-                   print("Removing %s" % sub_path)
-               status = delete_file(sub_path, _logger, allow_missing=allow_missing)
-               if not status and not force:
-                   return status
-       if map_name == 'vgrid':
-           if not refresh_vgrid_map(configuration) and not force:
-               return status
-       elif map_name == 'user':
-           if not refresh_user_map(configuration) and not force:
-               return status
-       elif map_name == 'resource':
-           if not refresh_resource_map(configuration) and not force:
-               return status
-
-       return status
+        for root in (configuration.mig_system_files, configuration.mig_system_run):
+            for ext in ('map', 'lock', 'modified'):
+                sub_path = os.path.join(root, "%s.%s" % (map_name, ext))
+                if verbose:
+                    print("Removing %s" % sub_path)
+                status = delete_file(
+                    sub_path, _logger, allow_missing=allow_missing)
+                if not status and not force:
+                    return status
+        if map_name == 'vgrid':
+            if not refresh_vgrid_map(configuration) and not force:
+                return status
+        elif map_name == 'user':
+            if not refresh_user_map(configuration) and not force:
+                return status
+        elif map_name == 'resource':
+            if not refresh_resource_map(configuration) and not force:
+                return status
+        else:
+            raise ValueError("unsupported map: %s" % map_name)
+    return status
 
 
 def usage(name='resetcaches.py'):
@@ -81,6 +80,7 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
+and MAP_NAME one or more of vgrid, user and resource.
 """ % {'name': name})
 
 
@@ -127,10 +127,11 @@ if '__main__' == __name__:
         map_list = ['vgrid', 'user', 'resource']
 
     if not refresh_maps(configuration, map_list, verbose, force):
-        print("Failed to refresh %s map(s) - force may be needed?" % ', '.join(map_list))
+        print("Failed to refresh %s map(s) - force may be needed?" %
+              ', '.join(map_list))
         sys.exit(1)
 
     if verbose:
-        print("Refreshed maps")
+        print("Refreshed %s maps" % ', '.join(map_list))
 
     sys.exit(0)
