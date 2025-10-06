@@ -459,7 +459,7 @@ def verify_user_peers(configuration, db_path, client_id, user, now, verify_peer,
 
 
 def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
-                      reset_token, reset_auth_type, pw_changed,
+                      reset_token, reset_auth_type, pw_match,
                       accepted_peer_list, force, verbose, ask_renew,
                       default_renew, do_lock, from_edit_user, ask_change_pw,
                       auto_create_db, create_backup):
@@ -571,12 +571,12 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
             # existing password should be left alone on renewal.
             # The password_hash field is not guaranteed to exist and it varies
             # depending on the current random seed and assigned salt. So we use
-            # check_password during submit and save result in pw_changed.
+            # check_password during submit and save result in pw_match.
             if not user['password']:
                 user['password'] = user['old_password']
             if not user.get('password_hash', ''):
                 user['password_hash'] = user['old_password_hash']
-            if pw_changed:
+            if not pw_match:
                 # Allow password change if it's directly authorized with login
                 # or authorized through a simple reset challenge (reset_token).
                 if not authorized and reset_token:
@@ -1062,11 +1062,11 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
         reset_auth_type = user.get('auth', ['UNKNOWN'])[-1]
         # Always remove any reset_token fields before DB insert
         del user['reset_token']
-    pw_changed = False
-    if 'pw_changed' in user:
-        pw_changed = user['pw_changed']
-        # Always remove any pw_changed fields before DB insert
-        del user['pw_changed']
+    pw_match = True
+    if 'pw_match' in user:
+        pw_match = user['pw_match']
+        # Always remove any pw_match fields before DB insert
+        del user['pw_match']
 
     _logger.info('trying to create or renew user %r' % client_id)
     if verbose:
@@ -1095,7 +1095,7 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
 
     created = create_user_in_db(configuration, db_path, client_id, user, now,
                                 authorized, reset_token, reset_auth_type,
-                                pw_changed, accepted_peer_list, force, verbose,
+                                pw_match, accepted_peer_list, force, verbose,
                                 ask_renew, default_renew, do_lock,
                                 from_edit_user, ask_change_pw, auto_create_db,
                                 create_backup)

@@ -144,31 +144,64 @@ class MigSharedAccountreq__peers(MigTestCase):
         self.assertTrue(success)
 
 
-class MigSharedAccountreq__prefilters(MigTestCase):
-    """Unit tests for prefilter helper functions within the accountreq module"""
+class MigSharedAccountreq__filters(MigTestCase):
+    """Unit tests for filter related functions within the accountreq module"""
 
+    TEST_SERVICE = 'migoid'
+    TEST_INTERNAL_DN = '/C=DK/ST=NA/L=NA/O=Local Org/OU=NA/CN=Test Name/emailAddress=test@local.org'
+    TEST_EXTERNAL_DN = '/C=DK/ST=NA/L=NA/O=External Org/OU=NA/CN=Test User/emailAddress=test@external.org'
+    TEST_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
     TEST_ADMIN_DN = '/C=DK/ST=NA/L=NA/O=DIKU/OU=NA/CN=Test Admin/emailAddress=siteadm@di.ku.dk'
 
-    def test_signup_prefilter_email_accept(self):
-        accept = ['john@doe.org', 'a@b.c.org', 'a@ku.dk.com',
-                  'a@sci.ku.dk.org', 'a@diku.dk', 'a@nbi.dk']
+    TEST_INT_PW = 'PW74deb6609F109f504d'
+    TEST_EXT_PW = 'PW174db6509F109e1531'
+    TEST_USER_PW = 'foobar'
+    TEST_INT_PW_HASH = 'PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$epib2rEg/HYTQZFnCp7hmIGZ6rzHnViy'
+    TEST_EXT_PW_HASH = 'PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$TQZFnCp7hmIGZ6ep2rEg/HYrzHnVyiib'
+    TEST_USER_PW_HASH = 'PBKDF2$sha256$10000$/TkhLk4yMGf6XhaY$7HUeQ9iwCkE4YMQAaCd+ZdrN+y8EzkJH'
+
+    TEST_INTERNAL_EMAILS = ['john.doe@science.ku.dk', 'abc123@ku.dk',
+                            'john.doe@a.b.c.ku.dk']
+    TEST_EXTERNAL_EMAILS = ['john@doe.org', 'a@b.c.org', 'a@ku.dk.com',
+                            'a@sci.ku.dk.org', 'a@diku.dk', 'a@nbi.dk']
+    TEST_EXTERNAL_EMAIL_PATTERN = r'^.+(?<!(@|\.)ku\.dk)$'
+    TEST_INTERNAL_EMAIL_PATTERN = r'^.+@([a-z0-9]+\.)*ku\.dk$'
+    INT_USER, EXT_USER, TEST_USER = {}, {}, {}
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        ensure_dirs_exist(self.configuration.user_cache)
+        ensure_dirs_exist(self.configuration.user_pending)
+        ensure_dirs_exist(self.configuration.user_settings)
+        ensure_dirs_exist(self.configuration.mrsl_files_dir)
+        ensure_dirs_exist(self.configuration.resource_pending)
+        self.INT_USER = distinguished_name_to_user(self.TEST_INTERNAL_DN)
+        self.INT_USER['password_hash'] = self.TEST_INT_PW_HASH
+        self.EXT_USER = distinguished_name_to_user(self.TEST_EXTERNAL_DN)
+        self.EXT_USER['peers_email'] = self.INT_USER['email']
+        self.EXT_USER['peers_full_name'] = self.INT_USER['full_name']
+        self.EXT_USER['password_hash'] = self.TEST_EXT_PW_HASH
+        self.TEST_USER = distinguished_name_to_user(self.TEST_USER_DN)
+        self.EXT_USER['password_hash'] = self.TEST_USER_PW_HASH
         self.configuration.site_signup_prefilter = [
-            ('email', r'^.+(?<!(@|\.)ku\.dk)$')]
-        for addr in accept:
-            user = {'email': addr}
+            ('email', self.TEST_EXTERNAL_EMAIL_PATTERN), ]
+        self.configuration.site_peers_prefilter = [
+            ('peers_email', self.TEST_INTERNAL_EMAIL_PATTERN), ]
+
+    def test_signup_prefilter_email_accept(self):
+        for addr in self.TEST_EXTERNAL_EMAILS:
+            self.EXT_USER['email'] = addr
             check = accountreq.signup_prefilter_allowed(self.configuration,
-                                                        user)
+                                                        self.EXT_USER)
             self.assertTrue(check)
 
     def test_signup_prefilter_email_reject(self):
-        reject = ['john.doe@science.ku.dk', 'abc123@ku.dk',
-                  'john.doe@a.b.c.ku.dk']
-        self.configuration.site_signup_prefilter = [
-            ('email', r'.+(?<!(@|\.)ku\.dk)$')]
-        for addr in reject:
-            user = {'email': addr}
+        for addr in self.TEST_INTERNAL_EMAILS:
+            self.EXT_USER['email'] = addr
             check = accountreq.signup_prefilter_allowed(self.configuration,
-                                                        user)
+                                                        self.EXT_USER)
             self.assertFalse(check)
 
     def test_signup_prefilter_email_accept_site_admins(self):
@@ -183,115 +216,136 @@ class MigSharedAccountreq__prefilters(MigTestCase):
         self.assertTrue(check)
 
     def test_peers_prefilter_email_accept(self):
-        accept = ['john.doe@science.ku.dk', 'abc123@ku.dk',
-                  'john.doe@a.b.c.ku.dk']
-        self.configuration.site_peers_prefilter = [
-            ('peers_email', r'^.+@([a-z0-9]+\.)*ku\.dk$')]
-        for addr in accept:
-            user = {'peers_email': addr}
+        for addr in self.TEST_INTERNAL_EMAILS:
+            self.EXT_USER['peers_email'] = addr
             check = accountreq.peers_prefilter_allowed(self.configuration,
-                                                       user)
+                                                       self.EXT_USER)
             self.assertTrue(check)
 
     def test_peers_prefilter_email_reject(self):
-        reject = ['john@doe.org', 'a@b.c.org', 'a@ku.dk.com',
-                  'a@sci.ku.dk.org']
-        self.configuration.site_peers_prefilter = [
-            ('peers_email', r'^.+@([a-z0-9]+\.)*ku\.dk$')]
-        for addr in reject:
-            user = {'peers_email': addr}
+        for addr in self.TEST_EXTERNAL_EMAILS:
+            self.EXT_USER['peers_email'] = addr
             check = accountreq.peers_prefilter_allowed(self.configuration,
-                                                       user)
+                                                       self.EXT_USER)
             self.assertFalse(check)
 
     def test_early_validation_checks_valid_new_simple(self):
-        service = 'migoid'
-        full_name = 'Valid Test Name'
-        email = 'john@doe.org'
-        dummy_pw = 'PW74deb6609F109f504d'
-        dummy_pw_hash = 'DUMMYPWHASH'
-        user = {'full_name': full_name, 'organization': 'Test Org',
-                'organizational_unit': '', 'email': email,
-                'password_hash': dummy_pw_hash, 'comment': ''}
-        fill_distinguished_name(user)
-        checked = accountreq.early_validation_checks(self.configuration, user,
-                                                     service, email, dummy_pw)
-        print("DEBUG: early checks on valid simple req: %s" % checked)
+        checked = accountreq.early_validation_checks(self.configuration,
+                                                     self.EXT_USER,
+                                                     self.TEST_SERVICE,
+                                                     self.EXT_USER['email'],
+                                                     self.TEST_EXT_PW)
+        # print("DEBUG: early checks on valid simple req: %s" % checked)
         self.assertEqual(checked['invalid'], [], "early validation failed")
 
     def test_early_validation_checks_valid_new_peers(self):
         self.configuration.site_enable_peers = True
         self.configuration.site_peers_explicit_fields = ['full_name', 'email']
-        self.configuration.site_peers_prefilter = [
-            ('peers_email', r'^.+@([a-z0-9]+\.)*ku\.dk$')]
-        service = 'migoid'
-        full_name = 'Valid Test Name'
-        email = 'john@doe.org'
-        peers_full_name = 'Valid Peer Name'
-        dummy_pw = 'PW74deb6609F109f504d'
-        dummy_pw_hash = 'DUMMYPWHASH'
-        accept = ['john.doe@science.ku.dk', 'abc123@ku.dk',
-                  'john.doe@a.b.c.ku.dk']
-        self.configuration.site_peers_prefilter = [
-            ('peers_email', r'^.+@([a-z0-9]+\.)*ku\.dk$')]
-        user = {'full_name': full_name, 'organization': 'Test Org',
-                'organizational_unit': '', 'email': email,
-                'password_hash': dummy_pw_hash, 'comment': '',
-                'peers_full_name': [peers_full_name], 'peers_email': []}
-        fill_distinguished_name(user)
-        for addr in accept:
-            user['peers_email'] = [addr]
-            username = user['email']
+        for addr in self.TEST_INTERNAL_EMAILS:
+            self.EXT_USER['peers_email'] = addr
             checked = accountreq.early_validation_checks(self.configuration,
-                                                         user, service,
-                                                         username, dummy_pw)
-            print("DEBUG: early checks on valid peers req: %s" % checked)
+                                                         self.EXT_USER,
+                                                         self.TEST_SERVICE,
+                                                         self.EXT_USER['email'],
+                                                         self.TEST_EXT_PW)
+            # print("DEBUG: early checks on valid peers req: %s" % checked)
             self.assertEqual(checked['invalid'], [], "early validation failed")
 
-    # TODO: add test valid renew
+    def test_early_validation_checks_valid_renew_existing(self):
+        test_int_client_dir = self._provision_test_user(self,
+                                                        self.TEST_INTERNAL_DN)
+        test_int_client_dir_name = os.path.basename(test_int_client_dir)
+        test_client_dir = self._provision_test_user(self, self.TEST_USER_DN)
+        test_client_dir_name = os.path.basename(test_client_dir)
+        self.TEST_USER['peers_email'] = self.INT_USER['email']
+        # TODO: sync password with saved hash and disable auth here
+        self.TEST_USER['authorized'] = True
+        checked = accountreq.early_validation_checks(self.configuration,
+                                                     self.TEST_USER,
+                                                     self.TEST_SERVICE,
+                                                     self.TEST_USER['email'],
+                                                     self.TEST_USER_PW)
+        # print("DEBUG: early checks on valid renew req: %s" % checked)
+        self.assertEqual(checked['invalid'], [], "early validation failed")
+
+    def test_early_validation_checks_valid_renew_authorized(self):
+        test_int_client_dir = self._provision_test_user(self,
+                                                        self.TEST_INTERNAL_DN)
+        test_int_client_dir_name = os.path.basename(test_int_client_dir)
+        test_client_dir = self._provision_test_user(self, self.TEST_USER_DN)
+        test_client_dir_name = os.path.basename(test_client_dir)
+        self.TEST_USER['peers_email'] = self.INT_USER['email']
+        # Make sure password change is allowed if needed
+        self.TEST_USER['authorized'] = True
+        checked = accountreq.early_validation_checks(self.configuration,
+                                                     self.TEST_USER,
+                                                     self.TEST_SERVICE,
+                                                     self.TEST_USER['email'],
+                                                     self.TEST_USER_PW)
+        # print("DEBUG: early checks on valid renew req: %s" % checked)
+        self.assertEqual(checked['invalid'], [], "early validation failed")
 
     def test_early_validation_checks_invalid_new_simple(self):
-        service = 'migoid'
-        full_name = 'InvalidTestName'
-        email = 'john@doe.org'
-        dummy_pw = 'PW74deb6609F109f504d'
-        dummy_pw_hash = 'DUMMYPWHASH'
-        user = {'full_name': full_name, 'organization': 'Test Org',
-                'organizational_unit': '', 'email': email,
-                'password_hash': dummy_pw_hash, 'comment': ''}
-        fill_distinguished_name(user)
-        checked = accountreq.early_validation_checks(self.configuration, user,
-                                                     service, email, dummy_pw)
-        print("DEBUG: early checks on invalid simple req: %s" % checked)
+        self.EXT_USER['full_name'] = 'InvalidNameWithoutSpace'
+        checked = accountreq.early_validation_checks(self.configuration,
+                                                     self.EXT_USER,
+                                                     self.TEST_SERVICE,
+                                                     self.EXT_USER['email'],
+                                                     self.TEST_INT_PW)
+        # print("DEBUG: early checks on invalid simple req: %s" % checked)
         self.assertTrue(checked['invalid'], "early validation failed")
 
     def test_early_validation_checks_invalid_new_peers(self):
         self.configuration.site_enable_peers = True
-        self.configuration.site_peers_explicit_fields = ['email']
-        self.configuration.site_peers_prefilter = [
-            ('peers_email', r'^.+@([a-z0-9]+\.)*ku\.dk$')]
-        service = 'migoid'
-        full_name = 'Valid Test Name'
-        email = 'john@doe.org'
-        peers_full_name = 'Valid Peer Name'
-        dummy_pw = 'PW74deb6609F109f504d'
-        dummy_pw_hash = 'DUMMYPWHASH'
-        user = {'full_name': full_name, 'organization': 'Test Org',
-                'organizational_unit': '', 'email': email,
-                'password_hash': dummy_pw_hash, 'comment': '',
-                'peers_full_name': [peers_full_name], 'peers_email': []}
-        fill_distinguished_name(user)
-        reject = ['', 'john@doe.org', 'a@b.c.org', 'a@ku.dk.com',
-                  'a@sci.ku.dk.org']
-        for addr in reject:
-            user['peers_email'] = addr
-            username = user['email']
-            checked = accountreq.early_validation_checks(self.configuration, user,
-                                                         service, email, dummy_pw)
-            print("DEBUG: early checks on invalid peers req: %s" % checked)
-            self.assertTrue(checked['invalid'], "early validation failed")
+        self.configuration.site_peers_explicit_fields = ['full_name', 'email']
+        self.EXT_USER['peers_full_name'] = self.INT_USER['full_name']
+        self.EXT_USER['peers_email'] = ''
+        checked = accountreq.early_validation_checks(self.configuration,
+                                                     self.EXT_USER,
+                                                     self.TEST_SERVICE,
+                                                     self.EXT_USER['email'],
+                                                     self.TEST_EXT_PW)
+        # print("DEBUG: early checks on invalid peers req: %s" % checked)
+        self.assertTrue(checked['invalid'], "early validation failed")
 
-    # TODO: add test invalid renew
+    def test_early_validation_checks_invalid_renew_collision(self):
+        test_client_dir = self._provision_test_user(self,
+                                                    self.TEST_USER_DN)
+        test_client_dir_name = os.path.basename(test_client_dir)
+        self.TEST_USER['organization'] = 'Invalid Changed Org'
+        del self.TEST_USER['distinguished_name']
+        self.TEST_USER = fill_distinguished_name(self.TEST_USER)
+        checked = accountreq.early_validation_checks(self.configuration,
+                                                     self.TEST_USER,
+                                                     self.TEST_SERVICE,
+                                                     self.TEST_USER['email'],
+                                                     self.TEST_USER_PW)
+        # print("DEBUG: early checks on invalid renew collision req: %s" % checked)
+        self.assertTrue(checked['invalid'], "early validation failed")
+
+    def test_early_validation_checks_invalid_renew_pw_change(self):
+        test_client_dir = self._provision_test_user(self, self.TEST_USER_DN)
+        test_client_dir_name = os.path.basename(test_client_dir)
+        checked = accountreq.early_validation_checks(self.configuration,
+                                                     self.TEST_USER,
+                                                     self.TEST_SERVICE,
+                                                     self.TEST_USER['email'],
+                                                     self.TEST_USER_PW + 'N3w')
+        # print("DEBUG: early checks on invalid renew pw change req: %s" % checked)
+        self.assertTrue(checked['invalid'], "early validation failed")
+
+    def test_early_validation_checks_invalid_renew_suspended(self):
+        test_client_dir = self._provision_test_user(self, self.TEST_USER_DN)
+        test_client_dir_name = os.path.basename(test_client_dir)
+        # TODO: change existing user status to suspended! (currently fails on pw)
+        self.TEST_USER['status'] = 'temporal'
+        checked = accountreq.early_validation_checks(self.configuration,
+                                                     self.TEST_USER,
+                                                     self.TEST_SERVICE,
+                                                     self.TEST_USER['email'],
+                                                     self.TEST_USER_PW)
+        # print("DEBUG: early checks on invalid renew suspended req: %s" % checked)
+        self.assertTrue(checked['invalid'], "early validation failed")
 
 
 if __name__ == '__main__':
