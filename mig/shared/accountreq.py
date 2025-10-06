@@ -51,7 +51,7 @@ from mig.shared.defaults import peers_fields, peers_filename, \
     gdp_distinguished_field
 from mig.shared.fileio import delete_file, make_temp_file
 from mig.shared.notification import notify_user
-from mig.shared.pwcrypto import check_hash
+from mig.shared.pwcrypto import check_hash, check_scramble
 # Expose some helper variables for functionality backends
 from mig.shared.safeinput import name_extras, password_extras, \
     password_min_len, password_max_len, valid_password_chars, \
@@ -1231,24 +1231,31 @@ to invite you instead if that is easier"""
 
     client_id = get_user_id(configuration, raw_request)
     db_path = default_db_path(configuration)
-    user_dict = load_user_dict(configuration, client_id, db_path)
+    user_dict = load_user_dict(logger, client_id, db_path)
     if user_dict:
-        # Renewal or password change
+        # Renewal or password change - check against existing pw and status
+        scrambled = user_dict.get('password', None)
+        hashed = user_dict.get('password_hash', None)
+        account_status = user_dict.get('status', 'active')
         authorized = raw_request.get('authorized', None)
         reset_token = raw_request.get('reset_token', None)
-        account_status = raw_request.get('status', 'active')
-        if not authorized and not reset_token:
-            hashed = user_dict.get('password_hash', None)
-            if not check_hash(configuration, service, username, password,
-                              hashed):
-                logger.warning('illegal password change in request from %r' %
-                               client_id)
-                raw_request['invalid'].append(illegal_pw_change)
-        elif account_status not in ('temporal', 'active', 'inactive'):
+        if hashed:
+            raw_request['pw_changed'] = check_hash(configuration, service,
+                                                   username, password, hashed)
+        elif scrambled:
+            raw_request['pw_changed'] = check_scramble(
+                configuration, service, username, password, scrambled,
+                salt=configuration.site_password_salt)
+
+        if account_status not in ('temporal', 'active', 'inactive'):
             logger.warning('existing account for %r is %s and not renewable'
                            % (client_id, account_status))
             raw_request['invalid'].append(renewal_blocked)
-        else:
+        if raw_request['pw_changed'] and not authorized and not reset_token:
+            logger.warning('illegal password change in request from %r' %
+                           client_id)
+            raw_request['invalid'].append(illegal_pw_change)
+        if not raw_request.get('invalid', []):
             logger.debug('account renewal from %r looks alright' % client_id)
     elif existing_user_collision(configuration, raw_request, client_id):
         # TODO: drop and rely solely on live check in janitor to avoid races?
