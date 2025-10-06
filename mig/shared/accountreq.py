@@ -1240,18 +1240,21 @@ to invite you instead if that is easier"""
         authorized = raw_request.get('authorized', None)
         reset_token = raw_request.get('reset_token', None)
         if hashed:
-            raw_request['pw_changed'] = check_hash(configuration, service,
-                                                   username, password, hashed)
+            raw_request['pw_match'] = check_hash(configuration, service,
+                                                 username, password, hashed)
         elif scrambled:
-            raw_request['pw_changed'] = check_scramble(
+            raw_request['pw_match'] = check_scramble(
                 configuration, service, username, password, scrambled,
                 salt=configuration.site_password_salt)
+        else:
+            logger.debug('account for %r has no passwords set' % client_id)
+            raw_request['pw_match'] = True
 
         if account_status not in ('temporal', 'active', 'inactive'):
             logger.warning('existing account for %r is %s and not renewable'
                            % (client_id, account_status))
             raw_request['invalid'].append(renewal_blocked)
-        if raw_request['pw_changed'] and not authorized and not reset_token:
+        if not raw_request['pw_match'] and not authorized and not reset_token:
             logger.warning('illegal password change in request from %r' %
                            client_id)
             raw_request['invalid'].append(illegal_pw_change)
