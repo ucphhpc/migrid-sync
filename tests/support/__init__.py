@@ -352,9 +352,11 @@ included:
         return relative_path
 
     @staticmethod
-    def _provision_test_user(self, distinguished_name):
+    def _provision_test_user(testcase, distinguished_name):
         """Provide a means to fabricate a useable test user on demand.
         """
+
+        self = testcase
 
         # ensure a user home directory for our test user
         conf_user_home = os.path.normpath(self.configuration.user_home)
@@ -369,10 +371,8 @@ included:
         prepared_fixture = _PreparedFixture.from_relpath(
             self,
             'MiG-users.db--example',
-            fixture_format='pickle',
-        )
-
-        test_db_file = prepared_fixture.copy_as_temp(prefix=conf_user_db_home)
+            fixture_format='json')
+        prepared_fixture.write_to_dir(conf_user_db_home, output_format='pickle')
 
         # create the test user home directory
         ensure_dirs_exist(test_user_dir)
@@ -381,14 +381,6 @@ included:
         ensure_dirs_exist(user_settings_dir)
 
         return test_user_dir
-
-
-def _to_display_path(value):
-    """Convert a relative path to one to be shown as part of test output."""
-    display_path = os.path.relpath(value, MIG_BASE)
-    if not display_path.startswith('.'):
-        return "./" + display_path
-    return display_path
 
 
 def is_path_within(path, start=None, _msg=None):
