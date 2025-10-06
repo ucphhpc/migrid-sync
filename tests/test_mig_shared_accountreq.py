@@ -204,6 +204,95 @@ class MigSharedAccountreq__prefilters(MigTestCase):
                                                        user)
             self.assertFalse(check)
 
+    def test_early_validation_checks_valid_new_simple(self):
+        service = 'migoid'
+        full_name = 'Valid Test Name'
+        email = 'john@doe.org'
+        dummy_pw = 'PW74deb6609F109f504d'
+        dummy_pw_hash = 'DUMMYPWHASH'
+        user = {'full_name': full_name, 'organization': 'Test Org',
+                'organizational_unit': '', 'email': email,
+                'password_hash': dummy_pw_hash, 'comment': ''}
+        fill_distinguished_name(user)
+        checked = accountreq.early_validation_checks(self.configuration, user,
+                                                     service, email, dummy_pw)
+        print("DEBUG: early checks on valid simple req: %s" % checked)
+        self.assertEqual(checked['invalid'], [], "early validation failed")
+
+    def test_early_validation_checks_valid_new_peers(self):
+        self.configuration.site_enable_peers = True
+        self.configuration.site_peers_explicit_fields = ['full_name', 'email']
+        self.configuration.site_peers_prefilter = [
+            ('peers_email', r'^.+@([a-z0-9]+\.)*ku\.dk$')]
+        service = 'migoid'
+        full_name = 'Valid Test Name'
+        email = 'john@doe.org'
+        peers_full_name = 'Valid Peer Name'
+        dummy_pw = 'PW74deb6609F109f504d'
+        dummy_pw_hash = 'DUMMYPWHASH'
+        accept = ['john.doe@science.ku.dk', 'abc123@ku.dk',
+                  'john.doe@a.b.c.ku.dk']
+        self.configuration.site_peers_prefilter = [
+            ('peers_email', r'^.+@([a-z0-9]+\.)*ku\.dk$')]
+        user = {'full_name': full_name, 'organization': 'Test Org',
+                'organizational_unit': '', 'email': email,
+                'password_hash': dummy_pw_hash, 'comment': '',
+                'peers_full_name': [peers_full_name], 'peers_email': []}
+        fill_distinguished_name(user)
+        for addr in accept:
+            user['peers_email'] = [addr]
+            username = user['email']
+            checked = accountreq.early_validation_checks(self.configuration,
+                                                         user, service,
+                                                         username, dummy_pw)
+            print("DEBUG: early checks on valid peers req: %s" % checked)
+            self.assertEqual(checked['invalid'], [], "early validation failed")
+
+    # TODO: add test valid renew
+
+    def test_early_validation_checks_invalid_new_simple(self):
+        service = 'migoid'
+        full_name = 'InvalidTestName'
+        email = 'john@doe.org'
+        dummy_pw = 'PW74deb6609F109f504d'
+        dummy_pw_hash = 'DUMMYPWHASH'
+        user = {'full_name': full_name, 'organization': 'Test Org',
+                'organizational_unit': '', 'email': email,
+                'password_hash': dummy_pw_hash, 'comment': ''}
+        fill_distinguished_name(user)
+        checked = accountreq.early_validation_checks(self.configuration, user,
+                                                     service, email, dummy_pw)
+        print("DEBUG: early checks on invalid simple req: %s" % checked)
+        self.assertTrue(checked['invalid'], "early validation failed")
+
+    def test_early_validation_checks_invalid_new_peers(self):
+        self.configuration.site_enable_peers = True
+        self.configuration.site_peers_explicit_fields = ['email']
+        self.configuration.site_peers_prefilter = [
+            ('peers_email', r'^.+@([a-z0-9]+\.)*ku\.dk$')]
+        service = 'migoid'
+        full_name = 'Valid Test Name'
+        email = 'john@doe.org'
+        peers_full_name = 'Valid Peer Name'
+        dummy_pw = 'PW74deb6609F109f504d'
+        dummy_pw_hash = 'DUMMYPWHASH'
+        user = {'full_name': full_name, 'organization': 'Test Org',
+                'organizational_unit': '', 'email': email,
+                'password_hash': dummy_pw_hash, 'comment': '',
+                'peers_full_name': [peers_full_name], 'peers_email': []}
+        fill_distinguished_name(user)
+        reject = ['', 'john@doe.org', 'a@b.c.org', 'a@ku.dk.com',
+                  'a@sci.ku.dk.org']
+        for addr in reject:
+            user['peers_email'] = addr
+            username = user['email']
+            checked = accountreq.early_validation_checks(self.configuration, user,
+                                                         service, email, dummy_pw)
+            print("DEBUG: early checks on invalid peers req: %s" % checked)
+            self.assertTrue(checked['invalid'], "early validation failed")
+
+    # TODO: add test invalid renew
+
 
 if __name__ == '__main__':
     testmain()
