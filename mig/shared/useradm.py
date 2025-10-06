@@ -1829,6 +1829,9 @@ def get_any_oid_user_dn(configuration, raw_login,
             distinguished_name = lookup_client_id(configuration, user_id)
         elif configuration.site_user_id_format == X509_USER_ID_FORMAT:
             distinguished_name = client_dir_id(native_dir)
+        else:
+            raise ValueError("invalid user ID format requested: %s" %
+                             configuration.site_user_id_format)
         _logger.debug('found full ID %s from %s link'
                       % (distinguished_name, raw_login))
         return distinguished_name
