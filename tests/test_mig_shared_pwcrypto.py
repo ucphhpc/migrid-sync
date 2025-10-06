@@ -155,11 +155,11 @@ class MigSharedPwCrypto(MigTestCase):
         random seed. I.e. the value may differ across interpreter invocations
         but remains constant in same interpreter.
         """
-        first = make_hash(
-            DUMMY_WEAK_PW, _urandom=lambda vlen: DUMMY_SALT[:vlen])
-        second = make_hash(
-            DUMMY_WEAK_PW, _urandom=lambda vlen: DUMMY_SALT[:vlen])
-        self.assertEqual(first, second, "hashing is not constant")
+        first = make_hash(DUMMY_WEAK_PW,
+                          _urandom=lambda vlen: DUMMY_SALT[:vlen])
+        second = make_hash(DUMMY_WEAK_PW,
+                           _urandom=lambda vlen: DUMMY_SALT[:vlen])
+        self.assertEqual(first, second, "same seed hashing is not constant")
 
     def test_check_hash_reject_weak(self):
         """Test basic hash checking of a constant weak complexity password"""
@@ -209,8 +209,8 @@ class MigSharedPwCrypto(MigTestCase):
                             allow_legacy=False)
         self.assertTrue(result, "check hash must accept modern complexity pw")
 
-    def test_check_hash_constant(self):
-        """Test basic hash checking of a constant string"""
+    def test_check_hash_fixed(self):
+        """Test basic hash checking of a fixed string"""
         expected = make_hash(DUMMY_MEDIUM_PW)
         result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                             DUMMY_MEDIUM_PW, expected, strict_policy=True)
@@ -231,6 +231,33 @@ class MigSharedPwCrypto(MigTestCase):
         result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                             random_pw, expected)
         self.assertTrue(result, "mismatch in random hash check")
+
+    def test_make_hash_variation(self):
+        """Test how hashing of a fixed string varies depending on random seed.
+        I.e. the value likely remains constant in same interpreter but differs
+        across interpreter invocations.
+        """
+        first = make_hash(DUMMY_MODERN_PW,
+                          _urandom=lambda vlen: DUMMY_SALT[:vlen])
+        second = make_hash(DUMMY_MODERN_PW,
+                           _urandom=lambda vlen: DUMMY_SALT[::-1][:vlen])
+        self.assertNotEqual(first, second, "varying seed hashing is constant")
+
+    def test_check_hash_despite_variation(self):
+        """Test that check_hash works independently of random seed variation.
+        I.e. the hash value differs across interpreter invocations but testing
+        the same password against each succeeds.
+        """
+        first = make_hash(DUMMY_MODERN_PW,
+                          _urandom=lambda vlen: DUMMY_SALT[:vlen])
+        second = make_hash(DUMMY_MODERN_PW,
+                           _urandom=lambda vlen: DUMMY_SALT[::-1][:vlen])
+        result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
+                            DUMMY_MODERN_PW, first)
+        self.assertTrue(result, "mismatch in 1st random password hash check")
+        result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
+                            DUMMY_MODERN_PW, second)
+        self.assertTrue(result, "mismatch in 2nd random password hash check")
 
     def test_check_digest(self):
         """Test basic digest checking of a random string"""
@@ -317,8 +344,8 @@ class MigSharedPwCrypto(MigTestCase):
                                random_pw, encrypted, algo='aesgcm_static')
         self.assertTrue(result, "mismatch in aesgcm_static encrypt check")
 
-    def test_password_reset_token(self):
-        """Test basic password reset token handling on a random string"""
+    def test_password_reset_token_generate_and_verify(self):
+        """Test basic password reset token generate and verify helper"""
         random_pw = generate_random_password(self.dummy_conf)
         hashed_pw = make_hash(random_pw)
         dummy_user = {'distinguished_name': DUMMY_USER}
@@ -332,6 +359,23 @@ class MigSharedPwCrypto(MigTestCase):
         result = verify_reset_token(self.dummy_conf, dummy_user, expected,
                                     DUMMY_SERVICE, timestamp)
         self.assertTrue(result, "failed password reset token handling")
+
+    def test_password_reset_token_verify_expired(self):
+        """Test basic password reset token verify failure after it expired"""
+        random_pw = generate_random_password(self.dummy_conf)
+        hashed_pw = make_hash(random_pw)
+        dummy_user = {'distinguished_name': DUMMY_USER}
+        dummy_user['password_hash'] = hashed_pw
+        timestamp = 42
+        expected = generate_reset_token(self.dummy_conf, dummy_user,
+                                        DUMMY_SERVICE, timestamp)
+        parsed = parse_reset_token(self.dummy_conf, expected, DUMMY_SERVICE)
+        self.assertEqual(parsed[0], timestamp, "failed parse token time")
+        self.assertEqual(parsed[1], hashed_pw, "failed parse token hash")
+        timestamp = 4242
+        result = verify_reset_token(self.dummy_conf, dummy_user, expected,
+                                    DUMMY_SERVICE, timestamp)
+        self.assertFalse(result, "failed password reset token expiry check")
 
    # TODO: migrate remaining inline checks from module here instead
 
