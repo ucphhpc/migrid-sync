@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gdpman - entry point with project access and management for GDP-enabled sites
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -1649,13 +1649,12 @@ Please contact the site admins %s if you think it should be enabled.
                                client_addr,
                                client_id,
                                autologout=True)
-            return_url = req_url
-            return_query_dict = None
+            return_url = req_url.replace(environ.get('SCRIPT_URL', ''),
+                                     configuration.site_autolaunch_page)
             redirect_url = build_autologout_url(configuration,
                                                 environ,
                                                 client_id,
-                                                return_url,
-                                                return_query_dict=return_query_dict)
+                                                return_url)
         elif active_project_client_id:
             dest_op_name = 'fileman'
             redirect_url = requested_page(environ).replace(op_name,
