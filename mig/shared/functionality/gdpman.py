@@ -1610,7 +1610,7 @@ Please contact the site admins %s if you think it should be enabled.
         tmptopicfile = write_named_tempfile(configuration, topic_mrsl)
         if not tmptopicfile:
             msg = 'Problem writing temporary topic file on server.'
-            logger.error("%s : %s" % msg)
+            logger.error(msg)
             output_objects.append(
                 {'object_type': 'error_text', 'text': msg})
             return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -1673,6 +1673,7 @@ Please contact the site admins %s if you think it should be enabled.
 
     # Generate html
 
+    validate_msg = ""
     if status:
         (status, validate_msg) = validate_user(configuration,
                                                client_id,
