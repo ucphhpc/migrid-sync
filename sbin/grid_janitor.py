@@ -90,12 +90,18 @@ unless it is available in mig/server/MiGserver.conf
     print("Starting janitor daemon - Ctrl-C to quit")
     logger.info("(%s) Starting Janitor daemon" % main_pid)
 
+    last_failed = False
     logger.debug("(%s) Starting main loop" % main_pid)
     print("%s: Start main loop" % os.getpid())
     while not check_stop():
         try:
             now = time.time()
-            if handle_janitor_tasks(configuration, now) <= 0:
+            if last_failed:
+                # Throttle on general exception in main loop
+                interruptible_sleep(configuration, LONG_THROTTLE_SECS,
+                                    (check_run, check_stop))
+                last_failed = False
+            elif handle_janitor_tasks(configuration, now) <= 0:
                 interruptible_sleep(configuration, LONG_THROTTLE_SECS,
                                     (check_run, check_stop))
             else:
@@ -108,6 +114,7 @@ unless it is available in mig/server/MiGserver.conf
             #       so we make sure to propagate to monitor child
             print("Interrupt requested - shutdown")
         except Exception as exc:
+            last_failed = True
             logger.error(
                 "(%s) Caught unexpected exception: %s" % (os.getpid(), exc)
             )
