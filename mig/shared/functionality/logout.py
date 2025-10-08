@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # logout - force-expire local login session(s)
-# Copyright (C) 2003-2025  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -40,7 +40,8 @@ from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.gdp.all import project_logout, get_client_id_from_project_client_id
 from mig.shared.httpsclient import extract_client_id, detect_client_auth, \
-    require_twofactor_setup, build_logout_url, extract_client_openid
+    require_twofactor_setup, build_logout_url, extract_client_openid, \
+    build_autologout_url
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.useradm import expire_oid_sessions, find_oid_sessions
 from mig.shared.url import urlencode
@@ -231,7 +232,18 @@ documentation for details.""" % (configuration.short_title, auth_type)})
                                    % configuration.short_title})
             status = returnvalues.CLIENT_ERROR
     else:
-        logout_url = build_logout_url(configuration, environ)
+        if configuration.site_enable_gdp:
+            real_user = get_client_id_from_project_client_id(configuration,
+                                                             client_id)
+            req_url = environ.get('SCRIPT_URI', '')
+            return_url = req_url.replace(environ.get('SCRIPT_URL', ''),
+                                         configuration.site_autolaunch_page)
+            logout_url = build_autologout_url(configuration,
+                                              environ,
+                                              real_user,
+                                              return_url)
+        else:
+            logout_url = build_logout_url(configuration, environ)
         output_objects.append(
             {'object_type': 'text', 'text': """Are you sure you want to
 log out of %s?""" % configuration.short_title})
