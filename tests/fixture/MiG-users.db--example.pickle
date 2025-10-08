@@ -1,10 +1,10 @@
 (dp0
-V/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=b'Test User'/emailAddress=dummy-user
+V/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=dummy-user
 p1
 (dp2
 Vfull_name
 p3
-Vb'Test User'
+VTest User
 p4
 sVorganization
 p5
@@ -32,11 +32,11 @@ V
 p16
 sVpassword_hash
 p17
-VPBKDF2$sha256$10000$b't0JM/JjkQ347th0Q'$b'QupJt53hA5KhESEeqDhTQTCPOrCBvZ6H'
+VPBKDF2$sha256$10000$t0JM/JjkQ347th0Q$QupJt53hA5KhESEeqDhTQTCPOrCBvZ6H
 p18
 sVdistinguished_name
 p19
-V/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=b'Test User'/emailAddress=dummy-user
+V/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=dummy-user
 p20
 sVlocality
 p21
@@ -59,7 +59,7 @@ p27
 (lp28
 sVold_password_hash
 p29
-VPBKDF2$sha256$10000$b'GL7Qq92iLe/hZXBo'$b'ZwB/5IZqgU7onP+ZqZk9zcHVZOx7jmWz'
+VPBKDF2$sha256$10000$GL7Qq92iLe/hZXBo$ZwB/5IZqgU7onP+ZqZk9zcHVZOx7jmWz
 p30
 sVrenewed
 p31
@@ -96,7 +96,7 @@ p46
 g16
 sVpassword_hash
 p47
-VPBKDF2$sha256$10000$b'kZ8WgLNH+wg3X11d'$b't1d08MV4g215WYW7S7EbkjHqDF+MCjMa'
+VPBKDF2$sha256$10000$kZ8WgLNH+wg3X11d$t1d08MV4g215WYW7S7EbkjHqDF+MCjMa
 p48
 sVdistinguished_name
 p49
@@ -123,7 +123,7 @@ p57
 (lp58
 sVold_password_hash
 p59
-VPBKDF2$sha256$10000$b'yObizsUepZvvJ0/r'$b'uKIt7n6Lf/7WXD6pKDGyvT30L2uowBnV'
+VPBKDF2$sha256$10000$yObizsUepZvvJ0/r$uKIt7n6Lf/7WXD6pKDGyvT30L2uowBnV
 p60
 sVrenewed
 p61
@@ -160,7 +160,7 @@ p76
 g16
 sVpassword_hash
 p77
-VPBKDF2$sha256$10000$b'/TkhLk4yMGf6XhaY'$b'7HUeQ9iwCkE4YMQAaCd+ZdrN+y8EzkJH'
+VPBKDF2$sha256$10000$/TkhLk4yMGf6XhaY$7HUeQ9iwCkE4YMQAaCd+ZdrN+y8EzkJH
 p78
 sVdistinguished_name
 p79
