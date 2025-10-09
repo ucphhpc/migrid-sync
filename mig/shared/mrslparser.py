@@ -45,12 +45,6 @@ from mig.shared.refunctions import is_runtime_environment
 from mig.shared.safeinput import html_escape, valid_path
 from mig.shared.vgridaccess import user_vgrid_access
 
-try:
-    from mig.shared import arcwrapper
-except:
-    # Ignore errors and let it crash if ARC is enabled without the lib
-    pass
-
 
 def replace_variables(text, replace_list):
     """Replace all occurrences of variables from replace_list keys in text
@@ -187,10 +181,8 @@ def parse(
     # convert specified runtime environments to upper-case and verify they
     # actually exist
 
-    # do not check runtime envs if the job is for ARC (submission will
-    # fail later)
-    if global_dict.get('JOBTYPE', 'unset') != 'arc' \
-            and 'RUNTIMEENVIRONMENT' in global_dict:
+    # check runtime envs
+    if 'RUNTIMEENVIRONMENT' in global_dict:
         re_entries_uppercase = []
         for specified_re in global_dict['RUNTIMEENVIRONMENT']:
             specified_re = specified_re.upper()
@@ -297,31 +289,6 @@ environment '%s', therefore the job can not be run on any resources.""" %
                             (field, html_escape(part), exc))
             normalized_field.append(' '.join(normalized_parts))
         global_dict[field] = normalized_field
-
-    # if this is an ARC job (indicated by a flag), check proxy existence
-    # and lifetime. grid_script will submit the job directly.
-
-    if global_dict.get('JOBTYPE', 'unset') == 'arc':
-        if not configuration.arc_clusters:
-            return (False, 'No ARC support!')
-
-        logger.debug('Received job for ARC.')
-        user_home = os.path.join(configuration.user_home, client_dir)
-        try:
-            session = arcwrapper.Ui(user_home)
-            timeleft = session.getProxy().getTimeleft()
-            req_time = int(global_dict.get('CPUTIME', '0'))
-            logger.debug('CPU time (%s), proxy lifetime (%s)'
-                         % (req_time, timeleft))
-            if timeleft < req_time:
-                return (False, 'Proxy time shorter than requested CPU time')
-
-        except arcwrapper.ARCWrapperError as err:
-            return (False, err.what())
-        except arcwrapper.NoProxyError as err:
-            return (False, 'No Proxy found: %s' % err.what())
-        except Exception as err:
-            return (False, err.__str__())
 
     # save file
     if outfile == 'AUTOMATIC':

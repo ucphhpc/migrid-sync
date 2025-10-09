@@ -69,14 +69,6 @@ from mig.shared.useradm import create_user
 from mig.shared.userdb import default_db_path
 from mig.shared.validstring import is_valid_email_address
 
-try:
-    from mig.shared import arcwrapper
-except Exception as exc:
-
-    # Ignore errors and let it crash if ARC is enabled without the lib
-
-    pass
-
 
 def signature(configuration, auth_type):
     """Signature of the main function"""
@@ -169,60 +161,6 @@ def signature(configuration, auth_type):
     else:
         raise ValueError('no such auth_type: %s' % auth_type)
     return ['text', defaults]
-
-
-def handle_proxy(proxy_string, client_id, config):
-    """If ARC-enabled server: store a proxy certificate.
-       Arguments: proxy_string - text  extracted from given upload
-                  client_id  - DN for user just being created
-                  config     - global configuration
-    """
-
-    output = []
-    client_dir = client_id_dir(client_id)
-    proxy_dir = os.path.join(config.user_home, client_dir)
-    proxy_path = os.path.join(config.user_home, client_dir,
-                              arcwrapper.Ui.proxy_name)
-
-    if not config.arc_clusters:
-        output.append({'object_type': 'error_text',
-                       'text': 'No ARC support!'})
-        return output
-
-    # store the file
-
-    try:
-        write_file(proxy_string, proxy_path, config.logger)
-        os.chmod(proxy_path, 0o600)
-    except Exception as exc:
-        output.append({'object_type': 'error_text',
-                       'text': 'Proxy file could not be written (%s)!'
-                       % ("%s" % exc).replace(proxy_dir, '')})
-        return output
-
-    # provide information about the uploaded proxy
-
-    try:
-        session_ui = arcwrapper.Ui(proxy_dir)
-        proxy = session_ui.getProxy()
-        if proxy.IsExpired():
-
-            # can rarely happen, constructor will throw exception
-
-            output.append({'object_type': 'warning',
-                           'text': 'Proxy certificate is expired.'})
-        else:
-            output.append({'object_type': 'text', 'text': 'Proxy for %s'
-                           % proxy.GetIdentitySN()})
-            output.append({'object_type': 'text',
-                           'text': 'Proxy certificate will expire on %s (in %s sec.)'
-                           % (proxy.Expires(), proxy.getTimeleft())})
-    except arcwrapper.NoProxyError as err:
-
-        output.append({'object_type': 'warning',
-                       'text': 'No proxy certificate to load: %s'
-                       % err.what()})
-    return output
 
 
 def split_comma_concat(value_list, sep=','):
@@ -768,14 +706,6 @@ should be enabled.""" % fill_helper})
             create_user(user_dict, configuration.config_file, db_path,
                         ask_renew=False, default_renew=True,
                         verify_peer=peer_pattern)
-            if configuration.site_enable_griddk \
-                    and accepted['proxy_upload'] != ['']:
-
-                # save the file, display expiration date
-
-                proxy_out = handle_proxy(proxy_content, user_id,
-                                         configuration)
-                output_objects.extend(proxy_out)
         except Exception as err:
             logger.error('create failed for %s: %s' % (user_id, err))
             output_objects.append({'object_type': 'error_text', 'text':

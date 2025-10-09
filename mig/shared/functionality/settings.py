@@ -65,12 +65,6 @@ from mig.shared.useradm import create_alias_link, get_default_mrsl, \
     get_default_css
 from mig.shared.vgridaccess import get_vgrid_map_vgrids
 
-try:
-    from mig.shared import arcwrapper
-except Exception as exc:
-    # Ignore errors and let it crash if ARC is enabled without the lib
-    pass
-
 
 general_edit = cm_options.copy()
 ssh_edit = cm_options.copy()
@@ -200,8 +194,6 @@ def main(client_id, user_arguments_dict):
         valid_topics.append('profile')
     if configuration.site_enable_widgets and configuration.site_script_deps:
         valid_topics.append('widgets')
-    if configuration.arc_clusters:
-        valid_topics.append('arc')
     if 'setup' not in active_menu:
         if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
             valid_topics.append('sftp')
@@ -2221,34 +2213,6 @@ value="%(default_authpassword)s" />
 
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
-
-    # if ARC-enabled server:
-    if 'arc' in topic_list:
-        # provide information about the available proxy, offer upload
-        try:
-            home_dir = os.path.normpath(base_dir)
-            session_Ui = arcwrapper.Ui(home_dir, require_user_proxy=True)
-            proxy = session_Ui.getProxy()
-            if proxy.IsExpired():
-                # can rarely happen, constructor will throw exception
-                output_objects.append({'object_type': 'text',
-                                       'text':
-                                       'Proxy certificate is expired.'})
-            else:
-                output_objects.append({'object_type': 'text',
-                                       'text': 'Proxy for %s'
-                                       % proxy.GetIdentitySN()})
-                output_objects.append(
-                    {'object_type': 'text',
-                     'text': 'Proxy certificate will expire on %s (in %s sec.)'
-                     % (proxy.Expires(), proxy.getTimeleft())
-                     })
-        except arcwrapper.NoProxyError as err:
-            output_objects.append({'object_type': 'warning',
-                                   'text': 'No proxy certificate to load: %s'
-                                   % err.what()})
-
-        output_objects = output_objects + arcwrapper.askProxy()
 
     output_objects.append({'object_type': 'html_form', 'text':
                            '<div class="vertical-spacer"></div>'})
