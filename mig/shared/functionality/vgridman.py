@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -40,7 +41,8 @@ from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.modified import pending_vgrids_update
 from mig.shared.useradm import get_full_user_map
 from mig.shared.vgrid import vgrid_create_allowed
-from mig.shared.vgridaccess import get_vgrid_map, VGRIDS, OWNERS, MEMBERS, SETTINGS
+from mig.shared.vgridaccess import get_vgrid_map, load_vgrid_map, MEMBERS, \
+    OWNERS, SETTINGS, VGRIDS
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']
@@ -185,7 +187,11 @@ resources.''' % label})
 
     if operation in list_operations:
         logger.info("get vgrid map with caching %s" % caching)
-        vgrid_map = get_vgrid_map(configuration, caching=caching)
+        # NOTE: prevent refresh if janitor is enabled as it handles all updates
+        if configuration.site_enable_janitor:
+            (vgrid_map, _) = load_vgrid_map(configuration, caching=caching)
+        else:
+            vgrid_map = get_vgrid_map(configuration, caching=caching)
         # NOTE: use simple pending check if caching to avoid lock during update
         if caching:
             pending_updates = pending_vgrids_update(configuration)
