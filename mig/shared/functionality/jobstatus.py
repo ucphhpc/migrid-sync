@@ -47,12 +47,6 @@ from mig.shared.parseflags import verbose, sorted, interactive
 from mig.shared.resource import anon_resource_id
 from mig.shared.validstring import valid_user_path
 
-try:
-    from mig.shared import arcwrapper
-except Exception as exc:
-    # Ignore errors and let it crash if ARC is enabled without the lib
-    pass
-
 
 def signature():
     """Signature of the main function"""
@@ -250,31 +244,6 @@ contact the site admins.''' % configuration.short_title})
                     # not a time object, just add
 
                     job_obj[name.lower()] = job_dict[name]
-
-        ###########################################
-        # ARC job status retrieval on demand:
-        # But we should _not_ update the status in the mRSL files, since
-        # other MiG code might rely on finding only valid "MiG" states.
-
-        if configuration.arc_clusters and \
-                job_dict.get('UNIQUE_RESOURCE_NAME', 'unset') == 'ARC' \
-                and job_dict['STATUS'] == 'EXECUTING':
-            try:
-                home = os.path.join(configuration.user_home, client_dir)
-                arcsession = arcwrapper.Ui(home)
-                arcstatus = arcsession.jobStatus(job_dict['EXE'])
-                job_obj['status'] = arcstatus['status']
-            except arcwrapper.ARCWrapperError as err:
-                logger.error('Error retrieving ARC job status: %s' %
-                             err.what())
-                job_obj['status'] += '(Error: ' + err.what() + ')'
-            except arcwrapper.NoProxyError as err:
-                logger.error('While retrieving ARC job status: %s' %
-                             err.what())
-                job_obj['status'] += '(Error: ' + err.what() + ')'
-            except Exception as err:
-                logger.error('Error retrieving ARC job status: %s' % err)
-                job_obj['status'] += '(Error during retrieval)'
 
         exec_histories = []
         if verbose(flags):

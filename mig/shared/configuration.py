@@ -741,12 +741,6 @@ _CONFIGURATION_DEFAULTS = {
     'auto_add_user_with_peer': [('distinguished_name', '.*')],
     'auto_add_filter_method': '',
     'auto_add_filter_fields': [],
-
-    # ARC resource configuration (list)
-    # wired-in shorthands in arcwrapper:
-    # fyrgrid, benedict. Otherwise, ldap://bla.bla:2135/...
-
-    'arc_clusters': [],
 }
 
 
@@ -2805,12 +2799,6 @@ location.""" % self.config_file)
                                                     'custom_valid_days')
         else:
             self.generic_valid_days = generic_valid_days
-
-        # if arc cluster URLs configured, read them in:
-
-        if config.has_option('ARC', 'arc_clusters'):
-            self.arc_clusters = config.get('ARC',
-                                           'arc_clusters').split()
 
         # Warn about missing IP check if in GDP mode
         if self.site_enable_gdp \
