@@ -52,9 +52,9 @@ import sys
 if sys.version_info[0] >= 3:
     from urllib.parse import quote, unquote, urlencode, parse_qs, parse_qsl, \
         urlsplit, urlparse, urljoin
-    from urllib.request import urlopen, FancyURLopener
+    from urllib.request import urlopen
 else:
-    from urllib import quote, unquote, urlencode, urlopen, FancyURLopener
+    from urllib import quote, unquote, urlencode, urlopen
     from urlparse import parse_qs, parse_qsl, urlsplit, urlparse, urljoin
 
 try:

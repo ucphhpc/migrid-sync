@@ -33,6 +33,7 @@ from __future__ import absolute_import
 import getopt
 import os
 import re
+import ssl
 import sys
 import time
 
@@ -48,7 +49,7 @@ from mig.shared.output import format_output
 from mig.shared.pwcrypto import generate_random_password, unscramble_password, \
     scramble_password
 from mig.shared.safeinput import valid_password_chars
-from mig.shared.url import FancyURLopener
+from mig.shared.url import urlopen
 from mig.shared.useradm import init_user_adm, default_search, create_user, \
     search_users
 from mig.shared.vgridaccess import refresh_user_map
@@ -87,12 +88,13 @@ def dump_contents(url, key_path=None, cert_path=None):
 
     # allow file dump at least until we get certificate based access
 
-    browser = FancyURLopener(key_file=key_path,
-                             cert_file=cert_path)
-    pipe = browser.open(url)
-    # NOTE: FancyURLopener returns bytes and we want native string for search
-    data = force_native_str(pipe.read())
-    browser.close()
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+    context.load_cert_chain(cert_path, key_path)
+
+    # NOTE: reading returns bytes and we want native string for search
+    response = urlopen(url, context=context)
+    data = force_native_str(response.read())
+    response.close()
 
     return data
 
