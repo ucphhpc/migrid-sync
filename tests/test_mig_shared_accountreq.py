@@ -36,7 +36,8 @@ import unittest
 from tests.support import MigTestCase, testmain, fixturefile, ensure_dirs_exist
 
 import mig.shared.accountreq as accountreq
-from mig.shared.base import canonical_user, fill_distinguished_name
+from mig.shared.base import canonical_user, distinguished_name_to_user, \
+    fill_distinguished_name, get_client_id
 from mig.shared.defaults import keyword_auto
 
 
@@ -142,6 +143,12 @@ class MigSharedAccountreq__peers(MigTestCase):
 
         self.assertTrue(success)
 
+
+class MigSharedAccountreq__prefilters(MigTestCase):
+    """Unit tests for prefilter helper functions within the accountreq module"""
+
+    TEST_ADMIN_DN = '/C=DK/ST=NA/L=NA/O=DIKU/OU=NA/CN=Test Admin/emailAddress=siteadm@di.ku.dk'
+
     def test_signup_prefilter_email_accept(self):
         accept = ['john@doe.org', 'a@b.c.org', 'a@ku.dk.com',
                   'a@sci.ku.dk.org', 'a@diku.dk', 'a@nbi.dk']
@@ -163,6 +170,17 @@ class MigSharedAccountreq__peers(MigTestCase):
             check = accountreq.signup_prefilter_allowed(self.configuration,
                                                         user)
             self.assertFalse(check)
+
+    def test_signup_prefilter_email_accept_site_admins(self):
+        user = distinguished_name_to_user(self.TEST_ADMIN_DN)
+        admin_list = [get_client_id(user)]
+        self.configuration.site_signup_prefilter = [
+            ('email', r'^.+(?<!(@|\.)ku\.dk)$')]
+        check = accountreq.signup_prefilter_allowed(self.configuration, user)
+        self.assertFalse(check)
+        check = accountreq.signup_prefilter_allowed(self.configuration, user,
+                                                    admin_list)
+        self.assertTrue(check)
 
     def test_peers_prefilter_email_accept(self):
         accept = ['john.doe@science.ku.dk', 'abc123@ku.dk',

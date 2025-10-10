@@ -1393,10 +1393,17 @@ def auto_add_user_allowed_with_peer(configuration, user_dict):
                                    configuration.auto_add_user_with_peer)
 
 
-def signup_prefilter_allowed(configuration, user_dict):
+def signup_prefilter_allowed(configuration, user_dict, allow_dn_list=None):
     """Check if user with user_dict is potentially allowed to sign up in forms
     soleley based on optional configuration prefilter.
+    If a list of user distinguished_name values is passed as the allow_dn_list
+    those users will unconditionally be allowed through the filter. This is
+    mainly useful in relation to allowing registered site admins to sign up for
+    X509 certificates or migoid(c) access for an existing extoid(c) account.
     """
+    if allow_dn_list and user_dict.get('distinguished_name', None) in \
+            allow_dn_list:
+        return True
     for (key, val) in configuration.site_signup_prefilter:
         if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
             return False

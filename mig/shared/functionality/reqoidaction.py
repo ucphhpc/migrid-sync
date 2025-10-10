@@ -245,7 +245,9 @@ You may also read more about the Peers system in the site documentation.
     user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     fill_distinguished_name(user_dict)
 
-    if not signup_prefilter_allowed(configuration, raw_user):
+    # NOTE: allow registered site admins to request alternative login access
+    if not signup_prefilter_allowed(configuration, raw_user,
+                                    configuration.admin_list):
         output_objects.append({'object_type': 'error_text', 'text':
                                '''Invalid sign up request:
 Please read and follow the sign up help and instructions on the request page!
