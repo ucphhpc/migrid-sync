@@ -30,6 +30,7 @@
 import base64
 import os
 import sys
+import unittest
 
 from tests.support import MigTestCase, FakeConfiguration, \
     cleanpath, temppath, testmain
@@ -41,6 +42,7 @@ from mig.shared.pwcrypto import *
 
 DUMMY_USER = "dummy-user"
 DUMMY_ID = "dummy-id"
+# NOTE: these passwords are not and should not ever be used outside unit tests
 DUMMY_WEAK_PW = 'foobar'
 DUMMY_MEDIUM_PW = 'QZFnCp7h'
 DUMMY_HIGH_PW = 'QZFnp7I-GZ'
@@ -50,6 +52,19 @@ DUMMY_WEAK_PW_SHA256 = \
     "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
 DUMMY_WEAK_PW_PBKDF2 = \
     "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$epib2rEg/HYTQZFnCp7hmIGZ6rzHnViy"
+DUMMY_MEDIUM_PW_PBKDF2 = \
+    "PBKDF2$sha256$10000$ebQHnDX1rzY9Rizb$0vUJ9/4ThhsN4cRaKYmOj4N0YKEsozTr"
+DUMMY_HIGH_PW_PBKDF2 = \
+    "PBKDF2$sha256$10000$HR+KcqLyQe3v0WSk$CtxMAomi8JHiI7gWc/PH5Ey00zW1Now3"
+DUMMY_MODERN_PW_MD5 = "a06d169a171ef7d4383b212457162d93"
+DUMMY_MODERN_PW_SHA256 = \
+    "d293dcb9762c87641ea1decbfe76d84ec51b13d6a1e688cdf1a838eebc5bb1a9"
+DUMMY_MODERN_PW_PBKDF2 = \
+    "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$B22uw6C7C4VFiYAe4Vf10n58FHrn1pjX"
+DUMMY_MODERN_PW_DIGEST = \
+    "DIGEST$custom$CONFSALT$64756D6D792D7265616C6D3A64756D6D792D7520DE71261F96A2FE48A67DD0877F2A2C"
+DUMMY_MODERN_PW_SCRAMBLE = "53BB031C1F96A2FE48A67DD0877F2A2C"
+DUMMY_MODERN_PW_RESET_TOKEN = b'gAAAAABo63hYqeHE7Db93pMxWn1sWzj2Z-6td2UhA5gKYa4KV096ndV-AO0pp6hrR9jXKcwWAouLCMiNC0BRudeCAYHoBii15lTRbP9b7JzvJjeusbidjRxqcJg0om6bbtSK1Rz_RBTq_jhdAk4v-7PccWlZ15dVJ4j-X3X4zSsBWIOR5y6Y-bA='
 DUMMY_HOME_DIR = 'dummy_user_home'
 DUMMY_SETTINGS_DIR = 'dummy_user_settings'
 # TODO: adjust password reset token helpers to handle configured services
@@ -57,7 +72,7 @@ DUMMY_SETTINGS_DIR = 'dummy_user_settings'
 # DUMMY_SERVICE = 'dummy-svc'
 DUMMY_SERVICE = 'migoid'
 DUMMY_REALM = 'dummy-realm'
-DUMMY_SALT = base64.b16encode(os.urandom(16))
+DUMMY_SALT = b'53BB031C4ECCE4900BD64AB8EA361B6B'
 
 
 class MigSharedPwCrypto(MigTestCase):
@@ -112,42 +127,36 @@ class MigSharedPwCrypto(MigTestCase):
         allow_modern = valid_login_password(self.dummy_conf, DUMMY_MODERN_PW)
         self.assertTrue(allow_modern, "refused login with modern pw")
 
-    def test_make_simple_hash_fixed_seed(self):
+    def test_make_simple_hash_fixed(self):
         """Test basic hashing of a fixed string to be constant"""
-        expected = DUMMY_WEAK_PW_MD5
-        actual = make_simple_hash(DUMMY_WEAK_PW)
+        expected = DUMMY_MODERN_PW_MD5
+        actual = make_simple_hash(DUMMY_MODERN_PW)
         self.assertEqual(actual, expected, "mismatch simple hash string")
 
     def test_make_simple_hash_constant_string(self):
-        """Test basic hashing of a fixed string to be constant for a particular
-        random seed. I.e. the value may differ across interpreter invocations
-        but remains constant in same interpreter.
-        """
-        first = make_simple_hash(DUMMY_WEAK_PW)
-        second = make_simple_hash(DUMMY_WEAK_PW)
+        """Test basic hashing of a fixed string to be constant"""
+        first = make_simple_hash(DUMMY_MODERN_PW)
+        second = make_simple_hash(DUMMY_MODERN_PW)
         self.assertEqual(first, second, "simple hashing is not constant")
 
-    def test_make_safe_hash_fixed_seed(self):
+    def test_make_safe_hash_fixed(self):
         """Test basic hashing of a fixed string to be constant"""
-        expected = DUMMY_WEAK_PW_SHA256
-        actual = make_safe_hash(DUMMY_WEAK_PW)
+        expected = DUMMY_MODERN_PW_SHA256
+        actual = make_safe_hash(DUMMY_MODERN_PW)
         self.assertEqual(actual, expected, "mismatch safe hash string")
 
     def test_make_safe_hash_constant_string(self):
-        """Test basic hashing of a fixed string to be constant for a particular
-        random seed. I.e. the value may differ across interpreter invocations
-        but remains constant in same interpreter.
-        """
-        first = make_safe_hash(DUMMY_WEAK_PW)
-        second = make_safe_hash(DUMMY_WEAK_PW)
+        """Test basic hashing of a fixed string to be constant"""
+        first = make_safe_hash(DUMMY_MODERN_PW)
+        second = make_safe_hash(DUMMY_MODERN_PW)
         self.assertEqual(first, second, "safe hashing is not constant")
 
     def test_make_hash_fixed_seed(self):
         """Test basic hashing of a fixed string to be constant for a fixed
         random seed.
         """
-        expected = DUMMY_WEAK_PW_PBKDF2
-        actual = make_hash(DUMMY_WEAK_PW, _urandom=lambda vlen: b'0' * vlen)
+        expected = DUMMY_MODERN_PW_PBKDF2
+        actual = make_hash(DUMMY_MODERN_PW, _urandom=lambda vlen: b'0' * vlen)
         self.assertEqual(actual, expected, "mismatch hashing string")
 
     def test_make_hash_constant_string(self):
@@ -155,15 +164,15 @@ class MigSharedPwCrypto(MigTestCase):
         random seed. I.e. the value may differ across interpreter invocations
         but remains constant in same interpreter.
         """
-        first = make_hash(DUMMY_WEAK_PW,
+        first = make_hash(DUMMY_MODERN_PW,
                           _urandom=lambda vlen: DUMMY_SALT[:vlen])
-        second = make_hash(DUMMY_WEAK_PW,
+        second = make_hash(DUMMY_MODERN_PW,
                            _urandom=lambda vlen: DUMMY_SALT[:vlen])
         self.assertEqual(first, second, "same seed hashing is not constant")
 
     def test_check_hash_reject_weak(self):
         """Test basic hash checking of a constant weak complexity password"""
-        expected = make_hash(DUMMY_WEAK_PW)
+        expected = DUMMY_WEAK_PW_PBKDF2
         result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                             DUMMY_WEAK_PW, expected, strict_policy=True)
         self.assertFalse(result, "check hash should fail on weak pw")
@@ -172,7 +181,7 @@ class MigSharedPwCrypto(MigTestCase):
         """Test basic hash checking of a constant medium complexity password
         without legacy password support.
         """
-        expected = make_hash(DUMMY_MEDIUM_PW)
+        expected = DUMMY_MEDIUM_PW_PBKDF2
         result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                             DUMMY_MEDIUM_PW, expected, strict_policy=True,
                             allow_legacy=False)
@@ -182,7 +191,7 @@ class MigSharedPwCrypto(MigTestCase):
         """Test basic hash checking of a constant medium complexity password
         with legacy password support.
         """
-        expected = make_hash(DUMMY_MEDIUM_PW)
+        expected = DUMMY_MEDIUM_PW_PBKDF2
         result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                             DUMMY_MEDIUM_PW, expected, strict_policy=True,
                             allow_legacy=True)
@@ -192,7 +201,7 @@ class MigSharedPwCrypto(MigTestCase):
         """Test basic hash checking of a constant high complexity password
         without legacy password support.
         """
-        expected = make_hash(DUMMY_HIGH_PW)
+        expected = DUMMY_HIGH_PW_PBKDF2
         self.dummy_conf.site_password_policy = POLICY_HIGH
         result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                             DUMMY_HIGH_PW, expected, strict_policy=True,
@@ -203,7 +212,7 @@ class MigSharedPwCrypto(MigTestCase):
         """Test basic hash checking of a constant modern complexity password
         without legacy password support.
         """
-        expected = make_hash(DUMMY_MODERN_PW)
+        expected = DUMMY_MODERN_PW_PBKDF2
         result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                             DUMMY_MODERN_PW, expected, strict_policy=True,
                             allow_legacy=False)
@@ -211,7 +220,7 @@ class MigSharedPwCrypto(MigTestCase):
 
     def test_check_hash_fixed(self):
         """Test basic hash checking of a fixed string"""
-        expected = make_hash(DUMMY_MEDIUM_PW)
+        expected = DUMMY_MEDIUM_PW_PBKDF2
         result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                             DUMMY_MEDIUM_PW, expected, strict_policy=True)
         self.assertFalse(result, "check hash should reject medium pw")
@@ -219,18 +228,18 @@ class MigSharedPwCrypto(MigTestCase):
                             DUMMY_MEDIUM_PW, expected, strict_policy=False,
                             allow_legacy=True)
         self.assertTrue(result, "check hash failed medium pw when not strict")
-        expected = make_hash(DUMMY_MODERN_PW)
+        expected = DUMMY_MODERN_PW_PBKDF2
         result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                             DUMMY_MODERN_PW, expected, strict_policy=True)
         self.assertTrue(result, "check hash failed modern pw")
 
     def test_check_hash_random(self):
-        """Test basic hash checking of a random string"""
+        """Test basic hashing and hash checking of a random string"""
         random_pw = generate_random_password(self.dummy_conf)
         expected = make_hash(random_pw)
         result = check_hash(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                             random_pw, expected)
-        self.assertTrue(result, "mismatch in random hash check")
+        self.assertTrue(result, "mismatch in random hash and check")
 
     def test_make_hash_variation(self):
         """Test how hashing of a fixed string varies depending on random seed.
@@ -259,23 +268,82 @@ class MigSharedPwCrypto(MigTestCase):
                             DUMMY_MODERN_PW, second)
         self.assertTrue(result, "mismatch in 2nd random password hash check")
 
-    def test_check_digest(self):
-        """Test basic digest checking of a random string"""
-        random_pw = generate_random_password(self.dummy_conf)
-        expected = make_digest(DUMMY_REALM, DUMMY_USER,
-                               DUMMY_MODERN_PW, DUMMY_SALT)
+    def test_make_digest_fixed(self):
+        """Test basic digest of a fixed string"""
+        expected = DUMMY_MODERN_PW_DIGEST
+        result = make_digest(DUMMY_REALM, DUMMY_USER, DUMMY_MODERN_PW,
+                             DUMMY_SALT)
+        self.assertEqual(expected, result, "mismatch in fixed digest")
+
+    def test_check_digest_fixed(self):
+        """Test basic digest checking of a fixed string"""
+        expected = DUMMY_MODERN_PW_DIGEST
         result = check_digest(self.dummy_conf, DUMMY_SERVICE, DUMMY_REALM,
                               DUMMY_USER, DUMMY_MODERN_PW, expected,
                               DUMMY_SALT)
-        self.assertTrue(result, "mismatch in digest check")
+        self.assertTrue(result, "mismatch in fixed digest check")
 
-    def test_check_scramble(self):
-        """Test basic scramble checking of a random string"""
+    def test_check_digest_random(self):
+        """Test basic digest checking of a random string"""
         random_pw = generate_random_password(self.dummy_conf)
-        expected = make_scramble(DUMMY_MODERN_PW, DUMMY_SALT)
+        random_salt = base64.b16encode(os.urandom(16))
+        expected = make_digest(DUMMY_REALM, DUMMY_USER, random_pw, random_salt)
+        result = check_digest(self.dummy_conf, DUMMY_SERVICE, DUMMY_REALM,
+                              DUMMY_USER, random_pw, expected, random_salt)
+        self.assertTrue(result, "mismatch in random digest check")
+
+    def test_digest_constant_string(self):
+        """Test basic digest of a fixed string to be constant for a particular
+        random seed. I.e. the value may differ across interpreter invocations
+        but remains constant in same interpreter.
+        """
+        first = make_digest(DUMMY_REALM, DUMMY_USER, DUMMY_MODERN_PW,
+                            DUMMY_SALT)
+        second = make_digest(DUMMY_REALM, DUMMY_USER, DUMMY_MODERN_PW,
+                             DUMMY_SALT)
+        self.assertEqual(first, second, "basic digest is not constant")
+
+    def test_scramble_password_fixed(self):
+        """Test basic scramble of a fixed string to be constant"""
+        expected = DUMMY_MODERN_PW_SCRAMBLE
+        actual = scramble_password(DUMMY_SALT, DUMMY_MODERN_PW)
+        self.assertEqual(actual, expected, "mismatch scramble pw string")
+
+    def test_unscramble_password_fixed(self):
+        """Test basic unscramble of a fixed string to be constant"""
+        expected = DUMMY_MODERN_PW
+        actual = unscramble_password(DUMMY_SALT, DUMMY_MODERN_PW_SCRAMBLE)
+        self.assertEqual(actual, expected, "mismatch unscramble pw string")
+
+    def test_make_scramble_fixed(self):
+        """Test basic scramble of a fixed string to be constant"""
+        expected = DUMMY_MODERN_PW_SCRAMBLE
+        actual = make_scramble(DUMMY_MODERN_PW, DUMMY_SALT)
+        self.assertEqual(actual, expected, "mismatch make scramble string")
+
+    def test_check_scramble_fixed(self):
+        """Test basic scramble checking of a fixed string"""
+        expected = DUMMY_MODERN_PW_SCRAMBLE
         result = check_scramble(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                                 DUMMY_MODERN_PW, expected, DUMMY_SALT)
-        self.assertTrue(result, "mismatch in scramble check")
+        self.assertTrue(result, "mismatch in fixed scramble check")
+
+    def test_check_scramble_random(self):
+        """Test basic scramble checking of a random string"""
+        random_pw = generate_random_password(self.dummy_conf)
+        random_salt = base64.b16encode(os.urandom(16))
+        expected = make_scramble(DUMMY_MODERN_PW, random_salt)
+        result = check_scramble(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
+                                DUMMY_MODERN_PW, expected, random_salt)
+        self.assertTrue(result, "mismatch in random scramble check")
+
+    def test_scramble_constant_string(self):
+        """Test basic scramble of a fixed string to be constant for a particular
+        salt.
+        """
+        first = make_scramble(DUMMY_MODERN_PW, DUMMY_SALT)
+        second = make_scramble(DUMMY_MODERN_PW, DUMMY_SALT)
+        self.assertEqual(first, second, "basic scramble is not constant")
 
     def test_fernet_encrypt_decrypt(self):
         """Test basic fernet password encrypt and decrypt on a random string"""
@@ -343,6 +411,39 @@ class MigSharedPwCrypto(MigTestCase):
         result = check_encrypt(self.dummy_conf, DUMMY_SERVICE, DUMMY_USER,
                                random_pw, encrypted, algo='aesgcm_static')
         self.assertTrue(result, "mismatch in aesgcm_static encrypt check")
+
+    @unittest.skipIf(True, "requires constant random seed")
+    def test_generate_reset_token_fixed(self):
+        """Test basic password reset token generate for a fixed string"""
+        dummy_user = {'distinguished_name': DUMMY_USER}
+        dummy_user['password_hash'] = DUMMY_MODERN_PW_PBKDF2
+        timestamp = 42
+        expected = DUMMY_MODERN_PW_RESET_TOKEN
+        result = generate_reset_token(self.dummy_conf, dummy_user,
+                                      DUMMY_SERVICE, timestamp)
+        self.assertEqual(expected, result,
+                         "failed generate password reset token")
+
+    @unittest.skipIf(True, "requires constant random seed")
+    def test_parse_reset_token_fixed(self):
+        """Test basic password reset token parse for a fixed string"""
+        timestamp = 42
+        result = parse_reset_token(self.dummy_conf, DUMMY_MODERN_PW_RESET_TOKEN,
+                                   DUMMY_SERVICE)
+        self.assertEqual(result[0], timestamp, "failed parse token time")
+        self.assertEqual(result[1], DUMMY_MODERN_PW_PBKDF2,
+                         "failed parse token hash")
+
+    @unittest.skipIf(True, "requires constant random seed")
+    def test_verify_reset_token_fixed(self):
+        """Test basic password reset token verify for a fixed string"""
+        dummy_user = {'distinguished_name': DUMMY_USER}
+        dummy_user['password_hash'] = DUMMY_MODERN_PW_PBKDF2
+        timestamp = 42
+        result = verify_reset_token(self.dummy_conf, dummy_user,
+                                    DUMMY_MODERN_PW_RESET_TOKEN,
+                                    DUMMY_SERVICE, timestamp)
+        self.assertTrue(result, "failed password reset token handling")
 
     def test_password_reset_token_generate_and_verify(self):
         """Test basic password reset token generate and verify helper"""
