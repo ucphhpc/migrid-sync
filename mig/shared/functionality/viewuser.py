@@ -53,7 +53,7 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'cert_id': REJECT_UNSET,
-                'caching': ['false']}
+                'caching': ['true']}
     return ['user_info', defaults]
 
 
@@ -211,10 +211,15 @@ def main(client_id, user_arguments_dict):
                                             client_dir)) + os.sep
     status = returnvalues.OK
 
+    if caching:
+        caching_note = '(cached)'
+    else:
+        caching_note = ''
+
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'User details'
     output_objects.append({'object_type': 'header', 'text':
-                           'Show user details'})
+                           'Show user details %s' % caching_note})
 
     visible_user = user_visible_user_confs(configuration, client_id, caching)
     vgrid_access = user_vgrid_access(configuration, client_id, caching)
@@ -251,12 +256,15 @@ def main(client_id, user_arguments_dict):
                                                          vgrid_access)
         output_objects.append(user_item)
 
+    output_objects.append({'object_type': 'html_form',
+                           'text': '<div class="vertical-spacer"></div>'})
+    user_query = '%s' % '&'.join(['cert_id=%s' % i for i in user_list])
     output_objects.append(
         {'object_type': 'link',
          'destination':
-         'viewuser.py?%s' % '&'.join(['cert_id=%s' % i for i in user_list]),
+         'viewuser.py?caching=false&%s' % user_query,
          'class': 'refreshlink iconspace',
-         'title': 'Refresh current user data - may take long time',
-         'text': ''})
+         'title': 'View without caching',
+         'text': 'View without caching of user data - may take a long time'})
 
     return (output_objects, status)
