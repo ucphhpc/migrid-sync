@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mrslparser - Parse mRSL job descriptions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -136,7 +137,7 @@ def parse(
     if not status:
         return (False, 'Parse failed (typecheck) %s' % msg)
 
-    #logger.debug('check_types updated job dict to: %s' % external_dict)
+    # logger.debug('check_types updated job dict to: %s' % external_dict)
 
     global_dict = {}
 
@@ -375,9 +376,8 @@ to %s''' % configuration.grid_stdin)
         else:
             before_runt_dict = resource_config['RUNTVERIFICATION']
             if re_name not in before_runt_dict:
-                before_runt_dict[re_name] = [].append(dict_entry)
-            else:
-                before_runt_dict[re_name].append(dict_entry)
+                before_runt_dict[re_name] = []
+            before_runt_dict[re_name].append(dict_entry)
 
         # save dict with added entry
 
@@ -396,4 +396,3 @@ to %s''' % configuration.grid_stdin)
     # phew, we made it. Everything ok
 
     return (True, '')
-
