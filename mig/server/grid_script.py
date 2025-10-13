@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_script - the core job handling daemon on a MiG server
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -693,11 +694,9 @@ while True:
                     exe_job = \
                         executing_queue.get_job_by_id(job_dict['JOB_ID'
                                                                ])
+                    # Ignore missing fields
+                    (last_res, last_exe) = ('', '')
                     if exe_job:
-
-                        # Ignore missing fields
-
-                        (last_res, last_exe) = ('', '')
                         if 'UNIQUE_RESOURCE_NAME' in exe_job:
                             last_res = exe_job['UNIQUE_RESOURCE_NAME']
                         if 'EXE' in exe_job:
@@ -799,7 +798,8 @@ while True:
 
         vgrids_in_prioritized_order = []
 
-        list_indices = [(last_vgrid + i) % len(exe_vgrids) for i in range(len(exe_vgrids))]
+        list_indices = [(last_vgrid + i) % len(exe_vgrids)
+                        for i in range(len(exe_vgrids))]
         for index in list_indices:
 
             # replace "" with default_vgrid
