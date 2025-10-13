@@ -396,3 +396,4 @@ to %s''' % configuration.grid_stdin)
     # phew, we made it. Everything ok
 
     return (True, '')
+
