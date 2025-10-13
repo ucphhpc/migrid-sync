@@ -113,6 +113,14 @@ class MigSharedPwCrypto(MigTestCase):
             site_login_methods=[DUMMY_SERVICE],
             site_signup_methods=[DUMMY_SERVICE],
         )
+        # TODO: fix the below pylint issue to make CI happy without this hack
+        # NOTE: for whatever reason pylint fails with Instance of
+        #       'FakeConfiguration' has no 'site_password_legacy_policy' member
+        #       (no-member) unless we explicitly (re-)init it here
+        self.dummy_conf.site_password_legacy_policy = getattr(
+            self.dummy_conf, 'site_password_legacy_policy', POLICY_NONE)
+        self.assertEqual(self.dummy_conf.site_password_legacy_policy,
+                         POLICY_MEDIUM)
 
     def test_best_crypt_salt(self):
         """Test selection of best salt based on salt availability in
