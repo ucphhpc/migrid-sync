@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # autocreate - auto create user from signed certificate or openid login
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -395,6 +396,11 @@ def main(client_id, user_arguments_dict, environ=None):
         state = accepted['state'][-1].strip()
         org = accepted['org'][-1].strip()
         org_unit = ''
+
+        # NOTE: no tokens involved here
+        token_issuer = ''
+        token_audience = ''
+
         # NOTE: leave role and association alone here
         role = ''
         association = ''
@@ -428,6 +434,10 @@ def main(client_id, user_arguments_dict, environ=None):
             or accepted['openid.sreg.organization'][-1].strip()
         org_unit = accepted['openid.sreg.ou'][-1].strip() \
             or accepted['openid.sreg.organizational_unit'][-1].strip()
+
+        # NOTE: no tokens involved here
+        token_issuer = ''
+        token_audience = ''
 
         # We may receive multiple roles and associations
 
@@ -469,6 +479,8 @@ def main(client_id, user_arguments_dict, environ=None):
         #       translate to individual args instead in that case. E.g. as in
         #       'john@doe.org,jd@doe.org' -> ['john@doe.org', 'jd@doe.org']
         email = split_comma_concat(accepted['oidc.claim.email'])[-1].strip()
+    else:
+        raise ValueError("Unsupported auth type: %r" % auth_type)
 
     # We may encounter results without an email, fall back to try plain IDs then
     if not email:
@@ -828,4 +840,3 @@ moment.
 Please contact the %(short_title)s support (%(support_email)s) if you think it
 should be enabled.""" % fill_helper})
         return (output_objects, returnvalues.ERROR)
-
