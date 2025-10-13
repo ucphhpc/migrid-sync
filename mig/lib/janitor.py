@@ -263,6 +263,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
     req_expire = req_dict.get("expire", now)
     user_dict = load_user_dict(_logger, client_id, db_path)
     req_invalid = req_dict.get("invalid", None)
+    authorized = req_dict.get("authorized", False)
     reset_token = req_dict.get("reset_token", "")
     req_auth = req_dict.get("auth", ["migoid"])[-1]
     auth_type = req_auth.lstrip("mig").lstrip("ext")
@@ -288,6 +289,17 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             )
         else:
             _logger.info("rejected invalid %r account request" % client_id)
+    elif authorized:
+        _logger.info("%r requested renew and authorized password change" %
+                     client_id)
+        peer_id = user_dict.get("peers", [None])[0]
+        if accept_account_req(req_id, configuration, peer_id,
+                              user_copy=user_copy, admin_copy=admin_copy,
+                              auth_type=auth_type,
+                              default_renew=default_renew):
+            _logger.info("accepted authorized %r access renew" % client_id)
+        else:
+            _logger.warning("failed authorized %r access renew" % client_id)
     elif reset_token:
         # TODO: handle loaded user_dict == None here (e.g. recently removed)
         #       to avoid verify_reset_token failing on DN access.
