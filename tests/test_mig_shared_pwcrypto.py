@@ -66,7 +66,7 @@ DUMMY_MODERN_PW_DIGEST = \
     "DIGEST$custom$CONFSALT$64756D6D792D7265616C6D3A64756D6D792D7520DE71261F96A2FE48A67DD0877F2A2C"
 DUMMY_MODERN_DIGEST_SCRAMBLE = "53BB031C1F96A2FE48A67DD0877F2A2C"
 DUMMY_MODERN_PW_SCRAMBLE = "53BB031C1F96A2FE48A67DD0877F2A2C"
-DUMMY_MODERN_PW_AESGCM_SIV_ENCRYPTED = b'xRsT1qHmiM3xqDjuvFuxqQ==.g4-Gt83uRrdvVWwXNHdk5guAy3dbosnmjJQ6rg==.ICAgIG1pZ3JpZCBhdXRoZW50aWNhdGVkMjAyNTEwMTM='
+DUMMY_MODERN_PW_AESGCM_SIV_ENCRYPTED = b'xRsT1qHmiM3xqDjuvFuxqQ==.g4-Gt83uRrdvVWwXiN0a29_PLwkqySS0Pb7MmA==.ICAgIG1pZ3JpZCBhdXRoZW50aWNhdGVkMjAyNTEwMTY='
 DUMMY_MODERN_PW_RESET_TOKEN = b'gAAAAABo63hYqeHE7Db93pMxWn1sWzj2Z-6td2UhA5gKYa4KV096ndV-AO0pp6hrR9jXKcwWAouLCMiNC0BRudeCAYHoBii15lTRbP9b7JzvJjeusbidjRxqcJg0om6bbtSK1Rz_RBTq_jhdAk4v-7PccWlZ15dVJ4j-X3X4zSsBWIOR5y6Y-bA='
 DUMMY_METHOD = 'dummy-method'
 DUMMY_OPERATION = 'dummy-operation'
@@ -88,7 +88,7 @@ DUMMY_FERNET_KEY = 'NDg3OTcyNzE1NTQ2Nzc3ODYxNjc0NjRFRDZGMjNFQzY='
 DUMMY_AESGCM_KEY = b'48797271554677786167464ED6F23EC6'
 DUMMY_AESGCM_STATIC_IV = b'\xc5\x1b\x13\xd6\xa1\xe6\x88\xcd\xf1\xa88\xee\xbc[\xb1\xa9'
 DUMMY_AESGCM_AAD_PREFIX = b'\xc5\x1b\x13\xd6\xa1\xe6\x88\xcd\xf1\xa88\xee\xbc[\xb1\xa9\xa88\xee\xbc[\xb1\xa9'
-DUMMY_AESGCM_AAD = b' \xc5\x1b\x13\xd6\xa1\xe6\x88\xcd\xf1\xa88\xee\xbc[\xb1\xa9\xa88\xee\xbc[\xb1\xa920251013'
+DUMMY_AESGCM_AAD = b' \xc5\x1b\x13\xd6\xa1\xe6\x88\xcd\xf1\xa88\xee\xbc[\xb1\xa9\xa88\xee\xbc[\xb1\xa920251016'
 
 
 class MigSharedPwCrypto(MigTestCase):
@@ -514,7 +514,7 @@ class MigSharedPwCrypto(MigTestCase):
         self.assertEqual(expected, result, "failed prepare aesgcm static iv")
 
     def test_prepare_aesgcm_aad_fixed(self):
-        """Test basic aesgcm additional auth dat preparation on a fixed
+        """Test basic aesgcm additional auth data preparation on a fixed
         entropy value.
         """
         expected = DUMMY_AESGCM_AAD
