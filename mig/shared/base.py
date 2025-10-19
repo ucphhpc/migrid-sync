@@ -303,7 +303,7 @@ def canonical_user(configuration, user_dict, limit_fields):
             # TODO: is this right for py2+3 support now?
             # IMPORTANT: we get utf8 coded bytes here and title() treats such
             # chars as word termination. Temporarily force to unicode.
-            #val = force_utf8(force_unicode(val).title())
+            # val = force_utf8(force_unicode(val).title())
             val = force_native_str(force_unicode(val).title())
         elif key == 'email':
             val = val.lower()
@@ -951,7 +951,8 @@ def auth_type_description(configuration, auth_type=keyword_all):
         return auth_map.get(auth_type, 'UNKNOWN')
 
 
-if __name__ == '__main__':
+def main(_exit=sys.exit, _print=print):
+    """Run module self-tests"""
     orig_id = '/C=DK/ST=NA/L=NA/O=Ajax Inc/OU=NA/CN=John Doe/emailAddress=john.doe@ajaxinc.org'
     client_dir = client_id_dir(orig_id)
     client_id = client_dir_id(client_dir)
@@ -986,7 +987,8 @@ if __name__ == '__main__':
         print("  %s: %s" % (path, not invisible_path(path)))
 
     from mig.shared.conf import get_configuration_object
-    configuration = get_configuration_object()
+    configuration = get_configuration_object(
+        skip_log=True, disable_auth_log=True)
     print("check script restrictions:")
     for script_name in ['reqoid.py', 'ls.py', 'sharelink.py', 'put']:
         (allow, msg) = allow_script(configuration, script_name, '')
@@ -1032,3 +1034,7 @@ if __name__ == '__main__':
               (script_uri, requested_url_base()))
         print("Found unsafe page for %r : %s" %
               (script_uri, requested_page(include_unsafe=True)))
+
+
+if __name__ == '__main__':
+    main()
