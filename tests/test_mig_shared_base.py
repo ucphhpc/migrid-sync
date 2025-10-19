@@ -19,7 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -27,13 +28,13 @@
 """Unit tests for mig.shared.base module"""
 
 import sys
-from mig.shared.base import client_id_dir, client_dir_id, get_site_base_url, \
-    mask_creds, extract_field, distinguished_name_to_user, \
+from mig.shared.base import allow_script, client_id_dir, client_dir_id, \
+    get_site_base_url, mask_creds, extract_field, distinguished_name_to_user, \
     fill_distinguished_name, fill_user, canonical_user, generate_https_urls
 from tests.support import MigTestCase, testmain
 from tests.support.configsupp import FakeConfiguration
 from mig.shared.defaults import csrf_field, gdp_distinguished_field, \
-    cert_field_order
+    cert_field_order, valid_gdp_anon_scripts, valid_gdp_auth_scripts
 
 from mig.shared.base import main as base_main
 
@@ -49,8 +50,10 @@ class TestMigSharedBase(MigTestCase):
 
     def test_client_id_dir_mixed_fields(self):
         """Test conversion with multiple field types"""
-        input_id = "/CN=Alice/O=Open Science/OU=Research Team/emailAddress=alice@example.com"
-        expected = "+CN=Alice+O=Open_Science+OU=Research_Team+emailAddress=alice@example.com"
+        input_id = "/CN=Alice/O=Open Science/OU=Research Team/" \
+                   "emailAddress=alice@example.com"
+        expected = "+CN=Alice+O=Open_Science+OU=Research_Team+" \
+                   "emailAddress=alice@example.com"
         self.assertEqual(client_id_dir(input_id), expected)
 
     def test_client_id_dir_spaces(self):
@@ -84,8 +87,10 @@ class TestMigSharedBase(MigTestCase):
 
     def test_client_dir_id_mixed_fields(self):
         """Test conversion with multiple field types"""
-        input_dir = "+CN=Alice+O=Open_Science+OU=Research_Team+emailAddress=alice@example.com"
-        expected_id = "/CN=Alice/O=Open Science/OU=Research Team/emailAddress=alice@example.com"
+        input_dir = "+CN=Alice+O=Open_Science+OU=Research_Team+" \
+                    "emailAddress=alice@example.com"
+        expected_id = "/CN=Alice/O=Open Science/OU=Research Team/" \
+                      "emailAddress=alice@example.com"
         self.assertEqual(client_dir_id(input_dir), expected_id)
 
     def test_client_dir_id_underscore_to_space(self):
@@ -106,7 +111,8 @@ class TestMigSharedBase(MigTestCase):
         self.assertEqual(client_dir_id("+CN=Single"), "/CN=Single")
 
     def test_client_dir_id_underscore_handling(self):
-        """Test underscore replacement in remapped fields and preservation elsewhere."""
+        """Test underscore replacement in remapped fields and preservation
+        elsewhere."""
         input_dir = "+OU=Dev_Team+emailAddress=user_name@site.com"
         expected_id = "/OU=Dev Team/emailAddress=user_name@site.com"
         self.assertEqual(client_dir_id(input_dir), expected_id)
@@ -119,7 +125,8 @@ class TestMigSharedBase(MigTestCase):
         self.assertEqual(get_site_base_url(config), "https://example.com")
 
     def test_get_site_base_url_fallback_to_http(self):
-        """Test get_site_base_url falls back to HTTP when HTTPS is not available."""
+        """Test get_site_base_url falls back to HTTP when HTTPS is not
+        available."""
         config = FakeConfiguration()
         config.migserver_http_url = "http://example.com"
         config.migserver_https_url = ""  # Not available
@@ -201,7 +208,8 @@ class TestMigSharedBase(MigTestCase):
         self.assertIsNone(extract_field(dn, 'email'))
 
     def test_extract_field_with_na_value(self):
-        """Test extracting a field with 'NA' value, which should be an empty string."""
+        """Test extracting a field with 'NA' value, which should be an empty
+        string."""
         dn = "/C=US/O=NA/CN=John Doe"
         self.assertEqual(extract_field(dn, 'organization'), '')
 
@@ -331,7 +339,8 @@ class TestMigSharedBase(MigTestCase):
         self.assertEqual(user['distinguished_name'], expected_dn)
 
     def test_fill_user_completes_dict(self):
-        """Test that fill_user adds missing fields and preserves existing ones."""
+        """Test that fill_user adds missing fields and preserves existing
+        ones."""
         user = {
             'full_name': 'Test User',
             'extra_field': 'extra_value'
@@ -359,7 +368,8 @@ class TestMigSharedBase(MigTestCase):
             self.assertEqual(user[key], '')
 
     def test_fill_user_modifies_in_place_and_returns_self(self):
-        """Test that fill_user modifies the dictionary in-place and returns it."""
+        """Test that fill_user modifies the dictionary in-place and returns
+        it."""
         user = {}
         returned_user = fill_user(user)
         self.assertIs(user, returned_user)
@@ -507,6 +517,88 @@ just use the one that looks most familiar or try them in turn)"""
                                             expected_note)
         self.assertEqual(result, expected_result)
 
+    def test_allow_script_gdp_enabled_anonymous_allowed(self):
+        """Test allow_script with GDP enabled, anonymous user, and script
+        allowed."""
+        config = FakeConfiguration()
+        config.site_enable_gdp = True
+        script_name = valid_gdp_anon_scripts[0] if valid_gdp_anon_scripts \
+            else 'allowed_script.py'  # Use a valid script or a default
+        if not valid_gdp_anon_scripts:
+            print("WARNING: valid_gdp_anon_scripts is empty.  Using "
+                  "'allowed_script.py' which may cause a test failure.")
+        allow, msg = allow_script(config, script_name, None)
+        self.assertTrue(allow)
+        self.assertEqual(msg, "")
+
+    def test_allow_script_gdp_enabled_anonymous_disallowed(self):
+        """Test allow_script with GDP enabled, anonymous user, and script
+        disallowed."""
+        config = FakeConfiguration()
+        config.site_enable_gdp = True
+        script_name = 'disallowed_script.py'
+        # Ensure the script is not in valid_gdp_anon_scripts
+        if script_name in valid_gdp_anon_scripts:
+            valid_gdp_anon_scripts.remove(script_name)
+        allow, msg = allow_script(config, script_name, None)
+        self.assertFalse(allow)
+        self.assertEqual(msg, "anonoymous access to functionality disabled "
+                         "by site configuration!")
+
+    def test_allow_script_gdp_enabled_authenticated_allowed(self):
+        """Test allow_script with GDP enabled, authenticated user, and script
+        allowed."""
+        config = FakeConfiguration()
+        config.site_enable_gdp = True
+        script_name = valid_gdp_auth_scripts[0] if valid_gdp_auth_scripts \
+            else valid_gdp_anon_scripts[0] if valid_gdp_anon_scripts \
+            else 'allowed_script.py'
+        if not valid_gdp_auth_scripts and not valid_gdp_anon_scripts:
+            print("WARNING: valid_gdp_auth_scripts and "
+                  "valid_gdp_anon_scripts are empty.  Using "
+                  "'allowed_script.py' which may cause a test failure.")
+
+        allow, msg = allow_script(config, script_name, 'test_client')
+        self.assertTrue(allow)
+        self.assertEqual(msg, "")
+
+    def test_allow_script_gdp_enabled_authenticated_disallowed(self):
+        """Test allow_script with GDP enabled, authenticated user, and script
+        disallowed."""
+        config = FakeConfiguration()
+        config.site_enable_gdp = True
+        script_name = 'disallowed_script.py'
+
+        # Ensure the script is not in valid_gdp_auth_scripts or
+        # valid_gdp_anon_scripts
+        if script_name in valid_gdp_auth_scripts:
+            valid_gdp_auth_scripts.remove(script_name)
+        if script_name in valid_gdp_anon_scripts:
+            valid_gdp_anon_scripts.remove(script_name)
+
+        allow, msg = allow_script(config, script_name, 'test_client')
+        self.assertFalse(allow)
+        self.assertEqual(msg, "all access to functionality disabled by site "
+                         "configuration!")
+
+    def test_allow_script_gdp_disabled(self):
+        """Test allow_script with GDP disabled."""
+        config = FakeConfiguration()
+        config.site_enable_gdp = False
+        allow, msg = allow_script(config, 'any_script.py',
+                                  'test_client')
+        self.assertTrue(allow)
+        self.assertEqual(msg, "")
+
+    def test_allow_script_gdp_disabled_anonymous(self):
+        """Test allow_script with GDP disabled and anonymous user."""
+        config = FakeConfiguration()
+        config.site_enable_gdp = False
+        allow, msg = allow_script(config, 'any_script.py', None)
+        self.assertTrue(allow)
+        self.assertEqual(msg, "")
+
+    # NOTE: keep existing main last and perhaps migrate here eventually
     def test_existing_main(self):
         """Run built-in self-tests and check output"""
         def raise_on_error_exit(exit_code):
@@ -516,14 +608,11 @@ just use the one that looks most familiar or try them in turn)"""
                 else:
                     identifying_message = 'unknown'
                 raise AssertionError(
-                    'failure in unittest/testcore: %s' % (identifying_message,))
+                    'failure in unittest/testcore: %s' %
+                    (identifying_message,))
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
             raise_on_error_exit.last_print = value
 
         base_main(_exit=raise_on_error_exit, _print=record_last_print)
-
-
-if __name__ == '__main__':
-    testmain()
