@@ -42,6 +42,10 @@ from mig.shared.base import main as base_main
 class TestMigSharedBase(MigTestCase):
     """Test mig.shared.base functions"""
 
+    def before_each(self):
+        """Setup fake configuration before each test."""
+        self.dummy_conf = FakeConfiguration()
+
     def test_client_id_dir_basic(self):
         """Test basic client_id_dir conversion"""
         input_id = "/C=DK/CN=John Doe"
@@ -119,18 +123,18 @@ class TestMigSharedBase(MigTestCase):
 
     def test_get_site_base_url_prefers_https(self):
         """Test get_site_base_url prefers HTTPS when available."""
-        config = FakeConfiguration()
-        config.migserver_http_url = "http://example.com"
-        config.migserver_https_url = "https://example.com"
-        self.assertEqual(get_site_base_url(config), "https://example.com")
+        self.dummy_conf.migserver_http_url = "http://example.com"
+        self.dummy_conf.migserver_https_url = "https://example.com"
+        self.assertEqual(get_site_base_url(
+            self.dummy_conf), "https://example.com")
 
     def test_get_site_base_url_fallback_to_http(self):
         """Test get_site_base_url falls back to HTTP when HTTPS is not
         available."""
-        config = FakeConfiguration()
-        config.migserver_http_url = "http://example.com"
-        config.migserver_https_url = ""  # Not available
-        self.assertEqual(get_site_base_url(config), "http://example.com")
+        self.dummy_conf.migserver_http_url = "http://example.com"
+        self.dummy_conf.migserver_https_url = ""  # Not available
+        self.assertEqual(get_site_base_url(self.dummy_conf),
+                         "http://example.com")
 
     def test_mask_creds_default_masking(self):
         """Test mask_creds with default fields and value."""
@@ -376,7 +380,6 @@ class TestMigSharedBase(MigTestCase):
 
     def test_canonical_user_transformations(self):
         """Test canonical_user applies all transformations correctly."""
-        config = FakeConfiguration()
         user_dict = {
             'full_name': '  john doe  ',
             'email': 'John.Doe@Example.COM',
@@ -388,7 +391,7 @@ class TestMigSharedBase(MigTestCase):
         }
         limit_fields = ['full_name', 'email',
                         'country', 'state', 'organization', 'id']
-        canonical = canonical_user(config, user_dict, limit_fields)
+        canonical = canonical_user(self.dummy_conf, user_dict, limit_fields)
 
         expected = {
             'full_name': 'John Doe',
@@ -403,31 +406,28 @@ class TestMigSharedBase(MigTestCase):
 
     def test_canonical_user_unicode_name(self):
         """Test canonical_user with unicode characters in full_name."""
-        config = FakeConfiguration()
         # Using a name that title() might mess up without unicode conversion
         user_dict = {'full_name': u'josé de la vega'}
         limit_fields = ['full_name']
-        canonical = canonical_user(config, user_dict, limit_fields)
+        canonical = canonical_user(self.dummy_conf, user_dict, limit_fields)
         self.assertEqual(canonical['full_name'], u'José De La Vega')
 
     def test_canonical_user_empty_input(self):
         """Test canonical_user with empty inputs."""
-        config = FakeConfiguration()
-        self.assertEqual(canonical_user(config, {}, []), {})
-        self.assertEqual(canonical_user(config, {'a': 1}, []), {})
-        self.assertEqual(canonical_user(config, {}, ['a']), {})
+        self.assertEqual(canonical_user(self.dummy_conf, {}, []), {})
+        self.assertEqual(canonical_user(self.dummy_conf, {'a': 1}, []), {})
+        self.assertEqual(canonical_user(self.dummy_conf, {}, ['a']), {})
 
     def _setup_config_for_https_urls(self):
-        config = FakeConfiguration()
-        config.migserver_https_mig_cert_url = "https://mig.cert"
-        config.migserver_https_ext_cert_url = "https://ext.cert"
-        config.migserver_https_mig_oid_url = "https://mig.oid"
-        config.migserver_https_ext_oid_url = "https://ext.oid"
-        config.migserver_https_mig_oidc_url = "https://mig.oidc"
-        config.migserver_https_ext_oidc_url = "https://ext.oidc"
-        config.site_enable_wsgi = False
-        config.site_login_methods = []
-        return config
+        self.dummy_conf.migserver_https_mig_cert_url = "https://mig.cert"
+        self.dummy_conf.migserver_https_ext_cert_url = "https://ext.cert"
+        self.dummy_conf.migserver_https_mig_oid_url = "https://mig.oid"
+        self.dummy_conf.migserver_https_ext_oid_url = "https://ext.oid"
+        self.dummy_conf.migserver_https_mig_oidc_url = "https://mig.oidc"
+        self.dummy_conf.migserver_https_ext_oidc_url = "https://ext.oidc"
+        self.dummy_conf.site_enable_wsgi = False
+        self.dummy_conf.site_login_methods = []
+        return self.dummy_conf
 
     def test_generate_https_urls_single_method_cgi(self):
         """Test generate_https_urls with a single method and cgi-bin."""
@@ -520,14 +520,13 @@ just use the one that looks most familiar or try them in turn)"""
     def test_allow_script_gdp_enabled_anonymous_allowed(self):
         """Test allow_script with GDP enabled, anonymous user, and script
         allowed."""
-        config = FakeConfiguration()
-        config.site_enable_gdp = True
+        self.dummy_conf.site_enable_gdp = True
         script_name = valid_gdp_anon_scripts[0] if valid_gdp_anon_scripts \
             else 'allowed_script.py'  # Use a valid script or a default
         if not valid_gdp_anon_scripts:
             print("WARNING: valid_gdp_anon_scripts is empty.  Using "
                   "'allowed_script.py' which may cause a test failure.")
-        allow, msg = allow_script(config, script_name, None)
+        allow, msg = allow_script(self.dummy_conf, script_name, None)
         self.assertTrue(allow)
         self.assertEqual(msg, "")
 
@@ -535,12 +534,12 @@ just use the one that looks most familiar or try them in turn)"""
         """Test allow_script with GDP enabled, anonymous user, and script
         disallowed."""
         config = FakeConfiguration()
-        config.site_enable_gdp = True
+        self.dummy_conf.site_enable_gdp = True
         script_name = 'disallowed_script.py'
         # Ensure the script is not in valid_gdp_anon_scripts
         if script_name in valid_gdp_anon_scripts:
             valid_gdp_anon_scripts.remove(script_name)
-        allow, msg = allow_script(config, script_name, None)
+        allow, msg = allow_script(self.dummy_conf, script_name, None)
         self.assertFalse(allow)
         self.assertEqual(msg, "anonoymous access to functionality disabled "
                          "by site configuration!")
@@ -549,7 +548,7 @@ just use the one that looks most familiar or try them in turn)"""
         """Test allow_script with GDP enabled, authenticated user, and script
         allowed."""
         config = FakeConfiguration()
-        config.site_enable_gdp = True
+        self.dummy_conf.site_enable_gdp = True
         script_name = valid_gdp_auth_scripts[0] if valid_gdp_auth_scripts \
             else valid_gdp_anon_scripts[0] if valid_gdp_anon_scripts \
             else 'allowed_script.py'
@@ -558,7 +557,7 @@ just use the one that looks most familiar or try them in turn)"""
                   "valid_gdp_anon_scripts are empty.  Using "
                   "'allowed_script.py' which may cause a test failure.")
 
-        allow, msg = allow_script(config, script_name, 'test_client')
+        allow, msg = allow_script(self.dummy_conf, script_name, 'test_client')
         self.assertTrue(allow)
         self.assertEqual(msg, "")
 
@@ -566,7 +565,7 @@ just use the one that looks most familiar or try them in turn)"""
         """Test allow_script with GDP enabled, authenticated user, and script
         disallowed."""
         config = FakeConfiguration()
-        config.site_enable_gdp = True
+        self.dummy_conf.site_enable_gdp = True
         script_name = 'disallowed_script.py'
 
         # Ensure the script is not in valid_gdp_auth_scripts or
@@ -576,25 +575,23 @@ just use the one that looks most familiar or try them in turn)"""
         if script_name in valid_gdp_anon_scripts:
             valid_gdp_anon_scripts.remove(script_name)
 
-        allow, msg = allow_script(config, script_name, 'test_client')
+        allow, msg = allow_script(self.dummy_conf, script_name, 'test_client')
         self.assertFalse(allow)
         self.assertEqual(msg, "all access to functionality disabled by site "
                          "configuration!")
 
     def test_allow_script_gdp_disabled(self):
         """Test allow_script with GDP disabled."""
-        config = FakeConfiguration()
-        config.site_enable_gdp = False
-        allow, msg = allow_script(config, 'any_script.py',
+        self.dummy_conf.site_enable_gdp = False
+        allow, msg = allow_script(self.dummy_conf, 'any_script.py',
                                   'test_client')
         self.assertTrue(allow)
         self.assertEqual(msg, "")
 
     def test_allow_script_gdp_disabled_anonymous(self):
         """Test allow_script with GDP disabled and anonymous user."""
-        config = FakeConfiguration()
-        config.site_enable_gdp = False
-        allow, msg = allow_script(config, 'any_script.py', None)
+        self.dummy_conf.site_enable_gdp = False
+        allow, msg = allow_script(self.dummy_conf, 'any_script.py', None)
         self.assertTrue(allow)
         self.assertEqual(msg, "")
 
