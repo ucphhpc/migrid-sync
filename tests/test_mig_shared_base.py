@@ -926,7 +926,7 @@ just use the one that looks most familiar or try them in turn)"""
             ('/', '/'),
             ('/single', '/single'),
             ('/double/slash', '/double/slash'),
-            ('invalid.proto:/1st/2nd/slash', 'invalid.proto:/1st/2nd/slash')
+            ('invalid.proto:/1st/2nd/slash', 'invalid.proto:/1st/2nd/slash'),
             ('invalid.proto://double/slash', 'invalid.proto://double')
         ]
         for (input_url, expected) in test_cases:
