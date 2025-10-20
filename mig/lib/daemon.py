@@ -68,6 +68,18 @@ def register_run_handler(configuration, run_signal=signal.SIGCONT):
     signal.signal(run_signal, run_handler)
 
 
+def unregister_signal_handlers(configuration, target_signals=None):
+    """Remove any handlers registered to react on provided target_signals list.
+    Default to SIGCONT, SIGUSR1 and SIGUSR2 if target_signals is left to None.
+    """
+    if target_signals is None:
+        target_signals = [signal.SIGCONT, signal.SIGUSR1, signal.SIGUSR2]
+    for target in target_signals:
+        original_handler = signal.getsignal(target)
+        if original_handler:
+            signal.signal(target, signal.SIG_IGN)
+
+
 def interruptible_sleep(configuration, max_secs, break_checks, nap_secs=0.1):
     """Idle loop for max_secs or until one or more break_checks succeed"""
     assert nap_secs > 0.0, "Invalid non-positive nap_secs value"

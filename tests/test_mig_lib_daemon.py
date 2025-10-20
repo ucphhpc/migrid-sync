@@ -31,11 +31,11 @@ import os
 import signal
 import time
 
-from tests.support import FakeConfiguration, MigTestCase
-
 from mig.lib.daemon import _run_event, _stop_event, check_run, check_stop, \
-    do_run, reset_run, reset_stop, stop_running, interruptible_sleep, \
-    register_run_handler, register_stop_handler, run_handler, stop_handler
+    do_run, interruptible_sleep, register_run_handler, register_stop_handler, \
+    reset_run, reset_stop, run_handler, stop_handler, stop_running, \
+    unregister_signal_handlers
+from tests.support import FakeConfiguration, MigTestCase
 
 
 class MigLibDaemon(MigTestCase):
@@ -52,6 +52,11 @@ class MigLibDaemon(MigTestCase):
         # Reset event states
         reset_run()
         reset_stop()
+
+        # Unregister any existing signal handlers
+        used_signals = [signal.SIGCONT, signal.SIGINT, signal.SIGALRM,
+                        signal.SIGUSR1, signal.SIGUSR2]
+        unregister_signal_handlers(self.dummy_conf, used_signals)
 
     def test_register_run_handler_manual(self):
         """Register a run handler and verify it can be manually overriden to
@@ -146,6 +151,72 @@ class MigLibDaemon(MigTestCase):
         self.assertTrue(check_stop())
         # Verify repeated triggering
         stop_handler(self.sig, self.frame)
+        self.assertTrue(check_stop())
+
+    def test_interruptible_sleep_immediate_exit(self):
+        """Test interruptible_sleep with max_secs < nap_secs"""
+        start = time.time()
+        interruptible_sleep(self.dummy_conf, 0.1, [], nap_secs=0.2)
+        duration = time.time() - start
+        self.assertTrue(duration < 0.15)
+
+    def test_interruptible_sleep_positional_args(self):
+        """Test interruptible_sleep works without named arguments"""
+        start = time.time()
+        interruptible_sleep(None, 0.1, [lambda: False])
+        duration = time.time() - start
+        self.assertAlmostEqual(duration, 0.1, delta=0.15)
+
+    def test_interruptible_sleep_negative_max_secs(self):
+        """Test interruptible_sleep with negative max_secs"""
+        start = time.time()
+        interruptible_sleep(self.dummy_conf, -1.0, [])
+        duration = time.time() - start
+        self.assertTrue(duration < 0.1)
+
+    def test_interruptible_sleep_zero_max_secs(self):
+        """Test interruptible_sleep with zero max_secs"""
+        start = time.time()
+        interruptible_sleep(self.dummy_conf, 0.0, [])
+        duration = time.time() - start
+        self.assertTrue(duration < 0.1)
+
+    def test_handler_unregistered_signals(self):
+        """Test event handlers don't fire for unregistered signals"""
+        # Verify default signal handlers
+        original_cont = signal.getsignal(signal.SIGCONT)
+        original_int = signal.getsignal(signal.SIGINT)
+
+        os.kill(os.getpid(), signal.SIGCONT)
+        os.kill(os.getpid(), signal.SIGINT)
+        time.sleep(0.1)
+
+        self.assertFalse(check_run())
+        self.assertFalse(check_stop())
+
+        # Restore original handlers to avoid test pollution
+        signal.signal(signal.SIGCONT, original_cont)
+        signal.signal(signal.SIGINT, original_int)
+
+    def test_consecutive_signal_handling(self):
+        """Test back-to-back signal handling"""
+        register_run_handler(self.dummy_conf, signal.SIGUSR1)
+        register_stop_handler(self.dummy_conf, signal.SIGUSR2)
+
+        # First signal pair
+        os.kill(os.getpid(), signal.SIGUSR1)
+        os.kill(os.getpid(), signal.SIGUSR2)
+        time.sleep(0.2)
+        self.assertTrue(check_run())
+        self.assertTrue(check_stop())
+        reset_run()
+        reset_stop()
+
+        # Second signal pair
+        os.kill(os.getpid(), signal.SIGUSR1)
+        os.kill(os.getpid(), signal.SIGUSR2)
+        time.sleep(0.2)
+        self.assertTrue(check_run())
         self.assertTrue(check_stop())
 
     def test_interruptible_sleep_edge_cases(self):
