@@ -35,7 +35,7 @@ from mig.lib.daemon import _run_event, _stop_event, check_run, check_stop, \
     do_run, interruptible_sleep, register_run_handler, register_stop_handler, \
     reset_run, reset_stop, run_handler, stop_handler, stop_running, \
     unregister_signal_handlers
-from tests.support import FakeConfiguration, MigTestCase
+from tests.support import FakeConfiguration, FakeLogger, MigTestCase
 
 
 class MigLibDaemon(MigTestCase):
@@ -46,6 +46,7 @@ class MigLibDaemon(MigTestCase):
 
         # Create fake configuration, sig and frame for test isolation
         self.dummy_conf = FakeConfiguration()
+        self.dummy_conf.logger = FakeLogger()
         self.sig = None
         self.frame = None
 
@@ -55,7 +56,7 @@ class MigLibDaemon(MigTestCase):
 
         # Unregister any existing signal handlers
         used_signals = [signal.SIGCONT, signal.SIGINT, signal.SIGALRM,
-                        signal.SIGUSR1, signal.SIGUSR2]
+                        signal.SIGABRT, signal.SIGUSR1, signal.SIGUSR2]
         unregister_signal_handlers(self.dummy_conf, used_signals)
 
     def test_register_run_handler_manual(self):
@@ -194,7 +195,7 @@ class MigLibDaemon(MigTestCase):
         self.assertFalse(check_run())
         self.assertFalse(check_stop())
 
-        # Restore original handlers to avoid test pollution
+        # Restore original handlers to avoid test pollution, even if not needed
         signal.signal(signal.SIGCONT, original_cont)
         signal.signal(signal.SIGINT, original_int)
 
@@ -221,12 +222,12 @@ class MigLibDaemon(MigTestCase):
 
     def test_interruptible_sleep_edge_cases(self):
         """Test interruptible_sleep with edge case parameters"""
-        # Should complete instantly since max_secs == nap_secs
+        # Should complete instantly since max_secs < nap_secs
         start = time.time()
         interruptible_sleep(self.dummy_conf, 0.01, [], nap_secs=0.05)
         self.assertTrue(time.time() - start < 0.05)
 
-        # Test zero max_secs
+        # Test zero and negative max_secs returns immediately
         interruptible_sleep(self.dummy_conf, 0.0, [])
         interruptible_sleep(self.dummy_conf, -1.0, [])
 
@@ -300,6 +301,103 @@ class MigLibDaemon(MigTestCase):
         """Test invalid nap_secs parameter"""
         with self.assertRaises(AssertionError):
             interruptible_sleep(self.dummy_conf, 0.5, [], nap_secs=-1.0)
+
+    def test_unregister_signal_handlers_explicit(self):
+        """Test explicit unregistration of signal handlers"""
+        # Register handlers first
+        register_run_handler(self.dummy_conf, signal.SIGALRM)
+        register_stop_handler(self.dummy_conf, signal.SIGABRT)
+
+        # Verify handlers were set
+        self.assertEqual(signal.getsignal(
+            signal.SIGALRM).__name__, 'run_handler')
+        self.assertEqual(signal.getsignal(
+            signal.SIGABRT).__name__, 'stop_handler')
+
+        # Unregister specific signals
+        unregister_signal_handlers(
+            self.dummy_conf, [signal.SIGALRM, signal.SIGABRT])
+        self.assertEqual(signal.getsignal(signal.SIGALRM), signal.SIG_IGN)
+        self.assertEqual(signal.getsignal(signal.SIGABRT), signal.SIG_IGN)
+
+    def test_interruptible_sleep_condition_after_interval(self):
+        """Test interruptible_sleep break condition after one interval"""
+        state = {'count': 0}
+
+        def counter_condition():
+            state['count'] += 1
+            return state['count'] >= 2
+
+        start = time.time()
+        interruptible_sleep(self.dummy_conf, 5.0, [
+                            counter_condition], nap_secs=0.1)
+        duration = time.time() - start
+        self.assertAlmostEqual(duration, 0.2, delta=0.15)
+
+    def test_interruptible_sleep_maxsecs_equals_napsecs(self):
+        """Test interruptible_sleep with max_secs exactly matching nap_secs"""
+        start = time.time()
+        interruptible_sleep(self.dummy_conf, 0.1, [lambda: False],
+                            nap_secs=0.1)
+        duration = time.time() - start
+        self.assertAlmostEqual(duration, 0.1, delta=0.05)
+
+    def test_interruptible_sleep_break_func_exception(self):
+        """Test interruptible_sleep handles break function exceptions"""
+
+        SLEEP_ERR = "Sleep Test Error"
+
+        def faulty_condition():
+            self.dummy_conf.logger.error(SLEEP_ERR)
+
+        start = time.time()
+        interruptible_sleep(self.dummy_conf, 0.1, [faulty_condition],
+                            nap_secs=0.01)
+        duration = time.time() - start
+        self.assertAlmostEqual(duration, 0.1, delta=0.05)
+        try:
+            self.dummy_conf.logger.check_empty_and_reset()
+        except RuntimeError as rte:
+            self.assertTrue(SLEEP_ERR in str(rte), "failed sleep break exc")
+
+    def test_reset_run(self):
+        """Test reset_run helper"""
+        do_run()
+        self.assertTrue(check_run())
+        reset_run()
+        self.assertFalse(check_run())
+
+    def test_reset_stop(self):
+        """Test reset_stop helper"""
+        stop_running()
+        self.assertTrue(check_stop())
+        reset_stop()
+        self.assertFalse(check_stop())
+
+    def test_do_run(self):
+        """Test explicit execution of do_run helper"""
+        self.assertFalse(check_run())
+        do_run()
+        self.assertTrue(check_run())
+
+    def test_stop_running(self):
+        """Test explicit execution of stop_running helper"""
+        self.assertFalse(check_stop())
+        stop_running()
+        self.assertTrue(check_stop())
+
+    def test_signal_handlers_with_real_signals(self):
+        """Test signal handlers with real signal delivery"""
+        register_run_handler(self.dummy_conf, signal.SIGUSR1)
+        register_stop_handler(self.dummy_conf, signal.SIGUSR2)
+
+        os.kill(os.getpid(), signal.SIGUSR1)
+        time.sleep(0.1)
+        self.assertTrue(check_run())
+
+        os.kill(os.getpid(), signal.SIGUSR2)
+        time.sleep(0.1)
+        self.assertTrue(check_stop())
 
     def test_event_state_persistence(self):
         """Test event states persist across multiple checks"""
