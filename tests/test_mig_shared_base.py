@@ -28,14 +28,16 @@
 """Unit tests for mig.shared.base module"""
 
 import sys
+import unittest
+
 from mig.shared.base import allow_script, client_id_dir, client_dir_id, \
     get_site_base_url, mask_creds, extract_field, distinguished_name_to_user, \
     fill_distinguished_name, fill_user, canonical_user, generate_https_urls, \
-    canonical_user_with_peers, invisible_path, requested_page
-from tests.support import MigTestCase, testmain
-from tests.support.configsupp import FakeConfiguration
+    canonical_user_with_peers, invisible_path, requested_page, \
+    requested_url_base
 from mig.shared.defaults import csrf_field, gdp_distinguished_field, \
     cert_field_order, valid_gdp_anon_scripts, valid_gdp_auth_scripts
+from tests.support import MigTestCase, testmain, FakeConfiguration
 
 from mig.shared.base import main as base_main
 
@@ -787,6 +789,102 @@ just use the one that looks most familiar or try them in turn)"""
         fallback = 'special.py'
         result = requested_page(fake_env, fallback=fallback)
         self.assertEqual(result, fallback)
+
+    def test_requested_url_base_normal(self):
+        """Test requested_url_base with basic complete URL"""
+        fake_env = {'SCRIPT_URI': 'https://example.com/path/to/script.py'}
+        result = requested_url_base(fake_env)
+        expected = 'https://example.com'
+        self.assertEqual(result, expected)
+
+    def test_requested_url_base_custom_field(self):
+        """Test requested_url_base with custom uri_field parameter"""
+        fake_env = {'CUSTOM_FIELD_URI': 'http://server.org:8001/base/'}
+        result = requested_url_base(fake_env, uri_field='CUSTOM_FIELD_URI')
+        expected = 'http://server.org:8001'
+        self.assertEqual(result, expected)
+
+    # TODO: adjust tested function to bail out on missing uri_field
+    @unittest.skipIf(True, "requires fix in tested function")
+    def test_requested_url_base_missing(self):
+        """Test requested_url_base when uri_field not present"""
+        fake_env = {}
+        result = requested_url_base(fake_env)
+        self.assertEqual(result, '')
+
+    def test_requested_url_base_safe_filter(self):
+        """Test unsafe character filtering in url base"""
+        test_url = 'https://user:pass@evil.com/<script>malicious</script>'
+        fake_env = {'SCRIPT_URI': test_url}
+        safe_result = requested_url_base(fake_env)
+        expected_safe = 'https://user:passevil.com'
+        self.assertEqual(safe_result, expected_safe)
+
+    def test_requested_url_base_include_unsafe(self):
+        """Test include_unsafe argument behavior"""
+        test_url = 'http://[::1]?<markup>'
+        fake_env = {'SCRIPT_URI': test_url}
+        unsafe_result = requested_url_base(fake_env, include_unsafe=True)
+        self.assertEqual(unsafe_result, 'http://[::1]?<markup>')
+
+        safe_result = requested_url_base(fake_env, include_unsafe=False)
+        self.assertEqual(safe_result, 'http://::1markup')
+        safe_result = requested_url_base(fake_env)
+        self.assertEqual(safe_result, 'http://::1markup')
+
+    def test_requested_url_base_split_valid_edge_cases(self):
+        """Test URL base splitting on valid edge cases"""
+        test_cases = [
+            ('https://site.com', 'https://site.com'),
+            ('http://a/single/slash', 'http://a'),
+            ('file:///absolute/path', 'file://'),
+            ('invalid.proto://double/slash', 'invalid.proto://double')
+        ]
+        for (input_url, expected) in test_cases:
+            fake_env = {'SCRIPT_URI': input_url}
+            result = requested_url_base(fake_env)
+            self.assertEqual(result, expected,
+                             "failed for %s" % input_url)
+
+    # TODO: adjust function to bail out on invalid URLs and enable next
+    @unittest.skipIf(True, "requires fix in tested function")
+    def test_requested_url_base_split_invalid_edge_cases(self):
+        """Test URL base splitting on invalid edge cases"""
+        test_cases = [
+            ('', ''),
+            ('/', '/'),
+            ('/single', '/single'),
+            ('/double/slash', '/double/slash'),
+            ('invalid.proto:/1st/2nd/slash', 'invalid.proto:/1st/2nd/slash')
+            ('invalid.proto://double/slash', 'invalid.proto://double')
+        ]
+        for (input_url, expected) in test_cases:
+            fake_env = {'SCRIPT_URI': input_url}
+            try:
+                result = requested_url_base(fake_env)
+            except ValueError:
+                result = False
+            self.assertFalse(result, "allowed invalid %s" % input_url)
+
+    # TODO: adjust tested function to bail out on missing URL prefix
+    @unittest.skipIf(True, "requires fix in tested function")
+    def test_requested_url_base_relative_path(self):
+        """Test relative paths in URL"""
+        fake_env = {'SCRIPT_URI': '/cgi-bin/script.py'}
+        try:
+            result = requested_url_base(fake_env)
+        except ValueError:
+            result = False
+        self.assertFalse(result, "allowed relative path")
+
+    # TODO: adjust tested function to allow unicode chars / domains?
+    @unittest.skipIf(True, "requires fix in tested function")
+    def test_requested_url_base_special_chars(self):
+        """Test handling of special characters in URL"""
+        test_url = 'http://üñîçøðê.net/path'
+        fake_env = {'SCRIPT_URI': test_url}
+        result = requested_url_base(fake_env)
+        self.assertEqual(result, 'http://üñîçøðê.net')
 
     def test_invisible_path_file(self):
         """Test invisible_path detects names in invisible files"""
