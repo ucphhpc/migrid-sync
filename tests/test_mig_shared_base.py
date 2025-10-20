@@ -34,7 +34,7 @@ from mig.shared.base import allow_script, client_id_dir, client_dir_id, \
     get_site_base_url, mask_creds, extract_field, distinguished_name_to_user, \
     fill_distinguished_name, fill_user, canonical_user, generate_https_urls, \
     canonical_user_with_peers, invisible_path, requested_page, \
-    requested_url_base
+    requested_url_base, verify_local_url
 from mig.shared.defaults import csrf_field, gdp_distinguished_field, \
     cert_field_order, valid_gdp_anon_scripts, valid_gdp_auth_scripts
 from tests.support import MigTestCase, testmain, FakeConfiguration
@@ -49,12 +49,17 @@ class TestMigSharedBase(MigTestCase):
         """Setup fake configuration before each test."""
         self.dummy_conf = FakeConfiguration()
 
+        self.dummy_conf.migserver_http_url = "http://mig.plain"
+        self.dummy_conf.migserver_https_url = "https://mig.crypt"
+        self.dummy_conf.migserver_public_url = "https://mig.pub"
+        self.dummy_conf.migserver_public_alias_url = "https://mig.pub.alias"
         self.dummy_conf.migserver_https_mig_cert_url = "https://mig.cert"
         self.dummy_conf.migserver_https_ext_cert_url = "https://ext.cert"
         self.dummy_conf.migserver_https_mig_oid_url = "https://mig.oid"
         self.dummy_conf.migserver_https_ext_oid_url = "https://ext.oid"
         self.dummy_conf.migserver_https_mig_oidc_url = "https://mig.oidc"
         self.dummy_conf.migserver_https_ext_oidc_url = "https://ext.oidc"
+        self.dummy_conf.migserver_https_sid_url = "https://mig.sid"
         self.dummy_conf.site_enable_wsgi = False
         self.dummy_conf.site_login_methods = []
 
@@ -885,6 +890,56 @@ just use the one that looks most familiar or try them in turn)"""
         fake_env = {'SCRIPT_URI': test_url}
         result = requested_url_base(fake_env)
         self.assertEqual(result, 'http://üñîçøðê.net')
+
+    def test_verify_local_url_direct_match(self):
+        """Test verify_local_url with direct match to known site URL"""
+        test_url = "https://mig.cert/cgi-bin/home.py"
+        self.dummy_conf.migserver_https_mig_cert_url = "https://mig.cert"
+        self.assertTrue(verify_local_url(self.dummy_conf, test_url))
+
+    def test_verify_local_url_subpath_match(self):
+        """Test verify_local_url with subpath under valid domain"""
+        test_url = "https://mig.oid/wsgi-bin/login.py"
+        self.dummy_conf.migserver_https_mig_oid_url = "https://mig.oid"
+        self.assertTrue(verify_local_url(self.dummy_conf, test_url))
+
+    def test_verify_local_url_public_alias(self):
+        """Test verify_local_url with public alias domain"""
+        self.dummy_conf.migserver_public_alias_url = "https://grid.example.org"
+        test_url = "https://grid.example.org/cgi-bin/file.py"
+        self.assertTrue(verify_local_url(self.dummy_conf, test_url))
+
+    def test_verify_local_url_absolute_path(self):
+        """Test verify_local_url with absolute path"""
+        test_url = "/cgi-bin/script.py"
+        self.assertTrue(verify_local_url(self.dummy_conf, test_url))
+
+    def test_verify_local_url_relative_path(self):
+        """Test verify_local_url with relative path"""
+        test_url = "subdir/script.py"
+        self.assertFalse(verify_local_url(self.dummy_conf, test_url))
+
+    def test_verify_local_url_external_domain(self):
+        """Test verify_local_url rejects external domains"""
+        test_url = "https://evil.com/malicious.py"
+        self.assertFalse(verify_local_url(self.dummy_conf, test_url))
+
+    def test_verify_local_url_invalid_url(self):
+        """Test verify_local_url rejects invalid/malformed URLs"""
+        test_url = "javascript:alert('xss')"
+        self.assertFalse(verify_local_url(self.dummy_conf, test_url))
+
+    def test_verify_local_url_missing_https(self):
+        """Test verify_local_url with HTTP when only HTTPS supported"""
+        test_url = "http://mig.cert/cgi-bin/home.py"
+        self.dummy_conf.migserver_https_mig_cert_url = "https://mig.cert"
+        self.assertFalse(verify_local_url(self.dummy_conf, test_url))
+
+    def test_verify_local_url_different_port(self):
+        """Test verify_local_url rejects same domain with different port"""
+        self.dummy_conf.migserver_https_ext_cert_url = "https://ext.cert:443"
+        test_url = "https://ext.cert:444/cgi-bin/file.py"
+        self.assertFalse(verify_local_url(self.dummy_conf, test_url))
 
     def test_invisible_path_file(self):
         """Test invisible_path detects names in invisible files"""
