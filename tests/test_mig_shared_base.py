@@ -776,7 +776,11 @@ just use the one that looks most familiar or try them in turn)"""
         substring_path = '/prefix%ssuffix/file' % invisible_dirname
         self.assertFalse(invisible_path(substring_path))
 
-    # NOTE: keep existing main last and perhaps migrate here eventually
+
+class TestMigSharedBase__legacy(MigTestCase):
+    """Run mig.shared.base legacy self-test"""
+
+    # TODO: migrate all legacy self-check functionality into the above?
     def test_existing_main(self):
         """Run built-in self-tests and check output"""
         def raise_on_error_exit(exit_code):
@@ -791,6 +795,7 @@ just use the one that looks most familiar or try them in turn)"""
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
+            """Keep track of printed output"""
             raise_on_error_exit.last_print = value
 
         base_main(_exit=raise_on_error_exit, _print=record_last_print)
