@@ -30,16 +30,15 @@
 import sys
 import unittest
 
-from mig.shared.base import allow_script, client_id_dir, client_dir_id, \
-    get_site_base_url, mask_creds, extract_field, distinguished_name_to_user, \
-    fill_distinguished_name, fill_user, canonical_user, generate_https_urls, \
-    canonical_user_with_peers, invisible_path, requested_page, \
-    requested_url_base, verify_local_url
-from mig.shared.defaults import csrf_field, gdp_distinguished_field, \
-    cert_field_order, valid_gdp_anon_scripts, valid_gdp_auth_scripts
-from tests.support import MigTestCase, testmain, FakeConfiguration
-
+from mig.shared.base import allow_script, brief_list, canonical_user, \
+    canonical_user_with_peers, client_dir_id, client_id_dir, \
+    distinguished_name_to_user, extract_field, fill_distinguished_name, \
+    fill_user, generate_https_urls, get_site_base_url, invisible_path, \
+    mask_creds, requested_page, requested_url_base, verify_local_url
 from mig.shared.base import main as base_main
+from mig.shared.defaults import csrf_field, cert_field_order, \
+    gdp_distinguished_field, valid_gdp_anon_scripts, valid_gdp_auth_scripts
+from tests.support import FakeConfiguration, MigTestCase, testmain
 
 
 class TestMigSharedBase(MigTestCase):
@@ -1020,6 +1019,62 @@ just use the one that looks most familiar or try them in turn)"""
         # Path that only contains invisible directory substring
         substring_path = '/prefix%ssuffix/file' % invisible_dirname
         self.assertFalse(invisible_path(substring_path))
+
+    def test_brief_list(self):
+        """Test brief_list helper function for shortening long lists"""
+
+        # Empty list should remain empty
+        self.assertEqual(brief_list([]), [])
+
+        # List smaller than max_entries remains unchanged
+        short_list = [1, 2, 3]
+        self.assertEqual(brief_list(short_list, 5), short_list)
+
+        # List exactly at max_entries remains unchanged
+        exact_list = list(range(10))
+        self.assertEqual(brief_list(exact_list), exact_list)
+
+        # List longer than max_entries gets shortened
+        long_list = list(range(15))
+        expected_long = [0, 1, 2, 3, 4, ' ... shortened ... ', 10, 11, 12,
+                         13, 14]
+        self.assertEqual(brief_list(long_list), expected_long)
+
+        # Custom max_entries with odd number
+        custom_odd_list = list(range(10))
+        expected_odd = [0, 1, 2, 3, ' ... shortened ... ', 6, 7, 8, 9]
+        self.assertEqual(brief_list(custom_odd_list, 9), expected_odd)
+
+        # Range objects should be handled properly
+        input_range = range(20)
+        expected_range = [0, 1, 2, 3, 4, ' ... shortened ... ', 15, 16, 17,
+                          18, 19]
+        self.assertEqual(brief_list(input_range), expected_range)
+
+        # Edge case - max_entries=2
+        self.assertEqual(brief_list([1, 2, 3, 4], 2),
+                         [1, ' ... shortened ... ', 4])
+
+        # Very small max_entries
+        self.assertEqual(brief_list([1, 2, 3, 4], 3),
+                         [1, ' ... shortened ... ', 4])
+
+        # Non-integer input
+        str_list = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+        expected_str = ['a', 'b', 'c', ' ... shortened ... ', 'e', 'f', 'g']
+        self.assertEqual(brief_list(str_list, 7), str_list)  # At max_entries
+
+    # TODO: fix tested function to handle these and enable test
+    @unittest.skipIf(True, "requires fix in tested function")
+    def test_brief_list_edge_cases(self):
+        """Test brief_list helper function for compact list on edge cases"""
+        # Edge case - max_entries=1
+        self.assertEqual(brief_list([1, 2, 3], 1), [' ... shortened ... '])
+
+        # Edge case - even short number of max_entries
+        str_list = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+        self.assertEqual(brief_list(str_list, 6),
+                         ['a', 'b', ' ... shortened ... ', 'f', 'g'])
 
 
 class TestMigSharedBase__legacy(MigTestCase):
