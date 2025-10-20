@@ -70,7 +70,9 @@ def register_run_handler(configuration, run_signal=signal.SIGCONT):
 
 def interruptible_sleep(configuration, max_secs, break_checks, nap_secs=0.1):
     """Idle loop for max_secs or until one or more break_checks succeed"""
-    assert max_secs >= nap_secs, "Invalid max_secs value smaller than nap_secs"
+    assert nap_secs > 0.0, "Invalid non-positive nap_secs value"
+    if max_secs < nap_secs:
+        return
     for _ in range(int(max_secs / nap_secs)):
         for check in break_checks:
             if check():
