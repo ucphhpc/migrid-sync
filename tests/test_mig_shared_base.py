@@ -30,7 +30,8 @@
 import sys
 from mig.shared.base import allow_script, client_id_dir, client_dir_id, \
     get_site_base_url, mask_creds, extract_field, distinguished_name_to_user, \
-    fill_distinguished_name, fill_user, canonical_user, generate_https_urls
+    fill_distinguished_name, fill_user, canonical_user, generate_https_urls, \
+    canonical_user_with_peers
 from tests.support import MigTestCase, testmain
 from tests.support.configsupp import FakeConfiguration
 from mig.shared.defaults import csrf_field, gdp_distinguished_field, \
@@ -412,6 +413,117 @@ class TestMigSharedBase(MigTestCase):
         }
         self.assertEqual(canonical, expected)
         self.assertNotIn('extra_field', canonical)
+
+    def test_canonical_user_with_peers_legacy(self):
+        """Test canonical_user_with_peers with legacy peers list"""
+        self.dummy_conf.site_peers_explicit_fields = ['email', 'full_name']
+        user_dict = {
+            'full_name': 'John Doe',
+            'email': 'john@example.com',
+            'peers': [
+                '/C=DK/CN=Alice/emailAddress=alice@example.com',
+                '/C=DK/CN=Bob/emailAddress=bob@example.com'
+            ]
+        }
+        limit_fields = ['full_name', 'email']
+        canonical = canonical_user_with_peers(
+            self.dummy_conf, user_dict, limit_fields)
+
+        self.assertEqual(canonical['peers_email'],
+                         'alice@example.com, bob@example.com')
+        self.assertEqual(canonical['peers_full_name'], 'Alice, Bob')
+
+    def test_canonical_user_with_peers_explicit(self):
+        """Test canonical_user_with_peers with explicit peers fields"""
+        self.dummy_conf.site_peers_explicit_fields = ['email', 'full_name']
+        user_dict = {
+            'full_name': 'John Doe',
+            'email': 'john@example.com',
+            'peers_email': 'custom@example.com',
+            'peers_full_name': 'Custom Name',
+            'peers': [
+                '/C=DK/CN=Alice/emailAddress=alice@example.com',
+                '/C=DK/CN=Bob/emailAddress=bob@example.com'
+            ]
+        }
+        limit_fields = ['full_name', 'email']
+        canonical = canonical_user_with_peers(
+            self.dummy_conf, user_dict, limit_fields)
+
+        self.assertEqual(canonical['peers_email'], 'custom@example.com')
+        self.assertEqual(canonical['peers_full_name'], 'Custom Name')
+
+    def test_canonical_user_with_peers_mixed(self):
+        """Test canonical_user_with_peers with mixed explicit and legacy peers"""
+        self.dummy_conf.site_peers_explicit_fields = ['email', 'organization']
+        user_dict = {
+            'full_name': 'John Doe',
+            'email': 'john@example.com',
+            'peers_organization': 'Test Org',
+            'peers': [
+                '/C=DK/O=Legacy Org/CN=Alice/emailAddress=alice@example.com',
+                '/C=DK/CN=Bob/emailAddress=bob@example.com'
+            ]
+        }
+        limit_fields = ['full_name', 'email', 'organization']
+        canonical = canonical_user_with_peers(
+            self.dummy_conf, user_dict, limit_fields)
+
+        # Explicit field should be preserved
+        self.assertEqual(canonical['peers_organization'], 'Test Org')
+        # Legacy peers should be converted for email
+        self.assertEqual(canonical['peers_email'],
+                         'alice@example.com, bob@example.com')
+
+    def test_canonical_user_with_peers_empty(self):
+        """Test canonical_user_with_peers with no peers data"""
+        self.dummy_conf.site_peers_explicit_fields = ['email']
+        user_dict = {
+            'full_name': 'John Doe',
+            'email': 'john@example.com'
+        }
+        limit_fields = ['full_name', 'email']
+        canonical = canonical_user_with_peers(
+            self.dummy_conf, user_dict, limit_fields)
+
+        self.assertNotIn('peers_email', canonical)
+        self.assertNotIn('peers', canonical)
+
+    def test_canonical_user_with_peers_no_explicit_fields(self):
+        """Test canonical_user_with_peers with no peer fields configured"""
+        self.dummy_conf.site_peers_explicit_fields = []
+        user_dict = {
+            'full_name': 'John Doe',
+            'email': 'john@example.com',
+            'peers': [
+                '/C=DK/CN=Alice/emailAddress=alice@example.com'
+            ]
+        }
+        limit_fields = ['full_name', 'email']
+        canonical = canonical_user_with_peers(
+            self.dummy_conf, user_dict, limit_fields)
+
+        # Should not create any peer fields
+        self.assertNotIn('peers_email', canonical)
+        self.assertNotIn('peers_full_name', canonical)
+
+    def test_canonical_user_with_peers_special_chars(self):
+        """Test canonical_user_with_peers handles special characters in DNs"""
+        self.dummy_conf.site_peers_explicit_fields = ['full_name']
+        user_dict = {
+            'full_name': 'John Doe',
+            'peers': [
+                '/C=DK/CN=Jérôme Müller',
+                '/C=DK/CN=O‘‘Reilly',
+                '/C=DK/CN=Alice "Ace" Smith'
+            ]
+        }
+        limit_fields = ['full_name']
+        canonical = canonical_user_with_peers(
+            self.dummy_conf, user_dict, limit_fields)
+
+        self.assertEqual(canonical['peers_full_name'],
+                         'Jérôme Müller, O‘‘Reilly, Alice "Ace" Smith')
 
     def test_canonical_user_unicode_name(self):
         """Test canonical_user with unicode characters in full_name."""
