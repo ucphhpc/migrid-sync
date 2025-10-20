@@ -123,8 +123,8 @@ class TestMigSharedBase(MigTestCase):
 
     def test_get_site_base_url_prefers_https(self):
         """Test get_site_base_url prefers HTTPS when available."""
-        self.dummy_conf.migserver_http_url = "http://example.com"
         self.dummy_conf.migserver_https_url = "https://example.com"
+        self.dummy_conf.migserver_http_url = "http://example.com"
         self.assertEqual(get_site_base_url(
             self.dummy_conf), "https://example.com")
 
@@ -533,7 +533,6 @@ just use the one that looks most familiar or try them in turn)"""
     def test_allow_script_gdp_enabled_anonymous_disallowed(self):
         """Test allow_script with GDP enabled, anonymous user, and script
         disallowed."""
-        config = FakeConfiguration()
         self.dummy_conf.site_enable_gdp = True
         script_name = 'disallowed_script.py'
         # Ensure the script is not in valid_gdp_anon_scripts
@@ -547,7 +546,6 @@ just use the one that looks most familiar or try them in turn)"""
     def test_allow_script_gdp_enabled_authenticated_allowed(self):
         """Test allow_script with GDP enabled, authenticated user, and script
         allowed."""
-        config = FakeConfiguration()
         self.dummy_conf.site_enable_gdp = True
         script_name = valid_gdp_auth_scripts[0] if valid_gdp_auth_scripts \
             else valid_gdp_anon_scripts[0] if valid_gdp_anon_scripts \
@@ -564,7 +562,6 @@ just use the one that looks most familiar or try them in turn)"""
     def test_allow_script_gdp_enabled_authenticated_disallowed(self):
         """Test allow_script with GDP enabled, authenticated user, and script
         disallowed."""
-        config = FakeConfiguration()
         self.dummy_conf.site_enable_gdp = True
         script_name = 'disallowed_script.py'
 
