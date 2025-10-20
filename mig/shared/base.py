@@ -951,7 +951,7 @@ def auth_type_description(configuration, auth_type=keyword_all):
         return auth_map.get(auth_type, 'UNKNOWN')
 
 
-def main(_exit=sys.exit, _print=print):
+def legacy_main(_exit=sys.exit, _print=print):
     """Run module self-tests"""
     orig_id = '/C=DK/ST=NA/L=NA/O=Ajax Inc/OU=NA/CN=John Doe/emailAddress=john.doe@ajaxinc.org'
     client_dir = client_id_dir(orig_id)
@@ -1037,4 +1037,4 @@ def main(_exit=sys.exit, _print=print):
 
 
 if __name__ == '__main__':
-    main()
+    legacy_main()

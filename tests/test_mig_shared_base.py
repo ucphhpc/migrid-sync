@@ -30,13 +30,13 @@
 import sys
 import unittest
 
-from mig.shared.base import allow_script, brief_list, canonical_user, \
-    canonical_user_with_peers, client_dir_id, client_id_dir, \
+from mig.shared.base import allow_script, auth_type_description, brief_list, \
+    canonical_user, canonical_user_with_peers, client_dir_id, client_id_dir, \
     distinguished_name_to_user, extract_field, fill_distinguished_name, \
     fill_user, generate_https_urls, get_site_base_url, invisible_path, \
-    mask_creds, requested_page, requested_url_base, verify_local_url
-from mig.shared.base import main as base_main
-from mig.shared.defaults import csrf_field, cert_field_order, \
+    legacy_main, mask_creds, requested_page, requested_url_base, \
+    verify_local_url
+from mig.shared.defaults import cert_field_order, csrf_field, \
     gdp_distinguished_field, valid_gdp_anon_scripts, valid_gdp_auth_scripts
 from tests.support import FakeConfiguration, MigTestCase, testmain
 
@@ -61,6 +61,10 @@ class TestMigSharedBase(MigTestCase):
         self.dummy_conf.migserver_https_sid_url = "https://mig.sid"
         self.dummy_conf.site_enable_wsgi = False
         self.dummy_conf.site_login_methods = []
+        self.dummy_conf.user_mig_oid_title = "UNSET"
+        self.dummy_conf.user_mig_cert_title = "UNSET"
+        self.dummy_conf.user_ext_oid_title = "UNSET"
+        self.dummy_conf.user_ext_cert_title = "UNSET"
 
     def test_client_id_dir_basic(self):
         """Test basic client_id_dir conversion"""
@@ -627,6 +631,69 @@ just use the one that looks most familiar or try them in turn)"""
                                             expected_note)
         self.assertEqual(result, expected_result)
 
+    def test_auth_type_description_all(self):
+        """Test auth_type_description returns full dict when requested"""
+        from mig.shared.defaults import keyword_all
+        result = auth_type_description(self.dummy_conf, keyword_all)
+        expected_keys = ['migoid', 'migoidc', 'migcert', 'extoid', 'extoidc',
+                         'extcert']
+        self.assertEqual(sorted(result.keys()), sorted(expected_keys))
+
+    def test_auth_type_description_individual(self):
+        """Test auth_type_description returns expected strings for each type"""
+        from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_CONNECT, \
+            AUTH_OPENID_V2
+
+        # Setup titles in configuration
+        self.dummy_conf.user_mig_oid_title = "MiG OpenID"
+        self.dummy_conf.user_mig_cert_title = "MiG Certificate"
+        self.dummy_conf.user_ext_oid_title = "External OpenID"
+        self.dummy_conf.user_ext_cert_title = "External Certificate"
+
+        test_cases = [
+            ('migoid', 'MiG OpenID %s' % AUTH_OPENID_V2),
+            ('migoidc', 'MiG OpenID %s' % AUTH_OPENID_CONNECT),
+            ('migcert', 'MiG Certificate %s' % AUTH_CERTIFICATE),
+            ('extoid', 'External OpenID %s' % AUTH_OPENID_V2),
+            ('extoidc', 'External OpenID %s' % AUTH_OPENID_CONNECT),
+            ('extcert', 'External Certificate %s' % AUTH_CERTIFICATE),
+        ]
+
+        for (auth_type, expected) in test_cases:
+            result = auth_type_description(self.dummy_conf, auth_type)
+            self.assertEqual(result, expected)
+
+    def test_auth_type_description_unknown(self):
+        """Test auth_type_description returns 'UNKNOWN' for invalid types"""
+        self.assertEqual(auth_type_description(self.dummy_conf, 'invalid'),
+                         'UNKNOWN')
+        self.assertEqual(auth_type_description(self.dummy_conf, ''), 'UNKNOWN')
+        self.assertEqual(auth_type_description(
+            self.dummy_conf, None), 'UNKNOWN')
+
+    def test_auth_type_description_empty_titles(self):
+        """Test auth_type_description handles empty titles in configuration"""
+        from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_CONNECT, \
+            AUTH_OPENID_V2
+
+        self.dummy_conf.user_mig_oid_title = ""
+        self.dummy_conf.user_mig_cert_title = ""
+        self.dummy_conf.user_ext_oid_title = ""
+        self.dummy_conf.user_ext_cert_title = ""
+
+        test_cases = [
+            ('migoid', ' %s' % AUTH_OPENID_V2),
+            ('migoidc', ' %s' % AUTH_OPENID_CONNECT),
+            ('migcert', ' %s' % AUTH_CERTIFICATE),
+            ('extoid', ' %s' % AUTH_OPENID_V2),
+            ('extoidc', ' %s' % AUTH_OPENID_CONNECT),
+            ('extcert', ' %s' % AUTH_CERTIFICATE),
+        ]
+
+        for (auth_type, expected) in test_cases:
+            result = auth_type_description(self.dummy_conf, auth_type)
+            self.assertEqual(result, expected)
+
     def test_allow_script_gdp_enabled_anonymous_allowed(self):
         """Test allow_script with GDP enabled, anonymous user, and script
         allowed."""
@@ -1098,4 +1165,4 @@ class TestMigSharedBase__legacy(MigTestCase):
             """Keep track of printed output"""
             raise_on_error_exit.last_print = value
 
-        base_main(_exit=raise_on_error_exit, _print=record_last_print)
+        legacy_main(_exit=raise_on_error_exit, _print=record_last_print)
