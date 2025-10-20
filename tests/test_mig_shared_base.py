@@ -31,7 +31,7 @@ import sys
 from mig.shared.base import allow_script, client_id_dir, client_dir_id, \
     get_site_base_url, mask_creds, extract_field, distinguished_name_to_user, \
     fill_distinguished_name, fill_user, canonical_user, generate_https_urls, \
-    canonical_user_with_peers
+    canonical_user_with_peers, invisible_path
 from tests.support import MigTestCase, testmain
 from tests.support.configsupp import FakeConfiguration
 from mig.shared.defaults import csrf_field, gdp_distinguished_field, \
@@ -695,6 +695,86 @@ just use the one that looks most familiar or try them in turn)"""
         allow, msg = allow_script(self.dummy_conf, 'any_script.py', None)
         self.assertTrue(allow)
         self.assertEqual(msg, "")
+
+    def test_invisible_path_file(self):
+        """Test invisible_path detects names in invisible files"""
+        invisible_filename = '.htaccess'
+        visible_filename = 'visible.txt'
+
+        # Test with invisible filename
+        self.assertTrue(invisible_path('/some/path/%s' % invisible_filename))
+        self.assertTrue(invisible_path(invisible_filename))
+        self.assertTrue(invisible_path(invisible_filename, True))
+
+        # Test with visible filename
+        self.assertFalse(invisible_path(visible_filename))
+        self.assertFalse(invisible_path('/some/path/%s' % visible_filename))
+
+    def test_invisible_path_dir(self):
+        """Test invisible_path detects paths in invisible dir"""
+        invisible_dirname = '.vgridscm'
+        visible_dirname = 'somedir'
+
+        # Test different forms of invisible directory path
+        self.assertTrue(invisible_path(invisible_dirname))
+        self.assertTrue(invisible_path('/%s' % invisible_dirname))
+        self.assertTrue(invisible_path('/parent/%s' % invisible_dirname))
+        self.assertTrue(invisible_path('%s/sub' % invisible_dirname))
+        self.assertTrue(invisible_path('/%s/file' % invisible_dirname))
+
+        # Test visible directory
+        self.assertFalse(invisible_path(visible_dirname))
+        self.assertFalse(invisible_path('/%s' % visible_dirname))
+        self.assertFalse(invisible_path('/parent/%s' % visible_dirname))
+
+    def test_invisible_path_vgrid_exception(self):
+        """Test allow_vgrid_scripts excludes valid vgrid xgi scripts"""
+        invisible_dirname = '.vgridscm'
+        vgrid_script = '.vgridscm/cgi-bin/hgweb.cgi'
+
+        test_patterns = [
+            '/%s/%s' % (invisible_dirname, vgrid_script),
+            '/root/%s/sub/%s' % (invisible_dirname, vgrid_script),
+            '/%s/prefix%ssuffix' % (invisible_dirname, vgrid_script),
+            '/%s/similar_script.py' % invisible_dirname,
+            '/path/to/%s' % vgrid_script
+
+        ]
+        test_expects = [False, False, False, True, False]
+
+        test_iter = zip(test_patterns, test_expects)
+        for (i, (path, expected)) in enumerate(test_iter):
+            self.assertEqual(
+                invisible_path(path, allow_vgrid_scripts=True),
+                expected,
+                "test case %d: path %r should %sbe invisible with scripts"
+                % (i, path, "" if expected else "not ")
+            )
+
+            # Should still be invisible without exception flag
+            expect_no_exception = True if invisible_dirname in path else False
+            self.assertEqual(
+                invisible_path(path, allow_vgrid_scripts=False),
+                expect_no_exception,
+                "test case %d: path %r should %sbe invisible without scripts"
+                % (i, path, "" if expect_no_exception else "not ")
+            )
+
+    def test_invisible_path_edge_cases(self):
+        """Test invisible_path handles edge cases"""
+        from mig.shared.defaults import _user_invisible_dirs
+        invisible_dirname = _user_invisible_dirs[0]
+
+        # Empty path
+        self.assertFalse(invisible_path(''))
+        self.assertFalse(invisible_path('', allow_vgrid_scripts=True))
+
+        # Root path
+        self.assertFalse(invisible_path('/'))
+
+        # Path that only contains invisible directory substring
+        substring_path = '/prefix%ssuffix/file' % invisible_dirname
+        self.assertFalse(invisible_path(substring_path))
 
     # NOTE: keep existing main last and perhaps migrate here eventually
     def test_existing_main(self):
