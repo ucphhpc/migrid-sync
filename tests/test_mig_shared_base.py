@@ -46,6 +46,15 @@ class TestMigSharedBase(MigTestCase):
         """Setup fake configuration before each test."""
         self.dummy_conf = FakeConfiguration()
 
+        self.dummy_conf.migserver_https_mig_cert_url = "https://mig.cert"
+        self.dummy_conf.migserver_https_ext_cert_url = "https://ext.cert"
+        self.dummy_conf.migserver_https_mig_oid_url = "https://mig.oid"
+        self.dummy_conf.migserver_https_ext_oid_url = "https://ext.oid"
+        self.dummy_conf.migserver_https_mig_oidc_url = "https://mig.oidc"
+        self.dummy_conf.migserver_https_ext_oidc_url = "https://ext.oidc"
+        self.dummy_conf.site_enable_wsgi = False
+        self.dummy_conf.site_login_methods = []
+
     def test_client_id_dir_basic(self):
         """Test basic client_id_dir conversion"""
         input_id = "/C=DK/CN=John Doe"
@@ -418,40 +427,28 @@ class TestMigSharedBase(MigTestCase):
         self.assertEqual(canonical_user(self.dummy_conf, {'a': 1}, []), {})
         self.assertEqual(canonical_user(self.dummy_conf, {}, ['a']), {})
 
-    def _setup_config_for_https_urls(self):
-        self.dummy_conf.migserver_https_mig_cert_url = "https://mig.cert"
-        self.dummy_conf.migserver_https_ext_cert_url = "https://ext.cert"
-        self.dummy_conf.migserver_https_mig_oid_url = "https://mig.oid"
-        self.dummy_conf.migserver_https_ext_oid_url = "https://ext.oid"
-        self.dummy_conf.migserver_https_mig_oidc_url = "https://mig.oidc"
-        self.dummy_conf.migserver_https_ext_oidc_url = "https://ext.oidc"
-        self.dummy_conf.site_enable_wsgi = False
-        self.dummy_conf.site_login_methods = []
-        return self.dummy_conf
-
     def test_generate_https_urls_single_method_cgi(self):
         """Test generate_https_urls with a single method and cgi-bin."""
-        config = self._setup_config_for_https_urls()
-        config.site_login_methods = ['migcert']
+        self.dummy_conf.site_login_methods = ['migcert']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(config, template, {})
-        self.assertEqual(result, "https://mig.cert/cgi-bin/script.py")
+        expected = "https://mig.cert/cgi-bin/script.py"
+        result = generate_https_urls(self.dummy_conf, template, {})
+        self.assertEqual(result, expected)
 
     def test_generate_https_urls_single_method_wsgi(self):
         """Test generate_https_urls with a single method and wsgi-bin."""
-        config = self._setup_config_for_https_urls()
-        config.site_enable_wsgi = True
-        config.site_login_methods = ['migcert']
+        self.dummy_conf.site_enable_wsgi = True
+        self.dummy_conf.site_login_methods = ['migcert']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(config, template, {})
-        self.assertEqual(result, "https://mig.cert/wsgi-bin/script.py")
+        expected = "https://mig.cert/wsgi-bin/script.py"
+        result = generate_https_urls(self.dummy_conf, template, {})
+        self.assertEqual(result, expected)
 
     def test_generate_https_urls_multiple_methods(self):
         """Test generate_https_urls with multiple methods."""
-        config = self._setup_config_for_https_urls()
-        config.site_login_methods = ['migcert', 'extoidc']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(config, template, {})
+        self.dummy_conf.site_login_methods = ['migcert', 'extoidc']
+        result = generate_https_urls(self.dummy_conf, template, {})
         expected_url1 = "https://mig.cert/cgi-bin/script.py"
         expected_url2 = "https://ext.oidc/cgi-bin/script.py"
         expected_note = """
@@ -463,36 +460,32 @@ just use the one that looks most familiar or try them in turn)"""
 
     def test_generate_https_urls_with_helper_dict(self):
         """Test generate_https_urls with a helper_dict."""
-        config = self._setup_config_for_https_urls()
-        config.site_login_methods = ['extoid']
+        self.dummy_conf.site_login_methods = ['extoid']
         template = "%(auto_base)s/%(auto_bin)s/%(script)s"
         helper = {'script': 'login.py'}
-        result = generate_https_urls(config, template, helper)
+        result = generate_https_urls(self.dummy_conf, template, helper)
         self.assertEqual(result, "https://ext.oid/cgi-bin/login.py")
 
     def test_generate_https_urls_method_enabled_but_url_missing(self):
         """Test that methods with no configured URL are skipped."""
-        config = self._setup_config_for_https_urls()
-        config.migserver_https_ext_cert_url = ""  # URL is missing
-        config.site_login_methods = ['migcert', 'extcert']
+        self.dummy_conf.migserver_https_ext_cert_url = ""  # URL is missing
+        self.dummy_conf.site_login_methods = ['migcert', 'extcert']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(config, template, {})
+        result = generate_https_urls(self.dummy_conf, template, {})
         self.assertEqual(result, "https://mig.cert/cgi-bin/script.py")
 
     def test_generate_https_urls_no_methods_enabled(self):
         """Test generate_https_urls with no login methods enabled."""
-        config = self._setup_config_for_https_urls()
-        config.site_login_methods = []
+        self.dummy_conf.site_login_methods = []
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(config, template, {})
+        result = generate_https_urls(self.dummy_conf, template, {})
         self.assertEqual(result, "")
 
     def test_generate_https_urls_respects_order(self):
         """Test that the order of site_login_methods is respected."""
-        config = self._setup_config_for_https_urls()
-        config.site_login_methods = ['extoidc', 'migcert']
+        self.dummy_conf.site_login_methods = ['extoidc', 'migcert']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(config, template, {})
+        result = generate_https_urls(self.dummy_conf, template, {})
         expected_url1 = "https://ext.oidc/cgi-bin/script.py"
         expected_url2 = "https://mig.cert/cgi-bin/script.py"
         expected_note = """
@@ -504,10 +497,9 @@ just use the one that looks most familiar or try them in turn)"""
 
     def test_generate_https_urls_avoids_duplicates(self):
         """Test that duplicate URLs are not generated."""
-        config = self._setup_config_for_https_urls()
-        config.site_login_methods = ['migcert', 'extoidc', 'migcert']
+        self.dummy_conf.site_login_methods = ['migcert', 'extoidc', 'migcert']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(config, template, {})
+        result = generate_https_urls(self.dummy_conf, template, {})
         expected_url1 = "https://mig.cert/cgi-bin/script.py"
         expected_url2 = "https://ext.oidc/cgi-bin/script.py"
         expected_note = """
