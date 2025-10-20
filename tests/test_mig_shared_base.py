@@ -46,25 +46,25 @@ class TestMigSharedBase(MigTestCase):
 
     def before_each(self):
         """Setup fake configuration before each test."""
-        self.dummy_conf = FakeConfiguration()
-
-        self.dummy_conf.migserver_http_url = "http://mig.plain"
-        self.dummy_conf.migserver_https_url = "https://mig.crypt"
-        self.dummy_conf.migserver_public_url = "https://mig.pub"
-        self.dummy_conf.migserver_public_alias_url = "https://mig.pub.alias"
-        self.dummy_conf.migserver_https_mig_cert_url = "https://mig.cert"
-        self.dummy_conf.migserver_https_ext_cert_url = "https://ext.cert"
-        self.dummy_conf.migserver_https_mig_oid_url = "https://mig.oid"
-        self.dummy_conf.migserver_https_ext_oid_url = "https://ext.oid"
-        self.dummy_conf.migserver_https_mig_oidc_url = "https://mig.oidc"
-        self.dummy_conf.migserver_https_ext_oidc_url = "https://ext.oidc"
-        self.dummy_conf.migserver_https_sid_url = "https://mig.sid"
-        self.dummy_conf.site_enable_wsgi = False
-        self.dummy_conf.site_login_methods = []
-        self.dummy_conf.user_mig_oid_title = "UNSET"
-        self.dummy_conf.user_mig_cert_title = "UNSET"
-        self.dummy_conf.user_ext_oid_title = "UNSET"
-        self.dummy_conf.user_ext_cert_title = "UNSET"
+        self.dummy_conf = FakeConfiguration(
+            migserver_http_url="http://mig.plain",
+            migserver_https_url="https://mig.crypt",
+            migserver_public_url="https://mig.pub",
+            migserver_public_alias_url="https://mig.pub.alias",
+            migserver_https_mig_cert_url="https://mig.cert",
+            migserver_https_ext_cert_url="https://ext.cert",
+            migserver_https_mig_oid_url="https://mig.oid",
+            migserver_https_ext_oid_url="https://ext.oid",
+            migserver_https_mig_oidc_url="https://mig.oidc",
+            migserver_https_ext_oidc_url="https://ext.oidc",
+            migserver_https_sid_url="https://mig.sid",
+            site_enable_wsgi=False,
+            site_login_methods=[],
+            user_mig_oid_title="UNSET",
+            user_mig_cert_title="UNSET",
+            user_ext_oid_title="UNSET",
+            user_ext_cert_title="UNSET",
+        )
 
     def test_client_id_dir_basic(self):
         """Test basic client_id_dir conversion"""
