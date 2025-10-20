@@ -31,7 +31,7 @@ import sys
 from mig.shared.base import allow_script, client_id_dir, client_dir_id, \
     get_site_base_url, mask_creds, extract_field, distinguished_name_to_user, \
     fill_distinguished_name, fill_user, canonical_user, generate_https_urls, \
-    canonical_user_with_peers, invisible_path
+    canonical_user_with_peers, invisible_path, requested_page
 from tests.support import MigTestCase, testmain
 from tests.support.configsupp import FakeConfiguration
 from mig.shared.defaults import csrf_field, gdp_distinguished_field, \
@@ -695,6 +695,98 @@ just use the one that looks most familiar or try them in turn)"""
         allow, msg = allow_script(self.dummy_conf, 'any_script.py', None)
         self.assertTrue(allow)
         self.assertEqual(msg, "")
+
+    def test_requested_page_normal(self):
+        """Test requested_page with basic environment"""
+        fake_env = {
+            'SCRIPT_NAME': '/cgi-bin/home.py',
+            'REQUEST_URI': '/cgi-bin/home.py'
+        }
+        self.assertEqual(requested_page(fake_env), '/cgi-bin/home.py')
+
+    def test_requested_page_name_only(self):
+        """Test requested_page with name_only argument"""
+        fake_env = {
+            'BACKEND_NAME': 'search.py',
+            'PATH_INFO': '/cgi-bin/search.py/path'
+        }
+        result = requested_page(fake_env, name_only=True, fallback='fallback')
+        self.assertEqual(result, 'search.py')
+
+    def test_requested_page_strip_extension(self):
+        """Test requested_page with strip_ext argument"""
+        fake_env = {'REQUEST_URI': '/cgi-bin/file.py?query=val'}
+        result = requested_page(fake_env, strip_ext=True)
+        self.assertEqual(result, '/cgi-bin/file')
+
+    def test_requested_page_priority(self):
+        """Test environment variable priority order"""
+        _init_env = {
+            'BACKEND_NAME': 'backend.py',
+            'SCRIPT_URL': '/cgi-bin/script_url.py',
+            'SCRIPT_URI': 'https://host/cgi-bin/script_uri.py',
+            'PATH_INFO': '/cgi-bin/path_info.py',
+            'REQUEST_URI': '/cgi-bin/req_uri.py'
+        }
+
+        priority_order = ['BACKEND_NAME', 'SCRIPT_URL', 'SCRIPT_URI',
+                          'PATH_INFO', 'REQUEST_URI']
+
+        for var in priority_order:
+            # Reset fake_env each time
+            fake_env = dict([pair for pair in _init_env.items()])
+            current_env = {var: fake_env[var]}
+            if var != 'SCRIPT_URI':
+                expected = fake_env[var]
+            else:
+                expected = 'https://host/cgi-bin/script_uri.py'
+            result = requested_page(current_env)
+            self.assertEqual(result, expected,
+                             "failed priority for %s" % var)
+
+            # Remove higher priority variables one by one
+            for higher_var in priority_order[:priority_order.index(var)]:
+                del fake_env[higher_var]
+            result = requested_page(fake_env)
+            self.assertEqual(result, fake_env[var],
+                             "failed fallthrough to %s" % var)
+
+    def test_requested_page_unsafe_filter(self):
+        """Test unsafe character filtering"""
+        test_cases = [
+            ('/cgi-bin/unsafe<script>.py', '/cgi-bin/unsafescript.py'),
+            ('/path/with#hash', '/path/withhash'),
+            ('/evil/alert("xss")', '/evil/alertxss')
+        ]
+        for (input_val, expected) in test_cases:
+            fake_env = {'REQUEST_URI': input_val}
+            result = requested_page(fake_env)
+            self.assertEqual(result, expected,
+                             "failed filtering for %s" % input_val)
+
+    def test_requested_page_include_unsafe(self):
+        """Test include_unsafe argument behavior"""
+        dangerous = '/cgi-bin/unsafe<script>alert(1)</script>.py'
+        fake_env = {'REQUEST_URI': dangerous}
+        unsafe_result = requested_page(fake_env, include_unsafe=True)
+        self.assertEqual(unsafe_result, dangerous)
+
+        safe_result = requested_page(fake_env)
+        self.assertNotEqual(safe_result, dangerous)
+
+    def test_requested_page_query_stripping(self):
+        """Test removal of query parameters"""
+        test_input = '/cgi-bin/script.py?query=value&param=data'
+        fake_env = {'REQUEST_URI': test_input}
+        result = requested_page(fake_env)
+        self.assertEqual(result, '/cgi-bin/script.py')
+
+    def test_requested_page_fallback(self):
+        """Test fallback to default"""
+        fake_env = {}
+        fallback = 'special.py'
+        result = requested_page(fake_env, fallback=fallback)
+        self.assertEqual(result, fallback)
 
     def test_invisible_path_file(self):
         """Test invisible_path detects names in invisible files"""
