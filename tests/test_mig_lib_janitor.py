@@ -741,9 +741,8 @@ class MigLibJanitor(MigTestCase):
         # Verify last run timestamps updated
         self.assertEqual(_lookup_last_run(
             self.dummy_conf, "state-cleanup"), now)
-        # TODO: fix copy/paste bug in tested function and enable next
-        # self.assertEqual(_lookup_last_run(
-        #    self.dummy_conf, "session-cleanup"), now)
+        self.assertEqual(_lookup_last_run(
+            self.dummy_conf, "session-cleanup"), now)
         self.assertEqual(_lookup_last_run(
             self.dummy_conf, "pending-reqs"), now)
         self.assertEqual(_lookup_last_run(
