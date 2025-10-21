@@ -44,27 +44,29 @@ from tests.support import FakeConfiguration, MigTestCase, testmain
 class TestMigSharedBase(MigTestCase):
     """Test mig.shared.base functions"""
 
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
     def before_each(self):
         """Setup fake configuration before each test."""
-        self.dummy_conf = FakeConfiguration(
-            migserver_http_url="http://mig.plain",
-            migserver_https_url="https://mig.crypt",
-            migserver_public_url="https://mig.pub",
-            migserver_public_alias_url="https://mig.pub.alias",
-            migserver_https_mig_cert_url="https://mig.cert",
-            migserver_https_ext_cert_url="https://ext.cert",
-            migserver_https_mig_oid_url="https://mig.oid",
-            migserver_https_ext_oid_url="https://ext.oid",
-            migserver_https_mig_oidc_url="https://mig.oidc",
-            migserver_https_ext_oidc_url="https://ext.oidc",
-            migserver_https_sid_url="https://mig.sid",
-            site_enable_wsgi=False,
-            site_login_methods=[],
-            user_mig_oid_title="UNSET",
-            user_mig_cert_title="UNSET",
-            user_ext_oid_title="UNSET",
-            user_ext_cert_title="UNSET",
-        )
+        self.configuration.migserver_http_url = "http://mig.plain"
+        self.configuration.migserver_https_url = "https://mig.crypt"
+        self.configuration.migserver_public_url = "https://mig.pub"
+        self.configuration.migserver_public_alias_url = "https://mig.pub.alias"
+        self.configuration.migserver_https_mig_cert_url = "https://mig.cert"
+        self.configuration.migserver_https_ext_cert_url = "https://ext.cert"
+        self.configuration.migserver_https_mig_oid_url = "https://mig.oid"
+        self.configuration.migserver_https_ext_oid_url = "https://ext.oid"
+        self.configuration.migserver_https_mig_oidc_url = "https://mig.oidc"
+        self.configuration.migserver_https_ext_oidc_url = "https://ext.oidc"
+        self.configuration.migserver_https_sid_url = "https://mig.sid"
+        self.configuration.site_enable_wsgi = False
+        self.configuration.site_login_methods = []
+        self.configuration.user_mig_oid_title = "UNSET"
+        self.configuration.user_mig_cert_title = "UNSET"
+        self.configuration.user_ext_oid_title = "UNSET"
+        self.configuration.user_ext_cert_title = "UNSET"
 
     def test_client_id_dir_basic(self):
         """Test basic client_id_dir conversion"""
@@ -143,17 +145,17 @@ class TestMigSharedBase(MigTestCase):
 
     def test_get_site_base_url_prefers_https(self):
         """Test get_site_base_url prefers HTTPS when available."""
-        self.dummy_conf.migserver_https_url = "https://example.com"
-        self.dummy_conf.migserver_http_url = "http://example.com"
+        self.configuration.migserver_https_url = "https://example.com"
+        self.configuration.migserver_http_url = "http://example.com"
         self.assertEqual(get_site_base_url(
-            self.dummy_conf), "https://example.com")
+            self.configuration), "https://example.com")
 
     def test_get_site_base_url_fallback_to_http(self):
         """Test get_site_base_url falls back to HTTP when HTTPS is not
         available."""
-        self.dummy_conf.migserver_http_url = "http://example.com"
-        self.dummy_conf.migserver_https_url = ""  # Not available
-        self.assertEqual(get_site_base_url(self.dummy_conf),
+        self.configuration.migserver_http_url = "http://example.com"
+        self.configuration.migserver_https_url = ""  # Not available
+        self.assertEqual(get_site_base_url(self.configuration),
                          "http://example.com")
 
     def test_mask_creds_default_masking(self):
@@ -411,7 +413,7 @@ class TestMigSharedBase(MigTestCase):
         }
         limit_fields = ['full_name', 'email',
                         'country', 'state', 'organization', 'id']
-        canonical = canonical_user(self.dummy_conf, user_dict, limit_fields)
+        canonical = canonical_user(self.configuration, user_dict, limit_fields)
 
         expected = {
             'full_name': 'John Doe',
@@ -426,7 +428,7 @@ class TestMigSharedBase(MigTestCase):
 
     def test_canonical_user_with_peers_legacy(self):
         """Test canonical_user_with_peers with legacy peers list"""
-        self.dummy_conf.site_peers_explicit_fields = ['email', 'full_name']
+        self.configuration.site_peers_explicit_fields = ['email', 'full_name']
         user_dict = {
             'full_name': 'John Doe',
             'email': 'john@example.com',
@@ -437,7 +439,7 @@ class TestMigSharedBase(MigTestCase):
         }
         limit_fields = ['full_name', 'email']
         canonical = canonical_user_with_peers(
-            self.dummy_conf, user_dict, limit_fields)
+            self.configuration, user_dict, limit_fields)
 
         self.assertEqual(canonical['peers_email'],
                          'alice@example.com, bob@example.com')
@@ -445,7 +447,7 @@ class TestMigSharedBase(MigTestCase):
 
     def test_canonical_user_with_peers_explicit(self):
         """Test canonical_user_with_peers with explicit peers fields"""
-        self.dummy_conf.site_peers_explicit_fields = ['email', 'full_name']
+        self.configuration.site_peers_explicit_fields = ['email', 'full_name']
         user_dict = {
             'full_name': 'John Doe',
             'email': 'john@example.com',
@@ -458,14 +460,15 @@ class TestMigSharedBase(MigTestCase):
         }
         limit_fields = ['full_name', 'email']
         canonical = canonical_user_with_peers(
-            self.dummy_conf, user_dict, limit_fields)
+            self.configuration, user_dict, limit_fields)
 
         self.assertEqual(canonical['peers_email'], 'custom@example.com')
         self.assertEqual(canonical['peers_full_name'], 'Custom Name')
 
     def test_canonical_user_with_peers_mixed(self):
         """Test canonical_user_with_peers with mixed explicit and legacy peers"""
-        self.dummy_conf.site_peers_explicit_fields = ['email', 'organization']
+        self.configuration.site_peers_explicit_fields = [
+            'email', 'organization']
         user_dict = {
             'full_name': 'John Doe',
             'email': 'john@example.com',
@@ -477,7 +480,7 @@ class TestMigSharedBase(MigTestCase):
         }
         limit_fields = ['full_name', 'email', 'organization']
         canonical = canonical_user_with_peers(
-            self.dummy_conf, user_dict, limit_fields)
+            self.configuration, user_dict, limit_fields)
 
         # Explicit field should be preserved
         self.assertEqual(canonical['peers_organization'], 'Test Org')
@@ -487,21 +490,21 @@ class TestMigSharedBase(MigTestCase):
 
     def test_canonical_user_with_peers_empty(self):
         """Test canonical_user_with_peers with no peers data"""
-        self.dummy_conf.site_peers_explicit_fields = ['email']
+        self.configuration.site_peers_explicit_fields = ['email']
         user_dict = {
             'full_name': 'John Doe',
             'email': 'john@example.com'
         }
         limit_fields = ['full_name', 'email']
         canonical = canonical_user_with_peers(
-            self.dummy_conf, user_dict, limit_fields)
+            self.configuration, user_dict, limit_fields)
 
         self.assertNotIn('peers_email', canonical)
         self.assertNotIn('peers', canonical)
 
     def test_canonical_user_with_peers_no_explicit_fields(self):
         """Test canonical_user_with_peers with no peer fields configured"""
-        self.dummy_conf.site_peers_explicit_fields = []
+        self.configuration.site_peers_explicit_fields = []
         user_dict = {
             'full_name': 'John Doe',
             'email': 'john@example.com',
@@ -511,7 +514,7 @@ class TestMigSharedBase(MigTestCase):
         }
         limit_fields = ['full_name', 'email']
         canonical = canonical_user_with_peers(
-            self.dummy_conf, user_dict, limit_fields)
+            self.configuration, user_dict, limit_fields)
 
         # Should not create any peer fields
         self.assertNotIn('peers_email', canonical)
@@ -519,7 +522,7 @@ class TestMigSharedBase(MigTestCase):
 
     def test_canonical_user_with_peers_special_chars(self):
         """Test canonical_user_with_peers handles special characters in DNs"""
-        self.dummy_conf.site_peers_explicit_fields = ['full_name']
+        self.configuration.site_peers_explicit_fields = ['full_name']
         user_dict = {
             'full_name': 'John Doe',
             'peers': [
@@ -530,7 +533,7 @@ class TestMigSharedBase(MigTestCase):
         }
         limit_fields = ['full_name']
         canonical = canonical_user_with_peers(
-            self.dummy_conf, user_dict, limit_fields)
+            self.configuration, user_dict, limit_fields)
 
         self.assertEqual(canonical['peers_full_name'],
                          'Jérôme Müller, O‘‘Reilly, Alice "Ace" Smith')
@@ -540,37 +543,37 @@ class TestMigSharedBase(MigTestCase):
         # Using a name that title() might mess up without unicode conversion
         user_dict = {'full_name': u'josé de la vega'}
         limit_fields = ['full_name']
-        canonical = canonical_user(self.dummy_conf, user_dict, limit_fields)
+        canonical = canonical_user(self.configuration, user_dict, limit_fields)
         self.assertEqual(canonical['full_name'], u'José De La Vega')
 
     def test_canonical_user_empty_input(self):
         """Test canonical_user with empty inputs."""
-        self.assertEqual(canonical_user(self.dummy_conf, {}, []), {})
-        self.assertEqual(canonical_user(self.dummy_conf, {'a': 1}, []), {})
-        self.assertEqual(canonical_user(self.dummy_conf, {}, ['a']), {})
+        self.assertEqual(canonical_user(self.configuration, {}, []), {})
+        self.assertEqual(canonical_user(self.configuration, {'a': 1}, []), {})
+        self.assertEqual(canonical_user(self.configuration, {}, ['a']), {})
 
     def test_generate_https_urls_single_method_cgi(self):
         """Test generate_https_urls with a single method and cgi-bin."""
-        self.dummy_conf.site_login_methods = ['migcert']
+        self.configuration.site_login_methods = ['migcert']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
         expected = "https://mig.cert/cgi-bin/script.py"
-        result = generate_https_urls(self.dummy_conf, template, {})
+        result = generate_https_urls(self.configuration, template, {})
         self.assertEqual(result, expected)
 
     def test_generate_https_urls_single_method_wsgi(self):
         """Test generate_https_urls with a single method and wsgi-bin."""
-        self.dummy_conf.site_enable_wsgi = True
-        self.dummy_conf.site_login_methods = ['migcert']
+        self.configuration.site_enable_wsgi = True
+        self.configuration.site_login_methods = ['migcert']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
         expected = "https://mig.cert/wsgi-bin/script.py"
-        result = generate_https_urls(self.dummy_conf, template, {})
+        result = generate_https_urls(self.configuration, template, {})
         self.assertEqual(result, expected)
 
     def test_generate_https_urls_multiple_methods(self):
         """Test generate_https_urls with multiple methods."""
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        self.dummy_conf.site_login_methods = ['migcert', 'extoidc']
-        result = generate_https_urls(self.dummy_conf, template, {})
+        self.configuration.site_login_methods = ['migcert', 'extoidc']
+        result = generate_https_urls(self.configuration, template, {})
         expected_url1 = "https://mig.cert/cgi-bin/script.py"
         expected_url2 = "https://ext.oidc/cgi-bin/script.py"
         expected_note = """
@@ -582,32 +585,32 @@ just use the one that looks most familiar or try them in turn)"""
 
     def test_generate_https_urls_with_helper_dict(self):
         """Test generate_https_urls with a helper_dict."""
-        self.dummy_conf.site_login_methods = ['extoid']
+        self.configuration.site_login_methods = ['extoid']
         template = "%(auto_base)s/%(auto_bin)s/%(script)s"
         helper = {'script': 'login.py'}
-        result = generate_https_urls(self.dummy_conf, template, helper)
+        result = generate_https_urls(self.configuration, template, helper)
         self.assertEqual(result, "https://ext.oid/cgi-bin/login.py")
 
     def test_generate_https_urls_method_enabled_but_url_missing(self):
         """Test that methods with no configured URL are skipped."""
-        self.dummy_conf.migserver_https_ext_cert_url = ""  # URL is missing
-        self.dummy_conf.site_login_methods = ['migcert', 'extcert']
+        self.configuration.migserver_https_ext_cert_url = ""  # URL is missing
+        self.configuration.site_login_methods = ['migcert', 'extcert']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(self.dummy_conf, template, {})
+        result = generate_https_urls(self.configuration, template, {})
         self.assertEqual(result, "https://mig.cert/cgi-bin/script.py")
 
     def test_generate_https_urls_no_methods_enabled(self):
         """Test generate_https_urls with no login methods enabled."""
-        self.dummy_conf.site_login_methods = []
+        self.configuration.site_login_methods = []
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(self.dummy_conf, template, {})
+        result = generate_https_urls(self.configuration, template, {})
         self.assertEqual(result, "")
 
     def test_generate_https_urls_respects_order(self):
         """Test that the order of site_login_methods is respected."""
-        self.dummy_conf.site_login_methods = ['extoidc', 'migcert']
+        self.configuration.site_login_methods = ['extoidc', 'migcert']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(self.dummy_conf, template, {})
+        result = generate_https_urls(self.configuration, template, {})
         expected_url1 = "https://ext.oidc/cgi-bin/script.py"
         expected_url2 = "https://mig.cert/cgi-bin/script.py"
         expected_note = """
@@ -619,9 +622,10 @@ just use the one that looks most familiar or try them in turn)"""
 
     def test_generate_https_urls_avoids_duplicates(self):
         """Test that duplicate URLs are not generated."""
-        self.dummy_conf.site_login_methods = ['migcert', 'extoidc', 'migcert']
+        self.configuration.site_login_methods = [
+            'migcert', 'extoidc', 'migcert']
         template = "%(auto_base)s/%(auto_bin)s/script.py"
-        result = generate_https_urls(self.dummy_conf, template, {})
+        result = generate_https_urls(self.configuration, template, {})
         expected_url1 = "https://mig.cert/cgi-bin/script.py"
         expected_url2 = "https://ext.oidc/cgi-bin/script.py"
         expected_note = """
@@ -634,7 +638,7 @@ just use the one that looks most familiar or try them in turn)"""
     def test_auth_type_description_all(self):
         """Test auth_type_description returns full dict when requested"""
         from mig.shared.defaults import keyword_all
-        result = auth_type_description(self.dummy_conf, keyword_all)
+        result = auth_type_description(self.configuration, keyword_all)
         expected_keys = ['migoid', 'migoidc', 'migcert', 'extoid', 'extoidc',
                          'extcert']
         self.assertEqual(sorted(result.keys()), sorted(expected_keys))
@@ -645,10 +649,10 @@ just use the one that looks most familiar or try them in turn)"""
             AUTH_OPENID_V2
 
         # Setup titles in configuration
-        self.dummy_conf.user_mig_oid_title = "MiG OpenID"
-        self.dummy_conf.user_mig_cert_title = "MiG Certificate"
-        self.dummy_conf.user_ext_oid_title = "External OpenID"
-        self.dummy_conf.user_ext_cert_title = "External Certificate"
+        self.configuration.user_mig_oid_title = "MiG OpenID"
+        self.configuration.user_mig_cert_title = "MiG Certificate"
+        self.configuration.user_ext_oid_title = "External OpenID"
+        self.configuration.user_ext_cert_title = "External Certificate"
 
         test_cases = [
             ('migoid', 'MiG OpenID %s' % AUTH_OPENID_V2),
@@ -660,26 +664,27 @@ just use the one that looks most familiar or try them in turn)"""
         ]
 
         for (auth_type, expected) in test_cases:
-            result = auth_type_description(self.dummy_conf, auth_type)
+            result = auth_type_description(self.configuration, auth_type)
             self.assertEqual(result, expected)
 
     def test_auth_type_description_unknown(self):
         """Test auth_type_description returns 'UNKNOWN' for invalid types"""
-        self.assertEqual(auth_type_description(self.dummy_conf, 'invalid'),
+        self.assertEqual(auth_type_description(self.configuration, 'invalid'),
                          'UNKNOWN')
-        self.assertEqual(auth_type_description(self.dummy_conf, ''), 'UNKNOWN')
         self.assertEqual(auth_type_description(
-            self.dummy_conf, None), 'UNKNOWN')
+            self.configuration, ''), 'UNKNOWN')
+        self.assertEqual(auth_type_description(
+            self.configuration, None), 'UNKNOWN')
 
     def test_auth_type_description_empty_titles(self):
         """Test auth_type_description handles empty titles in configuration"""
         from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_CONNECT, \
             AUTH_OPENID_V2
 
-        self.dummy_conf.user_mig_oid_title = ""
-        self.dummy_conf.user_mig_cert_title = ""
-        self.dummy_conf.user_ext_oid_title = ""
-        self.dummy_conf.user_ext_cert_title = ""
+        self.configuration.user_mig_oid_title = ""
+        self.configuration.user_mig_cert_title = ""
+        self.configuration.user_ext_oid_title = ""
+        self.configuration.user_ext_cert_title = ""
 
         test_cases = [
             ('migoid', ' %s' % AUTH_OPENID_V2),
@@ -691,31 +696,31 @@ just use the one that looks most familiar or try them in turn)"""
         ]
 
         for (auth_type, expected) in test_cases:
-            result = auth_type_description(self.dummy_conf, auth_type)
+            result = auth_type_description(self.configuration, auth_type)
             self.assertEqual(result, expected)
 
     def test_allow_script_gdp_enabled_anonymous_allowed(self):
         """Test allow_script with GDP enabled, anonymous user, and script
         allowed."""
-        self.dummy_conf.site_enable_gdp = True
+        self.configuration.site_enable_gdp = True
         script_name = valid_gdp_anon_scripts[0] if valid_gdp_anon_scripts \
             else 'allowed_script.py'  # Use a valid script or a default
         if not valid_gdp_anon_scripts:
             print("WARNING: valid_gdp_anon_scripts is empty.  Using "
                   "'allowed_script.py' which may cause a test failure.")
-        allow, msg = allow_script(self.dummy_conf, script_name, None)
+        allow, msg = allow_script(self.configuration, script_name, None)
         self.assertTrue(allow)
         self.assertEqual(msg, "")
 
     def test_allow_script_gdp_enabled_anonymous_disallowed(self):
         """Test allow_script with GDP enabled, anonymous user, and script
         disallowed."""
-        self.dummy_conf.site_enable_gdp = True
+        self.configuration.site_enable_gdp = True
         script_name = 'disallowed_script.py'
         # Ensure the script is not in valid_gdp_anon_scripts
         if script_name in valid_gdp_anon_scripts:
             valid_gdp_anon_scripts.remove(script_name)
-        allow, msg = allow_script(self.dummy_conf, script_name, None)
+        allow, msg = allow_script(self.configuration, script_name, None)
         self.assertFalse(allow)
         self.assertEqual(msg, "anonoymous access to functionality disabled "
                          "by site configuration!")
@@ -723,7 +728,7 @@ just use the one that looks most familiar or try them in turn)"""
     def test_allow_script_gdp_enabled_authenticated_allowed(self):
         """Test allow_script with GDP enabled, authenticated user, and script
         allowed."""
-        self.dummy_conf.site_enable_gdp = True
+        self.configuration.site_enable_gdp = True
         script_name = valid_gdp_auth_scripts[0] if valid_gdp_auth_scripts \
             else valid_gdp_anon_scripts[0] if valid_gdp_anon_scripts \
             else 'allowed_script.py'
@@ -732,14 +737,15 @@ just use the one that looks most familiar or try them in turn)"""
                   "valid_gdp_anon_scripts are empty.  Using "
                   "'allowed_script.py' which may cause a test failure.")
 
-        allow, msg = allow_script(self.dummy_conf, script_name, 'test_client')
+        allow, msg = allow_script(
+            self.configuration, script_name, 'test_client')
         self.assertTrue(allow)
         self.assertEqual(msg, "")
 
     def test_allow_script_gdp_enabled_authenticated_disallowed(self):
         """Test allow_script with GDP enabled, authenticated user, and script
         disallowed."""
-        self.dummy_conf.site_enable_gdp = True
+        self.configuration.site_enable_gdp = True
         script_name = 'disallowed_script.py'
 
         # Ensure the script is not in valid_gdp_auth_scripts or
@@ -749,23 +755,24 @@ just use the one that looks most familiar or try them in turn)"""
         if script_name in valid_gdp_anon_scripts:
             valid_gdp_anon_scripts.remove(script_name)
 
-        allow, msg = allow_script(self.dummy_conf, script_name, 'test_client')
+        allow, msg = allow_script(
+            self.configuration, script_name, 'test_client')
         self.assertFalse(allow)
         self.assertEqual(msg, "all access to functionality disabled by site "
                          "configuration!")
 
     def test_allow_script_gdp_disabled(self):
         """Test allow_script with GDP disabled."""
-        self.dummy_conf.site_enable_gdp = False
-        allow, msg = allow_script(self.dummy_conf, 'any_script.py',
+        self.configuration.site_enable_gdp = False
+        allow, msg = allow_script(self.configuration, 'any_script.py',
                                   'test_client')
         self.assertTrue(allow)
         self.assertEqual(msg, "")
 
     def test_allow_script_gdp_disabled_anonymous(self):
         """Test allow_script with GDP disabled and anonymous user."""
-        self.dummy_conf.site_enable_gdp = False
-        allow, msg = allow_script(self.dummy_conf, 'any_script.py', None)
+        self.configuration.site_enable_gdp = False
+        allow, msg = allow_script(self.configuration, 'any_script.py', None)
         self.assertTrue(allow)
         self.assertEqual(msg, "")
 
@@ -960,52 +967,52 @@ just use the one that looks most familiar or try them in turn)"""
     def test_verify_local_url_direct_match(self):
         """Test verify_local_url with direct match to known site URL"""
         test_url = "https://mig.cert/cgi-bin/home.py"
-        self.dummy_conf.migserver_https_mig_cert_url = "https://mig.cert"
-        self.assertTrue(verify_local_url(self.dummy_conf, test_url))
+        self.configuration.migserver_https_mig_cert_url = "https://mig.cert"
+        self.assertTrue(verify_local_url(self.configuration, test_url))
 
     def test_verify_local_url_subpath_match(self):
         """Test verify_local_url with subpath under valid domain"""
         test_url = "https://mig.oid/wsgi-bin/login.py"
-        self.dummy_conf.migserver_https_mig_oid_url = "https://mig.oid"
-        self.assertTrue(verify_local_url(self.dummy_conf, test_url))
+        self.configuration.migserver_https_mig_oid_url = "https://mig.oid"
+        self.assertTrue(verify_local_url(self.configuration, test_url))
 
     def test_verify_local_url_public_alias(self):
         """Test verify_local_url with public alias domain"""
-        self.dummy_conf.migserver_public_alias_url = "https://grid.example.org"
+        self.configuration.migserver_public_alias_url = "https://grid.example.org"
         test_url = "https://grid.example.org/cgi-bin/file.py"
-        self.assertTrue(verify_local_url(self.dummy_conf, test_url))
+        self.assertTrue(verify_local_url(self.configuration, test_url))
 
     def test_verify_local_url_absolute_path(self):
         """Test verify_local_url with absolute path"""
         test_url = "/cgi-bin/script.py"
-        self.assertTrue(verify_local_url(self.dummy_conf, test_url))
+        self.assertTrue(verify_local_url(self.configuration, test_url))
 
     def test_verify_local_url_relative_path(self):
         """Test verify_local_url with relative path"""
         test_url = "subdir/script.py"
-        self.assertFalse(verify_local_url(self.dummy_conf, test_url))
+        self.assertFalse(verify_local_url(self.configuration, test_url))
 
     def test_verify_local_url_external_domain(self):
         """Test verify_local_url rejects external domains"""
         test_url = "https://evil.com/malicious.py"
-        self.assertFalse(verify_local_url(self.dummy_conf, test_url))
+        self.assertFalse(verify_local_url(self.configuration, test_url))
 
     def test_verify_local_url_invalid_url(self):
         """Test verify_local_url rejects invalid/malformed URLs"""
         test_url = "javascript:alert('xss')"
-        self.assertFalse(verify_local_url(self.dummy_conf, test_url))
+        self.assertFalse(verify_local_url(self.configuration, test_url))
 
     def test_verify_local_url_missing_https(self):
         """Test verify_local_url with HTTP when only HTTPS supported"""
         test_url = "http://mig.cert/cgi-bin/home.py"
-        self.dummy_conf.migserver_https_mig_cert_url = "https://mig.cert"
-        self.assertFalse(verify_local_url(self.dummy_conf, test_url))
+        self.configuration.migserver_https_mig_cert_url = "https://mig.cert"
+        self.assertFalse(verify_local_url(self.configuration, test_url))
 
     def test_verify_local_url_different_port(self):
         """Test verify_local_url rejects same domain with different port"""
-        self.dummy_conf.migserver_https_ext_cert_url = "https://ext.cert:443"
+        self.configuration.migserver_https_ext_cert_url = "https://ext.cert:443"
         test_url = "https://ext.cert:444/cgi-bin/file.py"
-        self.assertFalse(verify_local_url(self.dummy_conf, test_url))
+        self.assertFalse(verify_local_url(self.configuration, test_url))
 
     def test_invisible_path_file(self):
         """Test invisible_path detects names in invisible files"""
