@@ -432,11 +432,19 @@ def remind_and_expire_user_pending(configuration, now=None):
                 "found stale account request in %r : %dd"
                 % (req_path, req_age_days)
             )
+            print(
+                "found stale account request in %r : %dd"
+                % (req_path, req_age_days)
+            )
             # TODO: actually remind operator and user that request is pending
             #       ... possibly with copy to peers if pending acceptance.
             handled += 1
         if req_age_days > EXPIRE_REQ_DAYS:
             _logger.info(
+                "found expired account request from %r in %s : %dd"
+                % (client_id, req_path, req_age_days)
+            )
+            print(
                 "found expired account request from %r in %s : %dd"
                 % (client_id, req_path, req_age_days)
             )
