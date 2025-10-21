@@ -287,6 +287,8 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         else:
             _logger.info("rejected invalid %r account request" % client_id)
     elif reset_token:
+        # TODO: handle loaded user_dict == None here (e.g. recently removed)
+        #       to avoid verify_reset_token failing on DN access.
         valid_reset = verify_reset_token(
             configuration, user_dict, reset_token, req_auth, req_timestamp
         )
