@@ -517,7 +517,7 @@ def handle_janitor_tasks(configuration, now=None):
         _update_last_run(configuration, "state-cleanup", now)
     if _lookup_last_run(configuration, "session-cleanup") + SECS_PER_HOUR < now:
         tasks_completed += handle_session_cleanup(configuration, now)
-        _update_last_run(configuration, "state-cleanup", now)
+        _update_last_run(configuration, "session-cleanup", now)
     if _lookup_last_run(configuration, "pending-reqs") + SECS_PER_MINUTE < now:
         tasks_completed += handle_pending_requests(configuration, now)
         _update_last_run(configuration, "pending-reqs", now)
