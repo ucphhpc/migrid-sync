@@ -2400,6 +2400,9 @@ def _user_general_notify(user_id, targets, conf_path, db_path,
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
+    addresses = dict(zip(configuration.notify_protocols,
+                         [[] for _ in configuration.notify_protocols]))
+    addresses['email'] = []
     if db_path == keyword_auto:
         db_path = default_db_path(configuration)
     try:
@@ -2414,7 +2417,8 @@ def _user_general_notify(user_id, targets, conf_path, db_path,
         if verbose:
             print(err_msg)
         _logger.error(err_msg)
-        return []
+        errors.append("notify %r preparation failed: %s" % (user_id, err_msg))
+        return (configuration, None, addresses, errors)
 
     user_fields = {}
     if user_id in user_db:
@@ -2439,9 +2443,6 @@ def _user_general_notify(user_id, targets, conf_path, db_path,
         for field in get_fields:
             user_fields[field] = user_dict.get(field, None)
 
-    addresses = dict(zip(configuration.notify_protocols,
-                         [[] for _ in configuration.notify_protocols]))
-    addresses['email'] = []
     for (proto, address_list) in targets.items():
         if not proto in configuration.notify_protocols + ['email']:
             errors.append('unsupported protocol: %s' % proto)
