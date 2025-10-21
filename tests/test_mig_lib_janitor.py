@@ -46,12 +46,12 @@ from mig.shared.accountreq import save_account_request
 from mig.shared.base import distinguished_name_to_user
 from tests.support import MigTestCase, ensure_dirs_exist
 
-DUMMY_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.org'
+DUMMY_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
 DUMMY_FULL_NAME = "Test User"
 DUMMY_ORGANIZATION = "Test Org"
-DUMMY_EMAIL = "test@example.org"
+DUMMY_EMAIL = "test@example.com"
 DUMMY_SKIP_EMAIL = ''
-DUMMY_CLIENT_DIR = '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_User+emailAddress=test@example.org'
+DUMMY_CLIENT_DIR = '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_User+emailAddress=test@example.com'
 DUMMY_AUTH = 'migcert'
 DUMMY_USERDB = 'MiG-users.db'
 DUMMY_PEER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com'
@@ -73,11 +73,19 @@ class MigLibJanitor(MigTestCase):
         with open(self.user_db_path, 'wb') as udb:
             udb.write(pickle.dumps(user_db_dict))
 
+    # TODO: migrate or remove this helper if no longer needed
+    def _init_test_user_db(self, user_id=DUMMY_USER_DN):
+        """Write a user_db_dict to user database - truncating any contents"""
+        user_dict = distinguished_name_to_user(user_id)
+        self._write_user_db({user_id: user_dict})
+
     def before_each(self):
         """Set up test configuration and reset state before each test"""
         self.configuration.site_enable_jobs = True
         # Prevent admin email during reject, etc.
         self.configuration.admin_email = DUMMY_SKIP_EMAIL
+        self.user_db_path = os.path.join(self.configuration.user_db_home,
+                                         DUMMY_USERDB)
         # Create fake fs layout matching real systems
         ensure_dirs_exist(self.configuration.user_pending)
         ensure_dirs_exist(self.configuration.user_db_home)
@@ -97,10 +105,7 @@ class MigLibJanitor(MigTestCase):
         ensure_dirs_exist(dummy_job)
 
         # Prepare user DB with a single dummy user for all tests
-        self.user_db_path = os.path.join(self.configuration.user_db_home,
-                                         DUMMY_USERDB)
-        user_dict = distinguished_name_to_user(DUMMY_USER_DN)
-        self._write_user_db({DUMMY_USER_DN: user_dict})
+        self._provision_test_user(self, DUMMY_USER_DN)
 
         # Reset task triggers
         global task_triggers
@@ -278,7 +283,7 @@ class MigLibJanitor(MigTestCase):
 
         # Need user DB and path to simulate existing user
         user_dir = os.path.join(self.configuration.user_home, DUMMY_CLIENT_DIR)
-        os.makedirs(user_dir)
+        os.makedirs(user_dir, exist_ok=True)
         handled = manage_trivial_user_requests(self.configuration)
         self.assertEqual(handled, 1)
 
@@ -506,7 +511,7 @@ class MigLibJanitor(MigTestCase):
         """Test request handling with existing user collision"""
         # Setup existing user
         user_dir = os.path.join(self.configuration.user_home, DUMMY_CLIENT_DIR)
-        os.makedirs(user_dir)
+        os.makedirs(user_dir, exist_ok=True)
         # Create dummy user DB
         user_entry = {'distinguished_name': DUMMY_USER_DN}
         self._write_user_db({DUMMY_USER_DN: user_entry})
@@ -630,6 +635,7 @@ class MigLibJanitor(MigTestCase):
             'full_name': DUMMY_FULL_NAME,
             'organization': DUMMY_ORGANIZATION,
             'password_hash': DUMMY_MODERN_PW_PBKDF2,
+            # NOTE: disable email to prevent send failing on reject
             'email': DUMMY_SKIP_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
@@ -658,6 +664,7 @@ class MigLibJanitor(MigTestCase):
             'auth': [DUMMY_AUTH],
             'full_name': DUMMY_FULL_NAME,
             'organization': DUMMY_ORGANIZATION,
+            # NOTE: disable email to prevent send failing on reject
             'email': DUMMY_SKIP_EMAIL,
             'reset_token': 'INVALID_TOKEN_HERE',
             'expire': time.time() + SECS_PER_DAY,  # Future expiration
@@ -814,6 +821,7 @@ class MigLibJanitor(MigTestCase):
             'auth': [DUMMY_AUTH],
             'full_name': DUMMY_FULL_NAME,
             'organization': DUMMY_ORGANIZATION,
+            # NOTE: disable email to prevent send failing on reject
             'email': DUMMY_SKIP_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
