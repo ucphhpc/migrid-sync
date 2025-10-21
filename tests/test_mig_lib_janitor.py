@@ -32,19 +32,19 @@ import pickle
 import time
 import unittest
 
-from tests.support import FakeConfiguration, MigTestCase, ensure_dirs_exist
+from mig.lib.janitor import EXPIRE_DUMMY_JOBS_DAYS, EXPIRE_REQ_DAYS, \
+    EXPIRE_STATE_DAYS, EXPIRE_TWOFACTOR_DAYS, MANAGE_TRIVIAL_REQ_MINUTES, \
+    REMIND_REQ_DAYS, SECS_PER_DAY, SECS_PER_HOUR, SECS_PER_MINUTE, \
+    _clean_stale_state_files, _lookup_last_run, _update_last_run, \
+    clean_mig_system_files, clean_no_job_helpers, \
+    clean_sessid_to_mrls_link_home, clean_twofactor_sessions, \
+    clean_webserver_home, handle_cache_updates, handle_janitor_tasks, \
+    handle_pending_requests, handle_session_cleanup, handle_state_cleanup, \
+    manage_single_req, manage_trivial_user_requests, \
+    remind_and_expire_user_pending, task_triggers
 from mig.shared.accountreq import save_account_request
 from mig.shared.base import distinguished_name_to_user
-from mig.lib.janitor import _clean_stale_state_files, \
-    _lookup_last_run, _update_last_run, SECS_PER_MINUTE, SECS_PER_HOUR, \
-    SECS_PER_DAY, EXPIRE_STATE_DAYS, EXPIRE_DUMMY_JOBS_DAYS, \
-    EXPIRE_TWOFACTOR_DAYS, EXPIRE_REQ_DAYS, MANAGE_TRIVIAL_REQ_MINUTES, \
-    REMIND_REQ_DAYS, clean_mig_system_files, clean_webserver_home, \
-    clean_no_job_helpers, clean_twofactor_sessions, handle_state_cleanup, \
-    clean_sessid_to_mrls_link_home, handle_session_cleanup, \
-    manage_trivial_user_requests, manage_single_req, \
-    remind_and_expire_user_pending, handle_pending_requests, \
-    handle_cache_updates, handle_janitor_tasks, task_triggers
+from tests.support import MigTestCase, ensure_dirs_exist
 
 DUMMY_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.org'
 DUMMY_FULL_NAME = "Test User"
@@ -75,11 +75,9 @@ class MigLibJanitor(MigTestCase):
 
     def before_each(self):
         """Set up test configuration and reset state before each test"""
-        # Remap test configuration to dummy_conf for consistency
-        self.dummy_conf = self.configuration
-        self.dummy_conf.site_enable_jobs = True
+        self.configuration.site_enable_jobs = True
         # Prevent admin email during reject, etc.
-        self.dummy_conf.admin_email = DUMMY_SKIP_EMAIL
+        self.configuration.admin_email = DUMMY_SKIP_EMAIL
         # Create fake fs layout matching real systems
         ensure_dirs_exist(self.configuration.user_pending)
         ensure_dirs_exist(self.configuration.user_db_home)
@@ -94,12 +92,12 @@ class MigLibJanitor(MigTestCase):
         ensure_dirs_exist(self.configuration.sessid_to_mrsl_link_home)
         ensure_dirs_exist(self.configuration.mrsl_files_dir)
         ensure_dirs_exist(self.configuration.resource_pending)
-        dummy_job = os.path.join(self.dummy_conf.user_home,
+        dummy_job = os.path.join(self.configuration.user_home,
                                  "no_grid_jobs_in_grid_scheduler")
         ensure_dirs_exist(dummy_job)
 
         # Prepare user DB with a single dummy user for all tests
-        self.user_db_path = os.path.join(self.dummy_conf.user_db_home,
+        self.user_db_path = os.path.join(self.configuration.user_db_home,
                                          DUMMY_USERDB)
         user_dict = distinguished_name_to_user(DUMMY_USER_DN)
         self._write_user_db({DUMMY_USER_DN: user_dict})
@@ -111,13 +109,13 @@ class MigLibJanitor(MigTestCase):
     def test_last_run_bookkeeping(self):
         """Register a last run timestamp and check it"""
         expect = -1
-        stamp = _lookup_last_run(self.dummy_conf, 'janitor_task')
+        stamp = _lookup_last_run(self.configuration, 'janitor_task')
         self.assertEqual(stamp, expect)
         expect = 42
-        stamp = _update_last_run(self.dummy_conf, 'janitor_task', expect)
+        stamp = _update_last_run(self.configuration, 'janitor_task', expect)
         self.assertEqual(stamp, expect)
         expect = time.time()
-        stamp = _update_last_run(self.dummy_conf, 'janitor_task', expect)
+        stamp = _update_last_run(self.configuration, 'janitor_task', expect)
         self.assertEqual(stamp, expect)
 
     def test_clean_mig_system_files(self):
@@ -126,16 +124,16 @@ class MigLibJanitor(MigTestCase):
         valid_filenames = ['fresh.log', 'current.tmp']
         stale_filenames = ['tmp_expired.txt', 'no_grid_jobs.123']
         for name in valid_filenames + stale_filenames:
-            path = os.path.join(self.dummy_conf.mig_system_files, name)
+            path = os.path.join(self.configuration.mig_system_files, name)
             with open(path, 'w') as fp:
                 fp.write('test')
             os.utime(path, (test_time, test_time))
             if name in valid_filenames:
                 # Make one file fresh
                 os.utime(path, None)
-        handled = clean_mig_system_files(self.dummy_conf)
+        handled = clean_mig_system_files(self.configuration)
         self.assertEqual(handled, len(stale_filenames))
-        self.assertEqual(len(os.listdir(self.dummy_conf.mig_system_files)),
+        self.assertEqual(len(os.listdir(self.configuration.mig_system_files)),
                          len(valid_filenames))
 
     def test_clean_webserver_home(self):
@@ -144,22 +142,22 @@ class MigLibJanitor(MigTestCase):
         valid_filename = 'fresh.log'
         stale_filename = 'stale.log'
         for name in [valid_filename, stale_filename]:
-            path = os.path.join(self.dummy_conf.webserver_home, name)
+            path = os.path.join(self.configuration.webserver_home, name)
             with open(path, 'w') as fp:
                 fp.write('test')
             os.utime(path, (test_time, test_time))
             if name == valid_filename:
                 os.utime(path, None)
-        handled = clean_webserver_home(self.dummy_conf)
+        handled = clean_webserver_home(self.configuration)
         self.assertEqual(handled, 1)
         self.assertFalse(os.path.exists(os.path.join(
-            self.dummy_conf.webserver_home, stale_filename)))
+            self.configuration.webserver_home, stale_filename)))
         self.assertTrue(os.path.exists(os.path.join(
-            self.dummy_conf.webserver_home, valid_filename)))
+            self.configuration.webserver_home, valid_filename)))
 
     def test_clean_no_job_helpers(self):
         """Test clean dummy job helper files"""
-        dummy_job = os.path.join(self.dummy_conf.user_home,
+        dummy_job = os.path.join(self.configuration.user_home,
                                  "no_grid_jobs_in_grid_scheduler")
         test_time = time.time() - EXPIRE_DUMMY_JOBS_DAYS * SECS_PER_DAY - 1
         valid_filename = 'alive.txt'
@@ -171,7 +169,7 @@ class MigLibJanitor(MigTestCase):
             os.utime(path, (test_time, test_time))
             if name == valid_filename:
                 os.utime(path, None)
-        handled = clean_no_job_helpers(self.dummy_conf)
+        handled = clean_no_job_helpers(self.configuration)
         self.assertEqual(handled, 1)
         self.assertFalse(os.path.exists(os.path.join(dummy_job,
                                                      stale_filename)))
@@ -184,18 +182,18 @@ class MigLibJanitor(MigTestCase):
         valid_filename = 'current'
         stale_filename = 'expired'
         for name in [valid_filename, stale_filename]:
-            path = os.path.join(self.dummy_conf.twofactor_home, name)
+            path = os.path.join(self.configuration.twofactor_home, name)
             with open(path, 'w') as fp:
                 fp.write('test')
             os.utime(path, (test_time, test_time))
             if name == valid_filename:
                 os.utime(path, None)
-        handled = clean_twofactor_sessions(self.dummy_conf)
+        handled = clean_twofactor_sessions(self.configuration)
         self.assertEqual(handled, 1)
         self.assertFalse(os.path.exists(os.path.join(
-            self.dummy_conf.twofactor_home, stale_filename)))
+            self.configuration.twofactor_home, stale_filename)))
         self.assertTrue(os.path.exists(os.path.join(
-            self.dummy_conf.twofactor_home, valid_filename)))
+            self.configuration.twofactor_home, valid_filename)))
 
     def test_clean_sessid_to_mrls_link_home(self):
         """Test clean session MRSL link files"""
@@ -203,28 +201,29 @@ class MigLibJanitor(MigTestCase):
         valid_filename = 'active_session_link'
         stale_filename = 'expired_session_link'
         for name in [valid_filename, stale_filename]:
-            path = os.path.join(self.dummy_conf.sessid_to_mrsl_link_home, name)
+            path = os.path.join(
+                self.configuration.sessid_to_mrsl_link_home, name)
             with open(path, 'w') as fp:
                 fp.write('test')
             os.utime(path, (test_time, test_time))
             if name == valid_filename:
                 os.utime(path, None)
-        handled = clean_sessid_to_mrls_link_home(self.dummy_conf)
+        handled = clean_sessid_to_mrls_link_home(self.configuration)
         self.assertEqual(handled, 1)
         self.assertFalse(os.path.exists(os.path.join(
-            self.dummy_conf.sessid_to_mrsl_link_home, stale_filename)))
+            self.configuration.sessid_to_mrsl_link_home, stale_filename)))
         self.assertTrue(os.path.exists(os.path.join(
-            self.dummy_conf.sessid_to_mrsl_link_home, valid_filename)))
+            self.configuration.sessid_to_mrsl_link_home, valid_filename)))
 
     def test_handle_state_cleanup(self):
         """Test combined state cleanup"""
         # Create a stale file in each location to clean up
         test_time = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
         mig_path = os.path.join(
-            self.dummy_conf.mig_system_files, 'tmpAbCd1234')
-        web_path = os.path.join(self.dummy_conf.webserver_home, 'stale.txt')
+            self.configuration.mig_system_files, 'tmpAbCd1234')
+        web_path = os.path.join(self.configuration.webserver_home, 'stale.txt')
         empty_job_path = os.path.join(
-            os.path.join(self.dummy_conf.user_home,
+            os.path.join(self.configuration.user_home,
                          "no_grid_jobs_in_grid_scheduler"),
             'sleep.job'
         )
@@ -234,7 +233,7 @@ class MigLibJanitor(MigTestCase):
                 fp.write('test')
             os.utime(path, (test_time, test_time))
 
-        handled = handle_state_cleanup(self.dummy_conf)
+        handled = handle_state_cleanup(self.configuration)
         self.assertEqual(handled, 3)
 
     def test_handle_session_cleanup(self):
@@ -242,16 +241,16 @@ class MigLibJanitor(MigTestCase):
         test_time = time.time() - max(EXPIRE_STATE_DAYS,
                                       EXPIRE_TWOFACTOR_DAYS) * SECS_PER_DAY - 1
         session_path = os.path.join(
-            self.dummy_conf.sessid_to_mrsl_link_home, 'expired.txt')
+            self.configuration.sessid_to_mrsl_link_home, 'expired.txt')
         twofactor_path = os.path.join(
-            self.dummy_conf.twofactor_home, 'expired.txt')
+            self.configuration.twofactor_home, 'expired.txt')
         for path in [session_path, twofactor_path]:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, 'w') as fp:
                 fp.write('test')
             os.utime(path, (test_time, test_time))
 
-        handled = handle_session_cleanup(self.dummy_conf)
+        handled = handle_session_cleanup(self.configuration)
         self.assertEqual(handled, 2)
 
     def test_manage_pending_user_request(self):
@@ -269,18 +268,18 @@ class MigLibJanitor(MigTestCase):
             'email': DUMMY_EMAIL,
         }
 
-        self.assertDirEmpty(self.dummy_conf.user_pending)
-        saved, req_path = save_account_request(self.dummy_conf, req_dict)
+        self.assertDirEmpty(self.configuration.user_pending)
+        saved, req_path = save_account_request(self.configuration, req_dict)
         self.assertTrue(saved, "failed to save account req")
-        self.assertDirNotEmpty(self.dummy_conf.user_pending)
+        self.assertDirNotEmpty(self.configuration.user_pending)
         # Update mtime to make it ready for janitor
         req_age = time.time() - MANAGE_TRIVIAL_REQ_MINUTES * SECS_PER_MINUTE - 1
         os.utime(req_path, (req_age, req_age))
 
         # Need user DB and path to simulate existing user
-        user_dir = os.path.join(self.dummy_conf.user_home, DUMMY_CLIENT_DIR)
+        user_dir = os.path.join(self.configuration.user_home, DUMMY_CLIENT_DIR)
         os.makedirs(user_dir)
-        handled = manage_trivial_user_requests(self.dummy_conf)
+        handled = manage_trivial_user_requests(self.configuration)
         self.assertEqual(handled, 1)
 
     def test_expire_user_pending(self):
@@ -296,16 +295,16 @@ class MigLibJanitor(MigTestCase):
             'peers': [DUMMY_PEER_DN],
             'email': DUMMY_EMAIL,
         }
-        self.assertDirEmpty(self.dummy_conf.user_pending)
-        saved, req_path = save_account_request(self.dummy_conf, req_dict)
+        self.assertDirEmpty(self.configuration.user_pending)
+        saved, req_path = save_account_request(self.configuration, req_dict)
         self.assertTrue(saved, "failed to save account req")
-        self.assertDirNotEmpty(self.dummy_conf.user_pending)
+        self.assertDirNotEmpty(self.configuration.user_pending)
         # Make request very old
         req_age = time.time() - EXPIRE_REQ_DAYS * SECS_PER_DAY - 1
         os.utime(req_path, (req_age, req_age))
 
         # TODO: rework to handle expire before stale to avoid duplicate here
-        handled = remind_and_expire_user_pending(self.dummy_conf)
+        handled = remind_and_expire_user_pending(self.configuration)
         # self.assertEqual(handled, 1)
         self.assertEqual(handled, 2)  # counted stale and expired (see above)
 
@@ -323,11 +322,11 @@ class MigLibJanitor(MigTestCase):
             'peers': [DUMMY_PEER_DN],
             'email': DUMMY_EMAIL,
         }
-        self.assertDirEmpty(self.dummy_conf.user_pending)
-        saved, valid_req_path = save_account_request(self.dummy_conf,
+        self.assertDirEmpty(self.configuration.user_pending)
+        saved, valid_req_path = save_account_request(self.configuration,
                                                      valid_dict)
         self.assertTrue(saved, "failed to save valid req")
-        self.assertDirNotEmpty(self.dummy_conf.user_pending)
+        self.assertDirNotEmpty(self.configuration.user_pending)
         valid_id = os.path.basename(valid_req_path)
 
         expired_id = 'expired_req'
@@ -342,30 +341,31 @@ class MigLibJanitor(MigTestCase):
             'email': DUMMY_EMAIL,
         }
         saved, expired_req_path = save_account_request(
-            self.dummy_conf, expired_dict)
+            self.configuration, expired_dict)
         self.assertTrue(saved, "failed to save expired req")
         expired_id = os.path.basename(expired_req_path)
         # Make just one old enough to expire
         expire_time = time.time() - EXPIRE_REQ_DAYS * SECS_PER_DAY - 1
-        os.utime(os.path.join(self.dummy_conf.user_pending, expired_id),
+        os.utime(os.path.join(self.configuration.user_pending, expired_id),
                  (expire_time, expire_time))
 
         # TODO: rework to handle expire before stale to avoid duplicate here
-        handled = handle_pending_requests(self.dummy_conf)
+        handled = handle_pending_requests(self.configuration)
         # self.assertEqual(handled, 2)  # 1 manage + 1 expire
         self.assertEqual(handled, 3)  # 1 manage + 1 expire + 1 stale
 
     def test_handle_janitor_tasks_full(self):
         """Test full janitor task scheduler"""
         # Prepare environment with pending tasks
-        mig_path = os.path.join(self.dummy_conf.mig_system_files, 'stale.txt')
+        mig_path = os.path.join(
+            self.configuration.mig_system_files, 'stale.txt')
         with open(mig_path, 'w') as fp:
             fp.write('test')
         os.utime(mig_path,
                  (time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1,
                   time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1))
 
-        two_path = os.path.join(self.dummy_conf.twofactor_home, 'stale.txt')
+        two_path = os.path.join(self.configuration.twofactor_home, 'stale.txt')
         with open(two_path, 'w') as fp:
             fp.write('test')
         os.utime(two_path,
@@ -383,14 +383,14 @@ class MigLibJanitor(MigTestCase):
             'peers': [DUMMY_PEER_DN],
             'email': DUMMY_EMAIL,
         }
-        self.assertDirEmpty(self.dummy_conf.user_pending)
-        saved, req_path = save_account_request(self.dummy_conf, req_dict)
+        self.assertDirEmpty(self.configuration.user_pending)
+        saved, req_path = save_account_request(self.configuration, req_dict)
         self.assertTrue(saved, "failed to save account req")
-        self.assertDirNotEmpty(self.dummy_conf.user_pending)
+        self.assertDirNotEmpty(self.configuration.user_pending)
         req_id = os.path.basename(req_path)
         # Make request very old
         req_age = time.time() - EXPIRE_REQ_DAYS * SECS_PER_DAY - 1
-        os.utime(os.path.join(self.dummy_conf.user_pending, req_id),
+        os.utime(os.path.join(self.configuration.user_pending, req_id),
                  (req_age, req_age))
 
         # Set no last run timestamps to trigger all tasks
@@ -399,7 +399,7 @@ class MigLibJanitor(MigTestCase):
 
         # Run task handler and verify all tasks executed
         # TODO: rework to handle expire before stale to avoid duplicate here
-        handled = handle_janitor_tasks(self.dummy_conf, now=now)
+        handled = handle_janitor_tasks(self.configuration, now=now)
         # self.assertEqual(handled, 3)  # state+session+requests
         self.assertEqual(handled, 4)  # state (expired+stale)+session+requests
 
@@ -425,7 +425,7 @@ class MigLibJanitor(MigTestCase):
             os.utime(path, (mtime, mtime))
 
         handled = _clean_stale_state_files(
-            self.dummy_conf,
+            self.configuration,
             test_dir,
             patterns,
             EXPIRE_STATE_DAYS,
@@ -452,12 +452,12 @@ class MigLibJanitor(MigTestCase):
             # NOTE: disable email to prevent send failing on reject
             'email': DUMMY_SKIP_EMAIL,
         }
-        saved, req_path = save_account_request(self.dummy_conf, req_dict)
+        saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
         with self.assertLogs(level='INFO') as log_capture:
             manage_single_req(
-                self.dummy_conf,
+                self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
@@ -482,7 +482,7 @@ class MigLibJanitor(MigTestCase):
             'reset_token': 'INVALID_TOKEN',
             'expire': time.time() - SECS_PER_DAY,
         }
-        saved, req_path = save_account_request(self.dummy_conf, req_dict)
+        saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
         user_dict = {'distinguished_name': DUMMY_USER_DN,
@@ -491,7 +491,7 @@ class MigLibJanitor(MigTestCase):
 
         with self.assertLogs(level='WARNING') as log_capture:
             manage_single_req(
-                self.dummy_conf,
+                self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
@@ -505,7 +505,7 @@ class MigLibJanitor(MigTestCase):
     def test_manage_single_req_collision(self):
         """Test request handling with existing user collision"""
         # Setup existing user
-        user_dir = os.path.join(self.dummy_conf.user_home, DUMMY_CLIENT_DIR)
+        user_dir = os.path.join(self.configuration.user_home, DUMMY_CLIENT_DIR)
         os.makedirs(user_dir)
         # Create dummy user DB
         user_entry = {'distinguished_name': DUMMY_USER_DN}
@@ -524,12 +524,12 @@ class MigLibJanitor(MigTestCase):
             # NOTE: disable email to prevent send failing on reject
             'email': DUMMY_SKIP_EMAIL,
         }
-        saved, req_path = save_account_request(self.dummy_conf, req_dict)
+        saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
         with self.assertLogs(level='WARNING') as log_capture:
             manage_single_req(
-                self.dummy_conf,
+                self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
@@ -542,7 +542,7 @@ class MigLibJanitor(MigTestCase):
 
     def test_handle_cache_updates_stub(self):
         """Test handle_cache_updates placeholder returns zero"""
-        handled = handle_cache_updates(self.dummy_conf)
+        handled = handle_cache_updates(self.configuration)
         self.assertEqual(handled, 0)
 
     def test_janitor_update_timestamps(self):
@@ -551,15 +551,15 @@ class MigLibJanitor(MigTestCase):
         task = 'test-task'
 
         # Initial state
-        stamp = _lookup_last_run(self.dummy_conf, task)
+        stamp = _lookup_last_run(self.configuration, task)
         self.assertEqual(stamp, -1)
 
         # Update & verify
-        updated = _update_last_run(self.dummy_conf, task, now)
+        updated = _update_last_run(self.configuration, task, now)
         self.assertEqual(updated, now)
 
         # Check persistence (within process)
-        retrieved = _lookup_last_run(self.dummy_conf, task)
+        retrieved = _lookup_last_run(self.configuration, task)
         self.assertEqual(retrieved, now)
 
     def test__clean_stale_state_files_edge(self):
@@ -579,7 +579,7 @@ class MigLibJanitor(MigTestCase):
         os.makedirs(dir_path)
 
         handled = _clean_stale_state_files(
-            self.dummy_conf,
+            self.configuration,
             test_dir,
             ['*'],
             EXPIRE_STATE_DAYS,
@@ -590,7 +590,7 @@ class MigLibJanitor(MigTestCase):
 
         # Now include dotfiles
         handled = _clean_stale_state_files(
-            self.dummy_conf,
+            self.configuration,
             test_dir,
             ['*'],
             EXPIRE_STATE_DAYS,
@@ -604,13 +604,13 @@ class MigLibJanitor(MigTestCase):
     def test_manage_single_req_corrupted_file(self):
         """Test manage_single_req with corrupted request file"""
         req_id = 'corrupted_req'
-        req_path = os.path.join(self.dummy_conf.user_pending, req_id)
+        req_path = os.path.join(self.configuration.user_pending, req_id)
         with open(req_path, 'w') as fp:
             fp.write('invalid pickle content')
 
         with self.assertLogs(level='ERROR') as log_capture:
             manage_single_req(
-                self.dummy_conf,
+                self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
@@ -632,7 +632,7 @@ class MigLibJanitor(MigTestCase):
             'password_hash': DUMMY_MODERN_PW_PBKDF2,
             'email': DUMMY_SKIP_EMAIL,
         }
-        saved, req_path = save_account_request(self.dummy_conf, req_dict)
+        saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
         # Remove user database
@@ -640,7 +640,7 @@ class MigLibJanitor(MigTestCase):
 
         with self.assertLogs(level='ERROR') as log_capture:
             manage_single_req(
-                self.dummy_conf,
+                self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
@@ -662,12 +662,12 @@ class MigLibJanitor(MigTestCase):
             'reset_token': 'INVALID_TOKEN_HERE',
             'expire': time.time() + SECS_PER_DAY,  # Future expiration
         }
-        saved, req_path = save_account_request(self.dummy_conf, req_dict)
+        saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
         with self.assertLogs(level='WARNING') as log_capture:
             manage_single_req(
-                self.dummy_conf,
+                self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
@@ -686,7 +686,7 @@ class MigLibJanitor(MigTestCase):
         ]
 
         for (req_id, mtime) in test_cases:
-            req_path = os.path.join(self.dummy_conf.user_pending, req_id)
+            req_path = os.path.join(self.configuration.user_pending, req_id)
             req_dict = {
                 'client_id': DUMMY_USER_DN,
                 'distinguished_name': DUMMY_USER_DN,
@@ -696,10 +696,11 @@ class MigLibJanitor(MigTestCase):
                 'password': DUMMY_MODERN_PW,
                 'email': DUMMY_EMAIL,
             }
-            saved, req_path = save_account_request(self.dummy_conf, req_dict)
+            saved, req_path = save_account_request(
+                self.configuration, req_dict)
             os.utime(req_path, (mtime, mtime))
 
-        handled = remind_and_expire_user_pending(self.dummy_conf, now=now)
+        handled = remind_and_expire_user_pending(self.configuration, now=now)
         # TODO: rework to handle expire before stale to avoid duplicates here
         # Should match exact_expire only
         # self.assertEqual(handled, 1)
@@ -710,13 +711,13 @@ class MigLibJanitor(MigTestCase):
         now = time.time()
 
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "state-cleanup"), -1)
+            self.configuration, "state-cleanup"), -1)
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "session-cleanup"), -1)
+            self.configuration, "session-cleanup"), -1)
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "pending-reqs"), -1)
+            self.configuration, "pending-reqs"), -1)
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "cache-updates"), -1)
+            self.configuration, "cache-updates"), -1)
         # Test all tasks EXCEPT cache-updates are past threshold
         last_state_cleanup = now - SECS_PER_DAY - 3
         last_session_cleanup = now - SECS_PER_HOUR - 3
@@ -727,35 +728,35 @@ class MigLibJanitor(MigTestCase):
                               'pending-reqs': last_pending_reqs,
                               'cache-updates': last_cache_update})
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "state-cleanup"), last_state_cleanup)
+            self.configuration, "state-cleanup"), last_state_cleanup)
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "session-cleanup"), last_session_cleanup)
+            self.configuration, "session-cleanup"), last_session_cleanup)
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "cache-updates"), last_cache_update)
+            self.configuration, "cache-updates"), last_cache_update)
 
         # TODO: handled does NOT count no action runs - add dummies to handle?
-        handled = handle_janitor_tasks(self.dummy_conf, now=now)
+        handled = handle_janitor_tasks(self.configuration, now=now)
         # self.assertEqual(handled, 3)  # state + session + pending
         self.assertEqual(handled, 0)  # ran with nothing to do
 
         # Verify last run timestamps updated
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "state-cleanup"), now)
+            self.configuration, "state-cleanup"), now)
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "session-cleanup"), now)
+            self.configuration, "session-cleanup"), now)
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "pending-reqs"), now)
+            self.configuration, "pending-reqs"), now)
         self.assertEqual(_lookup_last_run(
-            self.dummy_conf, "cache-updates"), last_cache_update)
+            self.configuration, "cache-updates"), last_cache_update)
 
     # TODO: adjust tested function to allow enabling the next test
     @unittest.skipIf(True, "requires improved cleaner error handling")
     def test_clean_stale_files_nonexistent_dir(self):
         """Test state cleaner with invalid directory path"""
-        target_dir = os.path.join(self.dummy_conf.mig_system_files,
+        target_dir = os.path.join(self.configuration.mig_system_files,
                                   "non_existing_dir")
         handled = _clean_stale_state_files(
-            self.dummy_conf,
+            self.configuration,
             target_dir,
             ["*"],
             EXPIRE_STATE_DAYS,
@@ -780,7 +781,7 @@ class MigLibJanitor(MigTestCase):
 
         with self.assertLogs(level='ERROR'):
             handled = _clean_stale_state_files(
-                self.dummy_conf,
+                self.configuration,
                 test_dir,
                 ["*"],
                 EXPIRE_STATE_DAYS,
@@ -794,14 +795,14 @@ class MigLibJanitor(MigTestCase):
     def test_handle_empty_pending_dir(self):
         """Test operations with empty pending requests directory"""
         # Empty directory completely
-        for filename in os.listdir(self.dummy_conf.user_pending):
-            path = os.path.join(self.dummy_conf.user_pending, filename)
+        for filename in os.listdir(self.configuration.user_pending):
+            path = os.path.join(self.configuration.user_pending, filename)
             os.remove(path)
 
-        handled = manage_trivial_user_requests(self.dummy_conf)
+        handled = manage_trivial_user_requests(self.configuration)
         self.assertEqual(handled, 0)
 
-        handled = remind_and_expire_user_pending(self.dummy_conf)
+        handled = remind_and_expire_user_pending(self.configuration)
         self.assertEqual(handled, 0)
 
     def test_janitor_task_cleanup_after_reject(self):
@@ -815,14 +816,14 @@ class MigLibJanitor(MigTestCase):
             'organization': DUMMY_ORGANIZATION,
             'email': DUMMY_SKIP_EMAIL,
         }
-        saved, req_path = save_account_request(self.dummy_conf, req_dict)
+        saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
         # Verify initial existence
         self.assertTrue(os.path.exists(req_path))
 
         manage_single_req(
-            self.dummy_conf,
+            self.configuration,
             req_id,
             req_path,
             self.user_db_path,
