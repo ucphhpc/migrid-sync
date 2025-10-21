@@ -114,7 +114,7 @@ class TestMigSharedUserDB(MigTestCase):
         flock = lock_user_db(self.user_db_path, exclusive=False)
         self.assertTrue(flock is not None)
         self.assertTrue(flock.readable)
-        # TODO: expose this attribue in the backend and enable next
+        # TODO: expose this attribue in the backend and enable next?
         # self.assertFalse(flock.writable)
 
         # Unlock shared
@@ -127,7 +127,7 @@ class TestMigSharedUserDB(MigTestCase):
         save_user_db(empty_db, self.user_db_path)
         try:
             loaded = load_user_db(self.user_db_path)
-        except Exception as exc:
+        except Exception:
             loaded = None
         self.assertEqual(loaded, empty_db)
 
@@ -135,7 +135,7 @@ class TestMigSharedUserDB(MigTestCase):
         sample_db = self._create_sample_db()
         try:
             loaded = load_user_db(self.user_db_path)
-        except Exception as exc:
+        except Exception:
             loaded = None
         self.assertEqual(loaded, sample_db)
 
@@ -144,7 +144,7 @@ class TestMigSharedUserDB(MigTestCase):
             self.configuration.user_db_home, "no-such-db.db")
         try:
             loaded = load_user_db(db_path)
-        except Exception as exc:
+        except Exception:
             loaded = None
         self.assertEqual(loaded, None)
 
@@ -153,7 +153,7 @@ class TestMigSharedUserDB(MigTestCase):
         sample_db = self._create_sample_db()
         try:
             loaded = load_user_db(self.user_db_path)
-        except Exception as exc:
+        except Exception:
             loaded = None
         self.assertEqual(sample_db, loaded)
 
@@ -162,7 +162,7 @@ class TestMigSharedUserDB(MigTestCase):
         save_user_db(sample_db, self.user_db_path)
         try:
             reloaded = load_user_db(self.user_db_path)
-        except Exception as exc:
+        except Exception:
             reloaded = None
         self.assertEqual(reloaded, sample_db)
 
@@ -172,7 +172,7 @@ class TestMigSharedUserDB(MigTestCase):
         try:
             loaded = load_user_dict(self.logger, "no-such-user",
                                     self.user_db_path)
-        except Exception as exc:
+        except Exception:
             loaded = None
         self.assertIsNone(loaded)
 
@@ -182,7 +182,7 @@ class TestMigSharedUserDB(MigTestCase):
         try:
             test_user_data = load_user_dict(self.logger, TEST_USER_ID,
                                             self.user_db_path)
-        except Exception as exc:
+        except Exception:
             test_user_data = None
         self.assertEqual(test_user_data, sample_db[TEST_USER_ID])
 
@@ -195,7 +195,7 @@ class TestMigSharedUserDB(MigTestCase):
 
         try:
             loaded = load_user_db(self.user_db_path)
-        except Exception as exc:
+        except Exception:
             loaded = None
         self.assertEqual(loaded[OTHER_USER_ID], other_user)
 
@@ -210,7 +210,7 @@ class TestMigSharedUserDB(MigTestCase):
 
         try:
             loaded = load_user_db(self.user_db_path)
-        except Exception as exc:
+        except Exception:
             loaded = None
         self.assertEqual(loaded[THIS_USER_ID], changed)
 
@@ -224,7 +224,7 @@ class TestMigSharedUserDB(MigTestCase):
 
         try:
             full_db = load_user_db(self.user_db_path)
-        except Exception as exc:
+        except Exception:
             full_db = None
         self.assertEqual(full_db[THIS_USER_ID]["Organization"], "CHANGED")
 
@@ -234,7 +234,7 @@ class TestMigSharedUserDB(MigTestCase):
         try:
             result = update_user_dict(self.logger, "no-such-user",
                                       {"field": "test"}, self.user_db_path)
-        except Exception as exc:
+        except Exception:
             result = None
         self.assertIsNone(result)
 
@@ -252,7 +252,7 @@ class TestMigSharedUserDB(MigTestCase):
         def delayed_load():
             try:
                 loaded = load_user_db(self.user_db_path)
-            except Exception as exc:
+            except Exception:
                 loaded = None
             return loaded
 
@@ -274,6 +274,97 @@ class TestMigSharedUserDB(MigTestCase):
             pickled = fh.read()
         loaded = loads(pickled)
         self.assertEqual(orig_db, loaded)
+
+    # TODO: adjust API to allow enabling the next test
+    @unittest.skipIf(True, "requires locking fix")
+    def test_lock_user_db_invalid_path(self):
+        """Test locking on non-existent database path"""
+        invalid_path = os.path.join(
+            self.configuration.user_db_home, "missing", "MiG-users.db")
+        flock = lock_user_db(invalid_path)
+        self.assertIsNone(flock)
+
+    # TODO: adjust API to allow enabling the next test
+    @unittest.skipIf(True, "requires locking fix")
+    def test_unlock_user_db_invalid(self):
+        """Test unlocking with None and invalid lock objects"""
+        # Should handle without exceptions
+        unlock_user_db(None)
+        unlock_user_db("not a lock object")
+
+    def test_load_user_db_corrupted(self):
+        """Test loading corrupted user database"""
+        with open(self.user_db_path, 'w') as fh:
+            fh.write("invalid pickle content")
+        with self.assertRaises(Exception):
+            load_user_db(self.user_db_path)
+
+    # TODO: adjust API to allow enabling the next test
+    @unittest.skipIf(True, "requires error handling fix")
+    def test_save_user_db_readonly(self):
+        """Test saving to read-only database path"""
+        sample_db = self._create_sample_db()
+        try:
+            os.chmod(self.user_db_path, 0o444)  # Read-only
+        except Exception:
+            self.skipTest("Read-only test not supported")
+        try:
+            with self.assertRaises(PermissionError):
+                save_user_db({"test": "data"}, self.user_db_path)
+        finally:
+            os.chmod(self.user_db_path, 0o644)
+
+    def test_load_user_dict_empty_db(self):
+        """Test loading user from empty database"""
+        self._create_sample_db(content={})
+        loaded = load_user_dict(self.logger, TEST_USER_ID, self.user_db_path)
+        self.assertIsNone(loaded)
+
+    # TODO: adjust API to allow enabling the next test
+    @unittest.skipIf(True, "requires ID validation fix")
+    def test_save_user_dict_invalid_id(self):
+        """Test saving user with invalid characters in ID"""
+        invalid_id = "../../invalid.user"
+        user_dict = distinguished_name_to_user(TEST_USER_ID)
+        save_status = save_user_dict(self.logger, invalid_id,
+                                     user_dict, self.user_db_path)
+        self.assertFalse(save_status)
+
+    def test_update_user_dict_empty_changes(self):
+        """Test update_user_dict with empty changes dictionary"""
+        # Let log error about o changes pass
+        self.logger.forgive_errors()
+        sample_db = self._create_sample_db()
+        original = sample_db[THIS_USER_ID].copy()
+        updated = update_user_dict(self.logger, THIS_USER_ID, {},
+                                   self.user_db_path)
+        self.assertEqual(updated, original)
+
+    # TODO: adjust API to allow enabling the next test
+    @unittest.skipIf(True, "requires error handling fix")
+    def test_default_db_path_no_valid_paths(self):
+        """Test default_db_path with no valid locations"""
+        self.configuration.user_db_home = None
+        self.configuration.mig_server_home = None
+        with self.assertRaises(ValueError):
+            default_db_path(self.configuration)
+
+    # TODO: adjust API to allow enabling the next test
+    @unittest.skipIf(True, "requires validation fix")
+    def test_save_user_db_datatypes(self):
+        """Test saving non-dictionary database content"""
+        with self.assertRaises(TypeError):
+            save_user_db("invalid content", self.user_db_path)
+
+    def test_load_user_db_thread_safety(self):
+        """Test thread-safe loading with shared lock"""
+        flock = lock_user_db(self.user_db_path, exclusive=False)
+        try:
+            # Should allow concurrent reads
+            loaded = load_user_db(self.user_db_path)
+            self.assertIsInstance(loaded, dict)
+        finally:
+            unlock_user_db(flock)
 
 
 if __name__ == '__main__':
