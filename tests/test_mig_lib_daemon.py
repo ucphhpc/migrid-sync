@@ -41,30 +41,34 @@ from tests.support import FakeConfiguration, FakeLogger, MigTestCase
 class MigLibDaemon(MigTestCase):
     """Unit tests for daemon related helper functions"""
 
-    def before_each(self):
-        """Set up test configuration and reset state before each test"""
+    # Signals registered across the tests and explicitly unregistered on init
+    _used_signals = [signal.SIGCONT, signal.SIGINT, signal.SIGALRM,
+                     signal.SIGABRT, signal.SIGUSR1, signal.SIGUSR2]
 
-        # Create fake configuration, sig and frame for test isolation
-        self.dummy_conf = FakeConfiguration()
-        self.dummy_conf.logger = FakeLogger()
-        self.sig = None
-        self.frame = None
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up any test configuration and reset state before each test"""
+
+        # Create dummy sig and frame values for isolated test use
+        self.sig = 'SIGNAL'
+        self.frame = 'FRAME'
 
         # Reset event states
         reset_run()
         reset_stop()
 
         # Unregister any existing signal handlers
-        used_signals = [signal.SIGCONT, signal.SIGINT, signal.SIGALRM,
-                        signal.SIGABRT, signal.SIGUSR1, signal.SIGUSR2]
-        unregister_signal_handlers(self.dummy_conf, used_signals)
+        unregister_signal_handlers(self.configuration, self._used_signals)
 
     def test_register_run_handler_manual(self):
         """Register a run handler and verify it can be manually overriden to
         mark early run.
         """
         # It's easier to test with alarm than the usual interrupt signal
-        register_run_handler(self.dummy_conf, run_signal=signal.SIGALRM)
+        register_run_handler(self.configuration, run_signal=signal.SIGALRM)
         self.assertFalse(check_run())
         signal.alarm(3)
         time.sleep(1)
@@ -74,7 +78,7 @@ class MigLibDaemon(MigTestCase):
     def test_register_run_handler_signal(self):
         """Register a run handler and verify it can be used to trigger run"""
         # It's easier to test with alarm than the usual interrupt signal
-        register_run_handler(self.dummy_conf, run_signal=signal.SIGALRM)
+        register_run_handler(self.configuration, run_signal=signal.SIGALRM)
         self.assertFalse(check_run())
         signal.alarm(1)
         time.sleep(1)
@@ -85,12 +89,12 @@ class MigLibDaemon(MigTestCase):
         sleep to let daemon be responsive when needed.
         """
         # It's easier to test with alarm than the usual interrupt signal
-        register_run_handler(self.dummy_conf, run_signal=signal.SIGALRM)
+        register_run_handler(self.configuration, run_signal=signal.SIGALRM)
         self.assertFalse(check_run())
         max_secs = 4.2
         start = time.time()
         signal.alarm(1)
-        interruptible_sleep(self.dummy_conf, max_secs, (check_run, ))
+        interruptible_sleep(self.configuration, max_secs, (check_run, ))
         self.assertTrue(check_run())
         end = time.time()
         self.assertTrue(end < start + max_secs)
@@ -100,7 +104,7 @@ class MigLibDaemon(MigTestCase):
         mark early stop.
         """
         # It's easier to test with alarm than the usual interrupt signal
-        register_stop_handler(self.dummy_conf, stop_signal=signal.SIGALRM)
+        register_stop_handler(self.configuration, stop_signal=signal.SIGALRM)
         self.assertFalse(check_stop())
         signal.alarm(3)
         time.sleep(1)
@@ -112,7 +116,7 @@ class MigLibDaemon(MigTestCase):
         receiving the signal registered.
         """
         # It's easier to test with alarm than the usual interrupt signal
-        register_stop_handler(self.dummy_conf, stop_signal=signal.SIGALRM)
+        register_stop_handler(self.configuration, stop_signal=signal.SIGALRM)
         self.assertFalse(check_stop())
         signal.alarm(1)
         time.sleep(1)
@@ -157,7 +161,7 @@ class MigLibDaemon(MigTestCase):
     def test_interruptible_sleep_immediate_exit(self):
         """Test interruptible_sleep with max_secs < nap_secs"""
         start = time.time()
-        interruptible_sleep(self.dummy_conf, 0.1, [], nap_secs=0.2)
+        interruptible_sleep(self.configuration, 0.1, [], nap_secs=0.2)
         duration = time.time() - start
         self.assertTrue(duration < 0.15)
 
@@ -171,14 +175,14 @@ class MigLibDaemon(MigTestCase):
     def test_interruptible_sleep_negative_max_secs(self):
         """Test interruptible_sleep with negative max_secs"""
         start = time.time()
-        interruptible_sleep(self.dummy_conf, -1.0, [])
+        interruptible_sleep(self.configuration, -1.0, [])
         duration = time.time() - start
         self.assertTrue(duration < 0.1)
 
     def test_interruptible_sleep_zero_max_secs(self):
         """Test interruptible_sleep with zero max_secs"""
         start = time.time()
-        interruptible_sleep(self.dummy_conf, 0.0, [])
+        interruptible_sleep(self.configuration, 0.0, [])
         duration = time.time() - start
         self.assertTrue(duration < 0.1)
 
@@ -201,8 +205,8 @@ class MigLibDaemon(MigTestCase):
 
     def test_consecutive_signal_handling(self):
         """Test back-to-back signal handling"""
-        register_run_handler(self.dummy_conf, signal.SIGUSR1)
-        register_stop_handler(self.dummy_conf, signal.SIGUSR2)
+        register_run_handler(self.configuration, signal.SIGUSR1)
+        register_stop_handler(self.configuration, signal.SIGUSR2)
 
         # First signal pair
         os.kill(os.getpid(), signal.SIGUSR1)
@@ -224,12 +228,12 @@ class MigLibDaemon(MigTestCase):
         """Test interruptible_sleep with edge case parameters"""
         # Should complete instantly since max_secs < nap_secs
         start = time.time()
-        interruptible_sleep(self.dummy_conf, 0.01, [], nap_secs=0.05)
+        interruptible_sleep(self.configuration, 0.01, [], nap_secs=0.05)
         self.assertTrue(time.time() - start < 0.05)
 
         # Test zero and negative max_secs returns immediately
-        interruptible_sleep(self.dummy_conf, 0.0, [])
-        interruptible_sleep(self.dummy_conf, -1.0, [])
+        interruptible_sleep(self.configuration, 0.0, [])
+        interruptible_sleep(self.configuration, -1.0, [])
 
     def test_interruptible_sleep_multiple_conditions(self):
         """Test interruptible_sleep with multiple break conditions"""
@@ -239,28 +243,28 @@ class MigLibDaemon(MigTestCase):
             lambda: True,  # This triggers break
         ]
         start = time.time()
-        interruptible_sleep(self.dummy_conf, 5.0, conditions)
+        interruptible_sleep(self.configuration, 5.0, conditions)
         self.assertTrue(time.time() - start < 0.2)
 
     def test_handler_registration_conflict(self):
         """Test registering handlers with conflicting signals"""
         # First register USR1 for both handlers
-        register_run_handler(self.dummy_conf, signal.SIGUSR1)
-        register_stop_handler(self.dummy_conf, signal.SIGUSR1)
+        register_run_handler(self.configuration, signal.SIGUSR1)
+        register_stop_handler(self.configuration, signal.SIGUSR1)
 
         # Should still work
         signal.alarm(1)
         time.sleep(0.5)
-        register_run_handler(self.dummy_conf, signal.SIGUSR2)
-        register_stop_handler(self.dummy_conf, signal.SIGUSR2)
+        register_run_handler(self.configuration, signal.SIGUSR2)
+        register_stop_handler(self.configuration, signal.SIGUSR2)
 
     def test_concurrent_event_handling(self):
         """Test concurrent event triggers and state maintenance"""
         # Setup both handlers
         self.assertFalse(check_run())
         self.assertFalse(check_stop())
-        register_run_handler(self.dummy_conf, signal.SIGCONT)
-        register_stop_handler(self.dummy_conf, signal.SIGINT)
+        register_run_handler(self.configuration, signal.SIGCONT)
+        register_stop_handler(self.configuration, signal.SIGINT)
         os.kill(os.getpid(), signal.SIGCONT)
         os.kill(os.getpid(), signal.SIGINT)
         time.sleep(0.3)
@@ -279,7 +283,7 @@ class MigLibDaemon(MigTestCase):
             return True
 
         start = time.time()
-        interruptible_sleep(self.dummy_conf, 5.0, [immediate_true])
+        interruptible_sleep(self.configuration, 5.0, [immediate_true])
         duration = time.time() - start
         self.assertTrue(duration < 0.1,
                         "Sleep should exit immediately but took %s" % duration)
@@ -300,23 +304,23 @@ class MigLibDaemon(MigTestCase):
     def test_invalid_nap_secs(self):
         """Test invalid nap_secs parameter"""
         with self.assertRaises(AssertionError):
-            interruptible_sleep(self.dummy_conf, 0.5, [], nap_secs=-1.0)
+            interruptible_sleep(self.configuration, 0.5, [], nap_secs=-1.0)
 
     def test_unregister_signal_handlers_explicit(self):
         """Test explicit unregistration of signal handlers"""
         # Register handlers first
-        register_run_handler(self.dummy_conf, signal.SIGALRM)
-        register_stop_handler(self.dummy_conf, signal.SIGABRT)
+        register_run_handler(self.configuration, signal.SIGALRM)
+        register_stop_handler(self.configuration, signal.SIGABRT)
 
         # Verify handlers were set
-        self.assertEqual(signal.getsignal(
-            signal.SIGALRM).__name__, 'run_handler')
-        self.assertEqual(signal.getsignal(
-            signal.SIGABRT).__name__, 'stop_handler')
+        self.assertEqual(signal.getsignal(signal.SIGALRM).__name__,
+                         'run_handler')
+        self.assertEqual(signal.getsignal(signal.SIGABRT).__name__,
+                         'stop_handler')
 
         # Unregister specific signals
-        unregister_signal_handlers(
-            self.dummy_conf, [signal.SIGALRM, signal.SIGABRT])
+        unregister_signal_handlers(self.configuration, [signal.SIGALRM,
+                                                        signal.SIGABRT])
         self.assertEqual(signal.getsignal(signal.SIGALRM), signal.SIG_IGN)
         self.assertEqual(signal.getsignal(signal.SIGABRT), signal.SIG_IGN)
 
@@ -329,15 +333,15 @@ class MigLibDaemon(MigTestCase):
             return state['count'] >= 2
 
         start = time.time()
-        interruptible_sleep(self.dummy_conf, 5.0, [
-                            counter_condition], nap_secs=0.1)
+        interruptible_sleep(self.configuration, 5.0, [counter_condition],
+                            nap_secs=0.1)
         duration = time.time() - start
         self.assertAlmostEqual(duration, 0.2, delta=0.15)
 
     def test_interruptible_sleep_maxsecs_equals_napsecs(self):
         """Test interruptible_sleep with max_secs exactly matching nap_secs"""
         start = time.time()
-        interruptible_sleep(self.dummy_conf, 0.1, [lambda: False],
+        interruptible_sleep(self.configuration, 0.1, [lambda: False],
                             nap_secs=0.1)
         duration = time.time() - start
         self.assertAlmostEqual(duration, 0.1, delta=0.05)
@@ -348,15 +352,15 @@ class MigLibDaemon(MigTestCase):
         SLEEP_ERR = "Sleep Test Error"
 
         def faulty_condition():
-            self.dummy_conf.logger.error(SLEEP_ERR)
+            self.logger.error(SLEEP_ERR)
 
         start = time.time()
-        interruptible_sleep(self.dummy_conf, 0.1, [faulty_condition],
+        interruptible_sleep(self.configuration, 0.1, [faulty_condition],
                             nap_secs=0.01)
         duration = time.time() - start
         self.assertAlmostEqual(duration, 0.1, delta=0.05)
         try:
-            self.dummy_conf.logger.check_empty_and_reset()
+            self.logger.check_empty_and_reset()
         except RuntimeError as rte:
             self.assertTrue(SLEEP_ERR in str(rte), "failed sleep break exc")
 
@@ -388,8 +392,8 @@ class MigLibDaemon(MigTestCase):
 
     def test_signal_handlers_with_real_signals(self):
         """Test signal handlers with real signal delivery"""
-        register_run_handler(self.dummy_conf, signal.SIGUSR1)
-        register_stop_handler(self.dummy_conf, signal.SIGUSR2)
+        register_run_handler(self.configuration, signal.SIGUSR1)
+        register_stop_handler(self.configuration, signal.SIGUSR2)
 
         os.kill(os.getpid(), signal.SIGUSR1)
         time.sleep(0.1)
@@ -420,7 +424,7 @@ class MigLibDaemon(MigTestCase):
         for func, sigs in [(register_run_handler, test_signals['run']),
                            (register_stop_handler, test_signals['stop'])]:
             for sig in sigs:
-                func(self.dummy_conf, sig)
+                func(self.configuration, sig)
                 # Verify handler registration
                 dispatch = signal.getsignal(sig)
                 if func == register_run_handler:
@@ -460,7 +464,7 @@ class MigLibDaemon(MigTestCase):
     def test_interruptible_sleep_nap_accuracy(self):
         """Verify nap timing accuracy in sleep function"""
         start = time.time()
-        interruptible_sleep(self.dummy_conf, 0.3, [], nap_secs=0.1)
+        interruptible_sleep(self.configuration, 0.3, [], nap_secs=0.1)
         duration = time.time() - start
         # Should be ~0.3 secs +/- 0.1 tolerance
         self.assertAlmostEqual(duration, 0.3, delta=0.1)
@@ -468,11 +472,11 @@ class MigLibDaemon(MigTestCase):
     def test_interruptible_sleep_no_break_conditions(self):
         """Test sleep with no break conditions"""
         start = time.time()
-        interruptible_sleep(self.dummy_conf, 0.2, [])
+        interruptible_sleep(self.configuration, 0.2, [])
         duration = time.time() - start
         self.assertAlmostEqual(duration, 0.2, delta=0.05)
 
     def test_interruptible_sleep_invalid_break_conditions(self):
         """Test sleep with improperly formatted break conditions"""
         with self.assertRaises(TypeError):
-            interruptible_sleep(self.dummy_conf, 0.2, [None])
+            interruptible_sleep(self.configuration, 0.2, [None])
