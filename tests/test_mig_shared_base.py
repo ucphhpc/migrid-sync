@@ -27,18 +27,34 @@
 
 """Unit tests for mig.shared.base module"""
 
+import os
 import sys
 import unittest
 
 from mig.shared.base import allow_script, auth_type_description, brief_list, \
-    canonical_user, canonical_user_with_peers, client_dir_id, client_id_dir, \
-    distinguished_name_to_user, extract_field, fill_distinguished_name, \
-    fill_user, generate_https_urls, get_site_base_url, invisible_path, \
-    legacy_main, mask_creds, requested_page, requested_url_base, \
-    verify_local_url
+    canonical_user, canonical_user_with_peers, client_alias, client_dir_id, \
+    client_id_dir, distinguished_name_to_user, expand_openid_alias, \
+    extract_field, fill_distinguished_name, fill_user, generate_https_urls, \
+    get_client_id, get_short_id, get_site_base_url, get_user_id, get_xgi_bin, \
+    hexlify, invisible_dir, invisible_file, invisible_path, is_gdp_user, \
+    legacy_main, mask_creds, pretty_format_user, requested_backend, \
+    requested_page, requested_url_base, sandbox_resource, string_snippet, \
+    unhexlify, user_base_dir, valid_dir_input, verify_local_url
 from mig.shared.defaults import cert_field_order, csrf_field, \
     gdp_distinguished_field, valid_gdp_anon_scripts, valid_gdp_auth_scripts
 from tests.support import FakeConfiguration, MigTestCase, testmain
+
+TEST_USER_ID = "/C=DK/O=Test Org/CN=John Doe/emailAddress=john@doe.org"
+TEST_USER_DIR = "+C=DK+O=Test_Org+CN=John_Doe+emailAddress=john@doe.org"
+TEST_EMAIL = TEST_ALIAS = "john@doe.org"
+TEST_FULL_NAME = "John Doe"
+TEST_ORGANIZATION = "Test Org"
+TEST_COUNTRY = "DK"
+TEST_STATE = 'VT'
+TEST_CLIENT_ALIAS = 'L0NfREsvT19UZXN0IE9yZy9DTl9Kb2huIERvZS9lbWFpbEFkZHJlc3Nfam9obkBkb2Uub3Jn'
+GDP_USER_ID = "/C=DK/CN=John Doe/emailAddress=john@doe.org/GDP=projectx"
+GDP_USER_DIR = "+C=DK+CN=John_Doe+emailAddress=john@doe.org+GDP=projectx"
+GDP_EMAIL = GDP_ALIAS = "john@doe.org@projectx"
 
 
 class TestMigSharedBase(MigTestCase):
@@ -70,9 +86,7 @@ class TestMigSharedBase(MigTestCase):
 
     def test_client_id_dir_basic(self):
         """Test basic client_id_dir conversion"""
-        input_id = "/C=DK/CN=John Doe"
-        expected = "+C=DK+CN=John_Doe"
-        self.assertEqual(client_id_dir(input_id), expected)
+        self.assertEqual(client_id_dir(TEST_USER_ID), TEST_USER_DIR)
 
     def test_client_id_dir_mixed_fields(self):
         """Test conversion with multiple field types"""
@@ -107,9 +121,7 @@ class TestMigSharedBase(MigTestCase):
 
     def test_client_dir_id_basic(self):
         """Test basic client_dir_id conversion"""
-        input_dir = "+C=DK+CN=John_Doe"
-        expected_id = "/C=DK/CN=John Doe"
-        self.assertEqual(client_dir_id(input_dir), expected_id)
+        self.assertEqual(client_dir_id(TEST_USER_DIR), TEST_USER_ID)
 
     def test_client_dir_id_mixed_fields(self):
         """Test conversion with multiple field types"""
@@ -222,27 +234,27 @@ class TestMigSharedBase(MigTestCase):
 
     def test_extract_field_exists(self):
         """Test extracting an existing field from a distinguished name."""
-        dn = "/C=US/O=Test Inc/CN=John Doe"
-        self.assertEqual(extract_field(dn, 'full_name'), 'John Doe')
-        self.assertEqual(extract_field(dn, 'organization'), 'Test Inc')
-        self.assertEqual(extract_field(dn, 'country'), 'US')
+        self.assertEqual(extract_field(TEST_USER_ID, 'full_name'),
+                         TEST_FULL_NAME)
+        self.assertEqual(extract_field(TEST_USER_ID, 'organization'),
+                         TEST_ORGANIZATION)
+        self.assertEqual(extract_field(TEST_USER_ID, 'country'), TEST_COUNTRY)
+        self.assertEqual(extract_field(TEST_USER_ID, 'email'), TEST_EMAIL)
 
     def test_extract_field_not_exists(self):
         """Test extracting a non-existent field returns None."""
-        dn = "/C=US/O=Test Inc/CN=John Doe"
-        self.assertIsNone(extract_field(dn, 'org_unit'))
-        self.assertIsNone(extract_field(dn, 'email'))
+        self.assertIsNone(extract_field(TEST_USER_ID, 'missing'))
+        self.assertIsNone(extract_field(TEST_USER_ID, 'dummy'))
 
     def test_extract_field_with_na_value(self):
         """Test extracting a field with 'NA' value, which should be an empty
         string."""
-        dn = "/C=US/O=NA/CN=John Doe"
-        self.assertEqual(extract_field(dn, 'organization'), '')
+        self.assertEqual(extract_field('/C=DK/DUMMY=NA/CN=TEST', 'DUMMY'), '')
 
     def test_extract_field_custom_field(self):
         """Test extracting a custom (non-standard) field."""
-        dn = "/C=US/CN=John Doe/gdp_project=proj1"
-        self.assertEqual(extract_field(dn, 'gdp_project'), 'proj1')
+        self.assertEqual(extract_field('/C=DK/DUMMY=proj1/CN=Test', 'DUMMY'),
+                         'proj1')
 
     def test_extract_field_empty_dn(self):
         """Test extracting from an empty distinguished name."""
@@ -257,37 +269,41 @@ class TestMigSharedBase(MigTestCase):
 
     def test_distinguished_name_to_user_basic(self):
         """Test basic conversion from distinguished name to user dictionary."""
-        dn = "/C=US/O=Test Inc/CN=John Doe"
-        user_dict = distinguished_name_to_user(dn)
+        user_dict = distinguished_name_to_user(TEST_USER_ID)
         expected = {
-            'distinguished_name': dn,
-            'country': 'US',
-            'organization': 'Test Inc',
-            'full_name': 'John Doe'
+            'distinguished_name': TEST_USER_ID,
+            'country': TEST_COUNTRY,
+            'organization': TEST_ORGANIZATION,
+            'full_name': TEST_FULL_NAME,
+            'email': TEST_EMAIL,
         }
         self.assertEqual(user_dict, expected)
 
     def test_distinguished_name_to_user_with_na(self):
         """Test that 'NA' values are converted to empty strings."""
-        dn = "/C=US/O=NA/CN=John Doe"
+        dn = "%s/dummy=NA" % TEST_USER_ID
         user_dict = distinguished_name_to_user(dn)
         expected = {
             'distinguished_name': dn,
-            'country': 'US',
-            'organization': '',
-            'full_name': 'John Doe'
+            'country': TEST_COUNTRY,
+            'organization': TEST_ORGANIZATION,
+            'full_name': TEST_FULL_NAME,
+            'email': TEST_EMAIL,
+            'dummy': ''
         }
         self.assertEqual(user_dict, expected)
 
     def test_distinguished_name_to_user_with_custom_field(self):
         """Test handling of non-standard fields."""
-        dn = "/C=US/CN=John Doe/gdp_project=proj1"
+        dn = "%s/dummy=proj1" % TEST_USER_ID
         user_dict = distinguished_name_to_user(dn)
         expected = {
             'distinguished_name': dn,
-            'country': 'US',
-            'full_name': 'John Doe',
-            'gdp_project': 'proj1'
+            'country': TEST_COUNTRY,
+            'organization': TEST_ORGANIZATION,
+            'full_name': TEST_FULL_NAME,
+            'email': TEST_EMAIL,
+            'dummy': 'proj1'
         }
         self.assertEqual(user_dict, expected)
 
@@ -303,18 +319,18 @@ class TestMigSharedBase(MigTestCase):
         expected_malformed = {
             'distinguished_name': dn_malformed,
             'country': 'US',
-            'full_name': 'John Doe'
+            'full_name': TEST_FULL_NAME
         }
         self.assertEqual(user_dict_malformed, expected_malformed)
 
         # Empty value
-        dn_empty_val = "/C=US/O=/CN=John Doe"
+        dn_empty_val = "/C=DK/O=/CN=John Doe"
         user_dict_empty_val = distinguished_name_to_user(dn_empty_val)
         expected_empty_val = {
             'distinguished_name': dn_empty_val,
-            'country': 'US',
+            'country': TEST_COUNTRY,
             'organization': '',
-            'full_name': 'John Doe'
+            'full_name': TEST_FULL_NAME
         }
         self.assertEqual(user_dict_empty_val, expected_empty_val)
 
@@ -323,7 +339,7 @@ class TestMigSharedBase(MigTestCase):
         user = {
             'full_name': 'Jane Doe',
             'organization': 'Test Corp',
-            'country': 'DK',
+            'country': TEST_COUNTRY,
             'email': 'jane.doe@example.com'
         }
         fill_distinguished_name(user)
@@ -336,7 +352,7 @@ class TestMigSharedBase(MigTestCase):
         user = {
             'full_name': 'Jane Doe',
             'organization': 'Test Corp',
-            'country': 'DK',
+            'country': TEST_COUNTRY,
             gdp_distinguished_field: 'project_x'
         }
         fill_distinguished_name(user)
@@ -346,11 +362,10 @@ class TestMigSharedBase(MigTestCase):
 
     def test_fill_distinguished_name_already_exists(self):
         """Test that an existing distinguished_name is not overwritten."""
-        existing_dn = "/C=SE/CN=Existing User"
         user = {
-            'distinguished_name': existing_dn,
+            'distinguished_name': TEST_USER_ID,
             'full_name': 'Jane Doe',
-            'country': 'DK'
+            'country': 'US'
         }
         original_user = user.copy()
         returned_user = fill_distinguished_name(user)
@@ -368,13 +383,13 @@ class TestMigSharedBase(MigTestCase):
         """Test that fill_user adds missing fields and preserves existing
         ones."""
         user = {
-            'full_name': 'Test User',
+            'full_name': TEST_FULL_NAME,
             'extra_field': 'extra_value'
         }
         fill_user(user)
 
         # Check that existing values are preserved
-        self.assertEqual(user['full_name'], 'Test User')
+        self.assertEqual(user['full_name'], TEST_FULL_NAME)
         self.assertEqual(user['extra_field'], 'extra_value')
 
         # Check that missing standard fields are added with empty strings
@@ -404,10 +419,10 @@ class TestMigSharedBase(MigTestCase):
         """Test canonical_user applies all transformations correctly."""
         user_dict = {
             'full_name': '  john doe  ',
-            'email': 'John.Doe@Example.COM',
-            'country': 'us',
-            'state': 'ca',
-            'organization': '  Test Inc.  ',
+            'email': 'John@DoE.ORG',
+            'country': 'dk',
+            'state': 'vt',
+            'organization': '  Test Org  ',
             'extra_field': 'should be removed',
             'id': 123
         }
@@ -416,11 +431,11 @@ class TestMigSharedBase(MigTestCase):
         canonical = canonical_user(self.configuration, user_dict, limit_fields)
 
         expected = {
-            'full_name': 'John Doe',
-            'email': 'john.doe@example.com',
-            'country': 'US',
-            'state': 'CA',
-            'organization': 'Test Inc.',
+            'full_name': TEST_FULL_NAME,
+            'email': TEST_EMAIL,
+            'country': TEST_COUNTRY,
+            'state': TEST_STATE,
+            'organization': TEST_ORGANIZATION,
             'id': 123
         }
         self.assertEqual(canonical, expected)
@@ -430,8 +445,8 @@ class TestMigSharedBase(MigTestCase):
         """Test canonical_user_with_peers with legacy peers list"""
         self.configuration.site_peers_explicit_fields = ['email', 'full_name']
         user_dict = {
-            'full_name': 'John Doe',
-            'email': 'john@example.com',
+            'full_name': TEST_FULL_NAME,
+            'email': TEST_EMAIL,
             'peers': [
                 '/C=DK/CN=Alice/emailAddress=alice@example.com',
                 '/C=DK/CN=Bob/emailAddress=bob@example.com'
@@ -449,8 +464,8 @@ class TestMigSharedBase(MigTestCase):
         """Test canonical_user_with_peers with explicit peers fields"""
         self.configuration.site_peers_explicit_fields = ['email', 'full_name']
         user_dict = {
-            'full_name': 'John Doe',
-            'email': 'john@example.com',
+            'full_name': TEST_FULL_NAME,
+            'email': TEST_EMAIL,
             'peers_email': 'custom@example.com',
             'peers_full_name': 'Custom Name',
             'peers': [
@@ -470,9 +485,9 @@ class TestMigSharedBase(MigTestCase):
         self.configuration.site_peers_explicit_fields = [
             'email', 'organization']
         user_dict = {
-            'full_name': 'John Doe',
-            'email': 'john@example.com',
-            'peers_organization': 'Test Org',
+            'full_name': TEST_FULL_NAME,
+            'email': TEST_EMAIL,
+            'peers_organization': TEST_ORGANIZATION,
             'peers': [
                 '/C=DK/O=Legacy Org/CN=Alice/emailAddress=alice@example.com',
                 '/C=DK/CN=Bob/emailAddress=bob@example.com'
@@ -492,8 +507,8 @@ class TestMigSharedBase(MigTestCase):
         """Test canonical_user_with_peers with no peers data"""
         self.configuration.site_peers_explicit_fields = ['email']
         user_dict = {
-            'full_name': 'John Doe',
-            'email': 'john@example.com'
+            'full_name': TEST_FULL_NAME,
+            'email': TEST_EMAIL
         }
         limit_fields = ['full_name', 'email']
         canonical = canonical_user_with_peers(
@@ -506,7 +521,7 @@ class TestMigSharedBase(MigTestCase):
         """Test canonical_user_with_peers with no peer fields configured"""
         self.configuration.site_peers_explicit_fields = []
         user_dict = {
-            'full_name': 'John Doe',
+            'full_name': TEST_FULL_NAME,
             'email': 'john@example.com',
             'peers': [
                 '/C=DK/CN=Alice/emailAddress=alice@example.com'
@@ -524,7 +539,7 @@ class TestMigSharedBase(MigTestCase):
         """Test canonical_user_with_peers handles special characters in DNs"""
         self.configuration.site_peers_explicit_fields = ['full_name']
         user_dict = {
-            'full_name': 'John Doe',
+            'full_name': TEST_FULL_NAME,
             'peers': [
                 '/C=DK/CN=Jérôme Müller',
                 '/C=DK/CN=O‘‘Reilly',
@@ -1093,6 +1108,155 @@ just use the one that looks most familiar or try them in turn)"""
         # Path that only contains invisible directory substring
         substring_path = '/prefix%ssuffix/file' % invisible_dirname
         self.assertFalse(invisible_path(substring_path))
+
+    def test_client_alias(self):
+        """Test client_alias transforms and encodes IDs"""
+        result = client_alias(TEST_USER_ID)
+        # Verify base64 urlsafe encoding
+        self.assertEqual(result, TEST_CLIENT_ALIAS, "failed alias client id")
+
+    def test_expand_openid_alias(self):
+        """Test expand_openid_alias resolves symlinks to real IDs"""
+        user_home = self.temppath(TEST_USER_DIR, ensure_dir=True)
+
+        # Create symlink
+        link_path = os.path.join(user_home, TEST_ALIAS)
+        os.symlink(TEST_USER_DIR, link_path)
+
+        # Set config and test
+        self.configuration.user_home = user_home
+        resolved = expand_openid_alias(TEST_ALIAS, self.configuration)
+        self.assertEqual(resolved, TEST_USER_ID)
+
+    def test_get_short_id_basic(self):
+        """Test get_short_id without GDPR features"""
+        alias_field = "email"
+        result = get_short_id(self.configuration, TEST_USER_ID, alias_field)
+        self.assertEqual(result, TEST_ALIAS)
+
+    def test_get_short_id_with_gdp(self):
+        """Test get_short_id includes GDPR project info when enabled"""
+        self.configuration.site_enable_gdp = True
+        alias_field = "email"
+        result = get_short_id(self.configuration, GDP_USER_ID, alias_field)
+        self.assertEqual(result, GDP_ALIAS)
+
+    def test_get_user_id_x509_format(self):
+        """Test get_user_id returns DN for X509 format"""
+        self.configuration.site_user_id_format = "X509"
+        user = {'distinguished_name': TEST_USER_ID}
+        result = get_user_id(self.configuration, user)
+        self.assertEqual(result, TEST_USER_ID)
+
+    def test_get_user_id_uuid_format(self):
+        """Test get_user_id returns UUID when configured"""
+        self.configuration.site_user_id_format = "UUID"
+        user = {'unique_id': "123e4567-e89b-12d3-a456-426614174000"}
+        result = get_user_id(self.configuration, user)
+        self.assertEqual(result, "123e4567-e89b-12d3-a456-426614174000")
+
+    def test_get_client_id(self):
+        """Test get_client_id extracts DN from user dict"""
+        test_dn = "/C=US/CN=Alice"
+        user = {'distinguished_name': test_dn, 'other': 'field'}
+        result = get_client_id(user)
+        self.assertEqual(result, test_dn)
+
+    def test_hexlify_unhexlify_roundtrip(self):
+        """Test hexlify/unhexlify round-trip conversion"""
+        test_str = "secret_value"
+        hexed = hexlify(test_str)
+        self.assertEqual(hexed, "7365637265745f76616c7565")
+        unhexed = unhexlify(hexed)
+        self.assertEqual(unhexed, test_str)
+
+    def test_is_gdp_user_detection(self):
+        """Test is_gdp_user detects GDP project presence"""
+        self.assertTrue(is_gdp_user(
+            self.configuration,
+            "/GDP_PROJ=12345"
+        ))
+        self.assertFalse(is_gdp_user(
+            self.configuration,
+            "/CN=Regular User"
+        ))
+
+    def test_sandbox_resource_identification(self):
+        """Test sandbox_resource identifies sandboxes"""
+        self.assertTrue(sandbox_resource("sandbox.12345"))
+        self.assertFalse(sandbox_resource("production.system.42"))
+
+    def test_invisible_file_detection(self):
+        """Test invisible_file detects hidden system files"""
+        for forbidden in [".htaccess"]:
+            self.assertTrue(invisible_file(forbidden))
+        for allowed in ["readme.txt", "data.csv"]:
+            self.assertFalse(invisible_file(allowed))
+
+    def test_invisible_dir_detection(self):
+        """Test invisible_dir detects protected directories"""
+        for forbidden in [".vgridscm", ".vgridtracker"]:
+            self.assertTrue(invisible_dir(forbidden))
+        for allowed in ["public_files", "shared"]:
+            self.assertFalse(invisible_dir(allowed))
+
+    def test_requested_backend_extraction(self):
+        """Test requested_backend extracts backend name from environ"""
+        test_env = {
+            'BACKEND_NAME': '/cgi-bin/fileman.py',
+            'PATH_TRANSLATED': '/wsgi-bin/fileman.py'
+        }
+        result = requested_backend(test_env)
+        self.assertEqual(result, "fileman")
+
+    def test_pretty_format_user(self):
+        """Test pretty_format_user hides email and formats nicely"""
+        test_dn = "/C=DK/CN=Alice/O=Org/emailAddress=alice@example.com"
+        result = pretty_format_user(test_dn)
+        self.assertIn("Alice, Org", result)
+        self.assertIn("email hidden", result)
+
+    def test_string_snippet_shortening(self):
+        """Test string_snippet shortens long strings with markers"""
+        long_str = "abcdefghijklmnopqrstuvwxyz12345"
+        result = string_snippet(long_str, 16)
+        self.assertEqual(result, "abcdef .. z12345")
+
+    def test_get_xgi_bin_wsgi_vs_cgi(self):
+        """Test get_xgi_bin returns correct script bin based on config"""
+        # Test WSGI enabled
+        self.configuration.site_enable_wsgi = True
+        self.assertEqual(get_xgi_bin(self.configuration), 'wsgi-bin')
+
+        # Test WSGI disabled
+        self.configuration.site_enable_wsgi = False
+        self.assertEqual(get_xgi_bin(self.configuration), 'cgi-bin')
+
+        # Test legacy force
+        self.assertEqual(get_xgi_bin(self.configuration, force_legacy=True),
+                         'cgi-bin')
+
+    def test_valid_dir_input(self):
+        """Test valid_dir_input prevents path traversal attempts"""
+        base = "/allowed"
+        test_cases = [
+            ("safe_dir", True),
+            ("sub/safe", True),
+            ("../illegal", False),
+            ("/absolute", False),
+        ]
+        for (relative_path, expected) in test_cases:
+            self.assertEqual(
+                valid_dir_input(base, relative_path),
+                expected,
+                "failed for %s" % relative_path
+            )
+
+    def test_user_base_dir(self):
+        """Test user_base_dir formats paths with correct trailing slash"""
+        result = user_base_dir(self.configuration, TEST_USER_ID)
+        self.assertTrue(result.startswith(self.configuration.user_home))
+        self.assertTrue(result.endswith(os.sep))
 
     def test_brief_list(self):
         """Test brief_list helper function for shortening long lists"""
