@@ -30,9 +30,9 @@ import os
 import time
 import unittest
 
-from mig.shared.fileio import read_file, pickle
+from mig.shared.fileio import pickle, read_file
 from mig.shared.vgrid import vgrid_list, vgrid_set_entities, vgrid_settings
-from mig.shared.vgridaccess import OWNERS, SETTINGS, VGRIDS, RESOURCES, \
+from mig.shared.vgridaccess import OWNERS, RESOURCES, SETTINGS, VGRIDS, \
     check_vgrid_access, force_update_resource_map, force_update_user_map, \
     force_update_vgrid_map, get_resource_map, get_vgrid_map, \
     load_resource_map, refresh_vgrid_map, vgrid_inherit_map
@@ -152,7 +152,6 @@ class TestMigSharedVgridAccess(MigTestCase):
                            resources=[self.TEST_RESOURCE_ID])
         updated_vgrid_map = force_update_vgrid_map(self.configuration,
                                                    clean=True)
-        print("DEBUG: updated vgrid map %s" % updated_vgrid_map)
         # Check vgrid map contains resource entry
         vgrid_data = updated_vgrid_map.get(VGRIDS, {})
         top_vgrid_data = vgrid_data.get(self.test_vgrid, {})
@@ -162,7 +161,6 @@ class TestMigSharedVgridAccess(MigTestCase):
         # Check resource map contains resource entry
         updated_res_map = force_update_resource_map(self.configuration,
                                                     clean=True)
-        print("DEBUG: updated res map %s" % updated_res_map)
         # Check resource map contains entry
         self.assertTrue(self.TEST_RESOURCE_ID in updated_res_map)
 
