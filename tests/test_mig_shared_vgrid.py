@@ -27,6 +27,7 @@
 
 """Unit tests for vgrid helper module"""
 
+import datetime
 import os
 import time
 import unittest
@@ -35,12 +36,12 @@ from mig.shared.base import client_id_dir
 from mig.shared.serial import dump
 from mig.shared.vgrid import get_vgrid_workflow_jobs, legacy_main, \
     vgrid_add_entities, vgrid_add_members, vgrid_add_owners, \
-    vgrid_add_workflow_jobs, vgrid_allow_restrict_write, vgrid_exists, \
-    vgrid_is_default, vgrid_is_member, vgrid_is_owner, \
-    vgrid_is_owner_or_member, vgrid_list, vgrid_list_parents, \
-    vgrid_list_subvgrids, vgrid_list_vgrids, vgrid_match_resources, \
-    vgrid_nest_sep, vgrid_remove_entities, vgrid_restrict_write, \
-    vgrid_set_entities, vgrid_settings
+    vgrid_add_resources, vgrid_add_workflow_jobs, vgrid_allow_restrict_write, \
+    vgrid_exists, vgrid_flat_name, vgrid_is_default, vgrid_is_member, \
+    vgrid_is_owner, vgrid_is_owner_or_member, vgrid_is_trigger, vgrid_list, \
+    vgrid_list_parents, vgrid_list_subvgrids, vgrid_list_vgrids, \
+    vgrid_match_resources, vgrid_nest_sep, vgrid_remove_entities, \
+    vgrid_restrict_write, vgrid_set_entities, vgrid_settings
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 
@@ -185,9 +186,11 @@ class TestMigSharedVgrid(MigTestCase):
 
     def test_vgrid_settings_inheritance(self):
         """Test vgrid setting inheritance"""
-        # Parent settings
-        parent_settings = [('vgrid_name', self.test_vgrid),
-                           ('write_shared_files', 'None')]
+        # Parent settings (MUST include required vgrid_name field)
+        parent_settings = [
+            ('vgrid_name', self.test_vgrid),
+            ('write_shared_files', 'None')
+        ]
         added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
                                         'settings', parent_settings)
         self.assertTrue(added, msg)
@@ -197,6 +200,8 @@ class TestMigSharedVgrid(MigTestCase):
                                           recursive=True, as_dict=True)
         self.assertTrue(status)
         self.assertEqual(settings.get('write_shared_files'), 'None')
+        # Verify vgrid_name is preserved
+        self.assertEqual(settings['vgrid_name'], self.test_subvgrid)
 
     def test_vgrid_permission_checks(self):
         """Test owner/member permission verification"""
@@ -355,11 +360,12 @@ class TestMigSharedVgrid(MigTestCase):
 
     def test_vgrid_settings_scopes(self):
         """Test different vgrid settings lookup scopes"""
-        # Local settings only
-        local_settings = [('vgrid_name', self.test_subvgrid),
-                          ('description', 'test subvgrid'),
-                          ('write_shared_files', 'members'),
-                          ]
+        # Local settings only - MUST include required vgrid_name field
+        local_settings = [
+            ('vgrid_name', self.test_subvgrid),
+            ('description', 'test subvgrid'),
+            ('write_shared_files', 'members'),
+        ]
         added, msg = vgrid_add_entities(self.configuration, self.test_subvgrid,
                                         'settings', local_settings)
         self.assertTrue(added, msg)
@@ -388,15 +394,150 @@ class TestMigSharedVgrid(MigTestCase):
         owners = vgrid_list(self.test_vgrid, 'owners', self.configuration)[1]
         self.assertEqual(owners[0], new_owner)
 
+    def test_vgrid_is_trigger(self):
+        """Test trigger rule detection"""
+        test_rule = {
+            'rule_id': 'test_rule',
+            'vgrid_name': self.test_vgrid,
+            'path': '*.txt',
+            'changes': ['modified'],
+            'run_as': self.TEST_OWNER_DN,
+            'action': 'copy',
+            'arguments': [],
+            'match_files': True,
+            'match_dirs': False,
+            'match_recursive': False,
+        }
+        # Add trigger to vgrid with all required fields
+        added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
+                                        'triggers', [test_rule])
+        self.assertTrue(added, msg)
+        self.assertTrue(vgrid_is_trigger(
+            self.test_vgrid, 'test_rule', self.configuration))
+
+    def test_vgrid_sharelink_operations(self):
+        """Test sharelink add/remove cycles"""
+        test_share = {
+            'share_id': 'test_share',
+            'path': '/test/path',
+            'access': ['read'],  # Must be list type
+            'invites': [self.TEST_MEMBER_DN],  # Required field
+            'single_file': True,  # Correct field name (was 'is_dir')
+            'expire': '-1',  # Optional but included for completeness
+            'owner': self.TEST_OWNER_DN,
+            'created_timestamp': datetime.datetime.now()
+        }
+        added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
+                                        'sharelinks', [test_share])
+        self.assertTrue(added, msg)
+
+        # Test removal
+        removed, msg = vgrid_remove_entities(self.configuration, self.test_vgrid,
+                                             'sharelinks', ['test_share'], True)
+        self.assertTrue(removed, msg)
+
+    # TODO: adjust API to allow enabling the next test
+    @unittest.skipIf(True, "requires tweak to reject insert invalid setting")
+    def test_vgrid_settings_validation(self):
+        """Test settings key validation"""
+        invalid_settings = [
+            ('vgrid_name', self.test_vgrid),  # Required field
+            ('invalid_key', 'value')          # Invalid extra field
+        ]
+        added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
+                                        'settings', invalid_settings)
+        # Should not accept invalid key even with valid required fields
+        self.assertFalse(added)
+        self.assertIn("unknown settings key 'invalid_key'", msg)
+
+        status, settings = vgrid_list(self.test_vgrid, 'settings',
+                                      self.configuration)
+        # Should never save invalid key even with valid required fields
+        self.assertTrue(status)
+        self.assertNotIn('invalid_key', settings[0])
+
+    def test_vgrid_entity_listing(self):
+        """Test direct entity listing functions"""
+        # Test empty members and one owner listing from init
+        status, members = vgrid_list(self.test_vgrid, 'members',
+                                     self.configuration)
+        self.assertTrue(status)
+        self.assertEqual(len(members), 0)
+        status, owners = vgrid_list(self.test_vgrid, 'owners',
+                                    self.configuration)
+        self.assertTrue(status)
+        self.assertEqual(len(owners), 1)
+
+        # Populate and verify
+        vgrid_add_owners(self.configuration, self.test_vgrid,
+                         [self.TEST_OWNER_DN])
+        status, owners = vgrid_list(self.test_vgrid, 'owners',
+                                    self.configuration)
+        self.assertTrue(status)
+        self.assertEqual(owners, [self.TEST_OWNER_DN])
+
+    def test_flat_vgrid_name(self):
+        """Test vgrid_flat_name conversion"""
+        nested_vgrid = 'testvgrid/sub'
+        expected_flat = '%s' % vgrid_nest_sep.join(['testvgrid', 'sub'])
+        converted = vgrid_flat_name(nested_vgrid, self.configuration)
+        self.assertEqual(converted, expected_flat)
+        nested_vgrid = 'testvgrid/sub/test'
+        expected_flat = '%s' % vgrid_nest_sep.join(
+            ['testvgrid', 'sub', 'test'])
+        converted = vgrid_flat_name(nested_vgrid, self.configuration)
+        self.assertEqual(converted, expected_flat)
+
+    def test_resource_signup_workflow(self):
+        """Test full resource signup workflow"""
+        # Sign up resource
+        added, msg = vgrid_add_resources(self.configuration, self.test_vgrid,
+                                         [self.TEST_RESOURCE_DN])
+        self.assertTrue(added, msg)
+
+        # Verify visibility
+        matched = vgrid_match_resources(self.test_vgrid, [self.TEST_RESOURCE_DN],
+                                        self.configuration)
+        self.assertEqual(matched, [self.TEST_RESOURCE_DN])
+
+    def test_multi_level_inheritance(self):
+        """Test settings propagation through multiple vgrid levels"""
+        # Create grandchild vgrid
+        grandchild = os.path.join(self.test_subvgrid, 'grandchild')
+        grandchild_path = os.path.join(
+            self.configuration.vgrid_home, grandchild)
+        ensure_dirs_exist(grandchild_path)
+
+        # Set valid inherited setting at top level with required vgrid_name
+        top_settings = [
+            ('vgrid_name', self.test_vgrid),
+            ('hidden', True)  # Valid inherited field with boolean value
+        ]
+        added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
+                                        'settings', top_settings)
+        self.assertTrue(added, msg)
+
+        # Verify grandchild inheritance using 'hidden' field inherit=true
+        status, settings = vgrid_settings(grandchild, self.configuration,
+                                          recursive=True, as_dict=True)
+        self.assertTrue(status)
+        self.assertEqual(settings.get('hidden'), True)
+        # Verify vgrid_name is preserved
+        self.assertEqual(settings['vgrid_name'], grandchild)
+
     # TODO: adjust API to allow enabling the next test
     @unittest.skipIf(True, "requires tweaking of funcion")
     def test_workflow_job_priority(self):
         """Test workflow job queue ordering and limits"""
         # Create max jobs + 1
-        job_entries = [
-            {'client_id': self.TEST_OWNER_DN, 'job_id': str(i)}
-            for i in range(101)
-        ]
+        job_entries = [{
+            'vgrid_name': self.test_vgrid,
+            'client_id': self.TEST_OWNER_DN,
+            'job_id': str(i),
+            'run_as': self.TEST_OWNER_DN,  # Required field
+            'exe': '/bin/echo',           # Required job field
+            'arguments': ['Test job'],     # Required job field
+        } for i in range(101)]
         added, msg = vgrid_add_workflow_jobs(
             self.configuration,
             self.test_vgrid,
@@ -412,10 +553,11 @@ class TestMigSharedVgrid(MigTestCase):
         self.assertEqual(jobs[-1]['job_id'], '100')  # Newest at end
 
 
-class TestMigSharedVgrid__main(MigTestCase):
-    """Unit tests for vgrid self-checks"""
+class TestMigSharedVgrid__legacy_main(MigTestCase):
+    """Unit tests for legacy vgrid self-checks"""
 
     def test_existing_main(self):
+        """Run the legacy self-tests directly in module"""
         def raise_on_error_exit(exit_code):
             if exit_code != 0:
                 if raise_on_error_exit.last_print is not None:
@@ -427,6 +569,7 @@ class TestMigSharedVgrid__main(MigTestCase):
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
+            """Keep track of printed output"""
             raise_on_error_exit.last_print = value
 
         legacy_main(_exit=raise_on_error_exit, _print=record_last_print)
