@@ -41,7 +41,8 @@ from mig.shared.vgrid import get_vgrid_workflow_jobs, legacy_main, \
     vgrid_is_owner, vgrid_is_owner_or_member, vgrid_is_trigger, vgrid_list, \
     vgrid_list_parents, vgrid_list_subvgrids, vgrid_list_vgrids, \
     vgrid_match_resources, vgrid_nest_sep, vgrid_remove_entities, \
-    vgrid_restrict_write, vgrid_set_entities, vgrid_settings
+    vgrid_restrict_write, vgrid_set_entities, vgrid_set_owners, \
+    vgrid_settings
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 
@@ -394,6 +395,87 @@ class TestMigSharedVgrid(MigTestCase):
         owners = vgrid_list(self.test_vgrid, 'owners', self.configuration)[1]
         self.assertEqual(owners[0], new_owner)
 
+    def test_vgrid_add_owners_comprehensive(self):
+        """Comprehensive test for vgrid_add_owners functionality"""
+        # Clear existing owners to start fresh
+        reset, msg = vgrid_set_owners(self.configuration, self.test_vgrid, [],
+                                      allow_empty=True)
+        self.assertTrue(reset, msg)
+
+        # Test 1: Add initial owner
+        owner1 = self.TEST_OWNER_DN
+        added, msg = vgrid_add_owners(
+            self.configuration, self.test_vgrid, [owner1])
+        self.assertTrue(added, msg)
+
+        # Verify single owner
+        status, owners = vgrid_list(
+            self.test_vgrid, 'owners', self.configuration)
+        self.assertEqual(owners, [owner1])
+
+        # Test 2: Prepend new owner
+        owner2 = self.TEST_MEMBER_DN
+        added, msg = vgrid_add_owners(
+            self.configuration, self.test_vgrid, [owner2], rank=0)
+        self.assertTrue(added, msg)
+
+        # Verify new order
+        status, owners = vgrid_list(
+            self.test_vgrid, 'owners', self.configuration)
+        self.assertEqual(owners, [owner2, owner1])
+
+        # Test 3: Append without rank
+        owner3 = self.TEST_OUTSIDER_DN
+        added, msg = vgrid_add_owners(
+            self.configuration, self.test_vgrid, [owner3])
+        self.assertTrue(added, msg)
+
+        # Verify append
+        status, owners = vgrid_list(
+            self.test_vgrid, 'owners', self.configuration)
+        self.assertEqual(owners, [owner2, owner1, owner3])
+
+        # Test 4: Insert at middle position
+        owner4 = \
+            '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Owner Four/'\
+            'emailAddress=owner4@example.com'
+        added, msg = vgrid_add_owners(
+            self.configuration, self.test_vgrid, [owner4], rank=1)
+        self.assertTrue(added, msg)
+
+        # Verify insertion
+        status, owners = vgrid_list(
+            self.test_vgrid, 'owners', self.configuration)
+        self.assertEqual(owners, [owner2, owner4, owner1, owner3])
+
+        # Test 5: Add multiple owners at once
+        new_owners = [
+            '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Owner Five/'
+            'emailAddress=owner5@example.com',
+            '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Owner Six/'
+            'emailAddress=owner6@example.com'
+        ]
+        added, msg = vgrid_add_owners(
+            self.configuration, self.test_vgrid, new_owners, rank=2)
+        self.assertTrue(added, msg)
+
+        # Verify multi-insert
+        status, owners = vgrid_list(
+            self.test_vgrid, 'owners', self.configuration)
+        expected = [owner2, owner4] + new_owners + [owner1, owner3]
+        self.assertEqual(owners, expected)
+
+        # Test 6: Prevent duplicate owner addition
+        pre_add_count = len(owners)
+        added, msg = vgrid_add_owners(
+            self.configuration, self.test_vgrid, [owner1])
+        self.assertTrue(added, msg)
+
+        # Verify no duplicate added
+        status, owners = vgrid_list(
+            self.test_vgrid, 'owners', self.configuration)
+        self.assertEqual(len(owners), pre_add_count)
+
     def test_vgrid_is_trigger(self):
         """Test trigger rule detection"""
         test_rule = {
@@ -475,6 +557,86 @@ class TestMigSharedVgrid(MigTestCase):
                                     self.configuration)
         self.assertTrue(status)
         self.assertEqual(owners, [self.TEST_OWNER_DN])
+
+    def test_vgrid_add_members_comprehensive(self):
+        """Comprehensive test for vgrid_add_members functionality"""
+        # Clear existing members to start fresh
+        reset, msg = vgrid_set_entities(self.configuration, self.test_vgrid,
+                                        'members', [], allow_empty=True)
+        self.assertTrue(reset, msg)
+
+        # Test 1: Add initial member
+        member1 = self.TEST_MEMBER_DN
+        added, msg = vgrid_add_members(
+            self.configuration, self.test_vgrid, [member1])
+        self.assertTrue(added, msg)
+
+        # Verify single member
+        status, members = vgrid_list(
+            self.test_vgrid, 'members', self.configuration)
+        self.assertEqual(members, [member1])
+
+        # Test 2: Prepend new member
+        member2 = self.TEST_OUTSIDER_DN
+        added, msg = vgrid_add_members(
+            self.configuration, self.test_vgrid, [member2], rank=0)
+        self.assertTrue(added, msg)
+
+        # Verify new order
+        status, members = vgrid_list(
+            self.test_vgrid, 'members', self.configuration)
+        self.assertEqual(members, [member2, member1])
+
+        # Test 3: Append without rank
+        member3 = self.TEST_OWNER_DN
+        added, msg = vgrid_add_members(
+            self.configuration, self.test_vgrid, [member3])
+        self.assertTrue(added, msg)
+
+        # Verify append
+        status, members = vgrid_list(
+            self.test_vgrid, 'members', self.configuration)
+        self.assertEqual(members, [member2, member1, member3])
+
+        # Test 4: Insert at middle position
+        member4 = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Member Four/'\
+            'emailAddress=member4@example.com'
+        added, msg = vgrid_add_members(
+            self.configuration, self.test_vgrid, [member4], rank=1)
+        self.assertTrue(added, msg)
+
+        # Verify insertion
+        status, members = vgrid_list(
+            self.test_vgrid, 'members', self.configuration)
+        self.assertEqual(members, [member2, member4, member1, member3])
+
+        # Test 5: Add multiple members at once
+        new_members = [
+            '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Member Five/'
+            'emailAddress=member5@example.com',
+            '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Member Six/'
+            'emailAddress=member6@example.com'
+        ]
+        added, msg = vgrid_add_members(
+            self.configuration, self.test_vgrid, new_members, rank=2)
+        self.assertTrue(added, msg)
+
+        # Verify multi-insert
+        status, members = vgrid_list(
+            self.test_vgrid, 'members', self.configuration)
+        expected = [member2, member4] + new_members + [member1, member3]
+        self.assertEqual(members, expected)
+
+        # Test 6: Prevent duplicate member addition
+        pre_add_count = len(members)
+        added, msg = vgrid_add_members(
+            self.configuration, self.test_vgrid, [member1])
+        self.assertTrue(added, msg)
+
+        # Verify no duplicate added
+        status, members = vgrid_list(
+            self.test_vgrid, 'members', self.configuration)
+        self.assertEqual(len(members), pre_add_count)
 
     def test_flat_vgrid_name(self):
         """Test vgrid_flat_name conversion"""
