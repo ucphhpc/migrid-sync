@@ -33,9 +33,10 @@ import unittest
 from mig.shared.fileio import pickle, read_file
 from mig.shared.vgrid import vgrid_list, vgrid_set_entities, vgrid_settings
 from mig.shared.vgridaccess import CONF, MEMBERS, OWNERS, RESOURCES, SETTINGS, \
-    USERID, VGRIDS, check_vgrid_access, force_update_resource_map, \
-    force_update_user_map, force_update_vgrid_map, get_resource_map, \
-    get_user_map, get_vgrid_map, load_resource_map, refresh_vgrid_map, \
+    USERID, VGRIDS, check_vgrid_access, check_vgrids_modified, \
+    force_update_resource_map, force_update_user_map, force_update_vgrid_map, \
+    get_re_provider_map, get_resource_map, get_user_map, get_vgrid_map, \
+    load_resource_map, refresh_vgrid_map, resources_using_re, unmap_vgrid, \
     user_vgrid_access, vgrid_inherit_map
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
@@ -56,8 +57,10 @@ class TestMigSharedVgridAccess(MigTestCase):
         '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Outsider/'\
         'emailAddress=outsider@example.com'
     TEST_RESOURCE_ID = 'test.example.org.0'
+
     TEST_OWNER_UUID = 'ff326a2b984828d9b32077c9b0b35a05'
     TEST_USER_UUID = '707a2213995b4fb385793b5a7cb82a18'
+    TEST_RESOURCE_ALIAS = '0835f310d6422c36e33eeb7d0d3e9cf5'
 
     def _provide_configuration(self):
         """Prepare isolated test config"""
@@ -368,6 +371,67 @@ class TestMigSharedVgridAccess(MigTestCase):
         allowed_vgrids = user_vgrid_access(self.configuration,
                                            self.TEST_OUTSIDER_DN)
         self.assertFalse(self.test_vgrid in allowed_vgrids)
+
+    def test_get_re_provider_map(self):
+        """Test RE provider map includes test resource"""
+        test_re = 'Python'
+        res_config = {'RUNTIMEENVIRONMENT': [(test_re, '/python/path')]}
+        self._create_resource(self.TEST_RESOURCE_ID, [
+                              self.TEST_OWNER_DN], res_config)
+
+        # Update maps to include new resource
+        force_update_resource_map(self.configuration)
+
+        # Verify RE appears in provider mapping
+        re_map = get_re_provider_map(self.configuration)
+        self.assertIn(test_re, re_map)
+        self.assertIn(self.TEST_RESOURCE_ALIAS, re_map[test_re])
+
+    def test_resources_using_re(self):
+        """Test finding resources with specific runtime environment"""
+        test_re = 'Bash'
+        res_config = {'RUNTIMEENVIRONMENT': [(test_re, '/bash/path')]}
+        self._create_resource(self.TEST_RESOURCE_ID, [
+                              self.TEST_OWNER_DN], res_config)
+
+        # Refresh resource map
+        force_update_resource_map(self.configuration)
+
+        # Verify resource appears in RE-specific results
+        res_list = resources_using_re(self.configuration, test_re)
+        self.assertIn(self.TEST_RESOURCE_ALIAS, res_list)
+
+    def test_unmap_vgrid(self):
+        """Verify unmapping marks vgrid modified for update in cached data"""
+        mod_list, mod_stamp = check_vgrids_modified(self.configuration)
+        self.assertNotIn(self.test_vgrid, mod_list)
+
+        # Unmap and verify mark modified
+        unmap_vgrid(self.configuration, self.test_vgrid)
+
+        mod_list, mod_stamp = check_vgrids_modified(self.configuration)
+        self.assertIn(self.test_vgrid, mod_list)
+
+    def test_access_nonexistent_vgrid(self):
+        """Ensure checks fail cleanly for non-existent vgrid"""
+        allowed = check_vgrid_access(self.configuration, self.TEST_MEMBER_DN,
+                                     'no-such-vgrid')
+        self.assertFalse(allowed)
+
+        # Should not appear in allowed vgrids
+        allowed_vgrids = user_vgrid_access(
+            self.configuration, self.TEST_MEMBER_DN)
+        self.assertFalse('no-such-vgrid' in allowed_vgrids)
+
+    def test_empty_member_access(self):
+        """Verify members-only vgrid rejects outsiders"""
+        self._create_vgrid(self.test_vgrid, [], [self.TEST_MEMBER_DN])
+        force_update_vgrid_map(self.configuration)
+
+        # Outsider should be blocked despite no owners
+        allowed = check_vgrid_access(self.configuration, self.TEST_OUTSIDER_DN,
+                                     self.test_vgrid)
+        self.assertFalse(allowed)
 
 
 if __name__ == '__main__':
