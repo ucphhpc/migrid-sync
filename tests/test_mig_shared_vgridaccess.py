@@ -39,7 +39,8 @@ from mig.shared.vgridaccess import CONF, MEMBERS, OWNERS, RESOURCES, SETTINGS, \
     load_resource_map, load_user_map, load_vgrid_map, mark_vgrid_modified, \
     refresh_resource_map, refresh_user_map, refresh_vgrid_map, \
     res_vgrid_access, reset_vgrids_modified, resources_using_re, unmap_vgrid, \
-    user_vgrid_access, vgrid_inherit_map
+    user_allowed_res_confs, user_vgrid_access, user_visible_res_confs, \
+    user_visible_user_confs, vgrid_inherit_map
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 
@@ -108,7 +109,10 @@ class TestMigSharedVgridAccess(MigTestCase):
         self.assertTrue(saved)
         if config is None:
             # Make sure conf has one valid field
-            config = {'HOSTURL': res_name}
+            config = {'HOSTURL': res_name,
+                      'EXECONFIG': [{'name': 'exe', 'vgrid': ['Generic']}],
+                      'STORECONFIG': [{'name': 'exe', 'vgrid': ['Generic']}]
+                      }
         saved = pickle(config, res_config_path, self.logger)
         self.assertTrue(saved)
 
@@ -553,6 +557,38 @@ class TestMigSharedVgridAccess(MigTestCase):
         allowed_vgrids = user_vgrid_access(self.configuration,
                                            self.TEST_OUTSIDER_DN)
         self.assertFalse(self.test_vgrid in allowed_vgrids)
+
+    def test_user_allowed_res_confs(self):
+        """Minimal test for user_allowed_res_confs"""
+        # Create test user and add test resource to vgrid
+        self._provision_test_user(self, self.TEST_OWNER_DN)
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        self._create_vgrid(self.test_vgrid, owners=[self.TEST_OWNER_DN],
+                           resources=[self.TEST_RESOURCE_ID])
+        force_update_vgrid_map(self.configuration)
+        force_update_resource_map(self.configuration)
+        # Owner should be allowed access
+        allowed = user_allowed_res_confs(self.configuration,
+                                         self.TEST_OWNER_DN)
+        self.assertIn(self.TEST_RESOURCE_ALIAS, allowed)
+
+    def test_user_visible_res_confs(self):
+        """Minimal test for user_visible_res_confs"""
+        # Owner should see owned resources even without vgrid access
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        force_update_resource_map(self.configuration)
+        visible = user_visible_res_confs(
+            self.configuration, self.TEST_OWNER_DN)
+        self.assertIn(self.TEST_RESOURCE_ALIAS, visible)
+
+    def test_user_visible_user_confs(self):
+        """Minimal test for user_visible_user_confs"""
+        # Owner should see themselves in auto map
+        self._provision_test_user(self, self.TEST_OWNER_DN)
+        force_update_user_map(self.configuration)
+        visible = user_visible_user_confs(
+            self.configuration, self.TEST_OWNER_DN)
+        self.assertIn(self.TEST_OWNER_UUID, visible)
 
     def test_get_re_provider_map(self):
         """Test RE provider map includes test resource"""
