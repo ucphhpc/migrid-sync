@@ -36,10 +36,10 @@ from mig.shared.vgridaccess import CONF, MEMBERS, OWNERS, RESOURCES, SETTINGS, \
     USERID, VGRIDS, check_vgrid_access, check_vgrids_modified, \
     force_update_resource_map, force_update_user_map, force_update_vgrid_map, \
     get_re_provider_map, get_resource_map, get_user_map, get_vgrid_map, \
-    load_resource_map, mark_vgrid_modified, refresh_resource_map, \
-    refresh_user_map, refresh_vgrid_map, res_vgrid_access, \
-    reset_vgrids_modified, resources_using_re, unmap_vgrid, user_vgrid_access, \
-    vgrid_inherit_map
+    load_resource_map, load_user_map, load_vgrid_map, mark_vgrid_modified, \
+    refresh_resource_map, refresh_user_map, refresh_vgrid_map, \
+    res_vgrid_access, reset_vgrids_modified, resources_using_re, unmap_vgrid, \
+    user_vgrid_access, vgrid_inherit_map
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 
@@ -107,7 +107,8 @@ class TestMigSharedVgridAccess(MigTestCase):
         saved = pickle(owners, res_owners_path, self.logger)
         self.assertTrue(saved)
         if config is None:
-            config = {}
+            # Make sure conf has one valid field
+            config = {'HOSTURL': res_name}
         saved = pickle(config, res_config_path, self.logger)
         self.assertTrue(saved)
 
@@ -199,6 +200,41 @@ class TestMigSharedVgridAccess(MigTestCase):
         vgrid_map = get_vgrid_map(self.configuration)
         self.assertTrue(vgrid_map)
         self.assertIn(self.test_vgrid, vgrid_map.get(VGRIDS, []))
+
+    def test_load_user_map(self):
+        """Basic test for direct user map loading"""
+        # Get empty map initially
+        user_map, map_stamp = load_user_map(self.configuration)
+        self.assertEqual(user_map, {})
+        # Add test user
+        self._provision_test_user(self, self.TEST_USER_DN)
+        force_update_user_map(self.configuration)
+        # Verify updated map contains user
+        updated_map, updated_stamp = load_user_map(self.configuration)
+        self.assertIn(self.TEST_USER_DN, updated_map)
+
+    def test_load_resource_map(self):
+        """Basic test for direct resource map loading"""
+        # Get empty map initially
+        res_map, map_stamp = load_resource_map(self.configuration)
+        self.assertEqual(res_map, {})
+        # Add test resource
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        force_update_resource_map(self.configuration)
+        # Verify updated map contains resource after refresh
+        res_map, map_stamp = load_resource_map(self.configuration)
+        self.assertIn(self.TEST_RESOURCE_ID, res_map)
+
+    def test_load_vgrid_map(self):
+        """Basic test for direct vgrid map loading"""
+        # Get map with at least 'Generic' vgrid
+        vgrid_map, map_stamp = load_vgrid_map(self.configuration)
+        self.assertIn('Generic', vgrid_map.get(VGRIDS, {}))
+        self._create_vgrid(self.test_vgrid, [self.TEST_OWNER_DN])
+        force_update_vgrid_map(self.configuration)
+        # Verify updated map contains vgrid after refresh
+        vgrid_map, map_stamp = load_vgrid_map(self.configuration)
+        self.assertIn(self.test_vgrid, vgrid_map.get(VGRIDS, {}))
 
     def test_check_vgrids_modified(self):
         """Minimal test for vgrid modified tracking"""
