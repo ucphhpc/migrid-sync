@@ -67,7 +67,8 @@ def _fixturefile_loadrelative(relative_path, fixture_format=None):
     elif fixture_format == 'json':
         with open(tmp_path) as jsonfile:
             data = json.load(jsonfile, object_hook=_FixtureHint.object_hook)
-            _hints_apply_if_present(tmp_path, data)
+            _hints_apply_from_instances_if_present(data)
+            _hints_apply_from_fixture_ini_if_present(tmp_path, data)
     else:
         raise AssertionError(
             "unsupported fixture format: %s" % (fixture_format,))
@@ -83,14 +84,34 @@ def _fixturefile_normname(relative_path, prefix=''):
     return normname
 
 
+# The following chunk of code is all related to "hints": small transformations
+# that can be requested to data as it read (and in some cases written) in the
+# course of a test run.
+#
+# The observation here is that the on-disk format of various structures may not
+# always be suitable for either as an actual or expected value in a comparison
+# or as a human-centric fixture format. But, we explicitly wish to consume the
+# value as written by the production code.
+#
+# Thus, we provide a series of small named transformations which can be
+# explicitly requested at a few strategic points (e.g. loading an on-disk file)
+# that allows assertions in tests to succinctly make assertions as opposed to
+# the intent of the check becoming drowned in the details of conversions etc.
+#
+# <hints>
+
 def _hints_apply_array_of_tuples(value, modifier):
-    """Generate values for array_of_tuples hint."""
+    """
+    Convert list of lists such that its values are instead tuples.
+    """
     assert modifier is None
     return [tuple(x) for x in value]
 
 
 def _hints_apply_today_relative(value, modifier):
-    """Generate values for today_relative hint."""
+    """
+    Geneate a time value by applying a declared delta to today's date.
+    """
 
     kind, delta = modifier.split('|')
     if kind == "days":
@@ -101,7 +122,42 @@ def _hints_apply_today_relative(value, modifier):
         raise NotImplementedError("unspported today_relative modifier")
 
 
-def _hints_apply_dict_bytes_to_strings_kv(input_dict):
+def _hints_apply_dict_bytes_to_strings_kv(input_dict, modifier):
+    """
+    Convert a dictionary whose keys/values are bytes to one whose
+    keys/values are strings.
+    """
+
+    assert modifier is None
+
+    output_dict = {}
+
+    for k, v in input_dict.items():
+        key_to_use = k
+        if isinstance(k, bytes):
+            key_to_use = str(k, 'utf8')
+
+        if isinstance(v, dict):
+            output_dict[key_to_use] = _hints_apply_dict_bytes_to_strings_kv(v, modifier)
+            continue
+
+        val_to_use = v
+        if isinstance(v, bytes):
+            val_to_use = str(v, 'utf8')
+
+        output_dict[key_to_use] = val_to_use
+
+    return output_dict
+
+
+def _hints_apply_dict_strings_to_bytes_kv(input_dict, modifier):
+    """
+    Convert a dictionary whose keys/values are strings to one whose
+    keys/values are bytes.
+    """
+
+    assert modifier is None
+
     output_dict = {}
 
     for k, v in input_dict.items():
@@ -110,7 +166,7 @@ def _hints_apply_dict_bytes_to_strings_kv(input_dict):
             key_to_use = bytes(k, 'utf8')
 
         if isinstance(v, dict):
-            output_dict[key_to_use] = _hints_apply_dict_bytes_to_strings_kv(v)
+            output_dict[key_to_use] = _hints_apply_dict_strings_to_bytes_kv(v, modifier)
             continue
 
         val_to_use = v
@@ -122,26 +178,28 @@ def _hints_apply_dict_bytes_to_strings_kv(input_dict):
     return output_dict
 
 
+# hints that can be aplied without an additional modifier argument
+_HINTS_APPLIERS_ARGLESS = {
+    'array_of_tuples': _hints_apply_array_of_tuples,
+    'today_relative': _hints_apply_today_relative,
+    'convert_dict_bytes_to_strings_kv': _hints_apply_dict_bytes_to_strings_kv,
+    'convert_dict_strings_to_bytes_kv': _hints_apply_dict_strings_to_bytes_kv,
+}
+
+# hints applicable to the conversion of attributes during fixture loading
 _FIXTUREFILE_APPLIERS_ATTRIBUTES = {
     'array_of_tuples': _hints_apply_array_of_tuples,
     'today_relative': _hints_apply_today_relative,
 }
 
-
+# hints applied when writing the contents of a fixture as a temporary file
 _FIXTUREFILE_APPLIERS_ONWRITE = {
-    'convert_dict_bytes_to_strings_kv': _hints_apply_dict_bytes_to_strings_kv,
+    'convert_dict_strings_to_bytes_kv': _hints_apply_dict_strings_to_bytes_kv,
 }
 
 
-def _hints_apply_if_present(fixture_path, json_object):
-    """Apply hints to the supplied data in-place if relevant."""
-
-    _hints_apply_from_instances_if_present(json_object)
-    _hints_apply_from_ini_if_present(fixture_path, json_object)
-
-
 def _hints_apply_from_instances_if_present(json_object):
-    """Recursively aply hints to any hint instances in the supplied data."""
+    """Recursively apply hints to any hint instances in the supplied data."""
 
     for k, v in json_object.items():
         if isinstance(v, dict):
@@ -153,7 +211,7 @@ def _hints_apply_from_instances_if_present(json_object):
             pass
 
 
-def _hints_for_fixture(fixture_path):
+def _load_hints_ini_for_fixture_if_present(fixture_path):
     """Load any hints that may be specified for a given fixture."""
 
     hints = ConfigParser()
@@ -174,10 +232,13 @@ def _hints_for_fixture(fixture_path):
     return hints
 
 
-def _hints_apply_from_ini_if_present(fixture_path, json_object):
-    """Amend the supplied object in place with any applicable hints."""
+def _hints_apply_from_fixture_ini_if_present(fixture_path, json_object):
+    """
+    Amend the supplied object loaded from a fixture in place as specified
+    by an optional ini file corresponding to the fixture itself.
+    """
 
-    hints = _hints_for_fixture(fixture_path)
+    hints = _load_hints_ini_for_fixture_if_present(fixture_path)
 
     # apply any attriutes hints ahead of specified conversions such that any
     # key can be specified matching what is visible within the loaded fixture
@@ -198,7 +259,7 @@ def _hints_apply_from_ini_if_present(fixture_path, json_object):
 
 
 class _FixtureHint:
-    """Named type allowing idenfication of fixture hints."""
+    """Named type allowing identification of fixture hints."""
 
     def __init__(self, hint=None, modifier=None, value=None):
         self.hint = hint
@@ -224,6 +285,8 @@ class _FixtureHint:
             return _FixtureHint.decode_hint(fixture_hint)
 
         return decoded_object
+
+# </hints>
 
 
 def fixturepath(relative_path):
@@ -290,7 +353,7 @@ class _PreparedFixture:
         output_data = self.fixture_data
 
         # now apply any onwrite conversions
-        hints = _hints_for_fixture(self.fixture_path)
+        hints = _load_hints_ini_for_fixture_if_present(self.fixture_path)
         for item_name in hints['ONWRITE']:
             if item_name not in _FIXTUREFILE_APPLIERS_ONWRITE:
                 raise AssertionError(
@@ -300,8 +363,8 @@ class _PreparedFixture:
             if not enabled:
                 continue
 
-            apply_conversion = _FIXTUREFILE_APPLIERS_ONWRITE[item_name]
-            output_data = apply_conversion(output_data)
+            hint_fn = _FIXTUREFILE_APPLIERS_ONWRITE[item_name]
+            output_data = hint_fn(output_data, None)
 
         if output_format == 'binary':
             with open(fixture_file_target, 'wb') as fixture_outputfile:

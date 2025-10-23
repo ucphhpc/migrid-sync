@@ -41,11 +41,10 @@ sys.path.append(_LOCAL_MIG_BASE)
 
 from mig.shared.conf import get_configuration_object
 from mig.shared.install import MIG_BASE, generate_confs
+from mig.shared.useradm import _ensure_dirs_needed_for_userdb
 
 _LOCAL_ENVHELP_OUTPUT_DIR = os.path.join(_LOCAL_MIG_BASE, "envhelp/output")
 _MAKECONFIG_ALLOWED = ["local", "test"]
-_USERADM_PATH_KEYS = ('user_cache', 'user_db_home', 'user_home',
-                      'user_settings', 'mrsl_files_dir', 'resource_pending')
 _CONTAINER_USER_NAME = 'migtest'
 
 
@@ -55,18 +54,6 @@ def _at(sequence, index=-1, default=None):
         return sequence[index]
     except IndexError:
         return default
-
-
-def _ensure_dirs_needed_for_userdb(configuration):
-    """Provision the basic directories needed for the operation of the
-     userdb deriving paths from the supplied configuration object."""
-
-    for config_key in _USERADM_PATH_KEYS:
-        dir_path = getattr(configuration, config_key).rstrip(os.path.sep)
-        try:
-            os.makedirs(dir_path, exist_ok=True)
-        except OSError as exc:
-            pass
 
 
 def write_testconfig(env_name, is_docker=False):

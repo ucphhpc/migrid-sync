@@ -38,10 +38,13 @@ import unittest
 
 from tests.support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
     FakeConfiguration, testmain, cleanpath, is_path_within
+from tests.support.fixturesupp import FixtureAssertMixin
+from tests.support.picklesupp import PickleAssertMixin
 
 from mig.shared.defaults import keyword_auto, htaccess_filename, \
     DEFAULT_USER_ID_FORMAT
-from mig.shared.useradm import assure_current_htaccess
+from mig.shared.useradm import assure_current_htaccess, create_user, \
+    _ensure_dirs_needed_for_userdb
 
 DUMMY_USER = 'dummy-user'
 DUMMY_STALE_USER = 'dummy-stale-user'
@@ -80,8 +83,114 @@ DUMMY_CONF = FakeConfiguration(user_home=DUMMY_HOME_PATH,
                                )
 
 
+class TestMigSharedUsedadm_create_user(MigTestCase,
+                                       FixtureAssertMixin,
+                                       PickleAssertMixin):
+    """Coverage of useradm create_user function."""
+
+    TEST_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
+    TEST_USER_DN_GDP = "%s/GDP" % (TEST_USER_DN,)
+    TEST_USER_PASSWORD_HASH = 'PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM2134uix'
+
+    def before_each(self):
+        configuration = self.configuration
+
+        _ensure_dirs_needed_for_userdb(self.configuration)
+
+        self.expected_user_db_home = os.path.normpath(configuration.user_db_home)
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, 'MiG-users.db')
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def test_user_db_is_created(self):
+        user_dict = {}
+        user_dict['full_name'] = "Test User"
+        user_dict['organization'] = "Test Org"
+        user_dict['state'] = "NA"
+        user_dict['country'] = "DK"
+        user_dict['email'] = "user@example.com"
+        user_dict['comment'] = "This is the create comment"
+        user_dict['password'] = "password"
+        create_user(user_dict, self.configuration,
+                    keyword_auto, default_renew=True)
+
+        # presence of user home
+        path_kind = MigTestCase._absolute_path_kind(self.expected_user_db_home)
+        self.assertEqual(path_kind, 'dir')
+
+        # presence of user db
+        path_kind = MigTestCase._absolute_path_kind(self.expected_user_db_file)
+        self.assertEqual(path_kind, 'file')
+
+    def test_user_creation_records_a_user(self):
+        def _adjust_user_dict_for_compare(user_obj):
+            obj = dict(user_obj)
+            obj['created'] = 9999999999.9999999
+            obj['expire'] = 9999999999.9999999
+            obj['unique_id'] = '__UNIQUE_ID__'
+            return obj
+
+        expected_user_id = self.TEST_USER_DN
+        expected_user_password_hash = self.TEST_USER_PASSWORD_HASH
+
+        user_dict = {}
+        user_dict['full_name'] = "Test User"
+        user_dict['organization'] = "Test Org"
+        user_dict['state'] = "NA"
+        user_dict['country'] = "DK"
+        user_dict['email'] = "test@example.com"
+        user_dict['comment'] = "This is the create comment"
+        user_dict['locality'] = ""
+        user_dict['organizational_unit'] = ""
+        user_dict['password'] = ""
+        user_dict['password_hash'] = expected_user_password_hash
+
+        create_user(user_dict, self.configuration,
+                    keyword_auto, default_renew=True)
+
+        pickled = self.assertPickledFile(self.expected_user_db_file,
+                                         apply_hints=['convert_dict_bytes_to_strings_kv'])
+        self.assertIn(expected_user_id, pickled)
+
+        prepared = self.prepareFixtureAssert('MiG-users.db--example',
+                                             fixture_format='json')
+
+        # TODO: remove resetting the handful of keys here
+        #       this is done to allow the comparision to succeed
+        actual_user_object = _adjust_user_dict_for_compare(pickled[expected_user_id])
+        expected_user_object = _adjust_user_dict_for_compare(prepared.fixture_data[expected_user_id])
+
+        self.maxDiff = None
+        self.assertEqual(actual_user_object, expected_user_object)
+
+    def test_user_creation_records_a_user_with_gdp(self):
+        self.configuration.site_enable_gdp = True
+
+        user_dict = {}
+        user_dict['full_name'] = "Test User"
+        user_dict['organization'] = "Test Org"
+        user_dict['state'] = "NA"
+        user_dict['country'] = "DK"
+        user_dict['email'] = "test@example.com"
+        user_dict['comment'] = "This is the create comment"
+        user_dict['locality'] = ""
+        user_dict['organizational_unit'] = ""
+        user_dict['password'] = ""
+        user_dict['password_hash'] = self.TEST_USER_PASSWORD_HASH
+        # explicitly setting set a DN suffixed user DN to force GDP
+        user_dict['distinguished_name'] = self.TEST_USER_DN_GDP
+
+        try:
+            create_user(user_dict, self.configuration,
+                        keyword_auto, default_renew=True)
+        except:
+            self.assertFalse(True, "should not be reached")
+
+
 class MigSharedUseradm__assure_current_htaccess(MigTestCase):
-    """Unit test helper for the migrid code pointed to in class name"""
+    """Coverage of useradm behaviours around htaccess."""
 
     def before_each(self):
         """The create_user call requires quite a few helper dirs"""
