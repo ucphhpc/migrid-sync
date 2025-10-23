@@ -102,6 +102,22 @@ https_authpasswords = user_db_filename
 https_authdigests = user_db_filename
 
 
+_USERADM_PATH_KEYS = ('user_db_home', 'user_home', 'user_settings',
+                      'user_cache', 'mrsl_files_dir', 'resource_pending')
+
+
+def _ensure_dirs_needed_for_userdb(configuration):
+    """Provision the basic directories needed for the operation of the
+     userdb deriving paths from the supplied configuration object."""
+
+    for config_key in _USERADM_PATH_KEYS:
+        dir_path = getattr(configuration, config_key).rstrip(os.path.sep)
+        try:
+            makedirs_rec(dir_path, configuration, accept_existing=True)
+        except OSError as exc:
+            pass
+
+
 def init_user_adm(dynamic_db_path=True):
     """Shared init function for all user administration scripts.
     The optional dynamic_db_path argument toggles dynamic user db path lookup
