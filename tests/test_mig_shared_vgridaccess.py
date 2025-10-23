@@ -32,23 +32,32 @@ import unittest
 
 from mig.shared.fileio import pickle, read_file
 from mig.shared.vgrid import vgrid_list, vgrid_set_entities, vgrid_settings
-from mig.shared.vgridaccess import OWNERS, RESOURCES, SETTINGS, VGRIDS, \
-    check_vgrid_access, force_update_resource_map, force_update_user_map, \
-    force_update_vgrid_map, get_resource_map, get_vgrid_map, \
-    load_resource_map, refresh_vgrid_map, vgrid_inherit_map
+from mig.shared.vgridaccess import CONF, MEMBERS, OWNERS, RESOURCES, SETTINGS, \
+    USERID, VGRIDS, check_vgrid_access, force_update_resource_map, \
+    force_update_user_map, force_update_vgrid_map, get_resource_map, \
+    get_user_map, get_vgrid_map, load_resource_map, refresh_vgrid_map, \
+    user_vgrid_access, vgrid_inherit_map
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 
 class TestMigSharedVgridAccess(MigTestCase):
     """Unit tests for vgridaccess related helper functions"""
 
+    TEST_USER_DN = \
+        '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/'\
+        'emailAddress=test@example.com'
     TEST_OWNER_DN = \
         '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Owner/'\
         'emailAddress=owner@example.org'
     TEST_MEMBER_DN = \
         '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Member/'\
         'emailAddress=member@example.org'
+    TEST_OUTSIDER_DN = \
+        '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Outsider/'\
+        'emailAddress=outsider@example.com'
     TEST_RESOURCE_ID = 'test.example.org.0'
+    TEST_OWNER_UUID = 'ff326a2b984828d9b32077c9b0b35a05'
+    TEST_USER_UUID = '707a2213995b4fb385793b5a7cb82a18'
 
     def _provide_configuration(self):
         """Prepare isolated test config"""
@@ -210,6 +219,155 @@ class TestMigSharedVgridAccess(MigTestCase):
 
         # Verify hidden setting inheritance
         self.assertEqual(sub_settings_dict.get('hidden'), True)
+
+    def test_user_map_fields(self):
+        """Verify user map includes complete profile/settings data"""
+        # First add a couple of test users
+        self._provision_test_user(self, self.TEST_OWNER_DN)
+        self._provision_test_user(self, self.TEST_USER_DN)
+        # Force fresh user map
+        initial_vgrid_map = force_update_vgrid_map(self.configuration,
+                                                   clean=True)
+        user_map = force_update_user_map(self.configuration)
+        test_owner = user_map.get(self.TEST_OWNER_DN, {})
+        self.assertEqual(test_owner.get(USERID), self.TEST_OWNER_UUID)
+        self.assertTrue(isinstance(test_owner.get(CONF), dict))
+        test_user = user_map.get(self.TEST_USER_DN, {})
+        self.assertEqual(test_user.get(USERID), self.TEST_USER_UUID)
+        self.assertTrue(isinstance(test_user.get(CONF), dict))
+
+    def test_resource_revoked_access(self):
+        """Verify resource removal propagates through cached maps"""
+        # First add resource and vgrid
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        self._create_vgrid(self.test_vgrid, owners=[self.TEST_OWNER_DN],
+                           resources=[self.TEST_RESOURCE_ID])
+
+        initial_vgrid_map = force_update_vgrid_map(self.configuration,
+                                                   clean=True)
+        # Check vgrid map contains resource entry
+        vgrid_data = initial_vgrid_map.get(VGRIDS, {})
+        top_vgrid_data = vgrid_data.get(self.test_vgrid, {})
+        top_vgrid_res = top_vgrid_data.get(RESOURCES, [])
+        self.assertTrue(self.TEST_RESOURCE_ID in top_vgrid_res)
+
+        # Check resource map contains resource entry
+        initial_map = force_update_resource_map(self.configuration,
+                                                clean=True)
+        self.assertIn(self.TEST_RESOURCE_ID, initial_map)
+
+        # Remove resource assignment from vgrid
+        status, msg = vgrid_set_entities(self.configuration, self.test_vgrid,
+                                         'resources', [], allow_empty=True)
+        self.assertTrue(status, msg)
+
+        updated_vgrid_map = force_update_vgrid_map(self.configuration,
+                                                   clean=True)
+        # Check vgrid map no longer contains resource entry
+        vgrid_data = updated_vgrid_map.get(VGRIDS, {})
+        top_vgrid_data = vgrid_data.get(self.test_vgrid, {})
+        top_vgrid_res = top_vgrid_data.get(RESOURCES, [])
+        self.assertFalse(self.TEST_RESOURCE_ID in top_vgrid_res)
+
+        # Verify resource still in resource map
+        updated_map = force_update_resource_map(self.configuration,
+                                                clean=True)
+        self.assertIn(self.TEST_RESOURCE_ID, updated_map)
+
+    def test_non_recursive_inheritance(self):
+        """Verify non-recursive map excludes nested vgrids"""
+        # Create parent+child vgrids
+        parent_vgrid = 'parent'
+        self._create_vgrid(parent_vgrid, [self.TEST_OWNER_DN])
+        child_vgrid = os.path.join(parent_vgrid, 'child')
+        self._create_vgrid(child_vgrid, None, [self.TEST_MEMBER_DN])
+
+        # Force update to avoid auto caching and get non-recursive map
+        vgrid_map = force_update_vgrid_map(self.configuration,
+                                           clean=True)
+        vgrid_map = get_vgrid_map(self.configuration, recursive=False)
+        # Parent should appear
+        self.assertIn(parent_vgrid, vgrid_map.get(VGRIDS, {}))
+        # Child should still appear when non-recursive but just not inherit
+        self.assertIn(child_vgrid, vgrid_map.get(VGRIDS, {}))
+        # Check owners and members to verify they aren't inherited
+        self.assertEqual(vgrid_map[VGRIDS][parent_vgrid][OWNERS],
+                         [self.TEST_OWNER_DN])
+        self.assertEqual(len(vgrid_map[VGRIDS][parent_vgrid][MEMBERS]), 0)
+        self.assertEqual(len(vgrid_map[VGRIDS][child_vgrid][OWNERS]), 0)
+        self.assertEqual(vgrid_map[VGRIDS][child_vgrid][MEMBERS],
+                         [self.TEST_MEMBER_DN])
+
+    def test_hidden_setting_propagation(self):
+        """Verify hidden=True propagates to not infect parent settings"""
+        parent_vgrid = 'parent'
+        self._create_vgrid(parent_vgrid, [self.TEST_OWNER_DN])
+        child_vgrid = os.path.join(parent_vgrid, 'child')
+        self._create_vgrid(child_vgrid, [self.TEST_OWNER_DN],
+                           settings=[('vgrid_name', child_vgrid),
+                                     ('hidden', True)])
+
+        # Verify parent remains visible in cache
+        updated_map = force_update_vgrid_map(self.configuration)
+        parent_data = updated_map.get(VGRIDS, {}).get(parent_vgrid, {})
+        parent_settings = dict(parent_data.get(SETTINGS, []))
+        self.assertNotEqual(parent_settings.get('hidden'), True)
+
+    def test_default_vgrid_access(self):
+        """Verify special access rules for default vgrid"""
+        self._create_vgrid(self.test_vgrid, owners=[self.TEST_OWNER_DN],
+                           members=[self.TEST_MEMBER_DN])
+
+        initial_vgrid_map = force_update_vgrid_map(self.configuration,
+                                                   clean=True)
+
+        # Even non-member should have access to default vgrid
+        participant = check_vgrid_access(self.configuration,
+                                         self.TEST_OUTSIDER_DN,
+                                         'Generic')
+        self.assertFalse(participant)
+        allowed_vgrids = user_vgrid_access(self.configuration,
+                                           self.TEST_OUTSIDER_DN)
+        self.assertTrue('Generic' in allowed_vgrids)
+
+        # Invalid vgrid should not allow any participation or access
+        participant = check_vgrid_access(self.configuration, self.TEST_MEMBER_DN,
+                                         'invalid-vgrid-name')
+        self.assertFalse(participant)
+        allowed_vgrids = user_vgrid_access(self.configuration,
+                                           self.TEST_MEMBER_DN)
+        self.assertFalse('invalid-vgrid-name' in allowed_vgrids)
+
+    def test_general_vgrid_access(self):
+        """Verify general access rules for vgrids"""
+        self._create_vgrid(self.test_vgrid, owners=[self.TEST_OWNER_DN],
+                           members=[self.TEST_MEMBER_DN])
+
+        initial_vgrid_map = force_update_vgrid_map(self.configuration,
+                                                   clean=True)
+
+        # Test vgrid must allow owner and members access
+        allowed = check_vgrid_access(self.configuration, self.TEST_OWNER_DN,
+                                     self.test_vgrid)
+        self.assertTrue(allowed)
+        allowed_vgrids = user_vgrid_access(self.configuration,
+                                           self.TEST_OWNER_DN)
+        self.assertTrue(self.test_vgrid in allowed_vgrids)
+
+        allowed = check_vgrid_access(self.configuration, self.TEST_MEMBER_DN,
+                                     self.test_vgrid)
+        self.assertTrue(allowed)
+        allowed_vgrids = user_vgrid_access(self.configuration,
+                                           self.TEST_MEMBER_DN)
+        self.assertTrue(self.test_vgrid in allowed_vgrids)
+
+        # Test vgrid must reject allow outsider access
+        allowed = check_vgrid_access(self.configuration, self.TEST_OUTSIDER_DN,
+                                     self.test_vgrid)
+        self.assertFalse(allowed)
+        allowed_vgrids = user_vgrid_access(self.configuration,
+                                           self.TEST_OUTSIDER_DN)
+        self.assertFalse(self.test_vgrid in allowed_vgrids)
 
 
 if __name__ == '__main__':
