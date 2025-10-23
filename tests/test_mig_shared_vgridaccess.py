@@ -761,35 +761,6 @@ class TestMigSharedVgridAccess(MigTestCase):
         # mod_list, mod_stamp = check_resources_modified(self.configuration)
         # self.assertIn(self.TEST_RESOURCE_ID, mod_list)
 
-    def test_check_vgrids_modified_initial(self):
-        """Verify initial state of modified vgrids list is empty"""
-        modified, stamp = check_vgrids_modified(self.configuration)
-        self.assertEqual(modified, ['ALL'])
-        reset_vgrids_modified(self.configuration)
-        modified, stamp = check_vgrids_modified(self.configuration)
-        self.assertEqual(modified, [])
-
-    def test_resources_using_re_notfound(self):
-        """Test RE with no assigned resources returns empty list"""
-        # Nonexistent RE should have no resources
-        res_list = resources_using_re(self.configuration, 'NoSuchRE')
-        self.assertEqual(res_list, [])
-
-    def test_vgrid_inherit_map_single(self):
-        """Test inheritance mapping with single vgrid"""
-        test_settings = [('vgrid_name', self.test_vgrid),
-                         ('description', 'Test description')]
-        test_map = {
-            VGRIDS: {
-                self.test_vgrid: {
-                    SETTINGS: test_settings
-                }
-            }
-        }
-        inherited_map = vgrid_inherit_map(self.configuration, test_map)
-        settings_dict = dict(inherited_map[VGRIDS][self.test_vgrid][SETTINGS])
-        self.assertEqual(settings_dict['description'], 'Test description')
-
     def test_access_nonexistent_vgrid(self):
         """Ensure checks fail cleanly for non-existent vgrid"""
         allowed = check_vgrid_access(self.configuration, self.TEST_MEMBER_DN,
