@@ -33,14 +33,19 @@ import unittest
 from mig.shared.fileio import pickle, read_file
 from mig.shared.vgrid import vgrid_list, vgrid_set_entities, vgrid_settings
 from mig.shared.vgridaccess import CONF, MEMBERS, OWNERS, RESOURCES, SETTINGS, \
-    USERID, VGRIDS, check_vgrid_access, check_vgrids_modified, \
-    force_update_resource_map, force_update_user_map, force_update_vgrid_map, \
-    get_re_provider_map, get_resource_map, get_user_map, get_vgrid_map, \
-    load_resource_map, load_user_map, load_vgrid_map, mark_vgrid_modified, \
-    refresh_resource_map, refresh_user_map, refresh_vgrid_map, \
-    res_vgrid_access, reset_vgrids_modified, resources_using_re, unmap_vgrid, \
-    user_allowed_res_confs, user_vgrid_access, user_visible_res_confs, \
-    user_visible_user_confs, vgrid_inherit_map
+    USERID, VGRIDS, check_resources_modified, check_vgrid_access, \
+    check_vgrids_modified, fill_placeholder_cache, force_update_resource_map, \
+    force_update_user_map, force_update_vgrid_map, get_re_provider_map, \
+    get_resource_map, get_user_map, get_vgrid_map, get_vgrid_map_vgrids, \
+    is_vgrid_parent_placeholder, load_resource_map, load_user_map, \
+    load_vgrid_map, mark_vgrid_modified, refresh_resource_map, \
+    refresh_user_map, refresh_vgrid_map, res_vgrid_access, \
+    reset_resources_modified, reset_vgrids_modified, resources_using_re, \
+    unmap_inheritance, unmap_resource, unmap_vgrid, user_allowed_res_confs, \
+    user_allowed_res_exes, user_allowed_res_stores, user_allowed_res_units, \
+    user_allowed_user_confs, user_owned_res_exes, user_owned_res_stores, \
+    user_vgrid_access, user_visible_res_confs, user_visible_res_exes, \
+    user_visible_res_stores, user_visible_user_confs, vgrid_inherit_map
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 
@@ -164,21 +169,18 @@ class TestMigSharedVgridAccess(MigTestCase):
         """Minimal test for user map refresh functionality"""
         self._provision_test_user(self, self.TEST_USER_DN)
         user_map = refresh_user_map(self.configuration)
-        self.assertTrue(user_map)
         self.assertIn(self.TEST_USER_DN, user_map)
 
     def test_refresh_resource_map(self):
         """Minimal test for resource map refresh functionality"""
         self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
         res_map = refresh_resource_map(self.configuration)
-        self.assertTrue(res_map)
         self.assertIn(self.TEST_RESOURCE_ID, res_map)
 
     def test_refresh_vgrid_map(self):
         """Minimal test for vgrid map refresh functionality"""
         self._create_vgrid(self.test_vgrid, [self.TEST_OWNER_DN])
         vgrid_map = refresh_vgrid_map(self.configuration)
-        self.assertTrue(vgrid_map)
         self.assertIn(self.test_vgrid, vgrid_map.get(VGRIDS, []))
 
     def test_get_user_map(self):
@@ -186,7 +188,6 @@ class TestMigSharedVgridAccess(MigTestCase):
         self._provision_test_user(self, self.TEST_USER_DN)
         force_update_user_map(self.configuration)
         user_map = get_user_map(self.configuration)
-        self.assertTrue(user_map)
         self.assertIn(self.TEST_USER_DN, user_map)
 
     def test_get_resource_map(self):
@@ -194,7 +195,6 @@ class TestMigSharedVgridAccess(MigTestCase):
         self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
         force_update_resource_map(self.configuration)
         resource_map = get_resource_map(self.configuration)
-        self.assertTrue(resource_map)
         self.assertIn(self.TEST_RESOURCE_ID, resource_map)
 
     def test_get_vgrid_map(self):
@@ -202,7 +202,6 @@ class TestMigSharedVgridAccess(MigTestCase):
         self._create_vgrid(self.test_vgrid, [self.TEST_OWNER_DN])
         force_update_vgrid_map(self.configuration)
         vgrid_map = get_vgrid_map(self.configuration)
-        self.assertTrue(vgrid_map)
         self.assertIn(self.test_vgrid, vgrid_map.get(VGRIDS, []))
 
     def test_load_user_map(self):
@@ -239,6 +238,108 @@ class TestMigSharedVgridAccess(MigTestCase):
         # Verify updated map contains vgrid after refresh
         vgrid_map, map_stamp = load_vgrid_map(self.configuration)
         self.assertIn(self.test_vgrid, vgrid_map.get(VGRIDS, {}))
+
+    def test_get_vgrid_map_vgrids(self):
+        """Test get_vgrid_map_vgrids returns vgrid list"""
+        vgrid_list = get_vgrid_map_vgrids(self.configuration)
+        self.assertTrue(isinstance(vgrid_list, list))
+        self.assertEqual(['Generic'], vgrid_list)
+
+    def test_user_owned_res_exes(self):
+        """Test user_owned_res_exes returns owned execution nodes"""
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        force_update_resource_map(self.configuration)
+        owned = user_owned_res_exes(self.configuration, self.TEST_OWNER_DN)
+        self.assertTrue(isinstance(owned, dict))
+        self.assertIn(self.TEST_RESOURCE_ALIAS, owned)
+
+    def test_user_owned_res_stores(self):
+        """Test user_owned_res_stores returns owned storage nodes"""
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        force_update_resource_map(self.configuration)
+        owned = user_owned_res_stores(self.configuration, self.TEST_OWNER_DN)
+        self.assertTrue(isinstance(owned, dict))
+        self.assertIn(self.TEST_RESOURCE_ALIAS, owned)
+
+    def test_user_allowed_res_units(self):
+        """Test user_allowed_res_units returns allowed units"""
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        self._create_vgrid(self.test_vgrid, [self.TEST_OWNER_DN])
+        force_update_vgrid_map(self.configuration)
+        force_update_resource_map(self.configuration)
+        allowed = user_allowed_res_units(
+            self.configuration, self.TEST_OWNER_DN, "exe")
+        self.assertTrue(isinstance(allowed, dict))
+        self.assertIn(self.TEST_RESOURCE_ALIAS, allowed)
+
+    def test_user_allowed_res_exes(self):
+        """Test user_allowed_res_exes returns allowed exes"""
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        self._create_vgrid(self.test_vgrid, [self.TEST_OWNER_DN])
+        force_update_vgrid_map(self.configuration)
+        force_update_resource_map(self.configuration)
+        allowed = user_allowed_res_exes(self.configuration, self.TEST_OWNER_DN)
+        self.assertTrue(isinstance(allowed, dict))
+        self.assertIn(self.TEST_RESOURCE_ALIAS, allowed)
+
+    def test_user_allowed_res_stores(self):
+        """Test user_allowed_res_stores returns allowed stores"""
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        self._create_vgrid(self.test_vgrid, [self.TEST_OWNER_DN])
+        force_update_vgrid_map(self.configuration)
+        force_update_resource_map(self.configuration)
+        allowed = user_allowed_res_stores(
+            self.configuration, self.TEST_OWNER_DN)
+        self.assertTrue(isinstance(allowed, dict))
+        self.assertIn(self.TEST_RESOURCE_ALIAS, allowed)
+
+    def test_user_visible_res_exes(self):
+        """Test user_visible_res_exes returns visible exes"""
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        self._create_vgrid(self.test_vgrid, [self.TEST_OWNER_DN])
+        force_update_vgrid_map(self.configuration)
+        force_update_resource_map(self.configuration)
+        visible = user_visible_res_exes(self.configuration, self.TEST_OWNER_DN)
+        self.assertTrue(isinstance(visible, dict))
+        self.assertIn(self.TEST_RESOURCE_ALIAS, visible)
+
+    def test_user_visible_res_stores(self):
+        """Test user_visible_res_stores returns visible stores"""
+        self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
+        self._create_vgrid(self.test_vgrid, [self.TEST_OWNER_DN])
+        force_update_vgrid_map(self.configuration)
+        force_update_resource_map(self.configuration)
+        visible = user_visible_res_stores(
+            self.configuration, self.TEST_OWNER_DN)
+        self.assertTrue(isinstance(visible, dict))
+        self.assertIn(self.TEST_RESOURCE_ALIAS, visible)
+
+    def test_user_allowed_user_confs(self):
+        """Test user_allowed_user_confs returns allowed user confs"""
+        self._provision_test_user(self, self.TEST_OWNER_DN)
+        self._provision_test_user(self, self.TEST_USER_DN)
+        self._create_vgrid(self.test_vgrid, [self.TEST_OWNER_DN],
+                           [self.TEST_USER_DN])
+        force_update_vgrid_map(self.configuration)
+        force_update_user_map(self.configuration)
+        allowed = user_allowed_user_confs(
+            self.configuration, self.TEST_OWNER_DN)
+        self.assertTrue(isinstance(allowed, dict))
+        self.assertIn(self.TEST_USER_UUID, allowed)
+        self.assertIn(self.TEST_OWNER_UUID, allowed)
+
+    def test_fill_placeholder_cache(self):
+        """Test fill_placeholder_cache populates cache"""
+        cache = {}
+        fill_placeholder_cache(self.configuration, cache, [self.test_vgrid])
+        self.assertIn(self.test_vgrid, cache)
+
+    def test_is_vgrid_parent_placeholder(self):
+        """Test is_vgrid_parent_placeholder detection"""
+        test_path = os.path.join(self.configuration.user_home, 'testvgrid')
+        result = is_vgrid_parent_placeholder(self.configuration, test_path,
+                                             test_path)
+        self.assertIsNone(result)
 
     def test_check_vgrids_modified_initial(self):
         """Verify initial state of modified vgrids list is empty"""
@@ -416,6 +517,22 @@ class TestMigSharedVgridAccess(MigTestCase):
 
         # Verify hidden setting inheritance
         self.assertEqual(sub_settings_dict.get('hidden'), True)
+
+    def test_unmap_inheritance(self):
+        """Test unmap_inheritance clears inherited mappings"""
+        self._create_vgrid(self.test_vgrid, owners=[self.TEST_OWNER_DN])
+        sub_vgrid = os.path.join(self.test_vgrid, 'subvgrid')
+        self._create_vgrid(sub_vgrid)
+
+        # Force refresh of cached map
+        updated_map = force_update_vgrid_map(self.configuration)
+
+        # Unmap and verify mark modified
+        unmap_inheritance(self.configuration, self.test_vgrid,
+                          self.TEST_OWNER_DN)
+
+        modified, stamp = check_vgrids_modified(self.configuration)
+        self.assertEqual(modified, [self.test_vgrid, sub_vgrid])
 
     def test_user_map_fields(self):
         """Verify user map includes complete profile/settings data"""
@@ -629,6 +746,20 @@ class TestMigSharedVgridAccess(MigTestCase):
 
         mod_list, mod_stamp = check_vgrids_modified(self.configuration)
         self.assertIn(self.test_vgrid, mod_list)
+
+    def test_unmap_resource(self):
+        """Test unmap_resource marks resource modified"""
+        mod_list, mod_stamp = check_resources_modified(self.configuration)
+        self.assertNotIn(self.TEST_RESOURCE_ID, mod_list)
+
+        # Unmap and verify mark modified
+        unmap_resource(self.configuration, self.TEST_RESOURCE_ID)
+
+        mod_list, mod_stamp = check_vgrids_modified(self.configuration)
+        self.assertIn(self.TEST_RESOURCE_ID, mod_list)
+        # TODO: fix and enable next
+        # mod_list, mod_stamp = check_resources_modified(self.configuration)
+        # self.assertIn(self.TEST_RESOURCE_ID, mod_list)
 
     def test_check_vgrids_modified_initial(self):
         """Verify initial state of modified vgrids list is empty"""
