@@ -42,6 +42,22 @@ clean:
 	@rm -f ./envhelp/py3.imageid
 	@rm -f ./envhelp/local.depends
 
+.PHONY: coverage
+coverage:
+ifneq ($(MIG_ENV),'local')
+	@echo "unavailable outside local development environment"
+	@exit 1
+endif
+	@$(LOCAL_PYTHON_BIN) -m coverage run -m unittest discover ./tests
+
+.PHONY: coverage-report
+coverage-report:
+ifneq ($(MIG_ENV),'local')
+	@echo "unavailable outside local development environment"
+	@exit 1
+endif
+	@$(LOCAL_PYTHON_BIN) -m coverage html
+
 .PHONY: distclean
 distclean: clean
 	@rm -rf ./envhelp/venv
