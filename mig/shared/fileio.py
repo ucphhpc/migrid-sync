@@ -499,6 +499,7 @@ def send_message_to_grid_notify(message, logger, configuration):
     """Write message to notify home"""
     if not logger:
         logger = null_logger("dummy")
+    filepath = 'UNDEFINED'
     try:
         (filedescriptor, filepath) = make_temp_file(
             suffix='.%s' % time.time(),
@@ -788,8 +789,8 @@ def write_named_tempfile(configuration, contents):
         os.write(filehandle, force_utf8(contents))
         os.close(filehandle)
     except Exception as exc:
-        _logger.error("failed to write tempfile %r: %s" % (tmpname, exc))
         tmpname = None
+        _logger.error("failed to write tempfile %r: %s" % (tmpname, exc))
     return tmpname
 
 
