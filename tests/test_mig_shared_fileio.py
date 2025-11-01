@@ -1047,5 +1047,163 @@ class MigSharedFileio__makedirs_rec(MigTestCase):
         self.assertFalse(result)
 
 
+class MigSharedFileio__check_access(MigTestCase):
+    """Test the various check access functions from mig.shared.fileio module"""
+
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def setUp(self):
+        """Initialize test environment for access check tests"""
+        super(MigSharedFileio__check_access, self).setUp()
+        self.tmp_dir = temppath('fileio/check_access', self)
+        os.makedirs(self.tmp_dir)
+        self.writeonly_file = os.path.join(self.tmp_dir, 'writeonly.txt')
+        self.readonly_file = os.path.join(self.tmp_dir, 'readonly.txt')
+        self.readwrite_file = os.path.join(self.tmp_dir, 'readwrite.txt')
+
+        # Create test files with different permissions
+        with open(self.writeonly_file, 'w') as fh:
+            fh.write("writeonly")
+        with open(self.readonly_file, 'w') as fh:
+            fh.write("readonly")
+        with open(self.readwrite_file, 'w') as fh:
+            fh.write("read-write")
+
+        # Set permissions
+        os.chmod(self.writeonly_file, 0o200)
+        os.chmod(self.readonly_file, 0o400)
+        os.chmod(self.readwrite_file, 0o600)
+
+    def test_check_read_access_file(self):
+        """Test check_read_access with readable file"""
+        self.assertTrue(fileio.check_read_access(self.readwrite_file))
+        self.assertTrue(fileio.check_read_access(self.readonly_file))
+        self.assertTrue(fileio.check_read_access(self.tmp_dir,
+                                                 parent_dir=True))
+        # Super-user has access to read and write all files!
+        if os.getuid() == 0:
+            self.assertTrue(fileio.check_read_access(self.writeonly_file))
+        else:
+            self.assertFalse(fileio.check_read_access(self.writeonly_file))
+        self.assertFalse(fileio.check_read_access('/invalid/path'))
+
+    def test_check_write_access_file(self):
+        """Test check_write_access with writable file"""
+        self.assertTrue(fileio.check_write_access(self.writeonly_file))
+        self.assertTrue(fileio.check_write_access(self.readwrite_file))
+        # Super-user has access to read and write all files!
+        if os.getuid() == 0:
+            self.assertTrue(fileio.check_write_access(self.readonly_file))
+        else:
+            self.assertFalse(fileio.check_write_access(self.readonly_file))
+        self.assertFalse(fileio.check_write_access('/invalid/path'))
+
+    def test_check_read_access_with_parent(self):
+        """Test check_read_access with parent_dir True"""
+        sub_file = os.path.join(self.tmp_dir, 'file.txt')
+        result = fileio.check_read_access(sub_file, parent_dir=True)
+        self.assertTrue(result)
+
+    def test_check_write_access_with_parent(self):
+        """Test check_write_access with parent_dir True"""
+        sub_file = os.path.join(self.tmp_dir, 'file.txt')
+        result = fileio.check_write_access(sub_file, parent_dir=True)
+        self.assertTrue(result)
+
+    def test_check_readable(self):
+        """Test check_readable wrapper function"""
+        self.assertTrue(fileio.check_readable(self.configuration,
+                                              self.readwrite_file))
+        self.assertTrue(fileio.check_readable(self.configuration,
+                                              self.readonly_file))
+        # Super-user has access to read and write all files!
+        if os.getuid() == 0:
+            self.assertTrue(fileio.check_readable(self.configuration,
+                                                  self.writeonly_file))
+        else:
+            self.assertFalse(fileio.check_readable(self.configuration,
+                                                   self.writeonly_file))
+        self.assertFalse(fileio.check_readable(self.configuration,
+                                               '/invalid/path'))
+
+    def test_check_writable(self):
+        """Test check_writable wrapper function"""
+        self.assertTrue(fileio.check_writable(self.configuration,
+                                              self.readwrite_file))
+        self.assertTrue(fileio.check_writable(self.configuration,
+                                              self.writeonly_file))
+        # Super-user has access to read and write all files!
+        if os.getuid() == 0:
+            self.assertTrue(fileio.check_writable(self.configuration,
+                                                  self.readonly_file))
+        else:
+            self.assertFalse(fileio.check_writable(self.configuration,
+                                                   self.readonly_file))
+        self.assertFalse(fileio.check_writable(self.configuration,
+                                               "/no/such/file"))
+
+    def test_check_readonly(self):
+        """Test check_readonly wrapper function"""
+        # Super-user has access to read and write all files!
+        if os.getuid() == 0:
+            # Test with read-only file path
+            self.assertFalse(fileio.check_readonly(self.configuration,
+                                                   self.readonly_file))
+
+            # Test with writable file
+            self.assertFalse(fileio.check_readonly(self.configuration,
+                                                   self.writeonly_file))
+            self.assertFalse(fileio.check_readonly(self.configuration,
+                                                   self.readwrite_file))
+        else:
+            # Test with read-only file path
+            self.assertTrue(fileio.check_readonly(self.configuration,
+                                                  self.readonly_file))
+
+            # Test with writable file
+            self.assertFalse(fileio.check_readonly(self.configuration,
+                                                   self.writeonly_file))
+            self.assertFalse(fileio.check_readonly(self.configuration,
+                                                   self.readwrite_file))
+
+    def test_check_readwritable(self):
+        """Test check_readwritable wrapper function"""
+        self.assertTrue(fileio.check_readwritable(self.configuration,
+                                                  self.readwrite_file))
+        # Super-user has access to read and write all files!
+        if os.getuid() == 0:
+            self.assertTrue(fileio.check_readwritable(self.configuration,
+                                                      self.readonly_file))
+            self.assertTrue(fileio.check_readwritable(self.configuration,
+                                                      self.writeonly_file))
+        else:
+            self.assertFalse(fileio.check_readwritable(self.configuration,
+                                                       self.readonly_file))
+            self.assertFalse(fileio.check_readwritable(self.configuration,
+                                                       self.writeonly_file))
+
+        self.assertFalse(fileio.check_readwritable(self.configuration,
+                                                   "/invalid/file"))
+
+    def test_special_cases(self):
+        """Test various special cases for access checks"""
+        # Check directory paths
+        self.assertTrue(fileio.check_read_access(self.tmp_dir))
+        self.assertTrue(fileio.check_write_access(self.tmp_dir))
+
+        # Check non-existent paths
+        missing_path = os.path.join(self.tmp_dir, 'missing.txt')
+        self.assertFalse(fileio.check_read_access(missing_path))
+        self.assertFalse(fileio.check_write_access(missing_path))
+
+        # Check with custom follow_symlink=False
+        self.assertTrue(fileio.check_read_access(self.readwrite_file,
+                                                 follow_symlink=False))
+        self.assertTrue(fileio.check_read_access(self.tmp_dir, True,
+                                                 follow_symlink=False))
+
+
 if __name__ == '__main__':
     testmain()
