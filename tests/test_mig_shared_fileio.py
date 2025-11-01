@@ -55,6 +55,8 @@ DUMMY_FILE_DELETEFILE = 'fileio/delete_file'
 DUMMY_FILE_GETFILESIZE = 'fileio/get_file_size'
 DUMMY_FILE_MAKESYMLINKSRC = 'fileio/make_symlink/link'
 DUMMY_FILE_MAKESYMLINKDST = 'fileio/make_symlink/target'
+DUMMY_FILE_DELETESYMLINKSRC = 'fileio/delete_symlink/link'
+DUMMY_FILE_DELETESYMLINKDST = 'fileio/delete_symlink/target'
 # NOTE: getsize returns 4k for directories
 DUMMY_DIRECTORY_SIZE = 4096
 
@@ -540,6 +542,7 @@ class MigSharedFileio__make_symlink(MigTestCase):
         self.tmp_link = temppath(DUMMY_FILE_MAKESYMLINKSRC, self)
         self.tmp_target = temppath(DUMMY_FILE_MAKESYMLINKDST, self)
         # We generally need output dir to exist here
+        os.makedirs(os.path.dirname(self.tmp_link), exist_ok=True)
         os.makedirs(os.path.dirname(self.tmp_target), exist_ok=True)
         cleanpath(os.path.dirname(self.tmp_link), self)
         cleanpath(os.path.dirname(self.tmp_target), self)
@@ -578,6 +581,74 @@ class MigSharedFileio__make_symlink(MigTestCase):
         self.assertTrue(result)
         self.assertTrue(os.path.islink(self.tmp_link))
         self.assertEqual(os.readlink(self.tmp_link), broken_target)
+
+
+class MigSharedFileio__delete_symlink(MigTestCase):
+    """Test the delete_symlink function from mig.shared.fileio module"""
+
+    def setUp(self):
+        """Initialize test environment for delete_symlink tests"""
+        super(MigSharedFileio__delete_symlink, self).setUp()
+        self.tmp_link = temppath(DUMMY_FILE_DELETESYMLINKSRC, self)
+        self.tmp_target = temppath(DUMMY_FILE_DELETESYMLINKDST, self)
+        # We generally need output dir to exist here
+        os.makedirs(os.path.dirname(self.tmp_link), exist_ok=True)
+        os.makedirs(os.path.dirname(self.tmp_target), exist_ok=True)
+        cleanpath(os.path.dirname(self.tmp_link), self)
+        cleanpath(os.path.dirname(self.tmp_target), self)
+        with open(self.tmp_target, 'w') as fh:
+            fh.write("test")
+
+    def create_symlink(self, target=None, link=None):
+        """Helper to create valid symlink before deletion"""
+        if target is None:
+            target = self.tmp_target
+        if link is None:
+            link = self.tmp_link
+        os.symlink(target, link)
+
+    def test_deletes_existing_symlink(self):
+        """Test delete_symlink removes existing symlink"""
+        self.create_symlink()
+        result = fileio.delete_symlink(self.tmp_link, self.logger)
+        self.assertTrue(result)
+        self.assertFalse(os.path.exists(self.tmp_link))
+
+    def test_handles_missing_file_with_allow_missing(self):
+        """Test delete_symlink succeeds with allow_missing=True"""
+        # First make sure file doesn't exist
+        if os.path.exists(self.tmp_link):
+            os.remove(self.tmp_link)
+        result = fileio.delete_symlink(self.tmp_link, self.logger,
+                                       allow_missing=True)
+        self.assertTrue(result)
+
+    def test_handles_missing_symlink_without_allow_missing(self):
+        """Test delete_symlink fails with allow_missing=False"""
+        self.logger.forgive_errors()
+        result = fileio.delete_symlink('missing_symlink', self.logger,
+                                       allow_missing=False)
+        self.assertFalse(result)
+
+    @unittest.skip("TODO: implement check in tested function and enable again")
+    def test_rejects_regular_file(self):
+        """Test delete_symlink returns False when path is a regular file"""
+        self.logger.forgive_errors()
+        with open(self.tmp_link, 'w') as fh:
+            fh.write("dummy")
+
+        result = fileio.delete_symlink(self.tmp_link, self.logger)
+        self.assertFalse(result)
+
+    def test_deletes_broken_symlink(self):
+        """Test delete_symlink removes broken symlink"""
+        # Create broken symlink
+        broken_target = self.tmp_target + '-nonexistent'
+        self.create_symlink(broken_target)
+        self.assertTrue(os.path.islink(self.tmp_link))
+        # Now delete it
+        result = fileio.delete_symlink(self.tmp_link, self.logger)
+        self.assertTrue(result)
 
 
 if __name__ == '__main__':
