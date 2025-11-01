@@ -150,6 +150,8 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
         return False
 
 # TODO: toggle default force_string here when we have auto mode select?
+
+
 def write_chunk(path, chunk, offset, logger, mode='r+b', force_string=True):
     """Wrapper to handle writing of chunks with offset to path.
     Creates file first if it doesn't already exist.
@@ -176,7 +178,7 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None,
         old_umask = os.umask(umask)
 
     # TODO: enable this again once throuroughly tested and assured py2+3 safe
-    #mode = _auto_adjust_mode(content, mode)
+    # mode = _auto_adjust_mode(content, mode)
 
     retval = _write_chunk(path, content, offset=0, logger=logger, mode=mode,
                           make_parent=make_parent, create_file=False,
@@ -311,7 +313,7 @@ def get_file_size(path, logger):
         return os.path.getsize(path)
     except Exception as err:
         logger.error("could not get size for %r: %s" % (path, err))
-        result = -1
+        return -1
 
 
 def delete_file(path, logger, allow_broken_symlink=False, allow_missing=False):
@@ -752,7 +754,7 @@ def check_read_access(path, parent_dir=False, follow_symlink=True):
     argument decides if any symlinks in path are expanded before this check
     and it is on by default.
     """
-    return _check_access(path, os.O_RDONLY, parent_dir, follow_symlink)
+    return _check_access(path, os.R_OK, parent_dir, follow_symlink)
 
 
 def check_write_access(path, parent_dir=False, follow_symlink=True):
@@ -762,8 +764,7 @@ def check_write_access(path, parent_dir=False, follow_symlink=True):
     decides if any symlinks in path are expanded before this check and it is
     on by default.
     """
-    # IMPORTANT: we need to use RDWR rather than WRONLY here.
-    return _check_access(path, os.O_RDWR, parent_dir, follow_symlink)
+    return _check_access(path, os.W_OK, parent_dir, follow_symlink)
 
 
 def make_temp_file(suffix='', prefix='tmp', dir=None, text=False):
