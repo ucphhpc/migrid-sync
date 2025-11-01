@@ -30,6 +30,7 @@
 import binascii
 import os
 import sys
+import time
 import unittest
 
 # NOTE: wrap next imports in try except to prevent autopep8 shuffling up
@@ -45,6 +46,17 @@ DUMMY_BYTES_LENGTH = 4
 DUMMY_UNICODE = u'UniCode123½¾µßðþđŋħĸþł@ª€£$¥©®'
 DUMMY_UNICODE_LENGTH = len(DUMMY_UNICODE)
 DUMMY_FILE_WRITECHUNK = 'fileio/write_chunk'
+DUMMY_DIRECTORY_NESTED = 'fileio/nested/dir/structure'
+DUMMY_DIRECTORY_EMPTY = 'fileio/empty_dir'
+DUMMY_DIRECTORY_MOVE_SRC = 'fileio/move_dir_src'
+DUMMY_DIRECTORY_MOVE_DST = 'fileio/move_dir_dst'
+# File/dir paths for move/copy operations
+DUMMY_FILE_MOVE_SRC = 'fileio/move_src'
+DUMMY_FILE_MOVE_DST = 'fileio/move_dst'
+DUMMY_FILE_COPY_SRC = 'fileio/copy_src'
+DUMMY_FILE_COPY_DST = 'fileio/copy_dst'
+# NOTE: getsize returns 4k for directories
+DUMMY_DIRECTORY_SIZE = 4096
 DUMMY_FILE_WRITEFILE = 'fileio/write_file'
 DUMMY_FILE_WRITEFILELINES = 'fileio/write_file_lines'
 DUMMY_FILE_READFILE = 'fileio/read_file'
@@ -649,6 +661,390 @@ class MigSharedFileio__delete_symlink(MigTestCase):
         # Now delete it
         result = fileio.delete_symlink(self.tmp_link, self.logger)
         self.assertTrue(result)
+
+
+class MigSharedFileio__touch(MigTestCase):
+    """Test the touch function from mig.shared.fileio module"""
+
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def setUp(self):
+        """Initialize test environment for touch tests"""
+        super(MigSharedFileio__touch, self).setUp()
+        self.tmp_path = temppath('fileio/touch', self)
+        # We generally need output dir to exist here
+        os.makedirs(os.path.dirname(self.tmp_path), exist_ok=True)
+        cleanpath(os.path.dirname(self.tmp_path), self)
+
+    def test_creates_new_file(self):
+        """Test touch creates new file if missing"""
+        self.assertFalse(os.path.exists(self.tmp_path))
+        result = fileio.touch(self.tmp_path, self.configuration)
+        self.assertTrue(result)
+        self.assertTrue(os.path.exists(self.tmp_path))
+        self.assertTrue(os.path.isfile(self.tmp_path))
+
+    @unittest.skip("TODO: fix invalid open 'r+w' in tested function and enable again")
+    def test_updates_timestamp_on_existing_file(self):
+        """Test touch updates timestamp on existing file"""
+        # Create initial file
+        with open(self.tmp_path, 'w') as fh:
+            fh.write("test")
+        orig_mtime = os.path.getmtime(self.tmp_path)
+        time.sleep(0.1)
+        result = fileio.touch(self.tmp_path, self.configuration)
+        self.assertTrue(result)
+        new_mtime = os.path.getmtime(self.tmp_path)
+        self.assertNotEqual(orig_mtime, new_mtime)
+
+    @unittest.skip("TODO: fix handling of directory in tested function and enable again")
+    def test_succeeds_on_directory(self):
+        """Test touch succeeds for existing directory and updates timestamp"""
+        os.makedirs(self.tmp_path)
+        orig_mtime = os.path.getmtime(self.tmp_path)
+        time.sleep(0.1)
+        result = fileio.touch(self.tmp_path, self.configuration)
+        self.assertTrue(result)
+        self.assertTrue(os.path.isdir(self.tmp_path))
+        new_mtime = os.path.getmtime(self.tmp_path)
+        self.assertNotEqual(orig_mtime, new_mtime)
+
+    def test_fails_on_missing_parent(self):
+        """Test touch fails when parent directory doesn't exist"""
+        self.logger.forgive_errors()
+        nested_path = os.path.join(self.tmp_path, 'missing', 'file.txt')
+        result = fileio.touch(nested_path, self.configuration)
+        self.assertFalse(result)
+        self.assertFalse(os.path.exists(nested_path))
+
+
+class MigSharedFileio__remove_dir(MigTestCase):
+    """Test the remove_dir function from mig.shared.fileio module"""
+
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def setUp(self):
+        """Initialize test environment for remove_dir tests"""
+        super(MigSharedFileio__remove_dir, self).setUp()
+        self.tmp_path = temppath('fileio/remove_dir', self)
+        # We generally need output dir to exist here
+        os.makedirs(os.path.dirname(self.tmp_path), exist_ok=True)
+        cleanpath(self.tmp_path, self)
+        os.makedirs(self.tmp_path)
+
+    def test_removes_empty_directory(self):
+        """Test remove_dir removes empty directory"""
+        self.assertTrue(os.path.exists(self.tmp_path))
+        result = fileio.remove_dir(self.tmp_path, self.configuration)
+        self.assertTrue(result)
+        self.assertFalse(os.path.exists(self.tmp_path))
+
+    def test_fails_on_nonempty_directory(self):
+        """Test remove_dir returns False for non-empty directory"""
+        self.logger.forgive_errors()
+        # Add a file to the directory
+        with open(os.path.join(self.tmp_path, 'test.txt'), 'w') as fh:
+            fh.write("test")
+        result = fileio.remove_dir(self.tmp_path, self.configuration)
+        self.assertFalse(result)
+        self.assertTrue(os.path.exists(self.tmp_path))
+
+    def test_fails_on_file(self):
+        """Test remove_dir returns False for file"""
+        self.logger.forgive_errors()
+        # Add a file to the directory
+        file_path = os.path.join(self.tmp_path, 'test.txt')
+        with open(file_path, 'w') as fh:
+            fh.write("test")
+        result = fileio.remove_dir(file_path, self.configuration)
+        self.assertFalse(result)
+        self.assertTrue(os.path.exists(file_path))
+
+
+class MigSharedFileio__remove_rec(MigTestCase):
+    """Test the remove_rec function from mig.shared.fileio module"""
+
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def setUp(self):
+        """Initialize test environment for remove_rec tests"""
+        super(MigSharedFileio__remove_rec, self).setUp()
+        self.tmp_path = temppath('fileio/remove_rec', self)
+        cleanpath(self.tmp_path, self)
+        # Create a nested directory structure with files
+        # fileio/remove_rec/
+        # ├── file1.txt
+        # └── subdir/
+        #     └── file2.txt
+        os.makedirs(os.path.join(self.tmp_path, 'subdir'))
+        with open(os.path.join(self.tmp_path, 'file1.txt'), 'w') as fh:
+            fh.write("dummy")
+        with open(os.path.join(self.tmp_path, 'subdir', 'file2.txt'), 'w') as fh:
+            fh.write("dummy2")
+
+    def test_removes_directory_recursively(self):
+        """Test remove_rec removes directory and contents"""
+        self.assertTrue(os.path.exists(self.tmp_path))
+        result = fileio.remove_rec(self.tmp_path, self.configuration)
+        self.assertTrue(result)
+        self.assertFalse(os.path.exists(self.tmp_path))
+
+    def test_rejects_regular_file(self):
+        """Test remove_rec returns False when path is a regular file"""
+        file_path = os.path.join(self.tmp_path, 'file1.txt')
+        result = fileio.remove_rec(file_path, self.configuration)
+        self.assertFalse(result)
+        self.assertTrue(os.path.exists(file_path))
+
+
+class MigSharedFileio__move_file(MigTestCase):
+    """Test the move_file function from mig.shared.fileio module"""
+
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def setUp(self):
+        """Initialize test environment for move_file tests"""
+        super(MigSharedFileio__move_file, self).setUp()
+        self.tmp_src = temppath(DUMMY_FILE_MOVE_SRC, self)
+        os.makedirs(os.path.dirname(self.tmp_src), exist_ok=True)
+        self.tmp_dst = temppath(DUMMY_FILE_MOVE_DST, self)
+        os.makedirs(os.path.dirname(self.tmp_dst), exist_ok=True)
+        cleanpath(self.tmp_src, self)
+        cleanpath(self.tmp_dst, self)
+        with open(self.tmp_src, 'w') as fh:
+            fh.write("test")
+
+    def test_moves_file(self):
+        """Test move_file successfully moves a file"""
+        success, msg = fileio.move_file(self.tmp_src, self.tmp_dst,
+                                        self.configuration)
+        self.assertTrue(success)
+        self.assertFalse(msg)
+        self.assertFalse(os.path.exists(self.tmp_src))
+        self.assertTrue(os.path.exists(self.tmp_dst))
+
+    def test_overwrites_existing_destination(self):
+        """Test move_file overwrites existing destination file"""
+        # Create initial destination file
+        with open(self.tmp_dst, 'w') as fh:
+            fh.write("original")
+        success, msg = fileio.move_file(self.tmp_src, self.tmp_dst,
+                                        self.configuration)
+        self.assertTrue(success)
+        self.assertFalse(msg)
+        with open(self.tmp_dst, 'r') as fh:
+            content = fh.read()
+        self.assertEqual(content, "test")
+
+
+class MigSharedFileio__move_rec(MigTestCase):
+    """Test the move_rec function from mig.shared.fileio module"""
+
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def setUp(self):
+        """Initialize test environment for move_rec tests"""
+        super(MigSharedFileio__move_rec, self).setUp()
+        self.tmp_src = temppath(DUMMY_DIRECTORY_MOVE_SRC, self)
+        self.tmp_dst = temppath(DUMMY_DIRECTORY_MOVE_DST, self)
+        cleanpath(self.tmp_src, self)
+        cleanpath(self.tmp_dst, self)
+        # Create a nested directory structure with files
+        # fileio/move_dir_src/
+        # ├── file1.txt
+        # └── subdir/
+        #     └── file2.txt
+        os.makedirs(os.path.join(self.tmp_src, 'subdir'))
+        with open(os.path.join(self.tmp_src, 'file1.txt'), 'w') as fh:
+            fh.write("dummy1")
+        with open(os.path.join(self.tmp_src, 'subdir', 'file2.txt'), 'w') as fh:
+            fh.write("dummy2")
+
+    def test_moves_directory_recursively(self):
+        """Test move_rec moves directory and contents"""
+        result = fileio.move_rec(self.tmp_src, self.tmp_dst,
+                                 self.configuration)
+        self.assertTrue(result)
+        self.assertFalse(os.path.exists(self.tmp_src))
+        self.assertTrue(os.path.exists(self.tmp_dst))
+        # Verify structure
+        self.assertTrue(os.path.exists(os.path.join(self.tmp_dst,
+                                                    'file1.txt')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmp_dst, 'subdir',
+                                                    'file2.txt')))
+
+    def test_extends_existing_destination(self):
+        """Test move_rec extends existing destination directory"""
+        # Create initial destination with some content
+        os.makedirs(os.path.join(self.tmp_dst, 'prior'))
+        success, msg = fileio.move_rec(self.tmp_src, self.tmp_dst,
+                                       self.configuration)
+        self.assertTrue(success)
+        self.assertFalse(msg)
+
+        # Verify structure with new src subdir and existing dir
+        new_sub = os.path.basename(DUMMY_DIRECTORY_MOVE_SRC)
+        self.assertTrue(os.path.exists(os.path.join(self.tmp_dst, new_sub,
+                                                    'file1.txt')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmp_dst, new_sub,
+                                                    'subdir', 'file2.txt')))
+        self.assertTrue(os.path.exists(os.path.join(self.tmp_dst, 'prior')))
+
+
+class MigSharedFileio__copy_file(MigTestCase):
+    """Test the copy_file function from mig.shared.fileio module"""
+
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def setUp(self):
+        """Initialize test environment for copy_file tests"""
+        super(MigSharedFileio__copy_file, self).setUp()
+        self.tmp_src = temppath(DUMMY_FILE_COPY_SRC, self)
+        self.tmp_dst = temppath(DUMMY_FILE_COPY_DST, self)
+        os.makedirs(os.path.dirname(self.tmp_src), exist_ok=True)
+        os.makedirs(os.path.dirname(self.tmp_dst), exist_ok=True)
+        cleanpath(self.tmp_src, self)
+        cleanpath(self.tmp_dst, self)
+        with open(self.tmp_src, 'w') as fh:
+            fh.write("test")
+
+    def test_copies_file(self):
+        """Test copy_file successfully copies a file"""
+        result = fileio.copy_file(
+            self.tmp_src, self.tmp_dst, self.configuration)
+        self.assertTrue(result)
+        self.assertTrue(os.path.exists(self.tmp_src))
+        self.assertTrue(os.path.exists(self.tmp_dst))
+
+    def test_overwrites_existing_destination(self):
+        """Test copy_file overwrites existing destination file"""
+        # Create initial destination file
+        with open(self.tmp_dst, 'w') as fh:
+            fh.write("original")
+        result = fileio.copy_file(
+            self.tmp_src, self.tmp_dst, self.configuration)
+        self.assertTrue(result)
+        with open(self.tmp_dst, 'r') as fh:
+            content = fh.read()
+        self.assertEqual(content, "test")
+
+
+class MigSharedFileio__copy_rec(MigTestCase):
+    """Test the copy_rec function from mig.shared.fileio module"""
+
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def setUp(self):
+        """Initialize test environment for copy_rec tests"""
+        super(MigSharedFileio__copy_rec, self).setUp()
+        self.tmp_src = temppath('fileio/copy_dir_src', self)
+        self.tmp_dst = temppath('fileio/copy_dir_dst', self)
+        cleanpath(self.tmp_src, self)
+        cleanpath(self.tmp_dst, self)
+        # Create a nested directory structure with files
+        os.makedirs(os.path.join(self.tmp_src, 'subdir'))
+        with open(os.path.join(self.tmp_src, 'file1.txt'), 'w') as fh:
+            fh.write("dummy1")
+        with open(os.path.join(self.tmp_src, 'subdir', 'file2.txt'), 'w') as fh:
+            fh.write("dummy2")
+
+    def test_copies_directory_recursively(self):
+        """Test copy_rec copies directory and contents"""
+        result = fileio.copy_rec(
+            self.tmp_src, self.tmp_dst, self.configuration)
+        self.assertTrue(result)
+        self.assertTrue(os.path.exists(self.tmp_src))
+        self.assertTrue(os.path.exists(self.tmp_dst))
+        # Verify structure
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmp_dst, 'file1.txt')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmp_dst, 'subdir', 'file2.txt')))
+
+
+class MigSharedFileio__check_empty_dir(MigTestCase):
+    """Test the check_empty_dir function from mig.shared.fileio module"""
+
+    def setUp(self):
+        """Initialize test environment for check_empty_dir tests"""
+        super(MigSharedFileio__check_empty_dir, self).setUp()
+        self.empty_path = temppath(DUMMY_DIRECTORY_EMPTY, self)
+        self.nonempty_path = temppath(DUMMY_DIRECTORY_NESTED, self)
+        cleanpath(DUMMY_DIRECTORY_EMPTY, self)
+        cleanpath(DUMMY_DIRECTORY_NESTED, self)
+        os.makedirs(self.empty_path)
+        # Create non-empty directory structure
+        os.makedirs(self.nonempty_path)
+        with open(os.path.join(self.nonempty_path, 'test.txt'), 'w') as fh:
+            fh.write("dummy")
+
+    def test_returns_true_for_empty(self):
+        """Test check_empty_dir returns True for empty directory"""
+        self.assertTrue(fileio.check_empty_dir(self.empty_path))
+
+    def test_returns_false_for_nonempty(self):
+        """Test check_empty_dir returns False for non-empty directory"""
+        self.assertFalse(fileio.check_empty_dir(self.nonempty_path))
+
+    def test_returns_false_for_file(self):
+        """Test check_empty_dir returns False for file path"""
+        file_path = os.path.join(self.nonempty_path, 'test.txt')
+        result = fileio.check_empty_dir(file_path)
+        self.assertFalse(result)
+
+
+class MigSharedFileio__makedirs_rec(MigTestCase):
+    """Test the makedirs_rec function from mig.shared.fileio module"""
+
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def setUp(self):
+        """Initialize test environment for makedirs_rec tests"""
+        super(MigSharedFileio__makedirs_rec, self).setUp()
+        self.tmp_path = temppath('fileio/makedirs_rec', self)
+        # We generally need output dir to exist here
+        os.makedirs(os.path.dirname(self.tmp_path), exist_ok=True)
+        cleanpath(self.tmp_path, self)
+
+    def test_creates_directory_path(self):
+        """Test makedirs_rec creates nested directories"""
+        nested_path = os.path.join(self.tmp_path, 'a', 'b', 'c')
+        result = fileio.makedirs_rec(nested_path, self.configuration)
+        self.assertTrue(result)
+        self.assertTrue(os.path.exists(nested_path))
+
+    def test_returns_true_for_existing_directory(self):
+        """Test makedirs_rec returns True for existing path"""
+        os.makedirs(self.tmp_path)
+        result = fileio.makedirs_rec(self.tmp_path, self.configuration)
+        self.assertTrue(result)
+
+    def test_fails_for_file_path(self):
+        """Test makedirs_rec returns False if path is file"""
+        self.logger.forgive_errors()
+        # Create a file at the path
+        os.makedirs(self.tmp_path)
+        file_path = os.path.join(self.tmp_path, 'file.txt')
+        with open(file_path, 'w') as fh:
+            fh.write("dummy")
+        result = fileio.makedirs_rec(file_path, self.configuration)
+        self.assertFalse(result)
 
 
 if __name__ == '__main__':
