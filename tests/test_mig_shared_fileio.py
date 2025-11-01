@@ -46,8 +46,7 @@ DUMMY_UNICODE = u'UniCode123½¾µßðþđŋħĸþł@ª€£$¥©®'
 DUMMY_UNICODE_LENGTH = len(DUMMY_UNICODE)
 DUMMY_FILE_WRITECHUNK = 'fileio/write_chunk'
 DUMMY_FILE_WRITEFILE = 'fileio/write_file'
-# TODO: add similar tests for write_file_lines and enable next
-# DUMMY_FILE_WRITEFILELINES = 'fileio/write_file_lines'
+DUMMY_FILE_WRITEFILELINES = 'fileio/write_file_lines'
 DUMMY_FILE_READFILE = 'fileio/read_file'
 DUMMY_FILE_READFILELINES = 'fileio/read_file_lines'
 DUMMY_FILE_READHEADLINES = 'fileio/read_head_lines'
@@ -259,6 +258,58 @@ class MigSharedFileio__write_file(MigTestCase):
             content = file.read(1024)
             self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
             self.assertEqual(content[:], DUMMY_UNICODE)
+
+
+class MigSharedFileio__write_file_lines(MigTestCase):
+    """Test the write_file_lines function from mig.shared.fileio module"""
+
+    def setUp(self):
+        """Initialize test environment for write_file_lines tests"""
+        super(MigSharedFileio__write_file_lines, self).setUp()
+        self.tmp_path = temppath(DUMMY_FILE_WRITEFILELINES, self)
+        # Output dir is created by default here
+        cleanpath(os.path.dirname(DUMMY_FILE_WRITEFILELINES), self)
+
+    def test_write_lines(self):
+        """Test write_file_lines writes lines to a file"""
+        test_lines = ["line1\n", "line2\n", "line3"]
+        result = fileio.write_file_lines(
+            test_lines, self.tmp_path, self.logger)
+        self.assertTrue(result)
+
+        # Verify with read_file_lines
+        lines = fileio.read_file_lines(self.tmp_path, self.logger)
+        self.assertEqual(lines, test_lines)
+
+    def test_invalid_data(self):
+        """Test write_file_lines raises TypeError for non-list input"""
+        self.logger.forgive_errors()
+        with self.assertRaises(TypeError):
+            fileio.write_file_lines(4242, self.tmp_path, self.logger)
+
+    def test_creates_directory(self):
+        """Test write_file_lines creates parent directory when needed"""
+        test_lines = ["test line"]
+        result = fileio.write_file_lines(
+            test_lines, self.tmp_path, self.logger)
+        self.assertTrue(result)
+
+        path_kind = self.assertPathExists('fileio/write_file_lines')
+        self.assertEqual(path_kind, "file")
+
+    def test_return_false_on_invalid_dir(self):
+        """Test write_file_lines returns False when path is directory"""
+        self.logger.forgive_errors()
+        os.makedirs(self.tmp_path)
+        result = fileio.write_file_lines(["dummy"], self.tmp_path, self.logger)
+        self.assertFalse(result)
+
+    def test_return_false_on_missing_dir(self):
+        """Test write_file_lines fails when parent directory missing"""
+        self.logger.forgive_errors()
+        result = fileio.write_file_lines(["dummy"], self.tmp_path, self.logger,
+                                         make_parent=False)
+        self.assertFalse(result)
 
 
 class MigSharedFileio__read_file(MigTestCase):
