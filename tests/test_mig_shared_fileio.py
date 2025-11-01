@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_fileio - unit test of the corresponding mig shared module
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -51,13 +51,16 @@ assert isinstance(DUMMY_BYTES, bytes)
 
 
 class MigSharedFileio__write_chunk(MigTestCase):
-    # TODO: Add docstrings to this class and its methods
+    """Test the write_chunk function from mig.shared.fileio module"""
+
     def setUp(self):
+        """Initialize test environment for write_chunk tests"""
         super(MigSharedFileio__write_chunk, self).setUp()
         self.tmp_path = temppath(DUMMY_FILE_WRITECHUNK, self)
         cleanpath(os.path.dirname(DUMMY_FILE_WRITECHUNK), self)
 
     def test_return_false_on_invalid_data(self):
+        """Test write_chunk returns False with invalid data input"""
         self.logger.forgive_errors()
 
         # NOTE: we make sure to disable any forced stringification here
@@ -66,6 +69,7 @@ class MigSharedFileio__write_chunk(MigTestCase):
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_offset(self):
+        """Test write_chunk returns False with negative offset value"""
         self.logger.forgive_errors()
 
         did_succeed = fileio.write_chunk(self.tmp_path, DUMMY_BYTES, -42,
@@ -73,6 +77,7 @@ class MigSharedFileio__write_chunk(MigTestCase):
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_dir(self):
+        """Test write_chunk returns False when path is a directory"""
         self.logger.forgive_errors()
 
         os.makedirs(self.tmp_path)
@@ -81,12 +86,14 @@ class MigSharedFileio__write_chunk(MigTestCase):
         self.assertFalse(did_succeed)
 
     def test_creates_directory(self):
+        """Test write_chunk creates parent directory when needed"""
         fileio.write_chunk(self.tmp_path, DUMMY_BYTES, 0, self.logger)
 
         path_kind = self.assertPathExists(DUMMY_FILE_WRITECHUNK)
         self.assertEqual(path_kind, "file")
 
     def test_store_bytes(self):
+        """Test write_chunk stores byte data correctly at offset 0"""
         fileio.write_chunk(self.tmp_path, DUMMY_BYTES, 0, self.logger)
 
         with open(self.tmp_path, 'rb') as file:
@@ -95,6 +102,7 @@ class MigSharedFileio__write_chunk(MigTestCase):
             self.assertEqual(content[:], DUMMY_BYTES)
 
     def test_store_bytes_at_offset(self):
+        """Test write_chunk stores byte data at specified offset"""
         offset = 3
 
         fileio.write_chunk(self.tmp_path, DUMMY_BYTES, offset, self.logger)
@@ -108,6 +116,7 @@ class MigSharedFileio__write_chunk(MigTestCase):
 
     @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_bytes_in_text_mode(self):
+        """Test write_chunk stores byte data in text mode"""
         fileio.write_chunk(self.tmp_path, DUMMY_BYTES, 0, self.logger,
                            mode="r+")
 
@@ -118,6 +127,7 @@ class MigSharedFileio__write_chunk(MigTestCase):
 
     @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_unicode(self):
+        """Test write_chunk stores unicode data in text mode"""
         fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
                            mode='r+')
 
@@ -128,6 +138,7 @@ class MigSharedFileio__write_chunk(MigTestCase):
 
     @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_unicode_in_binary_mode(self):
+        """Test write_chunk stores unicode data in binary mode"""
         fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
                            mode='r+b')
 
@@ -138,12 +149,16 @@ class MigSharedFileio__write_chunk(MigTestCase):
 
 
 class MigSharedFileio__write_file(MigTestCase):
+    """Test the write_file function from mig.shared.fileio module"""
+
     def setUp(self):
+        """Initialize test environment for write_file tests"""
         super(MigSharedFileio__write_file, self).setUp()
         self.tmp_path = temppath(DUMMY_FILE_WRITEFILE, self)
         cleanpath(os.path.dirname(DUMMY_FILE_WRITEFILE), self)
 
     def test_return_false_on_invalid_data(self):
+        """Test write_file returns False with non-string data input"""
         self.logger.forgive_errors()
 
         # NOTE: we make sure to disable any forced stringification here
@@ -152,32 +167,38 @@ class MigSharedFileio__write_file(MigTestCase):
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_dir(self):
+        """Test write_file returns False when path is a directory"""
         self.logger.forgive_errors()
 
         os.makedirs(self.tmp_path)
 
-        did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger)
+        did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path,
+                                        self.logger)
         self.assertFalse(did_succeed)
 
     def test_return_false_on_missing_dir(self):
+        """Test write_file returns False on missing parent dir"""
         self.logger.forgive_errors()
 
-        did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger,
-                                        make_parent=False)
+        did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path,
+                                        self.logger, make_parent=False)
         self.assertFalse(did_succeed)
 
     def test_creates_directory(self):
+        """Test write_file creates parent directory when needed"""
         # TODO: temporarily use empty string to avoid any byte/unicode issues
-        # did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger)
+        # did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path,
+        #     self.logger)
         did_succeed = fileio.write_file('', self.tmp_path, self.logger)
         self.assertTrue(did_succeed)
 
         path_kind = self.assertPathExists(DUMMY_FILE_WRITEFILE)
         self.assertEqual(path_kind, "file")
 
-    def test_store_bytes(self):
+    # TODO: replace next test once we have auto adjust mode in write helper
+    def test_store_bytes_with_manual_adjust_mode(self):
+        """Test write_file stores byte data in with manual adjust mode call"""
         mode = 'w'
-        # TODO: remove next once we have auto adjust mode in write helper
         mode = fileio._auto_adjust_mode(DUMMY_BYTES, mode)
         did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger,
                                         mode=mode)
@@ -190,6 +211,7 @@ class MigSharedFileio__write_file(MigTestCase):
 
     @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_bytes_in_text_mode(self):
+        """Test write_file stores byte data when opening in text mode"""
         did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger,
                                         mode="w")
         self.assertTrue(did_succeed)
@@ -201,6 +223,7 @@ class MigSharedFileio__write_file(MigTestCase):
 
     @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_unicode(self):
+        """Test write_file stores unicode string when opening in text mode"""
         did_succeed = fileio.write_file(DUMMY_UNICODE, self.tmp_path,
                                         self.logger, mode='w')
         self.assertTrue(did_succeed)
@@ -212,6 +235,7 @@ class MigSharedFileio__write_file(MigTestCase):
 
     @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_unicode_in_binary_mode(self):
+        """Test write_file handles unicode strings when opening in binary mode"""
         did_succeed = fileio.write_file(DUMMY_UNICODE, self.tmp_path,
                                         self.logger, mode='wb')
         self.assertTrue(did_succeed)
