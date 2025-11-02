@@ -200,7 +200,7 @@ class TestMigSharedVgridAccess(MigTestCase):
         self.assertEqual(user_map, vgridaccess.last_map[USERS])
 
     def test_force_update_user_map(self):
-        """Simple test that user map refresh completes"""
+        """Simple test that forced user map update completes"""
         # Verify empty map on init
         user_map_before, _ = load_user_map(self.configuration)
         self.assertEqual(user_map_before, {})
@@ -212,7 +212,7 @@ class TestMigSharedVgridAccess(MigTestCase):
         self.assertIn(self.TEST_USER_DN, updated_users)
 
     def test_force_update_resource_map(self):
-        """Simple test that resource map refresh completes"""
+        """Simple test that forced resource map update completes"""
         # Verify empty map on init
         res_map_before, _ = load_resource_map(self.configuration)
         self.assertEqual(res_map_before, {})
@@ -224,7 +224,7 @@ class TestMigSharedVgridAccess(MigTestCase):
         self.assertIn(self.TEST_RESOURCE_ID, updated_res)
 
     def test_force_update_vgrid_map(self):
-        """Simple test that vgrid map refresh completes"""
+        """Simple test that forced vgrid map update completes"""
         # Only (implicit) default vgrid in vgrid map before init
         vgrid_map_before, _ = load_vgrid_map(self.configuration)
         self.assertEqual(vgrid_map_before.get(VGRIDS, {}), self.MINIMAL_VGRIDS)
@@ -256,14 +256,14 @@ class TestMigSharedVgridAccess(MigTestCase):
         self.assertIn(self.TEST_VGRID_NAME, vgrid_map.get(VGRIDS, {}))
 
     def test_get_user_map(self):
-        """Minimal test for user map refresh functionality"""
+        """Minimal test for get user map functionality"""
         self._provision_test_user(self, self.TEST_USER_DN)
         force_update_user_map(self.configuration)
         user_map = get_user_map(self.configuration)
         self.assertIn(self.TEST_USER_DN, user_map)
 
     def test_get_resource_map(self):
-        """Minimal test for user map refresh functionality"""
+        """Minimal test for get user map functionality"""
         self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
         force_update_resource_map(self.configuration)
         resource_map = get_resource_map(self.configuration)
