@@ -451,7 +451,8 @@ def refresh_vgrid_map(configuration, clean=False):
         conf_path = os.path.join(configuration.resource_home, res, "config")
         if not os.path.isfile(conf_path):
             continue
-        if os.path.getmtime(conf_path) >= map_stamp:
+        if res not in vgrid_map[RESOURCES] or \
+                os.path.getmtime(conf_path) >= map_stamp:
             # Read maps of exe name to vgrid list and of store name to vgrid
             # list. Save them separately to be able to distinguish them in
             # exe / store access and visibility
@@ -562,7 +563,7 @@ def refresh_vgrid_map(configuration, clean=False):
         else:
             conf_mtime = -1
             user_conf = {}
-        if conf_mtime >= map_stamp:
+        if user not in vgrid_map[USERS] or conf_mtime >= map_stamp:
             vgrid_map[USERS][user] = user_conf
             vgrid_map[USERS][user][ASSIGN] = vgrid_map[USERS][user].get(ASSIGN,
                                                                         [])
