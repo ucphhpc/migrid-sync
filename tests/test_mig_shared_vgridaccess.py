@@ -357,6 +357,7 @@ class TestMigSharedVgridAccess(MigTestCase):
 
     def test_user_allowed_res_units(self):
         """Test user_allowed_res_units returns allowed units"""
+        # NOTE: create assigns TEST_RESOURCE_ID to default vgrid
         self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
         self._create_vgrid(self.TEST_VGRID_NAME, [self.TEST_OWNER_DN])
         initial_vgrid_map = force_update_vgrid_map(self.configuration)
@@ -370,6 +371,7 @@ class TestMigSharedVgridAccess(MigTestCase):
 
     def test_user_allowed_res_exes(self):
         """Test user_allowed_res_exes returns allowed exes"""
+        # NOTE: create assigns TEST_RESOURCE_ID to default vgrid
         self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
         self._create_vgrid(self.TEST_VGRID_NAME, [self.TEST_OWNER_DN])
         initial_vgrid_map = force_update_vgrid_map(self.configuration)
@@ -382,6 +384,7 @@ class TestMigSharedVgridAccess(MigTestCase):
 
     def test_user_allowed_res_stores(self):
         """Test user_allowed_res_stores returns allowed stores"""
+        # NOTE: create assigns TEST_RESOURCE_ID to default vgrid
         self._create_resource(self.TEST_RESOURCE_ID, [self.TEST_OWNER_DN])
         self._create_vgrid(self.TEST_VGRID_NAME, [self.TEST_OWNER_DN])
         initial_vgrid_map = force_update_vgrid_map(self.configuration)
