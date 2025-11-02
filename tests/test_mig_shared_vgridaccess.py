@@ -33,19 +33,20 @@ import unittest
 from mig.shared.fileio import pickle, read_file
 from mig.shared.vgrid import vgrid_list, vgrid_set_entities, vgrid_settings
 from mig.shared.vgridaccess import CONF, MEMBERS, OWNERS, RESOURCES, SETTINGS, \
-    USERID, VGRIDS, check_resources_modified, check_vgrid_access, \
+    USERID, USERS, VGRIDS, check_resources_modified, check_vgrid_access, \
     check_vgrids_modified, fill_placeholder_cache, force_update_resource_map, \
     force_update_user_map, force_update_vgrid_map, get_re_provider_map, \
     get_resource_map, get_user_map, get_vgrid_map, get_vgrid_map_vgrids, \
-    is_vgrid_parent_placeholder, load_resource_map, load_user_map, \
-    load_vgrid_map, mark_vgrid_modified, refresh_resource_map, \
-    refresh_user_map, refresh_vgrid_map, res_vgrid_access, \
-    reset_resources_modified, reset_vgrids_modified, resources_using_re, \
-    unmap_inheritance, unmap_resource, unmap_vgrid, user_allowed_res_confs, \
-    user_allowed_res_exes, user_allowed_res_stores, user_allowed_res_units, \
-    user_allowed_user_confs, user_owned_res_exes, user_owned_res_stores, \
-    user_vgrid_access, user_visible_res_confs, user_visible_res_exes, \
-    user_visible_res_stores, user_visible_user_confs, vgrid_inherit_map
+    is_vgrid_parent_placeholder, last_load, last_map, last_refresh, \
+    load_resource_map, load_user_map, load_vgrid_map, mark_vgrid_modified, \
+    refresh_resource_map, refresh_user_map, refresh_vgrid_map, \
+    res_vgrid_access, reset_resources_modified, reset_vgrids_modified, \
+    resources_using_re, unmap_inheritance, unmap_resource, unmap_vgrid, \
+    user_allowed_res_confs, user_allowed_res_exes, user_allowed_res_stores, \
+    user_allowed_res_units, user_allowed_user_confs, user_owned_res_exes, \
+    user_owned_res_stores, user_vgrid_access, user_visible_res_confs, \
+    user_visible_res_exes, user_visible_res_stores, user_visible_user_confs, \
+    vgrid_inherit_map
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 
@@ -126,8 +127,15 @@ class TestMigSharedVgridAccess(MigTestCase):
         saved = pickle(config, res_config_path, self.logger)
         self.assertTrue(saved)
 
+    def _reset_caches(self):
+        """Assure all vgrid maps and stamps are wiped for next test"""
+        for field in (USERS, RESOURCES, VGRIDS):
+            last_refresh[field] = 0
+            last_load[field] = 0
+            last_map[field].clear()
+
     def before_each(self):
-        """Create test environment for vgridaccess tests"""
+        """Create clean test environment for vgridaccess tests"""
         used_state_dirs = [
             self.configuration.mig_system_files,
             self.configuration.mig_system_run,
@@ -139,14 +147,41 @@ class TestMigSharedVgridAccess(MigTestCase):
         for state_dir in used_state_dirs:
             ensure_dirs_exist(state_dir)
 
+        # Drop all caches and state between tests
+        self._reset_caches()
+
+        # Make sure we start with a clean slate for each test
+        for field in (USERS, RESOURCES, VGRIDS):
+            self.assertTrue(last_refresh[field] == 0)
+            self.assertTrue(last_load[field] == 0)
+            self.assertEqual(last_map[field], {})
+
         # IMPORTANT: don't use refresh_X here as it does not reset last_X cache
         # Start with minimal maps and corresponding cache - only default vgrid
         vgrid_map = force_update_vgrid_map(self.configuration)
         self.assertEqual(vgrid_map.get(VGRIDS, {}), self.MINIMAL_VGRIDS)
+
+        # Make sure all vgrid map entries are complete
+        for vgrid_name in vgrid_map.get(VGRIDS, {}):
+            for field in (OWNERS, MEMBERS, SETTINGS, RESOURCES):
+                vgrid_entry = vgrid_map[VGRIDS][vgrid_name]
+                self.assertIn(field, vgrid_entry)
+
         res_map = force_update_resource_map(self.configuration)
+        # Make sure no resource map entries exist initially
         self.assertEqual(res_map, {})
+
         user_map = force_update_user_map(self.configuration)
+        # Make sure no user map entries exist initially
         self.assertEqual(user_map, {})
+
+        # Make sure accounting and caching entries are consistent and complete
+        for field in (USERS, RESOURCES, VGRIDS):
+            self.assertTrue(last_refresh[field] > 0)
+            self.assertTrue(last_load[field] > 0)
+        self.assertEqual(vgrid_map, last_map[VGRIDS])
+        self.assertEqual(res_map, last_map[RESOURCES])
+        self.assertEqual(user_map, last_map[USERS])
 
     def test_force_update_user_map(self):
         """Simple test that user map refresh completes"""
