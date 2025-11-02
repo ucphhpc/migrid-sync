@@ -401,18 +401,18 @@ def refresh_vgrid_map(configuration, clean=False):
     optional_conf = [SETTINGS, ]
 
     for vgrid in all_vgrids:
+        # Make sure vgrid dict exists before filling it
+        vgrid_map[VGRIDS][vgrid] = vgrid_map[VGRIDS].get(vgrid, {})
         for (field, name, list_call) in conf_read:
             conf_path = os.path.join(configuration.vgrid_home, vgrid, name)
             if not os.path.isfile(conf_path):
-                # Make sure vgrid dict exists before filling it
-                vgrid_map[VGRIDS][vgrid] = vgrid_map[VGRIDS].get(vgrid, {})
                 vgrid_map[VGRIDS][vgrid][field] = []
                 if vgrid != default_vgrid and field not in optional_conf:
                     _logger.warning('missing file: %s' %
                                     conf_path)
                     dirty[VGRIDS] = dirty.get(VGRIDS, []) + [vgrid]
 
-            elif vgrid not in vgrid_map[VGRIDS] or \
+            elif field not in vgrid_map[VGRIDS][vgrid] or \
                     os.path.getmtime(conf_path) >= map_stamp:
                 (status, entries) = list_call(vgrid, configuration,
                                               recursive=False)
@@ -425,6 +425,8 @@ def refresh_vgrid_map(configuration, clean=False):
                 vgrid_map[VGRIDS][vgrid] = map_entry
                 vgrid_map[VGRIDS][vgrid][field] = entries
                 dirty[VGRIDS] = dirty.get(VGRIDS, []) + [vgrid]
+            else:
+                _logger.debug("caching %s for %s in vgrid map" % (name, vgrid))
     # Remove any missing vgrids from map
     missing_vgrids = [vgrid for vgrid in vgrid_map[VGRIDS]
                       if not vgrid in all_vgrids]
@@ -853,7 +855,6 @@ def check_vgrid_access(configuration, client_id, vgrid_name, recursive=True,
     the vgrid module and should replace that one everywhere that only vgrid map
     (cached) lookups are needed.
     """
-    vgrid_access = [default_vgrid]
     vgrid_map = get_vgrid_map(configuration, recursive, caching)
     vgrid_entry = vgrid_map.get(VGRIDS, {}).get(
         vgrid_name, {OWNERS: [], MEMBERS: []})
