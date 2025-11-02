@@ -82,31 +82,40 @@ class TestMigSharedVgridAccess(MigTestCase):
         return 'testconfig'
 
     def _create_vgrid(self, vgrid_name, owners=None, members=None,
-                      resources=None, settings=None):
+                      resources=None, settings=None, triggers=None):
         """Helper to create valid skeleton vgrid for testing"""
         vgrid_path = os.path.join(self.configuration.vgrid_home, vgrid_name)
         ensure_dirs_exist(vgrid_path)
+        # Save vgrid owners, members, resources, settings and triggers
         if owners is None:
             owners = []
-        # Add vgrid owners
-        status, msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                         'owners', owners, allow_empty=True)
-        self.assertTrue(status, msg)
-        if members is not None:
-            status, msg = vgrid_set_entities(self.configuration, vgrid_name,
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'owners', owners, allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if members is None:
+            members = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
                                              'members', members,
-                                             allow_empty=False)
-            self.assertTrue(status, msg)
-        if resources is not None:
-            status, msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if resources is None:
+            resources = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
                                              'resources', resources,
-                                             allow_empty=False)
-            self.assertTrue(status, msg)
-        if settings is not None:
-            status, msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if settings is None:
+            settings = [('vgrid_name', vgrid_name)]
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
                                              'settings', settings,
-                                             allow_empty=False)
-            self.assertTrue(status, msg)
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if triggers is None:
+            triggers = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'triggers', triggers,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
 
     def _create_resource(self, res_name, owners, config=None):
         """Helper to create valid skeleton resource for testing"""
@@ -147,6 +156,8 @@ class TestMigSharedVgridAccess(MigTestCase):
         ]
         for state_dir in used_state_dirs:
             ensure_dirs_exist(state_dir)
+            # Make sure no stale data is left
+            self.assertEqual(os.listdir(state_dir), [])
 
         # Drop all caches and state between tests
         self._reset_caches()
@@ -638,9 +649,9 @@ class TestMigSharedVgridAccess(MigTestCase):
         self.assertIn(self.TEST_RESOURCE_ID, initial_map)
 
         # Remove resource assignment from vgrid
-        status, msg = vgrid_set_entities(self.configuration, self.TEST_VGRID_NAME,
-                                         'resources', [], allow_empty=True)
-        self.assertTrue(status, msg)
+        success_and_msg = vgrid_set_entities(self.configuration, self.TEST_VGRID_NAME,
+                                             'resources', [], allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ''))
 
         updated_vgrid_map = force_update_vgrid_map(self.configuration)
         # Check vgrid map no longer contains resource entry
