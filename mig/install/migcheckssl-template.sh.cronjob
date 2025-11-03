@@ -20,6 +20,10 @@
 # NOTE: 'set -eE' exits on non-zero exit codes to add safety and as recommended
 # best-practice (CWE-252, CWE-248, ...), yet, in some cases it hurts more to
 # exit midway, so it can be a trade-off.
+# IMPORTANT: we currently opt for manual exit code checks here since we deem
+# the consequences of an early script exit worse.
+# TODO: introduce individual exit code checks and re-enable '-eE' below?
+#set -eEuo pipefail
 set -uo pipefail
 
 # Send output to another email address
