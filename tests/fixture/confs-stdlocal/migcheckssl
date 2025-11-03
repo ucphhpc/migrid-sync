@@ -14,9 +14,13 @@
 # This is a limitation on the run-parts wrapper used by cron
 # (see man run-parts for the rationale behind this).
 
-# Force bash to handle uninitialized variables and errors
+# By default bash silently ignores and continues on most errors but we can set
+# options to e.g. catch uninitialized variables and errors as explained in:
 # https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
-set -eEuo pipefail
+# NOTE: 'set -eE' exits on non-zero exit codes to add safety and as recommended
+# best-practice (CWE-252, CWE-248, ...), yet, in some cases it hurts more to
+# exit midway, so it can be a trade-off.
+set -uo pipefail
 
 # Send output to another email address
 #MAILTO="root"
