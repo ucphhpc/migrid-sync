@@ -23,7 +23,7 @@ set -eEuo pipefail
 # Send output to another email address
 #MAILTO="root"
 
-MIG_CONF=__MIG_CODE__/server/MiGserver.conf
+MIG_CONF=/home/mig/mig/server/MiGserver.conf
 
 # Specify if migrid runs natively or inside containers with lustre at host.
 # Value is the container manager (docker, podman, or empty string for none)

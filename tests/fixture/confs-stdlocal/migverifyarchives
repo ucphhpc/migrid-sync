@@ -7,9 +7,15 @@
 # any effect. Basically the ready-finalized-YYYYMMDD.txt files in archivestaging
 # must be filled with root paths of pending archives to check.
 
-# Force bash to handle uninitialized variables and errors
+# By default bash silently ignores and continues on most errors but we can set
+# options to e.g. catch uninitialized variables and errors as explained in:
 # https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
-# NOTE: 'set -eE' exits on failure, good for debug but we want to handle errors
+# NOTE: 'set -eE' exits on non-zero exit codes to add safety and as recommended
+# best-practice (CWE-252, CWE-248, ...), yet, in some cases it hurts more to
+# exit midway, so it can be a trade-off.
+# IMPORTANT: we currently opt for manual exit code checks here since we deem
+# the consequences of an early script exit worse.
+# TODO: introduce individual exit code checks and re-enable '-eE' below?
 #set -eEuo pipefail
 set -uo pipefail
 
