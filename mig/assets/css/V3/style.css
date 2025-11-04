@@ -816,3 +816,8 @@ var, sampl, code {
     border: 1px solid #ff9900;
     margin-bottom: 20px;
 }
+
+/* Disable border on e.g. input elements if specifically requested */
+.noborder {
+    border: 0;
+}

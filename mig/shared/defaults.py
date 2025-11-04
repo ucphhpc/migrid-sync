@@ -208,6 +208,10 @@ generic_auto_extend_days = custom_auto_extend_days = 30
 # Number of days before expire that auto extend attempts kick in
 # NOTE: must be lower than all X_auto_extend_days values to avoid hammering
 attempt_auto_extend_days = 10
+# Enforce peers expire value (End date) to default/min/max days in the future
+peers_expire_default_days = generic_valid_days
+peers_expire_min_days = 7
+peers_expire_max_days = 3652
 
 # Strictly ordered list of account status values to enable use of filemarks
 # for caching account status using integer timestamps outside user DB.

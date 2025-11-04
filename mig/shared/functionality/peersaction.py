@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # peersaction - handle management of peers
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -41,7 +41,8 @@ from mig.shared.accountreq import parse_peers, peers_permit_allowed, \
 from mig.shared.base import client_id_dir, fill_distinguished_name, \
     extract_field
 from mig.shared.defaults import peers_filename, peer_kinds, peers_fields, \
-    keyword_auto, csrf_field
+    keyword_auto, csrf_field, peers_expire_default_days, \
+    peers_expire_min_days, peers_expire_max_days
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.htmlgen import html_post_helper
@@ -51,7 +52,6 @@ from mig.shared.serial import load, dump
 from mig.shared.url import urlencode
 from mig.shared.useradm import get_full_user_map
 
-default_expire_days = 7
 peer_actions = ['import', 'add', 'remove', 'update', 'accept', 'reject']
 
 
@@ -155,17 +155,20 @@ Please contact the %s site support (%s) if you think it should be enabled.
             expire = now
         else:
             expire = datetime.datetime.strptime(raw_expire, '%Y-%m-%d')
-            if now > expire:
-                raise ValueError("specified expire value is in the past!")
+            if now + datetime.timedelta(days=peers_expire_min_days) > expire:
+                raise ValueError("specified expire is in the past!")
+            if now + datetime.timedelta(days=peers_expire_max_days) < expire:
+                raise ValueError("specified expire is too far in the future!")
     except Exception as exc:
-        logger.error("expire %r could not be parsed into a (future) date" %
+        logger.error("expire %r could not be parsed into a valid date" %
                      raw_expire)
         output_objects.append(
-            {'object_type': 'text', 'text':
-             'No valid expire provided - using default: %d days' %
-             default_expire_days})
+            {'object_type': 'warning', 'text':
+             'End date must be %d - %d days from now - using default %d days' %
+             (peers_expire_min_days, peers_expire_max_days,
+              peers_expire_default_days)})
         expire = now
-        expire += datetime.timedelta(days=default_expire_days)
+        expire += datetime.timedelta(days=peers_expire_default_days)
     expire = expire.date().isoformat()
 
     peers_path = os.path.join(configuration.user_settings, client_dir,
