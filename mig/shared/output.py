@@ -1530,7 +1530,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <th>State</th>
         <th>Kind</th>
         <th>Label</th>
-        <th>Expire</th>
+        <th>End Date</th>
         <th>Actions</th>
     </tr>
 </thead>
