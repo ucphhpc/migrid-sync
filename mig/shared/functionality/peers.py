@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # peers - manage external collaboration partners, etc.
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -305,7 +305,7 @@ This is an overview of your registered peers. That is, people that you have
 vouched for to get an account on %(site)s because they need it for a particular
 course/workshop, research project or for general long term collaboration with
 you. The site admins will use this information to accept account requests and
-extensions from your peers until the given time of expiry.
+extensions from your peers until the given end date.
 </p>
 <div class="peer_entries">
 '''
@@ -376,10 +376,10 @@ extensions from your peers until the given time of expiry.
 <div id="fields-tab">
 <p>
 You may enter your individual peers in the form fields below and assign a
-shared kind and account expiry time for all entries. Just leave the Action
-field to <em>Add</em> unless you want to <em>Update</em> or <em>Remove</em>
-existing peers. You are free to leave rows empty, but each field in a peer row
-MUST be filled for the row to be treated.
+shared kind and account end date for all entries. Just leave the Action field
+to <em>Add</em> unless you want to <em>Update</em> or <em>Remove</em> existing
+peers. You are free to leave rows empty, but each field in a peer row MUST be
+filled for the row to be treated.
 </p>
 <div class="enter-form form_container">
 %(form_prefix_html)s
