@@ -91,7 +91,7 @@ def main(client_id, user_arguments_dict):
     logger.info("%s begin for %s" % (op_name, client_id))
 
     # IMPORTANT: single line here to avoid breaking javascript inlining
-    expire_help = "For security reasons peer accounts should be closed when no longer required. Expire is used to limit account access time for that purpose, and you can always extend it later if needed. For courses and workshops a few weeks or months should usually suffice, while projects and long-term collaboration often extend to months or years. Peer accounts still need to be renewed at least annually, but the peer users can do so themselves without your repeated explicit acceptance, as long as it does not exceed your provided expire date."
+    expire_help = "For security reasons peer accounts should be closed when no longer required. End date is used to limit account access time for that purpose, and you can always extend it later if needed. For courses and workshops a few weeks or months should usually suffice, while projects and long-term collaboration often extend to months or years. Peer accounts still need to be renewed at least annually, but the peer users can do so themselves without your repeated explicit acceptance, as long as it does not exceed your provided end date."
 
     # jquery support for tablesorter and confirmation on delete
     # table initially sorted by col. 5 (kind), then 0 (name)
@@ -251,13 +251,13 @@ action="%(target_op)s.py">
           </select>
       </div>
       <div class="col-md-4 mb-3 form-cell">
-          <label for="peers_expire">Expire&nbsp;
+          <label for="peers_expire">End Date&nbsp;
             <span class="info leftpad iconspace" title="%(expire_help)s"
-                onClick="show_info(\'Expire Help\', \'%(expire_help)s\');"/>
+                onClick="show_info(\'End Date Help\', \'%(expire_help)s\');"/>
           </label>
           <input class="form-control themed-select html-select fill-width"
             type="date" name="peers_expire" required pattern="[0-9/-]+"
-            title="Access expiry date" />
+            title="Access end date" />
       </div>
     </div>
 '''
@@ -332,11 +332,11 @@ extensions from your peers until the given time of expiry.
             'object_type': 'link',
             'destination':
             "javascript: confirmDialog(%s, '%s', '%s', %s);" %
-            ('peer_action', 'Update %(full_name)s (%(email)s) expire date (YYYY-MM-DD)?' % filled_entry,
+            ('peer_action', 'Update %(full_name)s (%(email)s) end date (YYYY-MM-DD)?' % filled_entry,
              'peers_expire',
              "{action: 'update', peers_label: '%(label)s', peers_kind: '%(kind)s', peers_content: '%(distinguished_name)s', peers_invite: false}" % filled_entry),
             'class': 'editlink iconspace',
-            'title': 'Update %(distinguished_name)s Expire value in peers' % filled_entry,
+            'title': 'Update %(distinguished_name)s End date value in peers' % filled_entry,
             'text': ''}
         filled_entry['invitepeerlink'] = {
             'object_type': 'link',
@@ -533,10 +533,10 @@ at the bottom.
 <div id="requests-tab" >
 <p>
 If someone requests an external user account on %(site)s and explicitly
-references you as peers contact person the site admins will generally forward
-the request, so that it shows up here for you to confirm. You can then accept
-or reject the individual requests below to let the site admins proceed with
-account creation or rejection. Please select an expire date to provide limited
+references you among contact persons (peers) the site admins will generally
+forward the request, so that it shows up here for you to confirm. You can then
+accept or reject the individual requests below to let the site admins proceed
+with account creation or rejection. Please select an end date to provide limited
 but sufficiently long account access - it can always be extended later.
 </p>
 '''
