@@ -1903,7 +1903,7 @@ want to reference the contents in a publication.
             skip_list = i.get('skip_list', [])
             optional_cols = [('access', 'Access'), ('created', 'Created'),
                              ('active', 'Active'), ('owner', 'Owner'),
-                             ('invites', 'Invites'),  ('expire', 'Expire'),
+                             ('invites', 'Invites'), ('expire', 'Expire'),
                              ('single_file', 'Single file'),
                              ]
             # IMPORTANT: AdBlock Plus hides elements with class sharelink(s)
@@ -2647,20 +2647,6 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
         return '\n'.join(lines)
 
 
-# def xml_format(configuration, ret_val, ret_msg, out_obj):
-#    """Generate output in xml format"""
-#
-#    print "xml format not implemented yet"
-#    return True
-
-
-def soap_format(configuration, ret_val, ret_msg, out_obj):
-    """Generate output in soap format"""
-
-    import SOAPpy
-    return SOAPpy.buildSOAP(out_obj)
-
-
 def pickle_helper(configuration, ret_val, ret_msg, out_obj, protocol=None):
     """Generate output in requested pickle protocol format"""
 
@@ -2749,7 +2735,7 @@ def file_format(configuration, ret_val, ret_msg, out_obj):
             content_type = val
     if content_type in ('text/plain', 'text/html'):
         render_text, render_errors = True, True
-    #_logger.debug("render output in file_format: %s (%s %s)" %
+    # _logger.debug("render output in file_format: %s (%s %s)" %
     #              (out_obj, render_text, render_errors))
     for entry in out_obj:
         if entry['object_type'] == 'file_output':
@@ -2797,11 +2783,10 @@ def get_outputformat_helper(name, default_format='html'):
             name = 'txt'
     # TODO: can we use functools or similar to generate this map on the fly?
     valid_format_map = {'txt': txt_format, 'html': html_format,
-                        'soap': soap_format, 'pickle': pickle_format,
-                        'pickle1': pickle1_format, 'pickle2': pickle2_format,
-                        'yaml': yaml_format, 'xmlrpc': xmlrpc_format,
-                        'resource': resource_format, 'json': json_format,
-                        'file': file_format}
+                        'pickle': pickle_format, 'pickle1': pickle1_format,
+                        'pickle2': pickle2_format, 'yaml': yaml_format,
+                        'xmlrpc': xmlrpc_format, 'resource': resource_format,
+                        'json': json_format, 'file': file_format}
     return valid_format_map[name]
 
 
@@ -2816,7 +2801,7 @@ def format_output(
     """This is the public method that should be called from other scripts"""
 
     logger = configuration.logger
-    #logger.debug("format output to %s" % outputformat)
+    # logger.debug("format output to %s" % outputformat)
     valid_formats = get_valid_outputformats()
     (val_ret, val_msg) = validate(out_obj)
     if not val_ret:
@@ -2867,7 +2852,7 @@ def format_output(
     if not outputformat in ('txt', 'html', 'file'):
         out_obj = [i for i in out_obj if i['object_type'] != 'wsgi']
 
-    #logger.debug("%s formatting output" % outputformat)
+    # logger.debug("%s formatting output" % outputformat)
     try:
         # return eval('%s_format(configuration, ret_val, ret_msg, out_obj)' %
         #            outputformat)
@@ -2900,10 +2885,10 @@ def format_output(
 def format_timedelta(timedelta):
     """Formats timedelta as '[Years,] [days,] HH:MM:SS'"""
     years = timedelta.days // 365
-    days = timedelta.days - (years*365)
+    days = timedelta.days - (years * 365)
     hours = timedelta.seconds // 3600
-    minutes = (timedelta.seconds-(hours*3600)) // 60
-    seconds = timedelta.seconds - (hours*3600) - (minutes*60)
+    minutes = (timedelta.seconds - (hours * 3600)) // 60
+    seconds = timedelta.seconds - (hours * 3600) - (minutes * 60)
 
     hours_str = "%s" % hours
     if hours < 10:
