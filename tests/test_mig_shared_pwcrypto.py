@@ -89,7 +89,7 @@ DUMMY_AESGCM_KEY = b'48797271554677786167464ED6F23EC6'
 DUMMY_AESGCM_STATIC_IV = b'\xc5\x1b\x13\xd6\xa1\xe6\x88\xcd\xf1\xa88\xee\xbc[\xb1\xa9'
 DUMMY_AESGCM_AAD_PREFIX = b'\xc5\x1b\x13\xd6\xa1\xe6\x88\xcd\xf1\xa88\xee\xbc[\xb1\xa9\xa88\xee\xbc[\xb1\xa9'
 DUMMY_AESGCM_AAD = b' \xc5\x1b\x13\xd6\xa1\xe6\x88\xcd\xf1\xa88\xee\xbc[\xb1\xa9\xa88\xee\xbc[\xb1\xa920500101'
-# NOTE: we avoid any percent expansion values of actual date here freeze AAD
+# NOTE: we avoid any percent expansion values of actual date here to freeze AAD
 DUMMY_FIXED_TIMESTAMP = '20500101'
 
 
