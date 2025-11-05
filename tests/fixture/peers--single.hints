@@ -1,0 +1,2 @@
+[ONWRITE]
+convert_dict_strings_to_bytes_kv = True

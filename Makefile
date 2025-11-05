@@ -10,12 +10,15 @@ endif
 #LINT_ENFORCE_DIRS = ./bin ./mig/lib ./sbin ./tests
 LINT_ENFORCE_DIRS = ./mig/__init__.py
 LOCAL_PYTHON_BIN = './envhelp/lpython'
+ROOT_DIR=$(realpath .)
+STAGING_DIR="$(ROOT_DIR)/envhelp/staging"
 
 ifdef PYTHON_BIN
 	LOCAL_PYTHON_BIN = $(PYTHON_BIN)
 else
 	PYTHON_BIN = './envhelp/python3'
 endif
+
 
 ifeq ($(ALLDEPS),1)
 	REQS_PATH = ./recommended.txt
@@ -76,6 +79,7 @@ clean:
 distclean: clean
 	@rm -rf ./envhelp/venv
 	@rm -rf ./envhelp/output
+	@rm -rf ./envhelp/staging
 	@rm -rf ./tests/__pycache__
 	@rm -f ./tests/*.pyc
 
@@ -96,18 +100,36 @@ testconfig: ./envhelp/output/testconfs
 ./envhelp/output/testconfs:
 	@./envhelp/makeconfig test --docker
 	@./envhelp/makeconfig test
+	@echo "prime any configured templates"
+	@$(LOCAL_PYTHON_BIN) -m mig.lib.templates prime \
+		-c ./envhelp/output/testconfs-local/MiGserver.conf
 
 ifeq ($(MIG_ENV),'local')
 ./envhelp/local.depends: $(REQS_PATH) local-requirements.txt
 else
 ./envhelp/local.depends: $(REQS_PATH)
 endif
+ifeq ($(MIG_ENV),'local')
+	@echo "installing development dependencies"
+	@$(LOCAL_PYTHON_BIN) -m pip install \
+		-r local-requirements.txt
+	@echo "expanding local packages"
+	@$(LOCAL_PYTHON_BIN) ./envhelp/scripts/expand_sources.py
+	@echo "generating local package index"
+	@./envhelp/invoke dumb-pypi \
+		--package-list "$(STAGING_DIR)/.packages.lst" \
+		--packages-url='../..' \
+		--output-dir "$(STAGING_DIR)"
+endif
 	@echo "installing dependencies from $(REQS_PATH)"
 	@$(LOCAL_PYTHON_BIN) -m pip install -r $(REQS_PATH)
 ifeq ($(MIG_ENV),'local')
-	@echo ""
-	@echo "installing development dependencies"
-	@$(LOCAL_PYTHON_BIN) -m pip install -r local-requirements.txt
+	@echo "installing plugins"
+	@$(LOCAL_PYTHON_BIN) -m pip install \
+		-r ./mig/install/requirements/migux-requirements.txt \
+		--extra-index-url="file://$(STAGING_DIR)/simple"
+	@echo "running plugins postinstall"
+	@$(LOCAL_PYTHON_BIN) ./mig/install/postinstall/migux-postinstall
 endif
 	@touch ./envhelp/local.depends
 
@@ -116,4 +138,4 @@ endif
 	@/usr/bin/env python3 -m venv ./envhelp/venv
 	@rm -f ./envhelp/local.depends
 	@echo "upgrading venv pip as required for some dependencies"
-	@./envhelp/venv/bin/pip3 install --upgrade pip
+	@$(LOCAL_PYTHON_BIN) -m pip install --upgrade pip

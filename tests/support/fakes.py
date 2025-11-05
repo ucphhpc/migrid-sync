@@ -29,6 +29,8 @@
 import inspect
 from types import SimpleNamespace
 
+__INSTRUMENTED_MARKER = "__" + __name__
+
 
 class FakeSendEmail:
     """
@@ -37,7 +39,9 @@ class FakeSendEmail:
 
     def __init__(self):
         self.calls = []
-        self._checked = False
+        self._checked = set()
+        self._forgive = False
+        self._recipients = None
 
     def __call__(self, *args, **kwargs):
         # Record any arguments upon a call to send email (discarding the
@@ -45,44 +49,66 @@ class FakeSendEmail:
         self.calls.append((args, kwargs))
         return True
 
-    def _recipients(self):
+    def all_recipients(self):
+        if self._recipients:
+            return self._recipients
+
         recipients = set()
         for args, kwargs in self.calls:
             email_address = args[0]
             recipients.add(email_address)
+        self._recipients = recipients
         return recipients
 
     def check_empty_and_reset(self):
-        if self._checked:
+        if self.is_checked():
             # nothing to do
             return
 
+        suprise_recipients = self.all_recipients() - self._checked
+        if not suprise_recipients:
+            # all have been checked
+            return
+
+        display_recipients = sorted(suprise_recipients)
+        raise AssertionError('detected email sending without expectation: \n  %s'
+                                % ('\n  '.join(display_recipients),))
+
+    def is_checked(self):
+        if self._forgive:
+            return True
+
         has_calls = len(self.calls) > 0
-        if has_calls:
-            surprise_recipients = []
-            for args, kwargs in self.calls:
-                email_address = args[0]
-                surprise_recipients.append(email_address)
-            raise AssertionError(
-                "detected email sending without expectation: \n  %s"
-                % ("\n  ".join(surprise_recipients),)
-            )
+        if not has_calls:
+            return True
+
+        return False
 
     def forgive_email(self):
-        self._checked = True
+        self._forgive = True
 
     @property
     def called_once(self):
-        self._checked = True
-        return len(self.calls) == 1
+        was_called_once = len(self.calls) == 1
+        if was_called_once:
+            self._forgive = True
+        return was_called_once
 
     def email_was_sent_to(self, email_address):
-        recipients = self._recipients()
+        recipients = self.all_recipients()
+
         assert (
             email_address in recipients
         ), "no email was not set to recipient: %s" % (email_address,)
-        self._checked = True
+
+        self._checked.add(email_address)
+
         return email_address in recipients
+
+    def total_emails_sent(self):
+        total = len(self.calls)
+        self._forgive = True
+        return total
 
 
 def make_fake_notifier(mig_test_case=None):
@@ -99,8 +125,14 @@ def instrument_test_case(mig_test_case=None, mig_configuration=None):
         getattr(mig_configuration, "context_set", None)
     ), "supplied configuration must be usable at runtime"
 
+    maybe_marker = getattr(mig_configuration, __INSTRUMENTED_MARKER, None)
+    if maybe_marker is __INSTRUMENTED_MARKER:
+        return
+
     fakes_by_context_key = {
         "notifier": make_fake_notifier(mig_test_case=mig_test_case),
     }
     for content_key, context_value in fakes_by_context_key.items():
         mig_configuration.context_set(content_key, context_value)
+
+    setattr(mig_configuration, __INSTRUMENTED_MARKER, __INSTRUMENTED_MARKER)

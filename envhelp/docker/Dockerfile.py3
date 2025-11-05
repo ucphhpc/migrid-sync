@@ -15,4 +15,12 @@ WORKDIR /usr/src/app
 COPY requirements.txt local-requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt -r local-requirements.txt
 
+# insert dist files for our local packages
+RUN mkdir -p ./envhelp
+COPY ./envhelp/staging ./envhelp/staging
+COPY ./mig/install/requirements ./envhelp/requirements
+RUN pip install --no-cache-dir \
+                --index-url=file:///usr/src/app/envhelp/staging/simple \
+                 -r ./envhelp/requirements/migux-requirements.txt
+
 CMD [ "python", "--version" ]

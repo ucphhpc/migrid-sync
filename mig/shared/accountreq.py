@@ -33,6 +33,7 @@ account request handlers.
 from __future__ import absolute_import
 
 from builtins import zip
+from datetime import date
 import os
 import re
 import time
@@ -48,16 +49,16 @@ from mig.shared.base import auth_type_description, canonical_user, \
     client_id_dir, distinguished_name_to_user, fill_distinguished_name, \
     fill_user, force_utf8, force_native_str_rec, get_user_id, mask_creds, \
     requested_backend
-from mig.shared.defaults import peers_fields, peers_filename, \
+from mig.shared.defaults import peers_fields, peers_filename, peer_kinds, \
     pending_peers_filename, keyword_auto, user_db_filename, \
     gdp_distinguished_field
-from mig.shared.fileio import delete_file, make_temp_file
+from mig.shared.fileio import delete_file, make_temp_file, unpickle
 from mig.shared.notification import notify_user
 from mig.shared.pwcrypto import check_hash, check_scramble
 # Expose some helper variables for functionality backends
 from mig.shared.safeinput import name_extras, password_extras, \
-    password_min_len, password_max_len, valid_password_chars, \
-    valid_name_chars, dn_max_len, html_escape, validated_input, REJECT_UNSET
+    password_min_len, password_max_len, valid_password_chars, valid_date, \
+    valid_commonname, dn_max_len, html_escape, validated_input, REJECT_UNSET
 from mig.shared.serial import load, dump, dumps
 from mig.shared.useradm import user_request_reject, user_account_notify, \
     default_search, search_users, create_user
@@ -793,6 +794,62 @@ def list_account_reqs(configuration):
     return (True, accountreq_list)
 
 
+def list_account_reqs_pairs(configuration):
+    success, reqids = list_account_reqs(configuration)
+    if not success:
+        return []
+
+    user_dn_reqid_pairs = []
+
+    for reqid in reqids:
+        user_pending_file = os.path.join(configuration.user_pending, reqid)
+        user_pending_dict = unpickle(user_pending_file, configuration.logger)
+        user_dn_reqid_pairs.append((user_pending_dict['distinguished_name'], reqid))
+
+    return user_dn_reqid_pairs
+
+
+def list_peers_accepted(configuration, target_dn, filters=None):
+    """
+    Return the accepted peers corresponding to a particular user.
+    """
+
+    _logger = configuration.logger
+    client_dir = client_id_dir(target_dn)
+    accepted_peers_path = os.path.join(configuration.user_settings, client_dir,
+                                      peers_filename)
+    try:
+        accepted_peers = load(accepted_peers_path).values()
+    except Exception as exc:
+        if os.path.exists(accepted_peers_path):
+            _logger.warning("could not load accepted peers from %s: %s" %
+                            (accepted_peers_path, exc))
+        accepted_peers = []
+
+    return accepted_peers
+
+
+def list_peers_requested(configuration, target_dn, filters=None):
+    """
+    Return the requested peers corresponding to a particular user.
+    """
+
+    _logger = configuration.logger
+    client_dir = client_id_dir(target_dn)
+    pending_peers_path = os.path.join(configuration.user_settings, client_dir,
+                                      pending_peers_filename)
+    try:
+        pending_peer_pairs = load(pending_peers_path)
+        pending_peers = [peer_dict for _, peer_dict in pending_peer_pairs]
+    except Exception as exc:
+        if os.path.exists(pending_peers_path):
+            _logger.warning("could not load pending peers from %s: %s" %
+                            (pending_peers_path, exc))
+        pending_peers = []
+
+    return pending_peers
+
+
 def is_account_req(req_id, configuration):
     """Check that req_id is an existing account request"""
     req_path = os.path.join(configuration.user_pending, req_id)
@@ -814,8 +871,11 @@ def get_account_req(req_id, configuration):
         return (True, req_dict)
 
 
-def accept_account_req(req_id, configuration, peer_id, user_copy=True,
-                       admin_copy=True, auth_type='oid', default_renew=False):
+def accept_account_req(req_id, configuration, peer_id,
+                       user_copy=True,
+                       admin_copy=True,
+                       auth_type='oid',
+                       default_renew=False):
     """Helper to accept a pending account request"""
     _logger = configuration.logger
     _logger.info('accept account %s with peer %s' % (req_id, peer_id))
@@ -883,6 +943,12 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
     _logger.info('%sd %s in user database and in file system' %
                  (operation_type.title(), user_dict['distinguished_name']))
 
+    if not delete_file(req_path, _logger):
+        err_msg = 'failed to clean up request %s after user %s' % \
+                  (req_path, operation_type)
+        _logger.error(err_msg)
+        return (False, err_msg)
+
     if user_copy or admin_copy:
         extra_copies = []
         # Default to inform mail used in request
@@ -923,17 +989,15 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
     else:
         _logger.error('one or more account intro messages failed for %s' %
                       req_path)
-
-    if not delete_file(req_path, _logger):
-        err_msg = 'failed to clean up request %s after user %s' % \
-                  (req_path, operation_type)
-        _logger.error(err_msg)
-        return (False, err_msg)
     return (True, '')
 
 
-def peer_account_req(req_id, configuration, target_id, user_copy=False,
-                     admin_copy=True, auth_type='oid'):
+def peer_account_req(req_id, configuration, target_id,
+                    admin_copy=True,
+                    user_copy=True,
+                    include_auto_email=True,
+                    auth_type='oid',
+                    _notify_user=notify_user):
     """Helper to request peer accept for a pending account request"""
     # TODO: enable user_copy if it can be clearly marked only CC?
     _logger = configuration.logger
@@ -985,7 +1049,8 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
 
     # Use email from user DB by default
     raw_targets = {}
-    raw_targets['email'] = [keyword_auto]
+    if include_auto_email:
+        raw_targets['email'] = [keyword_auto]
 
     extra_copies = []
     if user_copy and req_dict.get('email', ''):
@@ -1063,7 +1128,7 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
 """ % (peers_field.replace('_', ' '), req_dict.get(field_name, ''))
         peers_details += """Comment: %(comment)s
 """ % req_dict
-        (send_status, send_errors) = notify_user(
+        (send_status, send_errors) = _notify_user(
             notify_dict, [peer_id, configuration.short_title, 'peeraccount',
                           peers_details, req_dict['email'], user_id],
             'SENDREQUEST', _logger, '', configuration)
@@ -1077,7 +1142,9 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
             all_sent = False
             all_errors += send_errors
 
-    if notify_count < 1:
+    had_email_to_send = len(raw_targets)
+
+    if had_email_to_send and notify_count < 1:
         err_msg = 'no valid actual peers found for %s' % req_path
         _logger.warning(err_msg)
         return (False, err_msg)
@@ -1516,6 +1583,110 @@ def parse_peers_form(configuration, raw_lines, csv_sep):
         peers.append(canonical_user(configuration, peer_user, peers_fields))
     _logger.debug('parsed form into peers: %s' % peers)
     return (peers, err)
+
+
+def valid_kind(value, **kwargs):
+    if not value in peer_kinds:
+        raise ValueError("invalid peer kind")
+
+
+def valid_label(value, **kwargs):
+    valid_commonname(value, extra_chars='-_')
+
+
+BASIC_PEER_FIELDS = dict([(i, REJECT_UNSET) for i in peers_fields])
+EXTRA_PEER_FIELDS_TYPE = {
+    'expire': valid_date,
+    'kind': valid_kind,
+    'label': valid_label,
+}
+EXTRA_PEER_FIELDS = {
+    'expire': REJECT_UNSET,
+    'kind': REJECT_UNSET,
+    'label': REJECT_UNSET,
+}
+
+
+def _unlistify_dict(thedict):
+    return {key:value[0] for key, value in thedict.items()}
+
+
+def _normalize_rejected_value(failure_detail):
+    """
+    Convert single rejected field value to an error string.
+
+    The complexity here is necessary because different
+    rejections cause different structures to be returned
+    as values of rejected keys. Try to make something
+    presentable in the UI from what we get.
+    """
+
+    normalized_details = []
+    if isinstance(failure_detail, list):
+        normalized_details.append(failure_detail[0][1])
+    else:
+        normalized_details.append(failure_detail[0])
+        normalized_details.append(failure_detail[1][0])
+    return ' '.join(normalized_details)
+
+
+def _normalize_rejected(rejected):
+    """
+    Make a dictionary of rejected fields uniform.
+    """
+    return {key: _normalize_rejected_value(value)
+            for key, value in rejected.items()}
+
+
+def peer_dict_from_fields(peer_fields_dict):
+    """
+    Creates a peer_dict from a simple dictionary containing fields
+    and their values ensuring the validity of the key/value pairs.
+    """
+
+    rejected = {}
+
+    basic_fields = {field_name: peer_fields_dict.get(field_name, '').strip()
+                    for field_name in BASIC_PEER_FIELDS.keys()}
+    basic_accepted, rejected = validated_input(basic_fields,
+                                         BASIC_PEER_FIELDS,
+                                         list_wrap=True)
+    rejected.update(rejected)
+    # There is no choice but use list_wrap during validation - not doing
+    # so leads to accepted containing arrays of the _characters_ within the
+    # values. This is unfortunate. It means we get our input values back from
+    # validation wrapped in arrays, so we need to undo that.
+    peer_dict = _unlistify_dict(basic_accepted)
+
+
+    # the only remaining fields should now be the extra fields
+    extra_fields = {k:v for k, v in peer_fields_dict.items()
+                             if k not in BASIC_PEER_FIELDS}
+    try:
+        extra_accepted, extra_rejected = validated_input(extra_fields,
+                            EXTRA_PEER_FIELDS,
+                            EXTRA_PEER_FIELDS_TYPE,
+                            list_wrap=True)
+    except Exception as any_exc:
+        # unfortunately validated_input itself is not safe against input
+        # data that is not wrapped the way it expects - treat this an error
+        extra_accepted = {}
+        extra_rejected = {k: 'invalid value' for k in EXTRA_PEER_FIELDS.keys()}
+    rejected.update(extra_rejected)
+    peer_dict.update(_unlistify_dict(extra_accepted))
+
+    if rejected:
+        errors = _normalize_rejected(rejected)
+        return peer_dict, errors
+
+    # nudge expire into a unix time
+    expire_date = date.fromisoformat(peer_dict['expire'])
+    peer_dict["expire"] = int(time.mktime(expire_date.timetuple()))
+
+    fill_user(peer_dict)
+    fill_distinguished_name(peer_dict)
+
+    return peer_dict, None
 
 
 def parse_peers_userid(configuration, raw_entries):

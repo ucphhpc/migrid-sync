@@ -91,10 +91,10 @@ jobs:
           dnf install -y python3 python3-pip make
       - name: Setup environment
         run: |
-          make dependencies
+          make PYTHON_BIN=python3 dependencies
       - name: Run tests
         run: |
-          make unittest
+          make PYTHON_BIN=python3 unittest
 
   python3-rocky9:
     name: Run internal tests in default python3 on Rocky9
@@ -109,7 +109,7 @@ jobs:
           dnf install -y python3 python3-pip make
       - name: Setup environment
         run: |
-          make dependencies
+          make PYTHON_BIN=python3 dependencies
       - name: Run tests
         run: |
-          make unittest
+          make PYTHON_BIN=python3 unittest

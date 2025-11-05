@@ -51,10 +51,17 @@ class FakeLogger:
 
     def __init__(self):
         self.channels_dict = defaultdict(list)
+        self.expected_by_channel = defaultdict(list)
         self.forgive_by_channel = defaultdict(lambda: False)
         self.unclosed_by_file = defaultdict(list)
 
     def _append_as(self, channel, line):
+        # ignore the log if it was expected
+        for is_expected in self.expected_by_channel[channel]:
+            if is_expected(line):
+                return
+
+        # record the line in its channel of receipt
         self.channels_dict[channel].append(line)
 
     def check_empty_and_reset(self):
@@ -77,6 +84,19 @@ class FakeLogger:
         if channels_dict['error'] and not forgive_by_channel['error']:
             raise RuntimeError('errors reported to logger:\n%s' %
                                '\n'.join(channels_dict['error']))
+
+    def declare_expected_error(self, comparison="equal", expectation=None):
+        """Record a particular logged error message as expected."""
+
+        assert isinstance(expectation, str)
+
+        if comparison == 'startswith':
+            is_expected = lambda s: s.startswith(expectation)
+        elif comparison == 'equal':
+            is_expected = lambda s: s == expectation
+        else:
+            raise NotImplementedError("unsupported comparsion %s" % (comparison,))
+        self.expected_by_channel["error"].append(is_expected)
 
     def forgive_errors(self):
         """Allow log errors for cases where they are expected"""

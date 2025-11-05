@@ -545,7 +545,7 @@ def generate_confs(
     datasafety_text='',
     wwwserve_max_bytes=-1,
     templates_cache_dir=keyword_auto,
-    templates_base_packages='',
+    templates_base_packages='migux',
     _getpwnam=pwd.getpwnam,
     _prepare=None,
     _writefiles=None,
