@@ -40,6 +40,7 @@ from string import ascii_lowercase, ascii_uppercase, digits
 import datetime
 import hashlib
 import time
+import sys
 
 from mig.shared.base import force_utf8, force_native_str, mask_creds, string_snippet
 from mig.shared.defaults import keyword_auto, RESET_TOKEN_TTL
@@ -1027,7 +1028,8 @@ def generate_random_password(configuration, tries=42):
     raise ValueError("Failed to generate suitable password!")
 
 
-if __name__ == "__main__":
+def main(_exit=sys.exit, _print=print):
+    """Run module self-tests"""
     from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
     dummy_user = {'distinguished_name': 'Test User', 'password_hash': ''}
@@ -1057,6 +1059,8 @@ if __name__ == "__main__":
         hashed = make_hash(pw)
         snippet = string_snippet(hashed)
         dummy_user['password_hash'] = hashed
+        if 'migoid' not in configuration.site_login_methods:
+            configuration.site_login_methods.append('migoid')
         token = generate_reset_token(configuration, dummy_user, 'migoid')
         print("Password %r gives hash %r, snippet %r and reset token %r" %
               (pw, hashed, snippet, token))
@@ -1112,3 +1116,7 @@ if __name__ == "__main__":
         except Exception as exc:
             print(
                 "Failed to handle aesgcm static encrypt/decrypt %s : %s" % (pw, exc))
+
+
+if __name__ == "__main__":
+    main()
