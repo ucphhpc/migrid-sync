@@ -232,8 +232,12 @@ class MigLibDaemon(MigTestCase):
         self.assertTrue(time.time() - start < 0.05)
 
         # Test zero and negative max_secs returns immediately
+        start = time.time()
         interruptible_sleep(self.configuration, 0.0, [])
+        self.assertTrue(time.time() - start < 0.01)
+        start = time.time()
         interruptible_sleep(self.configuration, -1.0, [])
+        self.assertTrue(time.time() - start < 0.01)
 
     def test_interruptible_sleep_multiple_conditions(self):
         """Test interruptible_sleep with multiple break conditions"""
