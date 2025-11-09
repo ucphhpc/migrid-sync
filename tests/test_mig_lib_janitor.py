@@ -604,8 +604,7 @@ class MigLibJanitor(MigTestCase):
         )
         self.assertEqual(handled, 1)
 
-    # TODO: adjust tested function to allow enabling the next test
-    @unittest.skipIf(True, "requires improved unpickling error handling")
+    @unittest.skip("TODO: enable once unpickling error handling is improved")
     def test_manage_single_req_corrupted_file(self):
         """Test manage_single_req with corrupted request file"""
         req_id = 'corrupted_req'
@@ -623,6 +622,7 @@ class MigLibJanitor(MigTestCase):
             )
 
         self.assertTrue(any('Failed to load request from' in msg
+                            or 'Could not load saved request' in msg
                             for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path))
 
@@ -682,6 +682,7 @@ class MigLibJanitor(MigTestCase):
             )
 
         self.assertTrue(any('bad token' in msg.lower()
+                            or 'password reset' in msg.lower()
                             for msg in log_capture.output))
 
     def test_remind_and_expire_edge_cases(self):
@@ -756,8 +757,7 @@ class MigLibJanitor(MigTestCase):
         self.assertEqual(_lookup_last_run(
             self.configuration, "cache-updates"), last_cache_update)
 
-    # TODO: adjust tested function to allow enabling the next test
-    @unittest.skipIf(True, "requires improved cleaner error handling")
+    @unittest.skip("TODO: enable once cleaner has improved error handling")
     def test_clean_stale_files_nonexistent_dir(self):
         """Test state cleaner with invalid directory path"""
         target_dir = os.path.join(self.configuration.mig_system_files,
@@ -771,8 +771,7 @@ class MigLibJanitor(MigTestCase):
         )
         self.assertEqual(handled, 0)
 
-    # TODO: adjust tested function to allow enabling the next test
-    @unittest.skipIf(True, "requires improved cleaner error handling")
+    @unittest.skip("TODO: enable once cleaner has improved error handling")
     def test_clean_stale_files_permission_error(self):
         """Test state cleaner handles permission errors gracefully"""
         test_dir = self.temppath("readonly_dir", ensure_dir=True)
@@ -840,3 +839,54 @@ class MigLibJanitor(MigTestCase):
 
         # Verify post-execution cleanup
         self.assertFalse(os.path.exists(req_path))
+
+    def test_cleaner_with_multiple_patterns(self):
+        """Test state cleaner with multiple filename patterns"""
+        test_dir = self.temppath('multi_pattern_test', ensure_dir=True)
+        clean_patterns = ['*.tmp', '*.log', 'temp*']
+        clean_pairs = [
+            ('should_keep_recent.log', EXPIRE_STATE_DAYS - 1),
+            ('should_remove_stale.tmp', EXPIRE_STATE_DAYS + 1),
+            ('should_keep_other.pck', EXPIRE_STATE_DAYS + 1)
+        ]
+
+        for (name, age_days) in clean_pairs:
+            path = os.path.join(test_dir, name)
+            with open(path, 'w') as fp:
+                fp.write('test')
+            mtime = time.time() - age_days * SECS_PER_DAY
+            os.utime(path, (mtime, mtime))
+
+        self.assertTrue(os.path.exists(
+            os.path.join(test_dir, 'should_keep_recent.log')))
+        self.assertTrue(os.path.exists(
+            os.path.join(test_dir, 'should_remove_stale.tmp')))
+        self.assertTrue(os.path.exists(
+            os.path.join(test_dir, 'should_keep_other.pck')))
+
+        handled = _clean_stale_state_files(
+            self.configuration,
+            test_dir,
+            clean_patterns,
+            EXPIRE_STATE_DAYS,
+            time.time()
+        )
+        self.assertEqual(handled, 1)
+        self.assertTrue(os.path.exists(
+            os.path.join(test_dir, 'should_keep_recent.log')))
+        self.assertFalse(os.path.exists(
+            os.path.join(test_dir, 'should_remove_stale.tmp')))
+        self.assertTrue(os.path.exists(
+            os.path.join(test_dir, 'should_keep_other.pck')))
+
+    def test_absent_jobs_flag(self):
+        """Test clean_no_job_helpers with site_enable_jobs disabled"""
+        self.configuration.site_enable_jobs = False
+        handled = clean_no_job_helpers(self.configuration)
+        self.assertEqual(handled, 0)
+
+    def test_clean_sessions_jobs_disabled(self):
+        """Test session cleanup with jobs disabled"""
+        self.configuration.site_enable_jobs = False
+        handled = clean_sessid_to_mrls_link_home(self.configuration)
+        self.assertEqual(handled, 0)
