@@ -256,11 +256,24 @@ class MigLibDaemon(MigTestCase):
         register_run_handler(self.configuration, signal.SIGUSR1)
         register_stop_handler(self.configuration, signal.SIGUSR1)
 
-        # Should still work
-        signal.alarm(1)
-        time.sleep(0.5)
-        register_run_handler(self.configuration, signal.SIGUSR2)
+        os.kill(os.getpid(), signal.SIGUSR1)
+        time.sleep(0.1)
+        # Make sure that only most recently assigned handler triggered
+        self.assertTrue(check_stop())
+        self.assertFalse(check_run())
+
+        # Reset and test with additional signals
+        reset_run()
+        reset_stop()
+
+        # Second signal pair on USR2
         register_stop_handler(self.configuration, signal.SIGUSR2)
+        register_run_handler(self.configuration, signal.SIGUSR2)
+        # Should still work just reversed to fit most recent assignment
+        os.kill(os.getpid(), signal.SIGUSR2)
+        time.sleep(0.1)
+        self.assertTrue(check_run())
+        self.assertFalse(check_stop())
 
     def test_concurrent_event_handling(self):
         """Test concurrent event triggers and state maintenance"""
