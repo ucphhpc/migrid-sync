@@ -433,7 +433,7 @@ class MigLibDaemon(MigTestCase):
         # Contains both valid and invalid break check items
         checks = [lambda: True, "not-callable"]
         start = time.time()
-        result = interruptible_sleep(self.configuration, 0.1, checks)
+        interruptible_sleep(self.configuration, 0.1, checks)
         duration = time.time() - start
         # Should complete when valid condition returns True
         self.assertTrue(duration < 0.05)
@@ -460,8 +460,7 @@ class MigLibDaemon(MigTestCase):
         """Test interruptible_sleep counts down remaining naps correctly"""
         checks = [lambda: False]
         start = time.time()
-        result = interruptible_sleep(
-            self.configuration, 0.25, checks, nap_secs=0.1)
+        interruptible_sleep(self.configuration, 0.25, checks, nap_secs=0.1)
         duration = time.time() - start
         # 2*0.1=0.2 < 0.25, 3*0.1=0.3 >0.25 -> should do 3rd nap with 0.05 actual sleep
         self.assertAlmostEqual(duration, 0.25, delta=0.05)
