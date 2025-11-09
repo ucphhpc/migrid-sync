@@ -28,6 +28,8 @@
 """Unit tests for mig.shared.filemarks module"""
 
 import os
+import shutil
+import stat
 import tempfile
 import time
 import unittest
@@ -50,7 +52,7 @@ class TestMigSharedFilemarks(MigTestCase):
         """Setup fake configuration and temp dir before each test."""
         self.marks_base = os.path.join(self.configuration.mig_system_run,
                                        TEST_MARKS_DIR)
-        ensure_dirs_exist(os.path.dirname(self.marks_base))
+        ensure_dirs_exist(self.marks_base)
         self.marks_path = os.path.join(self.marks_base, TEST_MARKS_FILE)
 
     def test_update_filemark_create(self):
@@ -129,6 +131,90 @@ class TestMigSharedFilemarks(MigTestCase):
         for mark in marks:
             result = get_filemark(self.configuration, self.marks_base, mark)
             self.assertEqual(result, 0)
+
+    def test_update_filemark_fails_when_file_prevents_directory(self):
+        """Test update_filemark fails when file prevents create directory"""
+        # Create a file in the way to prevent subdir creation
+        result = update_filemark(self.configuration, self.marks_base,
+                                 'obstruct', time.time())
+        self.assertTrue(result)
+        result = update_filemark(self.configuration, self.marks_base,
+                                 os.path.join('obstruct', 'test.mark'),
+                                 time.time())
+        self.assertFalse(result)
+
+    @unittest.skipIf(os.getuid() == 0, "enable when not running as priv user")
+    def test_update_filemark_directory_perms_failure(self):
+        """Test update_filemark fails on directory creation failure"""
+        # Create a read-only parent directory to prevent subdir creation
+        # TODO: permissions are not enforced if running as a privileged user
+        #       like it's the case for our current docker CI
+        os.chmod(self.marks_base, stat.S_IRUSR)  # Remove write permissions
+
+        result = update_filemark(self.configuration, self.marks_base,
+                                 os.path.join('noaccess', 'test.mark'),
+                                 time.time())
+        self.assertFalse(result)
+
+    @unittest.skipIf(os.getuid() == 0, "enable when not running as priv user")
+    def test_get_filemark_permission_denied(self):
+        """Test get_filemark returns None when permission denied"""
+        # Create valid file first
+        update_filemark(self.configuration, self.marks_base,
+                        TEST_MARKS_FILE, time.time())
+
+        # Remove read permissions through parent dir
+        os.chmod(self.marks_base, 0)
+        result = get_filemark(self.configuration, self.marks_base,
+                              TEST_MARKS_FILE)
+        self.assertIsNone(result)
+        # Restore permissions so cleanup works
+        os.chmod(self.marks_base, stat.S_IRWXU)
+
+    def test_reset_filemark_string_mark_list(self):
+        """Test reset_filemark handles single string mark_list"""
+        update_filemark(self.configuration, self.marks_base,
+                        TEST_MARKS_FILE, time.time())
+        reset_result = reset_filemark(self.configuration, self.marks_base,
+                                      TEST_MARKS_FILE)
+        self.assertTrue(reset_result)
+        self.assertEqual(get_filemark(self.configuration, self.marks_base,
+                                      TEST_MARKS_FILE), 0)
+
+    def test_reset_filemark_invalid_mark_list(self):
+        """Test reset_filemark fails with invalid mark_list type"""
+        reset_result = reset_filemark(self.configuration, self.marks_base,
+                                      {'invalid': 'type'})
+        self.assertFalse(reset_result)
+
+    def test_reset_filemark_all_missing_dir(self):
+        """Test reset_filemark handles missing directory when mark_list=None"""
+        shutil.rmtree(self.marks_base)  # Ensure directory doesn't exist
+        reset_result = reset_filemark(self.configuration, self.marks_base)
+        self.assertFalse(reset_result)
+
+    def test_reset_filemark_partial_failure(self):
+        """Test reset_filemark with partial success"""
+        valid_mark = 'valid.mark'
+        # invalid_mark = os.path.join('restricted_dir', 'invalid.mark')
+        invalid_mark = 'invalid.mark'
+        invalid_path = os.path.join(self.marks_base, invalid_mark)
+        ensure_dirs_exist(invalid_path)
+
+        # Create both marks but remove access to the latter
+        update_filemark(self.configuration, self.marks_base, valid_mark,
+                        time.time())
+        update_filemark(self.configuration, self.marks_base, invalid_mark,
+                        time.time())
+        os.chmod(invalid_path, stat.S_IRUSR)  # Remove write permissions
+
+        reset_result = reset_filemark(self.configuration, self.marks_base,
+                                      [valid_mark, invalid_mark])
+        self.assertFalse(reset_result)  # Should fail due to partial failure
+
+        # Verify valid mark was still reset
+        self.assertEqual(get_filemark(self.configuration,
+                         self.marks_base, valid_mark), 0)
 
 
 if __name__ == '__main__':
