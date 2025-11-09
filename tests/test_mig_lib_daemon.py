@@ -85,8 +85,8 @@ class MigLibDaemon(MigTestCase):
         self.assertTrue(check_run())
 
     def test_interruptible_sleep(self):
-        """Register a run handler and verify it can be used for interruptible
-        sleep to let daemon be responsive when needed.
+        """Register a run handler and verify it can be used for idle looping.
+        That is, interruptible sleep to let daemon be responsive when needed.
         """
         # It's easier to test with alarm than the usual interrupt signal
         register_run_handler(self.configuration, run_signal=signal.SIGALRM)
@@ -97,7 +97,7 @@ class MigLibDaemon(MigTestCase):
         interruptible_sleep(self.configuration, max_secs, (check_run, ))
         self.assertTrue(check_run())
         end = time.time()
-        self.assertTrue(end < start + max_secs)
+        self.assertTrue(end - start < max_secs)
 
     def test_register_stop_handler_manual(self):
         """Register a stop handler and verify it can be manually overriden to
@@ -230,6 +230,13 @@ class MigLibDaemon(MigTestCase):
         start = time.time()
         interruptible_sleep(self.configuration, 0.01, [], nap_secs=0.05)
         self.assertTrue(time.time() - start < 0.05)
+
+        # Similar test with max_secs = nap_secs
+        start = time.time()
+        interruptible_sleep(self.configuration, 0.05, [], nap_secs=0.05)
+        # Takes 0.05 sec but completes normally
+        self.assertTrue(time.time() - start >= 0.05)
+        self.assertTrue(time.time() - start < 0.06)
 
         # Test zero and negative max_secs returns immediately
         start = time.time()
@@ -380,6 +387,84 @@ class MigLibDaemon(MigTestCase):
             self.logger.check_empty_and_reset()
         except RuntimeError as rte:
             self.assertTrue(SLEEP_ERR in str(rte), "failed sleep break exc")
+
+    def test_unregister_default_signals(self):
+        """Test unregister_signal_handlers with default target_signals"""
+        # First register handlers on default and custom signals
+        register_run_handler(self.configuration, signal.SIGCONT)
+        register_stop_handler(self.configuration, signal.SIGUSR2)
+        register_run_handler(self.configuration, signal.SIGINT)
+        register_stop_handler(self.configuration, signal.SIGALRM)
+        # Now unregister with overlapping default signals
+        unregister_signal_handlers(self.configuration, target_signals=None)
+
+        # Verify default signals were unregistered
+        self.assertEqual(signal.getsignal(signal.SIGCONT), signal.SIG_IGN)
+        self.assertEqual(signal.getsignal(signal.SIGUSR2), signal.SIG_IGN)
+        # Verify custom signals remain after default unregister
+        self.assertEqual(signal.getsignal(signal.SIGINT).__name__,
+                         'run_handler')
+        self.assertEqual(signal.getsignal(signal.SIGALRM).__name__,
+                         'stop_handler')
+
+    def test_register_default_signal(self):
+        """Test handler registration with default signal values"""
+        # Run handler should default to SIGCONT
+        register_run_handler(self.configuration)
+        self.assertEqual(signal.getsignal(signal.SIGCONT).__name__,
+                         'run_handler')
+
+        # Stop handler should default to SIGINT
+        register_stop_handler(self.configuration)
+        self.assertEqual(signal.getsignal(signal.SIGINT).__name__,
+                         'stop_handler')
+
+    def test_reset_unregistered_signals(self):
+        """Test unregister responds gracefully to previously unregistered signals"""
+        self.assertEqual(signal.getsignal(signal.SIGCONT), signal.SIG_IGN)
+        unregister_signal_handlers(self.configuration, [signal.SIGCONT])
+        self.assertEqual(signal.getsignal(signal.SIGCONT), signal.SIG_IGN)
+        # Should succeed even though not registered
+        unregister_signal_handlers(self.configuration, [signal.SIGCONT])
+        self.assertEqual(signal.getsignal(signal.SIGCONT), signal.SIG_IGN)
+
+    def test_interruptible_sleep_break_not_callable(self):
+        """Test interruptible_sleep ignores non-callable break conditions"""
+        # Contains both valid and invalid break check items
+        checks = [lambda: True, "not-callable"]
+        start = time.time()
+        result = interruptible_sleep(self.configuration, 0.1, checks)
+        duration = time.time() - start
+        # Should complete when valid condition returns True
+        self.assertTrue(duration < 0.05)
+
+    def test_interruptible_sleep_all_conditions_checked(self):
+        """Verify all break conditions are checked each sleep interval"""
+        counter = {'count': 0}
+        max_checks = 3
+
+        def counter_condition():
+            if counter['count'] < max_checks:
+                counter['count'] += 1
+            return counter['count'] >= max_checks
+
+        start = time.time()
+        interruptible_sleep(self.configuration, 5.0, [counter_condition],
+                            nap_secs=0.1)
+        duration = time.time() - start
+        # Should run for ~0.3 sec (3 naps of 0.1 sec)
+        self.assertAlmostEqual(duration, 0.3, delta=0.15)
+        self.assertEqual(counter['count'], max_checks)
+
+    def test_interruptible_sleep_naps_remaining(self):
+        """Test interruptible_sleep counts down remaining naps correctly"""
+        checks = [lambda: False]
+        start = time.time()
+        result = interruptible_sleep(
+            self.configuration, 0.25, checks, nap_secs=0.1)
+        duration = time.time() - start
+        # 2*0.1=0.2 < 0.25, 3*0.1=0.3 >0.25 -> should do 3rd nap with 0.05 actual sleep
+        self.assertAlmostEqual(duration, 0.25, delta=0.05)
 
     def test_reset_run(self):
         """Test reset_run helper"""
