@@ -79,6 +79,12 @@ class MigLibJanitor(MigTestCase):
         user_dict = distinguished_name_to_user(user_id)
         self._write_user_db({user_id: user_dict})
 
+    def _prepare_test_file(self, path, times=None, content='test'):
+        """Prepare file in path with optional times for timestamp"""
+        with open(path, 'w') as fp:
+            fp.write(content)
+        os.utime(path, times)
+
     def before_each(self):
         """Set up test configuration and reset state before each test"""
         self.configuration.site_enable_jobs = True
@@ -130,100 +136,97 @@ class MigLibJanitor(MigTestCase):
         stale_filenames = ['tmp_expired.txt', 'no_grid_jobs.123']
         for name in valid_filenames + stale_filenames:
             path = os.path.join(self.configuration.mig_system_files, name)
-            with open(path, 'w') as fp:
-                fp.write('test')
-            os.utime(path, (test_time, test_time))
-            if name in valid_filenames:
-                # Make one file fresh
-                os.utime(path, None)
+            self._prepare_test_file(path, (test_time, test_time))
+            self.assertTrue(os.path.exists(path))
+
         handled = clean_mig_system_files(self.configuration)
         self.assertEqual(handled, len(stale_filenames))
         self.assertEqual(len(os.listdir(self.configuration.mig_system_files)),
                          len(valid_filenames))
+        for name in valid_filenames:
+            path = os.path.join(self.configuration.mig_system_files, name)
+            self.assertTrue(os.path.exists(path))
+        for name in stale_filenames:
+            path = os.path.join(self.configuration.mig_system_files, name)
+            self.assertFalse(os.path.exists(path))
 
     def test_clean_webserver_home(self):
         """Test clean webserver files helper"""
-        test_time = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
+        stale_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
+        test_dir = self.configuration.webserver_home
         valid_filename = 'fresh.log'
         stale_filename = 'stale.log'
-        for name in [valid_filename, stale_filename]:
-            path = os.path.join(self.configuration.webserver_home, name)
-            with open(path, 'w') as fp:
-                fp.write('test')
-            os.utime(path, (test_time, test_time))
-            if name == valid_filename:
-                os.utime(path, None)
+        valid_path = os.path.join(test_dir, valid_filename)
+        stale_path = os.path.join(test_dir, stale_filename)
+        self._prepare_test_file(valid_path)
+        self._prepare_test_file(stale_path, (stale_stamp, stale_stamp))
+
+        self.assertTrue(os.path.exists(valid_path))
+        self.assertTrue(os.path.exists(stale_path))
         handled = clean_webserver_home(self.configuration)
         self.assertEqual(handled, 1)
-        self.assertFalse(os.path.exists(os.path.join(
-            self.configuration.webserver_home, stale_filename)))
-        self.assertTrue(os.path.exists(os.path.join(
-            self.configuration.webserver_home, valid_filename)))
+        self.assertTrue(os.path.exists(valid_path))
+        self.assertFalse(os.path.exists(stale_path))
 
     def test_clean_no_job_helpers(self):
         """Test clean dummy job helper files"""
-        dummy_job = os.path.join(self.configuration.user_home,
-                                 "no_grid_jobs_in_grid_scheduler")
-        test_time = time.time() - EXPIRE_DUMMY_JOBS_DAYS * SECS_PER_DAY - 1
+        stale_stamp = time.time() - EXPIRE_DUMMY_JOBS_DAYS * SECS_PER_DAY - 1
+        test_dir = os.path.join(self.configuration.user_home,
+                                "no_grid_jobs_in_grid_scheduler")
         valid_filename = 'alive.txt'
         stale_filename = 'expired.txt'
-        for name in [valid_filename, stale_filename]:
-            path = os.path.join(dummy_job, name)
-            with open(path, 'w') as fp:
-                fp.write('test')
-            os.utime(path, (test_time, test_time))
-            if name == valid_filename:
-                os.utime(path, None)
+        valid_path = os.path.join(test_dir, valid_filename)
+        stale_path = os.path.join(test_dir, stale_filename)
+        self._prepare_test_file(valid_path)
+        self._prepare_test_file(stale_path, (stale_stamp, stale_stamp))
+
+        self.assertTrue(os.path.exists(stale_path))
+        self.assertTrue(os.path.exists(valid_path))
         handled = clean_no_job_helpers(self.configuration)
         self.assertEqual(handled, 1)
-        self.assertFalse(os.path.exists(os.path.join(dummy_job,
-                                                     stale_filename)))
-        self.assertTrue(os.path.exists(os.path.join(dummy_job,
-                                                    valid_filename)))
+        self.assertFalse(os.path.exists(stale_path))
+        self.assertTrue(os.path.exists(valid_path))
 
     def test_clean_twofactor_sessions(self):
         """Test clean twofactor sessions"""
-        test_time = time.time() - EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY - 1
+        stale_stamp = time.time() - EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY - 1
+        test_dir = self.configuration.twofactor_home
         valid_filename = 'current'
         stale_filename = 'expired'
-        for name in [valid_filename, stale_filename]:
-            path = os.path.join(self.configuration.twofactor_home, name)
-            with open(path, 'w') as fp:
-                fp.write('test')
-            os.utime(path, (test_time, test_time))
-            if name == valid_filename:
-                os.utime(path, None)
+        valid_path = os.path.join(test_dir, valid_filename)
+        stale_path = os.path.join(test_dir, stale_filename)
+        self._prepare_test_file(valid_path)
+        self._prepare_test_file(stale_path, (stale_stamp, stale_stamp))
+
+        self.assertTrue(os.path.exists(stale_path))
+        self.assertTrue(os.path.exists(valid_path))
         handled = clean_twofactor_sessions(self.configuration)
         self.assertEqual(handled, 1)
-        self.assertFalse(os.path.exists(os.path.join(
-            self.configuration.twofactor_home, stale_filename)))
-        self.assertTrue(os.path.exists(os.path.join(
-            self.configuration.twofactor_home, valid_filename)))
+        self.assertFalse(os.path.exists(stale_path))
+        self.assertTrue(os.path.exists(valid_path))
 
     def test_clean_sessid_to_mrls_link_home(self):
         """Test clean session MRSL link files"""
-        test_time = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
+        stale_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
+        test_dir = self.configuration.sessid_to_mrsl_link_home
         valid_filename = 'active_session_link'
         stale_filename = 'expired_session_link'
-        for name in [valid_filename, stale_filename]:
-            path = os.path.join(
-                self.configuration.sessid_to_mrsl_link_home, name)
-            with open(path, 'w') as fp:
-                fp.write('test')
-            os.utime(path, (test_time, test_time))
-            if name == valid_filename:
-                os.utime(path, None)
+        valid_path = os.path.join(test_dir, valid_filename)
+        stale_path = os.path.join(test_dir, stale_filename)
+        self._prepare_test_file(valid_path)
+        self._prepare_test_file(stale_path, (stale_stamp, stale_stamp))
+
+        self.assertTrue(os.path.exists(stale_path))
+        self.assertTrue(os.path.exists(valid_path))
         handled = clean_sessid_to_mrls_link_home(self.configuration)
         self.assertEqual(handled, 1)
-        self.assertFalse(os.path.exists(os.path.join(
-            self.configuration.sessid_to_mrsl_link_home, stale_filename)))
-        self.assertTrue(os.path.exists(os.path.join(
-            self.configuration.sessid_to_mrsl_link_home, valid_filename)))
+        self.assertFalse(os.path.exists(stale_path))
+        self.assertTrue(os.path.exists(valid_path))
 
     def test_handle_state_cleanup(self):
         """Test combined state cleanup"""
         # Create a stale file in each location to clean up
-        test_time = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
+        stale_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
         mig_path = os.path.join(
             self.configuration.mig_system_files, 'tmpAbCd1234')
         web_path = os.path.join(self.configuration.webserver_home, 'stale.txt')
@@ -232,31 +235,35 @@ class MigLibJanitor(MigTestCase):
                          "no_grid_jobs_in_grid_scheduler"),
             'sleep.job'
         )
-        for path in [mig_path, web_path, empty_job_path]:
+        stale_paths = [mig_path, web_path, empty_job_path]
+        for path in stale_paths:
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, 'w') as fp:
-                fp.write('test')
-            os.utime(path, (test_time, test_time))
+            self._prepare_test_file(path, (stale_stamp, stale_stamp))
+            self.assertTrue(os.path.exists(path))
 
         handled = handle_state_cleanup(self.configuration)
         self.assertEqual(handled, 3)
+        for path in stale_paths:
+            self.assertFalse(os.path.exists(path))
 
     def test_handle_session_cleanup(self):
         """Test combined session cleanup"""
-        test_time = time.time() - max(EXPIRE_STATE_DAYS,
-                                      EXPIRE_TWOFACTOR_DAYS) * SECS_PER_DAY - 1
+        stale_stamp = time.time() - max(EXPIRE_STATE_DAYS,
+                                        EXPIRE_TWOFACTOR_DAYS) * SECS_PER_DAY - 1
         session_path = os.path.join(
             self.configuration.sessid_to_mrsl_link_home, 'expired.txt')
         twofactor_path = os.path.join(
             self.configuration.twofactor_home, 'expired.txt')
-        for path in [session_path, twofactor_path]:
+        test_paths = [session_path, twofactor_path]
+        for path in test_paths:
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, 'w') as fp:
-                fp.write('test')
-            os.utime(path, (test_time, test_time))
+            self._prepare_test_file(path, (stale_stamp, stale_stamp))
+            self.assertTrue(os.path.exists(path))
 
         handled = handle_session_cleanup(self.configuration)
         self.assertEqual(handled, 2)
+        for path in test_paths:
+            self.assertFalse(os.path.exists(path))
 
     def test_manage_pending_user_request(self):
         """Test pending user request management"""
@@ -361,21 +368,16 @@ class MigLibJanitor(MigTestCase):
 
     def test_handle_janitor_tasks_full(self):
         """Test full janitor task scheduler"""
-        # Prepare environment with pending tasks
-        mig_path = os.path.join(
-            self.configuration.mig_system_files, 'stale.txt')
-        with open(mig_path, 'w') as fp:
-            fp.write('test')
-        os.utime(mig_path,
-                 (time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1,
-                  time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1))
-
+        # Prepare environment with pending tasks of each kind
+        mig_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
+        mig_path = os.path.join(self.configuration.mig_system_files,
+                                'tmp-stale.txt')
         two_path = os.path.join(self.configuration.twofactor_home, 'stale.txt')
-        with open(two_path, 'w') as fp:
-            fp.write('test')
-        os.utime(two_path,
-                 (time.time() - EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY - 1,
-                  time.time() - EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY - 1))
+        two_stamp = time.time() - EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY - 1
+        stale_tests = ((mig_path, mig_stamp), (two_path, two_stamp), )
+        for (stale_path, stale_stamp) in stale_tests:
+            self._prepare_test_file(stale_path, (stale_stamp, stale_stamp))
+            self.assertTrue(os.path.exists(stale_path))
 
         req_id = 'expired_request'
         req_dict = {
@@ -403,10 +405,12 @@ class MigLibJanitor(MigTestCase):
         task_triggers.clear()
 
         # Run task handler and verify all tasks executed
-        # TODO: rework to handle expire before stale to avoid duplicate here
+        # TODO: rework to handle expire before stale to avoid req tripled here
         handled = handle_janitor_tasks(self.configuration, now=now)
         # self.assertEqual(handled, 3)  # state+session+requests
-        self.assertEqual(handled, 4)  # state (expired+stale)+session+requests
+        self.assertEqual(handled, 5)  # state+session+3*request
+        for (stale_path, _) in stale_tests:
+            self.assertFalse(os.path.exists(stale_path), stale_path)
 
     def test__clean_stale_state_files(self):
         """Test core stale state file cleaner helper"""
@@ -414,20 +418,21 @@ class MigLibJanitor(MigTestCase):
         patterns = ['tmp_*', 'session_*']
 
         # Create test files (fresh, expired, unexpired, non-matching)
-        test_files = [
-            ('tmp_fresh.txt', -1),
+        test_remove = [
             ('tmp_expired.txt', EXPIRE_STATE_DAYS * SECS_PER_DAY + 1),
-            ('session_valid.dat', 0),
             ('session_old.dat', EXPIRE_STATE_DAYS * SECS_PER_DAY + 1),
+        ]
+        test_keep = [
+            ('tmp_fresh.txt', -1),
+            ('session_valid.dat', 0),
             ('other_file.log', EXPIRE_STATE_DAYS * SECS_PER_DAY + 1),
         ]
 
-        for (name, age_diff) in test_files:
+        for (name, age_diff) in test_keep + test_remove:
             path = os.path.join(test_dir, name)
-            with open(path, 'w') as fp:
-                fp.write('test')
-            mtime = time.time() - age_diff
-            os.utime(path, (mtime, mtime))
+            stamp = time.time() - age_diff
+            self._prepare_test_file(path, (stamp, stamp))
+            self.assertTrue(os.path.exists(path))
 
         handled = _clean_stale_state_files(
             self.configuration,
@@ -438,12 +443,12 @@ class MigLibJanitor(MigTestCase):
             include_dotfiles=False
         )
         self.assertEqual(handled, 2)  # tmp_expired.txt + session_old.dat
-        self.assertTrue(os.path.exists(os.path.join(test_dir,
-                                                    'tmp_fresh.txt')))
-        self.assertFalse(os.path.exists(os.path.join(test_dir,
-                                                     'tmp_expired.txt')))
-        self.assertTrue(os.path.exists(os.path.join(test_dir,
-                                                    'other_file.log')))
+        for (name, _) in test_keep:
+            path = os.path.join(test_dir, name)
+            self.assertTrue(os.path.exists(path))
+        for (name, _) in test_remove:
+            path = os.path.join(test_dir, name)
+            self.assertFalse(os.path.exists(path))
 
     def test_manage_single_req_invalid(self):
         """Test request handling for invalid request"""
@@ -573,11 +578,8 @@ class MigLibJanitor(MigTestCase):
 
         # Dot file
         dot_path = os.path.join(test_dir, '.hidden.tmp')
-        with open(dot_path, 'w') as fp:
-            fp.write('test')
-        os.utime(dot_path,
-                 (time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1,
-                  time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1))
+        stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
+        self._prepare_test_file(dot_path, (stamp, stamp))
 
         # Directory
         dir_path = os.path.join(test_dir, 'subdir')
@@ -604,7 +606,7 @@ class MigLibJanitor(MigTestCase):
         )
         self.assertEqual(handled, 1)
 
-    @unittest.skip("TODO: enable once unpickling error handling is improved")
+    @ unittest.skip("TODO: enable once unpickling error handling is improved")
     def test_manage_single_req_corrupted_file(self):
         """Test manage_single_req with corrupted request file"""
         req_id = 'corrupted_req'
@@ -757,7 +759,7 @@ class MigLibJanitor(MigTestCase):
         self.assertEqual(_lookup_last_run(
             self.configuration, "cache-updates"), last_cache_update)
 
-    @unittest.skip("TODO: enable once cleaner has improved error handling")
+    @ unittest.skip("TODO: enable once cleaner has improved error handling")
     def test_clean_stale_files_nonexistent_dir(self):
         """Test state cleaner with invalid directory path"""
         target_dir = os.path.join(self.configuration.mig_system_files,
@@ -771,19 +773,15 @@ class MigLibJanitor(MigTestCase):
         )
         self.assertEqual(handled, 0)
 
-    @unittest.skip("TODO: enable once cleaner has improved error handling")
+    @ unittest.skip("TODO: enable once cleaner has improved error handling")
     def test_clean_stale_files_permission_error(self):
         """Test state cleaner handles permission errors gracefully"""
         test_dir = self.temppath("readonly_dir", ensure_dir=True)
         os.chmod(test_dir, 0o444)  # Read-only
 
-        test_file = os.path.join(test_dir, "test.txt")
-        with open(test_file, "w") as fh:
-            fh.write("content")
-
-        # Make file appear expired
-        old_time = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
-        os.utime(test_file, (old_time, old_time))
+        test_path = os.path.join(test_dir, "test.txt")
+        stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
+        self._prepare_test_file(test_path, (stamp, stamp))
 
         with self.assertLogs(level='ERROR'):
             handled = _clean_stale_state_files(
@@ -852,17 +850,9 @@ class MigLibJanitor(MigTestCase):
 
         for (name, age_days) in clean_pairs:
             path = os.path.join(test_dir, name)
-            with open(path, 'w') as fp:
-                fp.write('test')
-            mtime = time.time() - age_days * SECS_PER_DAY
-            os.utime(path, (mtime, mtime))
-
-        self.assertTrue(os.path.exists(
-            os.path.join(test_dir, 'should_keep_recent.log')))
-        self.assertTrue(os.path.exists(
-            os.path.join(test_dir, 'should_remove_stale.tmp')))
-        self.assertTrue(os.path.exists(
-            os.path.join(test_dir, 'should_keep_other.pck')))
+            stamp = time.time() - age_days * SECS_PER_DAY
+            self._prepare_test_file(path, (stamp, stamp))
+            self.assertTrue(os.path.exists(path))
 
         handled = _clean_stale_state_files(
             self.configuration,
