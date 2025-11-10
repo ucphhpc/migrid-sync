@@ -382,6 +382,7 @@ def generate_confs(
     enable_jupyter=False,
     enable_cloud=False,
     enable_hsts=True,
+    enable_reqtimeout=False,
     enable_vhost_certs=False,
     enable_verify_certs=False,
     enable_seafile=False,
@@ -711,6 +712,7 @@ def _generate_confs_prepare(
     enable_jupyter,
     enable_cloud,
     enable_hsts,
+    enable_reqtimeout,
     enable_vhost_certs,
     enable_verify_certs,
     enable_seafile,
@@ -970,6 +972,7 @@ def _generate_confs_prepare(
     user_dict['__ENABLE_JUPYTER__'] = "%s" % enable_jupyter
     user_dict['__ENABLE_CLOUD__'] = "%s" % enable_cloud
     user_dict['__ENABLE_HSTS__'] = "%s" % enable_hsts
+    user_dict['__ENABLE_REQTIMEOUT__'] = "%s" % enable_reqtimeout
     user_dict['__ENABLE_VHOST_CERTS__'] = "%s" % enable_vhost_certs
     user_dict['__ENABLE_VERIFY_CERTS__'] = "%s" % enable_verify_certs
     user_dict['__ENABLE_SEAFILE__'] = "%s" % enable_seafile
@@ -1364,6 +1367,12 @@ cert, oid and sid based https!
         user_dict['__HSTS_COMMENTED__'] = ''
     else:
         user_dict['__HSTS_COMMENTED__'] = '#'
+
+    # Enable reqtimeout module to limit resource use if explicitly requested
+    if user_dict['__ENABLE_REQTIMEOUT__'].lower() == 'true':
+        user_dict['__REQTIMEOUT_COMMENTED__'] = ''
+    else:
+        user_dict['__REQTIMEOUT_COMMENTED__'] = '#'
 
     # Enable vhost-specific certificates only if explicitly requested
     if user_dict['__ENABLE_VHOST_CERTS__'].lower() == 'true':
