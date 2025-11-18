@@ -197,8 +197,7 @@ class TestMigSharedSafeInput(MigTestCase):
     def test_valid_path_unicode_normalization(self):
         """Test unicode decomposition handling"""
         # Make sure unicode normalization doesn't raise exception
-        result = valid_path(self.DECOMPOSED_UNICODE)
-        self.assertEqual(result, None)
+        self.assertEqual(valid_path(self.DECOMPOSED_UNICODE), None)
 
 
 class TestMigSharedSafeInput__legacy(MigTestCase):
