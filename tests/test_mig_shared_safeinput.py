@@ -164,6 +164,43 @@ class TestMigSharedSafeInput(MigTestCase):
 
     # NOTE: indirect tests for __valid_contents using some of its wrappers
 
+    def test_valid_printable_lengths(self):
+        """Test printable character validation"""
+        # Valid cases
+        valid_printable(self.PRINTABLE_CHARS, min_length=5)
+
+        # Length violations
+        with self.assertRaises(InputException):
+            valid_printable("a", min_length=2)
+
+        with self.assertRaises(InputException):
+            valid_printable("a" * 201, max_length=200)
+
+    def test_valid_alphanumeric_with_extras(self):
+        """Test alphanumeric validation with extra characters"""
+        # Valid cases
+        valid_alphanumeric(self.VALID_EXTRA_CHARS_NAME, extra_chars="-_")
+
+        # Invalid characters
+        with self.assertRaises(InputException):
+            valid_alphanumeric(self.INVALID_DOLLAR_NAME)
+
+    def test_valid_commonname_accent_handling(self):
+        """Test accented character handling validation"""
+        # Common accents should pass with COMMON_ACCENTED
+        valid_commonname(self.ACCENTED_VALID)
+
+        # Exotic accents should fail with NO_ACCENTED
+        with self.assertRaises(InputException):
+            valid_printable(self.ACCENTED_INVALID_EXOTIC)
+
+    def test_valid_path_unicode_normalization(self):
+        """Test unicode decomposition handling"""
+        # Make sure unicode normalization doesn't raise exception
+        result = valid_path(self.DECOMPOSED_UNICODE)
+        self.assertEqual(result, None)
+
+
 class TestMigSharedSafeInput__legacy(MigTestCase):
     """Legacy tests for safeinput module self-checks"""
 
