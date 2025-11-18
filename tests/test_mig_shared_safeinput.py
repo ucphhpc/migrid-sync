@@ -153,7 +153,7 @@ class TestMigSharedSafeInput(MigTestCase):
         self.assertEqual(result, self.APOSTROPHE_FULL_NAME_HEX)
 
 
-class TestMigSharedBase__legacy(MigTestCase):
+class TestMigSharedSafeInput__legacy(MigTestCase):
     """Run mig.shared.safeinput legacy self-test"""
 
     # TODO: migrate all legacy self-check functionality into the above?
