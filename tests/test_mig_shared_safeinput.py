@@ -2,8 +2,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# addheader - add license header to all code modules.
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# test_mig_shared_base - unit tests for shared base helpers
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -27,9 +27,8 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
+import base64
 import codecs
-import importlib
-import os
 import sys
 from past.builtins import basestring, unicode
 
@@ -53,23 +52,26 @@ def is_string_of_unicode(value):
     return type(value) == type(u'')
 
 
-class MigSharedSafeinput(MigTestCase):
+def _hex_wrap(val):
+    """Insert a clearly marked hex representation of val"""
+    # Please keep aligned with helper in mig/shared/functionality/autocreate.py
+    return ".X%s" % base64.b16encode(val.encode('utf8')).decode('utf8')
 
-    def test_existing_main(self):
-        def raise_on_error_exit(exit_code):
-            if exit_code != 0:
-                if raise_on_error_exit.last_print is not None:
-                    identifying_message = raise_on_error_exit.last_print
-                else:
-                    identifying_message = 'unknown'
-                raise AssertionError(
-                    'failure in unittest/testcore: %s' % (identifying_message,))
-        raise_on_error_exit.last_print = None
 
-        def record_last_print(value):
-            raise_on_error_exit.last_print = value
+class TestMigSharedSafeInput(MigTestCase):
+    """Test mig.shared.safeinput functions"""
 
-        safeinput_main(_exit=raise_on_error_exit, _print=record_last_print)
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def before_each(self):
+        """Setup fake configuration before each test."""
+        return
+
+    APOSTROPHE_FULL_NAME = "John O'Connor"
+    APOSTROPHE_FULL_NAME_SKIP = "John OConnor"
+    APOSTROPHE_FULL_NAME_HEX = "John O.X27Connor"
 
     COMMONNAME_PERMITTED = (
         'Firstname Lastname',
@@ -85,6 +87,7 @@ class MigSharedSafeinput(MigTestCase):
         'Test HTML Invalid <code/>')
 
     def test_commonname_valid(self):
+        """Test commonname_valid with on set of test users"""
         for test_cn in self.COMMONNAME_PERMITTED:
             saw_raise = False
             try:
@@ -102,6 +105,7 @@ class MigSharedSafeinput(MigTestCase):
             self.assertTrue(saw_raise)
 
     def test_commonname_filter(self):
+        """Test filter_commonname on the set of test users"""
         for test_cn in self.COMMONNAME_PERMITTED:
             test_cn_unicode = as_string_of_unicode(test_cn)
             filtered_cn = filter_commonname(test_cn)
@@ -111,6 +115,65 @@ class MigSharedSafeinput(MigTestCase):
             test_cn_unicode = as_string_of_unicode(test_cn)
             filtered_cn = filter_commonname(test_cn)
             self.assertNotEqual(filtered_cn, test_cn_unicode)
+            self.assertTrue(len(filtered_cn) < len(test_cn_unicode))
+            # With default skip all chars in filtered_cn must be in original
+            overlap = [i for i in filtered_cn if i in test_cn_unicode]
+            self.assertEqual(''.join(overlap), filtered_cn)
+
+    def test_commonname_filter_hexlify_illegal(self):
+        """Test filter_commonname on the set of test users with hexlify"""
+        for test_cn in self.COMMONNAME_PERMITTED:
+            test_cn_unicode = as_string_of_unicode(test_cn)
+            filtered_cn = filter_commonname(test_cn, illegal_handler=_hex_wrap)
+            # Valid should remain unchanged with hexlify illegal_handler
+            self.assertEqual(filtered_cn, test_cn_unicode)
+
+        for test_cn in self.COMMONNAME_PROHIBITED:
+            test_cn_unicode = as_string_of_unicode(test_cn)
+            filtered_cn = filter_commonname(test_cn, illegal_handler=_hex_wrap)
+            # Invalid should be replaced with hexlify illegal_handler
+            self.assertNotEqual(filtered_cn, test_cn_unicode)
+            self.assertIn('.X', filtered_cn)
+            self.assertTrue(len(filtered_cn) > len(test_cn_unicode))
+
+    def test_filter_commonname_apostrophe_name_skip_illegal(self):
+        """Test filter_commonname with skip and apostrophe in name"""
+        result = filter_commonname(self.APOSTROPHE_FULL_NAME,
+                                   illegal_handler=None)
+        self.assertNotEqual(result, self.APOSTROPHE_FULL_NAME)
+        self.assertNotIn("'", result)
+        self.assertEqual(result, self.APOSTROPHE_FULL_NAME_SKIP)
+
+    def test_filter_commonname_apostrophe_name_hexlify_illegal(self):
+        """Test filter_commonname with hexlify and apostrophe in name"""
+        result = filter_commonname(self.APOSTROPHE_FULL_NAME,
+                                   illegal_handler=_hex_wrap)
+        self.assertNotEqual(result, self.APOSTROPHE_FULL_NAME)
+        self.assertNotIn("'", result)
+        self.assertEqual(result, self.APOSTROPHE_FULL_NAME_HEX)
+
+
+class TestMigSharedBase__legacy(MigTestCase):
+    """Run mig.shared.safeinput legacy self-test"""
+
+    # TODO: migrate all legacy self-check functionality into the above?
+    def test_existing_main(self):
+        """Run built-in self-tests and check output"""
+        def raise_on_error_exit(exit_code):
+            if exit_code != 0:
+                if raise_on_error_exit.last_print is not None:
+                    identifying_message = raise_on_error_exit.last_print
+                else:
+                    identifying_message = 'unknown'
+                raise AssertionError(
+                    'failure in unittest/testcore: %s' % (identifying_message,))
+        raise_on_error_exit.last_print = None
+
+        def record_last_print(value):
+            """Keep track of printed output"""
+            raise_on_error_exit.last_print = value
+
+        safeinput_main(_exit=raise_on_error_exit, _print=record_last_print)
 
 
 if __name__ == '__main__':
