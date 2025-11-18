@@ -2,7 +2,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# test_mig_shared_base - unit tests for shared base helpers
+# test_mig_shared_safeinput - unit tests for shared safeinput validation
 # Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -35,7 +35,8 @@ from past.builtins import basestring, unicode
 from tests.support import MigTestCase, testmain
 
 from mig.shared.safeinput import main as safeinput_main, InputException, \
-    filter_commonname, valid_commonname
+    filter_commonname, valid_alphanumeric, valid_commonname, valid_path, \
+    valid_printable, VALID_NAME_CHARACTERS
 
 PY2 = sys.version_info[0] == 2
 
@@ -61,14 +62,15 @@ def _hex_wrap(val):
 class TestMigSharedSafeInput(MigTestCase):
     """Test mig.shared.safeinput functions"""
 
-    def _provide_configuration(self):
-        """Set up isolated test configuration and logger for the tests"""
-        return 'testconfig'
+    # Core functionality test constants
+    INVALID_DOLLAR_NAME = "invalid$name"
+    VALID_EXTRA_CHARS_NAME = "user-name_123"
+    PRINTABLE_CHARS = "abc123!@#"
+    ACCENTED_VALID = "Renée Müller"
+    ACCENTED_INVALID_EXOTIC = "Źaćâř"
+    DECOMPOSED_UNICODE = u"å"  # a + combining ring above
 
-    def before_each(self):
-        """Setup fake configuration before each test."""
-        return
-
+    # Commonname specific test constants
     APOSTROPHE_FULL_NAME = "John O'Connor"
     APOSTROPHE_FULL_NAME_SKIP = "John OConnor"
     APOSTROPHE_FULL_NAME_HEX = "John O.X27Connor"
@@ -86,8 +88,16 @@ class TestMigSharedSafeInput(MigTestCase):
         'Test Invalid ?',
         'Test HTML Invalid <code/>')
 
+    def _provide_configuration(self):
+        """Provide test configuration"""
+        return 'testconfig'
+
+    def before_each(self):
+        """Test case setup handler"""
+        return
+
     def test_commonname_valid(self):
-        """Test commonname_valid with on set of test users"""
+        """Test valid_commonname with acceptable and prohibited names"""
         for test_cn in self.COMMONNAME_PERMITTED:
             saw_raise = False
             try:
@@ -105,7 +115,7 @@ class TestMigSharedSafeInput(MigTestCase):
             self.assertTrue(saw_raise)
 
     def test_commonname_filter(self):
-        """Test filter_commonname on the set of test users"""
+        """Test filter_commonname name sanitization"""
         for test_cn in self.COMMONNAME_PERMITTED:
             test_cn_unicode = as_string_of_unicode(test_cn)
             filtered_cn = filter_commonname(test_cn)
@@ -121,7 +131,7 @@ class TestMigSharedSafeInput(MigTestCase):
             self.assertEqual(''.join(overlap), filtered_cn)
 
     def test_commonname_filter_hexlify_illegal(self):
-        """Test filter_commonname on the set of test users with hexlify"""
+        """Test filter_commonname with hex encoding of illegal chars"""
         for test_cn in self.COMMONNAME_PERMITTED:
             test_cn_unicode = as_string_of_unicode(test_cn)
             filtered_cn = filter_commonname(test_cn, illegal_handler=_hex_wrap)
@@ -137,7 +147,7 @@ class TestMigSharedSafeInput(MigTestCase):
             self.assertTrue(len(filtered_cn) > len(test_cn_unicode))
 
     def test_filter_commonname_apostrophe_name_skip_illegal(self):
-        """Test filter_commonname with skip and apostrophe in name"""
+        """Test apostrophe handling with skip illegal_handler"""
         result = filter_commonname(self.APOSTROPHE_FULL_NAME,
                                    illegal_handler=None)
         self.assertNotEqual(result, self.APOSTROPHE_FULL_NAME)
@@ -145,16 +155,17 @@ class TestMigSharedSafeInput(MigTestCase):
         self.assertEqual(result, self.APOSTROPHE_FULL_NAME_SKIP)
 
     def test_filter_commonname_apostrophe_name_hexlify_illegal(self):
-        """Test filter_commonname with hexlify and apostrophe in name"""
+        """Test apostrophe handling with hex encode illegal_handler"""
         result = filter_commonname(self.APOSTROPHE_FULL_NAME,
                                    illegal_handler=_hex_wrap)
         self.assertNotEqual(result, self.APOSTROPHE_FULL_NAME)
         self.assertNotIn("'", result)
         self.assertEqual(result, self.APOSTROPHE_FULL_NAME_HEX)
 
+    # NOTE: indirect tests for __valid_contents using some of its wrappers
 
 class TestMigSharedSafeInput__legacy(MigTestCase):
-    """Run mig.shared.safeinput legacy self-test"""
+    """Legacy tests for safeinput module self-checks"""
 
     # TODO: migrate all legacy self-check functionality into the above?
     def test_existing_main(self):
