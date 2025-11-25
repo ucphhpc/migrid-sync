@@ -533,6 +533,7 @@ def generate_confs(
     gdp_id_scramble='safe_hash',
     gdp_path_scramble='safe_encrypt',
     quota_backend='lustre',
+    quota_update_interval=3600,
     quota_user_limit=(1024**4),
     quota_vgrid_limit=(1024**4),
     ca_fqdn='',
@@ -859,6 +860,7 @@ def _generate_confs_prepare(
     gdp_id_scramble,
     gdp_path_scramble,
     quota_backend,
+    quota_update_interval,
     quota_user_limit,
     quota_vgrid_limit,
     ca_fqdn,
@@ -1117,6 +1119,7 @@ def _generate_confs_prepare(
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
     user_dict['__STATUS_ALIAS_HTTPS_LISTEN__'] = listen_clause
     user_dict['__QUOTA_BACKEND__'] = quota_backend
+    user_dict['__QUOTA_UPDATE_INTERVAL__'] = "%s" % quota_update_interval
     user_dict['__QUOTA_USER_LIMIT__'] = "%s" % quota_user_limit
     user_dict['__QUOTA_VGRID_LIMIT__'] = "%s" % quota_vgrid_limit
     user_dict['__CA_FQDN__'] = ca_fqdn
@@ -2343,7 +2346,6 @@ def _generate_confs_writefiles(options, user_dict, insert_list=[], cleanup_list=
         ("migacctexpire-template.sh.cronjob", "migacctexpire"),
         ("migverifyarchives-template.sh.cronjob", "migverifyarchives"),
         ("migstats-template.sh.cronjob", "migstats"),
-        ("miglustrequota-template.sh.cronjob", "miglustrequota"),
     ]
     overrides_out_name = {
         'apache.initd': _override_apache_initd
@@ -2522,11 +2524,11 @@ sudo cp %(destination)s/mig{stateclean,errors,sftpmon,importdoi,notifyexpire} \\
         /etc/cron.daily/
 until the janitor service is ready to take care of those tasks.
 
-The migcheckssl, migverifyarchives, migstats, migacctexpire and miglustrequota
+The migcheckssl, migverifyarchives, migstats and migacctexpire
 files are cron scripts to automatically check for LetsEncrypt certificate
 renewal, run pending archive verification before sending a copy to tape, save
-various usage stats, generate account expire stats and create/update lustre
-quota.
+various usage stats and generate account expire stats.
+
 You can install them with:
 chmod 700 %(destination)s/migcheckssl
 sudo cp %(destination)s/migcheckssl /etc/cron.daily/
@@ -2536,8 +2538,6 @@ chmod 700 %(destination)s/migstats
 sudo cp %(destination)s/migstats /etc/cron.weekly/
 chmod 700 %(destination)s/migacctexpire
 sudo cp %(destination)s/migacctexpire /etc/cron.monthly/
-chmod 700 %(destination)s/miglustrequota
-sudo cp %(destination)s/miglustrequota /etc/cron.hourly/
 
 ''' % instructions_dict
     instructions_path = os.path.join(

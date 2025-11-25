@@ -397,6 +397,7 @@ def fix_missing(config_file, verbose=True):
                          'vgrid_recipes_home': '.workflow_recipes_home/',
                          'vgrid_history_home': '.workflow_history_home/'}
     quota_section = {'backend': 'lustre',
+                     'update_interval': 3600,
                      'user_limit': 1024**4,
                      'vgrid_limit': 1024**4}
     defaults = {
@@ -2002,6 +2003,9 @@ location.""" % self.config_file)
         if config.has_option('QUOTA', 'backend'):
             self.quota_backend = config.get(
                 'QUOTA', 'backend')
+        if config.has_option('QUOTA', 'update_interval'):
+            self.quota_update_interval = config.getint(
+                'QUOTA', 'update_interval')
         if config.has_option('QUOTA', 'user_limit'):
             self.quota_user_limit = config.getint(
                 'QUOTA', 'user_limit')

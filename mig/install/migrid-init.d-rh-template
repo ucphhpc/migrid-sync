@@ -35,6 +35,7 @@
 # processname: grid_notify.py
 # processname: grid_imnotify.py
 # processname: grid_vmproxy.py
+# processname: grid_quota.py
 # processname: sshd
 # config: /etc/sysconfig/migrid
 # 
@@ -74,6 +75,9 @@ if [ -z "$PYTHONPATH" ]; then
 else
     export PYTHONPATH=${MIG_PATH}:$PYTHONPATH
 fi
+# Make sure '/usr/local/(s)bin' is in path and force lookup order
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 # you probably do not want to modify these...
 PID_DIR=${PID_DIR:-/var/run}
 MIG_LOG=${MIG_STATE}/log
@@ -93,13 +97,14 @@ MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
 MIG_NOTIFY=${MIG_CODE}/server/grid_notify.py
 MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
 MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
+MIG_QUOTA=${MIG_CODE}/server/grid_quota.py
 MIG_CHKUSERROOT=${MIG_CODE}/server/chkuserroot.py
 MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
 
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
     echo "where daemon is left out for all or given along with DAEMON as one of the following"
-    echo "(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|all)"
 }
 
 check_enabled() {
@@ -353,6 +358,21 @@ start_vmproxy() {
     [ $RET2 -ne 0 ] && echo "Warning: vmproxy not started."
     echo
 }
+start_quota() {
+    check_enabled "quota" || return
+    DAEMON_PATH=${MIG_QUOTA}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG quota daemon: $SHORT_NAME"
+    daemon --user root --pidfile ${PID_FILE} \
+       "${DAEMON_PATH} >> ${MIG_LOG}/quota.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
+    RET2=$?
+    [ $RET2 -eq 0 ] && success
+    echo
+    [ $RET2 -ne 0 ] && echo "Warning: quota not started."
+    echo
+}
 start_sftpsubsys() {
     check_enabled "sftp_subsys" || return
     DAEMON_PATH=${MIG_SFTPSUBSYS}
@@ -385,6 +405,7 @@ start_all() {
     start_notify
     start_imnotify
     start_vmproxy
+    start_quota
     return 0
 }
 
@@ -545,6 +566,15 @@ stop_vmproxy() {
     killproc ${DAEMON_PATH}
     echo
 }
+stop_quota() {
+    check_enabled "quota" || return
+    DAEMON_PATH=${MIG_QUOTA}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG quota: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
 stop_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -588,6 +618,7 @@ stop_all() {
     stop_notify
     stop_imnotify
     stop_vmproxy
+    stop_quota
     return 0
 }
 
@@ -717,6 +748,15 @@ reload_vmproxy() {
     killproc ${DAEMON_PATH} -HUP
     echo
 }
+reload_quota() {
+    check_enabled "quota" || return
+    DAEMON_PATH=${MIG_QUOTA}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG quota: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
 reload_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -773,6 +813,7 @@ reload_all() {
     reload_notify
     reload_imnotify
     reload_vmproxy
+    reload_quota
     # Apache helpers to verify proper chrooting
     reload_chkuserroot
     reload_chksidroot
@@ -877,6 +918,13 @@ status_vmproxy() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status ${DAEMON_PATH} 
 }
+status_quota() {
+    check_enabled "quota" || return
+    DAEMON_PATH=${MIG_QUOTA}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
 status_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -916,6 +964,7 @@ status_all() {
     status_notify
     status_imnotify
     status_vmproxy
+    status_quota
     return 0
 }
 
@@ -927,7 +976,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|all)
         TARGET="$2"
 	;;
     '')
