@@ -1738,6 +1738,9 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'user_shared_dhparams'):
             self.user_shared_dhparams = config.get('GLOBAL',
                                                    'user_shared_dhparams')
+        if config.has_option('GLOBAL', 'user_quota_log'):
+            self.user_quota_log = config.get('GLOBAL',
+                                                   'user_quota_log')
         if config.has_option('GLOBAL', 'public_key_file'):
             self.public_key_file = config.get('GLOBAL', 'public_key_file')
         if config.has_option('GLOBAL', 'smtp_sender'):
