@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# __init__ - luste quota python extensions
+# __init__ - luste client python extension
 # Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -24,7 +24,7 @@
 #
 # -- END_HEADER ---
 #
-"""This package provide luste quota functionality"""
+"""This package provide luste client functionality"""
 
 __dummy = True
 
@@ -37,8 +37,8 @@ __all__ = []
 	
 # Collect all package information here for easy use from scripts and helpers
 
-package_name = 'Lustre Quota Python extension'
-short_name = 'pylustrequota'
+package_name = 'Lustre Client Python extension'
+short_name = 'lustreclient'
 
 # IMPORTANT: Please keep version in sync with doc-src/README.t2t
 
@@ -46,18 +46,18 @@ version_tuple = (0, 0, 1)
 version_suffix = ''
 version_string = '.'.join([str(i) for i in version_tuple]) + version_suffix
 package_version = '%s %s' % (package_name, version_string)
-project_team = 'The MiG Project lead by Brian Vinter'
-project_email = 'info@erda.dk'
-maintainer_team = 'The pylustrequota maintainers'
-maintainer_email = 'info@erda.dk'
-project_url = 'https://github.com/ucphhpc/pylustrequota'
-download_url = 'https://github.com/ucphhpc/pylustrequota/releases'
+project_team = 'The MiG Project by the Science HPC Center at UCPH'
+project_email = 'info@migrid.org'
+maintainer_team = 'The migrid.org maintainers'
+maintainer_email = 'info@migrid.org'
+project_url = 'https://github.com/ucphhpc/migrid-sync'
+download_url = 'https://github.com/ucphhpc/migrid-sync/releases'
 license_name = 'GNU GPL v2'
 short_desc = \
-    'Python quota extension for lustre'
+    'Lustre client python extension'
 long_desc = \
-    """Python quota extension for for lustre:
-Documentation: https://github.com/ucphhpc/pylustrequota
+    """Lustre client python extension:
+Documentation: https://github.com/ucphhpc/migrid-sync
 """
 project_class = [
     'Development Status :: 1 - Beta',
@@ -72,7 +72,6 @@ project_keywords = [
     'Python',
     'Python C extensions',
     'lustre',
-    'rsync',
     ]
 
 # Requirements

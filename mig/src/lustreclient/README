@@ -1,7 +1,7 @@
-This folder contains a module for MiG lustre quota
+This folder contains a module for MiG lustre client python extension
 
 To suppert containerized MiG (where lustre is mounted outside the container) 
-lustre quota functionality is compiled statically into this module.
+lustre client functionality is compiled statically into this module.
 
 Install lustre dependencies (Rocky 9):
 ======================================
@@ -18,7 +18,7 @@ dnf --enablerepo=crb install \
     libnl3-devel.x86_64 \
     libyaml-devel \
     krb5-devel.x86_64   
-git clone git://git.whamcloud.com/fs/lustre-release.git
+git clone https://github.com/lustre/lustre-release
 cd lustre-release && git checkout ${VERSION} ; cd -
 cd lustre-release && sh ./autogen.sh ; cd -
 cd lustre-release && ./configure --disable-server --enable-quota --enable-utils --enable-gss ; cd -
