@@ -43,6 +43,9 @@ if [ -z "$PYTHONPATH" ]; then
 else
     PYTHONPATH=${MIG_PATH}:$PYTHONPATH
 fi
+# Make sure '/usr/local/(s)bin' is in path and force lookup order
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 # you probably do not want to modify these...
 PID_DIR=${PID_DIR:-/var/run}
 MIG_LOG=${MIG_STATE}/log
@@ -62,13 +65,14 @@ MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
 MIG_NOTIFY=${MIG_CODE}/server/grid_notify.py
 MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
 MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
+MIG_QUOTA=${MIG_CODE}/server/grid_quota.py
 MIG_CHKUSERROOT=${MIG_CODE}/server/chkuserroot.py
 MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
 
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
     echo "where daemon is left out for all or given along with DAEMON as one of the following"
-    echo "(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|all)"
 }
 
 check_enabled() {
@@ -264,6 +268,18 @@ start_vmproxy() {
 	log_end_msg 1 || true
     fi
 }
+start_quota() {
+    check_enabled "quota" || return 0
+    DAEMON_PATH=${MIG_QUOTA}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG quota daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user root --chuid root --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
+    log_end_msg 0 || true
+    else
+    log_end_msg 1 || true
+    fi
+}
 start_sftpsubsys() {
     check_enabled "sftp_subsys" || return 0
     DAEMON_PATH=${MIG_SFTPSUBSYS}
@@ -292,6 +308,7 @@ start_all() {
     start_notify
     start_imnotify
     start_vmproxy
+    start_quota
     return 0
 }
 
@@ -524,6 +541,19 @@ stop_vmproxy() {
 	log_end_msg 1 || true
     fi
 }
+stop_quota() {
+    check_enabled "quota" || return 0
+    DAEMON_PATH=${MIG_QUOTA}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG quota" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
 stop_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -563,6 +593,7 @@ stop_all() {
     stop_notify
     stop_imnotify
     stop_vmproxy
+    stop_quota
     return 0
 }
 
@@ -735,6 +766,18 @@ reload_vmproxy() {
 	log_end_msg 1 || true
     fi
 }
+reload_quota() {
+    check_enabled "quota" || return 0
+    DAEMON_PATH=${MIG_QUOTA}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG quota" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
 reload_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -787,6 +830,7 @@ reload_all() {
     reload_notify
     reload_imnotify
     reload_vmproxy
+    reload_quota
     # Apache helpers to verify proper chrooting
     reload_chkuserroot
     reload_chksidroot
@@ -891,6 +935,13 @@ status_vmproxy() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
+status_quota() {
+    check_enabled "quota" || return 0
+    DAEMON_PATH=${MIG_QUOTA}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
+}
 status_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -929,6 +980,7 @@ status_all() {
     status_notify
     status_imnotify
     status_vmproxy
+    status_quota
     return 0
 }
 
@@ -940,7 +992,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|all)
         TARGET="$2"
 	;;
     '')
