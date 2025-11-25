@@ -1,7 +1,7 @@
 /* --- BEGIN_HEADER ---
 
-lfs - Shared lustre library functions for Python lustre quota
-Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+lfs - Shared lustre library functions for Python lustre client
+Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 
 This file is part of MiG.
 MiG is free software: you can redistribute it and/or modify
