@@ -44,7 +44,7 @@ from mig.shared.logger import daemon_logger, register_hangup_handler
 
 if __name__ == "__main__":
     print(
-        """This is the MiG lustre quota daemon which collect storage quota
+        """This is the MiG quota daemon which collects storage quota
         information for users and vgrids.
 
 Set the MIG_CONF environment to the server configuration path

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# __init__ - luste client python extension
+# __init__ - lustre client python extension
 # Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -24,7 +24,7 @@
 #
 # -- END_HEADER ---
 #
-"""This package provide luste client functionality"""
+"""This package provide lustre client functionality"""
 
 __dummy = True
 
