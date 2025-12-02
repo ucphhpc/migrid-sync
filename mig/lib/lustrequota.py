@@ -29,7 +29,6 @@
 """helpers to support lustre quota"""
 
 import os
-import sys
 import stat
 import time
 import shlex
