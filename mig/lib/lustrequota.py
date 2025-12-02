@@ -33,7 +33,12 @@ import stat
 import time
 import shlex
 import subprocess
-import psutil
+
+# NOTE: we rely on psutil to resolve lustre mount point
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 from mig.shared.base import force_unicode
 from mig.shared.fileio import unpickle, pickle, save_json, makedirs_rec, \
@@ -50,6 +55,9 @@ except ImportError:
 def __get_lustre_basepath(configuration, lustre_basepath=None):
     """If *lustre_basepath* is provided then check it,
     otherwise try to resolve it"""
+    if  psutil is None:
+        return None
+
     valid_lustre_basepath = None
     for mount in psutil.disk_partitions(all=True):
         if mount.fstype == "lustre":
