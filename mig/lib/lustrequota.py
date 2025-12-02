@@ -38,8 +38,13 @@ import psutil
 from mig.shared.base import force_unicode
 from mig.shared.fileio import unpickle, pickle, save_json, makedirs_rec, \
     make_symlink
-from lustreclient.lfs import lfs_set_project_id, lfs_get_project_quota, \
-    lfs_set_project_quota
+try:
+    from lustreclient.lfs import lfs_set_project_id, lfs_get_project_quota, \
+        lfs_set_project_quota
+except:
+    lfs_set_project_id = None
+    lfs_get_project_quota = None
+    lfs_set_project_quota = None
 
 
 def __get_lustre_basepath(configuration, lustre_basepath=None):
@@ -175,10 +180,10 @@ def __set_project_id(configuration,
             return -1
         if currfiles == 0:
             break
-        logger.info("Skipping project id: %d" \
-            % next_lustre_pid \
-            + " already registered with %d files" \
-            % currfiles)
+        logger.info("Skipping project id: %d"
+                    % next_lustre_pid
+                    + " already registered with %d files"
+                    % currfiles)
         next_lustre_pid += 1
 
     if next_lustre_pid == max_lustre_pid:
@@ -400,6 +405,15 @@ def __update_quota(configuration,
 def update_lustre_quota(configuration):
     """Update lustre quota for users and vgrids"""
     logger = configuration.logger
+
+    # Check if lustreclient module was imported correctly
+
+    if lfs_set_project_id is None \
+            or lfs_get_project_quota is None \
+            or lfs_set_project_quota is None:
+        logger.error("Failed to import lustreclient module")
+        return False
+
     retval = True
     timestamp = int(time.time())
 
