@@ -29,6 +29,7 @@
 """helpers to support lustre quota"""
 
 import os
+import sys
 import stat
 import time
 import shlex
@@ -41,7 +42,7 @@ from mig.shared.fileio import unpickle, pickle, save_json, makedirs_rec, \
 try:
     from lustreclient.lfs import lfs_set_project_id, lfs_get_project_quota, \
         lfs_set_project_quota
-except:
+except ImportError:
     lfs_set_project_id = None
     lfs_get_project_quota = None
     lfs_set_project_quota = None
