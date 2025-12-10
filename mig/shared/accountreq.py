@@ -80,7 +80,7 @@ def account_js_helpers(configuration, fields):
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.accountform.js"></script>
     '''
-    add_init = """
+    add_init = r"""
   /* Helper to define countries for which State field makes sense */
   var enable_state = ['US', 'CA', 'AU'];
   var peers_mandatory = %(peers_mandatory)s;
@@ -529,7 +529,7 @@ def account_request_template(configuration, password=True, default_values={}):
         comment_pattern = ''
 
     if 'full_name' in configuration.site_peers_explicit_fields:
-        html += """
+        html += r"""
   <div class='form-row single-entry %(show_peers_full_name)s'>
     <div class='col-md-12 mb-3 form-cell'>
       <!-- NOTE: this simple form control just looks for one or more full names.
@@ -546,7 +546,7 @@ def account_request_template(configuration, password=True, default_values={}):
   </div>
         """
     if 'email' in configuration.site_peers_explicit_fields:
-        html += """
+        html += r"""
   <div class='form-row single-entry %(show_peers_email)s'>
     <div class='col-md-12 mb-3 form-cell'>
       <!-- NOTE: this simple form control just looks for one or more emails.
