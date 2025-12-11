@@ -6,11 +6,10 @@
 name: Python C-Extension Sanity Checks
 
 on:
+  # env.skip: Skip the following paths
+  # Format: PATH1|PATH2|PATH3
   env:
-    # env.skip: Skip the following paths
-    # Format: PATH1|PATH2|PATH3
-    env:
-      - skip: "mig/src/lustreclient/.*$"
+    - skip: "mig/src/lustreclient/.*$"
 
   # Triggers the workflow on push or pull request events but only for this git branch
   push:
