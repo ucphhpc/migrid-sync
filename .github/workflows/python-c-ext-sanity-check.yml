@@ -126,7 +126,7 @@ jobs:
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -Ev '${{ env.skip }}' | grep -E '\.c$')"
           # NOTE: splint complains about NATIVE_TSS_KEY_T in system header here
           # NOTE: show splint warnings but don't fail unless it found critical errors
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.c$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list -DNATIVE_TSS_KEY_T=char $(python3-config --includes) &> splint.log || true
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -Ev '${{ env.skip }}' | grep -E '\.c$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list -DNATIVE_TSS_KEY_T=char $(python3-config --includes) &> splint.log || true
           [ ! -e splint.log ] || cat splint.log
           [ ! -e splint.log ] || ! grep -q ' Cannot continue' splint.log
 
