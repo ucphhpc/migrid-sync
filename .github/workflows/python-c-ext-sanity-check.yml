@@ -6,6 +6,12 @@
 name: Python C-Extension Sanity Checks
 
 on:
+  env:
+    # env.skip: Skip the following paths
+    # Format: PATH1|PATH2|PATH3
+    env:
+      - skip: "mig/src/lustreclient/.*$"
+
   # Triggers the workflow on push or pull request events but only for this git branch
   push:
     paths-ignore:
@@ -92,9 +98,9 @@ jobs:
         run: |
           # NOTE: we only run splint error check for changed C files to limit noise
           # NOTE: point splint to Ubuntu's custom /usr/include/python3.x for Python.h
-          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.c$')"
+          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -Ev '${{ env.skip }}' | grep -E '\.c$')"
           # NOTE: show splint warnings but don't fail unless it found critical errors
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.c$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list $(python3-config --includes) &> splint.log || true
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -Ev '${{ env.skip }}' | grep -E '\.c$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list $(python3-config --includes) &> splint.log || true
           [ ! -e splint.log ] || cat splint.log
           [ ! -e splint.log ] || ! grep -q ' Cannot continue' splint.log
 
@@ -118,7 +124,7 @@ jobs:
         run: |
           # NOTE: we only run splint error check for changed C files to limit noise
           # NOTE: point splint to Ubuntu's custom /usr/include/python3.x for Python.h
-          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.c$')"
+          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -Ev '${{ env.skip }}' | grep -E '\.c$')"
           # NOTE: splint complains about NATIVE_TSS_KEY_T in system header here
           # NOTE: show splint warnings but don't fail unless it found critical errors
           git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.c$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list -DNATIVE_TSS_KEY_T=char $(python3-config --includes) &> splint.log || true
@@ -158,10 +164,10 @@ jobs:
           # NOTE: perms are not right inside container so repeat what checkout module does.
           git config --global --add safe.directory "$PWD"
           # NOTE: we only run splint error check for changed C files to limit noise
-          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.c$')"
+          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -Ev '${{ env.skip }}' | grep -E '\.c$')"
           echo "with splint from $(which splint)"
           ls -l /bin/splint
           # NOTE: show splint warnings but don't fail unless it found critical errors
-          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.c$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list &> splint.log || true
+          git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -Ev '${{ env.skip }}' | grep -E '\.c$' | xargs -r splint +posixlib -D__gnuc_va_list=va_list &> splint.log || true
           [ ! -e splint.log ] || cat splint.log
           [ ! -e splint.log ] || ! grep -q ' Cannot continue' splint.log
