@@ -75,8 +75,8 @@ if [ -z "$PYTHONPATH" ]; then
 else
     export PYTHONPATH=${MIG_PATH}:$PYTHONPATH
 fi
-# Make sure '/usr/local/(s)bin' is in path and force lookup order
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+# Make sure '/usr/local/(s)bin' is in PATH
+export PATH="$PATH:/usr/local/sbin:/usr/local/bin"
 
 # you probably do not want to modify these...
 PID_DIR=${PID_DIR:-/var/run}
