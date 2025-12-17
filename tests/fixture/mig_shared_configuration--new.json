@@ -1,7 +1,6 @@
 {
   "admin_email": "",
   "admin_list": "",
-  "arc_clusters": [],
   "architectures": [],
   "auth_logger": null,
   "auth_logger_obj": null,
