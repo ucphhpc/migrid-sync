@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# grid_quota - daemon to create storage quota
+# grid_quota - daemon to manage storage quotas
 # Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Daemon that create storage quota"""
+"""Daemon to manage storage quotas"""
 
 from __future__ import absolute_import, print_function
 
