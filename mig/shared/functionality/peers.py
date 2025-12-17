@@ -41,7 +41,8 @@ from mig.shared.accountreq import peers_permit_allowed, list_country_codes
 from mig.shared.base import pretty_format_user, fill_distinguished_name, \
     client_id_dir, force_native_str_rec
 from mig.shared.defaults import csrf_field, peers_filename, \
-    pending_peers_filename, peers_fields, peer_kinds, default_pager_entries
+    pending_peers_filename, peers_fields, peer_kinds, default_pager_entries, \
+    peers_expire_min_days, peers_expire_max_days
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
@@ -217,6 +218,12 @@ Please contact the %s site support (%s) if you think it should be enabled.
                     'csrf_field': csrf_field, 'csrf_limit': csrf_limit,
                     'target_op': target_op, 'csrf_token': csrf_token,
                     'expire_help': expire_help,
+                    # NOTE: allow select expire N days or more from now
+                    'min_peers_expire': datetime.date.today() + \
+                    datetime.timedelta(days=peers_expire_min_days),
+                    # NOTE: allow up to N days in the future
+                    'max_peers_expire': datetime.date.today() + \
+                    datetime.timedelta(days=peers_expire_max_days),
                     'csv_header': csv_sep.join([i for i in peers_fields])}
     form_prefix_html = '''
 <form class="save_peers save_general" method="%(form_method)s"
@@ -257,7 +264,9 @@ action="%(target_op)s.py">
           </label>
           <input class="form-control themed-select html-select fill-width"
             type="date" name="peers_expire" required pattern="[0-9/-]+"
+            min="%(min_peers_expire)s" max="%(max_peers_expire)s"
             title="Access end date" />
+
       </div>
     </div>
 '''

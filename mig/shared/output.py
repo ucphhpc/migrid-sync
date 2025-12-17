@@ -1560,6 +1560,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 single_peer['state'] = single_peer.get('state', '')
                 if not single_peer['state']:
                     single_peer['state'] = 'NA'
+                single_peer['expire'] = single_peer.get('expire', '')
+                if single_peer['expire']:
+                    # Make a dummy input field to force consistent date format
+                    single_peer['expire'] = "<input class='noborder' type=date " + \
+                        "value='%(expire)s' readonly=readonly />" % single_peer
                 lines.append('''<tr>
 <td>%(full_name)s</td><td>%(organization)s</td><td>%(email)s</td>
 <td>%(country)s</td><td>%(state)s</td><td>%(kind)s</td><td>%(label)s</td><td>%(expire)s</td>
