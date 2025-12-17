@@ -78,17 +78,17 @@ jobs:
     steps:
       - name: Update packages
         run: |
-          DEBIAN_FRONTEND='noninteractive' apt update -y
+          DEBIAN_FRONTEND='noninteractive' sudo apt update -y
       - name: Set up latest stable python 3.x
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
       - name: Set up git, findutils and make with apt
         run: |
-          DEBIAN_FRONTEND='noninteractive' apt install -y git findutils make
+          DEBIAN_FRONTEND='noninteractive' sudo apt install -y git findutils make
       - name: Install dependencies
         run: |
-          DEBIAN_FRONTEND='noninteractive' apt install -y libnss3-dev libpam-dev splint
+          DEBIAN_FRONTEND='noninteractive' sudo apt install -y libnss3-dev libpam-dev splint
       # We may need git installed to get a full repo clone rather than unpacked archive
       - name: Check out source repository
         uses: actions/checkout@v4
@@ -111,13 +111,13 @@ jobs:
     steps:
       - name: Update packages
         run: |
-          DEBIAN_FRONTEND='noninteractive' apt update -y
+          DEBIAN_FRONTEND='noninteractive' sudo apt update -y
       - name: Set up git, findutils and make with apt
         run: |
-          DEBIAN_FRONTEND='noninteractive' apt install -y git findutils make
+          DEBIAN_FRONTEND='noninteractive' sudo apt install -y git findutils make
       - name: Install dependencies
         run: |
-          DEBIAN_FRONTEND='noninteractive' apt install -y python3-dev libnss3-dev libpam-dev splint
+          DEBIAN_FRONTEND='noninteractive' sudo apt install -y python3-dev libnss3-dev libpam-dev splint
       # We may need git installed to get a full repo clone rather than unpacked archive
       - name: Check out source repository
         uses: actions/checkout@v4
