@@ -75,8 +75,12 @@ if [ -z "$PYTHONPATH" ]; then
 else
     export PYTHONPATH=${MIG_PATH}:$PYTHONPATH
 fi
-# Make sure '/usr/local/(s)bin' is in PATH
-export PATH="$PATH:/usr/local/sbin:/usr/local/bin"
+# Append '/usr/local/(s)bin' to PATH if it exists otherwise define PATH
+if [ -z "$PATH" ]; then
+    export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+else
+    export PATH="$PATH:/usr/local/sbin:/usr/local/bin"
+fi
 
 # you probably do not want to modify these...
 PID_DIR=${PID_DIR:-/var/run}
