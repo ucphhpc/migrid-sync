@@ -29,6 +29,7 @@ on:
       - 'mig/apache/**'
       - 'mig/bin/**'
       - 'mig/java-bin/**'
+      - 'mig/src/lustreclient/**'
       - '**/*.py'
       - '**/*.js'
     branches:
@@ -57,6 +58,7 @@ on:
       - 'mig/apache/**'
       - 'mig/bin/**'
       - 'mig/java-bin/**'
+      - 'mig/src/lustreclient/**'
       - '**/*.py'
       - '**/*.js'
     branches:

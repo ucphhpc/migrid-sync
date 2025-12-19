@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# setup.py - Setup for python luste quota
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# setup.py - Setup for lustre client python extension
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -27,7 +27,7 @@
 
 from setuptools import setup, Extension
 
-from pylustrequota import version_string, short_name, project_team, \
+from lustreclient import version_string, short_name, project_team, \
     project_email, short_desc, long_desc, project_url, download_url, \
     license_name, project_class, project_keywords, versioned_requires, \
     project_requires, project_extras, project_platforms, maintainer_team, \
@@ -51,14 +51,13 @@ setup(
     install_requires=versioned_requires,
     requires=project_requires,
     extras_require=project_extras,
-    scripts=['bin/miglustrequota.py',
-             ],
-    packages=['pylustrequota'],
-    package_dir={'pylustrequota': 'pylustrequota',
+    scripts=[],
+    packages=['lustreclient'],
+    package_dir={'lustreclient': 'lustreclient',
                  },
     package_data={},
     ext_modules=[
-        Extension('pylustrequota.lfs',
+        Extension('lustreclient.lfs',
                   include_dirs=['/usr/include',
                                 '/usr/include/python3',
                                 'lustre-release/libcfs/include',
@@ -69,7 +68,7 @@ setup(
                                 ],
                   library_dirs=[],
                   libraries=[],
-                  sources=['pylustrequota/lfs.c',
+                  sources=['lustreclient/lfs.c',
                            'lustre-release/lustre/utils/lfs_project.c'],
                   extra_objects=[
                       'lustre-release/lustre/utils/.libs/liblustreapi.a'],
