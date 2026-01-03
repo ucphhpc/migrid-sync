@@ -163,8 +163,74 @@ class MigSharedAuth__twofactor(MigTestCase):
         #
         self.assertEqual(new_key, reloaded_key, 'key should persist')
 
+    def test_save_twofactor_session(self):
+        """Test save twofactor session"""
+        client_dir = self._provision_test_user(self, TEST_USER_DN)
+        user_addr = '127.0.0.1'
+        user_agent = 'TestAgent'
+        session_start = time.time()
+        session_cookie = ''
+
+        # Generate session
+        session_key = auth.generate_session_key(self.configuration,
+                                                TEST_USER_DN)
+        save_result = auth.save_twofactor_session(self.configuration,
+                                                  TEST_USER_DN, session_key,
+                                                  user_addr, user_agent,
+                                                  session_start)
+        self.assertTrue(save_result, 'session should save successfully')
+
+    def test_list_twofactor_session(self):
+        """Test list saved twofactor session"""
+        client_dir = self._provision_test_user(self, TEST_USER_DN)
+        user_addr = '127.0.0.1'
+        user_agent = 'TestAgent'
+        session_start = time.time()
+        session_cookie = ''
+
+        # Generate session
+        session_key = auth.generate_session_key(self.configuration,
+                                                TEST_USER_DN)
+        save_result = auth.save_twofactor_session(self.configuration,
+                                                  TEST_USER_DN, session_key,
+                                                  user_addr, user_agent,
+                                                  session_start)
+        self.assertTrue(save_result, 'session should save successfully')
+
+        # Verify session exists
+        sessions = auth.list_twofactor_sessions(self.configuration,
+                                                TEST_USER_DN)
+        self.assertIn(session_key, sessions, 'new session should be listed')
+
+    def test_load_twofactor_session(self):
+        """Test load saved twofactor session"""
+        client_dir = self._provision_test_user(self, TEST_USER_DN)
+        user_addr = '127.0.0.1'
+        user_agent = 'TestAgent'
+        session_start = time.time()
+        session_cookie = ''
+
+        # Generate session
+        session_key = auth.generate_session_key(self.configuration,
+                                                TEST_USER_DN)
+        save_result = auth.save_twofactor_session(self.configuration,
+                                                  TEST_USER_DN, session_key,
+                                                  user_addr, user_agent,
+                                                  session_start)
+        self.assertTrue(save_result, 'session should save successfully')
+
+        # Validate session details
+        session_data = auth.load_twofactor_session(self.configuration,
+                                                   session_key)
+        self.assertEqual(session_data['client_id'], TEST_USER_DN,
+                         'session should match client_id'
+                         )
+        self.assertEqual(session_data['session_end'], session_start +
+                         twofactor_cookie_ttl,
+                         'session should have correct TTL')
+
     def test_twofactor_session_lifecycle(self):
-        """Test full twofactor session lifecycle"""
+        """Test full twofactor session lifecycle as an integration test"""
         client_dir = self._provision_test_user(self, TEST_USER_DN)
         user_addr = '127.0.0.1'
         user_agent = 'TestAgent'
