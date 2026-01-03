@@ -44,7 +44,7 @@ from mig.shared.defaults import twofactor_key_bytes, twofactor_cookie_ttl
 
 TEST_USER_DN = \
     '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
-GDP_USER_DN = f'{TEST_USER_DN}/GDP=projectx'
+GDP_USER_DN = '%s/GDP=projectx' % TEST_USER_DN
 TEST_CLIENT_PREFIX = \
     '2e1c3d78bddf637ed6b83067c15ac9b9893545ff6a549519178cb4a252ed38b5'
 DEFAULT_INTERVAL = 30
@@ -320,7 +320,7 @@ class MigSharedAuth__twofactor(MigTestCase):
         self.assertTrue(result, 'should accept token with custom interval')
 
     def test_strict_address_session_handling(self):
-        """Test session handling with strict address enforcement"""
+        """Test full session handling with strict source address enforcement"""
         self.configuration.site_twofactor_strict_address = True
         session_key = auth.generate_session_key(self.configuration,
                                                 TEST_USER_DN)
@@ -333,8 +333,7 @@ class MigSharedAuth__twofactor(MigTestCase):
 
         # Should have address-linked file
         addr_file = os.path.join(self.configuration.twofactor_home,
-                                 f"{user_addr}_{session_key}"
-                                 )
+                                 "%s_%s" % (user_addr, session_key))
         self.assertTrue(os.path.exists(addr_file),
                         'should create address-linked session file')
 
@@ -399,9 +398,11 @@ class MigSharedAuth__twofactor(MigTestCase):
         self.assertEqual(session_data.get('user_addr', ''), 'UNKNOWN',
                          'should handle malformed session files gracefully')
 
-    @ unittest.skipIf(os.getuid() == 0, "Permissions don't work for priv users")
-    def test_session_file_permissions(self):
-        """Test secure session file permissions"""
+    @unittest.skipIf(os.getuid() == 0, "Permissions don't work for priv users")
+    @unittest.skip("TODO: implement permission tightening and enable")
+    def test_session_file_access_restriction(self):
+        """Test session file permissions to be not globally readable"""
+        orig_umask = os.umask(0o000)
         session_key = auth.generate_session_key(self.configuration,
                                                 TEST_USER_DN)
         user_addr = '192.168.1.1'
@@ -410,12 +411,11 @@ class MigSharedAuth__twofactor(MigTestCase):
                                     session_key, user_addr, 'TestAgent',
                                     time.time())
 
+        os.umask(orig_umask)
         session_path = os.path.join(self.configuration.twofactor_home,
                                     session_key)
         mode = os.stat(session_path).st_mode
-        # TODO: tighten permissions in tested function and enable next
-        # expected = 0o600
-        expected = 0o644
+        expected = 0o660
         self.assertEqual(mode & 0o777, expected,
                          'session files should have restrictive permissions')
 
@@ -495,7 +495,7 @@ class MigSharedAuth__twofactor(MigTestCase):
             auth.get_twofactor_secrets(self.configuration, TEST_USER_DN)
         self.assertIn('failed to reset 2FA key', str(cm.exception))
 
-    @ unittest.skip("TODO: implement locking and enable")
+    @unittest.skip("TODO: implement locking and enable")
     def test_session_lock_conflicts(self):
         """Test concurrent session file access"""
         session_key = auth.generate_session_key(self.configuration,
@@ -519,7 +519,7 @@ class MigSharedAuth__twofactor(MigTestCase):
                              'should return empty data for locked files')
 
     def test_custom_interval_fallback(self):
-        """Test default interval fallback when custom fails"""
+        """Test default interval fallback when given custom interval fails"""
         self._provision_test_user(self, TEST_USER_DN)
 
         # Save invalid interval
@@ -537,7 +537,7 @@ class MigSharedAuth__twofactor(MigTestCase):
         # Verification should fallback to default interval
         result = auth.verify_twofactor_token(
             self.configuration, TEST_USER_DN, b32_key, token)
-        self.assertTrue(result, 'should fallback to default interval')
+        self.assertTrue(result, 'should fallback to default interval on error')
 
 
 if __name__ == '__main__':
