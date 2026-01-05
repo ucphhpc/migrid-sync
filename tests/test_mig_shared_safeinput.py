@@ -92,10 +92,6 @@ class TestMigSharedSafeInput(MigTestCase):
         """Provide test configuration"""
         return 'testconfig'
 
-    def before_each(self):
-        """Test case setup handler"""
-        return
-
     def test_commonname_valid(self):
         """Test valid_commonname with acceptable and prohibited names"""
         for test_cn in self.COMMONNAME_PERMITTED:
@@ -167,7 +163,12 @@ class TestMigSharedSafeInput(MigTestCase):
     def test_valid_printable_lengths(self):
         """Test printable character validation"""
         # Valid cases
-        valid_printable(self.PRINTABLE_CHARS, min_length=5)
+        saw_raise = False
+        try:
+            valid_printable(self.PRINTABLE_CHARS, min_length=5)
+        except InputException:
+            saw_raise = True
+        self.assertFalse(saw_raise)
 
         # Length violations
         with self.assertRaises(InputException):
@@ -179,7 +180,12 @@ class TestMigSharedSafeInput(MigTestCase):
     def test_valid_alphanumeric_with_extras(self):
         """Test alphanumeric validation with extra characters"""
         # Valid cases
-        valid_alphanumeric(self.VALID_EXTRA_CHARS_NAME, extra_chars="-_")
+        saw_raise = False
+        try:
+            valid_alphanumeric(self.VALID_EXTRA_CHARS_NAME, extra_chars="-_")
+        except InputException:
+            saw_raise = True
+        self.assertFalse(saw_raise)
 
         # Invalid characters
         with self.assertRaises(InputException):
@@ -188,7 +194,12 @@ class TestMigSharedSafeInput(MigTestCase):
     def test_valid_commonname_accent_handling(self):
         """Test accented character handling validation"""
         # Common accents should pass with COMMON_ACCENTED
-        valid_commonname(self.ACCENTED_VALID)
+        saw_raise = False
+        try:
+            valid_commonname(self.ACCENTED_VALID)
+        except InputException:
+            saw_raise = True
+        self.assertFalse(saw_raise)
 
         # Exotic accents should fail with NO_ACCENTED
         with self.assertRaises(InputException):
