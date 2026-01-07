@@ -353,7 +353,11 @@ def save_twofactor_session(configuration, client_id, session_key, user_addr,
     session_data = {'client_id': client_id, 'session_key': session_key,
                     'user_addr': user_addr, 'user_agent': user_agent,
                     'session_start': session_start, 'session_end': session_end}
+    # NOTE: force safe permissions on written session file to protect session data
+    orig_umask = os.umask(0o007)
     status = pickle(session_data, session_path, configuration.logger)
+    os.umask(orig_umask)
+
     if status and configuration.site_twofactor_strict_address:
         session_path_link = os.path.join(configuration.twofactor_home,
                                          "%s_%s" % (user_addr, session_key))
@@ -374,7 +378,7 @@ def list_twofactor_sessions(configuration, client_id, user_addr=None):
             configuration, client_id, expand_oid_alias=False)
     sessions = {}
     client_prefix = generate_session_prefix(configuration, client_id)
-    pattern = os.path.join(configuration.twofactor_home, client_prefix+'*')
+    pattern = os.path.join(configuration.twofactor_home, client_prefix + '*')
     for session_path in glob.glob(pattern):
         session_key = os.path.basename(session_path)
         session_data = load_twofactor_session(configuration, session_key)
