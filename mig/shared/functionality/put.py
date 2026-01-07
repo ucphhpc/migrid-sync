@@ -78,6 +78,7 @@ def main(client_id, user_arguments_dict, environ=None):
     # TODO: port to modern output and eliminate raw output through 'o'
 
     (logger, configuration, client_id, o) = init_cgiscript_possibly_with_cert()
+    logger.debug("got PUT request from %r" % client_id)
     client_dir = client_id_dir(client_id)
 
     if not configuration.site_enable_put:
@@ -105,7 +106,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # Check we got some content
 
-    content_length = os.getenv('CONTENT_LENGTH')
+    content_length = environ.get('CONTENT_LENGTH')
     if content_length == None or not content_length.isdigit():
         logger.warning("invalid content length: %r" % content_length)
         o.out('Invalid Content-Length, must be a positive integer!')
@@ -121,7 +122,7 @@ def main(client_id, user_arguments_dict, environ=None):
               configuration.wwwserve_max_bytes)
         o.reply_and_exit(o.CLIENT_ERROR)
 
-    content_type = os.getenv('CONTENT_TYPE')
+    content_type = environ.get('CONTENT_TYPE')
     if content_type == None:
         logger.debug('put: file without Content-Type')
     else:
@@ -133,7 +134,7 @@ def main(client_id, user_arguments_dict, environ=None):
     # We normalize path to remove double slashes that would otherwise cause
     # problems and to avoid illegal directory traversal attempts.
 
-    filename = os.path.normpath(unquote("%s" % os.getenv('REQUEST_URI')))
+    filename = os.path.normpath(unquote("%s" % environ.get('REQUEST_URI')))
     rel_name = filename.lstrip(os.sep)
     base_filename = os.path.basename(filename)
 
@@ -290,7 +291,7 @@ def main(client_id, user_arguments_dict, environ=None):
             if 'IS_EMPTY_JOB_HELPER_DICT' in dict:
                 o.internal('%s %s %s is starting a new exe from %s!' %
                            (dict['UNIQUE_RESOURCE_NAME'], dict['EXE'],
-                            dict['LOCALJOBNAME'], os.getenv('REMOTE_ADDR')))
+                            dict['LOCALJOBNAME'], environ.get('REMOTE_ADDR')))
 
                 # This try should not be necessary but log indicates possible
                 # uncaught exceptions somewhere in the call

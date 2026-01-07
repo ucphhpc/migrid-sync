@@ -32,4 +32,6 @@ import cgi
 from mig.shared.functionality.put import main
 from mig.shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
-run_cgi_script_possibly_with_cert(main)
+# TODO: port functionality backend to modern form and enable here
+# run_cgi_script_possibly_with_cert(main)
+main("UNKNOWN", {})
