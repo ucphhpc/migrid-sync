@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -1740,7 +1740,7 @@ location.""" % self.config_file)
                                                    'user_shared_dhparams')
         if config.has_option('GLOBAL', 'user_quota_log'):
             self.user_quota_log = config.get('GLOBAL',
-                                                   'user_quota_log')
+                                             'user_quota_log')
         if config.has_option('GLOBAL', 'public_key_file'):
             self.public_key_file = config.get('GLOBAL', 'public_key_file')
         if config.has_option('GLOBAL', 'smtp_sender'):
@@ -2368,6 +2368,11 @@ location.""" % self.config_file)
                 logger.error('gdp_data_categories: %r ' % load_path
                              + 'is not a valid data_categoriesfile!')
 
+        if config.has_option('SITE', 'enable_put'):
+            self.site_enable_put = config.getboolean('SITE', 'enable_put')
+        else:
+            self.site_enable_put = False
+
         if config.has_option('SITE', 'transfers_from'):
             transfers_from_str = config.get('SITE', 'transfers_from')
             unique_transfers_from = []
@@ -2600,6 +2605,8 @@ location.""" % self.config_file)
 
         # Force-disable all incompatible or unsafe features in GDP mode
         if self.site_enable_gdp:
+            # NOTE: we do not want legacy PUT handler on GDP sites
+            self.site_enable_put = False
             # NOTE: ftps COULD be enabled with GDP tweaks like for sftp/webdavs
             self.site_enable_ftps = False
             # NOTE: jupyter and cloud require GDP compatible hosts and tweaks
