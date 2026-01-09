@@ -465,7 +465,6 @@ class MigSharedAuth__twofactor(MigTestCase):
                          'should handle malformed session files gracefully')
 
     @unittest.skipIf(os.getuid() == 0, "Permissions don't work for priv users")
-    @unittest.skip("TODO: implement permission tightening and enable")
     def test_session_file_access_restriction(self):
         """Test session file permissions to be not globally readable"""
         orig_umask = os.umask(0o000)
