@@ -30,13 +30,16 @@ set -e
 SCRIPT_PATH=$(realpath "$0")
 SCRIPT_BASE=$(dirname -- "$SCRIPT_PATH")
 MIG_BASE=$(realpath "$SCRIPT_BASE/..")
+LOCAL_USER_UID=$(id -u $USER)
 
 if [ -n "${PYVER}" ]; then
     PYTHON_SUFFIX="pyver_$PYVER"
+    DISPLAY_PYVER="$PYVER"
     DOCKER_FILE_SUFFIX="pyver"
 else
     echo "No specific python version chosen - defaulting to supported baseline"
-    PYVER="3 (default)"
+    PYVER="3"
+    DISPLAY_PYVER="3 (default)"
     PYTHON_SUFFIX="py3"
     DOCKER_FILE_SUFFIX="py3"
 fi
@@ -48,7 +51,7 @@ DOCKER_PYTHON_BIN=${DOCKER_PYTHON_BIN:-"python3"}
 # NOTE: portable dynamic lookup with docker as default and fallback to podman
 DOCKER_BIN=$(command -v docker || command -v podman || echo "")
 if [ -z "${DOCKER_BIN}" ]; then
-    echo "No docker binary found - cannot use for python $PYVER tests"
+    echo "No docker binary found - cannot use for python $DISPLAY_PYVER tests"
     exit 1
 fi
 
@@ -64,12 +67,12 @@ MIG_ENV=${MIG_ENV:-'docker'}
 PYTHONPYCACHEPREFIX="$PYTHONPATH/envhelp/output/__pycache.${PYTHON_SUFFIX}__"
 
 # determine if the image has changed
-echo -n "validating python $PYVER container.. "
+echo -n "validating python $DISPLAY_PYVER container.. "
 
 # load a previously written docker image id if present
 IMAGEID_STORED=$(cat "$DOCKER_IMAGEID_FILE" 2>/dev/null || echo "")
 
-IMAGEID=$(${DOCKER_BIN} build -f "$DOCKER_FILE" . -q --build-arg "pyver=$PYVER")
+IMAGEID=$(${DOCKER_BIN} build -f "$DOCKER_FILE" . -q --build-arg "pyver=$PYVER" --build-arg "CONTAINER_USER_UID=$LOCAL_USER_UID")
 if [ "$IMAGEID" != "$IMAGEID_STORED" ]; then
     echo "rebuilt for changes"
 
