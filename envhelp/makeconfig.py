@@ -32,6 +32,7 @@ from __future__ import print_function
 
 import os
 import sys
+from types import SimpleNamespace
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _LOCAL_MIG_BASE = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
@@ -45,6 +46,7 @@ _LOCAL_ENVHELP_OUTPUT_DIR = os.path.join(_LOCAL_MIG_BASE, "envhelp/output")
 _MAKECONFIG_ALLOWED = ["local", "test"]
 _USERADM_PATH_KEYS = ('user_cache', 'user_db_home', 'user_home',
                       'user_settings', 'mrsl_files_dir', 'resource_pending')
+_CONTAINER_USER_NAME = 'migtest'
 
 
 def _at(sequence, index=-1, default=None):
@@ -94,6 +96,28 @@ def write_testconfig(env_name, is_docker=False):
         'mig_certs': os.path.join(conf_dir_path, 'certs'),
         'mig_state': os.path.join(conf_dir_path, 'state'),
     })
+
+    if is_docker:
+        # The generate_confs function makes assumptions that it is run _on_ the
+        # host for which it is configuring mig - one such assumption is that
+        # it can call getpwnam() and expect to get a result. This is not true
+        # here because we are generating a config ahead of time and the user
+        # does not yet exist; neither does the container within which the user
+        # will be made.  So, work around this by arranging a getpwnam() result
+        # with the values matching what will be set inside the container.
+        def _getpwnam(_):
+            local_user_uid = os.getuid()
+
+            return SimpleNamespace(
+                pw_uid=local_user_uid,
+                pw_gid=local_user_uid,
+            )
+
+        overrides.update(**{
+            '_getpwnam': _getpwnam,
+            'user': _CONTAINER_USER_NAME,
+            'group': _CONTAINER_USER_NAME,
+        })
 
     print('generating "%s" configuration ...' % (confs_name,))
 
