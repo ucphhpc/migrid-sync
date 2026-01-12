@@ -460,9 +460,7 @@ class MigSharedFileio__get_file_size(MigTestCase):
         """Test get_file_size returns -1 for missing file"""
         self.logger.forgive_errors()
         size = fileio.get_file_size('missing.txt', self.logger)
-        # TODO: fix called function to return on exception and enable next line
-        # self.assertEqual(size, -1)
-        self.assertIsNone(size)
+        self.assertEqual(size, -1)
 
     def test_handles_directory(self):
         """Test get_file_size returns -1 when path is directory"""
