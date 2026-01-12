@@ -270,7 +270,7 @@ access the workflows.'''
             'trigger',
             'vgridtrigger',
             configuration,
-            extra_fields + optional_fields
+            extra_fields=extra_fields + optional_fields
         )
         if not init_status:
             output_objects.append({'object_type': 'error_text', 'text':
