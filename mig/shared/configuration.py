@@ -37,6 +37,7 @@ import base64
 import copy
 import datetime
 import functools
+import inspect
 import os
 import pwd
 import re
@@ -72,6 +73,17 @@ try:
     from mig.shared.fileio import read_file, load_json, write_file
 except ImportError as ioe:
     print("could not import migrid modules")
+
+
+_CONFIGURATION_NOFORWARD_KEYS = set([
+    'self',
+    'config_file',
+    'mig_server_id',
+    'disable_auth_log',
+    'skip_log',
+    'verbose',
+    'logger',
+])
 
 
 def include_section_contents(logger, config, section, load_path, verbose=False,
@@ -436,6 +448,11 @@ def fix_missing(config_file, verbose=True):
         fd.close()
 
 
+def _configuraton_dict_without_noforward_keys(configuration_like):
+    return { k: v for k, v in configuration_like.__dict__.items()
+             if k not in _CONFIGURATION_NOFORWARD_KEYS }
+
+
 class NativeConfigParser(ConfigParser):
     """Wraps configparser.ConfigParser to force get method to return native
     string instead of always returning unicode.
@@ -446,7 +463,11 @@ class NativeConfigParser(ConfigParser):
         return force_native_str(ConfigParser.get(self, *args, **kwargs))
 
 
-_CONFIGURATION_DEFAULTS = {
+# TODO: this static definition is incomplete with many properties being
+#       dynamically assigned to Configuration objects at the point they are
+#       loaded - expand these as code that makes use of those properties comes
+#       under test with the ultimate goal that this becomes exhaustive
+_CONFIGURATION_PROPERTIES = {
     # Optional conf options with default values
     'state_path': os.path.expanduser('~/state'),
     'mig_path': os.path.expanduser('~/mig'),
@@ -470,6 +491,7 @@ _CONFIGURATION_DEFAULTS = {
     'ca_smtp': '',
     'ca_user': 'mig-ca',
     'resource_home': '',
+    'short_title': 'MiG',
     'vgrid_home': '',
     'vgrid_public_base': '',
     'vgrid_private_base': '',
@@ -512,6 +534,7 @@ _CONFIGURATION_DEFAULTS = {
     'workflows_vgrid_patterns_home': '',
     'workflows_vgrid_recipes_home': '',
     'workflows_vgrid_history_home': '',
+    'site_user_id_format': DEFAULT_USER_ID_FORMAT,
     'site_prefer_python3': False,
     'site_autolaunch_page': '',
     'site_landing_page': '',
@@ -539,6 +562,12 @@ _CONFIGURATION_DEFAULTS = {
     'site_password_policy': POLICY_MEDIUM,
     'site_password_legacy_policy': False,
     'site_password_cracklib': False,
+
+    # Salt values which are undonditionally populated on configuration load
+    'site_crypto_salt': '',
+    'site_password_salt': '',
+    'site_digest_salt': '',
+
     'site_extra_userpage_scripts': "",
     'site_extra_userpage_styles': "",
     'hg_path': '',
@@ -726,6 +755,7 @@ _CONFIGURATION_DEFAULTS = {
     'expire_peer': 600,
     'language': ['English'],
     'user_interface': ['V2', 'V3'],
+    'new_user_default_ui': keyword_auto,
     'submitui': ['fields', 'textarea', 'files'],
     # Init user default page with no selection to use site landing page
     'default_page': [''],
@@ -742,6 +772,8 @@ _CONFIGURATION_DEFAULTS = {
     'auto_add_user_with_peer': [('distinguished_name', '.*')],
     'auto_add_filter_method': '',
     'auto_add_filter_fields': [],
+
+    'cloud_services': [],
 }
 
 
@@ -758,9 +790,9 @@ class Configuration:
         self.auth_logger_obj = None
         self.gdp_logger_obj = None
 
-        configuration_options = copy.deepcopy(_CONFIGURATION_DEFAULTS)
+        configuration_properties = copy.deepcopy(_CONFIGURATION_PROPERTIES)
 
-        for k, v in configuration_options.items():
+        for k, v in configuration_properties.items():
             setattr(self, k, v)
 
         if config_file is not None:
@@ -1013,19 +1045,24 @@ location.""" % self.config_file)
             self.site_title = "Minimum intrusion Grid"
         if config.has_option('SITE', 'short_title'):
             self.short_title = config.get('SITE', 'short_title')
-        else:
-            self.short_title = "MiG"
+
         if config.has_option('SITE', 'user_interface'):
             self.user_interface = config.get(
                 'SITE', 'user_interface').split()
         else:
             self.user_interface = ['V2']
+
         # Allow gradual transition to new user interface - only new sign ups
         if config.has_option('SITE', 'new_user_default_ui'):
             self.new_user_default_ui = config.get(
                 'SITE', 'new_user_default_ui').strip()
-        else:
+        elif self.new_user_default_ui == keyword_auto and self.user_interface:
+            # an explicit default ui value for new users was not specified so
+            # use the first entry in supported user interfaces as a fallback
             self.new_user_default_ui = self.user_interface[0]
+        else:
+            print("No usable value supplied for default new user ui version.")
+            raise IOError
 
         if config.has_option('GLOBAL', 'state_path'):
             self.state_path = config.get('GLOBAL', 'state_path')
@@ -2035,8 +2072,6 @@ location.""" % self.config_file)
                 logger.warning("invalid user_id_format %r - using default" %
                                self.site_user_id_format)
                 self.site_user_id_format = DEFAULT_USER_ID_FORMAT
-        else:
-            self.site_user_id_format = DEFAULT_USER_ID_FORMAT
         if config.has_option('SITE', 'autolaunch_page'):
             self.site_autolaunch_page = config.get('SITE', 'autolaunch_page')
         else:
@@ -2864,6 +2899,21 @@ location.""" % self.config_file)
         logger.info('Added %d peer(s) from %s', len(peers_dict),
                     peerfile)
         return peers_dict
+
+    @staticmethod
+    def is_configuration_like(obj):
+        """Does the given object quack like a MiG Configuration."""
+        return inspect.ismethod(getattr(obj, 'reload_config', None))
+
+    @staticmethod
+    def to_dict(obj):
+        """Return a plain dictionary of the loaded configuration values only
+        given a Configuration-like object as input."""
+        assert Configuration.is_configuration_like(obj)
+        return _configuraton_dict_without_noforward_keys(obj)
+
+
+_CONFIGURATION_ARGUMENTS = set(_CONFIGURATION_PROPERTIES.keys()) - _CONFIGURATION_NOFORWARD_KEYS
 
 
 if '__main__' == __name__:

@@ -34,20 +34,37 @@ import unittest
 from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain
 from tests.support.fixturesupp import FixtureAssertMixin
 
-from mig.shared.configuration import Configuration
-
-
-def _is_method(value):
-    return type(value).__name__ == 'method'
+from mig.shared.configuration import Configuration, \
+    _CONFIGURATION_ARGUMENTS, _CONFIGURATION_PROPERTIES
 
 
 def _to_dict(obj):
     return {k: v for k, v in inspect.getmembers(obj)
-            if not (k.startswith('__') or _is_method(v))}
+            if not (k.startswith('__') or inspect.ismethod(v) or inspect.isfunction(v))}
 
 
-class MigSharedConfiguration(MigTestCase, FixtureAssertMixin):
-    """Wrap unit tests for the corresponding module"""
+class MigSharedConfiguration__static_definitions(MigTestCase):
+    """Coverage of the static definitions underlying Configuration objects."""
+
+    def test_consistent_parameters(self):
+        configuration_defaults_keys = set(_CONFIGURATION_PROPERTIES.keys())
+        mismatched = _CONFIGURATION_ARGUMENTS - configuration_defaults_keys
+
+        self.assertEqual(len(mismatched), 0,
+                         "configuration defaults do not match arguments")
+
+
+class MigSharedConfiguration__loaded_configurations(MigTestCase):
+    """Coverage of loaded Configuration instances."""
+
+    def test_argument_new_user_default_ui_is_replaced(self):
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--customised.conf')
+
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        self.assertEqual(configuration.new_user_default_ui, 'V3')
 
     def test_argument_storage_protocols(self):
         test_conf_file = os.path.join(
@@ -314,6 +331,10 @@ class MigSharedConfiguration(MigTestCase, FixtureAssertMixin):
         self.assertEqual(configuration.language, ['English'])
         # TODO: rename file to valid section name we can check and enable next?
         # self.assertEqual(configuration.multi, 'blabla')
+
+
+class MigSharedConfiguration__new_instance(MigTestCase, FixtureAssertMixin):
+    """Coverage of programatically created Configuration instances."""
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_default_object(self):

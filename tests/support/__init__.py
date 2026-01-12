@@ -219,9 +219,9 @@ class MigTestCase(TestCase):
     # testcase defaults
 
     @staticmethod
-    def _make_configuration_instance(configuration_to_make):
+    def _make_configuration_instance(testcase, configuration_to_make):
         if configuration_to_make == 'fakeconfig':
-            return FakeConfiguration()
+            return FakeConfiguration(logger=testcase.logger)
         elif configuration_to_make == 'testconfig':
             from mig.shared.conf import get_configuration_object
             return get_configuration_object(skip_log=True, disable_auth_log=True)
@@ -230,7 +230,7 @@ class MigTestCase(TestCase):
                 "MigTestCase: unknown configuration %r" % (configuration_to_make,))
 
     def _provide_configuration(self):
-        return 'fakeconfig'
+        return 'unspecified'
 
     @property
     def configuration(self):
@@ -240,8 +240,13 @@ class MigTestCase(TestCase):
             return self._configuration
 
         configuration_to_make = self._provide_configuration()
+
+        if configuration_to_make == 'unspecified':
+            raise AssertionError(
+                "configuration access but testcase did not request it")
+
         configuration_instance = self._make_configuration_instance(
-            configuration_to_make)
+            self, configuration_to_make)
 
         if configuration_to_make == 'testconfig':
             # use the paths defined by the loaded configuration to create

@@ -29,19 +29,61 @@
 
 from tests.support.loggersupp import FakeLogger
 
+from mig.shared.compat import SimpleNamespace
+from mig.shared.configuration import \
+    _CONFIGURATION_ARGUMENTS, _CONFIGURATION_PROPERTIES
 
-class FakeConfiguration:
-    """A simple helper to pretend we have a real Configuration object with any
-    required attributes explicitly passed.
+
+def _ensure_only_configuration_keys(thedict):
+    """Check a dictionary contains only keys valid as Configuration properties.
+    """
+
+    unknown_keys = set(thedict.keys()) - set(_CONFIGURATION_ARGUMENTS)
+    assert len(unknown_keys) == 0, \
+        "non-Configuration keys: %s" % (', '.join(unknown_keys),)
+
+
+def _generate_namespace_kwargs():
+    """Create plain dictionary with supported properties and keys that map to
+    their default values suitable for use in fabricating a namespace.
+    """
+
+    properties_and_defaults = dict(_CONFIGURATION_PROPERTIES)
+    properties_and_defaults['logger'] = None
+    return properties_and_defaults
+
+
+class FakeConfiguration(SimpleNamespace):
+    """An object that can act as a representative Configuration which can be
+    programmed with particular values required to exercise code under test.
+
+    This object will track standard values as would be present on a genuine
+    Configuration instance such that code under test expecting such can be
+    handed something. The defaults are overlaid by any explicit keyword args.
+
     Automatically attaches a FakeLogger instance if no logger is provided in
     kwargs.
     """
 
-    def __init__(self, **kwargs):
-        """Initialise instance attributes to be any named args provided and a
-        FakeLogger instance attached if not provided.
+    def __init__(self, logger=None, **kwargs):
+        """Initialise instance attributes based on the defaults plus any
+        supplied additional options.
         """
-        self.__dict__.update(kwargs)
-        if not 'logger' in self.__dict__:
-            dummy_logger = FakeLogger()
-            self.__dict__.update({'logger': dummy_logger})
+
+        SimpleNamespace.__init__(self, **_generate_namespace_kwargs())
+
+        if logger is None:
+            # TODO: remove this conditional once all callers that require a
+            #       FakeConfiguration request it via _provide_configuration()
+            logger = FakeLogger()
+        self.logger = logger
+
+        if kwargs:
+            _ensure_only_configuration_keys(kwargs)
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    def reload_config(self, *args, **kwargs):
+        """Stub defined to quack like Configuration."""
+
+        pass
