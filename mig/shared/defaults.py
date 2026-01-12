@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -488,7 +489,8 @@ STRONG_TLS_CURVES = "prime256v1:secp384r1:secp521r1"
 STRONG_SSH_HOSTKEYALGOS = "ssh-ed25519,rsa-sha2-512,rsa-sha2-256"
 LEGACY_SSH_HOSTKEYALGOS = ",".join([STRONG_SSH_HOSTKEYALGOS, "ssh-rsa"])
 FALLBACK_SSH_HOSTKEYALGOS = LEGACY_SSH_HOSTKEYALGOS
-STRONG_SSH_KEXALGOS = "sntrup761x25519-sha512@openssh.com,curve25519-sha256@libssh.org,curve25519-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512"
+# TODO: add the quantum safe future default mlkem768x25519-sha256 on Rocky10+
+STRONG_SSH_KEXALGOS = "sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512"
 # NOTE: fall back to relatively safe DH group-exchange-sha256 on old paramiko etc.
 LEGACY_SSH_KEXALGOS = ",".join([STRONG_SSH_KEXALGOS,
                                 "diffie-hellman-group-exchange-sha256"])
