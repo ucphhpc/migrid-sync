@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewuser - Display public details about a user
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -52,7 +52,8 @@ from mig.shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
 def signature():
     """Signature of the main function"""
 
-    defaults = {'cert_id': REJECT_UNSET}
+    defaults = {'cert_id': REJECT_UNSET,
+                'caching': ['true']}
     return ['user_info', defaults]
 
 
@@ -201,6 +202,7 @@ def main(client_id, user_arguments_dict):
                            'text': confirm_html(configuration)})
 
     user_list = accepted['cert_id']
+    caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -209,13 +211,18 @@ def main(client_id, user_arguments_dict):
                                             client_dir)) + os.sep
     status = returnvalues.OK
 
+    if caching:
+        caching_note = '(cached)'
+    else:
+        caching_note = ''
+
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'User details'
     output_objects.append({'object_type': 'header', 'text':
-                           'Show user details'})
+                           'Show user details %s' % caching_note})
 
-    visible_user = user_visible_user_confs(configuration, client_id)
-    vgrid_access = user_vgrid_access(configuration, client_id)
+    visible_user = user_visible_user_confs(configuration, client_id, caching)
+    vgrid_access = user_vgrid_access(configuration, client_id, caching)
     anon_map = anon_to_real_user_map(configuration)
 
     for visible_user_name in user_list:
@@ -248,5 +255,16 @@ def main(client_id, user_arguments_dict):
                                                          user_dict,
                                                          vgrid_access)
         output_objects.append(user_item)
+
+    output_objects.append({'object_type': 'html_form',
+                           'text': '<div class="vertical-spacer"></div>'})
+    user_query = '%s' % '&'.join(['cert_id=%s' % i for i in user_list])
+    output_objects.append(
+        {'object_type': 'link',
+         'destination':
+         'viewuser.py?caching=false&%s' % user_query,
+         'class': 'refreshlink iconspace',
+         'title': 'View without caching',
+         'text': 'View without caching of user data - may take a long time'})
 
     return (output_objects, status)
