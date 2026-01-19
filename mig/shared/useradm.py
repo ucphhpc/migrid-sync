@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -51,7 +51,7 @@ from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
     force_native_str_rec, native_str_escape, native_args
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
-from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
+from mig.shared.defaults import keyword_auto, keyword_updating, ssh_conf_dir, \
     davs_conf_dir, ftps_conf_dir, htaccess_filename, welcome_filename, \
     settings_filename, profile_filename, default_css_filename, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
@@ -59,7 +59,7 @@ from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     twofactor_filename, peers_filename, gdp_distinguished_field, \
     unique_id_length, unique_id_charset, X509_USER_ID_FORMAT, \
     UUID_USER_ID_FORMAT, valid_user_id_formats, user_id_alias_dir, \
-    expire_marks_dir, status_marks_dir
+    expire_marks_dir, status_marks_dir, user_db_filename
 from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
     make_symlink, delete_symlink, read_file, write_file, remove_dir, \
     remove_rec, makedirs_rec, listdir, move
@@ -1297,6 +1297,7 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
 
     user_dict = {}
     new_id = ''
+    saved_status = None
     try:
         old_user = user_db[client_id]
         user_dict.update(old_user)
@@ -1314,7 +1315,14 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
                 if do_lock:
                     unlock_user_db(flock)
                 raise Exception("Edit aborted: new user already exists!")
-            _logger.info("Force old user renew to fix any missing files")
+            # Keep track of updates in status to prevent concurrent changes
+            if old_user.get('status', None) == keyword_updating:
+                if do_lock:
+                    unlock_user_db(flock)
+                raise Exception("Edit aborted: concurrent user update active!")
+            saved_status = user_dict.get('status', None)
+            old_user['status'] = user_dict['status'] = keyword_updating
+            _logger.info("Force old user update to also fix any missing files")
             create_user(old_user, conf_path, db_path, force, verbose,
                         ask_renew=False, default_renew=True, do_lock=False,
                         from_edit_user=True, create_backup=True)
@@ -1556,7 +1564,12 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
 
     _logger.info("Renamed user %s to %s" % (client_id, new_id))
     mark_user_modified(configuration, new_id)
-    _logger.info("Force new user renew to fix access")
+    _logger.info("Force new user renew to fix access and restore %s status" %
+                 saved_status)
+    if saved_status is None:
+        del user_dict['status']
+    else:
+        user_dict['status'] = saved_status
     # NOTE: only backup user DB here if we didn't already do so in call above
     create_user(user_dict, conf_path, db_path, force, verbose,
                 ask_renew=False, default_renew=True, from_edit_user=True,
