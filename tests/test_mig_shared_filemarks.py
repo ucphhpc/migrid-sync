@@ -240,9 +240,6 @@ class TestMigSharedFilemarks(MigTestCase):
 
         self._verify_mark_after_test(valid_mark, 0)
 
-    def test_update_filemark_fails_when_file_prevents_directory(self):
-        """Test update_filemark fails when file prevents create directory"""
-
 
 if __name__ == '__main__':
     testmain()
