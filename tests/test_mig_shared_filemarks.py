@@ -208,10 +208,10 @@ class TestMigSharedFilemarks(MigTestCase):
         reset_result = reset_filemark(self.configuration, self.marks_base)
         self.assertFalse(reset_result)
 
-    def test_reset_filemark_partial_failure(self):
-        """Test reset_filemark with partial success"""
+    @unittest.skipIf(os.getuid() == 0, "access check is ignored as priv user")
+    def test_reset_filemark_partial_perms_failure(self):
+        """Test reset_filemark with partial failure due to permissions"""
         valid_mark = 'valid.mark'
-        # invalid_mark = os.path.join('restricted_dir', 'invalid.mark')
         invalid_mark = 'invalid.mark'
         invalid_path = os.path.join(self.marks_base, invalid_mark)
         # Create both marks but remove access to the latter
@@ -224,6 +224,24 @@ class TestMigSharedFilemarks(MigTestCase):
         self.assertFalse(reset_result)  # Should fail due to partial failure
 
         self._verify_mark_after_test(valid_mark, 0)
+
+    def test_reset_filemark_partial_file_prevents_directory_failure(self):
+        """Test reset_filemark with partial failure due to a file in the way"""
+        valid_mark = 'valid.mark'
+        invalid_mark = os.path.join('obstruct', 'invalid.mark')
+        # Create valid mark and a file to prevent the invalid mark
+        self._prepare_mark_for_test(valid_mark)
+        # Create a file in the way to prevent subdir creation
+        self._prepare_mark_for_test('obstruct')
+
+        reset_result = reset_filemark(self.configuration, self.marks_base,
+                                      [valid_mark, invalid_mark])
+        self.assertFalse(reset_result)  # Should fail due to partial failure
+
+        self._verify_mark_after_test(valid_mark, 0)
+
+    def test_update_filemark_fails_when_file_prevents_directory(self):
+        """Test update_filemark fails when file prevents create directory"""
 
 
 if __name__ == '__main__':
