@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_filemarks - unit tests for shared filemarks helpers
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -48,6 +48,23 @@ class TestMigSharedFilemarks(MigTestCase):
         """Set up isolated test configuration and logger for the tests"""
         return 'testconfig'
 
+    def _prepare_mark_for_test(self, mark_name=None, timestamp=None):
+        """Prepare test for mark_name with timestamp in default location"""
+        if mark_name is None:
+            mark_name = TEST_MARKS_FILE
+        if timestamp is None:
+            timestamp = time.time()
+        self.marks_path = os.path.join(self.marks_base, mark_name)
+        open(self.marks_path, 'w').close()
+        os.utime(self.marks_path, (timestamp, timestamp))
+        return timestamp
+
+    def _verify_mark_after_test(self, mark_name, timestamp):
+        """Verify that test has mark_name with timestamp in default location"""
+        self.marks_path = os.path.join(self.marks_base, mark_name)
+        self.assertTrue(os.path.exists(self.marks_path))
+        self.assertEqual(os.path.getmtime(self.marks_path), timestamp)
+
     def before_each(self):
         """Setup fake configuration and temp dir before each test."""
         self.marks_base = os.path.join(self.configuration.mig_system_run,
@@ -56,16 +73,20 @@ class TestMigSharedFilemarks(MigTestCase):
         self.marks_path = os.path.join(self.marks_base, TEST_MARKS_FILE)
 
     def test_update_filemark_create(self):
-        """Test update_filemark creates mark files"""
-        timestamp = time.time()
+        """Test update_filemark creates mark file with timestamp"""
+        timestamp = 4242
+        self.assertFalse(os.path.isfile(self.marks_path))
         update_result = update_filemark(self.configuration, self.marks_base,
                                         TEST_MARKS_FILE, timestamp)
         self.assertTrue(update_result)
         self.assertTrue(os.path.isfile(self.marks_path))
+        self.assertEqual(os.path.getmtime(self.marks_path), timestamp)
 
     def test_update_filemark_timestamp(self):
-        """Test update_filemark creates files with correct timestamp"""
-        timestamp = time.time()
+        """Test update_filemark updates existing file to given timestamp"""
+        timestamp = 424242
+        self._prepare_mark_for_test(TEST_MARKS_FILE, 4242)
+
         update_filemark(self.configuration, self.marks_base,
                         TEST_MARKS_FILE, timestamp)
         self.assertTrue(os.path.isfile(self.marks_path))
@@ -73,8 +94,8 @@ class TestMigSharedFilemarks(MigTestCase):
 
     def test_update_filemark_delete(self):
         """Test update_filemark deletes mark files with negative timestamp"""
-        update_filemark(self.configuration, self.marks_base,
-                        TEST_MARKS_FILE, time.time())
+        self._prepare_mark_for_test(TEST_MARKS_FILE)
+
         delete_result = update_filemark(self.configuration, self.marks_base,
                                         TEST_MARKS_FILE, -1)
         self.assertTrue(delete_result)
@@ -82,37 +103,38 @@ class TestMigSharedFilemarks(MigTestCase):
 
     def test_get_filemark_existing(self):
         """Test get_filemark retrieves timestamp for existing mark"""
-        timestamp = time.time()
-        update_filemark(self.configuration, self.marks_base,
-                        TEST_MARKS_FILE, timestamp)
+        timestamp = 4242
+        self._prepare_mark_for_test(TEST_MARKS_FILE, timestamp)
+
         retrieved = get_filemark(self.configuration, self.marks_base,
                                  TEST_MARKS_FILE)
         self.assertEqual(retrieved, timestamp)
 
     def test_get_filemark_missing(self):
         """Test get_filemark returns None for missing mark files"""
+        self.assertFalse(os.path.isfile(self.marks_path))
         retrieved = get_filemark(self.configuration, self.marks_base,
                                  'missing.mark')
         self.assertIsNone(retrieved)
 
     def test_reset_filemark_single(self):
         """Test reset_filemark updates single mark timestamp to 0"""
-        update_filemark(self.configuration, self.marks_base,
-                        TEST_MARKS_FILE, time.time())
+        self._prepare_mark_for_test(TEST_MARKS_FILE)
+
         reset_result = reset_filemark(self.configuration, self.marks_base,
                                       [TEST_MARKS_FILE])
         self.assertTrue(reset_result)
-        retrieved = get_filemark(self.configuration, self.marks_base,
-                                 TEST_MARKS_FILE)
-        self.assertEqual(retrieved, 0)
+
+        self._verify_mark_after_test(TEST_MARKS_FILE, 0)
 
     def test_reset_filemark_delete(self):
         """Test reset_filemark deletes marks with delete=True"""
-        update_filemark(self.configuration, self.marks_base,
-                        TEST_MARKS_FILE, time.time())
+        self._prepare_mark_for_test(TEST_MARKS_FILE)
+
         reset_result = reset_filemark(self.configuration, self.marks_base,
                                       [TEST_MARKS_FILE], delete=True)
         self.assertTrue(reset_result)
+
         retrieved = get_filemark(self.configuration, self.marks_base,
                                  TEST_MARKS_FILE)
         self.assertIsNone(retrieved)
@@ -122,33 +144,28 @@ class TestMigSharedFilemarks(MigTestCase):
         """Test reset_filemark resets all marks when mark_list=None"""
         marks = ['mark1', 'mark2', 'mark3']
         for mark in marks:
-            update_filemark(self.configuration, self.marks_base, mark,
-                            time.time())
+            self._prepare_mark_for_test(mark)
 
         reset_result = reset_filemark(self.configuration, self.marks_base)
         self.assertTrue(reset_result)
 
         for mark in marks:
-            result = get_filemark(self.configuration, self.marks_base, mark)
-            self.assertEqual(result, 0)
+            self._verify_mark_after_test(mark, 0)
 
     def test_update_filemark_fails_when_file_prevents_directory(self):
         """Test update_filemark fails when file prevents create directory"""
         # Create a file in the way to prevent subdir creation
-        result = update_filemark(self.configuration, self.marks_base,
-                                 'obstruct', time.time())
-        self.assertTrue(result)
+        self._prepare_mark_for_test('obstruct')
+
         result = update_filemark(self.configuration, self.marks_base,
                                  os.path.join('obstruct', 'test.mark'),
                                  time.time())
         self.assertFalse(result)
 
-    @unittest.skipIf(os.getuid() == 0, "enable when not running as priv user")
+    @unittest.skipIf(os.getuid() == 0, "access check is ignored as priv user")
     def test_update_filemark_directory_perms_failure(self):
         """Test update_filemark fails on directory creation failure"""
         # Create a read-only parent directory to prevent subdir creation
-        # TODO: permissions are not enforced if running as a privileged user
-        #       like it's the case for our current docker CI
         os.chmod(self.marks_base, stat.S_IRUSR)  # Remove write permissions
 
         result = update_filemark(self.configuration, self.marks_base,
@@ -156,15 +173,13 @@ class TestMigSharedFilemarks(MigTestCase):
                                  time.time())
         self.assertFalse(result)
 
-    @unittest.skipIf(os.getuid() == 0, "enable when not running as priv user")
+    @unittest.skipIf(os.getuid() == 0, "access check is ignored as priv user")
     def test_get_filemark_permission_denied(self):
         """Test get_filemark returns None when permission denied"""
-        # Create valid file first
-        update_filemark(self.configuration, self.marks_base,
-                        TEST_MARKS_FILE, time.time())
-
+        self._prepare_mark_for_test(TEST_MARKS_FILE)
         # Remove read permissions through parent dir
         os.chmod(self.marks_base, 0)
+
         result = get_filemark(self.configuration, self.marks_base,
                               TEST_MARKS_FILE)
         self.assertIsNone(result)
@@ -173,13 +188,13 @@ class TestMigSharedFilemarks(MigTestCase):
 
     def test_reset_filemark_string_mark_list(self):
         """Test reset_filemark handles single string mark_list"""
-        update_filemark(self.configuration, self.marks_base,
-                        TEST_MARKS_FILE, time.time())
+        self._prepare_mark_for_test(TEST_MARKS_FILE)
+
         reset_result = reset_filemark(self.configuration, self.marks_base,
                                       TEST_MARKS_FILE)
         self.assertTrue(reset_result)
-        self.assertEqual(get_filemark(self.configuration, self.marks_base,
-                                      TEST_MARKS_FILE), 0)
+
+        self._verify_mark_after_test(TEST_MARKS_FILE, 0)
 
     def test_reset_filemark_invalid_mark_list(self):
         """Test reset_filemark fails with invalid mark_list type"""
@@ -199,22 +214,16 @@ class TestMigSharedFilemarks(MigTestCase):
         # invalid_mark = os.path.join('restricted_dir', 'invalid.mark')
         invalid_mark = 'invalid.mark'
         invalid_path = os.path.join(self.marks_base, invalid_mark)
-        ensure_dirs_exist(invalid_path)
-
         # Create both marks but remove access to the latter
-        update_filemark(self.configuration, self.marks_base, valid_mark,
-                        time.time())
-        update_filemark(self.configuration, self.marks_base, invalid_mark,
-                        time.time())
+        self._prepare_mark_for_test(valid_mark)
+        self._prepare_mark_for_test(invalid_mark)
         os.chmod(invalid_path, stat.S_IRUSR)  # Remove write permissions
 
         reset_result = reset_filemark(self.configuration, self.marks_base,
                                       [valid_mark, invalid_mark])
         self.assertFalse(reset_result)  # Should fail due to partial failure
 
-        # Verify valid mark was still reset
-        self.assertEqual(get_filemark(self.configuration,
-                         self.marks_base, valid_mark), 0)
+        self._verify_mark_after_test(valid_mark, 0)
 
 
 if __name__ == '__main__':
