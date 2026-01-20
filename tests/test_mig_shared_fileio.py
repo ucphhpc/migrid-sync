@@ -90,6 +90,166 @@ DUMMY_DIRECTORY_SIZE = 4096
 assert isinstance(DUMMY_BYTES, bytes)
 
 
+class MigSharedFileio__temporary_umask(MigTestCase):
+    """Test the temporary_umask function from mig.shared.fileio module"""
+
+    def _provide_configuration(self):
+        """Set up isolated test configuration and logger for the tests"""
+        return 'testconfig'
+
+    def before_each(self):
+        """Setup test environment before each test method"""
+        self.tmp_base = os.path.join(self.configuration.mig_system_run,
+                                     DUMMY_TESTDIR)
+        ensure_dirs_exist(self.tmp_base)
+        self.tmp_file = os.path.join(self.tmp_base, DUMMY_FILE_ONE)
+        self.tmp_dir = os.path.join(self.tmp_base, DUMMY_DIRECTORY_EMPTY)
+
+    def _clean_test_file(self, path):
+        """Helper to clean up file after individual test"""
+        os.chmod(path, 0o600)
+        os.remove(path)
+
+    def _clean_test_dir(self, path):
+        """Helper to clean up dir after individual test"""
+        os.chmod(path, 0o700)
+        os.rmdir(path)
+
+    def test_creates_new_file_with_temporary_umask(self):
+        """Test create new file with permissions restricted by temporary_umask"""
+        self.assertFalse(os.path.exists(self.tmp_file))
+        with fileio.temporary_umask(0o777):
+            open(self.tmp_file, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file))
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o000)
+        self._clean_test_file(self.tmp_file)
+
+        self.assertFalse(os.path.exists(self.tmp_file))
+        with fileio.temporary_umask(0o277):
+            open(self.tmp_file, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file))
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o400)
+        self._clean_test_file(self.tmp_file)
+        self.assertFalse(os.path.exists(self.tmp_file))
+
+        self.assertFalse(os.path.exists(self.tmp_file))
+        with fileio.temporary_umask(0o227):
+            open(self.tmp_file, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file))
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o440)
+        self._clean_test_file(self.tmp_file)
+        self.assertFalse(os.path.exists(self.tmp_file))
+
+        self.assertFalse(os.path.exists(self.tmp_file))
+        with fileio.temporary_umask(0o077):
+            open(self.tmp_file, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file))
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o600)
+        self._clean_test_file(self.tmp_file)
+
+        self.assertFalse(os.path.exists(self.tmp_file))
+        with fileio.temporary_umask(0o027):
+            open(self.tmp_file, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file))
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o640)
+        self._clean_test_file(self.tmp_file)
+
+        self.assertFalse(os.path.exists(self.tmp_file))
+        with fileio.temporary_umask(0o007):
+            open(self.tmp_file, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file))
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o660)
+        self._clean_test_file(self.tmp_file)
+
+        self.assertFalse(os.path.exists(self.tmp_file))
+        with fileio.temporary_umask(0o022):
+            open(self.tmp_file, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file))
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o644)
+        self._clean_test_file(self.tmp_file)
+
+        self.assertFalse(os.path.exists(self.tmp_file))
+        with fileio.temporary_umask(0o002):
+            open(self.tmp_file, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file))
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o664)
+        self._clean_test_file(self.tmp_file)
+
+        self.assertFalse(os.path.exists(self.tmp_file))
+        with fileio.temporary_umask(0o000):
+            open(self.tmp_file, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file))
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o666)
+        self._clean_test_file(self.tmp_file)
+
+    def test_creates_new_directory_with_temporary_umask(self):
+        """Test create new directory with permissions restricted by temporary_umask"""
+        self.assertFalse(os.path.exists(self.tmp_dir))
+        with fileio.temporary_umask(0o777):
+            os.mkdir(self.tmp_dir)
+        self.assertTrue(os.path.isdir(self.tmp_dir))
+        self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o000)
+        self._clean_test_dir(self.tmp_dir)
+
+        self.assertFalse(os.path.exists(self.tmp_dir))
+        with fileio.temporary_umask(0o277):
+            os.mkdir(self.tmp_dir)
+        self.assertTrue(os.path.isdir(self.tmp_dir))
+        self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o500)
+        self._clean_test_dir(self.tmp_dir)
+
+        self.assertFalse(os.path.exists(self.tmp_dir))
+        with fileio.temporary_umask(0o227):
+            os.mkdir(self.tmp_dir)
+        self.assertTrue(os.path.isdir(self.tmp_dir))
+        self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o550)
+        self._clean_test_dir(self.tmp_dir)
+
+        self.assertFalse(os.path.exists(self.tmp_dir))
+        with fileio.temporary_umask(0o077):
+            os.mkdir(self.tmp_dir)
+        self.assertTrue(os.path.isdir(self.tmp_dir))
+        self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o700)
+        self._clean_test_dir(self.tmp_dir)
+        self.assertFalse(os.path.exists(self.tmp_dir))
+
+        self.assertFalse(os.path.exists(self.tmp_dir))
+        with fileio.temporary_umask(0o027):
+            os.mkdir(self.tmp_dir)
+        self.assertTrue(os.path.isdir(self.tmp_dir))
+        self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o750)
+        self._clean_test_dir(self.tmp_dir)
+
+        self.assertFalse(os.path.exists(self.tmp_dir))
+        with fileio.temporary_umask(0o007):
+            os.mkdir(self.tmp_dir)
+        self.assertTrue(os.path.isdir(self.tmp_dir))
+        self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o770)
+        self._clean_test_dir(self.tmp_dir)
+
+        self.assertFalse(os.path.exists(self.tmp_dir))
+        with fileio.temporary_umask(0o022):
+            os.mkdir(self.tmp_dir)
+        self.assertTrue(os.path.isdir(self.tmp_dir))
+        self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o755)
+        self._clean_test_dir(self.tmp_dir)
+
+        self.assertFalse(os.path.exists(self.tmp_dir))
+        with fileio.temporary_umask(0o002):
+            os.mkdir(self.tmp_dir)
+        self.assertTrue(os.path.isdir(self.tmp_dir))
+        self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o775)
+        self._clean_test_dir(self.tmp_dir)
+
+        self.assertFalse(os.path.exists(self.tmp_dir))
+        with fileio.temporary_umask(0o000):
+            os.mkdir(self.tmp_dir)
+        self.assertTrue(os.path.isdir(self.tmp_dir))
+        self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o777)
+        self._clean_test_dir(self.tmp_dir)
+        self.assertFalse(os.path.exists(self.tmp_dir))
+
+
 class MigSharedFileio__write_chunk(MigTestCase):
     """Test the write_chunk function from mig.shared.fileio module"""
 

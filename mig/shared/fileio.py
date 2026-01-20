@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileio - wrappers to keep file I/O in a single replaceable module
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from builtins import range
+import contextlib
 import errno
 import fcntl
 import os
@@ -148,6 +149,20 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
         logger.error("could not write %r chunk at %d: %s" %
                      (path, offset, err))
         return False
+
+
+@contextlib.contextmanager
+def temporary_umask(mask):
+    """A simple helper wrapped as a contextmanager to allow a fire-and-forget
+    temporary umask for one or more operations using a 'with'-construct like:
+    with temporary_umask(0o027):
+        do_stuff()
+    """
+    orig_mask = os.umask(mask)
+    try:
+        yield
+    finally:
+        os.umask(orig_mask)
 
 # TODO: toggle default force_string here when we have auto mode select?
 
