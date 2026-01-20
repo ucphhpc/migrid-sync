@@ -70,9 +70,10 @@ def html_tmpl(configuration, client_id, environ, title_entry):
     user_dict = user_map.get(client_id, None)
     user_account = ''
     if user_dict:
+        # NOTE: set min days high enough to always return renew and extend_days
         (_, _, renew_days, extend_days) = account_expire_info(configuration,
                                                               client_id,
-                                                              environ)
+                                                              environ, 999999)
         user_account += '''
         <h3>Account Details</h3>
         <p class="sub-title">Your account has the following information
