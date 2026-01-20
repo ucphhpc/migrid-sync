@@ -56,7 +56,7 @@ from mig.shared.base import client_id_dir, extract_field, force_native_str, \
 from mig.shared.defaults import twofactor_key_name, twofactor_interval_name, \
     twofactor_key_bytes, twofactor_cookie_bytes, twofactor_cookie_ttl
 from mig.shared.fileio import read_file, delete_file, delete_symlink, \
-    write_file, pickle, unpickle, make_symlink
+    write_file, pickle, unpickle, make_symlink, temporary_umask
 from mig.shared.gdp.all import get_base_client_id
 from mig.shared.pwcrypto import scramble_password, unscramble_password, \
     make_safe_hash
@@ -354,9 +354,8 @@ def save_twofactor_session(configuration, client_id, session_key, user_addr,
                     'user_addr': user_addr, 'user_agent': user_agent,
                     'session_start': session_start, 'session_end': session_end}
     # NOTE: force safe permissions on written session file to protect session data
-    orig_umask = os.umask(0o007)
-    status = pickle(session_data, session_path, configuration.logger)
-    os.umask(orig_umask)
+    with temporary_umask(0o007):
+        status = pickle(session_data, session_path, configuration.logger)
 
     if status and configuration.site_twofactor_strict_address:
         session_path_link = os.path.join(configuration.twofactor_home,
