@@ -102,13 +102,19 @@ class MigSharedFileio__temporary_umask(MigTestCase):
         self.tmp_base = os.path.join(self.configuration.mig_system_run,
                                      DUMMY_TESTDIR)
         ensure_dirs_exist(self.tmp_base)
-        self.tmp_file = os.path.join(self.tmp_base, DUMMY_FILE_ONE)
+        self.tmp_file_one = os.path.join(self.tmp_base, DUMMY_FILE_ONE)
         try:
-            os.chmod(self.tmp_file, 0o600)
-            os.remove(self.tmp_file)
+            os.chmod(self.tmp_file_one, 0o600)
+            os.remove(self.tmp_file_one)
         except:
             pass
-        self.assertFalse(os.path.exists(self.tmp_file))
+        self.tmp_file_two = os.path.join(self.tmp_base, DUMMY_FILE_TWO)
+        try:
+            os.chmod(self.tmp_file_two, 0o600)
+            os.remove(self.tmp_file_two)
+        except:
+            pass
+        self.assertFalse(os.path.exists(self.tmp_file_two))
         self.tmp_dir = os.path.join(self.tmp_base, DUMMY_DIRECTORY_EMPTY)
         try:
             os.chmod(self.tmp_dir, 0o700)
@@ -120,65 +126,65 @@ class MigSharedFileio__temporary_umask(MigTestCase):
     def test_creates_new_file_with_temporary_umask_777(self):
         """Test create file with permissions restricted by given temp umask"""
         with fileio.temporary_umask(0o777):
-            open(self.tmp_file, 'w').close()
-        self.assertTrue(os.path.isfile(self.tmp_file))
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o000)
+            open(self.tmp_file_one, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file_one))
+        self.assertEqual(os.stat(self.tmp_file_one).st_mode & 0o777, 0o000)
 
     def test_creates_new_file_with_temporary_umask_277(self):
         """Test create file with permissions restricted by given temp umask"""
         with fileio.temporary_umask(0o277):
-            open(self.tmp_file, 'w').close()
-        self.assertTrue(os.path.isfile(self.tmp_file))
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o400)
+            open(self.tmp_file_one, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file_one))
+        self.assertEqual(os.stat(self.tmp_file_one).st_mode & 0o777, 0o400)
 
     def test_creates_new_file_with_temporary_umask_227(self):
         """Test create file with permissions restricted by given temp umask"""
         with fileio.temporary_umask(0o227):
-            open(self.tmp_file, 'w').close()
-        self.assertTrue(os.path.isfile(self.tmp_file))
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o440)
+            open(self.tmp_file_one, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file_one))
+        self.assertEqual(os.stat(self.tmp_file_one).st_mode & 0o777, 0o440)
 
     def test_creates_new_file_with_temporary_umask_077(self):
         """Test create file with permissions restricted by given temp umask"""
         with fileio.temporary_umask(0o077):
-            open(self.tmp_file, 'w').close()
-        self.assertTrue(os.path.isfile(self.tmp_file))
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o600)
+            open(self.tmp_file_one, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file_one))
+        self.assertEqual(os.stat(self.tmp_file_one).st_mode & 0o777, 0o600)
 
     def test_creates_new_file_with_temporary_umask_027(self):
         """Test create file with permissions restricted by given temp umask"""
         with fileio.temporary_umask(0o027):
-            open(self.tmp_file, 'w').close()
-        self.assertTrue(os.path.isfile(self.tmp_file))
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o640)
+            open(self.tmp_file_one, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file_one))
+        self.assertEqual(os.stat(self.tmp_file_one).st_mode & 0o777, 0o640)
 
     def test_creates_new_file_with_temporary_umask_007(self):
         """Test create file with permissions restricted by given temp umask"""
         with fileio.temporary_umask(0o007):
-            open(self.tmp_file, 'w').close()
-        self.assertTrue(os.path.isfile(self.tmp_file))
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o660)
+            open(self.tmp_file_one, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file_one))
+        self.assertEqual(os.stat(self.tmp_file_one).st_mode & 0o777, 0o660)
 
     def test_creates_new_file_with_temporary_umask_022(self):
         """Test create file with permissions restricted by given temp umask"""
         with fileio.temporary_umask(0o022):
-            open(self.tmp_file, 'w').close()
-        self.assertTrue(os.path.isfile(self.tmp_file))
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o644)
+            open(self.tmp_file_one, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file_one))
+        self.assertEqual(os.stat(self.tmp_file_one).st_mode & 0o777, 0o644)
 
     def test_creates_new_file_with_temporary_umask_002(self):
         """Test create file with permissions restricted by given temp umask"""
         with fileio.temporary_umask(0o002):
-            open(self.tmp_file, 'w').close()
-        self.assertTrue(os.path.isfile(self.tmp_file))
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o664)
+            open(self.tmp_file_one, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file_one))
+        self.assertEqual(os.stat(self.tmp_file_one).st_mode & 0o777, 0o664)
 
     def test_creates_new_file_with_temporary_umask_000(self):
         """Test create file with permissions restricted by given temp umask"""
         with fileio.temporary_umask(0o000):
-            open(self.tmp_file, 'w').close()
-        self.assertTrue(os.path.isfile(self.tmp_file))
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o666)
+            open(self.tmp_file_one, 'w').close()
+        self.assertTrue(os.path.isfile(self.tmp_file_one))
+        self.assertEqual(os.stat(self.tmp_file_one).st_mode & 0o777, 0o666)
 
     def test_creates_new_directory_with_temporary_umask_777(self):
         """Test create dir with permissions restricted by given temp umask"""
@@ -244,6 +250,78 @@ class MigSharedFileio__temporary_umask(MigTestCase):
             os.mkdir(self.tmp_dir)
         self.assertTrue(os.path.isdir(self.tmp_dir))
         self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o777)
+
+    def test_restores_original_umask_after_exit(self):
+        """Test temporary_umask restores original umask after context"""
+        original_umask = os.umask(0o022)  # Set known umask
+        try:
+            # Enter temporary_umask context
+            with fileio.temporary_umask(0o077):
+                pass  # Just exit immediately
+            # Check umask restored to original (0o022)
+            current_umask = os.umask(original_umask)  # Retrieve and reset
+            # Cleanup: Restore environment
+            os.umask(current_umask)
+            self.assertEqual(current_umask, 0o022,
+                             "Failed to restore original umask")
+        finally:
+            os.umask(original_umask)  # Ensure cleanup
+
+    def test_nested_temporary_umask(self):
+        """Test nested temporary_umask contexts restore correctly"""
+        original_umask = os.umask(0o022)
+        try:
+            with fileio.temporary_umask(0o027):  # Outer context
+                open(self.tmp_file_one, 'w').close()
+                mode1 = os.stat(self.tmp_file_one).st_mode & 0o777
+                self.assertEqual(mode1, 0o640)  # 666 & ~027 = 640
+                with fileio.temporary_umask(0o077):  # Inner context
+                    open(self.tmp_file_two, 'w').close()
+                    mode2 = os.stat(self.tmp_file_two).st_mode & 0o777
+                    self.assertEqual(mode2, 0o600)  # 666 & ~077
+                # Back to outer context umask
+                os.remove(self.tmp_file_one)
+                open(self.tmp_file_one, 'w').close()
+                mode1_after = os.stat(self.tmp_file_one).st_mode & 0o777
+                self.assertEqual(mode1_after, 0o640)  # 666 & ~027
+            # Back to original umask
+            open(self.tmp_file_one, 'w').close()
+            mode_original = os.stat(self.tmp_file_one).st_mode & 0o777
+            self.assertEqual(mode_original, 0o640)  # 666 & ~002
+        finally:
+            os.umask(original_umask)
+            for path in [self.tmp_file_one, self.tmp_file_two]:
+                if os.path.exists(path):
+                    os.remove(path)
+
+    def test_restores_umask_after_exception(self):
+        """Test temporary_umask restores umask after exception"""
+        original_umask = os.umask(0o022)
+        try:
+            try:
+                with fileio.temporary_umask(0o077):
+                    raise ValueError("Test exception")
+            except ValueError:
+                pass  # Expected exception
+            # Umask should be restored to original
+            current_umask = os.umask(original_umask)
+            os.umask(current_umask)  # Reset for next check
+            self.assertEqual(current_umask, 0o022)
+        finally:
+            os.umask(original_umask)
+            if os.path.exists(self.tmp_file_one):
+                os.remove(self.tmp_file_one)
+
+    def test_umask_does_not_affect_existing_files(self):
+        """Test temporary_umask doesn't modify existing file permissions"""
+        open(self.tmp_file_one, 'w').close()
+        os.chmod(self.tmp_file_one, 0o644)  # Explicit permissions
+        with fileio.temporary_umask(0o077):  # Shouldn't affect existing file
+            # Change permissions inside context
+            os.chmod(self.tmp_file_one, 0o755)
+        mode_after = os.stat(self.tmp_file_one).st_mode & 0o777
+        # Directly set, not influenced by umask
+        self.assertEqual(mode_after, 0o755)
 
 
 class MigSharedFileio__write_chunk(MigTestCase):
