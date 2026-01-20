@@ -94,7 +94,7 @@ def html_tmpl(configuration, client_id, environ, title_entry):
 and sign up for %d days at a time)""" % (extend_days, renew_days)
                 elif renew_days > 0:
                     field_hint = """(renewal may extend it for up to %d days
-at a timedepending on site policies)""" % renew_days
+at a time depending on site policies)""" % renew_days
             user_account += '''%s: %s %s<br/>
             ''' % (label, user_dict[field], field_hint)
     # NOTE: ID token is only available for openid connect
