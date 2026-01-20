@@ -130,7 +130,6 @@ class MigSharedFileio__temporary_umask(MigTestCase):
         self.assertTrue(os.path.isfile(self.tmp_file))
         self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o400)
         self._clean_test_file(self.tmp_file)
-        self.assertFalse(os.path.exists(self.tmp_file))
 
         self.assertFalse(os.path.exists(self.tmp_file))
         with fileio.temporary_umask(0o227):
@@ -138,7 +137,6 @@ class MigSharedFileio__temporary_umask(MigTestCase):
         self.assertTrue(os.path.isfile(self.tmp_file))
         self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o440)
         self._clean_test_file(self.tmp_file)
-        self.assertFalse(os.path.exists(self.tmp_file))
 
         self.assertFalse(os.path.exists(self.tmp_file))
         with fileio.temporary_umask(0o077):
@@ -211,7 +209,6 @@ class MigSharedFileio__temporary_umask(MigTestCase):
         self.assertTrue(os.path.isdir(self.tmp_dir))
         self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o700)
         self._clean_test_dir(self.tmp_dir)
-        self.assertFalse(os.path.exists(self.tmp_dir))
 
         self.assertFalse(os.path.exists(self.tmp_dir))
         with fileio.temporary_umask(0o027):
@@ -247,7 +244,6 @@ class MigSharedFileio__temporary_umask(MigTestCase):
         self.assertTrue(os.path.isdir(self.tmp_dir))
         self.assertEqual(os.stat(self.tmp_dir).st_mode & 0o777, 0o777)
         self._clean_test_dir(self.tmp_dir)
-        self.assertFalse(os.path.exists(self.tmp_dir))
 
 
 class MigSharedFileio__write_chunk(MigTestCase):
