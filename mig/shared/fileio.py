@@ -499,7 +499,7 @@ def send_message_to_grid_notify(message, logger, configuration):
     """Write message to notify home"""
     if not logger:
         logger = null_logger("dummy")
-    filepath = 'UNDEFINED'
+    filepath = '/tmp/nonexistant-dummy-default-file-path-to-override-below'
     try:
         (filedescriptor, filepath) = make_temp_file(
             suffix='.%s' % time.time(),
