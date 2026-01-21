@@ -33,7 +33,7 @@ import unittest
 
 from mig.shared.base import distinguished_name_to_user
 from mig.shared.fileio import delete_file
-from mig.shared.serial import loads
+from mig.shared.serial import loads, dumps
 from mig.shared.userdb import default_db_path, load_user_db, load_user_dict, \
     lock_user_db, save_user_db, save_user_dict, unlock_user_db, \
     update_user_dict
@@ -52,10 +52,8 @@ class TestMigSharedUserDB(MigTestCase):
         return 'testconfig'
 
     # Helper methods
-    def _create_sample_db(self, content=None, db_path=None):
-        """Create sample user DB file with given content"""
-        if db_path is None:
-            db_path = self.user_db_path
+    def _generate_sample_db(self, content=None):
+        """Generate a sample user DB dictionary with content"""
         if content is None:
             sample_db = {
                 TEST_USER_ID: distinguished_name_to_user(TEST_USER_ID),
@@ -63,6 +61,13 @@ class TestMigSharedUserDB(MigTestCase):
             }
         else:
             sample_db = content
+        return sample_db
+
+    def _create_sample_db(self, content=None, db_path=None):
+        """Create sample user DB file with given content"""
+        if db_path is None:
+            db_path = self.user_db_path
+        sample_db = self._generate_sample_db(content)
         save_user_db(sample_db, db_path)
         return sample_db
 
@@ -147,12 +152,6 @@ class TestMigSharedUserDB(MigTestCase):
     def test_save_user_db(self):
         """Test saving user database content"""
         sample_db = self._create_sample_db()
-        try:
-            loaded = load_user_db(self.user_db_path)
-        except Exception:
-            loaded = None
-        self.assertEqual(sample_db, loaded)
-
         # Update DB
         sample_db["user3"] = {"field": "value3"}
         save_user_db(sample_db, self.user_db_path)
@@ -263,12 +262,23 @@ class TestMigSharedUserDB(MigTestCase):
         delayed_thread.join(1.0)
         self.assertFalse(delayed_thread.is_alive())
 
-    def test_pickle_roundtrip(self):
-        """Verify pickle serialization compatibility"""
+    def test_save_user_db_pickle_abi(self):
+        """Check save pickle compatibility to warn on underlying ABI changes"""
         orig_db = self._create_sample_db()
         with open(self.user_db_path, "rb") as fh:
             pickled = fh.read()
         loaded = loads(pickled)
+        self.assertEqual(orig_db, loaded)
+
+    def test_load_user_db_pickle_abi(self):
+        """Check load pickle compatibility to warn on underlying ABI changes"""
+        orig_db = self._generate_sample_db()
+        with open(self.user_db_path, "wb") as fh:
+            fh.write(dumps(orig_db))
+        try:
+            loaded = load_user_db(self.user_db_path)
+        except Exception:
+            loaded = None
         self.assertEqual(orig_db, loaded)
 
     # TODO: adjust API to allow enabling the next test
@@ -353,10 +363,10 @@ class TestMigSharedUserDB(MigTestCase):
             save_user_db("invalid content", self.user_db_path)
 
     def test_load_user_db_thread_safety(self):
-        """Test thread-safe loading with shared lock"""
+        """Test (emulated) thread-safe multiple-reader load with shared lock"""
         flock = lock_user_db(self.user_db_path, exclusive=False)
         try:
-            # Should allow concurrent reads
+            # Existing shared lock should still allow concurrent reads
             loaded = load_user_db(self.user_db_path)
             self.assertIsInstance(loaded, dict)
         finally:
