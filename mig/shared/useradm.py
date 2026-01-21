@@ -1316,7 +1316,7 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
                     unlock_user_db(flock)
                 raise Exception("Edit aborted: new user already exists!")
             # Keep track of updates in status to prevent concurrent changes
-            if old_user.get('status', None) == 'locked':
+            if old_user.get('status', 'active') == 'locked':
                 if do_lock:
                     unlock_user_db(flock)
                 raise Exception("Edit aborted: concurrent user update active!")
@@ -1566,7 +1566,13 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
     mark_user_modified(configuration, new_id)
     _logger.info("Force new user renew to fix access and restore %s status" %
                  saved_status)
-    user_dict['status'] = saved_status
+    if saved_status is None:
+        if verbose:
+            print('unexpectedly got no saved status after edit %r' % client_id)
+        _logger.error("something failed in edit user %r - delay unlocking" %
+                      client_id)
+    else:
+        user_dict['status'] = saved_status
     # NOTE: only backup user DB here if we didn't already do so in call above
     create_user(user_dict, conf_path, db_path, force, verbose,
                 ask_renew=False, default_renew=True, from_edit_user=True,
