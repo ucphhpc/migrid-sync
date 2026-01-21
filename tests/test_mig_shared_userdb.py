@@ -121,26 +121,31 @@ class TestMigSharedUserDB(MigTestCase):
         self.assertTrue(flock.writable)
         unlock_user_db(flock)
 
-    def test_load_user_db(self):
-        """Test loading valid and empty user databases"""
-        # Empty DB creation
+    def test_load_user_db_empty(self):
+        """Test loading empty user database"""
         empty_db = {}
-        save_user_db(empty_db, self.user_db_path)
+        with open(self.user_db_path, "wb") as fh:
+            fh.write(dumps(empty_db))
         try:
             loaded = load_user_db(self.user_db_path)
         except Exception:
             loaded = None
         self.assertEqual(loaded, empty_db)
 
-        # Verify proper loading
-        sample_db = self._create_sample_db()
+    def test_load_user_db_direct(self):
+        """Test loading valid directly saved user database"""
+        # Verify direct saved loading
+        sample_db = self._generate_sample_db()
+        with open(self.user_db_path, "wb") as fh:
+            fh.write(dumps(sample_db))
         try:
             loaded = load_user_db(self.user_db_path)
         except Exception:
             loaded = None
         self.assertEqual(loaded, sample_db)
 
-        # Test missing DB load
+    def test_load_user_db_missing(self):
+        """Test loading missing user database"""
         db_path = os.path.join(
             self.configuration.user_db_home, "no-such-db.db")
         try:
@@ -149,17 +154,34 @@ class TestMigSharedUserDB(MigTestCase):
             loaded = None
         self.assertEqual(loaded, None)
 
-    def test_save_user_db(self):
+    def test_save_user_db_empty(self):
+        """Test saving empty user database"""
+        save_user_db({}, self.user_db_path)
+        with open(self.user_db_path, "rb") as fh:
+            pickled = fh.read()
+            loaded = loads(pickled)
+        self.assertEqual(loaded, {})
+
+    def test_save_user_db_direct(self):
         """Test saving user database content"""
-        sample_db = self._create_sample_db()
+        sample_db = self._generate_sample_db()
         # Update DB
         sample_db["user3"] = {"field": "value3"}
         save_user_db(sample_db, self.user_db_path)
+        with open(self.user_db_path, "rb") as fh:
+            pickled = fh.read()
+            loaded = loads(pickled)
+        self.assertEqual(loaded, sample_db)
+
+    def test_save_load_user_db_cycle(self):
+        """Test complete cycle of saving and loading valid user database"""
+        sample_db = self._generate_sample_db()
+        save_user_db(sample_db, self.user_db_path)
         try:
-            reloaded = load_user_db(self.user_db_path)
+            loaded = load_user_db(self.user_db_path)
         except Exception:
-            reloaded = None
-        self.assertEqual(reloaded, sample_db)
+            loaded = None
+        self.assertEqual(loaded, sample_db)
 
     def test_load_user_dict_missing(self):
         """Test loading non-existent user from DB"""
@@ -188,10 +210,9 @@ class TestMigSharedUserDB(MigTestCase):
                                      other_user, self.user_db_path)
         self.assertTrue(save_status)
 
-        try:
-            loaded = load_user_db(self.user_db_path)
-        except Exception:
-            loaded = None
+        with open(self.user_db_path, "rb") as fh:
+            pickled = fh.read()
+            loaded = loads(pickled)
         self.assertEqual(loaded[OTHER_USER_ID], other_user)
 
     def test_save_user_dict_update(self):
@@ -203,10 +224,9 @@ class TestMigSharedUserDB(MigTestCase):
                                      changed, self.user_db_path)
         self.assertTrue(save_status)
 
-        try:
-            loaded = load_user_db(self.user_db_path)
-        except Exception:
-            loaded = None
+        with open(self.user_db_path, "rb") as fh:
+            pickled = fh.read()
+            loaded = loads(pickled)
         self.assertEqual(loaded[THIS_USER_ID], changed)
 
     def test_update_user_dict(self):
@@ -217,11 +237,10 @@ class TestMigSharedUserDB(MigTestCase):
                                    self.user_db_path)
         self.assertEqual(updated["Organization"], "CHANGED")
 
-        try:
-            full_db = load_user_db(self.user_db_path)
-        except Exception:
-            full_db = None
-        self.assertEqual(full_db[THIS_USER_ID]["Organization"], "CHANGED")
+        with open(self.user_db_path, "rb") as fh:
+            pickled = fh.read()
+            loaded = loads(pickled)
+        self.assertEqual(loaded[THIS_USER_ID]["Organization"], "CHANGED")
 
     def test_update_user_dict_requirements(self):
         """Test update_user_dict with invalid user ID"""
