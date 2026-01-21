@@ -218,7 +218,7 @@ peers_expire_max_days = 3652
 # for caching account status using integer timestamps outside user DB.
 # IMPORTANT: generally do NOT rearrange order, and ONLY append new values
 #            unless also purging ALL status filemarks in the process.
-valid_account_status = ['active', 'temporal', 'suspended', 'retired']
+valid_account_status = ['active', 'temporal', 'suspended', 'retired', 'locked']
 
 auth_openid_mig_db = 'mod_auth_openid-mig-users.db'
 auth_openid_ext_db = 'mod_auth_openid-ext-users.db'

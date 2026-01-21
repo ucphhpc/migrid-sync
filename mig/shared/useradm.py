@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -566,6 +566,11 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
             _logger.debug("proceed with %s account during edit user" %
                           account_status)
         else:
+            if do_lock:
+                unlock_user_db(flock)
+            if verbose:
+                print('Refusing to renew %s account for %r' % (account_status,
+                                                               client_id))
             raise Exception('refusing to renew %s account! (%s)' %
                             (account_status, accepted_peer_list))
         if reset_token and not new_expire:
@@ -1297,6 +1302,7 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
 
     user_dict = {}
     new_id = ''
+    saved_status = None
     try:
         old_user = user_db[client_id]
         user_dict.update(old_user)
@@ -1314,7 +1320,14 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
                 if do_lock:
                     unlock_user_db(flock)
                 raise Exception("Edit aborted: new user already exists!")
-            _logger.info("Force old user renew to fix any missing files")
+            # Keep track of updates in status to prevent concurrent changes
+            if old_user.get('status', 'active') == 'locked':
+                if do_lock:
+                    unlock_user_db(flock)
+                raise Exception("Edit aborted: concurrent user update active!")
+            saved_status = user_dict.get('status', 'active')
+            old_user['status'] = user_dict['status'] = 'locked'
+            _logger.info("Force old user update to also fix any missing files")
             create_user(old_user, conf_path, db_path, force, verbose,
                         ask_renew=False, default_renew=True, do_lock=False,
                         from_edit_user=True, create_backup=True)
@@ -1556,7 +1569,15 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
 
     _logger.info("Renamed user %s to %s" % (client_id, new_id))
     mark_user_modified(configuration, new_id)
-    _logger.info("Force new user renew to fix access")
+    _logger.info("Force new user renew to fix access and restore %s status" %
+                 saved_status)
+    if saved_status is None:
+        if verbose:
+            print('unexpectedly got no saved status after edit %r' % client_id)
+        _logger.error("something failed in edit user %r - delay unlocking" %
+                      client_id)
+    else:
+        user_dict['status'] = saved_status
     # NOTE: only backup user DB here if we didn't already do so in call above
     create_user(user_dict, conf_path, db_path, force, verbose,
                 ask_renew=False, default_renew=True, from_edit_user=True,

@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_useradm - unit test of the corresponding mig shared module
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -97,7 +97,8 @@ class TestMigSharedUsedadm_create_user(MigTestCase,
 
         _ensure_dirs_needed_for_userdb(self.configuration)
 
-        self.expected_user_db_home = os.path.normpath(configuration.user_db_home)
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home)
         self.expected_user_db_file = os.path.join(
             self.expected_user_db_home, 'MiG-users.db')
 
@@ -159,8 +160,10 @@ class TestMigSharedUsedadm_create_user(MigTestCase,
 
         # TODO: remove resetting the handful of keys here
         #       this is done to allow the comparision to succeed
-        actual_user_object = _adjust_user_dict_for_compare(pickled[expected_user_id])
-        expected_user_object = _adjust_user_dict_for_compare(prepared.fixture_data[expected_user_id])
+        actual_user_object = _adjust_user_dict_for_compare(
+            pickled[expected_user_id])
+        expected_user_object = _adjust_user_dict_for_compare(
+            prepared.fixture_data[expected_user_id])
 
         self.maxDiff = None
         self.assertEqual(actual_user_object, expected_user_object)
@@ -188,6 +191,60 @@ class TestMigSharedUsedadm_create_user(MigTestCase,
         except:
             self.assertFalse(True, "should not be reached")
 
+    def test_user_creation_and_renew_records_a_user(self):
+        user_dict = {}
+        user_dict['full_name'] = "Test User"
+        user_dict['organization'] = "Test Org"
+        user_dict['state'] = "NA"
+        user_dict['country'] = "DK"
+        user_dict['email'] = "test@example.com"
+        user_dict['comment'] = "This is the create comment"
+        user_dict['locality'] = ""
+        user_dict['organizational_unit'] = ""
+        user_dict['password'] = ""
+        user_dict['password_hash'] = self.TEST_USER_PASSWORD_HASH
+        # explicitly setting set a DN suffixed user DN to force GDP
+        user_dict['distinguished_name'] = self.TEST_USER_DN_GDP
+        user_dict['status'] = "active"
+
+        try:
+            create_user(user_dict, self.configuration, keyword_auto,
+                        default_renew=True, ask_renew=False)
+        except:
+            self.assertFalse(True, "should not be reached")
+
+        try:
+            create_user(user_dict, self.configuration, keyword_auto,
+                        default_renew=True, ask_renew=False)
+        except:
+            self.assertFalse(True, "should not be reached")
+
+    def test_user_creation_fails_in_renew_when_locked(self):
+        user_dict = {}
+        user_dict['full_name'] = "Test User"
+        user_dict['organization'] = "Test Org"
+        user_dict['state'] = "NA"
+        user_dict['country'] = "DK"
+        user_dict['email'] = "test@example.com"
+        user_dict['comment'] = "This is the create comment"
+        user_dict['locality'] = ""
+        user_dict['organizational_unit'] = ""
+        user_dict['password'] = ""
+        user_dict['password_hash'] = self.TEST_USER_PASSWORD_HASH
+        # explicitly setting set a DN suffixed user DN to force GDP
+        user_dict['distinguished_name'] = self.TEST_USER_DN_GDP
+        user_dict['status'] = "locked"
+
+        try:
+            create_user(user_dict, self.configuration, keyword_auto,
+                        default_renew=True, ask_renew=False)
+        except:
+            self.assertFalse(True, "should not be reached")
+
+        with self.assertRaises(Exception):
+            create_user(user_dict, self.configuration, keyword_auto,
+                        default_renew=True, ask_renew=False)
+
 
 class MigSharedUseradm__assure_current_htaccess(MigTestCase):
     """Coverage of useradm behaviours around htaccess."""
@@ -211,8 +268,6 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
             with io.open(generated) as htaccess_file:
                 generated = htaccess_file.read()
 
-        #print("DEBUG: generated htaccess:\n%s" % generated)
-
         generated_lines = generated.split('\n')
         if not expected in generated_lines:
             raise AssertionError("no such require user line: %s" % expected)
@@ -229,7 +284,6 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
             # File should not exist here at all
             self.assertNotEqual(path_kind, "file")
         except OSError as ignore_oserr:
-            #print("DEBUG: oserror found as expected: %s" % ignore_oserr)
             pass
 
     def test_creates_missing_htaccess_file(self):
