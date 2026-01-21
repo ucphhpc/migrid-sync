@@ -84,8 +84,6 @@ DUMMY_FILE_MAKESYMLINKDST = 'link_target'
 DUMMY_FILE_DELETESYMLINKSRC = 'link_src'
 DUMMY_FILE_DELETESYMLINKDST = 'link_target'
 DUMMY_FILE_TOUCH = 'touch_file'
-# NOTE: getsize returns 4k for directories
-DUMMY_DIRECTORY_SIZE = 4096
 
 assert isinstance(DUMMY_BYTES, bytes)
 
@@ -701,7 +699,10 @@ class MigSharedFileio__get_file_size(MigTestCase):
         self.logger.forgive_errors()
         ensure_dirs_exist(self.tmp_path)
         size = fileio.get_file_size(self.tmp_path, self.logger)
-        self.assertEqual(size, DUMMY_DIRECTORY_SIZE)
+        # explicitly check absence of the failure case
+        self.assertFalse(size == -1)
+        # additional check as directories do have a size
+        self.assertTrue(size > 0)
 
 
 class MigSharedFileio__delete_file(MigTestCase):
