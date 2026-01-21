@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_userdb - unit tests for shared user database handling
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -99,25 +99,21 @@ class TestMigSharedUserDB(MigTestCase):
         result = default_db_path(self.configuration)
         self.assertEqual(result, expected_legacy)
 
-    def test_lock_unlock_user_db(self):
-        """Test lock/unlock cycle for user database"""
-        # Exclusive locking
+    def test_shared_lock_unlock_user_db(self):
+        """Test shared (non-exclusive) lock/unlock cycle for user database"""
+        flock = lock_user_db(self.user_db_path, exclusive=False)
+        self.assertTrue(flock is not None)
+        self.assertTrue(flock.readable)
+        # TODO: expose this attribute as false in the backend and enable next?
+        # self.assertFalse(flock.writable)
+        unlock_user_db(flock)
+
+    def test_exclusive_lock_unlock_user_db(self):
+        """Test exclusive lock/unlock cycle for user database"""
         flock = lock_user_db(self.user_db_path, exclusive=True)
         self.assertTrue(flock is not None)
         self.assertTrue(flock.readable)
         self.assertTrue(flock.writable)
-
-        # Unlock exclusive
-        unlock_user_db(flock)
-
-        # Shared locking
-        flock = lock_user_db(self.user_db_path, exclusive=False)
-        self.assertTrue(flock is not None)
-        self.assertTrue(flock.readable)
-        # TODO: expose this attribue in the backend and enable next?
-        # self.assertFalse(flock.writable)
-
-        # Unlock shared
         unlock_user_db(flock)
 
     def test_load_user_db(self):
