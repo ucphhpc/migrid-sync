@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # account - account page with info and account management options
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -35,6 +36,7 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import renew_account_access_template
+from mig.shared.accountstate import account_expire_info
 from mig.shared.defaults import csrf_field, user_home_label
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
@@ -68,6 +70,10 @@ def html_tmpl(configuration, client_id, environ, title_entry):
     user_dict = user_map.get(client_id, None)
     user_account = ''
     if user_dict:
+        # NOTE: set min days high enough to always return renew and extend_days
+        (_, _, renew_days, extend_days) = account_expire_info(configuration,
+                                                              client_id,
+                                                              environ, 999999)
         user_account += '''
         <h3>Account Details</h3>
         <p class="sub-title">Your account has the following information
@@ -75,14 +81,22 @@ def html_tmpl(configuration, client_id, environ, title_entry):
         </p>
         '''
         for (field, label) in _account_field_order:
+            field_hint = ''
             if not user_dict.get(field, False):
                 continue
             if field == 'expire':
                 # NOTE: translate epoch to proper datetime string
                 expire_dt = datetime.datetime.fromtimestamp(user_dict[field])
-                user_dict[field] = expire_dt
-            user_account += '''%s: %s<br/>
-            ''' % (label, user_dict[field])
+                # strip usec for user-friendly time stamp
+                user_dict[field] = expire_dt.replace(microsecond=0)
+                if extend_days > 0:
+                    field_hint = """(web login auto-extends access for %d days,
+and sign up for %d days at a time)""" % (extend_days, renew_days)
+                elif renew_days > 0:
+                    field_hint = """(renewal may extend it for up to %d days
+at a time depending on site policies)""" % renew_days
+            user_account += '''%s: %s %s<br/>
+            ''' % (label, user_dict[field], field_hint)
     # NOTE: ID token is only available for openid connect
     claim_dump, user_token = '', ''
     for (key, val) in os.environ.items():
