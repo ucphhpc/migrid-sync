@@ -719,6 +719,8 @@ change."""
                               mask_creds(user))
             elif renew:
                 # NOTE: bail out here on edit/renewal as IDs are not unique
+                if do_lock:
+                    unlock_user_db(flock)
                 raise ValueError("unique ID for %s (%r) has a collission!" %
                                  (client_id, user['unique_id']))
             else:
@@ -727,6 +729,8 @@ change."""
             user['unique_id'] = generate_random_ascii(unique_id_length,
                                                       unique_id_charset)
         if not found_unique:
+            if do_lock:
+                unlock_user_db(flock)
             if verbose:
                 print('Failed to generate a unique id for %s - bailing out!' %
                       client_id)
