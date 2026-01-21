@@ -566,6 +566,11 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
             _logger.debug("proceed with %s account during edit user" %
                           account_status)
         else:
+            if do_lock:
+                unlock_user_db(flock)
+            if verbose:
+                print('Refusing to renew %s account for %r' % (account_status,
+                                                               client_id))
             raise Exception('refusing to renew %s account! (%s)' %
                             (account_status, accepted_peer_list))
         if reset_token and not new_expire:
