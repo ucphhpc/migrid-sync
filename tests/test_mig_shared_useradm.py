@@ -203,9 +203,6 @@ class TestMigSharedUsedadm_create_user(MigTestCase,
         user_dict['organizational_unit'] = ""
         user_dict['password'] = ""
         user_dict['password_hash'] = self.TEST_USER_PASSWORD_HASH
-        # explicitly setting set a DN suffixed user DN to force GDP
-        user_dict['distinguished_name'] = self.TEST_USER_DN_GDP
-        user_dict['status'] = "active"
 
         try:
             create_user(user_dict, self.configuration, keyword_auto,
@@ -241,6 +238,26 @@ class TestMigSharedUsedadm_create_user(MigTestCase,
         except:
             self.assertFalse(True, "should not be reached")
 
+    def test_user_creation_with_id_collission_fails(self):
+        user_dict = {}
+        user_dict['full_name'] = "Test User"
+        user_dict['organization'] = "Test Org"
+        user_dict['state'] = "NA"
+        user_dict['country'] = "DK"
+        user_dict['email'] = "user@example.com"
+        user_dict['comment'] = "This is the create comment"
+        user_dict['password'] = "password"
+        user_dict['distinguished_name'] = self.TEST_USER_DN
+
+        try:
+            create_user(user_dict, self.configuration,
+                        keyword_auto, default_renew=True)
+        except:
+            self.assertFalse(True, "should not be reached")
+
+        # NOTE: reset distinguished_name and introduce an ID conflict to test
+        del user_dict['distinguished_name']
+        user_dict['organization'] = "Another Org"
         with self.assertRaises(Exception):
             create_user(user_dict, self.configuration, keyword_auto,
                         default_renew=True, ask_renew=False)
