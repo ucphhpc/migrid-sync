@@ -255,7 +255,7 @@ class TestMigSharedUsedadm_create_user(MigTestCase,
         except:
             self.assertFalse(True, "should not be reached")
 
-        # NOTE: reset distinguished_name name and introduce a conflict
+        # NOTE: reset distinguished_name and introduce an ID conflict to test
         del user_dict['distinguished_name']
         user_dict['organization'] = "Another Org"
         with self.assertRaises(Exception):
