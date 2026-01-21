@@ -264,16 +264,13 @@ access the workflows.'''
         optional_fields = [('rate_limit', None), ('settle_time', None)]
 
         # Only include system triggers in verbose mode
-        if verbose(flags):
-            system_filter = []
         (init_status, oobjs) = vgrid_add_remove_table(
             client_id,
             vgrid_name,
             'trigger',
             'vgridtrigger',
             configuration,
-            extra_fields + optional_fields,
-            filter_items=system_filter
+            extra_fields=extra_fields + optional_fields
         )
         if not init_status:
             output_objects.append({'object_type': 'error_text', 'text':
