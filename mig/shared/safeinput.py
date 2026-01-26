@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -44,6 +45,7 @@ from past.builtins import basestring
 import re
 import sys
 from email.utils import parseaddr, formataddr
+from html import escape as escape_html
 from string import ascii_letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
 
@@ -52,14 +54,6 @@ try:
 except ImportError:
     nbformat = None
 
-PY2 = sys.version_info[0] < 3
-
-escape_html = None
-if PY2:
-    from cgi import escape as escape_html
-else:
-    from html import escape as escape_html
-assert escape_html is not None
 
 from mig.shared.base import force_unicode, force_native_str
 from mig.shared.defaults import src_dst_sep, username_charset, \
