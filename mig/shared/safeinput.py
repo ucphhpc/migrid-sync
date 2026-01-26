@@ -145,10 +145,10 @@ VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + CURRENCY + '?#*[]{}' + '"' + \
     "`|^" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = ascii_letters + digits + '.-'
 VALID_BACKEND_NAME_CHARACTERS = ascii_letters + digits + '-_'
-VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
-VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
 # According to https://tools.ietf.org/html/rfc3986#section-2 URLs may contain
 # '%'-encoded chars, alphanum chars and query chars "-._~:/?#[]@!$&'()*+,;=`."
+VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
+VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
 VALID_COMPLEXURL_CHARACTERS = VALID_BASEURL_CHARACTERS + \
     "%-._~:/?#[]@!$&'()*+,;=`."
 VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
@@ -2047,9 +2047,12 @@ def guess_type(name):
         for key in ('modauthopenid.referrer',
                     'transfer_src',
                     'transfer_dst',
-                    'redirect_url',
                     ):
             __type_map[key] = valid_url
+        # NOTE: Trac URLs may have user IDs with '@' and can hit twofactor
+        for key in ('redirect_url',
+                    ):
+            __type_map[key] = valid_complex_url
 
         # GDP
 
