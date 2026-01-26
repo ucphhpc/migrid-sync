@@ -1787,7 +1787,7 @@ location.""" % self.config_file)
             self.user_quota_log = config.get('GLOBAL',
                                              'user_quota_log')
         if config.has_option('GLOBAL', 'user_accounting_log'):
-            self.user_quota_log = config.get('GLOBAL',
+            self.user_accounting_log = config.get('GLOBAL',
                                              'user_accounting_log')
         if config.has_option('GLOBAL', 'public_key_file'):
             self.public_key_file = config.get('GLOBAL', 'public_key_file')
