@@ -36,6 +36,7 @@
 # processname: grid_imnotify.py
 # processname: grid_vmproxy.py
 # processname: grid_quota.py
+# processname: grid_accounting.py
 # processname: sshd
 # config: /etc/sysconfig/migrid
 # 
@@ -102,13 +103,14 @@ MIG_NOTIFY=${MIG_CODE}/server/grid_notify.py
 MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
 MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 MIG_QUOTA=${MIG_CODE}/server/grid_quota.py
+MIG_ACCOUNTING=${MIG_CODE}/server/grid_accounting.py
 MIG_CHKUSERROOT=${MIG_CODE}/server/chkuserroot.py
 MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
 
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
     echo "where daemon is left out for all or given along with DAEMON as one of the following"
-    echo "(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|all)"
+    echo "(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|accounting|all)"
 }
 
 check_enabled() {
@@ -377,6 +379,21 @@ start_quota() {
     [ $RET2 -ne 0 ] && echo "Warning: quota not started."
     echo
 }
+start_accounting() {
+    check_enabled "accounting" || return
+    DAEMON_PATH=${MIG_ACCOUNTING}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG accounting daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER}  --pidfile ${PID_FILE} \
+       "${DAEMON_PATH} >> ${MIG_LOG}/accounting.out 2>&1 &"
+    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
+    RET2=$?
+    [ $RET2 -eq 0 ] && success
+    echo
+    [ $RET2 -ne 0 ] && echo "Warning: accounting not started."
+    echo
+}
 start_sftpsubsys() {
     check_enabled "sftp_subsys" || return
     DAEMON_PATH=${MIG_SFTPSUBSYS}
@@ -410,6 +427,7 @@ start_all() {
     start_imnotify
     start_vmproxy
     start_quota
+    start_accounting
     return 0
 }
 
@@ -579,6 +597,15 @@ stop_quota() {
     killproc ${DAEMON_PATH}
     echo
 }
+stop_accounting() {
+    check_enabled "accounting" || return
+    DAEMON_PATH=${MIG_ACCOUNTING}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG accounting: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
 stop_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -623,6 +650,7 @@ stop_all() {
     stop_imnotify
     stop_vmproxy
     stop_quota
+    stop_accounting
     return 0
 }
 
@@ -761,6 +789,15 @@ reload_quota() {
     killproc ${DAEMON_PATH} -HUP
     echo
 }
+reload_accounting() {
+    check_enabled "accounting" || return
+    DAEMON_PATH=${MIG_ACCOUNTING}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG accounting: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
 reload_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -818,6 +855,7 @@ reload_all() {
     reload_imnotify
     reload_vmproxy
     reload_quota
+    reload_accounting
     # Apache helpers to verify proper chrooting
     reload_chkuserroot
     reload_chksidroot
@@ -929,6 +967,13 @@ status_quota() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status ${DAEMON_PATH}
 }
+status_accounting() {
+    check_enabled "accounting" || return
+    DAEMON_PATH=${MIG_ACCOUNTING}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
 status_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -969,6 +1014,7 @@ status_all() {
     status_imnotify
     status_vmproxy
     status_quota
+    status_accounting
     return 0
 }
 
@@ -980,7 +1026,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|all)
+    script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|accounting|all)
         TARGET="$2"
 	;;
     '')
