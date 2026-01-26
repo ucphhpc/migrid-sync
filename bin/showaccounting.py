@@ -59,7 +59,8 @@ Where ACCOUNTING_OPTIONS may be one or more of:
 def show_accounting(configuration,
                     timestamp,
                     user_filter,
-                    minimum_usage):
+                    minimum_usage,
+                    verbose):
     """Print user accointing report"""
     user_filter_re = None
     if user_filter:
@@ -186,6 +187,7 @@ if '__main__' == __name__:
     show_accounting(configuration,
                     timestamp,
                     user_filter,
-                    minimum_usage)
+                    minimum_usage,
+                    verbose)
 
     sys.exit(0)
