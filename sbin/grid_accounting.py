@@ -45,7 +45,7 @@ from mig.shared.logger import daemon_logger, register_hangup_handler
 
 if __name__ == "__main__":
     print(
-        """This is the MiG lustre accounting daemon that collect storage accounting
+        """This is the MiG accounting daemon that collect storage accounting
         information for users and their associated vgrids, archives and peers.
 
 Set the MIG_CONF environment to the server configuration path
