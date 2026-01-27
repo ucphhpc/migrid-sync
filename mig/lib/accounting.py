@@ -28,18 +28,17 @@
 
 """helpers to support storage accounting"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-import os
-import time
 import datetime
 import math
+import os
+import time
 
 from mig.shared.base import client_dir_id, force_native_str
-from mig.shared.fileio import pickle, unpickle, load_json, make_symlink
-from mig.shared.vgrid import vgrid_list_vgrids, vgrid_list
+from mig.shared.fileio import load_json, make_symlink, pickle, unpickle
 from mig.shared.useradm import get_accepted_peers
+from mig.shared.vgrid import vgrid_list, vgrid_list_vgrids
 
 
 def __init_accounting_entry(user_bytes=0,

@@ -27,17 +27,16 @@
 
 """Create accounting information for users"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-import sys
+import datetime
 import getopt
 import re
-import datetime
+import sys
 
+from mig.lib.accounting import get_usage, human_readable_filesize
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import gdp_distinguished_field
-from mig.lib.accounting import get_usage, human_readable_filesize
 
 
 def usage(name='showaccounting.py'):

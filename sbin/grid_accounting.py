@@ -30,18 +30,17 @@ information for users and their associated vgrids, archives and peers"""
 
 from __future__ import absolute_import, print_function
 
+import datetime
 import os
 import sys
 import time
 import traceback
-import datetime
 
+from mig.lib.accounting import update_accounting
 from mig.lib.daemon import check_run, check_stop, interruptible_sleep, \
     register_run_handler, register_stop_handler, reset_run, stop_running
-from mig.lib.accounting import update_accounting
 from mig.shared.conf import get_configuration_object
 from mig.shared.logger import daemon_logger, register_hangup_handler
-
 
 if __name__ == "__main__":
     print(
