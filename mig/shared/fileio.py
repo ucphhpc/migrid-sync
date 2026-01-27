@@ -577,14 +577,20 @@ def remove_rec(dir_path, configuration):
         if not os.path.isdir(dir_path):
             raise Exception("Directory %r does not exist" % dir_path)
 
-        os.chmod(dir_path, 0o777)
-
-        # extend permissions top-down
+        # Allow write before remove to avoid access errors
+        _logger.debug("extend permissions top-down prior to removing %s" %
+                      dir_path)
+        os.chmod(dir_path, 0o770)
         for root, dirs, files in walk(dir_path, topdown=True):
-            for name in files:
-                os.chmod(os.path.join(root, name), 0o777)
-            for name in dirs:
-                os.chmod(os.path.join(root, name), 0o777)
+            for name in files + dirs:
+                target = os.path.join(root, name)
+                # NOTE: skip symlinks here to avoid errors for broken ones
+                # NOTE: follow_symlinks arg of chmod isn't generally supported
+                if os.path.islink(target):
+                    _logger.debug("skip symlink %s in walk %s" % (target,
+                                                                  dir_path))
+                    continue
+                os.chmod(os.path.join(root, name), 0o770)
         shutil.rmtree(dir_path)
 
     except Exception as err:
