@@ -37,7 +37,7 @@ from tests.support import MigTestCase, ensure_dirs_exist
 
 
 class MigLibAccounting(MigTestCase):
-    """Unit tests for quota related helper functions"""
+    """Unit tests for accounting related helper functions"""
 
     def _provide_configuration(self):
         """Prepare isolated test config"""
