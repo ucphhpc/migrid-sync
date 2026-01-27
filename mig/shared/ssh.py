@@ -44,9 +44,8 @@ except ImportError:
     # Paramiko not available - imported fom griddaemons so fail gracefully
     paramiko = None
 
-from mig.shared.base import client_id_dir, force_utf8
+from mig.shared.base import client_id_dir, force_utf8, NativeStringIO
 from mig.shared.conf import get_resource_exe, get_configuration_object
-from mig.shared.compat import NativeStringIO
 from mig.shared.defaults import ssh_conf_dir
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe
 

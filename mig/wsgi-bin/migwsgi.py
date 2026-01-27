@@ -249,11 +249,6 @@ def application(environ, start_response, configuration=None,
     #      (sys.version_info, ), file=environ['wsgi.errors'])
     # print("DEBUG: path %s" % sys.path, file=environ['wsgi.errors'])
 
-    # NOTE: redirect stdout to stderr in python 2 only. It breaks logger in 3
-    #       and stdout redirection apparently is already handled there.
-    if sys.version_info[0] < 3:
-        sys.stdout = sys.stderr
-
     if configuration is None:
         configuration = get_configuration_object()
 

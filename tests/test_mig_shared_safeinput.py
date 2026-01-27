@@ -39,14 +39,10 @@ from mig.shared.safeinput import main as safeinput_main, InputException, \
     valid_printable, valid_base_url, valid_url, valid_complex_url, \
     VALID_NAME_CHARACTERS
 
-PY2 = sys.version_info[0] == 2
-
 
 def as_string_of_unicode(value):
     assert isinstance(value, basestring)
-    if not is_string_of_unicode(value):
-        assert PY2, "unreachable unless Python 2"
-        return unicode(codecs.decode(value, 'utf8'))
+    assert is_string_of_unicode(value)
     return value
 
 

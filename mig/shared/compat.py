@@ -36,27 +36,8 @@ from past.builtins import basestring
 import codecs
 import io
 import sys
-# NOTE: StringIO is only available in python2
-try:
-    import StringIO
-except ImportError:
-    StringIO = None
 
-PY2 = sys.version_info[0] < 3
 _TYPE_UNICODE = type(u"")
-
-
-if PY2:
-    class SimpleNamespace(dict):
-        """Bare minimum SimpleNamespace for Python 2."""
-
-        def __getattribute__(self, name):
-            if name == '__dict__':
-                return dict(**self)
-
-            return self[name]
-else:
-    from types import SimpleNamespace
 
 
 def _is_unicode(val):
@@ -72,34 +53,9 @@ def ensure_native_string(string_or_bytes):
     """Given a supplied input which can be either a string or bytes
     return a representation providing string operations while ensuring that
     its contents represent a valid series of textual characters.
-
-    Arrange identical operation across python 2 and 3 - specifically,
-    the presence of invalid UTF-8 bytes (thus the input not being a
-    valid textual string) will trigger a UnicodeDecodeError on PY3.
-    Force the same to occur on PY2.
     """
-    if PY2:
-        # Simulate decoding done by PY3 to trigger identical exceptions
-        # note the use of a forced "utf8" encoding value: this function
-        # is generally used to wrap, for example, substitutions of values
-        # into strings that are defined in the source code. In Python 3
-        # these are mandated to be UTF-8, and thus decoding as "utf8" is
-        # what will be attempted on supplied input. Match it.
-        textual_output = codecs.encode(string_or_bytes, 'utf8')
-    elif not _is_unicode(string_or_bytes):
+    if not _is_unicode(string_or_bytes):
         textual_output = str(string_or_bytes, 'utf8')
     else:
         textual_output = string_or_bytes
     return textual_output
-
-
-def NativeStringIO(initial_value=''):
-    """Mock StringIO pseudo-class to create a StringIO matching the native
-    string coding form. That is a BytesIO with utf8 on python 2 and unicode
-    StringIO otherwise. Optional string helpers are automatically converted
-    accordingly.
-    """
-    if PY2 and StringIO is not None:
-        return StringIO.StringIO(initial_value)
-    else:
-        return io.StringIO(initial_value)

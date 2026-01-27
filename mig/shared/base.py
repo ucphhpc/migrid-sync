@@ -736,23 +736,13 @@ def native_args(argv):
     https://docs.python.org/3/library/sys.html#sys.argv
     for further details.
     """
-    if sys.version_info[0] >= 3:
-        return [os.fsencode(arg) for arg in argv]
-    else:
-        return argv
+    return [os.fsencode(arg) for arg in argv]
 
 
 def NativeStringIO(initial_value=''):
-    """Mock StringIO pseudo-class to create a StringIO matching the native
-    string coding form. That is a BytesIO with utf8 on python 2 and unicode
-    StringIO otherwise. Optional string helpers are automatically converted
-    accordingly.
+    """Pseudo-class wrapper to return a StringIO. This is a unicode StringIO.
     """
-    if sys.version_info[0] >= 3:
-        return io.StringIO(initial_value)
-    else:
-        from StringIO import StringIO
-        return StringIO(initial_value)
+    return io.StringIO(initial_value)
 
 
 def DefaultStringIO(initial_value=''):

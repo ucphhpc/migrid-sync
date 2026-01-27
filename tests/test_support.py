@@ -32,7 +32,7 @@ import os
 import sys
 import unittest
 
-from tests.support import MigTestCase, PY2, testmain, temppath, \
+from tests.support import MigTestCase, testmain, temppath, \
     AssertOver, FakeConfiguration
 
 from mig.shared.conf import get_configuration_object
@@ -83,7 +83,6 @@ class SupportTestCase(MigTestCase):
         self.assertEqual(str(theexception),
             "configuration access but testcase did not request it")
 
-    @unittest.skipIf(PY2, "Python 3 only")
     def test_unclosed_files_are_recorded(self):
         tmp_path = temppath("support-unclosed", self)
 
@@ -160,7 +159,7 @@ class SupportTestCase_using_testconfig(MigTestCase):
         return 'testconfig'
 
     def test_provides_the_test_configuration(self):
-        expected_last_dir = 'testconfs-py2' if PY2 else 'testconfs-py3'
+        expected_last_dir = 'testconfs-py3'
 
         configuration = self.configuration
 

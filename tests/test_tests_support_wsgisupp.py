@@ -28,7 +28,7 @@
 """Unit tests for the tests module pointed to in the filename"""
 
 import unittest
-from mig.shared.compat import SimpleNamespace
+from types import SimpleNamespace
 
 from tests.support import AssertOver
 from tests.support.wsgisupp import prepare_wsgi

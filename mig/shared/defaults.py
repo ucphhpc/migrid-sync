@@ -37,17 +37,8 @@ import sys
 MIG_BASE = os.path.realpath(os.path.join(os.path.dirname(__file__), '../..'))
 MIG_ENV = os.getenv('MIG_ENV', 'default')
 
-# NOTE: python3 switched strings to use unicode by default in contrast to bytes
-#       in python2. File systems remain with utf8 however so we need to
-#       carefully handle a lot of cases of either encoding to utf8 or decoding
-#       to unicode depending on the python used.
-#       Please refer to the helpers in shared.base for actual handling of it.
-if sys.version_info[0] >= 3:
-    default_str_coding = 'unicode'
-    default_fs_coding = 'utf8'
-else:
-    default_str_coding = 'utf8'
-    default_fs_coding = 'utf8'
+default_str_coding = 'unicode'
+default_fs_coding = 'utf8'
 
 CODING_KINDS = (STR_KIND, FS_KIND) = ('__STR__', '__FS__')
 

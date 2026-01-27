@@ -34,7 +34,7 @@ import shutil
 import sys
 import unittest
 
-from tests.support import MIG_BASE, PY2, TEST_DATA_DIR, MigTestCase, testmain, \
+from tests.support import MIG_BASE, TEST_DATA_DIR, MigTestCase, testmain, \
     temppath, ensure_dirs_exist
 
 from mig.shared.base import client_id_dir
@@ -181,7 +181,6 @@ class MigSharedFunctionalityCat(MigTestCase):
                          "bigger than 3896 bytes - please use better "
                          "alternatives (SFTP) to retrieve large data")
 
-    @unittest.skipIf(PY2, "Python 3 only")
     def test_main_passes_environ(self):
         try:
             result = realmain(self.TEST_CLIENT_ID, {}, self.test_environ)

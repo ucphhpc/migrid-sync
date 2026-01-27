@@ -38,7 +38,7 @@ import logging
 
 sys.path.append(os.path.realpath(
     os.path.join(os.path.dirname(__file__), "../..")))
-from tests.support import MIG_BASE, PY2, is_path_within
+from tests.support import MIG_BASE, is_path_within
 
 from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list

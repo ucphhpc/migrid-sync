@@ -538,7 +538,7 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
                     # Fire 'modified' events for all dirs and files in subpath
                     # to ensure that all rule files are loaded
 
-                    for ent in scandir(src_path):
+                    for ent in os.scandir(src_path):
                         if ent.is_dir(follow_symlinks=True):
 
                             # logger.debug('(%s) Dispatch DirCreatedEvent for: %s'
@@ -1139,7 +1139,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     # For create this occurs by eg. mkdir -p 'path/subpath/subpath2'
                     # or 'cp -rf'
 
-                    for ent in scandir(src_path):
+                    for ent in os.scandir(src_path):
                         if ent.is_dir(follow_symlinks=True):
                             vgrid_sub_path = strip_base_dirs(ent.path)
 
@@ -1491,7 +1491,7 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
 
                 # Traverse dirs for subdirs created since last run
 
-                for ent in scandir(vgrid_files_path):
+                for ent in os.scandir(vgrid_files_path):
                     if ent.is_dir(follow_symlinks=True):
                         vgrid_sub_path = strip_base_dirs(ent.path)
                         # Force utf8 everywhere to avoid encoding issues
@@ -1839,7 +1839,7 @@ def monitor(configuration, vgrid_name):
                                          configuration.vgrid_triggers)
                 all_trigger_rules.append(rule_path)
     else:
-        for ent in scandir(vgrid_home):
+        for ent in os.scandir(vgrid_home):
             if configuration.vgrid_triggers in ent.name:
                 rule_path = ent.path
                 all_trigger_rules.append(rule_path)
@@ -1981,7 +1981,7 @@ unless it is available in mig/server/MiGserver.conf
 
     # Each top vgrid gets is own process
 
-    for ent in scandir(configuration.vgrid_home):
+    for ent in os.scandir(configuration.vgrid_home):
         vgrid_files_path = os.path.join(configuration.vgrid_files_home,
                                         ent.name)
         if os.path.isdir(ent.path) and os.path.isdir(vgrid_files_path):

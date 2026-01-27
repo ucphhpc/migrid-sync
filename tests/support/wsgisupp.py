@@ -29,15 +29,8 @@
 from collections import namedtuple
 import codecs
 from io import BytesIO
+from urllib.parse import urlencode, urlparse
 from werkzeug.datastructures import MultiDict
-
-from tests.support._env import PY2
-
-if PY2:
-    from urllib import urlencode
-    from urlparse import urlparse
-else:
-    from urllib.parse import urlencode, urlparse
 
 
 # named type representing the tuple that is passed to WSGI handlers

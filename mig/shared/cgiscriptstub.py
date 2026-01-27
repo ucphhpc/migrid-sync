@@ -117,9 +117,8 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
         #logger.debug("flush stdout")
         sys.stdout.flush()
         #logger.debug("write content: %s" % [output[:64], '..', output[-64:]])
-        # NOTE: always output native strings to stdout but use raw buffer
-        #       for byte output on py3 as explained above.
-        if sys.version_info[0] < 3 or is_default_str_coding(output):
+        # NOTE: use raw buffer for byte output as explained above
+        if is_default_str_coding(output):
             sys.stdout.write(output)
         else:
             sys.stdout.buffer.write(output)

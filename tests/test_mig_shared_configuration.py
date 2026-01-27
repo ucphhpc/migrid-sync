@@ -31,7 +31,7 @@ import inspect
 import os
 import unittest
 
-from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain
+from tests.support import MigTestCase, TEST_DATA_DIR, testmain
 from tests.support.fixturesupp import FixtureAssertMixin
 
 from mig.shared.configuration import Configuration, \
@@ -336,7 +336,6 @@ class MigSharedConfiguration__loaded_configurations(MigTestCase):
 class MigSharedConfiguration__new_instance(MigTestCase, FixtureAssertMixin):
     """Coverage of programatically created Configuration instances."""
 
-    @unittest.skipIf(PY2, "Python 3 only")
     def test_default_object(self):
         prepared_fixture = self.prepareFixtureAssert(
             'mig_shared_configuration--new', fixture_format='json')

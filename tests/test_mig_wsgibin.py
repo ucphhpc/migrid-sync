@@ -29,24 +29,21 @@
 
 import codecs
 from configparser import ConfigParser
+from html.parser import HTMLParser
 import importlib
 import os
 import stat
 import sys
+from types import SimpleNamespace
 
-from tests.support import PY2, MIG_BASE, MigTestCase, testmain, is_path_within
+from tests.support import MIG_BASE, MigTestCase, testmain, is_path_within
 from tests.support.snapshotsupp import SnapshotAssertMixin
 from tests.support.wsgisupp import prepare_wsgi, WsgiAssertMixin
 
 from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list
-from mig.shared.compat import SimpleNamespace
 import mig.shared.returnvalues as returnvalues
 
-if PY2:
-    from HTMLParser import HTMLParser
-else:
-    from html.parser import HTMLParser
 
 
 class DocumentBasicsHtmlParser(HTMLParser):

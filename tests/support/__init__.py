@@ -39,28 +39,15 @@ import pickle
 import shutil
 import stat
 import sys
+from types import SimpleNamespace
 from unittest import TestCase, main as testmain
 
+from tests.support._env import MIG_ENV
 from tests.support.configsupp import FakeConfiguration
 from tests.support.fixturesupp import _PreparedFixture
 from tests.support.suppconst import MIG_BASE, TEST_BASE, \
     TEST_DATA_DIR, TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR
 
-from tests.support._env import MIG_ENV, PY2
-
-# Allow the use of SimpleNamespace on PY2.
-
-if PY2:
-    class SimpleNamespace(dict):
-        """Bare minimum SimpleNamespace for Python 2."""
-
-        def __getattribute__(self, name):
-            if name == '__dict__':
-                return dict(**self)
-
-            return self[name]
-else:
-    from types import SimpleNamespace
 
 
 # Provide access to a configuration file for the active environment.

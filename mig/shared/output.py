@@ -651,7 +651,7 @@ ctime\t%(ctime)s
         lines = [status_line] + lines
 
     # NOTE: careful handling required for binary on python3+
-    if sys.version_info[0] > 2 and binary_output:
+    if binary_output:
         return b''.join(lines)
     else:
         return ''.join(lines)
@@ -2646,7 +2646,7 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                                          user_widgets))
 
     # NOTE: careful handling required for binary on python3+
-    if sys.version_info[0] > 2 and binary_output:
+    if binary_output:
         return b''.join(lines)
     else:
         return '\n'.join(lines)
