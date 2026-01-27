@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Daemon that create storage accounting"""
+"""Daemon that collect storage accounting
+information for users and their associated vgrids, archives and peers"""
 
 from __future__ import absolute_import, print_function
 
@@ -44,8 +45,8 @@ from mig.shared.logger import daemon_logger, register_hangup_handler
 
 if __name__ == "__main__":
     print(
-        """This is the MiG lustre accounting daemon which collect storage accounting
-        information for users and vgrids.
+        """This is the MiG lustre accounting daemon that collect storage accounting
+        information for users and their associated vgrids, archives and peers.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
