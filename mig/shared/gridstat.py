@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gridstat - grid monitor helpers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ import fcntl
 import os
 
 from mig.shared.defaults import default_vgrid, pending_states
-from mig.shared.fileio import pickle, unpickle, touch, walk, slow_walk
+from mig.shared.fileio import pickle, unpickle, touch, walk
 from mig.shared.serial import pickle as py_pickle
 from mig.shared.vgrid import validated_vgrid_list, job_fits_res_vgrid
 
@@ -470,10 +470,6 @@ class GridStat(object):
 
         # Traverse mRSL dir and update cache
 
-        if slow_walk:
-            self.__logger.warning(
-                "no optimized walk available - using old os.walk")
-
         for (root, _, files) in walk(root_dir, topdown=True):
 
             # skip all dot dirs - they are from repos etc and _not_ jobs
@@ -543,7 +539,7 @@ if __name__ == '__main__':
 
         if root.find(os.sep + '.') != -1:
             continue
-        for name in fnmatch.filter(files, job_id+'.mRSL'):
+        for name in fnmatch.filter(files, job_id + '.mRSL'):
             filename = os.path.join(root, name)
             job_dict = unpickle(filename, configuration.logger)
             if not job_dict:

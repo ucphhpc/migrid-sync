@@ -41,10 +41,10 @@ import tempfile
 import time
 import zipfile
 
-# NOTE: We expose optimized walk function directly for ease and efficiency.
-#       The functions are built-in and optimized since python 3 but several
-#       modules need to adjust before we can eliminate this old workaround.
-slow_walk, slow_listdir = False, False
+# NOTE: We expose efficient walk functions directly as a leftover from back
+#       when we hooked up scandir versions on python 2 when the native ones
+#       were highly inefficient. The native functions in the os module are
+#       optimized since python 3 but several modules still import from here.
 listdir, scandir, walk = os.listdir, os.scandir, os.walk
 
 try:

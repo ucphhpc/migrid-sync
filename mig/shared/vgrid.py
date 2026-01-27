@@ -47,7 +47,7 @@ from mig.shared.defaults import default_vgrid, keyword_owners, \
     vgrid_nest_sep, _dot_vgrid
 from mig.shared.fileio import make_symlink, move, check_readonly, check_writable, \
     check_write_access, unpickle, acquire_file_lock, release_file_lock, walk, \
-    slow_walk, remove_rec, move_rec, delete_symlink
+    remove_rec, move_rec, delete_symlink
 from mig.shared.findtype import is_user, is_resource
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import html_post_helper
@@ -683,8 +683,6 @@ def vgrid_list_vgrids(configuration, include_default=True, root_vgrid=''):
     vgrids_list = []
     search_root = os.path.join(configuration.vgrid_home,
                                root_vgrid.strip(os.sep))
-    if slow_walk:
-        _logger.warning("no optimized walk available - using old os.walk")
     for (root, dirs, _) in walk(search_root):
 
         # skip all dot dirs - they are from repos etc and _not_ vgrids

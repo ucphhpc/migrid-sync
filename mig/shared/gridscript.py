@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gridscript - main script helper functions
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ import time
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import job_output_dir, ignore_file_names
 from mig.shared.fileio import send_message_to_grid_script, pickle, unpickle, \
-    delete_file, touch, walk, slow_walk
+    delete_file, touch, walk
 from mig.shared.notification import notify_user_thread
 
 
@@ -106,9 +106,6 @@ def check_mrsl_files(
         last_start = os.path.getmtime(last_start_file)
 
     check_mrsl_files_start_time = time.time()
-
-    if slow_walk:
-        logger.warning("no optimized walk available - using old os.walk")
 
     # TODO: switch to listdir or glob? all files are in mrsl_files_dir/*/*.mRSL
 
@@ -202,7 +199,7 @@ def check_mrsl_files(
           timestamp=check_mrsl_files_start_time)
     check_mrsl_files_end_time = time.time()
     logger.info('finished checking for mRSL files in %fs' %
-                (check_mrsl_files_end_time-check_mrsl_files_start_time))
+                (check_mrsl_files_end_time - check_mrsl_files_start_time))
 
 
 def remove_jobrequest_pending_files(configuration, only_new=True):
@@ -247,7 +244,7 @@ def remove_jobrequest_pending_files(configuration, only_new=True):
 
     check_pending_files_end_time = time.time()
     logger.info('finished cleaning pending jobrequests in %fs' %
-                (check_pending_files_end_time-check_pending_files_start_time))
+                (check_pending_files_end_time - check_pending_files_start_time))
 
 
 def server_cleanup(
