@@ -45,7 +45,7 @@ import zipfile
 #       The functions are built-in and optimized since python 3 but several
 #       modules need to adjust before we can eliminate this old workaround.
 slow_walk, slow_listdir = False, False
-walk, listdir = os.walk, os.listdir
+listdir, scandir, walk = os.listdir, os.scandir, os.walk
 
 try:
     from mig.shared.base import force_utf8, force_utf8_rec, force_native_str

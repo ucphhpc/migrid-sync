@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_cron - daemon to monitor user crontabs and trigger actions
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -57,22 +57,6 @@ except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
-# Use the scandir module version if available:
-# https://github.com/benhoyt/scandir
-# Otherwise fail
-
-try:
-    from distutils.version import StrictVersion
-    from scandir import scandir, walk, __version__ as scandir_version
-    if StrictVersion(scandir_version) < StrictVersion("1.3"):
-
-        # Important os.walk compatibility utf8 fixes were not added until 1.3
-
-        raise ImportError('scandir version is too old >= 1.3 required')
-except ImportError as exc:
-    print('ERROR: %s' % exc)
-    sys.exit(1)
-
 from mig.shared.base import force_utf8, client_dir_id, client_id_dir
 from mig.shared.cmdapi import parse_command_args
 from mig.shared.conf import get_configuration_object
@@ -80,7 +64,7 @@ from mig.shared.defaults import crontab_name, atjobs_name, cron_output_dir, \
     cron_log_name, cron_log_size, cron_log_cnt, csrf_field
 from mig.shared.events import get_time_expand_map, parse_crontab, cron_match, \
     parse_atjobs, at_remain
-from mig.shared.fileio import makedirs_rec
+from mig.shared.fileio import makedirs_rec, scandir, walk
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.job import fill_mrsl_template, new_job
 from mig.shared.logger import daemon_logger, register_hangup_handler

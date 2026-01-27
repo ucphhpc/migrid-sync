@@ -59,23 +59,6 @@ except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
-# Use the native os.scandir function on python 3+ or rely on similar function
-# from the stand-alone module of the same name when on python 2.
-if sys.version_info[0] >= 3:
-    from os import scandir
-else:
-    try:
-        from distutils.version import StrictVersion
-        from scandir import scandir, __version__ as scandir_version
-        if StrictVersion(scandir_version) < StrictVersion("1.3"):
-
-            # Important os.walk compatibility utf8 fixes were not added until 1.3
-
-            raise ImportError('scandir version is too old >= 1.3 required')
-    except ImportError as exc:
-        print('ERROR: this daemon requires the scandir module on python 2')
-        sys.exit(1)
-
 try:
     from mig.shared.base import force_utf8
     from mig.shared.cmdapi import parse_command_args
@@ -83,7 +66,7 @@ try:
     from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
         workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
     from mig.shared.events import get_path_expand_map
-    from mig.shared.fileio import makedirs_rec, pickle, unpickle, walk
+    from mig.shared.fileio import makedirs_rec, pickle, unpickle, scandir, walk
     from mig.shared.handlers import get_csrf_limit, make_csrf_token
     from mig.shared.job import fill_mrsl_template, new_job
     from mig.shared.listhandling import frange
