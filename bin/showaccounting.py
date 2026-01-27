@@ -39,7 +39,7 @@ from mig.shared.conf import get_configuration_object
 from mig.lib.accounting import get_usage, human_readable_filesize
 
 
-def usage(name='accounting.py'):
+def usage(name='showaccounting.py'):
     """Usage help"""
 
     print("""Create accounting information based on quota.
