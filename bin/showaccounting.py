@@ -61,7 +61,7 @@ def show_accounting(configuration,
                     user_filter,
                     minimum_usage,
                     verbose):
-    """Print user accointing report"""
+    """Print user accounting report"""
     user_filter_re = None
     if user_filter:
         try:
@@ -124,7 +124,7 @@ def show_accounting(configuration,
           % (report_shown_users,
              human_readable_filesize(report_shown_bytes)))
     print("User filter: %r" % user_filter)
-    print("Minumum usage: %s" % human_readable_filesize(minimum_usage))
+    print("Minimum usage: %s" % human_readable_filesize(minimum_usage))
     for total_bytes in sorted_total_bytes:
         total_bytes_human = human_readable_filesize(total_bytes)
         for username in total_bytes_map[total_bytes]:
