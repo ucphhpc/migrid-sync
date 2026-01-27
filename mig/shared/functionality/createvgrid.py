@@ -337,7 +337,7 @@ def create_tracker(
 
         if not repair or not os.path.isdir(target_tracker_var):
             # Init tracker with trac-admin command:
-            # trac-admin tracker_dir initenv projectname db respostype repospath
+            # trac-admin tracker_dir initenv projectname db
             # NOTE: repo type arg is gone since 1.6 - use ini file instead
             create_cmd = [configuration.trac_admin_path, target_tracker_var,
                           'initenv', vgrid_name, tracker_db,
