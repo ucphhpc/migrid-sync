@@ -36,6 +36,7 @@ import re
 import datetime
 
 from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import gdp_distinguished_field
 from mig.lib.accounting import get_usage, human_readable_filesize
 
 
@@ -92,7 +93,7 @@ def show_accounting(configuration,
         # Do not show GDP project users
         # projects are accounted for by the main user
         if configuration.site_enable_gdp \
-                and username.find("/GDP=") != -1:
+                and username.find("/%s=" % gdp_distinguished_field) != -1:
             continue
         report_total_users += 1
         total_bytes = values.get('total_bytes', 0)
