@@ -518,10 +518,10 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
     ):
         """Constructor"""
 
-        PatternMatchingEventHandler.__init__(self, patterns,
-                                             ignore_patterns,
-                                             ignore_directories,
-                                             case_sensitive)
+        PatternMatchingEventHandler.__init__(
+            self, patterns=patterns, ignore_patterns=ignore_patterns,
+            ignore_directories=ignore_directories,
+            case_sensitive=case_sensitive)
 
     def __update_rule_monitor(
         self,
@@ -681,10 +681,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
     ):
         """Constructor"""
 
-        PatternMatchingEventHandler.__init__(self, patterns,
-                                             ignore_patterns,
-                                             ignore_directories,
-                                             case_sensitive)
+        PatternMatchingEventHandler.__init__(
+            self, patterns=patterns, ignore_patterns=ignore_patterns,
+            ignore_directories=ignore_directories,
+            case_sensitive=case_sensitive)
         self.sub_vgrids = sub_vgrids
 
     def __workflow_log(
