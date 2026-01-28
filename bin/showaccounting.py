@@ -105,7 +105,7 @@ def show_accounting(configuration,
         total_bytes_map_userlist = total_bytes_map.get(total_bytes, [])
         total_bytes_map_userlist.append(username)
         total_bytes_map[total_bytes] = total_bytes_map_userlist
-    sorted_total_bytes = sorted(list(total_bytes_map.keys()), reverse=True)
+    sorted_total_bytes = sorted(list(total_bytes_map), reverse=True)
 
     print("\nAccounting (%d) %s for storage quota(s):"
           % (accounting_timestamp, accounting_datestr))
