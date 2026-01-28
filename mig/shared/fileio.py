@@ -41,25 +41,11 @@ import tempfile
 import time
 import zipfile
 
-# NOTE: We expose optimized walk function directly for ease and efficiency.
-#       Requires stand-alone scandir module on python 2 whereas the native os
-#       functions are built-in and optimized similarly on python 3+
-slow_walk, slow_listdir = False, False
-if sys.version_info[0] > 2:
-    from os import walk, listdir
-else:
-    try:
-        from distutils.version import StrictVersion
-        from scandir import walk, listdir, __version__ as scandir_version
-        if StrictVersion(scandir_version) < StrictVersion("1.3"):
-            # Important os.walk compatibility utf8 fixes were not added until 1.3
-            raise ImportError(
-                "scandir version is too old: fall back to os.walk")
-    except ImportError as err:
-        # print("DEBUG: not using scandir: %s" % err)
-        slow_walk = slow_listdir = True
-        walk = os.walk
-        listdir = os.listdir
+# NOTE: We expose efficient walk functions directly as a leftover from back
+#       when we hooked up scandir versions on python 2 when the native ones
+#       were highly inefficient. The native functions in the os module are
+#       optimized since python 3 but several modules still import from here.
+listdir, scandir, walk = os.listdir, os.scandir, os.walk
 
 try:
     from mig.shared.base import force_utf8, force_utf8_rec, force_native_str
@@ -571,8 +557,6 @@ def remove_rec(dir_path, configuration):
     Returns Boolean to indicate success, writes messages to log.
     """
     _logger = configuration.logger
-    if slow_walk:
-        _logger.warning("no optimized walk available - using old os.walk")
     try:
         if not os.path.isdir(dir_path):
             raise Exception("Directory %r does not exist" % dir_path)

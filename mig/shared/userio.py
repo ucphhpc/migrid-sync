@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userio - wrappers to keep user file I/O in a single replaceable module
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -40,7 +40,7 @@ import time
 
 from mig.shared.base import invisible_path
 from mig.shared.defaults import trash_destdir, trash_linkname
-from mig.shared.fileio import walk, slow_walk
+from mig.shared.fileio import walk
 from mig.shared.gdp.all import get_project_from_client_id, project_log
 from mig.shared.vgrid import in_vgrid_legacy_share, in_vgrid_writable, \
     in_vgrid_priv_web, in_vgrid_pub_web
@@ -208,8 +208,6 @@ def prepare_changes(configuration, operation, changeset, action, path,
     # Use walk for recursive dir path - silently ignored for file path
     if not recursive or not os.path.isdir(path):
         return pending_path
-    if slow_walk:
-        _logger.warning("no optimized walk available - using old os.walk")
     _logger.info('%s walking: %s' % (operation, [path]))
     for (root, dirs, files) in walk(path, topdown=False, followlinks=True):
         for (kind, target) in [('files', files), ('dirs', dirs)]:

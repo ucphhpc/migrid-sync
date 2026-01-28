@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # docs - online documentation generator
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -233,11 +233,6 @@ This software is mainly implemented in Python and extension modules:"""})
                            'title': 'Python Watchdog Module at Python Package Index',
                            'text': 'Python Watchdog Module (Apache 2.0 license)'})
     output_objects.append({'object_type': 'text', 'text': ''})
-    output_objects.append({'object_type': 'link',
-                           'destination': 'https://pypi.python.org/pypi/scandir',
-                           'class': 'urllink iconspace',
-                           'title': 'Python scandir Module at Python Package Index',
-                           'text': 'Python scandir Module (New BSD license)'})
     output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'link',
                            'destination': 'https://pypi.python.org/pypi/pyenchant',
