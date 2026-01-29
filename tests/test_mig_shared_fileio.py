@@ -1083,6 +1083,36 @@ class MigSharedFileio__remove_rec(MigTestCase):
         self.assertTrue(result)
         self.assertFalse(os.path.exists(self.tmp_path))
 
+    def test_removes_directory_recursively_with_symlink(self):
+        """Test remove_rec removes directory and contents with symlink"""
+        link_src = os.path.join(self.tmp_path, DUMMY_FILE_ONE)
+        link_dst = os.path.join(self.tmp_path, DUMMY_FILE_ONE + '.lnk')
+        os.symlink(link_src, link_dst)
+        self.assertTrue(os.path.exists(self.tmp_path))
+        result = fileio.remove_rec(self.tmp_path, self.configuration)
+        self.assertTrue(result)
+        self.assertFalse(os.path.exists(self.tmp_path))
+
+    def test_removes_directory_recursively_with_broken_symlink(self):
+        """Test remove_rec removes directory and contents with broken symlink"""
+        link_src = os.path.join(self.tmp_path, DUMMY_FILE_MISSING)
+        link_dst = os.path.join(self.tmp_path, DUMMY_FILE_MISSING + '.lnk')
+        os.symlink(link_src, link_dst)
+        self.assertTrue(os.path.exists(self.tmp_path))
+        result = fileio.remove_rec(self.tmp_path, self.configuration)
+        self.assertTrue(result)
+        self.assertFalse(os.path.exists(self.tmp_path))
+
+    def test_removes_directory_recursively_despite_readonly(self):
+        """Test remove_rec removes directory and contents despite set readonly"""
+        os.chmod(self.tmp_path, 0o500)
+        file_path = os.path.join(self.tmp_path, DUMMY_FILE_ONE)
+        os.chmod(file_path, 0o400)
+        self.assertTrue(os.path.exists(self.tmp_path))
+        result = fileio.remove_rec(self.tmp_path, self.configuration)
+        self.assertTrue(result)
+        self.assertFalse(os.path.exists(self.tmp_path))
+
     def test_rejects_regular_file(self):
         """Test remove_rec returns False when path is a regular file"""
         file_path = os.path.join(self.tmp_path, DUMMY_FILE_ONE)

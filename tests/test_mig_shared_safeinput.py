@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_safeinput - unit tests for shared safeinput validation
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,8 @@ from tests.support import MigTestCase, testmain
 
 from mig.shared.safeinput import main as safeinput_main, InputException, \
     filter_commonname, valid_alphanumeric, valid_commonname, valid_path, \
-    valid_printable, VALID_NAME_CHARACTERS
+    valid_printable, valid_base_url, valid_url, valid_complex_url, \
+    VALID_NAME_CHARACTERS
 
 PY2 = sys.version_info[0] == 2
 
@@ -87,6 +88,11 @@ class TestMigSharedSafeInput(MigTestCase):
         'Test Maybe Invalid Źacãŕ',
         'Test Invalid ?',
         'Test HTML Invalid <code/>')
+
+    BASE_URL = 'https://www.migrid.org'
+    REGULAR_URL = 'https://www.migrid.org/wsgi-bin/ls.py?path=README&flags=v'
+    COMPLEX_URL = 'https://www.migrid.org/abc123@some.org/ls.py?path=R+D#HERE'
+    INVALID_URL = 'https://www.migrid.org/¾½§'
 
     def _provide_configuration(self):
         """Provide test configuration"""
@@ -209,6 +215,66 @@ class TestMigSharedSafeInput(MigTestCase):
         """Test unicode decomposition handling"""
         # Make sure unicode normalization doesn't raise exception
         self.assertEqual(valid_path(self.DECOMPOSED_UNICODE), None)
+
+    def test_valid_base_url_accepts_sample_base_url(self):
+        """Test that base URL succeeds in valid_base_url"""
+        # Make sure expected URL value doesn't raise exception
+        self.assertEqual(valid_base_url(self.BASE_URL), None)
+
+    def test_valid_base_url_refuses_sample_regular_url(self):
+        """Test that regular URL fails in valid_base_url"""
+        with self.assertRaises(InputException):
+            valid_base_url(self.REGULAR_URL)
+
+    def test_valid_base_url_refuses_sample_complex_url(self):
+        """Test that more complex URL fails in valid_base_url"""
+        with self.assertRaises(InputException):
+            valid_base_url(self.COMPLEX_URL)
+
+    def test_valid_base_url_refuses_sample_invalid_url(self):
+        """Test that invalid URL fails in valid_base_url"""
+        with self.assertRaises(InputException):
+            valid_base_url(self.INVALID_URL)
+
+    def test_valid_url_accepts_sample_base_url(self):
+        """Test that base URL succeeds in valid_url"""
+        # Make sure expected URL value doesn't raise exception
+        self.assertEqual(valid_url(self.BASE_URL), None)
+
+    def test_valid_url_accepts_sample_regular_url(self):
+        """Test that regular URL succeeds in valid_url"""
+        # Make sure expected URL value doesn't raise exception
+        self.assertEqual(valid_url(self.REGULAR_URL), None)
+
+    def test_valid_url_refuses_sample_complex_url(self):
+        """Test that complex URL fails in valid_url"""
+        with self.assertRaises(InputException):
+            valid_url(self.COMPLEX_URL)
+
+    def test_valid_url_refuses_sample_invalid_url(self):
+        """Test that invalid URL fails in valid_url"""
+        with self.assertRaises(InputException):
+            valid_url(self.INVALID_URL)
+
+    def test_valid_complex_url_accepts_sample_base_url(self):
+        """Test that base URL succeeds in valid_complex_url"""
+        # Make sure expected URL value doesn't raise exception
+        self.assertEqual(valid_complex_url(self.BASE_URL), None)
+
+    def test_valid_complex_url_accepts_sample_regular_url(self):
+        """Test that regular URL succeeds in valid_complex_url"""
+        # Make sure expected URL value doesn't raise exception
+        self.assertEqual(valid_complex_url(self.REGULAR_URL), None)
+
+    def test_valid_complex_url_accepts_sample_complex_url(self):
+        """Test that complex URL succeeds in valid_complex_url"""
+        # Make sure expected URL value doesn't raise exception
+        self.assertEqual(valid_complex_url(self.COMPLEX_URL), None)
+
+    def test_valid_complex_url_refuses_sample_invalid_url(self):
+        """Test that invalid URL fails in valid_complex_url"""
+        with self.assertRaises(InputException):
+            valid_complex_url(self.INVALID_URL)
 
 
 class TestMigSharedSafeInput__legacy(MigTestCase):

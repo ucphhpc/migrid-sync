@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgrid - helper functions related to VGrid actions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -47,7 +47,7 @@ from mig.shared.defaults import default_vgrid, keyword_owners, \
     vgrid_nest_sep, _dot_vgrid
 from mig.shared.fileio import make_symlink, move, check_readonly, check_writable, \
     check_write_access, unpickle, acquire_file_lock, release_file_lock, walk, \
-    slow_walk, remove_rec, move_rec, delete_symlink
+    remove_rec, move_rec, delete_symlink
 from mig.shared.findtype import is_user, is_resource
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import html_post_helper
@@ -683,8 +683,6 @@ def vgrid_list_vgrids(configuration, include_default=True, root_vgrid=''):
     vgrids_list = []
     search_root = os.path.join(configuration.vgrid_home,
                                root_vgrid.strip(os.sep))
-    if slow_walk:
-        _logger.warning("no optimized walk available - using old os.walk")
     for (root, dirs, _) in walk(search_root):
 
         # skip all dot dirs - they are from repos etc and _not_ vgrids
@@ -714,41 +712,49 @@ def init_vgrid_script_add_rem(
     subject,
     subject_type,
     configuration,
+    from_remove=False,
 ):
     """Initialize vgrid specific add and remove scripts"""
 
     msg = ''
+    fill_dict = {'vgrid_name': vgrid_name, 'client_id': client_id,
+                 'subject': subject, 'subject_type': subject_type,
+                 'vgrid_label': configuration.site_vgrid_label,
+                 'short_title': configuration.short_title}
     if not vgrid_name:
-        msg += 'Please specify vgrid_name in the querystring'
-        return (False, msg, None)
+        msg += 'Please specify vgrid_name in the query string'
+        return (False, msg % fill_dict, None)
 
     if not subject:
-        msg += 'Please provide the name of the %s' % subject_type
-        return (False, msg, None)
+        msg += "Please provide the name of the %(subject_type)s as subject"
+        return (False, msg % fill_dict, None)
 
     if not valid_dir_input(configuration.vgrid_home, vgrid_name):
-        msg += 'Illegal vgrid_name: %s' % vgrid_name
-        return (False, msg, None)
+        msg += 'Illegal vgrid_name: %(vgrid_name)r'
+        return (False, msg % fill_dict, None)
 
     if subject_type == 'member' or subject_type == 'owner':
         if not is_user(subject, configuration):
-            msg += """%(user_id)s is NOT a known %(short_title)s user and
+            if from_remove:
+                msg += """%(subject)r is not a known %(short_title)s user but
+removal from %(vgrid_label)s participants is always allowed"""
+            else:
+                msg += """%(subject)r is NOT a known %(short_title)s user and
 %(vgrid_label)s participation is limited to users already signed up to
-%(short_title)s""" % {'user_id': subject, 'vgrid_label':
-                      configuration.site_vgrid_label, 'short_title':
-                      configuration.short_title}
-            return (False, msg, None)
+%(short_title)s"""
+                return (False, msg % fill_dict, None)
     elif subject_type == 'resource':
         if not is_resource(subject, configuration):
-            msg += '%s is not a valid %s resource' % \
-                (subject, configuration.short_title)
-            msg += \
-                ' (OK, if removing or e.g. the resource creation is pending)'
+            msg += "%(subject)r is not a valid %(short_title)s resource "
+            if from_remove:
+                msg += "but removal from %(vgrid_label)s is always allowed."
+            else:
+                msg += "but it is OK if e.g. the resource creation is pending"
     elif subject_type == 'request':
         vgrid_base = os.path.join(configuration.vgrid_home, vgrid_name)
         if not valid_dir_input(vgrid_base, subject):
-            msg += 'Illegal subject: %s' % subject
-            return (False, msg, None)
+            msg += 'Illegal subject: %(subject)r'
+            return (False, msg % fill_dict, None)
     elif subject_type in ('trigger', 'settings', ):
         # Rules are checked later
         pass
@@ -756,8 +762,8 @@ def init_vgrid_script_add_rem(
         # No direct access to vgrid sharelinks (implicit with create/remove)
         pass
     else:
-        msg += 'unknown subject type in init_vgrid_script_add_rem'
-        return (False, msg, [])
+        msg += 'unknown subject type %(subject_type)r in value checks'
+        return (False, msg % fill_dict, [])
 
     # special case: members may modify/remove own triggers and add new ones
 
@@ -765,26 +771,30 @@ def init_vgrid_script_add_rem(
         if vgrid_is_trigger(vgrid_name, subject, configuration) and not \
             vgrid_is_trigger_owner(vgrid_name, subject, client_id,
                                    configuration):
-            msg += 'You must be an owner of the %s %s trigger to modify it' % \
-                   (vgrid_name, subject)
-            return (False, msg, [])
+            if from_remove:
+                msg += """%(subject)r is not a known %(short_title)s trigger of
+yours but removal from %(vgrid_label)s is always allowed"""
+            else:
+                msg += """You must be the owner of the %(vgrid_name)s
+%(subject)r trigger to modify it"""
+                return (False, msg % fill_dict, [])
         elif vgrid_is_member(vgrid_name, client_id, configuration):
-            return (True, msg, [])
+            return (True, msg % fill_dict, [])
 
     # special case: members may terminate own membership
 
     if (subject_type == 'member') and (client_id == subject) \
             and (vgrid_is_member(vgrid_name, subject, configuration)):
-        return (True, msg, [])
+        return (True, msg % fill_dict, [])
 
     # otherwise: only owners may add or remove:
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
-        msg += 'You must be an owner of the %s vgrid to modify %s' % \
-               (vgrid_name, subject_type)
-        return (False, msg, None)
+        msg += """You must be an owner of the %(vgrid_name)r %(vgrid_label)s to
+modify %(subject_type)s"""
+        return (False, msg % fill_dict, None)
 
-    return (True, msg, [])
+    return (True, msg % fill_dict, [])
 
 
 def init_vgrid_script_list(vgrid_name, client_id, configuration):
@@ -1483,13 +1493,13 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
 
         if update_id is None:
             entities = [i for i in entities if i not in id_list]
-            _logger.info("adding new %s: %s" % (kind, id_list))
+            _logger.info("adding new %s %s: %s" % (vgrid_name, kind, id_list))
         else:
             # A trigger or similar with same id exists and needs to be updated
             updating = [i[update_id] for i in id_list]
             entities = [i for i in entities if not i[update_id] in updating]
-            _logger.info("adding updated %s: %s (%s)" % (kind, id_list,
-                                                         entities))
+            _logger.info("adding updated %s %s: %s (%s)" % (vgrid_name, kind,
+                                                            id_list, entities))
         # Default to append
         if rank is None:
             rank = len(entities)
@@ -1621,6 +1631,7 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
             entities = [i for i in entities if not i in id_list]
         if not entities and not allow_empty:
             raise ValueError("not allowed to remove last entry of %s" % kind)
+        _logger.info("removing %s %s: %s" % (vgrid_name, kind, id_list))
         dump(entities, entity_filepath)
     except Exception as exc:
         status = False
@@ -1721,6 +1732,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
         vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
         # Keep dump under exclusive lock
         lock_handle = acquire_file_lock(lock_path, exclusive=True)
+        _logger.info("set %s %s: %s" % (vgrid_name, kind, id_list))
         dump(id_list, entity_filepath)
     except Exception as exc:
         status = False
@@ -2309,9 +2321,9 @@ def vgrid_rm_entry(configuration, vgrid):
     return (success, msg)
 
 
-if __name__ == "__main__":
+def legacy_main(_exit=sys.exit, _print=print):
     from mig.shared.conf import get_configuration_object
-    conf = get_configuration_object()
+    conf = get_configuration_object(skip_log=True, disable_auth_log=True)
     client_id = '/C=DK/CN=John Doe/emailAddress=john@doe.org'
     if sys.argv[1:]:
         client_id = sys.argv[1]
@@ -2432,3 +2444,7 @@ if __name__ == "__main__":
     if load_status:
         print(vgrid_set_members(conf, dummy_vgrid, orig_members))
     print(vgrid_members(dummy_vgrid, conf))
+
+
+if __name__ == "__main__":
+    legacy_main()

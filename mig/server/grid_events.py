@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_events - event handler to monitor files and trigger actions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -59,23 +59,6 @@ except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
-# Use the native os.scandir function on python 3+ or rely on similar function
-# from the stand-alone module of the same name when on python 2.
-if sys.version_info[0] >= 3:
-    from os import scandir
-else:
-    try:
-        from distutils.version import StrictVersion
-        from scandir import scandir, __version__ as scandir_version
-        if StrictVersion(scandir_version) < StrictVersion("1.3"):
-
-            # Important os.walk compatibility utf8 fixes were not added until 1.3
-
-            raise ImportError('scandir version is too old >= 1.3 required')
-    except ImportError as exc:
-        print('ERROR: this daemon requires the scandir module on python 2')
-        sys.exit(1)
-
 try:
     from mig.shared.base import force_utf8
     from mig.shared.cmdapi import parse_command_args
@@ -83,7 +66,7 @@ try:
     from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
         workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
     from mig.shared.events import get_path_expand_map
-    from mig.shared.fileio import makedirs_rec, pickle, unpickle, walk
+    from mig.shared.fileio import makedirs_rec, pickle, unpickle, scandir, walk
     from mig.shared.handlers import get_csrf_limit, make_csrf_token
     from mig.shared.job import fill_mrsl_template, new_job
     from mig.shared.listhandling import frange
@@ -285,8 +268,12 @@ def get_rule_hits(rule, limit_field):
     if limit_field == _rate_limit_field:
         (hit_count, hit_period) = extract_hit_limit(rule, limit_field)
     elif limit_field == _settle_time_field:
-        (hit_count, hit_period) = (1, extract_time_in_secs(rule,
-                                                           limit_field))
+        (hit_count, hit_period) = (1, extract_time_in_secs(rule, limit_field))
+    else:
+        logger.error('(%s) get_rule_hits invalid limit_field %s' %
+                     (pid, limit_field))
+        raise ValueError("got unexpected limit_field %r" % limit_field)
+
     _hits_lock.acquire()
     rule_history = rule_hits.get(rule['rule_id'], [])
     res = (rule_history, hit_count, hit_period)
@@ -514,10 +501,10 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
     ):
         """Constructor"""
 
-        PatternMatchingEventHandler.__init__(self, patterns,
-                                             ignore_patterns,
-                                             ignore_directories,
-                                             case_sensitive)
+        PatternMatchingEventHandler.__init__(
+            self, patterns=patterns, ignore_patterns=ignore_patterns,
+            ignore_directories=ignore_directories,
+            case_sensitive=case_sensitive)
 
     def __update_rule_monitor(
         self,
@@ -614,7 +601,8 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
             # Remove all old rules for this vgrid and
             # leave rules for parent and sub-vgrids
 
-            for target_path in all_rules:
+            # NOTE: we need to iterate over a copy of keys for in-place edits
+            for target_path in list(all_rules):
                 all_rules[target_path] = [i for i in
                                           all_rules[target_path] if i['vgrid_name']
                                           != vgrid_name]
@@ -676,10 +664,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
     ):
         """Constructor"""
 
-        PatternMatchingEventHandler.__init__(self, patterns,
-                                             ignore_patterns,
-                                             ignore_directories,
-                                             case_sensitive)
+        PatternMatchingEventHandler.__init__(
+            self, patterns=patterns, ignore_patterns=ignore_patterns,
+            ignore_directories=ignore_directories,
+            case_sensitive=case_sensitive)
         self.sub_vgrids = sub_vgrids
 
     def __workflow_log(
@@ -1220,7 +1208,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         logger.info('(%s) expire all old entries in miss cache' % pid)
         now = time.time()
-        for (event_id, time_stamp) in miss_cache.items():
+
+        # NOTE: we need to iterate over a copy of keys for in-place edits
+        for event_id in list(miss_cache):
+            time_stamp = miss_cache[event_id]
             if time_stamp + _miss_cache_ttl < now:
                 del miss_cache[event_id]
         logger.info('(%s) miss cache entries left after expire: %d' %
@@ -1532,6 +1523,7 @@ def add_vgrid_file_monitors(configuration, vgrid_name):
 
     vgrid_dir_cache = dir_cache[vgrid_name]
 
+    # NOTE: we need to iterate over a copy of keys for in-place edits
     vgrid_dir_cache_keys = list(vgrid_dir_cache)
     for path in vgrid_dir_cache_keys:
         # Make sure we only have utf8 everywhere to avoid encoding issues
@@ -1630,6 +1622,7 @@ def load_dir_cache(configuration, vgrid_name):
             generate_cache = False
             # TODO: once all caches are migrated we can remove this loop again
             # Make sure we only have utf8 everywhere to avoid encoding issues
+            # NOTE: we need to iterate over a copy of keys for in-place edits
             for old_path in [i for i in loaded_dir_cache if i != force_utf8(i)]:
                 print("NOTE: forcing old cache entry %s to utf8" % [old_path])
                 new_path = force_utf8(old_path)

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -44,6 +45,7 @@ from past.builtins import basestring
 import re
 import sys
 from email.utils import parseaddr, formataddr
+from html import escape as escape_html
 from string import ascii_letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
 
@@ -52,14 +54,6 @@ try:
 except ImportError:
     nbformat = None
 
-PY2 = sys.version_info[0] < 3
-
-escape_html = None
-if PY2:
-    from cgi import escape as escape_html
-else:
-    from html import escape as escape_html
-assert escape_html is not None
 
 from mig.shared.base import force_unicode, force_native_str
 from mig.shared.defaults import src_dst_sep, username_charset, \
@@ -151,10 +145,10 @@ VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + CURRENCY + '?#*[]{}' + '"' + \
     "`|^" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = ascii_letters + digits + '.-'
 VALID_BACKEND_NAME_CHARACTERS = ascii_letters + digits + '-_'
-VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
-VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
 # According to https://tools.ietf.org/html/rfc3986#section-2 URLs may contain
 # '%'-encoded chars, alphanum chars and query chars "-._~:/?#[]@!$&'()*+,;=`."
+VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
+VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
 VALID_COMPLEXURL_CHARACTERS = VALID_BASEURL_CHARACTERS + \
     "%-._~:/?#[]@!$&'()*+,;=`."
 VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
@@ -2053,9 +2047,12 @@ def guess_type(name):
         for key in ('modauthopenid.referrer',
                     'transfer_src',
                     'transfer_dst',
-                    'redirect_url',
                     ):
             __type_map[key] = valid_url
+        # NOTE: Trac URLs may have user IDs with '@' and can hit twofactor
+        for key in ('redirect_url',
+                    ):
+            __type_map[key] = valid_complex_url
 
         # GDP
 

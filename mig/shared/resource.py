@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resource - resource configuration functions
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -34,24 +34,11 @@ import os
 import re
 import socket
 
-# TODO: move to os.scandir with py3
-# NOTE: Use faster scandir if available
-try:
-    from distutils.version import StrictVersion
-    from scandir import scandir, __version__ as scandir_version
-    if StrictVersion(scandir_version) < StrictVersion("1.3"):
-        # Important os.scandir compatibility utf8 fixes were not added until
-        # 1.3
-        raise ImportError(
-            "scandir version is too old: fall back to os.listdir")
-except ImportError:
-    scandir = None
-
 from mig.shared.base import client_id_dir
 from mig.shared.confparser import get_resource_config_dict, run
 from mig.shared.defaults import exe_leader_name, keyword_auto
-from mig.shared.fileio import pickle, move, walk, write_file, read_file_lines, \
-    write_file_lines
+from mig.shared.fileio import pickle, move, scandir, walk, write_file, \
+    read_file_lines, write_file_lines
 from mig.shared.modified import mark_resource_modified, mark_vgrid_modified
 from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.resconfkeywords import get_resource_specs, get_exenode_specs, \
@@ -876,26 +863,17 @@ def write_resource_config(configuration, resource_conf, conf_path):
 
 def list_resources(resource_home, only_valid=False):
     """Return a list of all resources by listing the resource configuration
-    directories in resource_home. Uses scandir for efficiency when available.
-    Use only_valid parameter to filter out deleted and broken resources.
+    directories in resource_home. Uses scandir for efficiency. Use only_valid
+    parameter to filter out deleted and broken resources.
     """
     resources = []
-    if scandir:
-        children = scandir(resource_home)
-    else:
-        children = os.listdir(resource_home)
+    children = scandir(resource_home)
     for entry in children:
         # skip all files and dot dirs - they are NOT resources
-        if scandir:
-            name = entry.name
-            path = entry.path
-            if not entry.is_dir():
-                continue
-        else:
-            name = entry
-            path = os.path.join(resource_home, name)
-            if not os.path.isdir(path):
-                continue
+        name = entry.name
+        path = entry.path
+        if not entry.is_dir():
+            continue
 
         if path.find(os.sep + '.') != -1:
             continue
