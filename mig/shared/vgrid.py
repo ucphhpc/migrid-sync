@@ -2321,9 +2321,9 @@ def vgrid_rm_entry(configuration, vgrid):
     return (success, msg)
 
 
-if __name__ == "__main__":
+def legacy_main(_exit=sys.exit, _print=print):
     from mig.shared.conf import get_configuration_object
-    conf = get_configuration_object()
+    conf = get_configuration_object(skip_log=True, disable_auth_log=True)
     client_id = '/C=DK/CN=John Doe/emailAddress=john@doe.org'
     if sys.argv[1:]:
         client_id = sys.argv[1]
@@ -2444,3 +2444,7 @@ if __name__ == "__main__":
     if load_status:
         print(vgrid_set_members(conf, dummy_vgrid, orig_members))
     print(vgrid_members(dummy_vgrid, conf))
+
+
+if __name__ == "__main__":
+    legacy_main()
