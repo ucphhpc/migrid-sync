@@ -45,7 +45,7 @@ ENABLE_DAVS="__ENABLE_DAVS__"
 
 grep -H " ERROR " $LOGDIR/chkchroot.log | grep -E -v " from ${SECSCANIP} "| \
         grep -E -v "__CRACK_WEB_REGEX__" | \
-        grep -E -v "/index\.html$|/state/webserver_home/share_redirect$" | \
+        grep -E -v "/index\.html.$|/state/webserver_home/share_redirect.$" | \
         tail -n $MAXLINES
 
 # NOTE: we ignore script crashed errors here and treat specifically next
