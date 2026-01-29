@@ -82,7 +82,7 @@ TEST_MEMBER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Member/' \
     'emailAddress=member@example.com'
 TEST_OUTSIDER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Outsider/' \
     'emailAddress=outsider@example.com'
-TEST_RESOURCE_DN = 'test.example.org'
+TEST_RESOURCE_ID = 'test.example.org'
 TEST_OWNER_DIR = '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_Owner+' \
     'emailAddress=owner@example.com'
 TEST_JOB_ID = '12345667890'
@@ -102,6 +102,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
         ensure_dirs_exist(self.configuration.user_db_home)
         ensure_dirs_exist(self.configuration.user_home)
         ensure_dirs_exist(self.configuration.user_settings)
+        ensure_dirs_exist(self.configuration.resource_home)
         ensure_dirs_exist(self.configuration.vgrid_home)
         ensure_dirs_exist(self.configuration.vgrid_files_home)
         ensure_dirs_exist(self.configuration.vgrid_files_writable)
@@ -334,14 +335,14 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
 
     def test_vgrid_match_resources(self):
         """Test resource filtering for vgrid"""
-        test_resources = ['res1', 'res2', 'invalid_res', TEST_RESOURCE_DN]
+        test_resources = ['res1', 'res2', 'invalid_res', TEST_RESOURCE_ID]
         added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
-                                        'resources', [TEST_RESOURCE_DN])
+                                        'resources', [TEST_RESOURCE_ID])
         self.assertTrue(added, msg)
 
         matched = vgrid_match_resources(self.test_vgrid, test_resources,
                                         self.configuration)
-        self.assertEqual(matched, [TEST_RESOURCE_DN])
+        self.assertEqual(matched, [TEST_RESOURCE_ID])
 
     # TODO: adjust API to allow enabling the next test
     @unittest.skip("requires read-only mount")
@@ -786,6 +787,188 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
         )
         self.assertTrue(status, msg)
 
+    def test_init_vgrid_script_add_rem_add_owner_as_non_owner(self):
+        """Test attempt to add owner without privileges"""
+        # Ensure test users exist
+        self._provision_test_user(self, self.TEST_OWNER_DN)
+        self._provision_test_user(self, self.TEST_USER_DN)
+        self._provision_test_user(self, self.TEST_OUTSIDER_DN)
+
+        subject = self.TEST_USER_DN
+        subject_type = 'owner'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            self.test_vgrid, self.TEST_OUTSIDER_DN, subject, subject_type,
+            self.configuration, from_remove=False
+        )
+        self.assertFalse(status)
+        self.assertIn('must be an owner', msg)
+
+    def test_init_vgrid_script_add_rem_remove_owner_as_non_owner(self):
+        """Test attempt to remove owner without privileges"""
+        # Ensure test users exist
+        self._provision_test_user(self, self.TEST_OWNER_DN)
+        self._provision_test_user(self, self.TEST_USER_DN)
+        self._provision_test_user(self, self.TEST_OUTSIDER_DN)
+
+        subject = self.TEST_USER_DN
+        subject_type = 'owner'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            self.test_vgrid, self.TEST_OUTSIDER_DN, subject, subject_type,
+            self.configuration, from_remove=True
+        )
+        self.assertFalse(status)
+        self.assertIn('must be an owner', msg)
+
+    def test_init_vgrid_script_add_rem_add_unknown_resource(self):
+        """Test addition of (e.g. pending) unknown resource always allowed"""
+        subject = self.TEST_UNKNOWN_ID
+        subject_type = 'resource'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            self.test_vgrid, self.TEST_OWNER_DN, subject, subject_type,
+            self.configuration, from_remove=False
+        )
+        self.assertTrue(status, msg)
+
+    def test_init_vgrid_script_add_rem_remove_unknown_resource(self):
+        """Test removal of unknown resource always allowed"""
+        subject = self.TEST_UNKNOWN_ID
+        subject_type = 'resource'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            self.test_vgrid, self.TEST_OWNER_DN, subject, subject_type,
+            self.configuration, from_remove=True
+        )
+        self.assertTrue(status, msg)
+
+    def test_init_vgrid_script_add_rem_add_unknown_user(self):
+        """Test addition of unknown user refused"""
+        unknown_user = self.TEST_UNKNOWN_DN
+        subject_type = 'member'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            self.test_vgrid, self.TEST_OWNER_DN, unknown_user, subject_type,
+            self.configuration, from_remove=False
+        )
+        self.assertFalse(status, msg)
+
+    def test_init_vgrid_script_add_rem_remove_unknown_user(self):
+        """Test removal of unknown user always allowed"""
+        unknown_user = self.TEST_UNKNOWN_DN
+        subject_type = 'member'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            self.test_vgrid, self.TEST_OWNER_DN, unknown_user, subject_type,
+            self.configuration, from_remove=True
+        )
+        self.assertTrue(status, msg)
+
+    def test_init_vgrid_script_add_rem_modify_trigger_as_non_owner(self):
+        """Test modification attempt of trigger by non-owner"""
+        # Ensure test users exist
+        self._provision_test_user(self, self.TEST_OWNER_DN)
+        self._provision_test_user(self, self.TEST_OUTSIDER_DN)
+
+        # Add test trigger
+        test_trigger = {
+            'rule_id': 'test_rule',
+            'vgrid_name': self.test_vgrid,
+            'path': '*.txt',
+            'changes': ['modified'],
+            'run_as': self.TEST_OWNER_DN,
+            'action': 'copy',
+            'arguments': ['source', 'dest'],
+            'match_files': True
+        }
+        vgrid_add_entities(self.configuration, self.test_vgrid,
+                           'triggers', [test_trigger])
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            self.test_vgrid, self.TEST_OUTSIDER_DN, 'test_rule', 'trigger',
+            self.configuration, from_remove=False
+        )
+        self.assertFalse(status)
+        self.assertIn('You must be the owner', msg)
+
+    def test_init_vgrid_script_add_rem_remove_trigger_as_non_owner(self):
+        """Test removal attempt of trigger by non-owner"""
+        # Ensure test users exist
+        self._provision_test_user(self, self.TEST_OWNER_DN)
+        self._provision_test_user(self, self.TEST_OUTSIDER_DN)
+
+        # Add test trigger
+        test_trigger = {
+            'rule_id': 'test_rule',
+            'vgrid_name': self.test_vgrid,
+            'path': '*.txt',
+            'changes': ['modified'],
+            'run_as': self.TEST_OWNER_DN,
+            'action': 'copy',
+            'arguments': ['source', 'dest'],
+            'match_files': True
+        }
+        vgrid_add_entities(self.configuration, self.test_vgrid,
+                           'triggers', [test_trigger])
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            self.test_vgrid, self.TEST_OUTSIDER_DN, 'test_rule', 'trigger',
+            self.configuration, from_remove=True
+        )
+        self.assertFalse(status)
+        self.assertIn('You must be an owner', msg)
+
+    def test_init_vgrid_script_add_rem_modify_trigger_as_owner(self):
+        """Test modification attempt of trigger by trigger owner"""
+        # Ensure test user exists
+        self._provision_test_user(self, self.TEST_OWNER_DN)
+
+        # Add test trigger
+        test_trigger = {
+            'rule_id': 'test_rule',
+            'vgrid_name': self.test_vgrid,
+            'path': '*.txt',
+            'changes': ['modified'],
+            'run_as': self.TEST_OWNER_DN,
+            'action': 'copy',
+            'arguments': ['source', 'dest'],
+            'match_files': True
+        }
+        vgrid_add_entities(self.configuration, self.test_vgrid,
+                           'triggers', [test_trigger])
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            self.test_vgrid, self.TEST_OWNER_DN, 'test_rule', 'trigger',
+            self.configuration, from_remove=False
+        )
+        self.assertTrue(status, msg)
+
+    def test_init_vgrid_script_add_rem_remove_trigger_as_owner(self):
+        """Test removal of trigger by trigger owner"""
+        # Ensure test user exists
+        self._provision_test_user(self, self.TEST_OWNER_DN)
+
+        # Add test trigger
+        test_trigger = {
+            'rule_id': 'test_rule',
+            'vgrid_name': self.test_vgrid,
+            'path': '*.txt',
+            'changes': ['modified'],
+            'run_as': self.TEST_OWNER_DN,
+            'action': 'copy',
+            'arguments': ['source', 'dest'],
+            'match_files': True
+        }
+        vgrid_add_entities(self.configuration, self.test_vgrid,
+                           'triggers', [test_trigger])
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            self.test_vgrid, self.TEST_OWNER_DN, 'test_rule', 'trigger',
+            self.configuration, from_remove=True
+        )
+        self.assertTrue(status, msg)
+
     def test_vgrid_add_members_single(self):
         """Test vgrid_add_owners for initial member"""
         # Clear existing members to start fresh
@@ -973,13 +1156,13 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
         """Test full resource signup workflow"""
         # Sign up resource
         added, msg = vgrid_add_resources(self.configuration, self.test_vgrid,
-                                         [TEST_RESOURCE_DN])
+                                         [TEST_RESOURCE_ID])
         self.assertTrue(added, msg)
 
         # Verify visibility
-        matched = vgrid_match_resources(self.test_vgrid, [TEST_RESOURCE_DN],
+        matched = vgrid_match_resources(self.test_vgrid, [TEST_RESOURCE_ID],
                                         self.configuration)
-        self.assertEqual(matched, [TEST_RESOURCE_DN])
+        self.assertEqual(matched, [TEST_RESOURCE_ID])
 
     def test_multi_level_inheritance(self):
         """Test settings propagation through multiple vgrid levels"""
