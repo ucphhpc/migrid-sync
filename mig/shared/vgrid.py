@@ -1493,13 +1493,13 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
 
         if update_id is None:
             entities = [i for i in entities if i not in id_list]
-            _logger.info("adding new %s: %s" % (kind, id_list))
+            _logger.info("adding new %s %s: %s" % (vgrid_name, kind, id_list))
         else:
             # A trigger or similar with same id exists and needs to be updated
             updating = [i[update_id] for i in id_list]
             entities = [i for i in entities if not i[update_id] in updating]
-            _logger.info("adding updated %s: %s (%s)" % (kind, id_list,
-                                                         entities))
+            _logger.info("adding updated %s %s: %s (%s)" % (vgrid_name, kind,
+                                                            id_list, entities))
         # Default to append
         if rank is None:
             rank = len(entities)
@@ -1631,6 +1631,7 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
             entities = [i for i in entities if not i in id_list]
         if not entities and not allow_empty:
             raise ValueError("not allowed to remove last entry of %s" % kind)
+        _logger.info("removing %s %s: %s" % (vgrid_name, kind, id_list))
         dump(entities, entity_filepath)
     except Exception as exc:
         status = False
@@ -1731,6 +1732,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
         vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
         # Keep dump under exclusive lock
         lock_handle = acquire_file_lock(lock_path, exclusive=True)
+        _logger.info("set %s %s: %s" % (vgrid_name, kind, id_list))
         dump(id_list, entity_filepath)
     except Exception as exc:
         status = False
