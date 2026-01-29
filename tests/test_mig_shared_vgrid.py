@@ -35,37 +35,61 @@ import unittest
 # Imports required for the unit test wrapping
 from mig.shared.base import client_id_dir
 from mig.shared.serial import dump
+
 # Imports of the code under test
-from mig.shared.vgrid import get_vgrid_workflow_jobs, legacy_main, \
-    vgrid_add_entities, vgrid_add_members, vgrid_add_owners, \
-    vgrid_add_resources, vgrid_add_workflow_jobs, vgrid_allow_restrict_write, \
-    vgrid_exists, vgrid_flat_name, vgrid_is_default, vgrid_is_member, \
-    vgrid_is_owner, vgrid_is_owner_or_member, vgrid_is_trigger, vgrid_list, \
-    vgrid_list_parents, vgrid_list_subvgrids, vgrid_list_vgrids, \
-    vgrid_match_resources, vgrid_nest_sep, vgrid_remove_entities, \
-    vgrid_restrict_write, vgrid_set_entities, vgrid_set_members, \
-    vgrid_set_owners, vgrid_set_workflow_jobs, vgrid_settings
+from mig.shared.vgrid import (
+    get_vgrid_workflow_jobs,
+    init_vgrid_script_add_rem,
+    is_user,
+    legacy_main,
+    vgrid_add_entities,
+    vgrid_add_members,
+    vgrid_add_owners,
+    vgrid_add_resources,
+    vgrid_add_workflow_jobs,
+    vgrid_allow_restrict_write,
+    vgrid_exists,
+    vgrid_flat_name,
+    vgrid_is_default,
+    vgrid_is_member,
+    vgrid_is_owner,
+    vgrid_is_owner_or_member,
+    vgrid_is_trigger,
+    vgrid_list,
+    vgrid_list_parents,
+    vgrid_list_subvgrids,
+    vgrid_list_vgrids,
+    vgrid_match_resources,
+    vgrid_nest_sep,
+    vgrid_remove_entities,
+    vgrid_restrict_write,
+    vgrid_set_entities,
+    vgrid_set_members,
+    vgrid_set_owners,
+    vgrid_set_workflow_jobs,
+    vgrid_settings,
+)
+
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
+from tests.support.usersupp import UserAssertMixin, TEST_USER_DN
+
+# Additional helper constants
+# Standard user IDs following X.500 DN format
+TEST_OWNER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Owner/' \
+    'emailAddress=owner@example.com'
+TEST_MEMBER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Member/' \
+    'emailAddress=member@example.com'
+TEST_OUTSIDER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Outsider/' \
+    'emailAddress=outsider@example.com'
+TEST_RESOURCE_DN = 'test.example.org'
+TEST_OWNER_DIR = '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_Owner+' \
+    'emailAddress=owner@example.com'
+TEST_JOB_ID = '12345667890'
 
 
-class TestMigSharedVgrid(MigTestCase):
+class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
     """Unit tests for vgrid helpers"""
-    # Standard user IDs following X.500 DN format
-    TEST_OWNER_DN = \
-        '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Owner/'\
-        'emailAddress=owner@example.com'
-    TEST_MEMBER_DN = \
-        '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Member/'\
-        'emailAddress=member@example.com'
-    TEST_OUTSIDER_DN = \
-        '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Outsider/'\
-        'emailAddress=outsider@example.com'
-    TEST_RESOURCE_DN = 'test.example.org'
-    TEST_OWNER_DIR = \
-        '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_Owner+'\
-        'emailAddress=owner@example.com'
-    TEST_JOB_ID = '12345667890'
 
     def _provide_configuration(self):
         """Return configuration to use"""
@@ -75,6 +99,9 @@ class TestMigSharedVgrid(MigTestCase):
         """Create test environment for vgrid tests"""
 
         # Setup configuration
+        ensure_dirs_exist(self.configuration.user_db_home)
+        ensure_dirs_exist(self.configuration.user_home)
+        ensure_dirs_exist(self.configuration.user_settings)
         ensure_dirs_exist(self.configuration.vgrid_home)
         ensure_dirs_exist(self.configuration.vgrid_files_home)
         ensure_dirs_exist(self.configuration.vgrid_files_writable)
@@ -100,7 +127,7 @@ class TestMigSharedVgrid(MigTestCase):
             self.configuration.vgrid_home, self.test_vgrid)
         ensure_dirs_exist(self.test_vgrid_path)
         vgrid_add_owners(self.configuration, self.test_vgrid,
-                         [self.TEST_OWNER_DN])
+                         [TEST_OWNER_DN])
         vgrid_add_members(self.configuration, self.test_vgrid, [])
 
         # Nested sub-VGrid
@@ -169,24 +196,24 @@ class TestMigSharedVgrid(MigTestCase):
         """Test entity management in vgrid"""
         # Test adding owner
         added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
-                                        'owners', [self.TEST_OWNER_DN])
+                                        'owners', [TEST_OWNER_DN])
         self.assertTrue(added, msg)
         time.sleep(0.1)  # Ensure timestamp changes
 
         # Verify existence
-        self.assertTrue(vgrid_is_owner(self.test_vgrid, self.TEST_OWNER_DN,
+        self.assertTrue(vgrid_is_owner(self.test_vgrid, TEST_OWNER_DN,
                                        self.configuration))
 
         # Test removal without and with allow empty in turn
         removed, msg = vgrid_remove_entities(self.configuration, self.test_vgrid,
-                                             'owners', [self.TEST_OWNER_DN], False)
+                                             'owners', [TEST_OWNER_DN], False)
         self.assertFalse(removed, msg)
-        self.assertTrue(vgrid_is_owner(self.test_vgrid, self.TEST_OWNER_DN,
+        self.assertTrue(vgrid_is_owner(self.test_vgrid, TEST_OWNER_DN,
                                        self.configuration))
         removed, msg = vgrid_remove_entities(self.configuration, self.test_vgrid,
-                                             'owners', [self.TEST_OWNER_DN], True)
+                                             'owners', [TEST_OWNER_DN], True)
         self.assertTrue(removed, msg)
-        self.assertFalse(vgrid_is_owner(self.test_vgrid, self.TEST_OWNER_DN,
+        self.assertFalse(vgrid_is_owner(self.test_vgrid, TEST_OWNER_DN,
                                         self.configuration))
 
     def test_vgrid_settings_inheritance(self):
@@ -212,41 +239,41 @@ class TestMigSharedVgrid(MigTestCase):
         """Test owner/member permission verification"""
         # Setup owners and members
         added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
-                                        'owners', [self.TEST_OWNER_DN])
+                                        'owners', [TEST_OWNER_DN])
         self.assertTrue(added, msg)
         time.sleep(0.1)
         added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
-                                        'members', [self.TEST_MEMBER_DN])
+                                        'members', [TEST_MEMBER_DN])
         self.assertTrue(added, msg)
         time.sleep(0.1)
 
         # Verify owner permissions
-        self.assertTrue(vgrid_is_owner(self.test_vgrid, self.TEST_OWNER_DN,
+        self.assertTrue(vgrid_is_owner(self.test_vgrid, TEST_OWNER_DN,
                                        self.configuration))
-        self.assertTrue(vgrid_is_owner_or_member(self.test_vgrid, self.TEST_OWNER_DN,
+        self.assertTrue(vgrid_is_owner_or_member(self.test_vgrid, TEST_OWNER_DN,
                                                  self.configuration))
 
         # Verify member permissions
-        self.assertTrue(vgrid_is_member(self.test_vgrid, self.TEST_MEMBER_DN,
+        self.assertTrue(vgrid_is_member(self.test_vgrid, TEST_MEMBER_DN,
                                         self.configuration))
-        self.assertTrue(vgrid_is_owner_or_member(self.test_vgrid, self.TEST_MEMBER_DN,
+        self.assertTrue(vgrid_is_owner_or_member(self.test_vgrid, TEST_MEMBER_DN,
                                                  self.configuration))
 
         # Verify non-member
-        self.assertFalse(vgrid_is_owner_or_member(self.test_vgrid, self.TEST_OUTSIDER_DN,
+        self.assertFalse(vgrid_is_owner_or_member(self.test_vgrid, TEST_OUTSIDER_DN,
                                                   self.configuration))
 
     def test_workflow_job_management(self):
         """Test workflow job queue handling"""
         job_entry = {
-            'client_id': self.TEST_OWNER_DN,
-            'job_id': self.TEST_JOB_ID
+            'client_id': TEST_OWNER_DN,
+            'job_id': TEST_JOB_ID
         }
         job_dir = os.path.join(self.configuration.mrsl_files_dir,
-                               self.TEST_OWNER_DIR)
+                               TEST_OWNER_DIR)
         ensure_dirs_exist(job_dir)
-        job_path = os.path.join(job_dir, '%s.mRSL' % self.TEST_JOB_ID)
-        dump({'job_id': self.TEST_JOB_ID, 'EXECUTE': 'uptime'}, job_path)
+        job_path = os.path.join(job_dir, '%s.mRSL' % TEST_JOB_ID)
+        dump({'job_id': TEST_JOB_ID, 'EXECUTE': 'uptime'}, job_path)
 
         # Add job
         status, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
@@ -265,7 +292,7 @@ class TestMigSharedVgrid(MigTestCase):
             jobs = result
         self.assertTrue(status)
         self.assertEqual(len(jobs), 1)
-        self.assertEqual(jobs[0]['job_id'], self.TEST_JOB_ID)
+        self.assertEqual(jobs[0]['job_id'], TEST_JOB_ID)
 
         # TODO: adjust function to consistent return API? tuple vs list now.
         # Remove job
@@ -307,17 +334,17 @@ class TestMigSharedVgrid(MigTestCase):
 
     def test_vgrid_match_resources(self):
         """Test resource filtering for vgrid"""
-        test_resources = ['res1', 'res2', 'invalid_res', self.TEST_RESOURCE_DN]
+        test_resources = ['res1', 'res2', 'invalid_res', TEST_RESOURCE_DN]
         added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
-                                        'resources', [self.TEST_RESOURCE_DN])
+                                        'resources', [TEST_RESOURCE_DN])
         self.assertTrue(added, msg)
 
         matched = vgrid_match_resources(self.test_vgrid, test_resources,
                                         self.configuration)
-        self.assertEqual(matched, [self.TEST_RESOURCE_DN])
+        self.assertEqual(matched, [TEST_RESOURCE_DN])
 
     # TODO: adjust API to allow enabling the next test
-    @unittest.skipIf(True, "requires read-only mount")
+    @unittest.skip("requires read-only mount")
     def test_vgrid_allow_restrict_write(self):
         """Test write restriction validation logic"""
         # Create parent-child structure
@@ -343,7 +370,7 @@ class TestMigSharedVgrid(MigTestCase):
         self.assertTrue(result)
 
     # TODO: adjust API to allow enabling the next test
-    @unittest.skipIf(True, "requires read-only mount")
+    @unittest.skip("requires read-only mount")
     def test_vgrid_restrict_write(self):
         """Test write restriction enforcement"""
         # Setup test share
@@ -392,7 +419,7 @@ class TestMigSharedVgrid(MigTestCase):
                                       allow_empty=True)
         self.assertTrue(reset, msg)
 
-        owner1 = self.TEST_OWNER_DN
+        owner1 = TEST_OWNER_DN
         added, msg = vgrid_add_owners(
             self.configuration, self.test_vgrid, [owner1])
         self.assertTrue(added, msg)
@@ -416,11 +443,11 @@ class TestMigSharedVgrid(MigTestCase):
                                       allow_empty=True)
         self.assertTrue(reset, msg)
 
-        owner1 = self.TEST_OWNER_DN
+        owner1 = TEST_OWNER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner1])
         self.assertTrue(added, msg)
-        owner2 = self.TEST_MEMBER_DN
+        owner2 = TEST_MEMBER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner2])
         self.assertTrue(added, msg)
@@ -435,11 +462,11 @@ class TestMigSharedVgrid(MigTestCase):
                                       allow_empty=True)
         self.assertTrue(reset, msg)
 
-        owner1 = self.TEST_OWNER_DN
+        owner1 = TEST_OWNER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner1])
         self.assertTrue(added, msg)
-        owner2 = self.TEST_MEMBER_DN
+        owner2 = TEST_MEMBER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner2], rank=0)
         self.assertTrue(added, msg)
@@ -454,15 +481,15 @@ class TestMigSharedVgrid(MigTestCase):
                                       allow_empty=True)
         self.assertTrue(reset, msg)
 
-        owner1 = self.TEST_OWNER_DN
+        owner1 = TEST_OWNER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner1])
         self.assertTrue(added, msg)
-        owner2 = self.TEST_MEMBER_DN
+        owner2 = TEST_MEMBER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner2])
         self.assertTrue(added, msg)
-        owner3 = self.TEST_OUTSIDER_DN
+        owner3 = TEST_OUTSIDER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner3], rank=1)
         self.assertTrue(added, msg)
@@ -497,7 +524,7 @@ class TestMigSharedVgrid(MigTestCase):
                                       allow_empty=True)
         self.assertTrue(reset, msg)
 
-        owner1 = self.TEST_OWNER_DN
+        owner1 = TEST_OWNER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner1])
         self.assertTrue(added, msg)
@@ -517,7 +544,7 @@ class TestMigSharedVgrid(MigTestCase):
         self.assertTrue(reset, msg)
 
         # Test 1: Add initial owner
-        owner1 = self.TEST_OWNER_DN
+        owner1 = TEST_OWNER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner1])
         self.assertTrue(added, msg)
@@ -528,7 +555,7 @@ class TestMigSharedVgrid(MigTestCase):
         self.assertEqual(owners, [owner1])
 
         # Test 2: Prepend new owner
-        owner2 = self.TEST_MEMBER_DN
+        owner2 = TEST_MEMBER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner2], rank=0)
         self.assertTrue(added, msg)
@@ -539,7 +566,7 @@ class TestMigSharedVgrid(MigTestCase):
         self.assertEqual(owners, [owner2, owner1])
 
         # Test 3: Append without rank
-        owner3 = self.TEST_OUTSIDER_DN
+        owner3 = TEST_OUTSIDER_DN
         added, msg = vgrid_add_owners(self.configuration, self.test_vgrid,
                                       [owner3])
         self.assertTrue(added, msg)
@@ -597,7 +624,7 @@ class TestMigSharedVgrid(MigTestCase):
             'vgrid_name': self.test_vgrid,
             'path': '*.txt',
             'changes': ['modified'],
-            'run_as': self.TEST_OWNER_DN,
+            'run_as': TEST_OWNER_DN,
             'action': 'copy',
             'arguments': [],
             'match_files': True,
@@ -617,10 +644,10 @@ class TestMigSharedVgrid(MigTestCase):
             'share_id': 'test_share',
             'path': '/test/path',
             'access': ['read'],  # Must be list type
-            'invites': [self.TEST_MEMBER_DN],  # Required field
+            'invites': [TEST_MEMBER_DN],  # Required field
             'single_file': True,  # Correct field name (was 'is_dir')
             'expire': '-1',  # Optional but included for completeness
-            'owner': self.TEST_OWNER_DN,
+            'owner': TEST_OWNER_DN,
             'created_timestamp': datetime.datetime.now()
         }
         added, msg = vgrid_add_entities(self.configuration, self.test_vgrid,
@@ -633,7 +660,7 @@ class TestMigSharedVgrid(MigTestCase):
         self.assertTrue(removed, msg)
 
     # TODO: adjust API to allow enabling the next test
-    @unittest.skipIf(True, "requires tweak to reject insert invalid setting")
+    @unittest.skip("requires tweak to reject insert invalid setting")
     def test_vgrid_settings_validation(self):
         """Test settings key validation"""
         invalid_settings = [
@@ -666,11 +693,98 @@ class TestMigSharedVgrid(MigTestCase):
 
         # Populate and verify
         vgrid_add_owners(self.configuration, self.test_vgrid,
-                         [self.TEST_OWNER_DN])
+                         [TEST_OWNER_DN])
         status, owners = vgrid_list(self.test_vgrid, 'owners',
                                     self.configuration)
         self.assertTrue(status)
-        self.assertEqual(owners, [self.TEST_OWNER_DN])
+        self.assertEqual(owners, [TEST_OWNER_DN])
+
+    def test_init_vgrid_script_add_rem_valid_params(self):
+        """Test valid parameters for init_vgrid_script_add_rem"""
+        # Ensure test users exist before testing
+        self._provision_test_users(self, TEST_OWNER_DN,
+                                   TEST_MEMBER_DN)
+        self.assertTrue(is_user(TEST_OWNER_DN, self.configuration))
+        self.assertTrue(is_user(TEST_MEMBER_DN, self.configuration))
+
+        vgrid_name = self.test_vgrid
+        subject = TEST_MEMBER_DN
+        subject_type = 'member'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            vgrid_name, TEST_OWNER_DN, subject, subject_type, self.configuration
+        )
+        self.assertTrue(status, msg)
+
+    def test_init_vgrid_script_add_rem_non_owner(self):
+        """Test non-owner attempt with init_vgrid_script_add_rem"""
+        # Ensure test users exist before testing
+        self._provision_test_users(self, TEST_OUTSIDER_DN,
+                                   TEST_MEMBER_DN)
+        self.assertTrue(is_user(TEST_OUTSIDER_DN, self.configuration))
+        self.assertTrue(is_user(TEST_MEMBER_DN, self.configuration))
+
+        vgrid_name = self.test_vgrid
+        subject = TEST_MEMBER_DN
+        subject_type = 'member'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            vgrid_name, TEST_OUTSIDER_DN, subject, subject_type, self.configuration
+        )
+        self.assertFalse(status)
+        self.assertIn('must be an owner', msg)
+
+    def test_init_vgrid_script_add_rem_invalid_vgrid(self):
+        """Test invalid vgrid name validation"""
+        vgrid_name = '/../invalid!vgrid'
+        subject = TEST_MEMBER_DN
+        subject_type = 'member'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            vgrid_name, TEST_OWNER_DN, subject, subject_type, self.configuration
+        )
+        self.assertFalse(status)
+        self.assertIn('Illegal vgrid_name', msg)
+
+    def test_init_vgrid_script_add_rem_missing_subject_type(self):
+        """Test invalid subject_type parameter"""
+        vgrid_name = self.test_vgrid
+        subject = TEST_MEMBER_DN
+        subject_type = None
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            vgrid_name, TEST_OWNER_DN, subject, subject_type, self.configuration
+        )
+        self.assertFalse(status)
+        self.assertIn('unknown subject type', msg)
+
+    def test_init_vgrid_script_add_rem_invalid_subject_type(self):
+        """Test invalid subject_type parameter"""
+        vgrid_name = self.test_vgrid
+        subject = TEST_MEMBER_DN
+        subject_type = 'invalid_type'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            vgrid_name, TEST_OWNER_DN, subject, subject_type, self.configuration
+        )
+        self.assertFalse(status)
+        self.assertIn('unknown subject type', msg)
+
+    def test_init_vgrid_script_add_rem_member_self_removal(self):
+        """Test member self-removal exception"""
+        # Add member first
+        vgrid_add_members(self.configuration, self.test_vgrid,
+                          [TEST_MEMBER_DN])
+
+        vgrid_name = self.test_vgrid
+        subject = TEST_MEMBER_DN
+        subject_type = 'member'
+
+        status, msg, _ = init_vgrid_script_add_rem(
+            vgrid_name, TEST_MEMBER_DN, subject, subject_type,
+            self.configuration, from_remove=True
+        )
+        self.assertTrue(status, msg)
 
     def test_vgrid_add_members_single(self):
         """Test vgrid_add_owners for initial member"""
@@ -679,7 +793,7 @@ class TestMigSharedVgrid(MigTestCase):
                                         'members', [], allow_empty=True)
         self.assertTrue(reset, msg)
 
-        member1 = self.TEST_MEMBER_DN
+        member1 = TEST_MEMBER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member1])
         self.assertTrue(added, msg)
@@ -694,7 +808,7 @@ class TestMigSharedVgrid(MigTestCase):
                                         'members', [], allow_empty=True)
         self.assertTrue(reset, msg)
 
-        member1 = self.TEST_MEMBER_DN
+        member1 = TEST_MEMBER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member1], rank=0)  # Add first owner
         self.assertTrue(added, msg)
@@ -709,11 +823,11 @@ class TestMigSharedVgrid(MigTestCase):
                                         'members', [], allow_empty=True)
         self.assertTrue(reset, msg)
 
-        member1 = self.TEST_MEMBER_DN
+        member1 = TEST_MEMBER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member1])
         self.assertTrue(added, msg)
-        member2 = self.TEST_OUTSIDER_DN
+        member2 = TEST_OUTSIDER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member2])
         self.assertTrue(added, msg)
@@ -728,11 +842,11 @@ class TestMigSharedVgrid(MigTestCase):
                                         'members', [], allow_empty=True)
         self.assertTrue(reset, msg)
 
-        member1 = self.TEST_MEMBER_DN
+        member1 = TEST_MEMBER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member1])
         self.assertTrue(added, msg)
-        member2 = self.TEST_OUTSIDER_DN
+        member2 = TEST_OUTSIDER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member2], rank=0)
         self.assertTrue(added, msg)
@@ -747,15 +861,15 @@ class TestMigSharedVgrid(MigTestCase):
                                         'members', [], allow_empty=True)
         self.assertTrue(reset, msg)
 
-        member1 = self.TEST_MEMBER_DN
+        member1 = TEST_MEMBER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member1])
         self.assertTrue(added, msg)
-        member2 = self.TEST_OUTSIDER_DN
+        member2 = TEST_OUTSIDER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member2])
         self.assertTrue(added, msg)
-        member3 = self.TEST_OWNER_DN
+        member3 = TEST_OWNER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member3], rank=1)
         self.assertTrue(added, msg)
@@ -771,7 +885,7 @@ class TestMigSharedVgrid(MigTestCase):
         self.assertTrue(reset, msg)
 
         # Test 1: Add initial member
-        member1 = self.TEST_MEMBER_DN
+        member1 = TEST_MEMBER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member1])
         self.assertTrue(added, msg)
@@ -782,7 +896,7 @@ class TestMigSharedVgrid(MigTestCase):
         self.assertEqual(members, [member1])
 
         # Test 2: Prepend new member
-        member2 = self.TEST_OUTSIDER_DN
+        member2 = TEST_OUTSIDER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member2], rank=0)
         self.assertTrue(added, msg)
@@ -793,7 +907,7 @@ class TestMigSharedVgrid(MigTestCase):
         self.assertEqual(members, [member2, member1])
 
         # Test 3: Append without rank
-        member3 = self.TEST_OWNER_DN
+        member3 = TEST_OWNER_DN
         added, msg = vgrid_add_members(self.configuration, self.test_vgrid,
                                        [member3])
         self.assertTrue(added, msg)
@@ -859,13 +973,13 @@ class TestMigSharedVgrid(MigTestCase):
         """Test full resource signup workflow"""
         # Sign up resource
         added, msg = vgrid_add_resources(self.configuration, self.test_vgrid,
-                                         [self.TEST_RESOURCE_DN])
+                                         [TEST_RESOURCE_DN])
         self.assertTrue(added, msg)
 
         # Verify visibility
-        matched = vgrid_match_resources(self.test_vgrid, [self.TEST_RESOURCE_DN],
+        matched = vgrid_match_resources(self.test_vgrid, [TEST_RESOURCE_DN],
                                         self.configuration)
-        self.assertEqual(matched, [self.TEST_RESOURCE_DN])
+        self.assertEqual(matched, [TEST_RESOURCE_DN])
 
     def test_multi_level_inheritance(self):
         """Test settings propagation through multiple vgrid levels"""
@@ -893,15 +1007,15 @@ class TestMigSharedVgrid(MigTestCase):
         self.assertEqual(settings['vgrid_name'], grandchild)
 
     # TODO: adjust API to allow enabling the next test
-    @unittest.skipIf(True, "requires tweaking of funcion")
+    @unittest.skip("requires tweaking of function")
     def test_workflow_job_priority(self):
         """Test workflow job queue ordering and limits"""
         # Create max jobs + 1
         job_entries = [{
             'vgrid_name': self.test_vgrid,
-            'client_id': self.TEST_OWNER_DN,
+            'client_id': TEST_OWNER_DN,
             'job_id': str(i),
-            'run_as': self.TEST_OWNER_DN,  # Required field
+            'run_as': TEST_OWNER_DN,  # Required field
             'exe': '/bin/echo',           # Required job field
             'arguments': ['Test job'],     # Required job field
         } for i in range(101)]
