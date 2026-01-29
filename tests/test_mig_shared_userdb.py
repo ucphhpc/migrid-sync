@@ -381,7 +381,7 @@ class TestMigSharedUserDB(MigTestCase):
         with self.assertRaises(TypeError):
             save_user_db("invalid content", self.user_db_path)
 
-    def test_load_user_db_thread_safety(self):
+    def test_load_user_db_allows_concurrent_read_access(self):
         """Test (emulated) thread-safe multiple-reader load with shared lock"""
         flock = lock_user_db(self.user_db_path, exclusive=False)
         try:
