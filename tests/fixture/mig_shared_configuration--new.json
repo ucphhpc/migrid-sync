@@ -243,6 +243,7 @@
   "trac_ini_path": "",
   "twofactor_home": "",
   "usage_record_dir": null,
+  "user_accounting_log": "accounting.log",
   "user_auth_log": "auth.log",
   "user_cache": "",
   "user_chksidroot_log": "chkchroot.log",

@@ -255,6 +255,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'quota_update_interval',
         'quota_user_limit',
         'quota_vgrid_limit',
+        'accounting_update_interval',
         'wwwserve_max_bytes',
     ]
     bool_names = [
@@ -273,6 +274,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'enable_events',
         'enable_sharelinks',
         'enable_quota',
+        'enable_accounting',
         'enable_transfers',
         'enable_freeze',
         'enable_sandboxes',

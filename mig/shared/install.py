@@ -404,6 +404,7 @@ def generate_confs(
     enable_gravatars=False,
     enable_sitestatus=True,
     enable_quota=False,
+    enable_accounting=False,
     prefer_python3=False,
     io_account_expire=False,
     gdp_email_notify=False,
@@ -536,6 +537,7 @@ def generate_confs(
     quota_update_interval=3600,
     quota_user_limit=(1024**4),
     quota_vgrid_limit=(1024**4),
+    accounting_update_interval=3600,
     ca_fqdn='',
     ca_user='mig-ca',
     ca_smtp='localhost',
@@ -731,6 +733,7 @@ def _generate_confs_prepare(
     enable_gravatars,
     enable_sitestatus,
     enable_quota,
+    enable_accounting,
     prefer_python3,
     io_account_expire,
     gdp_email_notify,
@@ -863,6 +866,7 @@ def _generate_confs_prepare(
     quota_update_interval,
     quota_user_limit,
     quota_vgrid_limit,
+    accounting_update_interval,
     ca_fqdn,
     ca_user,
     ca_smtp,
@@ -988,6 +992,7 @@ def _generate_confs_prepare(
     user_dict['__ENABLE_GRAVATARS__'] = "%s" % enable_gravatars
     user_dict['__ENABLE_SITESTATUS__'] = "%s" % enable_sitestatus
     user_dict['__ENABLE_QUOTA__'] = "%s" % enable_quota
+    user_dict['__ENABLE_ACCOUNTING__'] = "%s" % enable_accounting
     user_dict['__PREFER_PYTHON3__'] = "%s" % prefer_python3
     user_dict['__IO_ACCOUNT_EXPIRE__'] = "%s" % io_account_expire
     user_dict['__GDP_EMAIL_NOTIFY__'] = "%s" % gdp_email_notify
@@ -1122,6 +1127,7 @@ def _generate_confs_prepare(
     user_dict['__QUOTA_UPDATE_INTERVAL__'] = "%s" % quota_update_interval
     user_dict['__QUOTA_USER_LIMIT__'] = "%s" % quota_user_limit
     user_dict['__QUOTA_VGRID_LIMIT__'] = "%s" % quota_vgrid_limit
+    user_dict['__ACCOUNTING_UPDATE_INTERVAL__'] = "%s" % accounting_update_interval
     user_dict['__CA_FQDN__'] = ca_fqdn
     user_dict['__CA_USER__'] = ca_user
     user_dict['__CA_SMTP__'] = ca_smtp

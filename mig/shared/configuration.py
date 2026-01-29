@@ -262,6 +262,7 @@ def fix_missing(config_file, verbose=True):
         'openid_store': '~/state/openid_store/',
         'sitestats_home': '~/state/sitestats_home/',
         'quota_home': '~/state/quota_home/',
+        'accounting_home': '~/state/accounting_home/',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'events_home': '~/state/events_home/',
@@ -375,6 +376,7 @@ def fix_missing(config_file, verbose=True):
         'user_auth_log': 'auth.log',
         'user_shared_dhparams': '~/certs/dhparams.pem',
         'user_quota_log': 'quota.log',
+        'user_accounting_log': 'accounting.log',
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -412,6 +414,8 @@ def fix_missing(config_file, verbose=True):
                      'update_interval': 3600,
                      'user_limit': 1024**4,
                      'vgrid_limit': 1024**4}
+    accounting_section = {'update_interval': 3600}
+
     defaults = {
         'GLOBAL': global_section,
         'SCHEDULER': scheduler_section,
@@ -420,6 +424,7 @@ def fix_missing(config_file, verbose=True):
         'FEASIBILITY': feasibility_section,
         'WORKFLOWS': workflows_section,
         'QUOTA': quota_section,
+        'ACCOUNTING': accounting_section,
     }
     for section in defaults:
         if not section in config.sections():
@@ -662,6 +667,7 @@ _CONFIGURATION_PROPERTIES = {
     'user_auth_log': 'auth.log',
     'user_shared_dhparams': '',
     'user_quota_log': 'quota.log',
+    'user_accounting_log': 'accounting.log',
     'user_imnotify_address': '',
     'user_imnotify_port': 6667,
     'user_imnotify_channel': '',
@@ -1188,6 +1194,8 @@ location.""" % self.config_file)
             self.sitestats_home = config.get('GLOBAL', 'sitestats_home')
         if config.has_option('GLOBAL', 'quota_home'):
             self.quota_home = config.get('GLOBAL', 'quota_home')
+        if config.has_option('GLOBAL', 'accounting_home'):
+            self.accounting_home = config.get('GLOBAL', 'accounting_home')
         if config.has_option('GLOBAL', 'jupyter_mount_files_dir'):
             self.jupyter_mount_files_dir = config.get(
                 'GLOBAL', 'jupyter_mount_files_dir')
@@ -1778,6 +1786,9 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'user_quota_log'):
             self.user_quota_log = config.get('GLOBAL',
                                              'user_quota_log')
+        if config.has_option('GLOBAL', 'user_accounting_log'):
+            self.user_accounting_log = config.get('GLOBAL',
+                                             'user_accounting_log')
         if config.has_option('GLOBAL', 'public_key_file'):
             self.public_key_file = config.get('GLOBAL', 'public_key_file')
         if config.has_option('GLOBAL', 'smtp_sender'):
@@ -2053,6 +2064,10 @@ location.""" % self.config_file)
             self.quota_vgrid_limit = config.getint(
                 'QUOTA', 'vgrid_limit')
 
+        if config.has_option('ACCOUNTING', 'update_interval'):
+            self.accounting_update_interval = config.getint(
+                'ACCOUNTING', 'update_interval')
+
         if config.has_option('SITE', 'images'):
             self.site_images = config.get('SITE', 'images')
         else:
@@ -2318,6 +2333,11 @@ location.""" % self.config_file)
                                                        'enable_quota')
         else:
             self.site_enable_quota = False
+        if config.has_option('SITE', 'enable_accounting'):
+            self.site_enable_accounting = config.getboolean('SITE',
+                                                            'enable_accounting')
+        else:
+            self.site_enable_accounting = False
         if config.has_option('SITE', 'enable_transfers'):
             self.site_enable_transfers = config.getboolean('SITE',
                                                            'enable_transfers')
@@ -2750,7 +2770,8 @@ location.""" % self.config_file)
                          'user_janitor_log', 'user_transfers_log',
                          'user_notify_log', 'user_imnotify_log',
                          'user_auth_log', 'user_chkuserroot_log',
-                         'user_chksidroot_log', 'user_quota_log'):
+                         'user_chksidroot_log', 'user_quota_log',
+                         'user_accounting_log'):
             _log_path = getattr(self, _log_var)
             if not os.path.isabs(_log_path):
                 setattr(self, _log_var, os.path.join(self.log_dir, _log_path))
