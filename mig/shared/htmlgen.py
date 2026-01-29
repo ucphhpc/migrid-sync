@@ -688,6 +688,12 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
             dyn_scripts += '''
             load_sitestatus("%s", %s, locale);
             ''' % (sitestatus_events, sitestatus_system_match)
+        # Workaround for bootstrap and jquery-ui conflict in our issue 205
+        # https://stackoverflow.com/questions/23428285/bootstrap-and-jqueryui-conflict
+        dyn_scripts += '''
+            var bootstrapButton = $.fn.button.noConflict();
+            $.fn.bootstrapBtn = bootstrapButton;
+        '''
         # Call dynamic content scripts on page ready
         scripts['ready'].append(dyn_scripts)
 
