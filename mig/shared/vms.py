@@ -1,12 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 # vms - shared virtual machine functions
-#
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -22,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -327,14 +326,14 @@ def machine_link(
 
         # Canceled, Finished, Unknown
 
-        specs_string = 'action=start;machine_name=%s' % name
+        specs_string = 'action=start&machine_name=%s' % name
         for (key, val) in machine_req.items():
             # Lists of strings must be split into multiple key=val pairs
             if not isinstance(val, basestring) and isinstance(val, list):
                 for entry in val:
-                    specs_string += ';%s=%s' % (key, entry)
+                    specs_string += '&%s=%s' % (key, entry)
             else:
-                specs_string += ';%s=%s' % (key, val)
+                specs_string += '&%s=%s' % (key, val)
         link = '<a href="?%s">%s</a>' % (specs_string, content)
 
     return link
