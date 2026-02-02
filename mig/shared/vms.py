@@ -40,7 +40,6 @@ from builtins import range
 from past.builtins import basestring
 import datetime
 import configparser
-import md5
 import operator
 import os
 import shutil
@@ -51,6 +50,7 @@ from mig.shared.base import client_id_dir
 from mig.shared.defaults import any_vgrid
 from mig.shared.fileio import unpickle, remove_rec
 from mig.shared.job import new_job
+from mig.shared.pwcrypto import make_simple_hash
 
 sys_location = 'sys_location.txt'
 vm_base = 'vms'
@@ -120,7 +120,7 @@ def vnc_jobid(job_id='Unknown'):
     This methods provides 127^8 identifiers.
     """
 
-    job_id_digest = md5.new(job_id).hexdigest()[:16]  # 2
+    job_id_digest = make_simple_hash(job_id)[:16]  # 2
     password = ''
     for i in range(0, len(job_id_digest), 2):  # 3, 4
 
