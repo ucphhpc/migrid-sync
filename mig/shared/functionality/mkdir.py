@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mkdir - create directory in user home
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -242,7 +242,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                    'text': "created directory %s"
                                    % (relative_path)})
             if id_query:
-                open_query = "%s;current_dir=%s" % (id_query, relative_path)
+                open_query = "%s&current_dir=%s" % (id_query, relative_path)
             else:
                 open_query = "?current_dir=%s" % relative_path
             output_objects.append({'object_type': 'link',
