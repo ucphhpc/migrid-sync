@@ -1464,13 +1464,15 @@ def get_project_info(configuration,
     if configuration.site_enable_quota:
         quota_filepath = os.path.join(
             configuration.quota_home,
+            configuration.quota_backend,
             'vgrid',
             "%s.pck" % project_name)
         quota = unpickle(quota_filepath, _logger)
         if quota:
             # Pretty format usage
-            result['quota']['usage'] = quota.get('bytes', 0)
-            result['quota']['limit'] = quota.get('hardlimit_bytes', 0)
+            result['quota']['files'] = quota.get('files', 0)
+            result['quota']['bytes'] = quota.get('bytes', 0)
+            result['quota']['mtime'] = quota.get('mtime', 0)
 
     return result
 

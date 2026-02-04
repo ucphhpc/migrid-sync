@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gdpman - entry point with project access and management for GDP-enabled sites
-# Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project lead by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -1392,12 +1392,17 @@ def js_tmpl_parts(configuration, csrf_token):
                 html += '</span>';
             }
             if (project_info.OK[0].quota !== undefined
-                    && project_info.OK[0].quota.usage !== undefined
-                    && project_info.OK[0].quota.limit !== undefined) {
+                    && project_info.OK[0].quota.files !== undefined
+                    && project_info.OK[0].quota.bytes !== undefined
+                    && project_info.OK[0].quota.mtime !== undefined) {
+                modifed_date = new Date(project_info.OK[0].quota.mtime*1000);
+
                 html += '<span>';
                 html += '<b>Usage:</b>';
                 html += '</span><span>';
-                html += pp_bytes(project_info.OK[0].quota.usage)+' / '+pp_bytes(project_info.OK[0].quota.limit);
+                html += modifed_date.toLocaleDateString()+' '+modifed_date.toLocaleTimeString()+'<br>';
+                html += project_info.OK[0].quota.files+' files <br>'
+                html += pp_bytes(project_info.OK[0].quota.bytes);
                 html += '</span>';
             }
             html += '</div>';
