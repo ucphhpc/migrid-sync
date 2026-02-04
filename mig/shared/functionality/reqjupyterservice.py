@@ -247,7 +247,7 @@ def get_host_from_service(configuration, service, base_url=None):
         if len(hosts) == 1:
             rng = 0
         else:
-            rng = random.randrange(0, len(hosts) - 1)
+            rng = random.randrange(0, len(hosts))
         try:
             with requests.session() as session:
                 _logger.info("requsting url: %s%s" % (hosts[rng], base_url))
