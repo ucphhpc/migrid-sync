@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # janitor - janitor helpers to handle recurring clean up and update tasks
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -293,6 +293,8 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         _logger.info("%r requested renew and authorized password change" %
                      client_id)
         peer_id = user_dict.get("peers", [None])[0]
+        # NOTE: let authorized reqs (with valid peer) renew even with pw change
+        default_renew = True
         if accept_account_req(req_id, configuration, peer_id,
                               user_copy=user_copy, admin_copy=admin_copy,
                               auth_type=auth_type,
