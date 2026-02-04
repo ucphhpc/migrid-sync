@@ -441,7 +441,7 @@ def update_accounting(configuration,
     # Check if all vgrids were accounted for
 
     for vgrid_name in vgrid_quota_files.keys():
-        if not vgrid_name in vgrids_accounted:
+        if vgrid_name not in vgrids_accounted:
             vgridowner = ''
             for owner, owned_vgrids in owned_vgrid.items():
                 if vgrid_name in owned_vgrids:
@@ -640,6 +640,7 @@ def get_usage(configuration,
                                    'vgrid_total': vgrid_total,
                                    'freeze_total': freeze_bytes,
                                    'ext_users_total': 0,
+                                   'total_report': '',
                                    'home_report': home_report,
                                    'freeze_report': freeze_report,
                                    'vgrid_report': vgrid_report,
@@ -694,6 +695,12 @@ def get_usage(configuration,
         if peers_report:
             peers_report = "Accepted by the following peer:%s" % peers_report
         account_usage[username]['peers_report'] = peers_report
+
+    # Create total usage report for each user
+
+    for usage in account_usage.values():
+        usage['total_report'] = "Total usage: %s" \
+                              % human_readable_filesize(usage['total_bytes'])
 
     # External users are accounted for by their peer
     # unless the external user also act as a peer
