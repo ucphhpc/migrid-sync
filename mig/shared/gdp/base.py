@@ -1046,6 +1046,7 @@ def project_log(
     _logger = configuration.logger
     _gdp_logger = configuration.gdp_logger
     status = True
+    project_client_id = None
     scrambled_path = '-'
     scrambled_dst_path = '-'
     log_err_msg = "GDP: project_log: user_id: %r, protocol: %r" \
@@ -1464,13 +1465,15 @@ def get_project_info(configuration,
     if configuration.site_enable_quota:
         quota_filepath = os.path.join(
             configuration.quota_home,
+            configuration.quota_backend,
             'vgrid',
             "%s.pck" % project_name)
         quota = unpickle(quota_filepath, _logger)
         if quota:
             # Pretty format usage
-            result['quota']['usage'] = quota.get('bytes', 0)
-            result['quota']['limit'] = quota.get('hardlimit_bytes', 0)
+            result['quota']['files'] = quota.get('files', 0)
+            result['quota']['bytes'] = quota.get('bytes', 0)
+            result['quota']['mtime'] = quota.get('mtime', 0)
 
     return result
 
@@ -1606,6 +1609,7 @@ def project_remove_user(
     #     % (client_id, project_name))
 
     status = True
+    flock = None
     category_dict = {}
 
     # Get login handle (email) from client_id
@@ -1774,7 +1778,9 @@ def project_remove_user(
                              source=owner_client_id,
                              user=client_id)
         __save_user_db(configuration, user_db, do_lock=False)
-    release_file_lock(flock)
+
+    if flock:
+        release_file_lock(flock)
 
     if status and send_notify:
         _logger.info("handle remove notify")
