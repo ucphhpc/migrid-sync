@@ -34,6 +34,7 @@ from __future__ import absolute_import
 import datetime
 import os
 
+from mig.lib.accounting import get_usage
 from mig.shared import returnvalues
 from mig.shared.accountreq import renew_account_access_template
 from mig.shared.accountstate import account_expire_info
@@ -212,6 +213,67 @@ before your access renewal can be accepted.
             %(renew_helper)s
         </div>
         ''' % fill_helpers
+
+    # Show storage accounting information if enabled
+
+    if configuration.site_enable_accounting:
+        account_usage = get_usage(configuration, client_id)
+        accounting = account_usage.get('accounting', {})
+        accounting_dt = datetime.datetime.fromtimestamp(
+            account_usage.get('timestamp', 0))
+        quota = account_usage.get('quota', {})
+        fill_helpers['usage_helper'] = "Updated: %s" % accounting_dt
+        fill_helpers['usage_helper'] += "<p>Quota updated:<br/>"
+        for backend, values in quota.items():
+            quota_dt = datetime.datetime.fromtimestamp(values.get('mtime', 0))
+            fill_helpers['usage_helper'] \
+                += "%s&nbsp;&nbsp;&nbsp;&nbsp;%s<br/>" % (quota_dt, backend)
+        fill_helpers['usage_helper'] += "</p><p>"
+        accounting_report = accounting.get(client_id, {})
+        if configuration.site_enable_gdp:
+            # NOTE: Only show vgrid usage when in GDP mode
+            #       as no data is stored in user home
+            vgrid_report = accounting_report.get('vgrid_report', '')
+            if vgrid_report:
+                fill_helpers['usage_helper'] \
+                    += vgrid_report.replace('\n', '<br/>')
+        else:
+            total_report = accounting_report.get('total_report', '')
+            home_report = accounting_report.get('home_report', '')
+            freeze_report = accounting_report.get('freeze_report', '')
+            vgrid_report = accounting_report.get('vgrid_report', '')
+            ext_users_report = accounting_report.get('ext_users_report', '')
+            peers_report = accounting_report.get('peers_report', '')
+            if total_report:
+                fill_helpers['usage_helper'] \
+                    += total_report.replace('\n', '<br/>') \
+                    + "<br/>"
+            if home_report:
+                fill_helpers['usage_helper'] \
+                    += home_report.replace('\n', '<br/>') \
+                    + "<br/>"
+            if freeze_report:
+                fill_helpers['usage_helper'] \
+                    += freeze_report.replace('\n', '<br/>') \
+                    + "<br/>"
+            if vgrid_report:
+                fill_helpers['usage_helper'] \
+                    += vgrid_report.replace('\n', '<br/>') \
+                    + "<br/>"
+            if ext_users_report:
+                fill_helpers['usage_helper'] \
+                    += ext_users_report.replace('\n', '<br/>') \
+                    + "<br/>"
+            if peers_report:
+                fill_helpers['usage_helper'] \
+                    += peers_report.replace('\n', '<br/>') \
+                    + "<br/>"
+        fill_helpers['usage_helper'] += "</p>"
+        html += '''
+        <div id="account-usage" class="row">
+            <h3>Account Usage</h3>
+            %(usage_helper)s
+        </div>''' % fill_helpers
 
     html += '''
             <div class="col-lg-12 vertical-spacer"></div>
