@@ -1,12 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 # vms - shared virtual machine functions
-#
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -22,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -41,7 +40,6 @@ from builtins import range
 from past.builtins import basestring
 import datetime
 import configparser
-import md5
 import operator
 import os
 import shutil
@@ -52,6 +50,7 @@ from mig.shared.base import client_id_dir
 from mig.shared.defaults import any_vgrid
 from mig.shared.fileio import unpickle, remove_rec
 from mig.shared.job import new_job
+from mig.shared.pwcrypto import make_simple_hash
 
 sys_location = 'sys_location.txt'
 vm_base = 'vms'
@@ -121,7 +120,7 @@ def vnc_jobid(job_id='Unknown'):
     This methods provides 127^8 identifiers.
     """
 
-    job_id_digest = md5.new(job_id).hexdigest()[:16]  # 2
+    job_id_digest = make_simple_hash(job_id)[:16]  # 2
     password = ''
     for i in range(0, len(job_id_digest), 2):  # 3, 4
 
@@ -327,14 +326,14 @@ def machine_link(
 
         # Canceled, Finished, Unknown
 
-        specs_string = 'action=start;machine_name=%s' % name
+        specs_string = 'action=start&machine_name=%s' % name
         for (key, val) in machine_req.items():
             # Lists of strings must be split into multiple key=val pairs
             if not isinstance(val, basestring) and isinstance(val, list):
                 for entry in val:
-                    specs_string += ';%s=%s' % (key, entry)
+                    specs_string += '&%s=%s' % (key, entry)
             else:
-                specs_string += ';%s=%s' % (key, val)
+                specs_string += '&%s=%s' % (key, val)
         link = '<a href="?%s">%s</a>' % (specs_string, content)
 
     return link
