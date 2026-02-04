@@ -1395,12 +1395,12 @@ def js_tmpl_parts(configuration, csrf_token):
                     && project_info.OK[0].quota.files !== undefined
                     && project_info.OK[0].quota.bytes !== undefined
                     && project_info.OK[0].quota.mtime !== undefined) {
-                modifed_date = new Date(project_info.OK[0].quota.mtime*1000);
+                mdate = new Date(project_info.OK[0].quota.mtime*1000);
 
                 html += '<span>';
                 html += '<b>Usage:</b>';
                 html += '</span><span>';
-                html += modifed_date.toLocaleDateString()+' '+modifed_date.toLocaleTimeString()+'<br>';
+                html += mdate.toLocaleDateString()+' '+mdate.toLocaleTimeString()+'<br>';
                 html += project_info.OK[0].quota.files+' files <br>'
                 html += pp_bytes(project_info.OK[0].quota.bytes);
                 html += '</span>';
