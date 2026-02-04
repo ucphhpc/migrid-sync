@@ -88,3 +88,6 @@ jobs:
           #       for now we do not enforce all additional format and content rules.
           use-pydocstyle: true
           extra-pydocstyle-options: "--ignore=D2,D4"
+          use-mypy: true
+          # NOTE: don't err on common missing type definitions
+          extra-mypy-options: "--disable-error-code=var-annotated --disable-error-code=assignment"
