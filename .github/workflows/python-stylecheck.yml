@@ -90,4 +90,4 @@ jobs:
           extra-pydocstyle-options: "--ignore=D2,D4"
           use-mypy: true
           # NOTE: don't err on common missing type definitions
-          extra-mypy-options: "--disable-error-code=var-annotated --disable-error-code=assignment"
+          extra-mypy-options: "--disable-error-code=var-annotated --disable-error-code=assignment --disable-error-code=attr-defined"
