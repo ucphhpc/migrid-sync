@@ -622,6 +622,7 @@ class MigLibJanitor(MigTestCase):
             'organization': DUMMY_ORGANIZATION,
             # NOTE: disable email to prevent send failing on reject
             'email': DUMMY_SKIP_EMAIL,
+            'password': '',
             'password_hash': DUMMY_MODERN_PW_PBKDF2,
             'expire': time.time() + SECS_PER_DAY,
         }
