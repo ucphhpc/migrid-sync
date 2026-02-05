@@ -273,16 +273,18 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         _logger.info("%r made an invalid account request" % client_id)
         # NOTE: 'invalid' is a list of validation error strings if set
         reason = "invalid request: %s." % ". ".join(req_invalid)
-        if not reject_account_req(
+        (rej_status, rej_err) = reject_account_req(
             req_id,
             configuration,
             reason,
             user_copy=user_copy,
             admin_copy=admin_copy,
             auth_type=auth_type,
-        ):
+        )
+        if not rej_status:
             _logger.warning(
-                "failed to reject invalid %r account request" % client_id
+                "failed to reject invalid %r account request: %s" % (client_id,
+                                                                     rej_err)
             )
         else:
             _logger.info("rejected invalid %r account request" % client_id)
@@ -297,7 +299,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
                 "%r requested and authorized password reset" % client_id
             )
             peer_id = user_dict.get("peers", [None])[0]
-            if not accept_account_req(
+            (acc_status, acc_err) = accept_account_req(
                 req_id,
                 configuration,
                 peer_id,
@@ -305,27 +307,32 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
                 admin_copy=admin_copy,
                 auth_type=auth_type,
                 default_renew=default_renew,
-            ):
+            )
+            if not acc_status:
                 _logger.warning(
-                    "failed to accept %r password reset" % client_id
+                    "failed to accept %r password reset: %s" % (client_id,
+                                                                acc_err)
                 )
             else:
                 _logger.info("accepted %r password reset" % client_id)
         else:
             _logger.warning(
-                "%r requested password reset with bad token" % client_id
+                "%r requested password reset with bad token: %s" % (
+                    client_id, reset_token)
             )
             reason = "invalid password reset token"
-            if not reject_account_req(
+            (rej_status, rej_err) = reject_account_req(
                 req_id,
                 configuration,
                 reason,
                 user_copy=user_copy,
                 admin_copy=admin_copy,
                 auth_type=auth_type,
-            ):
+            )
+            if not rej_status:
                 _logger.warning(
-                    "failed to reject %r password reset" % client_id
+                    "failed to reject %r password reset: %s" % (client_id,
+                                                                rej_err)
                 )
             else:
                 _logger.info("rejected %r password reset" % client_id)
@@ -333,30 +340,35 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         #  NOTE: probably should no longer happen after initial auto clean
         _logger.warning("%r request is now past expire" % client_id)
         reason = "expired request - please re-request if still relevant"
-        if not reject_account_req(
+        (rej_status, rej_err) = reject_account_req(
             req_id,
             configuration,
             reason,
             user_copy=user_copy,
             admin_copy=admin_copy,
             auth_type=auth_type,
-        ):
-            _logger.warning("failed to reject expired %r request" % client_id)
+        )
+        if not rej_status:
+            _logger.warning("failed to reject expired %r request: %s" %
+                            (client_id, rej_err)
+                            )
         else:
             _logger.info("rejected %r request now past expire" % client_id)
     elif existing_user_collision(configuration, req_dict, client_id):
         _logger.warning("ID collision in request from %r" % client_id)
         reason = "ID collision - please re-request with *existing* ID fields"
-        if not reject_account_req(
+        (rej_status, rej_err) = reject_account_req(
             req_id,
             configuration,
             reason,
             user_copy=user_copy,
             admin_copy=admin_copy,
             auth_type=auth_type,
-        ):
+        )
+        if not rej_status:
             _logger.warning(
-                "failed to reject %r request with ID collision" % client_id
+                "failed to reject %r request with ID collision: %s" %
+                (client_id, rej_err)
             )
         else:
             _logger.info("rejected %r request with ID collision" % client_id)
@@ -448,16 +460,17 @@ def remind_and_expire_user_pending(configuration, now=None):
             )
             user_copy = True
             admin_copy = True
-            if not reject_account_req(
+            (rej_status, rej_err) = reject_account_req(
                 req_id,
                 configuration,
                 reason,
                 user_copy=user_copy,
                 admin_copy=admin_copy,
                 auth_type=auth_type,
-            ):
-                _logger.warning("failed to expire %s request from %r" %
-                                (req_id, client_id))
+            )
+            if not rej_status:
+                _logger.warning("failed to expire %s request from %r: %s" %
+                                (req_id, client_id, rej_err))
             else:
                 _logger.info("expired %s request from %r" % (req_id,
                                                              client_id))

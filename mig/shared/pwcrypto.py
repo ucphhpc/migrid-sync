@@ -720,15 +720,15 @@ def verify_reset_token(configuration, user_dict, token, auth_type,
     try:
         assure_reset_supported(configuration, user_dict, auth_type)
     except ValueError as vae:
-        _logger.warning("verify %s reset token %s failed: %s" % (auth_type,
-                                                                 token, vae))
+        _logger.warning("unsupported verify %s reset token %s: %s" %
+                        (auth_type, token, vae))
         return False
 
     token_stamp, token_hash = parse_reset_token(configuration, token,
                                                 auth_type)
     if token_stamp > timestamp or timestamp - token_stamp > RESET_TOKEN_TTL:
-        _logger.debug("reject reset token %r with timestamp %d (%d)" %
-                      (token, token_stamp, timestamp))
+        _logger.warning("reject expired reset token %r with timestamp %d (%d)"
+                        % (token, token_stamp, timestamp))
         return False
 
     pw_hash = None
@@ -740,9 +740,9 @@ def verify_reset_token(configuration, user_dict, token, auth_type,
 
     if token_hash != pw_hash:
         # IMPORTANT: do NOT log actual hash but just a snippet hint
-        _logger.debug("reject reset token %r with wrong hash: %s vs %s" %
-                      (token, string_snippet(token_hash),
-                       string_snippet(pw_hash)))
+        _logger.warning("reject reset token %r with wrong hash: %s vs %s" %
+                        (token, string_snippet(token_hash),
+                         string_snippet(pw_hash)))
         return False
 
         # IMPORTANT: do NOT log actual hash but just a snippet hint
