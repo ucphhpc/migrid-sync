@@ -611,7 +611,6 @@ class MigLibJanitor(MigTestCase):
         self.assertFalse(os.path.exists(req_path),
                          "Failed cleanup collision for %s" % req_path)
 
-    @unittest.skip("TODO: enable once janitor handles auth change reqs")
     def test_manage_single_req_auth_change(self):
         """Test request handling with auth password change"""
         req_dict = {
