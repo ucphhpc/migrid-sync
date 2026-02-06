@@ -32,17 +32,18 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, distinguished_name_to_user, \
-    canonical_user, cert_field_map, requested_page
-from mig.shared.accountreq import valid_password_chars, valid_name_chars, \
-    password_min_len, password_max_len, account_request_template, \
-    account_css_helpers, account_js_helpers
+from mig.shared.accountreq import account_css_helpers, account_js_helpers, \
+    account_request_template, password_max_len, password_min_len, \
+    valid_name_chars, valid_password_chars
+from mig.shared.base import canonical_user, cert_field_map, client_id_dir, \
+    distinguished_name_to_user, requested_page
 from mig.shared.defaults import csrf_field, keyword_auto
 from mig.shared.functional import validate_input
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import find_entry, initialize_main_variables
 from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape
+from mig.shared.useradm import get_full_user_map
 
 
 def signature(configuration):
@@ -158,6 +159,15 @@ to your old files, jobs and privileges. </p>''' %
                                (configuration.short_title,
                                 configuration.user_mig_oid_title)})
         user_fields.update(distinguished_name_to_user(client_id))
+        # Update peer fields
+        user_map = get_full_user_map(configuration)
+        user_dict = user_map.get(client_id, None)
+        peers_fields = ['peers_%s' % field for field in
+                    configuration.site_peers_explicit_fields]
+        for peers_field in peers_fields:
+            peers_value = user_dict.get(peers_field, '')
+            if peers_value:
+                user_fields[peers_field] = peers_value
 
     # Override with arg values if set
     for field in user_fields:
