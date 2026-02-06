@@ -837,6 +837,8 @@ class MigLibJanitor(MigTestCase):
 
         self.assertTrue(any('accepted' in msg.lower()
                             for msg in log_capture.output))
+        self.assertFalse(os.path.exists(req_path),
+                         "Failed cleanup invalid token for %s" % req_path)
 
     def test_remind_and_expire_edge_cases(self):
         """Test request expiration with exact boundary timestamps"""
