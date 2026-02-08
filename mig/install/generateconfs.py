@@ -283,6 +283,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'enable_cloud',
         'enable_gdp',
         'enable_hsts',
+        'enable_antislowloris',
         'enable_vhost_certs',
         'enable_verify_certs',
         'enable_seafile',
