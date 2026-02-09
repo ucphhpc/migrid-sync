@@ -611,7 +611,6 @@ class MigLibJanitor(MigTestCase):
         self.assertFalse(os.path.exists(req_path),
                          "Failed cleanup collision for %s" % req_path)
 
-    @unittest.skip("TODO: enable once janitor handles auth change reqs")
     def test_manage_single_req_auth_change(self):
         """Test request handling with auth password change"""
         req_dict = {
@@ -838,6 +837,8 @@ class MigLibJanitor(MigTestCase):
 
         self.assertTrue(any('accepted' in msg.lower()
                             for msg in log_capture.output))
+        self.assertFalse(os.path.exists(req_path),
+                         "Failed cleanup invalid token for %s" % req_path)
 
     def test_remind_and_expire_edge_cases(self):
         """Test request expiration with exact boundary timestamps"""
