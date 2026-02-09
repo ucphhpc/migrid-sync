@@ -30,7 +30,8 @@
 import os
 import pickle
 
-from mig.lib.accounting import update_accounting, get_usage
+from mig.lib.accounting import get_usage, human_readable_filesize, \
+    update_accounting
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import peers_filename
 from tests.support import MigTestCase, ensure_dirs_exist
@@ -228,3 +229,18 @@ class MigLibAccounting(MigTestCase):
 
         total_bytes = test_user_accounting.get('total_bytes', 0)
         self.assertEqual(total_bytes, TEST_TOTAL_BYTES)
+
+    def test_human_readable_filesize_valid(self):
+        """Test human-friendly format helper success on valid byte sizes"""
+        valid = [(0, "0 B"), (42, "42.000 B"), (2**10, "1.000 KiB"),
+                 (2**30, "1.000 GiB"), (2**50, "1.000 PiB"),
+                 (2**89, "512.000 YiB"), (2**90 - 2**70, "1023.999 YiB")]
+        for (size, expect) in valid:
+            self.assertEqual(human_readable_filesize(size), expect)
+
+    def test_human_readable_filesize_invalid(self):
+        """Test human-friendly format helper failure on invalid byte sizes"""
+        invalid = [(i, "NaN") for i in [False, None, "", "one", -1, 1.2, 2**90,
+                                        2**128]]
+        for (size, expect) in invalid:
+            self.assertEqual(human_readable_filesize(size), expect)
