@@ -208,11 +208,16 @@ before your access renewal can be accepted.
         fill_helpers['renew_helper'] = renew_account_access_template(
             configuration, default_values=fill_helpers) % fill_helpers
         html += '''
-        <div class="renew-account-access__header col-12">
-            <h3>Renew Account Access</h3>
-            %(renew_helper)s
-        </div>
+            <div class="renew-account-access__header col-12">
+                <h3>Renew Account Access</h3>
+                %(renew_helper)s
+            </div>
         ''' % fill_helpers
+
+    html += '''
+            <div class="col-lg-12 vertical-spacer"></div>
+        </div>
+    '''
 
     # Show storage accounting information if enabled
 
@@ -222,7 +227,7 @@ before your access renewal can be accepted.
         accounting_dt = datetime.datetime.fromtimestamp(
             account_usage.get('timestamp', 0))
         quota = account_usage.get('quota', {})
-        fill_helpers['usage_helper'] = "Updated: %s" % accounting_dt
+        fill_helpers['usage_helper'] = "<p>Updated: %s</p>" % accounting_dt
         fill_helpers['usage_helper'] += "<p>Quota updated:<br/>"
         for backend, values in quota.items():
             quota_dt = datetime.datetime.fromtimestamp(values.get('mtime', 0))
@@ -269,15 +274,21 @@ before your access renewal can be accepted.
                     += peers_report.replace('\n', '<br/>') \
                     + "<br/>"
         fill_helpers['usage_helper'] += "</p>"
+
         html += '''
-        <div id="account-usage" class="row">
-            <h3>Account Usage</h3>
-            %(usage_helper)s
-        </div>''' % fill_helpers
+        <div id="usage-container" class="row">
+            <div class="usage-page__header col-12">
+                <h2>Account Usage</h2>
+       '''
+        html += '''
+                %(usage_helper)s
+            </div>
+            <div class="col-lg-12 vertical-spacer"></div>
+            ''' % fill_helpers
 
     html += '''
-            <div class="col-lg-12 vertical-spacer"></div>
         </div>
+    </div>
     '''
 
     return html
