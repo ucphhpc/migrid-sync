@@ -70,7 +70,7 @@ def __get_owned_vgrid(configuration, verbose=False):
     (status, vgrids) = vgrid_list_vgrids(configuration)
     if status:
         for vgrid_name in vgrids:
-            #print("checkking vgrid: %s" % check_vgrid_name)
+            # print("checking vgrid: %s" % check_vgrid_name)
             (owners_status, owners_list) = vgrid_list(vgrid_name,
                                                       'owners',
                                                       configuration,
@@ -147,7 +147,7 @@ def update_accounting(configuration,
     t1 = time.time()
     owned_vgrid = __get_owned_vgrid(configuration, verbose=verbose)
     t2 = time.time()
-    msg = "Created vgrid owners map in %d secs" % (t2-t1)
+    msg = "Created vgrid owners map in %d secs" % (t2 - t1)
     logger.info(msg)
     if verbose:
         print(msg)
@@ -161,7 +161,7 @@ def update_accounting(configuration,
     t1 = time.time()
     peers_map = __get_peers_map(configuration, verbose=verbose)
     t2 = time.time()
-    msg = "Created peers map in %d secs" % (t2-t1)
+    msg = "Created peers map in %d secs" % (t2 - t1)
     logger.info(msg)
     if verbose:
         print(msg)
@@ -257,7 +257,7 @@ def update_accounting(configuration,
                    quota_mtime,
                    quota_datestr,
                    user_path,
-                   (t2-t1))
+                   (t2 - t1))
             logger.info(msg)
             if verbose:
                 print(msg)
@@ -305,7 +305,7 @@ def update_accounting(configuration,
                    quota_mtime,
                    quota_datestr,
                    vgrid_path,
-                   (t2-t1))
+                   (t2 - t1))
             logger.info(msg)
             if verbose:
                 print(msg)
@@ -351,7 +351,7 @@ def update_accounting(configuration,
                          quota_mtime,
                          quota_datestr,
                          freeze_path,
-                         (t2-t1))
+                         (t2 - t1))
                 logger.info(msg)
                 if verbose:
                     print(msg)
@@ -538,20 +538,26 @@ def update_accounting(configuration,
 
 
 def human_readable_filesize(filesize):
-    """Return human readable filesize"""
+    """Return human readable filesize for non-negative int value below 2**90"""
+    # NOTE: False matches 'filesize == 0' unless we are careful here
+    if isinstance(filesize, bool) or isinstance(filesize, float):
+        return "NaN"
     if filesize == 0:
         return "0 B"
-    p = int(math.floor(math.log(filesize, 2)/10))
-    return "%.3f %s" % (filesize/math.pow(1024, p),
-                        ['B',
-                         'KiB',
-                         'MiB',
-                         'GiB',
-                         'TiB',
-                         'PiB',
-                         'EiB',
-                         'ZiB',
-                         'YiB'][p])
+    try:
+        p = int(math.floor(math.log(filesize, 2) / 10))
+        return "%.3f %s" % (filesize / math.pow(1024, p),
+                            ['B',
+                             'KiB',
+                             'MiB',
+                             'GiB',
+                             'TiB',
+                             'PiB',
+                             'EiB',
+                             'ZiB',
+                             'YiB'][p])
+    except (ValueError, TypeError, IndexError):
+        return 'NaN'
 
 
 def get_usage(configuration,
@@ -608,10 +614,7 @@ def get_usage(configuration,
         total_bytes += home_bytes
         home_report = ""
         if create_reports:
-            try:
-                home_bytes_human = human_readable_filesize(home_bytes)
-            except Exception:
-                home_bytes_human = "NaN"
+            home_bytes_human = human_readable_filesize(home_bytes)
             home_report += "Home usage: %s" % home_bytes_human
 
         # Freeze archive usage
@@ -620,10 +623,7 @@ def get_usage(configuration,
         total_bytes += freeze_bytes
         freeze_report = ""
         if create_reports and freeze_bytes > 0:
-            try:
-                freeze_bytes_human = human_readable_filesize(freeze_bytes)
-            except Exception:
-                freeze_bytes_human = "NaN"
+            freeze_bytes_human = human_readable_filesize(freeze_bytes)
             freeze_report += "Archive usage: %s" % freeze_bytes_human
 
         # Vgrid usage
@@ -633,10 +633,7 @@ def get_usage(configuration,
         for vgrid_name, vgrid_bytes in values.get('vgrid_bytes', {}).items():
             vgrid_total += vgrid_bytes
             if create_reports:
-                try:
-                    vgrid_bytes_human = human_readable_filesize(vgrid_bytes)
-                except Exception as err:
-                    vgrid_bytes_human = "NaN"
+                vgrid_bytes_human = human_readable_filesize(vgrid_bytes)
                 vgrid_report += "\n - %s: %s" \
                     % (vgrid_name, vgrid_bytes_human)
         if vgrid_report:
@@ -689,11 +686,8 @@ def get_usage(configuration,
             ext_user_total_bytes = account_usage.get(
                 ext_user, {}).get('total_bytes', 0)
             ext_users_total += ext_user_total_bytes
-            try:
-                ext_user_total_bytes_human = human_readable_filesize(
-                    ext_user_total_bytes)
-            except Exception as err:
-                ext_user_total_bytes_human = "NaN"
+            ext_user_total_bytes_human = human_readable_filesize(
+                ext_user_total_bytes)
             ext_users_report += "\n - %s: %s" % (ext_user,
                                                  ext_user_total_bytes_human)
         if ext_users_report:
