@@ -161,7 +161,7 @@ to your old files, jobs and privileges. </p>''' %
         user_fields.update(distinguished_name_to_user(client_id))
         # Update peer fields
         user_map = get_full_user_map(configuration)
-        user_dict = user_map.get(client_id, None)
+        user_dict = user_map.get(client_id, {})
         peers_fields = ['peers_%s' % field for field in
                     configuration.site_peers_explicit_fields]
         for peers_field in peers_fields:
