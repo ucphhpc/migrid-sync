@@ -440,7 +440,7 @@ def update_accounting(configuration,
 
     # Check if all vgrids were accounted for
 
-    for vgrid_name in vgrid_quota_files.keys():
+    for vgrid_name in vgrid_quota_files:
         if vgrid_name not in vgrids_accounted:
             vgridowner = ''
             for owner, owned_vgrids in owned_vgrid.items():
@@ -555,7 +555,7 @@ def human_readable_filesize(filesize):
 
 
 def get_usage(configuration,
-              usernames=[],
+              userlist=[],
               timestamp=0,
               verbose=False):
     """Generate and return 'storage' usage"""
@@ -577,64 +577,77 @@ def get_usage(configuration,
 
     accounting = data.get('accounting', {})
 
-    # Do not show external users as a main account
-    # unless they act as both peer and external user
+    # Do not show external users as main accounts unless requested
+    # or if the user act as both peer and external user
 
     ext_users = []
     peer_users = []
     skip_ext_users = []
     for values in accounting.values():
-        ext_users.extend(list(values.get('ext_users', {}).keys()))
-        peer_users.extend(list(values.get('peers', {}).keys()))
+        ext_users.extend(list(values.get('ext_users', {})))
+        peer_users.extend(list(values.get('peers', {})))
     skip_ext_users = [user for user in ext_users
-                      if user not in peer_users]
+                      if user not in userlist and user not in peer_users]
 
     # Create accounting report
 
     account_usage = {}
     for username, values in accounting.items():
-        if usernames and username not in usernames:
-            continue
+        # NOTE: If specific users are requested
+        #       then only create report for those
+        # NOTE: We need to summarize usage for all users
+        #       in order to map for external user account usage
+        create_reports = True
+        if userlist and username not in userlist:
+            create_reports = False
         total_bytes = 0
-        # Create home human readable bytes
-        home_report = ""
+
+        # Home usage
+
         home_bytes = values.get('user_bytes', 0)
         total_bytes += home_bytes
-        try:
-            home_bytes_human = human_readable_filesize(home_bytes)
-        except Exception:
-            home_bytes_human = "NaN"
-        home_report += "Home usage: %s" % home_bytes_human
+        home_report = ""
+        if create_reports:
+            try:
+                home_bytes_human = human_readable_filesize(home_bytes)
+            except Exception:
+                home_bytes_human = "NaN"
+            home_report += "Home usage: %s" % home_bytes_human
 
-        # Create freeze report
+        # Freeze archive usage
 
-        freeze_report = ""
         freeze_bytes = values.get('freeze_bytes', 0)
         total_bytes += freeze_bytes
-        if freeze_bytes > 0:
+        freeze_report = ""
+        if create_reports and freeze_bytes > 0:
             try:
                 freeze_bytes_human = human_readable_filesize(freeze_bytes)
             except Exception:
                 freeze_bytes_human = "NaN"
             freeze_report += "Archive usage: %s" % freeze_bytes_human
 
-        # Create vgrid report
+        # Vgrid usage
 
         vgrid_report = ""
         vgrid_total = 0
         for vgrid_name, vgrid_bytes in values.get('vgrid_bytes', {}).items():
             vgrid_total += vgrid_bytes
-            try:
-                vgrid_bytes_human = human_readable_filesize(vgrid_bytes)
-            except Exception as err:
-                vgrid_bytes_human = "NaN"
-            vgrid_report += "\n - %s: %s" % (vgrid_name, vgrid_bytes_human)
+            if create_reports:
+                try:
+                    vgrid_bytes_human = human_readable_filesize(vgrid_bytes)
+                except Exception as err:
+                    vgrid_bytes_human = "NaN"
+                vgrid_report += "\n - %s: %s" \
+                    % (vgrid_name, vgrid_bytes_human)
         if vgrid_report:
             vgrid_report = "%s usage (total: %s)%s" \
                 % (configuration.site_vgrid_label,
-                   human_readable_filesize(vgrid_total),
-                   vgrid_report)
+                           human_readable_filesize(vgrid_total),
+                           vgrid_report)
         total_bytes += vgrid_total
+
+        # Create account usage entry
+
         account_usage[username] = {'total_bytes': total_bytes,
                                    'home_total': home_bytes,
                                    'vgrid_total': vgrid_total,
@@ -652,6 +665,10 @@ def get_usage(configuration,
     #       generated before external users report
 
     for username, values in accounting.items():
+        # NOTE: If specific users are requested
+        #       then only create result for those
+        if userlist and username not in userlist:
+            continue
         # Create ext_users report
         ext_users = values.get('ext_users', {})
         peers = values.get('peers', {})
@@ -668,7 +685,7 @@ def get_usage(configuration,
 
         ext_users_report = ""
         ext_users_total = 0
-        for ext_user in ext_users.keys():
+        for ext_user in ext_users:
             ext_user_total_bytes = account_usage.get(
                 ext_user, {}).get('total_bytes', 0)
             ext_users_total += ext_user_total_bytes
@@ -690,7 +707,7 @@ def get_usage(configuration,
         # Create peers report
 
         peers_report = ""
-        for peer in peers.keys():
+        for peer in peers:
             peers_report += "\n - %s" % peer
         if peers_report:
             peers_report = "Accepted by the following peer:%s" % peers_report
@@ -700,7 +717,7 @@ def get_usage(configuration,
 
     for usage in account_usage.values():
         usage['total_report'] = "Total usage: %s" \
-                              % human_readable_filesize(usage['total_bytes'])
+            % human_readable_filesize(usage['total_bytes'])
 
     # External users are accounted for by their peer
     # unless the external user also act as a peer
@@ -710,6 +727,6 @@ def get_usage(configuration,
     result['quota'] = data.get('quota', {})
     result['accounting'] = {username: values for username, values
                             in account_usage.items()
-                            if username not in skip_ext_users}
-
+                            if not userlist or username in userlist
+                            and username not in skip_ext_users}
     return result
