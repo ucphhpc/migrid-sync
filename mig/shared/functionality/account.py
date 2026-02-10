@@ -62,7 +62,7 @@ def html_tmpl(configuration, client_id, environ, title_entry):
     """HTML page base: some account and manage actions depend on configuration
     and environ.
     """
-
+    logger = configuration.logger
     user_msg, show_user_msg = '', 'hidden'
     if configuration.site_enable_user_messages:
         user_msg = html_user_messages(configuration, client_id)
@@ -223,6 +223,10 @@ before your access renewal can be accepted.
 
     if configuration.site_enable_accounting:
         account_usage = get_usage(configuration, client_id)
+        if account_usage is None:
+            logger.error("Failed to load acount usage for user: %r" \
+                    % client_id)
+            account_usage = {}
         accounting = account_usage.get('accounting', {})
         accounting_dt = datetime.datetime.fromtimestamp(
             account_usage.get('timestamp', 0))
