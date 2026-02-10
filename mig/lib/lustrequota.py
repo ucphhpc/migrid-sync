@@ -55,7 +55,7 @@ except ImportError:
 def __get_lustre_basepath(configuration, lustre_basepath=None):
     """If *lustre_basepath* is provided then check it,
     otherwise try to resolve it"""
-    if  psutil is None:
+    if psutil is None:
         return None
 
     valid_lustre_basepath = None
@@ -438,6 +438,7 @@ def update_lustre_quota(configuration):
 
     # Get gocryptfs socket if enabled
 
+    gocryptfs_sock = None
     if configuration.quota_backend == "lustre-gocryptfs":
         gocryptfs_sock = __get_gocryptfs_socket(configuration)
         if gocryptfs_sock:
