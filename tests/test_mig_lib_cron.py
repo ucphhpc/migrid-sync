@@ -98,11 +98,15 @@ class MigLibCron(MigTestCase):
         self.assertFalse(stop_running.is_set())
 
     def test_run_handler_valid_job(self):
-        """Test run_handler creates worker for valid job"""
+        """Test run_handler creates worker for valid job and doesn't crash"""
         timestamp = datetime.datetime.now()
-        result = run_handler(
-            self.configuration, DUMMY_USER_DN, timestamp, DUMMY_CRON_JOB)
-        self.assertEqual(result, None)
+        caught = None
+        try:
+            run_handler(self.configuration, DUMMY_USER_DN, timestamp,
+                        DUMMY_CRON_JOB)
+        except Exception as exc:
+            caught = exc
+        self.assertEqual(caught, None)
 
     def test_parse_valid_crontab(self):
         """Test parsing of valid crontab content"""
