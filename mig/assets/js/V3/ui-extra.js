@@ -53,7 +53,6 @@ function hamburgerMenuToggle() {
 
 $(document).mouseup(function (e)
 {
-    console.log("mouse up start");
   var container = $("#hamMenu"); // YOUR CONTAINER SELECTOR
   var container2 = $("#sideBar");
   var x = document.getElementById("hamMenu");
@@ -73,7 +72,6 @@ $(document).mouseup(function (e)
       z.innerHTML = "Menu"
     }
   }
-    console.log("mouse up done");
 }
 );
 
