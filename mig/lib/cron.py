@@ -63,6 +63,7 @@ from mig.shared.events import get_time_expand_map, parse_crontab, cron_match, \
     parse_atjobs, at_remain
 from mig.shared.fileio import makedirs_rec, scandir, walk
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.job import fill_mrsl_template, new_job
 from mig.shared.logger import register_hangup_handler
 from mig.shared.output import txt_format
 
@@ -368,6 +369,7 @@ def __cron_info(configuration, client_id, msg):
 def __handle_cronjob(configuration, client_id, timestamp, crontab_entry):
     """Actually handle valid crontab entry which is due"""
 
+    logger = configuration.logger
     pid = multiprocessing.current_process().pid
     logger.info('(%s) in handling of %s for %s' % (pid,
                                                    crontab_entry['command'],

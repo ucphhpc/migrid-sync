@@ -41,7 +41,7 @@ import sys
 import time
 
 # TODO: change next to explicit imports
-from mig.lib.cron import *
+from mig.lib.cron import monitor, stop_handler, stop_running
 from mig.shared.conf import get_configuration_object
 from mig.shared.logger import daemon_logger, register_hangup_handler
 
