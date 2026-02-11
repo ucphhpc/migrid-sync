@@ -46,7 +46,6 @@ import signal
 import sys
 import tempfile
 import time
-import threading
 
 try:
     from watchdog.observers import Observer
@@ -411,25 +410,27 @@ def __handle_cronjob(configuration, client_id, timestamp, crontab_entry):
 
 
 def run_handler(configuration, client_id, timestamp, crontab_entry):
-    """Run crontab entry for client_id in a separate thread"""
+    """Run crontab entry for client_id in a properly isolated process to avoid
+    concurrent worker interference.
+    """
 
     pid = multiprocessing.current_process().pid
 
-    # TODO: Replace try/catch with an event queue or thread pool setup
+    # TODO: Replace try/catch with an event queue or process pool setup
 
-    waiting_for_thread_resources = True
-    while waiting_for_thread_resources:
+    waiting_for_worker_resources = True
+    while waiting_for_worker_resources:
         try:
             worker = \
-                threading.Thread(target=__handle_cronjob,
-                                 args=(configuration, client_id,
-                                       timestamp, crontab_entry))
+                multiprocessing.Process(target=__handle_cronjob,
+                                        args=(configuration, client_id,
+                                              timestamp, crontab_entry))
             worker.daemon = True
             worker.start()
-            waiting_for_thread_resources = False
-        except threading.ThreadError as exc:
+            waiting_for_worker_resources = False
+        except multiprocessing.ProcessError as exc:
 
-            # logger.debug('(%s) Waiting for thread resources to handle crontab: %s'
+            # logger.debug('(%s) Waiting for worker resources to handle crontab: %s'
             #              % (pid, crontab_entry))
 
             time.sleep(1)

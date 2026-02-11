@@ -1262,7 +1262,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         return src_path
 
     def run_handler(self, event):
-        """Trigger any rule actions bound to file state change"""
+        """Trigger any rule actions bound to file state change in a properly
+        isolated process to avoid concurrent worker interference.
+        """
 
         pid = multiprocessing.current_process().pid
         state = event.event_type
@@ -1355,21 +1357,21 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                     rule_hit = True
 
-                    # TODO: Replace try/catch with an event queue or thread
+                    # TODO: Replace try/catch with an event queue or process
                     #       pool setup
 
-                    waiting_for_thread_resources = True
-                    while waiting_for_thread_resources:
+                    waiting_for_worker_resources = True
+                    while waiting_for_worker_resources:
                         try:
                             worker = \
-                                threading.Thread(target=self.__handle_trigger,
-                                                 args=(event, target_path, rule))
+                                multiprocessing.Process(target=self.__handle_trigger,
+                                                        args=(event, target_path, rule))
                             worker.daemon = True
                             worker.start()
-                            waiting_for_thread_resources = False
-                        except threading.ThreadError as exc:
+                            waiting_for_worker_resources = False
+                        except multiprocessing.ProcessError as exc:
 
-                            # logger.debug('(%s) Waiting for thread resources to handle trigger: %s'
+                            # logger.debug('(%s) Waiting for worker resources to handle trigger: %s'
                             #              % (pid, event))
 
                             time.sleep(1)
