@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# home - home page
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# home - home page for logged in users
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -270,13 +270,5 @@ def main(client_id, user_arguments_dict):
 
     html = html_tmpl(configuration, client_id, title_entry)
     output_objects.append({'object_type': 'html_form', 'text': html})
-
-    # NOTE: only for openid connect tracing
-    if configuration.loglevel == 'debug':
-        claim_dump = ''
-        for (key, val) in os.environ.items():
-            if key.startswith('OIDC_CLAIM_'):
-                claim_dump += "%s: %s<br/>" % (key, val)
-        output_objects.append({'object_type': 'html_form', 'text': claim_dump})
 
     return (output_objects, returnvalues.OK)
