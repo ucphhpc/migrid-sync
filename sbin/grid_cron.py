@@ -40,8 +40,8 @@ import signal
 import sys
 import time
 
-# TODO: change next to explicit imports
-from mig.lib.cron import monitor, stop_handler, stop_running
+from mig.lib.cron import cron_monitor
+from mig.lib.daemon import check_stop, register_stop_handler, stop_running
 from mig.shared.conf import get_configuration_object
 from mig.shared.logger import daemon_logger, register_hangup_handler
 
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     register_hangup_handler(configuration)
 
     # Allow clean shutdown on SIGINT only to main process
-    signal.signal(signal.SIGINT, stop_handler)
+    register_stop_handler(configuration)
 
     if not configuration.site_enable_crontab:
         err_msg = "Cron support is disabled in configuration!"
@@ -90,7 +90,7 @@ unless it is available in mig/server/MiGserver.conf
 
     # Start a single global monitor for all crontabs
 
-    crontab_monitor = multiprocessing.Process(target=monitor,
+    crontab_monitor = multiprocessing.Process(target=cron_monitor,
                                               args=(configuration, ))
     crontab_monitor.start()
 

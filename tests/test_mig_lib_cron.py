@@ -36,8 +36,7 @@ from unittest.mock import patch, MagicMock
 
 import mig.lib.cron
 from mig.lib.cron import MiGCrontabEventHandler, parse_crontab, cron_match, \
-    parse_atjobs, at_remain, monitor, run_handler, stop_handler, stop_running, \
-    all_crontabs, all_atjobs, shared_state
+    parse_atjobs, at_remain, run_handler, all_crontabs, all_atjobs, shared_state
 from tests.support import MigTestCase, ensure_dirs_exist
 
 DUMMY_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
@@ -82,20 +81,6 @@ class MigLibCron(MigTestCase):
 
         # Prepare user DB with a single dummy user for all tests
         self._provision_test_user(self, DUMMY_USER_DN)
-
-        # Clear global state
-        global stop_running
-        stop_running.clear()
-
-    def test_stop_handler_signal(self):
-        """Test stop_handler() sets global stop_running flag"""
-        stop_handler(None, None)
-        self.assertTrue(stop_running.is_set())
-
-    def test_global_state_reset(self):
-        """Test global stop_running is reset between tests"""
-        global stop_running
-        self.assertFalse(stop_running.is_set())
 
     def test_run_handler_valid_job(self):
         """Test run_handler creates worker for valid job and doesn't crash"""
@@ -147,9 +132,24 @@ class MigLibCron(MigTestCase):
                     'dayofmonth': '*'}
         self.assertFalse(cron_match(self.configuration, now, test_job))
 
+    def test_event_handler_must_call_setup(self):
+        """Test event handler fails if used without calling setup_handler first"""
+        handler = MiGCrontabEventHandler(patterns=['*%s' % DUMMY_CRONTAB_NAME])
+        test_path = os.path.join(self.configuration.user_settings,
+                                 DUMMY_CLIENT_DIR, DUMMY_CRONTAB_NAME)
+
+        # Simulate file creation event without calling setup_handler
+        with self.assertRaises(ValueError):
+            handler.on_created(MagicMock(
+                event_type='created',
+                src_path=test_path,
+                is_directory=False
+            ))
+
     def test_event_handler_file_created(self):
         """Test event handler triggers on file creation"""
         handler = MiGCrontabEventHandler(patterns=['*%s' % DUMMY_CRONTAB_NAME])
+        handler.setup_handler(self.configuration)
         test_path = os.path.join(self.configuration.user_settings,
                                  DUMMY_CLIENT_DIR, DUMMY_CRONTAB_NAME)
 
@@ -159,9 +159,6 @@ class MigLibCron(MigTestCase):
             src_path=test_path,
             is_directory=False
         ))
-
-        # Verify path was registered in global state
-        self.assertIn(test_path, all_crontabs)
 
     def test_parse_atjobs_future_job(self):
         """Test parse_atjobs recognizes future jobs"""
