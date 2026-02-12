@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # lustrequota - helpers to support lustre quota
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -29,10 +29,10 @@
 """helpers to support lustre quota"""
 
 import os
-import stat
-import time
 import shlex
+import stat
 import subprocess
+import time
 
 # NOTE: we rely on psutil to resolve lustre mount point
 try:
@@ -41,10 +41,11 @@ except ImportError:
     psutil = None
 
 from mig.shared.base import force_unicode
-from mig.shared.fileio import unpickle, pickle, save_json, makedirs_rec, \
-    make_symlink
+from mig.shared.fileio import make_symlink, makedirs_rec, pickle, save_json, \
+    scandir, unpickle, walk, write_file
+
 try:
-    from lustreclient.lfs import lfs_set_project_id, lfs_get_project_quota, \
+    from lustreclient.lfs import lfs_get_project_quota, lfs_set_project_id, \
         lfs_set_project_quota
 except ImportError:
     lfs_set_project_id = None
@@ -59,17 +60,17 @@ def __get_lustre_basepath(configuration, lustre_basepath=None):
         return None
 
     valid_lustre_basepath = None
-    for mount in psutil.disk_partitions(all=True):
-        if mount.fstype == "lustre":
+    for dpart in psutil.disk_partitions(all=True):
+        if dpart.fstype == "lustre":
             if lustre_basepath \
-                    and lustre_basepath.startswith(mount.mountpoint) \
+                    and lustre_basepath.startswith(dpart.mountpoint) \
                     and os.path.isdir(lustre_basepath):
                 valid_lustre_basepath = lustre_basepath
                 break
-            elif mount.mountpoint.endswith(configuration.server_fqdn):
-                valid_lustre_basepath = mount.mountpoint
+            elif dpart.mountpoint.endswith(configuration.server_fqdn):
+                valid_lustre_basepath = dpart.mountpoint
             else:
-                check_lustre_basepath = os.path.join(mount.mountpoint,
+                check_lustre_basepath = os.path.join(dpart.mountpoint,
                                                      configuration.server_fqdn)
                 if os.path.isdir(check_lustre_basepath):
                     valid_lustre_basepath = check_lustre_basepath
@@ -204,9 +205,43 @@ def __set_project_id(configuration,
                 % (next_lustre_pid, quota_name, quota_datapath))
     rc = lfs_set_project_id(quota_datapath, next_lustre_pid, 1)
     if rc != 0:
-        logger.error("Failed to set lustre project id: %d for %r: %r"
+        logger.error("lfs_set_project_id failed for lustre project id: %d for %r: %r"
                      % (next_lustre_pid, quota_name, quota_datapath)
                      + ", rc: %d" % rc)
+        return -1
+
+    # Dump lustre pid in quota_datapath and wait for it to appear in the quota
+
+    lustre_pid_filepath = os.path.join(quota_datapath, '.lustrepid')
+    status = write_file(next_lustre_pid, lustre_pid_filepath, logger)
+    if not status:
+        logger.error("Failed write lustre project id: %d for %r to %r"
+                     % (next_lustre_pid, quota_name, quota_datapath))
+        return -1
+
+    # Wait for files to appear in quota before returning
+
+    files = 0
+    waiting = 0
+    max_waiting = 60
+    while files == 0 and waiting < max_waiting:
+        (rc, files, _, _, _) \
+            = lfs_get_project_quota(lustre_basepath, next_lustre_pid)
+        if rc != 0:
+            files = 0
+            logger.error("lfs_get_project_quota failed for:"
+                         + " %d, %r, %r, rc: %d"
+                         % (next_lustre_pid, quota_name, quota_datapath, rc))
+        if files == 0:
+            logger.info("Waiting for lustre quota: %d: %r: %r"
+                        % (next_lustre_pid, quota_name, quota_datapath))
+            time.sleep(1)
+        max_waiting += 1
+
+    if waiting == max_waiting:
+        logger.error("Failed to fetch quota for:"
+                     + " %d, %r, %r"
+                     % (next_lustre_pid, quota_name, quota_datapath))
         return -1
 
     return next_lustre_pid
@@ -217,6 +252,7 @@ def __update_quota(configuration,
                    lustre_setting,
                    quota_name,
                    quota_type,
+                   data_basefs,
                    gocryptfs_sock,
                    timestamp):
     """Update quota for *quota_name*, if new entry then
@@ -231,53 +267,35 @@ def __update_quota(configuration,
         logger.error("Invalid lustre quota next_pid: %d for: %r"
                      % (next_lustre_pid, quota_name))
         return False
+
+    # Resolve quota limit and data basepath
+
     if quota_type == 'vgrid':
         default_quota_limit = configuration.quota_vgrid_limit
         data_basepath = configuration.vgrid_files_writable
-        # NOTE: Old vgrids stored data directly in 'vgrid_files_home'
-        if not os.path.isdir(os.path.join(data_basepath, quota_name)):
-            data_basepath = configuration.vgrid_files_home
     else:
         default_quota_limit = configuration.quota_user_limit
         data_basepath = configuration.user_home
 
-    # Load quota if it exists otherwise new quota
-
-    quota_filepath = os.path.join(configuration.quota_home,
-                                  configuration.quota_backend,
-                                  quota_type,
-                                  "%s.pck" % quota_name)
-
-    if os.path.exists(quota_filepath):
-        quota = unpickle(quota_filepath, logger)
-        if not quota:
-            logger.error("Failed to load quota settings for: %r from %r"
-                         % (quota_name, quota_filepath))
-            return False
+    if data_basepath.startswith(configuration.state_path):
+        rel_data_basepath = data_basepath. \
+            replace(configuration.state_path, "").lstrip(os.sep)
     else:
-        quota = {'lustre_pid': next_lustre_pid,
-                 'files': -1,
-                 'bytes': -1,
-                 'softlimit_bytes': -1,
-                 'hardlimit_bytes': -1,
-                 }
-
-    quota_lustre_pid = quota.get('lustre_pid', -1)
-    if quota_lustre_pid == -1:
-        logger.error("Invalid quota lustre pid: %d for %r"
-                     % (quota_lustre_pid, quota_name))
+        logger.error("Failed to resolve relative data basepath from: %r"
+                     % data_basepath)
         return False
 
     # Resolve quota data path
-    # if gocryptfs then resolve encrypted path
-    # otherwise use plain path
+    # if gocryptfs then resolve encrypted path otherwise use plain path
 
     if configuration.quota_backend == "lustre":
-        quota_datapath = os.path.join(data_basepath,
+        quota_basefs = "lustre"
+        quota_datapath = os.path.join(lustre_basepath,
+                                      rel_data_basepath,
                                       quota_name)
+
     elif configuration.quota_backend == "lustre-gocryptfs":
-        rel_data_basepath = data_basepath. \
-            replace(configuration.state_path + os.sep, "")
+        quota_basefs = "fuse.gocryptfs"
         stdin_str = os.path.join(rel_data_basepath, quota_name)
         cmd = "gocryptfs-xray -encrypt-paths %s" % gocryptfs_sock
         (rc, stdout, stderr) = __shellexec(configuration,
@@ -298,14 +316,52 @@ def __update_quota(configuration,
                      % configuration.quota_backend)
         return False
 
-    # Skip non-dir entries
+    # Check if valid lustre data dir
 
     if not os.path.isdir(quota_datapath):
-        logger.debug("Skipping non-dir entry: %r: %r"
-                     % (quota_name, quota_datapath))
-        return True
+        msg = "skipping entry: %r : %r, no lustre data path: %r" \
+            % (quota_type, quota_name, quota_datapath)
+        # NOTE: log error and return false if dir is missing
+        #       and we expect data to be on lustre or gocryoptfs)
+        if data_basefs == quota_basefs:
+            logger.error(msg)
+            return False
+        else:
+            logger.debug(msg)
+            return True
+
+    logger.debug("Setting quota for lustre dir: %r" % quota_datapath)
+
+    # Load quota if it exists otherwise new quota
+
+    quota_filepath = os.path.join(configuration.quota_home,
+                                  configuration.quota_backend,
+                                  quota_type,
+                                  "%s.pck" % quota_name)
+    if os.path.exists(quota_filepath):
+        quota = unpickle(quota_filepath, logger)
+        if not quota:
+            logger.error("Failed to load quota settings for: %r from %r"
+                         % (quota_name, quota_filepath))
+            return False
+    else:
+        quota = {'lustre_pid': next_lustre_pid,
+                 'files': -1,
+                 'bytes': -1,
+                 'softlimit_bytes': -1,
+                 'hardlimit_bytes': -1,
+                 }
+
+    # Fetch quota lustre pid
+
+    quota_lustre_pid = quota.get('lustre_pid', -1)
+    if quota_lustre_pid == -1:
+        logger.error("Invalid quota lustre pid: %d for %r"
+                     % (quota_lustre_pid, quota_name))
+        return False
 
     # If new entry then set lustre project id
+
     new_lustre_pid = -1
     if quota_lustre_pid == next_lustre_pid:
         new_lustre_pid = __set_project_id(configuration,
@@ -318,19 +374,25 @@ def __update_quota(configuration,
                          % (new_lustre_pid, quota_name, quota_datapath))
             return False
         lustre_setting['next_pid'] = new_lustre_pid + 1
-        quota_lustre_pid = new_lustre_pid
+        quota['lustre_pid'] = quota_lustre_pid = new_lustre_pid
 
     # Get current quota values for lustre_pid
 
     (rc, currfiles, currbytes, softlimit_bytes, hardlimit_bytes) \
-        = lfs_get_project_quota(quota_datapath, quota_lustre_pid)
+        = lfs_get_project_quota(lustre_basepath, quota_lustre_pid)
     if rc != 0:
-        logger.error("Failed to fetch quota for lustre project id: %d, %r, %r"
+        logger.error("lfs_get_project_quota failed for: %d, %r, %r"
                      % (quota_lustre_pid, quota_name, quota_datapath)
                      + ", rc: %d" % rc)
         return False
 
     # Update quota info
+
+    if currfiles == 0 or currbytes == 0:
+        logger.warning("lustre_basepath: %r: pid: %d: quota_type: %s"
+                       % (lustre_basepath, quota_lustre_pid, quota_type)
+                       + "quota_name: %s, files: %d, bytes: %d"
+                       % (quota_name, currfiles, currbytes))
 
     quota['mtime'] = timestamp
     quota['files'] = currfiles
@@ -380,6 +442,10 @@ def __update_quota(configuration,
 
     new_quota_filepath_pck = os.path.join(new_quota_basepath,
                                           "%s.pck" % quota_name)
+
+    logger.debug("Saving: %s: %s: %s -> %r"
+                 % (quota_type, quota_name, quota, new_quota_filepath_pck))
+
     status = pickle(quota, new_quota_filepath_pck, logger)
     if not status:
         logger.error("Failed to save quota for: %r to %r"
@@ -466,29 +532,78 @@ def update_lustre_quota(configuration):
 
     # Update quota
 
-    for quota_type in ('vgrid', 'user'):
-        if quota_type == 'vgrid':
-            scandir = configuration.vgrid_home
-        else:
-            scandir = configuration.user_home
+    quota_targets = {'vgrid': {'basefs': 'lustre',
+                               'entries': {},
+                               },
+                     'user': {'basefs': 'lustre',
+                              'entries': {},
+                              },
+                     }
 
-        # Scan for new and modified entries
+    # Resolve basefs if possible
 
-        with os.scandir(scandir) as it:
-            for entry in it:
-                if not os.path.isdir(entry.path):
-                    # Only take dirs into account
-                    logger.debug("Skiping non-dir path: %r" % entry.path)
-                    continue
-                status = __update_quota(configuration,
-                                        lustre_basepath,
-                                        lustre_setting,
-                                        entry.name,
-                                        quota_type,
-                                        gocryptfs_sock,
-                                        timestamp)
-                if not status:
-                    retval = False
+    for dpart in psutil.disk_partitions(all=True):
+        mountpoint = dpart.mountpoint.rstrip(os.sep)
+        fstype = dpart.fstype
+        if mountpoint == configuration.vgrid_files_writable.rstrip(os.sep):
+            logger.debug("Found basefs for vgrid data: %r : %r"
+                         % (mountpoint, fstype))
+            quota_targets['vgrid']['basefs'] = fstype
+        if mountpoint == configuration.user_home.rstrip(os.sep):
+            logger.debug("Found basefs for user data: %r : %r"
+                         % (mountpoint, fstype))
+            quota_targets['user']['basefs'] = fstype
+
+    # Resolve vgrids and sub-vgrids
+
+    for root, dirs, _ in walk(configuration.vgrid_home, topdown=True):
+        for dirent in dirs:
+            vgrid_dirpath = os.path.join(root, dirent)
+            owners_filepath = os.path.join(vgrid_dirpath, 'owners')
+            if os.path.isfile(owners_filepath):
+                vgrid = vgrid_dirpath[len(configuration.vgrid_home):] \
+                    .replace(os.sep, ':')
+                logger.debug("Found vgrid: %r" % vgrid)
+                quota_targets['vgrid']['entries'][vgrid] = 1
+
+    # Resolve users
+
+    with scandir(configuration.user_home) as it:
+        for entry in it:
+            if os.path.islink(entry.path):
+                userhome = os.readlink(entry.path)
+                # NOTE: Relative links are prefixes with 'user_home'
+                if not userhome.startswith(os.sep):
+                    userhome = os.path.join(configuration.user_home,
+                                            userhome)
+            else:
+                userhome = entry.path
+            if os.path.isdir(userhome):
+                user = os.path.basename(userhome)
+            else:
+                logger.debug("skipping non-userhome: %r (%r)"
+                             % (userhome, entry.path))
+                continue
+            # NOTE: Multiple links might point to same user
+            quota_targets['user']['entries'][user] = True
+
+    # Update quotas
+
+    for quota_type in quota_targets:
+        target = quota_targets.get(quota_type, {})
+        data_basefs = target.get('basefs', 'lustre')
+        quota_entries = target.get('entries', {})
+        for quota_entry in quota_entries:
+            status = __update_quota(configuration,
+                                    lustre_basepath,
+                                    lustre_setting,
+                                    quota_entry,
+                                    quota_type,
+                                    data_basefs,
+                                    gocryptfs_sock,
+                                    timestamp)
+            if not status:
+                retval = False
 
     # Save updated lustre quota settings
 
