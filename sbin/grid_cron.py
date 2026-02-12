@@ -96,11 +96,11 @@ unless it is available in mig/server/MiGserver.conf
 
     logger.debug('(%s) Starting main loop' % main_pid)
     print("%s: Start main loop" % os.getpid())
-    while not stop_running.is_set():
+    while not check_stop():
         try:
             time.sleep(1)
         except KeyboardInterrupt:
-            stop_running.set()
+            stop_running()
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to monitor child
             print("Interrupt requested - close monitor and shutdown")
