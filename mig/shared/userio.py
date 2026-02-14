@@ -633,7 +633,7 @@ def main(_exit=sys.exit, _print=print):
                         print("Expectedly failed %s test on %s: %s" %
                               (action, real_target, '\n'.join(err)))
                 else:
-                    print("Unexpected test case: %s" % test_tuple)
+                    print("Unexpected test case: %s" % (test_tuple, ))
 
                 __clean_test_files(configuration, real_tmp)
             for del_func in (delete_path, remove_path):
@@ -669,7 +669,7 @@ def main(_exit=sys.exit, _print=print):
                         print("Expectedly failed %s test on %s: %s" %
                               (action, real_target, '\n'.join(err)))
                 else:
-                    print("Unexpected test case: %s" % test_tuple)
+                    print("Unexpected test case: %s" % (test_tuple, ))
 
                 __clean_test_files(configuration, real_tmp)
     events_files = os.listdir(configuration.events_home)
