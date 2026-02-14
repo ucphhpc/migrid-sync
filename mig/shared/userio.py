@@ -167,6 +167,9 @@ def _fill_changes(configuration, changeset, action, target_list,
         mode = "a"
     else:
         mode = "w"
+    # gzip and bz2 treat modes as 'b' unless explicitly appending 't' for text
+    if compress:
+        mode += "t"
     try:
         cfd = open_helper(pending_path, mode)
         for target in target_list:
@@ -177,6 +180,34 @@ def _fill_changes(configuration, changeset, action, target_list,
         _logger.error("Failed to save events: %s %s %s: %s" %
                       (changeset, action, target_list, err))
         return None
+
+
+def _parse_changes(configuration, changeset, compress=DEFAULT_COMPRESS):
+    """Helper to parse already filled events file for a user I/O action. Used
+    internally for verifying saved event changesets.
+    The changeset argument is used to deduct the events file to use.
+    Returns a handle to a temporary file with the saved events or None on
+    failure.
+    """
+    _logger = configuration.logger
+    _logger.debug("parse changes %r (%r)" % (changeset, compress))
+
+    open_helper, _ = _get_compression_helpers(configuration, compress)
+    events_path = _build_changes_path(configuration, changeset, pending=False,
+                                      compress=compress)
+
+    mode = "r"
+    # gzip and bz2 treat modes as 'b' unless explicitly appending 't' for text
+    if compress:
+        mode += "t"
+    try:
+        cfd = open_helper(events_path, mode)
+        changes = cfd.readlines()
+        cfd.close()
+    except Exception as err:
+        _logger.error("Failed to parse saved %s events: %s" % (changeset, err))
+        changes = None
+    return changes
 
 
 def prepare_changes(configuration, operation, changeset, action, path,
@@ -271,7 +302,8 @@ def abort_changes(configuration, changeset, compress):
         return None
 
 
-def delete_path(configuration, path, compress=DEFAULT_COMPRESS):
+def delete_path(configuration, path, compress=DEFAULT_COMPRESS,
+                changeset_stamp=None):
     """Wrapper to handle direct deletion of user file(s) in path. This version
     skips the user-friendly intermediate step of really just moving path to
     the trash folder in the user home or in the vgrid-special home, depending
@@ -282,7 +314,9 @@ def delete_path(configuration, path, compress=DEFAULT_COMPRESS):
     _logger = configuration.logger
     _logger.info('delete user path: %s' % path)
     result, errors = True, []
-    changeset = "delete-%f" % time.time()
+    if changeset_stamp is None:
+        changeset_stamp = time.time()
+    changeset = "delete-%f" % changeset_stamp
     if not path:
         _logger.error('not allowed to delete without path')
         result = False
@@ -317,7 +351,8 @@ def delete_path(configuration, path, compress=DEFAULT_COMPRESS):
     return (result, errors)
 
 
-def remove_path(configuration, path, compress=DEFAULT_COMPRESS):
+def remove_path(configuration, path, compress=DEFAULT_COMPRESS,
+                changeset_stamp=None):
     """Wrapper to handle removal of user file(s) in path. This version uses the
     default behaviour of really just moving path to the trash folder in the
     corresponding user home or vgrid-special home, depending on the location
@@ -328,7 +363,9 @@ def remove_path(configuration, path, compress=DEFAULT_COMPRESS):
     _logger = configuration.logger
     _logger.info('remove user path: %s' % path)
     result, errors = True, []
-    changeset = "remove-%f" % time.time()
+    if changeset_stamp is None:
+        changeset_stamp = time.time()
+    changeset = "remove-%f" % changeset_stamp
     if not path:
         _logger.error('not allowed to remove without path')
         result = False
@@ -389,14 +426,17 @@ def remove_path(configuration, path, compress=DEFAULT_COMPRESS):
     return (result, errors)
 
 
-def touch_path(configuration, path, timestamp=None, compress=DEFAULT_COMPRESS):
+def touch_path(configuration, path, timestamp=None, compress=DEFAULT_COMPRESS,
+               changeset_stamp=None):
     """Create path if it doesn't exist and set/update timestamp. Automatically
     compresses events records by default.
     """
     _logger = configuration.logger
     _logger.info('touch user path: %s (timestamp: %s)' % (path, timestamp))
     result, errors = True, []
-    changeset = "touch-%f" % time.time()
+    if changeset_stamp is None:
+        changeset_stamp = time.time()
+    changeset = "touch-%f" % changeset_stamp
     try:
         if not os.path.exists(path):
             prepare_changes(configuration, 'touch', changeset, CREATE, path,
@@ -493,12 +533,45 @@ def __make_test_files(configuration, test_path, dirs, files, links):
             os.symlink('.', real_path)
 
 
+def __verify_test_events(configuration, changeset, action, target_path,
+                         compress):
+    """Verify unit testing results"""
+    saved = _parse_changes(configuration, changeset, compress)
+    if saved is None:
+        print("ERROR: failed to parse changeset %s" % changeset)
+        return False
+    expected = "%s:%s\n" % (action.lower(), target_path)
+    if saved and saved[0] == expected:
+        # print("INFO: verified changeset %s: %s" % (changeset, saved))
+        return True
+    else:
+        print("ERROR: failed to verify changeset %s: %s" % (changeset, saved))
+        return False
+
+
 def __clean_test_files(configuration, test_path):
-    """For unit testing cleanup"""
+    """For unit testing cleanup - includes clean up of system trash folders
+    that the remove tests will automatically move the data into.
+    """
     try:
         shutil.rmtree(test_path)
-    except:
-        pass
+    except Exception as exc:
+        print("ERROR: failed to clean test %s: %s" % (test_path, exc))
+
+    trash_link_path = get_trash_location(configuration, test_path, True)
+    try:
+        if trash_link_path and os.path.islink(trash_link_path):
+            os.remove(trash_link_path)
+    except Exception as exc:
+        print("ERROR: failed to clean trash link %s: %s" % (trash_link_path,
+                                                            exc))
+    dot_trash_path = get_trash_location(configuration, test_path)
+    try:
+        if dot_trash_path and os.path.isdir(dot_trash_path):
+            shutil.rmtree(dot_trash_path)
+    except Exception as exc:
+        print("ERROR: failed to clean dot trash %s: %s" % (dot_trash_path,
+                                                           exc))
 
 
 def main(_exit=sys.exit, _print=print):
@@ -513,9 +586,10 @@ def main(_exit=sys.exit, _print=print):
         client_id = sys.argv[1]
     if sys.argv[2:]:
         sub_dir = sys.argv[2]
-    client_dir = os.path.join(client_id_dir(client_id), sub_dir)
+    client_dir = client_id_dir(client_id)
     configuration = get_configuration_object()
-    tmp_dir = "userio-testdir"
+    configuration.mig_server_id = "localhost"
+    tmp_dir = os.path.join("userio-testdir", sub_dir)
     real_tmp = os.path.normpath(os.path.join(configuration.user_home,
                                              client_dir, tmp_dir))
     print("Using client tmp dir \n%s\nfor tests" % real_tmp)
@@ -525,19 +599,78 @@ def main(_exit=sys.exit, _print=print):
                  "sub1/sub2/sub3/test5.txt"], [])
     invisible_test = ([], [htaccess_filename], [])
     link_test = ([], [], ['userio-testlink'])
-    for (dirs, files, links) in [basic_test, rec_test, invisible_test,
-                                 link_test]:
+    expect_success = [basic_test, rec_test]
+    expect_failure = [invisible_test, link_test]
+    for test_tuple in expect_success + expect_failure:
+        (dirs, files, links) = test_tuple
         real_target = os.path.join(real_tmp, (dirs + files + links)[0])
         for compress in (None, 'gzip', 'bz2'):
             for edit_func in (touch_path, ):
+                test_stamp = time.time()
+                changeset = "touch-%f" % test_stamp
+                action = "MODIFY"
                 __make_test_files(configuration, real_tmp, dirs, files, links)
-                print("Run %s on %s" % (edit_func, real_target))
-                print(edit_func(configuration, real_target, compress=compress))
+                print("Run %s on %s (%f %s)" % (action, real_target,
+                                                test_stamp, compress))
+                (result, err) = edit_func(configuration, real_target,
+                                          compress=compress,
+                                          changeset_stamp=test_stamp)
+                if test_tuple in expect_success:
+                    if result and __verify_test_events(configuration,
+                                                       changeset, action,
+                                                       real_target,
+                                                       compress=compress):
+                        print("Expectedly passed %s test on %s" %
+                              (action, real_target))
+                    else:
+                        print("Unexpectedly failed %s test on %s: %s" %
+                              (action, real_target, '\n'.join(err)))
+                elif test_tuple in expect_failure:
+                    if result:
+                        print("Unexpectedly succeeded %s test on %s" %
+                              (action, real_target))
+                    else:
+                        print("Expectedly failed %s test on %s: %s" %
+                              (action, real_target, '\n'.join(err)))
+                else:
+                    print("Unexpected test case: %s" % test_tuple)
+
                 __clean_test_files(configuration, real_tmp)
             for del_func in (delete_path, remove_path):
+                test_stamp = time.time()
+                action = "DELETE"
+                if del_func == delete_path:
+                    changeset = "delete-%f" % test_stamp
+                elif del_func == remove_path:
+                    changeset = "remove-%f" % test_stamp
+                else:
+                    raise ValueError("unexpected del_func: %s" % del_func)
                 __make_test_files(configuration, real_tmp, dirs, files, links)
-                print("Run %s on %s" % (del_func, real_target))
-                print(del_func(configuration, real_target, compress=compress))
+                print("Run %s on %s (%f %s)" % (action, real_target,
+                                                test_stamp, compress))
+                (result, err) = del_func(configuration, real_target,
+                                         compress=compress,
+                                         changeset_stamp=test_stamp)
+                if test_tuple in expect_success:
+                    if result and __verify_test_events(configuration,
+                                                       changeset, action,
+                                                       real_target,
+                                                       compress=compress):
+                        print("Expectedly passed %s test on %s" %
+                              (action, real_target))
+                    else:
+                        print("Unexpectedly failed %s test on %s: %s" %
+                              (action, real_target, '\n'.join(err)))
+                elif test_tuple in expect_failure:
+                    if result:
+                        print("Unexpectedly succeeded %s test on %s" %
+                              (action, real_target))
+                    else:
+                        print("Expectedly failed %s test on %s: %s" %
+                              (action, real_target, '\n'.join(err)))
+                else:
+                    print("Unexpected test case: %s" % test_tuple)
+
                 __clean_test_files(configuration, real_tmp)
     events_files = os.listdir(configuration.events_home)
     events_files.sort()
