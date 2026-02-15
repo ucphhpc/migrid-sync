@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_userio - test module of same name
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -28,9 +28,7 @@
 """Unit tests for the migrid module pointed to in the filename"""
 
 import os
-import sys
 import unittest
-from past.builtins import basestring, unicode
 
 from tests.support import MigTestCase, testmain, ensure_dirs_exist
 
@@ -38,16 +36,14 @@ from mig.shared.userio import ACTIONS, CREATE, MODIFY, MOVE, DELETE, \
     DEFAULT_COMPRESS, get_home_location, get_trash_location, _check_access, \
     _get_compression_helpers, _build_changes_path, _fill_changes, \
     prepare_changes, commit_changes, abort_changes, delete_path, remove_path, \
-    touch_path, __make_test_files, __clean_test_files, main as userio_main
+    touch_path, main as userio_main
 from mig.shared.vgrid import vgrid_set_entities
 
-
-# Constants from tests/test_mig_lib_janitor.py
+# TODO: gather shared constants in a tests.support library module
 DUMMY_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
 DUMMY_CLIENT_DIR = '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_User+emailAddress=test@example.com'
 TEST_VGRID_NAME = 'testvgrid'
 TEST_OWNER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Owner/emailAddress=owner@example.org'
-MODIFY_ACTION = 'modify'
 
 
 class TestMigSharedUserIO_main(MigTestCase):
@@ -102,6 +98,7 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def before_each(self):
         """Setup test environment before each test method"""
+        self.configuration.mig_server_id = 'test-id'
         ensure_dirs_exist(self.configuration.user_db_home)
         ensure_dirs_exist(self.configuration.user_home)
         ensure_dirs_exist(self.configuration.freeze_home)
@@ -109,6 +106,7 @@ class TestMigSharedUserIO_main(MigTestCase):
         ensure_dirs_exist(self.configuration.vgrid_files_home)
         ensure_dirs_exist(self.configuration.vgrid_files_writable)
         ensure_dirs_exist(self.configuration.vgrid_files_readonly)
+        ensure_dirs_exist(self.configuration.events_home)
 
     def test_constants(self):
         """Test constants are defined correctly"""
@@ -234,12 +232,12 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test__get_compression_helpers_gzip(self):
         """Test _get_compression_helpers with gzip"""
-        open_func, ext = _get_compression_helpers(self.configuration, 'gzip')
+        _, ext = _get_compression_helpers(self.configuration, 'gzip')
         self.assertEqual(ext, '.gz')
 
     def test__get_compression_helpers_bz2(self):
         """Test _get_compression_helpers with bz2"""
-        open_func, ext = _get_compression_helpers(self.configuration, 'bz2')
+        _, ext = _get_compression_helpers(self.configuration, 'bz2')
         self.assertEqual(ext, '.bz2')
 
     def test__get_compression_helpers_invalid(self):
@@ -282,7 +280,7 @@ class TestMigSharedUserIO_main(MigTestCase):
         valid_path = os.path.join(
             self.configuration.user_home, DUMMY_CLIENT_DIR, 'valid.txt')
         try:
-            _check_access(self.configuration, MODIFY_ACTION, [valid_path])
+            _check_access(self.configuration, MODIFY, [valid_path])
         except ValueError:
             self.fail("Unexpected ValueError for valid path")
 
@@ -292,7 +290,7 @@ class TestMigSharedUserIO_main(MigTestCase):
         invisible_path = os.path.join(
             self.configuration.user_home, DUMMY_CLIENT_DIR, '.htaccess')
         with self.assertRaises(ValueError):
-            _check_access(self.configuration, MODIFY_ACTION, [invisible_path])
+            _check_access(self.configuration, MODIFY, [invisible_path])
 
     def test__check_access_symlink_path_modify_rejected(self):
         """Test _check_access with symlink path"""
@@ -303,8 +301,133 @@ class TestMigSharedUserIO_main(MigTestCase):
             self.configuration.user_home, DUMMY_CLIENT_DIR, 'link')
         os.symlink(symlink_src, symlink_dst)
         with self.assertRaises(ValueError):
-            _check_access(self.configuration, MODIFY_ACTION, [symlink_dst])
+            _check_access(self.configuration, MODIFY, [symlink_dst])
         os.remove(symlink_dst)
+
+    @unittest.skip("TODO: fix issue 460 and enable")
+    def test__fill_changes_default_compression(self):
+        """Test _fill_changes helper"""
+        self._provision_test_user(self, DUMMY_USER_DN)
+        changeset = 'test-changeset'
+        action = DELETE
+        target_list = [os.path.join(self.configuration.user_home,
+                                    DUMMY_CLIENT_DIR, 'file.txt')]
+        pending_path = _fill_changes(
+            self.configuration, changeset, action, target_list)
+        self.assertIsNotNone(pending_path)
+        self.assertTrue(os.path.exists(pending_path))
+        open_func, _ = _get_compression_helpers(self.configuration,
+                                                DEFAULT_COMPRESS)
+        with open_func(pending_path, 'rt') as f:
+            content = f.read()
+            self.assertIn("%s:%s" % (action, target_list[0]), content)
+        os.remove(pending_path)
+
+    def test__fill_changes_uncompressed(self):
+        """Test _fill_changes helper"""
+        self._provision_test_user(self, DUMMY_USER_DN)
+        changeset = 'test-changeset'
+        action = DELETE
+        target_list = [os.path.join(self.configuration.user_home,
+                                    DUMMY_CLIENT_DIR, 'file.txt')]
+        pending_path = _fill_changes(
+            self.configuration, changeset, action, target_list, compress=None)
+        self.assertIsNotNone(pending_path)
+        self.assertTrue(os.path.exists(pending_path))
+        open_func, _ = _get_compression_helpers(self.configuration, None)
+        with open_func(pending_path, 'r') as f:
+            content = f.read()
+            self.assertIn("%s:%s" % (action, target_list[0]), content)
+        os.remove(pending_path)
+
+    @unittest.skip("TODO: fix issue 460 and enable")
+    def test_prepare_changes_default_compression(self):
+        """Test prepare_changes function"""
+        self._provision_test_user(self, DUMMY_USER_DN)
+        changeset = 'test-changeset'
+        action = DELETE
+        path = os.path.join(self.configuration.user_home, DUMMY_CLIENT_DIR,
+                            'file.txt')
+        pending_path = prepare_changes(
+            self.configuration, action, changeset, action, path, False,
+            DEFAULT_COMPRESS)
+        self.assertIsNotNone(pending_path)
+        self.assertTrue(os.path.exists(pending_path))
+        os.remove(pending_path)
+
+    def test_prepare_changes_uncompressed(self):
+        """Test prepare_changes function"""
+        self._provision_test_user(self, DUMMY_USER_DN)
+        changeset = 'test-changeset'
+        action = DELETE
+        path = os.path.join(self.configuration.user_home, DUMMY_CLIENT_DIR,
+                            'file.txt')
+        pending_path = prepare_changes(
+            self.configuration, action, changeset, action, path, False, None)
+        self.assertIsNotNone(pending_path)
+        self.assertTrue(os.path.exists(pending_path))
+        os.remove(pending_path)
+
+    def test_commit_changes(self):
+        """Test commit_changes function"""
+        self._provision_test_user(self, DUMMY_USER_DN)
+        changeset = 'test-changeset'
+        pending_path = _build_changes_path(
+            self.configuration, changeset, pending=True)
+        with open(pending_path, 'w') as f:
+            f.write("test content\n")
+        committed_path = commit_changes(
+            self.configuration, changeset, DEFAULT_COMPRESS)
+        self.assertIsNotNone(committed_path)
+        self.assertTrue(os.path.exists(committed_path))
+        self.assertFalse(os.path.exists(pending_path))
+
+    def test_abort_changes(self):
+        """Test abort_changes function"""
+        self._provision_test_user(self, DUMMY_USER_DN)
+        changeset = 'test-changeset'
+        pending_path = _build_changes_path(
+            self.configuration, changeset, pending=True)
+        with open(pending_path, 'w') as f:
+            f.write("test content\n")
+        result = abort_changes(self.configuration, changeset, DEFAULT_COMPRESS)
+        self.assertTrue(result)
+        self.assertFalse(os.path.exists(pending_path))
+
+    def test_delete_path(self):
+        """Test delete_path function"""
+        self._provision_test_user(self, DUMMY_USER_DN)
+        test_file = os.path.join(
+            self.configuration.user_home, DUMMY_CLIENT_DIR, 'test.txt')
+        with open(test_file, 'w') as f:
+            f.write("test content\n")
+        result, errors = delete_path(self.configuration, test_file)
+        self.assertTrue(result)
+        self.assertEqual(errors, [])
+        self.assertFalse(os.path.exists(test_file))
+
+    def test_remove_path(self):
+        """Test remove_path function"""
+        self._provision_test_user(self, DUMMY_USER_DN)
+        test_file = os.path.join(
+            self.configuration.user_home, DUMMY_CLIENT_DIR, 'test.txt')
+        with open(test_file, 'w') as f:
+            f.write("test content\n")
+        result, errors = remove_path(self.configuration, test_file)
+        self.assertTrue(result)
+        self.assertEqual(errors, [])
+        trash_path = get_trash_location(self.configuration, test_file)
+        self.assertTrue(os.path.exists(trash_path))
+
+    def test_touch_path(self):
+        """Test touch_path function"""
+        self._provision_test_user(self, DUMMY_USER_DN)
+        test_file = os.path.join(
+            self.configuration.user_home, DUMMY_CLIENT_DIR, 'test.txt')
+        result, errors = touch_path(self.configuration, test_file)
+        self.assertTrue(result)
+        self.assertEqual(errors, [])
+        self.assertTrue(os.path.exists(test_file))
 
 
 class TestMigSharedUserIO__legacy(MigTestCase):
@@ -312,6 +435,7 @@ class TestMigSharedUserIO__legacy(MigTestCase):
 
     # TODO: migrate all legacy self-check functionality into the above?
     def test_existing_main(self):
+        """Wrap old inline self-test as an additional unit test"""
         def raise_on_error_exit(exit_code):
             if exit_code != 0:
                 if raise_on_error_exit.last_print is not None:
@@ -323,6 +447,7 @@ class TestMigSharedUserIO__legacy(MigTestCase):
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
+            """Helper to show last print on error"""
             raise_on_error_exit.last_print = value
 
         userio_main(_exit=raise_on_error_exit, _print=record_last_print)
