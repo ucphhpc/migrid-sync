@@ -43,6 +43,7 @@ except ImportError:
 from mig.shared.base import force_unicode
 from mig.shared.fileio import make_symlink, makedirs_rec, pickle, save_json, \
     scandir, unpickle, walk, write_file
+from mig.shared.vgrid import vgrid_flat_name
 
 try:
     from lustreclient.lfs import lfs_get_project_quota, lfs_set_project_id, \
@@ -561,8 +562,9 @@ def update_lustre_quota(configuration):
             vgrid_dirpath = os.path.join(root, dirent)
             owners_filepath = os.path.join(vgrid_dirpath, 'owners')
             if os.path.isfile(owners_filepath):
-                vgrid = vgrid_dirpath[len(configuration.vgrid_home):] \
-                    .replace(os.sep, ':')
+                vgrid = vgrid_flat_name(
+                    vgrid_dirpath[len(configuration.vgrid_home):],
+                    configuration)
                 logger.debug("Found vgrid: %r" % vgrid)
                 quota_targets['vgrid']['entries'][vgrid] = 1
 
