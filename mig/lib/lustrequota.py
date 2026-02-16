@@ -574,7 +574,7 @@ def update_lustre_quota(configuration):
         for entry in it:
             if os.path.islink(entry.path):
                 userhome = os.readlink(entry.path)
-                # NOTE: Relative links are prefixes with 'user_home'
+                # NOTE: Relative links are prefixed with 'user_home'
                 if not userhome.startswith(os.sep):
                     userhome = os.path.join(configuration.user_home,
                                             userhome)
