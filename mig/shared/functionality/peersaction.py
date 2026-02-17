@@ -46,7 +46,8 @@ from mig.shared.defaults import peers_filename, peer_kinds, peers_fields, \
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.htmlgen import html_post_helper
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import initialize_main_variables, find_entry, \
+    make_start_entry, make_title_entry
 from mig.shared.notification import send_email
 from mig.shared.serial import load, dump
 from mig.shared.url import urlencode
@@ -70,20 +71,43 @@ def signature():
     return ['text', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None):
+    """Main function wrapper used by front end"""
+
+    if environ is None:
+        environ = os.environ
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
+
+    logger.debug('in peersaction: %s' % user_arguments_dict)
+
+    return _main(configuration, logger, environ, op_name=op_name,
+                 output_objects=output_objects, client_id=client_id,
+                 user_arguments_dict=user_arguments_dict)
+
+
+def _main(configuration, logger, environ, op_name='', output_objects=None, client_id=None,
+          user_arguments_dict=None, _safe_handler=safe_handler, _send_email=send_email):
+    """Actual main function to generate contents for the front end"""
+
+    assert environ is not None, "required arg: environ"
+
+    if logger is None:
+        logger = configuration.logger
+
+    # Create new output_objects list with start entry if None was supplied
+    if output_objects is None:
+        output_objects = [make_start_entry(), make_title_entry('')]
+
     defaults = signature()[1]
     client_dir = client_id_dir(client_id)
-    logger.debug('in peersaction: %s' % user_arguments_dict)
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not safe_handler(configuration, 'post', op_name, client_id,
+    if not _safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Only accepting
@@ -153,12 +177,14 @@ Please contact the %s site support (%s) if you think it should be enabled.
         # NOTE: we don't require an expire date for removes and rejects
         if action in ['remove', 'reject'] and not raw_expire:
             expire = now
-        else:
+        elif raw_expire:
             expire = datetime.datetime.strptime(raw_expire, '%Y-%m-%d')
             if now + datetime.timedelta(days=peers_expire_min_days) > expire:
                 raise ValueError("specified expire is in the past!")
             if now + datetime.timedelta(days=peers_expire_max_days) < expire:
                 raise ValueError("specified expire is too far in the future!")
+        else:
+            raise ValueError("no expire date supplied")
     except Exception as exc:
         logger.error("expire %r could not be parsed into a valid date" %
                      raw_expire)
@@ -369,7 +395,7 @@ Kind: %(kind)s , Expire: %(expire)s, Label: %(label)s , Peers:
 
     logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
                 % (admin_email, email_header, email_msg, smtp_server))
-    if not send_email(admin_email, email_header, email_msg, logger,
+    if not _send_email(admin_email, email_header, email_msg, logger,
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text': '''
 An error occurred trying to send the email about your %s peers to the site

@@ -29,6 +29,7 @@
 from collections import namedtuple
 import codecs
 from io import BytesIO
+import os
 from werkzeug.datastructures import MultiDict
 
 from tests.support._env import PY2
@@ -42,6 +43,13 @@ else:
 
 # named type representing the tuple that is passed to WSGI handlers
 _PreparedWsgi = namedtuple('_PreparedWsgi', ['environ', 'start_response'])
+
+
+_FORM_DATA_CONTENT_TYPES = set([
+    'application/x-www-form-urlencoded',
+    'multipart/form-data',
+    'text/plain',
+])
 
 
 class FakeWsgiStartResponse:
@@ -72,13 +80,26 @@ def create_wsgi_environ(configuration, wsgi_url, method='GET', query=None, heade
         method = 'POST'
         request_query = ''
 
-        body = urlencode(MultiDict(form)).encode('ascii')
+        form_body = MultiDict(form)
 
         headers = headers or {}
         if not 'Content-Type' in headers:
             headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        content_type = headers['Content-Type']
+
+        # the content type for form payloads must be one of the supported types
+        assert content_type in _FORM_DATA_CONTENT_TYPES, \
+                'invalid content type for form submission'
+
+        body = None
+        if content_type == 'multipart/form-data':
+            raise NotImplementedError('multipart form data not yet supported')
+        else:
+            body = urlencode(form_body).encode('ascii')
 
         headers['Content-Length'] = str(len(body))
+        # WSGI as specified in PEP 3333 is required to return only bytes on
+        # any read of wsgi.input
         wsgi_input = BytesIO(body)
     else:
         request_query = parsed_url.query
@@ -100,6 +121,13 @@ def create_wsgi_environ(configuration, wsgi_url, method='GET', query=None, heade
     environ['REQUEST_METHOD'] = method
     environ['SCRIPT_URI'] = ''.join(
         ('http://', environ['HTTP_HOST'], environ['PATH_INFO']))
+
+    path_parts = parsed_url.path.split('/')
+    maybe_script_name = path_parts[-1]
+    _, script_ext = os.path.splitext(maybe_script_name)
+    if script_ext != '':
+        # the script has an extension, so treat it as a functionality file
+        environ['SCRIPT_NAME'] = maybe_script_name
 
     if headers:
         for k, v in headers.items():
@@ -160,7 +188,9 @@ class WsgiAssertMixin:
         # check for expected HTTP status code
         wsgi_status = wsgi_call[0]
         actual_status_code = int(wsgi_status[0:3])
-        self.assertEqual(actual_status_code, expected_status_code)
+
+        if expected_status_code:
+            self.assertEqual(actual_status_code, expected_status_code)
 
         headers = dict(wsgi_call[1])
 
