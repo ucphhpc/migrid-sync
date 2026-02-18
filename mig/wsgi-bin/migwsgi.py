@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -45,7 +46,7 @@ from mig.shared.conf import get_configuration_object
 from mig.shared.objecttypes import get_object_type_info
 from mig.shared.output import validate, format_output, dummy_main, reject_main
 from mig.shared.safeinput import valid_backend_name, html_escape, InputException
-from mig.shared.scriptinput import fieldstorage_to_dict
+from mig.shared.scriptinput import fieldstorage_to_dict, FixedFieldStorage
 
 
 def object_type_info(object_type):
@@ -312,13 +313,17 @@ def application(environ, start_response, configuration=None,
         # _logger.debug('DEBUG: wsgi found backend %s and script %s' %
         #              (backend, script_name))
         try:
-            fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
-                                            environ=environ)
+            fieldstorage = FixedFieldStorage(fp=environ['wsgi.input'],
+                                             environ=environ)
+            # _logger.debug("extracted fieldstorage from wsgi request: %s" %
+            #              fieldstorage)
+            user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+            # _logger.debug("extracted user_arguments_dict from wsgi: %s" %
+            #              user_arguments_dict)
         except Exception as exc:
             _logger.error("wsgi %s failed to extract fieldstorage: %s" %
                           (backend, exc))
             raise exc
-        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
         output_format = get_output_format(configuration, user_arguments_dict)
 
         module_path = 'mig.shared.functionality.%s' % backend
@@ -441,7 +446,7 @@ def application(environ, start_response, configuration=None,
     _logger.debug("done and cleaning up to prevent further log noise")
     if user_arguments_dict:
         del user_arguments_dict
-    if fieldstorage:
+    if fieldstorage is not None:
         del fieldstorage
     _logger.debug("done cleaning up - detach wsgi error loggers")
     # TMP! uncomment next to test unhandled exception and error log

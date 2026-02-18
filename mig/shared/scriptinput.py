@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scriptinput - Handles html form style input from user
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,17 +20,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
 
-"""This module contains CGI/WSGI/... specific functions for
-handling user input.
+"""This module contains CGI/WSGI/... specific functions for handling user
+input.
 """
 
 from __future__ import print_function
 from __future__ import absolute_import
+
+import cgi
 
 # Expose some safeinput functions here, too
 
@@ -38,6 +41,7 @@ from mig.shared.safeinput import validated_boolean, validated_string, \
     validated_path, validated_fqdn, validated_commonname, \
     validated_integer, validated_job_id, html_escape
 from mig.shared.safeinput import InputException as CgiInputException
+from mig.shared.url import parse_qs
 
 
 def parse_input(user_arguments_dict, fields):
@@ -157,18 +161,34 @@ def parse_argument(
     return (raw, safe, error)
 
 
-def fieldstorage_to_dict(fieldstorage, fields=[]):
+def fieldstorage_to_dict(fieldstorage, fields=None):
     """Get a plain dictionary, rather than the '.value' system used by
     the cgi module. Please note that all values are on list form even
     if only a single value is provided.
     If the fields list is provided, only the provided fields are read.
     This may be necessary in PUT requests where fieldstorage key listing is
     not supported.
+
+    IMPORTANT: single value fieldstorage instances like:
+    FieldStorage(None, None, b'_csrf=dummy')
+    will fail if used as dict with fieldstorage.keys() or list(fieldstorage).
+    Please refer to FixedFieldStorage and it's use for further details.
     """
 
     params = {}
-    if not fields and fieldstorage:
-        fields = list(fieldstorage)
+    if fieldstorage is not None:
+        if fieldstorage.list is None:
+            params = parse_qs(fieldstorage.value)
+            if fields is None:
+                return params
+            else:
+                return dict([(i, params[i]) for i in params if i in fields])
+        else:
+            if fields is None:
+                fields = list(fieldstorage)
+
+    if fields is None:
+        fields = []
     for key in fields:
         try:
             params[key] = fieldstorage.getlist(key)
@@ -189,3 +209,22 @@ def fieldstorage_to_dict(fieldstorage, fields=[]):
             print('Warning: failed to extract values for %s: %s'
                   % (key, err))
     return params
+
+
+class FixedFieldStorage(cgi.FieldStorage):
+    """Wrapper to address a corner case issue in cgi.FieldStorage explained on
+
+    https://github.com/python/cpython/issues/71964
+
+    In short we need to make sure the make_file method does NOT treat single
+    value input on bytes form as str as that will ALWAYS fail in read_binary.
+    """
+
+    def make_file(self):
+        """Patch parent make_file to take input length into account, too"""
+        orig = self._binary_file
+        if self.length >= 0:
+            self._binary_file = True
+        tmp = cgi.FieldStorage.make_file(self)
+        self._binary_file = orig
+        return tmp

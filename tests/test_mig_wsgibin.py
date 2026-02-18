@@ -308,7 +308,7 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin, SnapshotAssertMixi
 
 class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin, SnapshotAssertMixin):
 
-    DUMMY_BYTES = 'dummycsrfæøåßßß'
+    DUMMY_BYTES = 'dummyæøå-ßßß-value'.encode('utf-8')
 
     def _provide_configuration(self):
         return 'testconfig'
@@ -340,13 +340,13 @@ class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin, SnapshotAssertMixin)
             _set_os_environ=False,
         )
 
-    @unittest.skip("fix the underlying wsgi use of Fieldstorage and enable")
+    # NOTE: enabled with underlying wsgi use of Fieldstorage fixed
     def test_put_text_plain_with_binary_input_succeeds(self):
         test_form = [('_csrf', self.DUMMY_BYTES)]
         test_env = {
             "REQUEST_METHOD": "PUT",
             "CONTENT_TYPE": "text/plain",
-            "CONTENT_LENGTH": len(self.DUMMY_BYTES)
+            "CONTENT_LENGTH": "100",
         }
         self._prepare_test(test_form, test_env)
 
@@ -371,13 +371,13 @@ class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin, SnapshotAssertMixin)
         # Must succeed with HTTP 200 when it parses input
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
 
-    # TODO: we should fix the underlying wsgi use of Fieldstorage and drop next
+    @unittest.skip("disabled with underlying wsgi use of Fieldstorage fixed")
     def test_put_text_plain_with_binary_input_fails(self):
         test_form = [('_csrf', self.DUMMY_BYTES)]
         test_env = {
             "REQUEST_METHOD": "PUT",
             "CONTENT_TYPE": "text/plain",
-            "CONTENT_LENGTH": len(self.DUMMY_BYTES)
+            "CONTENT_LENGTH": "100",
         }
         self._prepare_test(test_form, test_env)
 
