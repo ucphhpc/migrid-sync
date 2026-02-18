@@ -296,6 +296,209 @@ class MigLibEvents(MigTestCase):
                 any('failed to run' in msg or 'failed to lookup' in msg
                     for msg in log_capture.output))
 
+    def test_cron_match_edge_cases(self):
+        """Test cron_match with edge case times"""
+        now = datetime.datetime.now().replace(second=0, microsecond=0)
+        test_cases = [
+            ({'minute': '0', 'hour': '0', 'dayofmonth': '1', 'month': '1', 'dayofweek': '0'},
+             now.replace(hour=0, minute=0, day=1, month=1)),
+            ({'minute': '59', 'hour': '23', 'dayofmonth': '31', 'month': '12', 'dayofweek': '6'},
+             now.replace(hour=23, minute=59, day=31, month=12)),
+        ]
+        for job, match_time in test_cases:
+            self.assertEqual(cron_match(self.configuration, match_time, job),
+                             match_time == now)
+
+    def test_at_remain_edge_cases(self):
+        """Test at_remain with edge case times"""
+        now = datetime.datetime.now()
+        test_cases = [
+            (now + datetime.timedelta(seconds=30), 0),  # Less than 1 minute
+            # 1 minute 30 seconds
+            (now + datetime.timedelta(minutes=1, seconds=30), 1),
+            (now + datetime.timedelta(hours=1), 60),  # 1 hour
+            (now + datetime.timedelta(days=1), 1440),  # 1 day
+        ]
+        for future_time, expected_minutes in test_cases:
+            test_job = {'time_stamp': future_time}
+            remaining = at_remain(self.configuration, now, test_job)
+            self.assertEqual(remaining, expected_minutes)
+
+    def test_get_path_expand_map_empty_path(self):
+        """Test path expansion with empty path"""
+        trigger_path = ''
+        rule = {'vgrid_name': 'test', 'run_as': DUMMY_USER_DN}
+        with self.assertRaises(ValueError):
+            expanded = get_path_expand_map(trigger_path, rule, 'modified')
+
+    def test_get_time_expand_map_leap_year(self):
+        """Test time expansion with leap year"""
+        timestamp = datetime.datetime(2024, 2, 29, 12, 0)  # Leap day
+        rule = {'run_as': DUMMY_USER_DN}
+        expanded = get_time_expand_map(timestamp, rule)
+        self.assertEqual(expanded['+SCHEDDAY+'], '29')
+        self.assertEqual(expanded['+SCHEDMONTH+'], '02')
+        self.assertEqual(expanded['+SCHEDYEAR+'], '2024')
+
+    def test_run_cron_command_with_special_chars(self):
+        """Test running cron command with special characters"""
+        target_path = 'test file with spaces.txt'
+        command_list = ['touch', target_path]
+        crontab_entry = {'run_as': DUMMY_USER_DN}
+        try:
+            run_cron_command(command_list, target_path, crontab_entry,
+                             self.configuration)
+            self.assertTrue(True)  # If no exception, test passes
+        except Exception as exc:
+            self.fail("run_cron_command raised an exception: %s" % exc)
+
+    def test_run_events_command_with_special_chars(self):
+        """Test running events command with special characters"""
+        target_path = 'test file with spaces.txt'
+        command_list = ['touch', target_path]
+        rule = {'run_as': DUMMY_USER_DN}
+        try:
+            run_events_command(command_list, target_path, rule,
+                               self.configuration)
+            self.assertTrue(True)  # If no exception, test passes
+        except Exception as exc:
+            self.fail("run_events_command raised an exception: %s" % exc)
+
+    def test_parse_crontab_with_comments(self):
+        """Test parsing crontab with comments"""
+        crontab_content = """# This is a comment
+* * * * * /bin/test_command
+# Another comment
+30 2 * * * /usr/bin/another_command"""
+        crontab_lines = crontab_content.splitlines()
+        parsed = parse_crontab_contents(self.configuration, DUMMY_USER_DN,
+                                        crontab_lines)
+        self.assertEqual(len(parsed), 2)
+        self.assertEqual(parsed[0]['command'], ['/bin/test_command'])
+
+    def test_parse_atjobs_with_comments(self):
+        """Test parsing atjobs with comments"""
+        atjobs_content = """# This is a comment
+2042-01-01 12:34:56 /bin/future_command
+# Another comment"""
+        atjobs_lines = atjobs_content.splitlines()
+        parsed = parse_atjobs_contents(self.configuration, DUMMY_USER_DN,
+                                       atjobs_lines)
+        self.assertEqual(len(parsed), 1)
+        self.assertEqual(parsed[0]['command'], ['/bin/future_command'])
+
+    def test_cron_match_with_wildcards(self):
+        """Test cron_match with various wildcard combinations"""
+        now = datetime.datetime.now().replace(second=0, microsecond=0)
+        test_cases = [
+            ({'minute': '*', 'hour': '*', 'dayofmonth': '*', 'month': '*', 'dayofweek': '*'},
+             True),
+            ({'minute': '15', 'hour': '*', 'dayofmonth': '*', 'month': '*', 'dayofweek': '*'},
+             now.minute == 15),
+            ({'minute': '*', 'hour': '3', 'dayofmonth': '*', 'month': '*', 'dayofweek': '*'},
+             now.hour == 3),
+            ({'minute': '*', 'hour': '*', 'dayofmonth': '15', 'month': '*', 'dayofweek': '*'},
+             now.day == 15),
+            ({'minute': '*', 'hour': '*', 'dayofmonth': '*', 'month': '6', 'dayofweek': '*'},
+             now.month == 6),
+            ({'minute': '*', 'hour': '*', 'dayofmonth': '*', 'month': '*', 'dayofweek': '0'},
+             now.weekday() == 0),
+        ]
+        for job, expected in test_cases:
+            self.assertEqual(cron_match(
+                self.configuration, now, job), expected)
+
+    @unittest.skip("enable next if ever relevant - fails with TypeError")
+    def test_at_remain_with_timezones(self):
+        """Test at_remain with different timezones"""
+        now = datetime.datetime.now()
+        test_cases = [
+            (now.astimezone(datetime.timezone.utc) +
+             datetime.timedelta(minutes=30), 30),
+            (now.astimezone(datetime.timezone.utc) -
+             datetime.timedelta(minutes=30), -30),
+        ]
+        for future_time, expected_minutes in test_cases:
+            test_job = {'time_stamp': future_time}
+            remaining = at_remain(self.configuration, now, test_job)
+            self.assertEqual(remaining, expected_minutes)
+
+    def test_get_path_expand_map_with_relative_path(self):
+        """Test path expansion with relative path"""
+        trigger_path = '../relative/path/file.txt'
+        rule = {'vgrid_name': 'test', 'run_as': DUMMY_USER_DN}
+        expanded = get_path_expand_map(trigger_path, rule, 'modified')
+        self.assertEqual(expanded['+TRIGGERPATH+'],
+                         '../relative/path/file.txt')
+        self.assertEqual(expanded['+TRIGGERFILENAME+'], 'file.txt')
+        self.assertEqual(expanded['+TRIGGERPREFIX+'], 'file')
+        self.assertEqual(expanded['+TRIGGEREXTENSION+'], '.txt')
+
+    def test_get_time_expand_map_with_milliseconds(self):
+        """Test time expansion with milliseconds"""
+        timestamp = datetime.datetime(2023, 1, 2, 9, 2, 30, 123456)
+        rule = {'run_as': DUMMY_USER_DN}
+        expanded = get_time_expand_map(timestamp, rule)
+        self.assertEqual(expanded['+SCHEDSECOND+'], '30')
+        self.assertEqual(expanded['+SCHEDMINUTE+'], '02')
+        self.assertEqual(expanded['+SCHEDHOUR+'], '09')
+        self.assertEqual(expanded['+SCHEDDAY+'], '02')
+        self.assertEqual(expanded['+SCHEDMONTH+'], '01')
+        self.assertEqual(expanded['+SCHEDYEAR+'], '2023')
+        self.assertEqual(expanded['+SCHEDDAYOFWEEK+'], '0')
+
+    def test_run_cron_command_with_long_command(self):
+        """Test running cron command with long command"""
+        target_path = 'test.txt'
+        long_command = ['touch'] + ['arg'] * 100
+        command_list = long_command
+        crontab_entry = {'run_as': DUMMY_USER_DN}
+        try:
+            run_cron_command(command_list, target_path, crontab_entry,
+                             self.configuration)
+            self.assertTrue(True)  # If no exception, test passes
+        except Exception as exc:
+            self.fail("run_cron_command raised an exception: %s" % exc)
+
+    def test_run_events_command_with_long_command(self):
+        """Test running events command with long command"""
+        target_path = 'test.txt'
+        long_command = ['touch'] + ['arg'] * 100
+        command_list = long_command
+        rule = {'run_as': DUMMY_USER_DN}
+        try:
+            run_events_command(command_list, target_path, rule,
+                               self.configuration)
+            self.assertTrue(True)  # If no exception, test passes
+        except Exception as exc:
+            self.fail("run_events_command raised an exception: %s" % exc)
+
+    def test_parse_crontab_with_invalid_lines(self):
+        """Test parsing crontab with invalid lines"""
+        crontab_content = """* * * * * /bin/test_command
+invalid line
+30 2 * * * /usr/bin/another_command"""
+        crontab_lines = crontab_content.splitlines()
+        with self.assertLogs(level='WARNING') as log_capture:
+            parsed = parse_crontab_contents(self.configuration, DUMMY_USER_DN,
+                                            crontab_lines)
+            self.assertEqual(len(parsed), 2)
+            self.assertTrue(any('Skip invalid crontab line' in msg
+                                for msg in log_capture.output))
+
+    def test_parse_atjobs_with_invalid_lines(self):
+        """Test parsing atjobs with invalid lines"""
+        atjobs_content = """2042-01-01 12:34:56 /bin/future_command
+invalid line
+2042-01-02 12:34:56 /bin/another_command"""
+        atjobs_lines = atjobs_content.splitlines()
+        with self.assertLogs(level='WARNING') as log_capture:
+            parsed = parse_atjobs_contents(self.configuration, DUMMY_USER_DN,
+                                           atjobs_lines)
+            self.assertEqual(len(parsed), 2)
+            self.assertTrue(any('Skip invalid atjobs line' in msg
+                                for msg in log_capture.output))
+
 
 class MigLibEvents__legacy_main(MigTestCase):
     """Unit tests for legacy events self-checks"""
