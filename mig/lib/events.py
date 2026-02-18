@@ -53,6 +53,27 @@ atjobs_pattern = "^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2}):"
 atjobs_pattern += "([0-9]{2}) (.*)$"
 atjobs_expr = re.compile(atjobs_pattern)
 
+TRIGGER_EVENT = '_trigger_event'
+
+# Only cache rule misses for one minute at a time to catch rule updates.
+# Run complete expire cycle if miss cache exceeds expire size.
+
+MISS_CACHE_TTL = 60
+CACHE_EXPIRE_SIZE = 10000
+
+# Rate limit helpers
+
+(RATE_LIMIT_FIELD, SETTLE_TIME_FIELD) = ('rate_limit', 'settle_time')
+DEFAULT_PERIOD = 'm'
+DEFAULT_TIME = '0'
+UNIT_PERIODS = {
+    's': 1,
+    'm': 60,
+    'h': 60 * 60,
+    'd': 24 * 60 * 60,
+    'w': 7 * 24 * 60 * 60,
+}
+
 
 def get_path_expand_map(trigger_path, rule, state_change):
     """Generate a dictionary with the supported variables to be expanded and

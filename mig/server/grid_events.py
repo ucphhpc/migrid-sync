@@ -61,7 +61,9 @@ except ImportError:
     sys.exit(1)
 
 from mig.lib.daemon import check_stop, register_stop_handler, stop_running
-from mig.lib.events import get_path_expand_map
+from mig.lib.events import CACHE_EXPIRE_SIZE, DEFAULT_PERIOD, DEFAULT_TIME, \
+    MISS_CACHE_TTL, RATE_LIMIT_FIELD, SETTLE_TIME_FIELD, TRIGGER_EVENT, \
+    UNIT_PERIODS, get_path_expand_map
 from mig.shared.base import force_utf8
 from mig.shared.cmdapi import parse_command_args
 from mig.shared.conf import get_configuration_object
@@ -101,27 +103,8 @@ shared_state['file_handler'] = None
 shared_state['rule_handler'] = None
 shared_state['rule_inotify'] = None
 
-# Only cache rule misses for one minute at a time to catch rule updates.
-# Run complete expire cycle if miss cache exceeds expire size.
-
-_miss_cache_ttl = 60
-_cache_expire_size = 10000
-
-# Rate limit helpers
-
-(_rate_limit_field, _settle_time_field) = ('rate_limit', 'settle_time')
-_default_period = 'm'
-_default_time = '0'
-_unit_periods = {
-    's': 1,
-    'm': 60,
-    'h': 60 * 60,
-    'd': 24 * 60 * 60,
-    'w': 7 * 24 * 60 * 60,
-}
 _hits_lock = threading.Lock()
 _rule_monitor_lock = threading.Lock()
-_trigger_event = '_trigger_event'
 (configuration, logger) = (None, None)
 
 
@@ -142,7 +125,7 @@ def make_fake_event(path, state, is_directory=False):
 
     # mark it a trigger event
 
-    setattr(fake, _trigger_event, True)
+    setattr(fake, TRIGGER_EVENT, True)
     return fake
 
 
@@ -151,7 +134,7 @@ def is_fake_event(event):
     system change.
     """
 
-    return getattr(event, _trigger_event, False)
+    return getattr(event, TRIGGER_EVENT, False)
 
 
 def extract_time_in_secs(rule, field):
@@ -164,26 +147,26 @@ def extract_time_in_secs(rule, field):
 
     limit_str = rule.get(field, '')
     if not limit_str:
-        limit_str = "%s" % _default_time
+        limit_str = "%s" % DEFAULT_TIME
 
     # NOTE: format is 3(s) or 52m
     # extract unit suffix letter and fall back to a raw value with default unit
 
-    unit_key = _default_period
+    unit_key = DEFAULT_PERIOD
     if not limit_str[-1:].isdigit():
         val_str = limit_str[:-1]
-        if limit_str[-1] in _unit_periods:
+        if limit_str[-1] in UNIT_PERIODS:
             unit_key = limit_str[-1]
         else:
 
             # print "ERROR: invalid time value %s ... fall back to defaults" % \
             #      limit_str
 
-            (unit_key, val_str) = (_default_period, _default_time)
+            (unit_key, val_str) = (DEFAULT_PERIOD, DEFAULT_TIME)
     else:
         val_str = limit_str
     try:
-        secs = float(val_str) * _unit_periods[unit_key]
+        secs = float(val_str) * UNIT_PERIODS[unit_key]
     except Exception as exc:
         print('(%s) ERROR: failed to parse time %s (%s)!' % (pid,
                                                              limit_str, exc))
@@ -203,13 +186,13 @@ def extract_hit_limit(rule, field):
     # NOTE: format is 3(/m) or 52/h
     # split string on slash and fall back to no limit and default unit
 
-    parts = (limit_str.split('/', 1) + [_default_period])[:2]
+    parts = (limit_str.split('/', 1) + [DEFAULT_PERIOD])[:2]
     (number, unit) = parts
     if not number.isdigit():
         number = '-1'
-    if unit not in _unit_periods:
-        unit = _default_period
-    return (int(number), _unit_periods[unit])
+    if unit not in UNIT_PERIODS:
+        unit = DEFAULT_PERIOD
+    return (int(number), UNIT_PERIODS[unit])
 
 
 def update_rule_hits(
@@ -225,8 +208,8 @@ def update_rule_hits(
     """
 
     pid = multiprocessing.current_process().pid
-    (_, hit_period) = extract_hit_limit(rule, _rate_limit_field)
-    settle_period = extract_time_in_secs(rule, _settle_time_field)
+    (_, hit_period) = extract_hit_limit(rule, RATE_LIMIT_FIELD)
+    settle_period = extract_time_in_secs(rule, SETTLE_TIME_FIELD)
 
     # logger.debug('(%s) update rule hits at %s for %s and %s %s %s' % (
     #    pid,
@@ -255,9 +238,9 @@ def get_rule_hits(rule, limit_field):
 
     pid = multiprocessing.current_process().pid
 
-    if limit_field == _rate_limit_field:
+    if limit_field == RATE_LIMIT_FIELD:
         (hit_count, hit_period) = extract_hit_limit(rule, limit_field)
-    elif limit_field == _settle_time_field:
+    elif limit_field == SETTLE_TIME_FIELD:
         (hit_count, hit_period) = (1, extract_time_in_secs(rule, limit_field))
     else:
         logger.error('(%s) get_rule_hits invalid limit_field %s' %
@@ -341,7 +324,7 @@ def wait_settled(
 
     pid = multiprocessing.current_process().pid
 
-    limit_field = _settle_time_field
+    limit_field = SETTLE_TIME_FIELD
     (path_history, _, hit_period) = get_path_hits(rule, path,
                                                   limit_field)
     period_history = [i for i in path_history if time_stamp - i[3]
@@ -797,8 +780,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         # Run settle time check first to only trigger rate limit if settled
 
-        for (name, field) in [('settle time', _settle_time_field),
-                              ('rate limit', _rate_limit_field)]:
+        for (name, field) in [('settle time', SETTLE_TIME_FIELD),
+                              ('rate limit', RATE_LIMIT_FIELD)]:
             if above_path_limit(rule, src_path, field, time_stamp):
                 above_limit = True
                 logger.warning('(%s) skip %s due to %s: %s' %
@@ -834,7 +817,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         self.__workflow_info(configuration, rule['vgrid_name'],
                              'handle %s for %s %s' % (rule['action'],
                                                       state, rel_src))
-        settle_secs = extract_time_in_secs(rule, _settle_time_field)
+        settle_secs = extract_time_in_secs(rule, SETTLE_TIME_FIELD)
         if settle_secs > 0.0:
             wait_secs = settle_secs
         else:
@@ -1193,7 +1176,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             # event_id))
             return
 
-        if len(miss_cache) < _cache_expire_size:
+        if len(miss_cache) < CACHE_EXPIRE_SIZE:
             return
 
         logger.info('(%s) expire all old entries in miss cache' % pid)
@@ -1202,7 +1185,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         # NOTE: we need to iterate over a copy of keys for in-place edits
         for event_id in list(miss_cache):
             time_stamp = miss_cache[event_id]
-            if time_stamp + _miss_cache_ttl < now:
+            if time_stamp + MISS_CACHE_TTL < now:
                 del miss_cache[event_id]
         logger.info('(%s) miss cache entries left after expire: %d' %
                     (pid, len(miss_cache)))
@@ -1215,7 +1198,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         pid = multiprocessing.current_process().pid
         event_id = self._get_event_id(event)
         recent = miss_cache.get(event_id, -1)
-        if recent + _miss_cache_ttl > time.time():
+        if recent + MISS_CACHE_TTL > time.time():
             # logger.debug('(%s) found recent miss for %s: %s' % (pid, event_id,
             #                                                     recent))
             return True
