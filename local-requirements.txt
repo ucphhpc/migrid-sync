@@ -8,3 +8,4 @@ autopep8;python_version >= "3"
 paramiko;python_version >= "3.7"
 paramiko<3;python_version < "3.7"
 werkzeug
+watchdog
