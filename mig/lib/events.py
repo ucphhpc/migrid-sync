@@ -38,6 +38,7 @@ import multiprocessing
 import os
 import re
 import shlex
+import sys
 
 from mig.shared.base import client_id_dir
 from mig.shared.cmdapi import parse_command_args
@@ -323,8 +324,12 @@ def run_cron_command(
     # logger.debug('(%s) run %s on behalf of %s' % (pid, command_str,
     #             client_id))
 
-    (function, user_arguments_dict) = parse_command_args(configuration,
-                                                         command_list)
+    try:
+        (function, user_arguments_dict) = parse_command_args(configuration,
+                                                             command_list)
+    except Exception as exc:
+        logger.error('(%s) failed to lookup function matching command %s' %
+                     (pid, command_str))
 
     form_method = 'post'
     target_op = "%s" % function
@@ -399,8 +404,12 @@ def run_events_command(
     # logger.debug('(%s) run %s on behalf of %s' % (pid, command_str,
     #             client_id))
 
-    (function, user_arguments_dict) = parse_command_args(configuration,
-                                                         command_list)
+    try:
+        (function, user_arguments_dict) = parse_command_args(configuration,
+                                                             command_list)
+    except Exception as exc:
+        logger.error('(%s) failed to lookup function matching command %s' %
+                     (pid, command_str))
 
     form_method = 'post'
     target_op = "%s" % function
@@ -414,8 +423,8 @@ def run_events_command(
     main = id
     txt_format = id
     try:
-        exec('from mig.shared.functionality.%s import main' % function)
-        exec('from mig.shared.output import txt_format')
+        main = importlib.import_module('mig.shared.functionality.%s' %
+                                       function).main
 
         # logger.debug('(%s) run %s on %s for %s' % \
         #              (pid, function, user_arguments_dict, client_id))
@@ -456,7 +465,8 @@ def run_events_command(
     #                                               ret_msg, txt_out))
 
 
-if __name__ == '__main__':
+def main(_exit=sys.exit, _print=print):
+    """Run module self-tests"""
     from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     client_id = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
@@ -502,3 +512,7 @@ if __name__ == '__main__':
             remain = at_remain(conf, timestamp, rule)
             print("At %s job is %dm in the future for rule" % (
                 timestamp, remain))
+
+
+if __name__ == '__main__':
+    main()
