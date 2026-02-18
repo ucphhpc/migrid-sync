@@ -60,6 +60,7 @@ except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
+from mig.lib.daemon import check_stop, register_stop_handler, stop_running
 from mig.lib.events import get_path_expand_map
 from mig.shared.base import force_utf8
 from mig.shared.cmdapi import parse_command_args
@@ -121,15 +122,7 @@ _unit_periods = {
 _hits_lock = threading.Lock()
 _rule_monitor_lock = threading.Lock()
 _trigger_event = '_trigger_event'
-stop_running = multiprocessing.Event()
 (configuration, logger) = (None, None)
-
-
-def stop_handler(sig, frame):
-    """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
-    # Print blank line to avoid mix with Ctrl-C line
-    print('')
-    stop_running.set()
 
 
 def make_fake_event(path, state, is_directory=False):
@@ -1874,10 +1867,10 @@ def monitor(configuration, vgrid_name):
         if not load_status:
             logger.error('(%s) Failed to load / generate dir cache for: %s'
                          % (pid, vgrid_name))
-            stop_running.set()
+            stop_running()
 
     activated = False
-    while not stop_running.is_set():
+    while not check_stop():
 
         # NOTE: We delay launch of actual monitors until any rules are active,
         #       in order to avoid excessive load from vgrids without triggers.
@@ -1915,7 +1908,7 @@ def monitor(configuration, vgrid_name):
         except KeyboardInterrupt:
             print('(%s) caught interrupt' % pid)
             logger.info('(%s) caught interrupt' % pid)
-            stop_running.set()
+            stop_running()
 
     # Only save cache if rules were actually activated so dirs were monitored
     if activated:
@@ -1948,7 +1941,7 @@ if __name__ == '__main__':
     register_hangup_handler(configuration)
 
     # Allow clean shutdown on SIGINT only to main process
-    signal.signal(signal.SIGINT, stop_handler)
+    register_stop_handler(configuration)
 
     if not configuration.site_enable_events:
         err_msg = "Event trigger support is disabled in configuration!"
@@ -1997,14 +1990,14 @@ unless it is available in mig/server/MiGserver.conf
 
     logger.debug('(%s) Starting main loop' % main_pid)
     print("%s: Start main loop" % os.getpid())
-    while not stop_running.is_set():
+    while not check_stop():
         try:
 
             # Throttle down
 
             time.sleep(1)
         except KeyboardInterrupt:
-            stop_running.set()
+            stop_running()
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to all monitor children
             print("Interrupt requested - close monitors and shutdown")

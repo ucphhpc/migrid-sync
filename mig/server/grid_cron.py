@@ -57,6 +57,7 @@ except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
+from mig.lib.daemon import check_stop, register_stop_handler, stop_running
 from mig.lib.events import get_time_expand_map, parse_crontab, cron_match, \
     parse_atjobs, at_remain
 from mig.shared.base import force_utf8, client_dir_id, client_id_dir
@@ -84,16 +85,7 @@ shared_state['base_dir_len'] = 0
 shared_state['crontab_inotify'] = None
 shared_state['crontab_handler'] = None
 
-_cron_event = '_cron_event'
-stop_running = multiprocessing.Event()
 (configuration, logger) = (None, None)
-
-
-def stop_handler(sig, frame):
-    """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
-    # Print blank line to avoid mix with Ctrl-C line
-    print('')
-    stop_running.set()
 
 
 def run_command(
@@ -510,7 +502,7 @@ def monitor(configuration):
     # logger.debug('(%s) loaded initial crontabs:\n%s' % (pid,
     # all_crontab_files))
 
-    while not stop_running.is_set():
+    while not check_stop():
         try:
             loop_start = datetime.datetime.now()
             loop_minute = loop_start.replace(second=0, microsecond=0)
@@ -550,7 +542,7 @@ def monitor(configuration):
                     del all_atjobs[atjobs_path]
         except KeyboardInterrupt:
             print('(%s) caught interrupt' % pid)
-            stop_running.set()
+            stop_running()
         except Exception as exc:
             logger.error('unexpected exception in monitor: %s' % exc)
             import traceback
@@ -595,7 +587,7 @@ if __name__ == '__main__':
     register_hangup_handler(configuration)
 
     # Allow clean shutdown on SIGINT only to main process
-    signal.signal(signal.SIGINT, stop_handler)
+    register_stop_handler(configuration)
 
     if not configuration.site_enable_crontab:
         err_msg = "Cron support is disabled in configuration!"
@@ -622,11 +614,11 @@ unless it is available in mig/server/MiGserver.conf
 
     logger.debug('(%s) Starting main loop' % main_pid)
     print("%s: Start main loop" % os.getpid())
-    while not stop_running.is_set():
+    while not check_stop():
         try:
             time.sleep(1)
         except KeyboardInterrupt:
-            stop_running.set()
+            stop_running()
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to monitor child
             print("Interrupt requested - close monitor and shutdown")
