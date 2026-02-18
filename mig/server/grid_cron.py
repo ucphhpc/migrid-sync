@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -56,13 +57,13 @@ except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
+from mig.lib.events import get_time_expand_map, parse_crontab, cron_match, \
+    parse_atjobs, at_remain
 from mig.shared.base import force_utf8, client_dir_id, client_id_dir
 from mig.shared.cmdapi import parse_command_args
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import crontab_name, atjobs_name, cron_output_dir, \
     cron_log_name, cron_log_size, cron_log_cnt, csrf_field
-from mig.shared.events import get_time_expand_map, parse_crontab, cron_match, \
-    parse_atjobs, at_remain
 from mig.shared.fileio import makedirs_rec, scandir, walk
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.job import fill_mrsl_template, new_job

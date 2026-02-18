@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridworkflows - data-driven workflows for owners and members
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -31,6 +32,7 @@ anywhere in their VGrid shared directory.
 Triggers are personal but the workflows page allows sharing of trigger job
 status and so on to ease workflow collaboration.
 """
+
 from __future__ import absolute_import
 
 from future import standard_library
@@ -40,13 +42,13 @@ import os
 import re
 import time
 
+from mig.lib.events import get_path_expand_map
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
 from mig.shared.cmdapi import get_usage_map
 from mig.shared.defaults import keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
     workflows_log_cnt, pending_states, final_states
-from mig.shared.events import get_path_expand_map
 from mig.shared.fileio import unpickle, makedirs_rec, move_file
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.htmlgen import man_base_js, man_base_html
@@ -318,7 +320,7 @@ your disposal:<br/>
 
         # Make page with manage triggers tab and active jobs and log tab
 
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
     <div id="wrap-tabs" class="workflow-tabs">
 <ul>
 <li><a href="#manage-tab">Manage Triggers</a></li>
@@ -328,7 +330,7 @@ your disposal:<br/>
 
         # Display existing triggers and form to add new ones
 
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
 <div id="manage-tab">
 '''})
 
@@ -339,23 +341,23 @@ your disposal:<br/>
             {'object_type': 'html_form', 'text': helper_html})
 
         if configuration.site_enable_crontab:
-            output_objects.append({'object_type': 'html_form', 'text':  '''
+            output_objects.append({'object_type': 'html_form', 'text': '''
 <p>You can combine these workflows with the personal '''})
             output_objects.append({'object_type': 'link',
                                    'destination': 'crontab.py',
                                    'class': 'crontablink iconspace',
                                    'text': 'schedule task'})
-            output_objects.append({'object_type': 'html_form', 'text':  '''
+            output_objects.append({'object_type': 'html_form', 'text': '''
 facilities in case you want to trigger flows at given times rather than only
 in reaction to file system events.</p>
 '''})
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 '''})
 
         # Display active trigger jobs and recent logs for this vgrid
 
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
     <div id="jobs-tab">
     '''})
         output_objects.append({'object_type': 'sectionheader',
@@ -374,11 +376,11 @@ in reaction to file system events.</p>
     output_objects.append({'object_type': 'trigger_log', 'log_content':
                            log_content})
     if operation in show_operations:
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 '''})
 
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 '''})
     return (output_objects, returnvalues.OK)

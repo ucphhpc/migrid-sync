@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -59,27 +60,23 @@ except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
-try:
-    from mig.shared.base import force_utf8
-    from mig.shared.cmdapi import parse_command_args
-    from mig.shared.conf import get_configuration_object
-    from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
-        workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
-    from mig.shared.events import get_path_expand_map
-    from mig.shared.fileio import makedirs_rec, pickle, unpickle, scandir, walk
-    from mig.shared.handlers import get_csrf_limit, make_csrf_token
-    from mig.shared.job import fill_mrsl_template, new_job
-    from mig.shared.listhandling import frange
-    from mig.shared.logger import daemon_logger, register_hangup_handler
-    from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
-    from mig.shared.serial import load
-    from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
-        JOB_ID, JOB_CLIENT
-    from mig.shared.vgridaccess import check_vgrid_access
-    from mig.shared.workflows import get_wp_map, CONF
-except ImportError as ioe:
-    print("could not import mig modules!")
-    exit(1)
+from mig.lib.events import get_path_expand_map
+from mig.shared.base import force_utf8
+from mig.shared.cmdapi import parse_command_args
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
+    workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
+from mig.shared.fileio import makedirs_rec, pickle, unpickle, scandir, walk
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.job import fill_mrsl_template, new_job
+from mig.shared.listhandling import frange
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
+from mig.shared.serial import load
+from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
+    JOB_ID, JOB_CLIENT
+from mig.shared.vgridaccess import check_vgrid_access
+from mig.shared.workflows import get_wp_map, CONF
 
 # Global trigger rule dictionaries with rules for all VGrids
 
