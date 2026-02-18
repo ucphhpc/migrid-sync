@@ -2,7 +2,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# test_mig_lib_events - unit tests for evetns/cron helper functions
+# test_mig_lib_events - unit tests for events/cron helper functions
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Unit tests for events/cron helper functions"""
+"""Unit tests for shared events helper functions"""
 
 import datetime
 import os
@@ -34,7 +34,11 @@ import time
 import unittest
 
 from mig.lib.events import parse_crontab, cron_match, parse_atjobs, at_remain, \
-    run_cron_command
+    get_path_expand_map, get_time_expand_map, load_crontab, load_atjobs, \
+    parse_crontab_contents, parse_atjobs_contents, parse_and_save_crontab, \
+    parse_and_save_atjobs, run_cron_command, run_events_command, \
+    main as events_main
+from mig.shared.base import distinguished_name_to_user
 from tests.support import MigTestCase, ensure_dirs_exist
 
 DUMMY_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
@@ -43,10 +47,7 @@ DUMMY_ORGANIZATION = "Test Org"
 DUMMY_EMAIL = "test@example.com"
 DUMMY_SKIP_EMAIL = ''
 DUMMY_CLIENT_DIR = '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_User+emailAddress=test@example.com'
-DUMMY_CRON_JOB = {'command': ['echo', 'test'], 'run_as': DUMMY_USER_DN,
-                  # 'minute': '*', 'hour': '*', 'dayofmonth': '*', 'month': '*',
-                  # 'dayofweek': '*'
-                  }
+DUMMY_CRON_JOB = {'command': ['touch', 'test.txt'], 'run_as': DUMMY_USER_DN}
 DUMMY_CRONTAB_NAME = 'crontab'
 DUMMY_ATJOBS_NAME = 'atjobs'
 DUMMY_CRONTAB_CONTENT = """* * * * * /bin/test_command
@@ -54,8 +55,8 @@ DUMMY_CRONTAB_CONTENT = """* * * * * /bin/test_command
 DUMMY_ATJOBS_CONTENT = """2042-01-01 12:34:56 /bin/future_command"""
 
 
-class MigLibCron(MigTestCase):
-    """Unit tests for cron helper functions"""
+class MigLibEvents(MigTestCase):
+    """Unit tests for events helper functions"""
 
     def _provide_configuration(self):
         """Prepare isolated test config"""
@@ -63,13 +64,7 @@ class MigLibCron(MigTestCase):
 
     def before_each(self):
         """Set up test configuration and reset state before each test"""
-
-        # TODO: can we remove this hack?
-        # Pass configuration and logger to cron module
-        # mig.lib.events.configuration = self.configuration
-        # mig.lib.events.logger = self.configuration.logger
-
-        # Enable cron in configuration
+        # Enable events in configuration
         self.configuration.site_enable_crontab = True
 
         ensure_dirs_exist(self.configuration.user_db_home)
@@ -81,27 +76,157 @@ class MigLibCron(MigTestCase):
         # Prepare user DB with a single dummy user for all tests
         self._provision_test_user(self, DUMMY_USER_DN)
 
-    def test_parse_valid_crontab(self):
-        """Test parsing of valid crontab content"""
-        # Create dummy crontab file
+    def test_load_crontab(self):
+        """Test loading crontab from file"""
         crontab_path = os.path.join(self.configuration.user_settings,
                                     DUMMY_CLIENT_DIR, DUMMY_CRONTAB_NAME)
         os.makedirs(os.path.dirname(crontab_path), exist_ok=True)
-        with open(crontab_path, 'w') as f:
-            f.write(DUMMY_CRONTAB_CONTENT)
+        with open(crontab_path, 'w') as fd:
+            fd.write(DUMMY_CRONTAB_CONTENT)
+
+        crontab = load_crontab(DUMMY_USER_DN, self.configuration)
+        self.assertIn('* * * * * /bin/test_command', crontab)
+
+    def test_load_atjobs(self):
+        """Test loading atjobs from file"""
+        atjobs_path = os.path.join(self.configuration.user_settings,
+                                   DUMMY_CLIENT_DIR, DUMMY_ATJOBS_NAME)
+        os.makedirs(os.path.dirname(atjobs_path), exist_ok=True)
+        with open(atjobs_path, 'w') as fd:
+            fd.write(DUMMY_ATJOBS_CONTENT)
+
+        atjobs = load_atjobs(DUMMY_USER_DN, self.configuration)
+        self.assertIn('2042-01-01 12:34:56 /bin/future_command', atjobs)
+
+    def test_parse_crontab_contents(self):
+        """Test parsing crontab content lines"""
+        crontab_lines = DUMMY_CRONTAB_CONTENT.splitlines()
+        parsed = parse_crontab_contents(self.configuration, DUMMY_USER_DN,
+                                        crontab_lines)
+        self.assertEqual(len(parsed), 2)
+        self.assertEqual(parsed[0]['command'], ['/bin/test_command'])
+
+    def test_parse_atjobs_contents(self):
+        """Test parsing atjobs content lines"""
+        atjobs_lines = DUMMY_ATJOBS_CONTENT.splitlines()
+        parsed = parse_atjobs_contents(self.configuration, DUMMY_USER_DN,
+                                       atjobs_lines)
+        self.assertEqual(len(parsed), 1)
+        self.assertEqual(parsed[0]['command'], ['/bin/future_command'])
+
+    def test_parse_and_save_crontab(self):
+        """Test parsing and saving crontab"""
+        crontab = DUMMY_CRONTAB_CONTENT
+        status, msg = parse_and_save_crontab(crontab, DUMMY_USER_DN,
+                                             self.configuration)
+        self.assertTrue(status)
+        self.assertIn('valid crontab entries', msg)
+
+    def test_parse_and_save_atjobs(self):
+        """Test parsing and saving atjobs"""
+        atjobs = DUMMY_ATJOBS_CONTENT
+        status, msg = parse_and_save_atjobs(atjobs, DUMMY_USER_DN,
+                                            self.configuration)
+        self.assertTrue(status)
+        self.assertIn('valid atjobs entries', msg)
+
+    def test_cron_match(self):
+        """Test cron time matching"""
+        now = datetime.datetime.now().replace(second=0, microsecond=0)
+        test_job = {'minute': '*', 'hour': '*',
+                    'dayofmonth': '*', 'month': '*', 'dayofweek': '*'}
+        self.assertTrue(cron_match(self.configuration, now, test_job))
+
+    def test_at_remain(self):
+        """Test at job remaining time calculation"""
+        now = datetime.datetime.now()
+        future_time = now + datetime.timedelta(minutes=30)
+        test_job = {'time_stamp': future_time}
+        remaining = at_remain(self.configuration, now, test_job)
+        self.assertEqual(remaining, 30)
+
+    def test_get_path_expand_map(self):
+        """Test path expansion map generation"""
+        trigger_path = '/test/path/file.txt'
+        rule = {'vgrid_name': 'test', 'run_as': DUMMY_USER_DN}
+        expanded = get_path_expand_map(trigger_path, rule, 'modified')
+        self.assertIn('+TRIGGERPATH+', expanded)
+        self.assertEqual(expanded['+TRIGGERPATH+'], trigger_path)
+
+    def test_get_time_expand_map(self):
+        """Test time expansion map generation"""
+        timestamp = datetime.datetime(2023, 1, 2, 9, 2)
+        rule = {'run_as': DUMMY_USER_DN}
+        expanded = get_time_expand_map(timestamp, rule)
+        self.assertIn('+SCHEDYEAR+', expanded)
+        self.assertEqual(expanded['+SCHEDYEAR+'], '2023')
+
+    def test_run_cron_command(self):
+        """Test running cron command"""
+        target_path = 'test.txt'
+        command_list = ['touch', target_path]
+        crontab_entry = {'run_as': DUMMY_USER_DN}
+        try:
+            run_cron_command(command_list, target_path, crontab_entry,
+                             self.configuration)
+            self.assertTrue(True)  # If no exception, test passes
+        except Exception as exc:
+            self.fail("run_cron_command raised an exception: %s" % exc)
+
+    def test_run_events_command(self):
+        """Test running events command"""
+        target_path = 'test.txt'
+        command_list = ['touch', target_path]
+        rule = {'run_as': DUMMY_USER_DN}
+        try:
+            run_events_command(command_list, target_path, rule,
+                               self.configuration)
+            self.assertTrue(True)  # If no exception, test passes
+        except Exception as exc:
+            self.fail("run_events_command raised an exception: %s" % exc)
+
+    def test_parse_valid_crontab_file(self):
+        """Test parsing valid crontab file"""
+        crontab_path = os.path.join(self.configuration.user_settings,
+                                    DUMMY_CLIENT_DIR, DUMMY_CRONTAB_NAME)
+        os.makedirs(os.path.dirname(crontab_path), exist_ok=True)
+        with open(crontab_path, 'w') as fd:
+            fd.write(DUMMY_CRONTAB_CONTENT)
 
         parsed = parse_crontab(self.configuration, DUMMY_USER_DN, crontab_path)
         self.assertEqual(len(parsed), 2)
         self.assertEqual(parsed[0]['command'], ['/bin/test_command'])
 
-    def test_parse_empty_crontab(self):
-        """Test handling of empty crontab file"""
+    def test_parse_empty_crontab_file(self):
+        """Test parsing empty crontab file"""
         crontab_path = os.path.join(self.configuration.user_settings,
                                     DUMMY_CLIENT_DIR, DUMMY_CRONTAB_NAME)
         os.makedirs(os.path.dirname(crontab_path), exist_ok=True)
         open(crontab_path, 'a').close()  # Create empty file
 
         parsed = parse_crontab(self.configuration, DUMMY_USER_DN, crontab_path)
+        self.assertEqual(parsed, [])
+
+    def test_parse_valid_atjobs_file(self):
+        """Test parsing valid atjobs file"""
+        atjobs_path = os.path.join(self.configuration.user_settings,
+                                   DUMMY_CLIENT_DIR, DUMMY_ATJOBS_NAME)
+        os.makedirs(os.path.dirname(atjobs_path), exist_ok=True)
+        with open(atjobs_path, 'w') as fd:
+            fd.write(DUMMY_ATJOBS_CONTENT)
+
+        parsed = parse_atjobs(self.configuration, DUMMY_USER_DN, atjobs_path)
+        self.assertEqual(len(parsed), 1)
+        self.assertTrue(parsed[0]['time_stamp'] > datetime.datetime.now())
+
+    def test_parse_empty_atjobs_file(self):
+        """Test parsing empty atjobs file"""
+        atjobs_path = os.path.join(self.configuration.user_settings,
+                                   DUMMY_CLIENT_DIR, DUMMY_ATJOBS_NAME)
+        os.makedirs(os.path.dirname(atjobs_path), exist_ok=True)
+        open(atjobs_path, 'a').close()  # Create empty file
+
+        parsed = parse_atjobs(self.configuration, DUMMY_USER_DN, atjobs_path)
         self.assertEqual(parsed, [])
 
     def test_cron_match_current_minute(self):
@@ -116,34 +241,80 @@ class MigLibCron(MigTestCase):
         """Test cron_match rejects non-matching time"""
         now = datetime.datetime.now().replace(hour=3, minute=15, second=0, microsecond=0)
         test_job = {'minute': '30', 'hour': '2',
-                    'day': '*', 'month': '*', 'dayofweek': '*',
-                    'dayofmonth': '*'}
+                    'dayofmonth': '*', 'month': '*', 'dayofweek': '*'}
         self.assertFalse(cron_match(self.configuration, now, test_job))
 
-    def test_parse_atjobs_future_job(self):
-        """Test parse_atjobs recognizes future jobs"""
-        # Create dummy atjobs file
-        atjobs_path = os.path.join(self.configuration.user_settings,
-                                   DUMMY_CLIENT_DIR, DUMMY_ATJOBS_NAME)
-        os.makedirs(os.path.dirname(atjobs_path), exist_ok=True)
-        with open(atjobs_path, 'w') as f:
-            f.write(DUMMY_ATJOBS_CONTENT)
+    def test_at_remain_past_job(self):
+        """Test at_remain with past job"""
+        now = datetime.datetime.now()
+        past_time = now - datetime.timedelta(minutes=30)
+        test_job = {'time_stamp': past_time}
+        remaining = at_remain(self.configuration, now, test_job)
+        self.assertEqual(remaining, -30)
 
-        parsed = parse_atjobs(self.configuration, DUMMY_USER_DN, atjobs_path)
-        self.assertEqual(len(parsed), 1)
-        self.assertTrue(parsed[0]['time_stamp'] > datetime.datetime.now())
+    def test_get_path_expand_map_with_special_chars(self):
+        """Test path expansion with special characters"""
+        trigger_path = '/test/path/file with spaces.txt'
+        rule = {'vgrid_name': 'test', 'run_as': DUMMY_USER_DN}
+        expanded = get_path_expand_map(trigger_path, rule, 'modified')
+        self.assertIn('+TRIGGERFILENAME+', expanded)
+        self.assertEqual(expanded['+TRIGGERFILENAME+'], 'file with spaces.txt')
 
-    @unittest.skip("enable once run_cron_handler is migrated")
-    def test_run_cron_handler_valid_job(self):
-        """Test run_cron_handler creates worker for valid job without crash"""
-        timestamp = datetime.datetime.now()
-        caught = None
-        try:
-            run_cron_handler(self.configuration, DUMMY_USER_DN, timestamp,
-                             DUMMY_CRON_JOB)
-        except Exception as exc:
-            caught = exc
-        self.assertEqual(caught, None)
+    def test_get_time_expand_map_edge_cases(self):
+        """Test time expansion with edge cases"""
+        timestamp = datetime.datetime(2023, 12, 31, 23, 59)
+        rule = {'run_as': DUMMY_USER_DN}
+        expanded = get_time_expand_map(timestamp, rule)
+        self.assertEqual(expanded['+SCHEDDAY+'], '31')
+        self.assertEqual(expanded['+SCHEDMONTH+'], '12')
+        self.assertEqual(expanded['+SCHEDHOUR+'], '23')
+        self.assertEqual(expanded['+SCHEDMINUTE+'], '59')
+
+    def test_run_cron_command_with_invalid_command(self):
+        """Test running cron command with invalid command"""
+        target_path = 'test.txt'
+        command_list = ['invalid_command', target_path]
+        crontab_entry = {'run_as': DUMMY_USER_DN}
+        with self.assertLogs(level='DEBUG') as log_capture:
+            with self.assertRaises(Exception):
+                run_cron_command(command_list, target_path, crontab_entry,
+                                 self.configuration)
+            self.assertTrue(
+                any('failed to run' in msg or 'failed to lookup' in msg
+                    for msg in log_capture.output))
+
+    def test_run_events_command_with_invalid_command(self):
+        """Test running events command with invalid command"""
+        command_list = ['invalid_command', 'test']
+        target_path = '/test/path'
+        rule = {'run_as': DUMMY_USER_DN}
+        with self.assertLogs(level='ERROR') as log_capture:
+            with self.assertRaises(Exception):
+                run_events_command(command_list, target_path, rule,
+                                   self.configuration)
+            self.assertTrue(
+                any('failed to run' in msg or 'failed to lookup' in msg
+                    for msg in log_capture.output))
+
+
+class MigLibEvents__legacy_main(MigTestCase):
+    """Unit tests for legacy events self-checks"""
+
+    def test_existing_main(self):
+        def raise_on_error_exit(exit_code):
+            if exit_code != 0:
+                if raise_on_error_exit.last_print is not None:
+                    identifying_message = raise_on_error_exit.last_print
+                else:
+                    identifying_message = 'unknown'
+                raise AssertionError(
+                    'failure in unittest/testcore: %s' % (identifying_message,))
+        raise_on_error_exit.last_print = None
+
+        def record_last_print(value):
+            raise_on_error_exit.last_print = value
+
+        events_main(_exit=raise_on_error_exit, _print=record_last_print)
 
 
 if __name__ == '__main__':
