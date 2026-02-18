@@ -36,22 +36,18 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import datetime
-import fnmatch
-import glob
 import logging
 import logging.handlers
 import multiprocessing
 import os
 import signal
 import sys
-import tempfile
 import time
 
 try:
     from watchdog.observers import Observer
     from watchdog.events import PatternMatchingEventHandler, \
-        FileModifiedEvent, FileCreatedEvent, FileDeletedEvent, \
-        DirModifiedEvent, DirCreatedEvent, DirDeletedEvent
+        FileModifiedEvent, FileCreatedEvent, DirCreatedEvent
 except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
@@ -63,8 +59,7 @@ from mig.shared.base import force_utf8, client_dir_id, client_id_dir
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import crontab_name, atjobs_name, cron_output_dir, \
     cron_log_name, cron_log_size, cron_log_cnt
-from mig.shared.fileio import makedirs_rec, scandir, walk
-from mig.shared.job import fill_mrsl_template, new_job
+from mig.shared.fileio import scandir, walk
 from mig.shared.logger import daemon_logger, register_hangup_handler
 
 # Global cron entry dictionaries with crontabs for all users
