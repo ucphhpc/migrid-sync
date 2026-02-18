@@ -161,13 +161,14 @@ def parse_argument(
     return (raw, safe, error)
 
 
-def fieldstorage_to_dict(fieldstorage, fields=None):
+def fieldstorage_to_dict(fieldstorage, fields=None, encoding='utf-8'):
     """Get a plain dictionary, rather than the '.value' system used by
     the cgi module. Please note that all values are on list form even
     if only a single value is provided.
     If the fields list is provided, only the provided fields are read.
     This may be necessary in PUT requests where fieldstorage key listing is
     not supported.
+    The optional encoding argument is used to decode any binary single values.
 
     IMPORTANT: single value fieldstorage instances like:
     FieldStorage(None, None, b'_csrf=dummy')
@@ -178,7 +179,10 @@ def fieldstorage_to_dict(fieldstorage, fields=None):
     params = {}
     if fieldstorage is not None:
         if fieldstorage.list is None:
-            params = parse_qs(fieldstorage.value)
+            val = fieldstorage.value
+            if isinstance(val, bytes) and encoding:
+                val = val.decode(encoding)
+            params = parse_qs(val)
             if fields is None:
                 return params
             else:
