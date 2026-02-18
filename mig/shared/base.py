@@ -399,7 +399,7 @@ def requested_backend(environ=None, fallback='UNKNOWN', strip_ext=True):
     too, so use it whenever the actual (potentially unsafe) URL is not a strict
     requirement.
     """
-    if not environ:
+    if environ is None:
         environ = os.environ
     # NOTE: RPC wrappers inject name of actual backend as BACKEND_NAME
     # NOTE: wsgi sets SCRIPT_X to wsgi-bin but PATH_TRANSLATED contains backend
@@ -426,7 +426,7 @@ def requested_page(environ=None, fallback='home.py', name_only=False,
     environment values without proper filtering and then MUST be used very
     carefully, because printing may otherwise result in XSS vulnerabilities.
     """
-    if not environ:
+    if environ is None:
         environ = os.environ
     if name_only:
         return requested_backend(environ, fallback, strip_ext)
@@ -456,7 +456,7 @@ def requested_url_base(environ=None, include_unsafe=False, uri_field='SCRIPT_URI
     values without proper filtering and thus MUST be used very carefully,
     because printing may otherwise result in XSS vulnerabilities.
     """
-    if not environ:
+    if environ is None:
         environ = os.environ
     full_url = environ.get(uri_field, None)
     parts = full_url.split('/', 3)
