@@ -61,9 +61,11 @@ except ImportError:
     sys.exit(1)
 
 from mig.lib.daemon import check_stop, register_stop_handler, stop_running
-from mig.lib.events import CACHE_EXPIRE_SIZE, DEFAULT_PERIOD, DEFAULT_TIME, \
-    MISS_CACHE_TTL, RATE_LIMIT_FIELD, SETTLE_TIME_FIELD, TRIGGER_EVENT, \
-    UNIT_PERIODS, get_path_expand_map, run_events_command
+from mig.lib.events import CACHE_EXPIRE_SIZE, MISS_CACHE_TTL, \
+    RATE_LIMIT_FIELD, SETTLE_TIME_FIELD, TRIGGER_EVENT, above_path_limit, \
+    extract_time_in_secs, get_path_expand_map, is_fake_event, \
+    recently_modified, run_events_command, show_path_hits, update_rule_hits, \
+    wait_settled
 from mig.shared.base import force_utf8
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
@@ -82,7 +84,6 @@ from mig.shared.workflows import get_wp_map, CONF
 # Global trigger rule dictionaries with rules for all VGrids
 
 all_rules = {}
-rule_hits = {}
 dir_cache = {}
 
 # Global miss cache to avoid wasting energy on repeated events without triggers
@@ -101,7 +102,6 @@ shared_state['file_handler'] = None
 shared_state['rule_handler'] = None
 shared_state['rule_inotify'] = None
 
-_hits_lock = threading.Lock()
 _rule_monitor_lock = threading.Lock()
 (configuration, logger) = (None, None)
 
@@ -127,251 +127,6 @@ def make_fake_event(path, state, is_directory=False):
     return fake
 
 
-def is_fake_event(event):
-    """Check if event came from our trigger-X rules rather than a real file
-    system change.
-    """
-
-    return getattr(event, TRIGGER_EVENT, False)
-
-
-def extract_time_in_secs(rule, field):
-    """Get time in seconds for provided free form period field. The value is a
-    integer or float string with optional unit letter appended. If no unit is
-    given the default period is used and if all empty the default time is used.
-    """
-
-    pid = multiprocessing.current_process().pid
-
-    limit_str = rule.get(field, '')
-    if not limit_str:
-        limit_str = "%s" % DEFAULT_TIME
-
-    # NOTE: format is 3(s) or 52m
-    # extract unit suffix letter and fall back to a raw value with default unit
-
-    unit_key = DEFAULT_PERIOD
-    if not limit_str[-1:].isdigit():
-        val_str = limit_str[:-1]
-        if limit_str[-1] in UNIT_PERIODS:
-            unit_key = limit_str[-1]
-        else:
-
-            # print "ERROR: invalid time value %s ... fall back to defaults" % \
-            #      limit_str
-
-            (unit_key, val_str) = (DEFAULT_PERIOD, DEFAULT_TIME)
-    else:
-        val_str = limit_str
-    try:
-        secs = float(val_str) * UNIT_PERIODS[unit_key]
-    except Exception as exc:
-        print('(%s) ERROR: failed to parse time %s (%s)!' % (pid,
-                                                             limit_str, exc))
-        secs = 0.0
-    secs = max(secs, 0.0)
-    return secs
-
-
-def extract_hit_limit(rule, field):
-    """Get rule rate limit as (max_hits, period_length)-tuple for provided
-    rate limit field where the limit kicks in when more than max_hits happened
-    within the last period_length seconds.
-    """
-
-    limit_str = rule.get(field, '')
-
-    # NOTE: format is 3(/m) or 52/h
-    # split string on slash and fall back to no limit and default unit
-
-    parts = (limit_str.split('/', 1) + [DEFAULT_PERIOD])[:2]
-    (number, unit) = parts
-    if not number.isdigit():
-        number = '-1'
-    if unit not in UNIT_PERIODS:
-        unit = DEFAULT_PERIOD
-    return (int(number), UNIT_PERIODS[unit])
-
-
-def update_rule_hits(
-    rule,
-    path,
-    change,
-    ref,
-    time_stamp,
-):
-    """Update rule hits history with event and remove expired entries. Makes
-    sure to neither expire events needed for rate limit nor settle time
-    checking.
-    """
-
-    pid = multiprocessing.current_process().pid
-    (_, hit_period) = extract_hit_limit(rule, RATE_LIMIT_FIELD)
-    settle_period = extract_time_in_secs(rule, SETTLE_TIME_FIELD)
-
-    # logger.debug('(%s) update rule hits at %s for %s and %s %s %s' % (
-    #    pid,
-    #    time_stamp,
-    #    rule,
-    #    path,
-    #    change,
-    #    ref,
-    #    ))
-
-    _hits_lock.acquire()
-    rule_history = rule_hits.get(rule['rule_id'], [])
-    rule_history.append((path, change, ref, time_stamp))
-    max_period = max(hit_period, settle_period)
-    period_history = [i for i in rule_history if time_stamp - i[3]
-                      <= max_period]
-    rule_hits[rule['rule_id']] = period_history
-    _hits_lock.release()
-
-    # logger.debug('(%s) updated rule hits for %s to %s' % (pid,
-    #             rule['rule_id'], period_history))
-
-
-def get_rule_hits(rule, limit_field):
-    """find rule hit details"""
-
-    pid = multiprocessing.current_process().pid
-
-    if limit_field == RATE_LIMIT_FIELD:
-        (hit_count, hit_period) = extract_hit_limit(rule, limit_field)
-    elif limit_field == SETTLE_TIME_FIELD:
-        (hit_count, hit_period) = (1, extract_time_in_secs(rule, limit_field))
-    else:
-        logger.error('(%s) get_rule_hits invalid limit_field %s' %
-                     (pid, limit_field))
-        raise ValueError("got unexpected limit_field %r" % limit_field)
-
-    _hits_lock.acquire()
-    rule_history = rule_hits.get(rule['rule_id'], [])
-    res = (rule_history, hit_count, hit_period)
-    _hits_lock.release()
-
-    # logger.debug('(%s) get_rule_hits found %s' % (pid, res))
-
-    return res
-
-
-def get_path_hits(rule, path, limit_field):
-    """find path hit details"""
-
-    (rule_history, hit_count, hit_period) = get_rule_hits(rule,
-                                                          limit_field)
-    path_history = [i for i in rule_history if i[0] == path]
-    return (path_history, hit_count, hit_period)
-
-
-def above_path_limit(
-    rule,
-    path,
-    limit_field,
-    time_stamp,
-):
-    """Check path trigger history against limit field and return boolean
-    indicating if the rate limit or settle time should kick in.
-    """
-
-    pid = multiprocessing.current_process().pid
-
-    (path_history, hit_count, hit_period) = get_path_hits(rule, path,
-                                                          limit_field)
-    if hit_count <= 0 or hit_period <= 0:
-
-        # logger.debug('(%s) no %s limit set' % (pid, limit_field))
-
-        return False
-    period_history = [i for i in path_history if time_stamp - i[3]
-                      <= hit_period]
-
-    # logger.debug('(%s) above path %s test found %s vs %d' % (pid,
-    #             limit_field, period_history, hit_count))
-
-    if len(period_history) >= hit_count:
-        return True
-    return False
-
-
-def show_path_hits(rule, path, limit_field):
-    """Return path hit details for printing"""
-
-    pid = multiprocessing.current_process().pid
-
-    msg = ''
-    (path_history, hit_count, hit_period) = get_path_hits(rule, path,
-                                                          limit_field)
-    msg += \
-        '(%s) found %d entries in trigger history and limit is %d per %s s' \
-        % (pid, len(path_history), hit_count, hit_period)
-    return msg
-
-
-def wait_settled(
-    rule,
-    path,
-    change,
-    settle_secs,
-    time_stamp,
-):
-    """Lookup recent change events on path and check if settle_secs passed
-    since last one. Returns the number of seconds needed without further
-    events for changes to be considered settled.
-    """
-
-    pid = multiprocessing.current_process().pid
-
-    limit_field = SETTLE_TIME_FIELD
-    (path_history, _, hit_period) = get_path_hits(rule, path,
-                                                  limit_field)
-    period_history = [i for i in path_history if time_stamp - i[3]
-                      <= hit_period]
-
-    # logger.debug('(%s) wait_settled: path %s, change %s, settle_secs %s'
-    #              % (pid, path, change, settle_secs))
-
-    if not period_history:
-        remain = 0.0
-    else:
-
-        # NOTE: the time_stamp - i[3] values are non-negative here
-        # since hit_period >= 0.
-        # Thus we can just take the smallest and subtract from settle_secs
-        # to always wait the remaining part of settle_secs.
-
-        remain = settle_secs - min([time_stamp - i[3] for i in
-                                    period_history])
-
-    # logger.debug('(%s) wait_settled: remain %.1f , period_history %s'
-    #             % (pid, remain, period_history))
-
-    return remain
-
-
-def recently_modified(path, time_stamp, slack=2.0):
-    """Check if path was actually recently modified and not just accessed.
-    If atime and mtime are the same or if mtime is within slack from time_stamp
-    we accept it as recently changed.
-    """
-
-    pid = multiprocessing.current_process().pid
-
-    try:
-        stat_res = os.stat(path)
-        result = stat_res.st_mtime == stat_res.st_atime \
-            or stat_res.st_mtime > time_stamp - slack
-    except OSError as exc:
-
-        # If we get an OSError, *path* is most likely deleted
-
-        result = True
-
-        # logger.debug('(%s) OSError: %s' % (pid, exc))
-
-    return result
-
-
 def strip_base_dirs(path):
     """strips base directories from a given path"""
     if shared_state['base_dir'] in path:
@@ -389,25 +144,22 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
 
     def __init__(
         self,
+        configuration,
         patterns=None,
         ignore_patterns=None,
         ignore_directories=False,
         case_sensitive=False,
     ):
         """Constructor"""
-
+        self.configuration = configuration
         PatternMatchingEventHandler.__init__(
             self, patterns=patterns, ignore_patterns=ignore_patterns,
             ignore_directories=ignore_directories,
             case_sensitive=case_sensitive)
 
-    def __update_rule_monitor(
-        self,
-        configuration,
-        src_path,
-        state,
-    ):
-
+    def __update_rule_monitor(self, src_path, state):
+        """Update rule monitor for src_path and state"""
+        logger = self.configuration.logger
         pid = multiprocessing.current_process().pid
 
         if state == 'created':
@@ -459,13 +211,13 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
 
     def update_rules(self, event):
         """Handle all rule updates"""
-
+        logger = self.configuration.logger
         pid = multiprocessing.current_process().pid
         state = event.event_type
         src_path = event.src_path
 
         if event.is_directory:
-            self.__update_rule_monitor(configuration, src_path, state)
+            self.__update_rule_monitor(src_path, state)
         elif src_path.endswith(configuration.vgrid_triggers):
 
             # logger.debug('(%s) %s -> Updating rule for: %s' % (pid,
@@ -551,6 +303,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
     def __init__(
         self,
+        configuration,
         patterns=None,
         ignore_patterns=None,
         ignore_directories=False,
@@ -558,7 +311,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         sub_vgrids=None
     ):
         """Constructor"""
-
+        self.configuration = configuration
         PatternMatchingEventHandler.__init__(
             self, patterns=patterns, ignore_patterns=ignore_patterns,
             ignore_directories=ignore_directories,
@@ -567,16 +320,15 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
     def __workflow_log(
         self,
-        configuration,
         vgrid_name,
         msg,
         level='info',
     ):
         """Wrapper to send a single msg to vgrid workflows page log file"""
 
-        log_name = '%s.%s' % (configuration.vgrid_triggers,
+        log_name = '%s.%s' % (self.configuration.vgrid_triggers,
                               workflows_log_name)
-        log_path = os.path.join(configuration.vgrid_home, vgrid_name,
+        log_path = os.path.join(self.configuration.vgrid_home, vgrid_name,
                                 log_name)
         workflows_logger = logging.getLogger('workflows')
         workflows_logger.setLevel(logging.INFO)
@@ -599,53 +351,52 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
     def __workflow_err(
         self,
-        configuration,
         vgrid_name,
         msg,
     ):
         """Wrapper to send a single error msg to vgrid workflows page log"""
 
-        self.__workflow_log(configuration, vgrid_name, msg, 'error')
+        self.__workflow_log(vgrid_name, msg, 'error')
 
     def __workflow_warn(
         self,
-        configuration,
         vgrid_name,
         msg,
     ):
         """Wrapper to send a single warning msg to vgrid workflows page log"""
 
-        self.__workflow_log(configuration, vgrid_name, msg, 'warning')
+        self.__workflow_log(vgrid_name, msg, 'warning')
 
     def __workflow_info(
         self,
-        configuration,
         vgrid_name,
         msg,
     ):
         """Wrapper to send a single error msg to vgrid workflows page log"""
 
-        self.__workflow_log(configuration, vgrid_name, msg, 'info')
+        self.__workflow_log(vgrid_name, msg, 'info')
 
     def __add_trigger_job_ent(
         self,
-        configuration,
         event,
         rule,
         jobid,
     ):
+        logger = self.configuration.logger
+        pid = multiprocessing.current_process().pid
 
         result = True
-        pid = multiprocessing.current_process().pid
 
         vgrid_name = rule['vgrid_name']
         trigger_job_dir = os.path.join(
-            configuration.vgrid_home, os.path.join(vgrid_name, os.path.join(
-                '.%s.jobs' % configuration.vgrid_triggers, 'pending_states')))
+            self.configuration.vgrid_home,
+            os.path.join(vgrid_name, os.path.join(
+                '.%s.jobs' % self.configuration.vgrid_triggers,
+                'pending_states')))
 
         trigger_job_filepath = os.path.join(trigger_job_dir, jobid)
 
-        if makedirs_rec(trigger_job_dir, configuration):
+        if makedirs_rec(trigger_job_dir, self.configuration):
             trigger_job_dict = {
                 'jobid': jobid,
                 'owner': rule['run_as'],
@@ -687,7 +438,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         """Actually handle valid trigger for a specific event and the
         corresponding target_path pattern and trigger rule.
         """
-
+        logger = self.configuration.logger
         pid = multiprocessing.current_process().pid
         state = event.event_type
         src_path = event.src_path
@@ -704,15 +455,17 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         for (name, field) in [('settle time', SETTLE_TIME_FIELD),
                               ('rate limit', RATE_LIMIT_FIELD)]:
-            if above_path_limit(rule, src_path, field, time_stamp):
+            if above_path_limit(self.configuration, rule, src_path, field,
+                                time_stamp):
                 above_limit = True
                 logger.warning('(%s) skip %s due to %s: %s' %
                                (pid, src_path, name, show_path_hits(
-                                   rule, src_path, field)))
-                self.__workflow_warn(configuration, rule['vgrid_name'],
+                                   self.configuration, rule, src_path, field)))
+                self.__workflow_warn(rule['vgrid_name'],
                                      '(%s) skip %s trigger due to %s: %s' %
                                      (pid, rel_src, name, show_path_hits(
-                                         rule, src_path, field)))
+                                         self.configuration, rule, src_path,
+                                         field)))
                 break
 
         # TODO: consider if we should skip modified when just created
@@ -721,25 +474,28 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         # but make sure we handle our fake trigger-modified events
 
         if state == 'modified' and not is_fake_event(event) \
-                and not recently_modified(src_path, time_stamp):
+                and not recently_modified(self.configuration, src_path,
+                                          time_stamp):
             logger.info('(%s) skip %s which only changed atime' % (pid,
                                                                    src_path))
-            self.__workflow_info(configuration, rule['vgrid_name'],
+            self.__workflow_info(rule['vgrid_name'],
                                  'skip %s modified access time only event'
                                  % rel_src)
             return
 
         # Always update here to get trigger hits even for limited events
 
-        update_rule_hits(rule, src_path, state, '', time_stamp)
+        update_rule_hits(self.configuration, rule, src_path, state, '',
+                         time_stamp)
         if above_limit:
             return
         logger.info('(%s) proceed with handling of %s for %s %s'
                     % (pid, rule['action'], state, rel_src))
-        self.__workflow_info(configuration, rule['vgrid_name'],
+        self.__workflow_info(rule['vgrid_name'],
                              'handle %s for %s %s' % (rule['action'],
                                                       state, rel_src))
-        settle_secs = extract_time_in_secs(rule, SETTLE_TIME_FIELD)
+        settle_secs = extract_time_in_secs(self.configuration, rule,
+                                           SETTLE_TIME_FIELD)
         if settle_secs > 0.0:
             wait_secs = settle_secs
         else:
@@ -751,7 +507,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         while wait_secs > 0.0:
             logger.info('(%s) wait %.1fs for %s file events to settle down'
                         % (pid, wait_secs, src_path))
-            self.__workflow_info(configuration, rule['vgrid_name'],
+            self.__workflow_info(rule['vgrid_name'],
                                  'wait %.1fs for events on %s to settle'
                                  % (wait_secs, rel_src))
             time.sleep(wait_secs)
@@ -760,8 +516,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             #              % (pid, wait_secs, src_path))
 
             time_stamp += wait_secs
-            wait_secs = wait_settled(rule, src_path, state,
-                                     settle_secs, time_stamp)
+            wait_secs = wait_settled(self.configuration, rule, src_path,
+                                     state, settle_secs, time_stamp)
 
         # TODO: perhaps we should discriminate on files and dirs here?
         # TODO: logger does not actually work here, only __workflow_X logs
@@ -772,7 +528,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
             # Expand dynamic variables in argument once and for all
 
-            expand_map = get_path_expand_map(rel_src, rule, state)
+            expand_map = get_path_expand_map(self.configuration, rel_src, rule,
+                                             state)
             for argument in rule['arguments']:
                 filled_argument = argument
                 for (key, val) in expand_map.items():
@@ -781,7 +538,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 # logger.debug('(%s) expanded argument %s to %s' % (pid,
                 #             argument, filled_argument))
 
-                self.__workflow_info(configuration, rule['vgrid_name'],
+                self.__workflow_info(rule['vgrid_name'],
                                      'expanded argument %s to %s' %
                                      (argument, filled_argument))
                 pattern = os.path.join(vgrid_prefix, filled_argument)
@@ -799,8 +556,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                         logger.warning('(%s) breaking trigger cycle %s'
                                        % (pid, chain_str))
-                        self.__workflow_warn(configuration,
-                                             rule['vgrid_name'],
+                        self.__workflow_warn(rule['vgrid_name'],
                                              'breaking trigger cycle %s'
                                              % rel_chain_str)
                         continue
@@ -808,21 +564,21 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     fake._chain = _chain
                     logger.info('(%s) trigger %s event on %s' % (pid,
                                                                  change, path))
-                    self.__workflow_info(
-                        configuration, rule['vgrid_name'],
-                        'trigger %s event on %s' % (change, rel_path))
+                    self.__workflow_info(rule['vgrid_name'],
+                                         'trigger %s event on %s' % (change, rel_path))
                     self.handle_event(fake)
         elif rule['action'] == 'submit':
             temp_dir = tempfile.mkdtemp()
 
             # Expand dynamic variables in argument once and for all
 
-            expand_map = get_path_expand_map(rel_src, rule, state)
+            expand_map = get_path_expand_map(self.configuration, rel_src, rule,
+                                             state)
             try:
                 for job_template in rule['templates']:
                     pattern_id = rule['pattern_id']
                     pattern_map = get_wp_map(
-                        configuration).get(pattern_id, None)
+                        self.configuration).get(pattern_id, None)
 
                     if not pattern_map:
                         raise Exception('(%s) pattern entry %s is missing'
@@ -886,7 +642,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             except Exception as exc:
                 logger.error('(%s) failed to submit job(s) for %s: %s'
                              % (pid, target_path, exc))
-                self.__workflow_err(configuration, rule['vgrid_name'],
+                self.__workflow_err(rule['vgrid_name'],
                                     'failed to submit job for %s: %s'
                                     % (rel_src, exc))
             try:
@@ -898,29 +654,30 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
             # Expand dynamic variables in argument once and for all
 
-            expand_map = get_path_expand_map(rel_src, rule, state)
+            expand_map = get_path_expand_map(self.configuration, rel_src, rule,
+                                             state)
             command_list = (rule['arguments'])[:1]
             for argument in (rule['arguments'])[1:]:
                 filled_argument = argument
                 for (key, val) in expand_map.items():
                     filled_argument = filled_argument.replace(key, val)
-                self.__workflow_info(configuration, rule['vgrid_name'],
+                self.__workflow_info(rule['vgrid_name'],
                                      'expanded argument %s to %s' %
                                      (argument, filled_argument))
                 command_list.append(filled_argument)
             try:
                 run_events_command(command_list, target_path, rule,
-                                   configuration)
+                                   self.configuration)
                 logger.info('(%s) done running command for %s: %s' %
                             (pid, target_path, ' '.join(command_list)))
-                self.__workflow_info(configuration, rule['vgrid_name'],
+                self.__workflow_info(rule['vgrid_name'],
                                      'ran command: %s'
                                      % ' '.join(command_list))
             except Exception as exc:
                 command_str = ' '.join(command_list)
                 logger.error('(%s) failed to run command for %s: %s (%s)' %
                              (pid, target_path, command_str, exc))
-                self.__workflow_err(configuration, rule['vgrid_name'],
+                self.__workflow_err(rule['vgrid_name'],
                                     'failed to run command for %s: %s (%s)' %
                                     (rel_src, command_str, exc))
         else:
@@ -945,7 +702,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 state,
                 rule,
                 expand_map,
-                configuration,
+                self.configuration,
                 param_list=param
         ):
             raise Exception('fill template failed')
@@ -954,12 +711,11 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         #             % (pid, target_path, mrsl_path))
 
         (success, msg, jobid) = new_job(
-            mrsl_path, rule['run_as'], configuration, False,
+            mrsl_path, rule['run_as'], self.configuration, False,
             returnjobid=True, workflow_job=workflow_job)
 
         if success:
-            self.__add_trigger_job_ent(configuration,
-                                       event, rule, jobid)
+            self.__add_trigger_job_ent(event, rule, jobid)
 
             # update vgrid workflow jobs list
             vgrid = rule['vgrid_name']
@@ -968,13 +724,12 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     JOB_ID: jobid,
                     JOB_CLIENT: rule['run_as']
                 }
-                vgrid_add_workflow_jobs(configuration, vgrid,
+                vgrid_add_workflow_jobs(self.configuration, vgrid,
                                         [job_queue_entry])
 
             logger.info('(%s) submitted job for %s: %s'
                         % (pid, target_path, msg))
-            self.__workflow_info(configuration,
-                                 rule['vgrid_name'],
+            self.__workflow_info(rule['vgrid_name'],
                                  'submitted job for %s: %s' %
                                  (rel_src, msg))
 
@@ -984,7 +739,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
     def __detect_symlink(self, event):
         """detect symlink to directory creation events and correct them
         accordingly"""
-
+        logger = self.configuration.logger
         pid = multiprocessing.current_process().pid
         src_path = event.src_path
 
@@ -999,7 +754,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
     def __update_file_monitor(self, event):
         """Updates file monitor using the global dir_cache"""
-
+        logger = self.configuration.logger
         pid = multiprocessing.current_process().pid
         state = event.event_type
         is_directory = event.is_directory
@@ -1027,7 +782,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     vgrid_dir_cache[rel_path] = {}
                     rel_path_ctime = os.path.getctime(src_path)
                     rel_path_mtime = os.path.getmtime(src_path)
-                    add_vgrid_file_monitor_watch(configuration,
+                    add_vgrid_file_monitor_watch(self.configuration,
                                                  rel_path)
                     vgrid_dir_cache[rel_path]['mtime'] = rel_path_mtime
 
@@ -1083,6 +838,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         On miss it additionally checks if the cache size exceeds the limit and
         if so expires all old misses.
         """
+        logger = self.configuration.logger
         pid = multiprocessing.current_process().pid
 
         event_id = self._get_event_id(event)
@@ -1118,6 +874,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         cache of recent events with no matching rules and check if given event
         is identical except the timestamp.
         """
+        logger = self.configuration.logger
         pid = multiprocessing.current_process().pid
         event_id = self._get_event_id(event)
         recent = miss_cache.get(event_id, -1)
@@ -1147,8 +904,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         src_path = masked
 
         masked = src_path.replace(
-            configuration.vgrid_files_writable,
-            configuration.vgrid_files_home)
+            self.configuration.vgrid_files_writable,
+            self.configuration.vgrid_files_home)
         if os.path.exists(masked):
             src_path = masked
 
@@ -1161,7 +918,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         """Trigger any rule actions bound to file state change in a properly
         isolated process to avoid concurrent worker interference.
         """
-
+        logger = self.configuration.logger
         pid = multiprocessing.current_process().pid
         state = event.event_type
         src_path = self.__get_masked_event_path(event)
@@ -1241,7 +998,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     #              (pid, rule['run_as'], rule['vgrid_name'],
                     #               rule['rule_id']))
 
-                    if not check_vgrid_access(configuration, rule['run_as'],
+                    if not check_vgrid_access(self.configuration,
+                                              rule['run_as'],
                                               rule['vgrid_name']):
                         logger.warning('(%s) no such user in vgrid: %s'
                                        % (pid, rule['run_as']))
@@ -1287,7 +1045,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         was received. Still not perfect but better than comparing with 'now'
         values obtained deeply in handling calls.
         """
-
+        logger = self.configuration.logger
         pid = multiprocessing.current_process().pid
 
         event.time_stamp = time.time()
@@ -1334,7 +1092,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
 def add_vgrid_file_monitor_watch(configuration, path):
     """Adds file inotify watch for *path*"""
-
+    logger = configuration.logger
     pid = multiprocessing.current_process().pid
 
     vgrid_files_path = os.path.join(configuration.vgrid_files_home, path)
@@ -1365,7 +1123,7 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
     """Add file monitor for all dirs and subdirs in *path*, using the
     global dir_cache.
     """
-
+    logger = configuration.logger
     pid = multiprocessing.current_process().pid
 
     # Make sure we only have utf8 everywhere to avoid encoding issues
@@ -1416,7 +1174,7 @@ def add_vgrid_file_monitors(configuration, vgrid_name):
     """Add file monitors for all dirs and subdirs for *vgrid_name*, using the
     global dir_cache.
     """
-
+    logger = configuration.logger
     pid = multiprocessing.current_process().pid
 
     vgrid_dir_cache = dir_cache[vgrid_name]
@@ -1444,7 +1202,7 @@ def generate_vgrid_dir_cache(configuration, vgrid_base_path):
     """Generate directory cache for *vgrid_base_path*, using the global
     dir_cache.
     """
-
+    logger = configuration.logger
     pid = multiprocessing.current_process().pid
 
     vgrid_path = os.path.join(configuration.vgrid_files_home,
@@ -1485,10 +1243,10 @@ def generate_vgrid_dir_cache(configuration, vgrid_base_path):
 
 def load_dir_cache(configuration, vgrid_name):
     """Load directory cache for *vgrid_name*, into the global dir_cache"""
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
 
     result = True
-
-    pid = multiprocessing.current_process().pid
 
     vgrid_home_path = os.path.join(configuration.vgrid_home, vgrid_name)
     vgrid_dir_cache_filename = '.%s.dir_cache' \
@@ -1522,7 +1280,7 @@ def load_dir_cache(configuration, vgrid_name):
             # Make sure we only have utf8 everywhere to avoid encoding issues
             # NOTE: we need to iterate over a copy of keys for in-place edits
             for old_path in [i for i in loaded_dir_cache if i != force_utf8(i)]:
-                print("NOTE: forcing old cache entry %s to utf8" % [old_path])
+                logger.debug("forcing old cache entry %s to utf8" % [old_path])
                 new_path = force_utf8(old_path)
                 entry = loaded_dir_cache[old_path]
                 del loaded_dir_cache[old_path]
@@ -1545,14 +1303,14 @@ def load_dir_cache(configuration, vgrid_name):
         # logger.debug('(%s) Generated new dir_cache for: %s in %s secs'
         #             % (pid, vgrid_name, (cache_t2 - cache_t1))
 
-        result = save_dir_cache(vgrid_name)
+        result = save_dir_cache(configuration, vgrid_name)
 
     return result
 
 
-def save_dir_cache(vgrid_name):
+def save_dir_cache(configuration, vgrid_name):
     """Save directory cache for *vgrid_name*, from the global dir_cache"""
-
+    logger = configuration.logger
     pid = multiprocessing.current_process().pid
 
     result = True
@@ -1590,22 +1348,22 @@ def active_targets(configuration, vgrid_name, base_dir):
     return active
 
 
-def monitor(configuration, vgrid_name):
+def event_monitor(configuration, vgrid_name):
     """Monitors the filesystem for changes and match/apply trigger rules.
     Each top vgrid gets its own process.
     Handling new vgrids is done through a special root vgrid with vgrid_name='.'.
     New vgrids are handled by '.' until grid_events is restarted, after restart
     they get their own process.
     """
-
+    logger = configuration.logger
     pid = multiprocessing.current_process().pid
 
-    # TODO: We loose access to logger when called through multiprocessing
+    # TODO: We lose access to logger when called through multiprocessing
 
-    print('Starting monitor process with PID: %s for vgrid: %s' % (pid,
-                                                                   vgrid_name))
-    logger.info('Starting monitor process with PID: %s for vgrid: %s'
-                % (pid, vgrid_name))
+    print('Starting event monitor process with PID: %s for vgrid: %s' %
+          (pid, vgrid_name))
+    logger.info('Starting event monitor process with PID: %s for vgrid: %s' %
+                (pid, vgrid_name))
 
     # Set base directories and appropriate lengths
 
@@ -1654,7 +1412,8 @@ def monitor(configuration, vgrid_name):
     rule_monitor = Observer()
     rule_patterns = [os.path.join(vgrid_home, '*')]
     shared_state['rule_handler'] = MiGRuleEventHandler(
-        patterns=rule_patterns, ignore_directories=False, case_sensitive=True)
+        configuration, patterns=rule_patterns, ignore_directories=False,
+        case_sensitive=True)
 
     rule_monitor.schedule(shared_state['rule_handler'], vgrid_home,
                           recursive=recursive_rule_monitor)
@@ -1694,8 +1453,8 @@ def monitor(configuration, vgrid_name):
                 % (pid, file_patterns))
 
     shared_state['file_handler'] = MiGFileEventHandler(
-        patterns=file_patterns, ignore_directories=False, case_sensitive=True,
-        sub_vgrids=writeable_sub_vgrids)
+        configuration, patterns=file_patterns, ignore_directories=False,
+        case_sensitive=True, sub_vgrids=writeable_sub_vgrids)
 
     vgrid_homes = [os.path.join(configuration.vgrid_files_writable, sub_vgrid)
                    for sub_vgrid in writeable_sub_vgrids]
@@ -1820,7 +1579,7 @@ def monitor(configuration, vgrid_name):
     if activated:
         print('(%s) Saving cache for vgrid: %s' % (pid, vgrid_name))
         logger.info('(%s) Saving cache for vgrid: %s' % (pid, vgrid_name))
-        save_dir_cache(vgrid_name)
+        save_dir_cache(configuration, vgrid_name)
 
     print('(%s) Exiting monitor for vgrid: %s' % (pid, vgrid_name))
     logger.info('(%s) Exiting for vgrid: %s' % (pid, vgrid_name))
@@ -1874,8 +1633,8 @@ unless it is available in mig/server/MiGserver.conf
 
     vgrid_name = '.'
     vgrid_monitors[vgrid_name] = \
-        multiprocessing.Process(target=monitor, args=(configuration,
-                                                      vgrid_name))
+        multiprocessing.Process(target=event_monitor, args=(configuration,
+                                                            vgrid_name))
 
     # Each top vgrid gets is own process
 
@@ -1885,7 +1644,7 @@ unless it is available in mig/server/MiGserver.conf
         if os.path.isdir(ent.path) and os.path.isdir(vgrid_files_path):
             vgrid_name = ent.name
             vgrid_monitors[vgrid_name] = \
-                multiprocessing.Process(target=monitor,
+                multiprocessing.Process(target=event_monitor,
                                         args=(configuration, vgrid_name))
 
         # else:
@@ -1907,29 +1666,30 @@ unless it is available in mig/server/MiGserver.conf
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to all monitor children
             print("Interrupt requested - close monitors and shutdown")
-            logger.info('(%s) Shut down monitors and wait' % os.getpid())
+            logger.info('(%s) Shut down event monitors and wait' % os.getpid())
             for monitor in vgrid_monitors.values():
                 mon_pid = monitor.pid
                 if mon_pid is None:
                     continue
-                logger.debug('send exit signal to monitor %s' % mon_pid)
+                logger.debug('send exit signal to event monitor %s' % mon_pid)
                 os.kill(mon_pid, signal.SIGINT)
 
-            logger.info('Wait for monitors to clean up')
+            logger.info('Wait for event monitors to clean up')
             for monitor in vgrid_monitors.values():
                 mon_pid = monitor.pid
-                logger.debug('wait for monitor %s: %s' % (mon_pid,
-                                                          monitor.is_alive()))
+                logger.debug('wait for event monitor %s: %s' %
+                             (mon_pid, monitor.is_alive()))
                 monitor.join(5)
                 if monitor.is_alive():
-                    logger.warning("force kill %s: %s" % (mon_pid,
-                                                          monitor.is_alive()))
+                    logger.warning("force kill %s: %s" %
+                                   (mon_pid, monitor.is_alive()))
                     monitor.terminate()
                 else:
-                    logger.debug('monitor %s: done' % mon_pid)
+                    logger.debug('event monitor %s: done' % mon_pid)
 
-            logger.info('(%s) Shut down: all monitors done' % os.getpid())
-            print("All monitors finished shutting down")
+            logger.info('(%s) Shut down: all event monitors done' %
+                        os.getpid())
+            print("All event monitors finished shutting down")
 
     print('Event handler daemon shutting down')
     logger.info('(%s) Event handler daemon shutting down' % main_pid)

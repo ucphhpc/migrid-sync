@@ -35,13 +35,18 @@ import datetime
 import fnmatch
 import importlib
 import multiprocessing
+import logging
+import logging.handlers
 import os
 import re
 import shlex
+import threading
+import time
 
 from mig.shared.base import client_id_dir
 from mig.shared.cmdapi import parse_command_args
-from mig.shared.defaults import crontab_name, csrf_field, atjobs_name
+from mig.shared.defaults import atjobs_name, cron_log_cnt, cron_log_name, \
+    cron_log_size, crontab_name, cron_output_dir, csrf_field
 from mig.shared.fileio import read_file, read_file_lines, write_file
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.output import txt_format
@@ -79,8 +84,11 @@ UNIT_PERIODS = {
     'w': 7 * 24 * 60 * 60,
 }
 
+_hits_lock = threading.Lock()
+rule_hits = {}
 
-def get_path_expand_map(trigger_path, rule, state_change):
+
+def get_path_expand_map(configuration, trigger_path, rule, state_change):
     """Generate a dictionary with the supported variables to be expanded and
     the actual expanded values based on trigger_path and rule dictionary.
     """
@@ -108,7 +116,7 @@ def get_path_expand_map(trigger_path, rule, state_change):
     return expand_map
 
 
-def get_time_expand_map(timestamp, rule):
+def get_time_expand_map(configuration, timestamp, rule):
     """Generate a dictionary with the supported variables to be expanded and
     the actual expanded values based on datetime timestamp and crontab rule
     dictionary.
@@ -304,6 +312,368 @@ def at_remain(configuration, at_time, entry):
     return int((entry['time_stamp'] - at_time).total_seconds() // 60)
 
 
+def is_fake_event(event):
+    """Check if event came from our trigger-X rules rather than a real file
+    system change.
+    """
+
+    return getattr(event, TRIGGER_EVENT, False)
+
+
+def extract_time_in_secs(configuration, rule, field):
+    """Get time in seconds for provided free form period field. The value is a
+    integer or float string with optional unit letter appended. If no unit is
+    given the default period is used and if all empty the default time is used.
+    """
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+
+    limit_str = rule.get(field, '')
+    if not limit_str:
+        limit_str = "%s" % DEFAULT_TIME
+
+    # NOTE: format is 3(s) or 52m
+    # extract unit suffix letter and fall back to a raw value with default unit
+
+    unit_key = DEFAULT_PERIOD
+    if not limit_str[-1:].isdigit():
+        val_str = limit_str[:-1]
+        if limit_str[-1] in UNIT_PERIODS:
+            unit_key = limit_str[-1]
+        else:
+            logger.warning("invalid time value %s ... fall back to defaults" %
+                           limit_str)
+            (unit_key, val_str) = (DEFAULT_PERIOD, DEFAULT_TIME)
+    else:
+        val_str = limit_str
+    try:
+        secs = float(val_str) * UNIT_PERIODS[unit_key]
+    except Exception as exc:
+        logger.error('(%s): failed to parse time %s (%s)!' % (pid, limit_str,
+                                                              exc))
+        secs = 0.0
+    secs = max(secs, 0.0)
+    return secs
+
+
+def extract_hit_limit(configuration, rule, field):
+    """Get rule rate limit as (max_hits, period_length)-tuple for provided
+    rate limit field where the limit kicks in when more than max_hits happened
+    within the last period_length seconds.
+    """
+    logger = configuration.logger
+    limit_str = rule.get(field, '')
+
+    # NOTE: format is 3(/m) or 52/h
+    # split string on slash and fall back to no limit and default unit
+
+    parts = (limit_str.split('/', 1) + [DEFAULT_PERIOD])[:2]
+    (number, unit) = parts
+    if not number.isdigit():
+        number = '-1'
+    if unit not in UNIT_PERIODS:
+        unit = DEFAULT_PERIOD
+    return (int(number), UNIT_PERIODS[unit])
+
+
+def update_rule_hits(configuration,
+                     rule,
+                     path,
+                     change,
+                     ref,
+                     time_stamp,
+                     ):
+    """Update rule hits history with event and remove expired entries. Makes
+    sure to neither expire events needed for rate limit nor settle time
+    checking.
+    """
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+    (_, hit_period) = extract_hit_limit(configuration, rule, RATE_LIMIT_FIELD)
+    settle_period = extract_time_in_secs(configuration, rule,
+                                         SETTLE_TIME_FIELD)
+
+    # logger.debug('(%s) update rule hits at %s for %s and %s %s %s' % (
+    #    pid,
+    #    time_stamp,
+    #    rule,
+    #    path,
+    #    change,
+    #    ref,
+    #    ))
+
+    _hits_lock.acquire()
+    rule_history = rule_hits.get(rule['rule_id'], [])
+    rule_history.append((path, change, ref, time_stamp))
+    max_period = max(hit_period, settle_period)
+    period_history = [i for i in rule_history if time_stamp - i[3]
+                      <= max_period]
+    rule_hits[rule['rule_id']] = period_history
+    _hits_lock.release()
+
+    # logger.debug('(%s) updated rule hits for %s to %s' % (pid,
+    #             rule['rule_id'], period_history))
+
+
+def get_rule_hits(configuration, rule, limit_field):
+    """find rule hit details"""
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+
+    if limit_field == RATE_LIMIT_FIELD:
+        (hit_count, hit_period) = extract_hit_limit(configuration, rule,
+                                                    limit_field)
+    elif limit_field == SETTLE_TIME_FIELD:
+        (hit_count, hit_period) = (1, extract_time_in_secs(configuration, rule,
+                                                           limit_field))
+    else:
+        logger.error('(%s) get_rule_hits invalid limit_field %s' %
+                     (pid, limit_field))
+        raise ValueError("got unexpected limit_field %r" % limit_field)
+
+    _hits_lock.acquire()
+    rule_history = rule_hits.get(rule['rule_id'], [])
+    res = (rule_history, hit_count, hit_period)
+    _hits_lock.release()
+
+    # logger.debug('(%s) get_rule_hits found %s' % (pid, res))
+
+    return res
+
+
+def get_path_hits(configuration, rule, path, limit_field):
+    """find path hit details"""
+
+    (rule_history, hit_count, hit_period) = get_rule_hits(configuration, rule,
+                                                          limit_field)
+    path_history = [i for i in rule_history if i[0] == path]
+    return (path_history, hit_count, hit_period)
+
+
+def above_path_limit(configuration,
+                     rule,
+                     path,
+                     limit_field,
+                     time_stamp,
+                     ):
+    """Check path trigger history against limit field and return boolean
+    indicating if the rate limit or settle time should kick in.
+    """
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+
+    (path_history, hit_count, hit_period) = get_path_hits(configuration, rule,
+                                                          path, limit_field)
+    if hit_count <= 0 or hit_period <= 0:
+
+        # logger.debug('(%s) no %s limit set' % (pid, limit_field))
+
+        return False
+    period_history = [i for i in path_history if time_stamp - i[3]
+                      <= hit_period]
+
+    # logger.debug('(%s) above path %s test found %s vs %d' % (pid,
+    #             limit_field, period_history, hit_count))
+
+    if len(period_history) >= hit_count:
+        return True
+    return False
+
+
+def show_path_hits(configuration, rule, path, limit_field):
+    """Return path hit details for printing"""
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+
+    msg = ''
+    (path_history, hit_count, hit_period) = get_path_hits(configuration, rule,
+                                                          path, limit_field)
+    msg += \
+        '(%s) found %d entries in trigger history and limit is %d per %s s' \
+        % (pid, len(path_history), hit_count, hit_period)
+    return msg
+
+
+def wait_settled(configuration,
+                 rule,
+                 path,
+                 change,
+                 settle_secs,
+                 time_stamp,
+                 ):
+    """Lookup recent change events on path and check if settle_secs passed
+    since last one. Returns the number of seconds needed without further
+    events for changes to be considered settled.
+    """
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+
+    limit_field = SETTLE_TIME_FIELD
+    (path_history, _, hit_period) = get_path_hits(configuration, rule, path,
+                                                  limit_field)
+    period_history = [i for i in path_history if time_stamp - i[3]
+                      <= hit_period]
+
+    # logger.debug('(%s) wait_settled: path %s, change %s, settle_secs %s'
+    #              % (pid, path, change, settle_secs))
+
+    if not period_history:
+        remain = 0.0
+    else:
+
+        # NOTE: the time_stamp - i[3] values are non-negative here
+        # since hit_period >= 0.
+        # Thus we can just take the smallest and subtract from settle_secs
+        # to always wait the remaining part of settle_secs.
+
+        remain = settle_secs - min([time_stamp - i[3] for i in
+                                    period_history])
+
+    # logger.debug('(%s) wait_settled: remain %.1f , period_history %s'
+    #             % (pid, remain, period_history))
+
+    return remain
+
+
+def recently_modified(configuration, path, time_stamp, slack=2.0):
+    """Check if path was actually recently modified and not just accessed.
+    If atime and mtime are the same or if mtime is within slack from time_stamp
+    we accept it as recently changed.
+    """
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+
+    try:
+        stat_res = os.stat(path)
+        result = stat_res.st_mtime == stat_res.st_atime \
+            or stat_res.st_mtime > time_stamp - slack
+    except OSError as exc:
+
+        # If we get an OSError, *path* is most likely deleted
+
+        result = True
+
+        # logger.debug('(%s) OSError: %s' % (pid, exc))
+
+    return result
+
+
+def __cron_log(configuration, client_id, msg, level="info"):
+    """Wrapper to send a single msg to user cron log file"""
+
+    client_dir = client_id_dir(client_id)
+    log_dir_path = os.path.join(configuration.user_home, client_dir,
+                                cron_output_dir)
+    log_path = os.path.join(log_dir_path, cron_log_name)
+    if not os.path.exists(log_dir_path):
+        try:
+            os.makedirs(log_dir_path)
+        except:
+            pass
+    cron_logger = logging.getLogger('cron')
+    cron_logger.setLevel(logging.INFO)
+    handler = logging.handlers.RotatingFileHandler(
+        log_path, maxBytes=cron_log_size, backupCount=cron_log_cnt - 1)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    handler.setFormatter(formatter)
+    cron_logger.addHandler(handler)
+    if level == 'error':
+        cron_logger.error(msg)
+    elif level == 'warning':
+        cron_logger.warning(msg)
+    else:
+        cron_logger.info(msg)
+    handler.flush()
+    handler.close()
+    cron_logger.removeHandler(handler)
+
+
+def __cron_err(configuration, client_id, msg):
+    """Wrapper to send a single error msg to client_id cron log"""
+
+    __cron_log(configuration, client_id, msg, 'error')
+
+
+def __cron_warn(configuration, client_id, msg):
+    """Wrapper to send a single warning msg to client_id cron log"""
+
+    __cron_log(configuration, client_id, msg, 'warning')
+
+
+def __cron_info(configuration, client_id, msg):
+    """Wrapper to send a single info msg to client_id cron log"""
+
+    __cron_log(configuration, client_id, msg, 'info')
+
+
+def __handle_cronjob(configuration, client_id, timestamp, crontab_entry):
+    """Actually handle valid crontab entry which is due"""
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+    logger.info('(%s) in handling of %s for %s' % (pid,
+                                                   crontab_entry['command'],
+                                                   client_id))
+    __cron_info(configuration, client_id, 'handle %s for %s' %
+                (crontab_entry['command'], client_id))
+
+    if crontab_entry['run_as'] != client_id:
+        logger.error('(%s) skipping due to owner mismatch for %s and %s!' %
+                     (pid, client_id, crontab_entry))
+        return False
+
+    # Expand dynamic time variables in argument once and for all
+
+    expand_map = get_time_expand_map(configuration, timestamp, crontab_entry)
+    command_list = crontab_entry['command'][:1]
+    for argument in crontab_entry['command'][1:]:
+        filled_argument = argument
+        for (key, val) in expand_map.items():
+            filled_argument = filled_argument.replace(key, val)
+        __cron_info(configuration, client_id,
+                    'expanded argument %s to %s' %
+                    (argument, filled_argument))
+        command_list.append(filled_argument)
+    try:
+        run_cron_command(command_list, client_id, crontab_entry, configuration)
+        logger.info('(%s) done running command for %s: %s' %
+                    (pid, client_id, ' '.join(command_list)))
+        __cron_info(configuration, client_id,
+                    'ran command: %s' % ' '.join(command_list))
+    except Exception as exc:
+        command_str = ' '.join(command_list)
+        logger.error('(%s) failed to run command for %s: %s (%s)' %
+                     (pid, client_id, command_str, exc))
+        __cron_err(configuration, client_id,
+                   'failed to run command: %s (%s)' % (command_str, exc))
+
+
+def run_cron_handler(configuration, client_id, timestamp, crontab_entry):
+    """Run crontab entry for client_id in a properly isolated process to avoid
+    concurrent worker interference.
+    """
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+
+    # TODO: Replace try/catch with an event queue or process pool setup
+
+    waiting_for_worker_resources = True
+    while waiting_for_worker_resources:
+        try:
+            worker = \
+                multiprocessing.Process(target=__handle_cronjob,
+                                        args=(configuration, client_id,
+                                              timestamp, crontab_entry))
+            worker.daemon = True
+            worker.start()
+            waiting_for_worker_resources = False
+        except multiprocessing.ProcessError as exc:
+
+            # logger.debug('(%s) Waiting for worker resources to handle crontab: %s'
+            #              % (pid, crontab_entry))
+
+            time.sleep(1)
+
+
 def run_cron_command(
     command_list,
     target_path,
@@ -472,7 +842,7 @@ if __name__ == '__main__':
     print("Test trigger event map:")
     for (path, change) in trigger_samples:
         print("Expanded path vars for %s %s:" % (path, change))
-        expanded = get_path_expand_map(path, trigger_rule, change)
+        expanded = get_path_expand_map(conf, path, trigger_rule, change)
         for (key, val) in expanded.items():
             print("    %s: %s" % (key, val))
 
@@ -487,7 +857,7 @@ if __name__ == '__main__':
             match = cron_match(conf, timestamp, rule)
             print("Cron match against %s in rule: %s" % (timestamp, match))
             print("Expanded time %s vars:" % timestamp)
-            expanded = get_time_expand_map(timestamp, rule)
+            expanded = get_time_expand_map(conf, timestamp, rule)
             for (key, val) in expanded.items():
                 print("    %s: %s" % (key, val))
     now_stamp = now.isoformat(" ")
