@@ -52,6 +52,7 @@ except ImportError as ierr:
 
 from mig.shared.base import force_utf8, generate_https_urls, extract_field, \
     canonical_user_with_peers, cert_field_map, get_site_base_url
+from mig.shared.conf import RuntimeConfiguration
 from mig.shared.defaults import email_keyword_list, job_output_dir, \
     transfer_output_dir, keyword_auto, cert_auto_extend_days, \
     oid_auto_extend_days
@@ -561,11 +562,35 @@ def send_instant_message(
 
 
 def send_email(
+        configuration,
+        recipients,
+        subject,
+        message,
+        files=[],
+        custom_sender=None):
+    """Send email to recipients via the actively configured method."""
+
+    assert RuntimeConfiguration.is_runtime_configuration(configuration)
+
+    notifier = configuration.context_get('notifier')
+    if not notifier:
+        notifier = Notifier(configuration)
+        configuration.context_set('notifier', notifier)
+
+    return notifier.send_email(
+        recipients,
+        subject,
+        message,
+        files=files,
+        custom_sender=custom_sender,
+    )
+
+
+def direct_send_email(
+    configuration,
     recipients,
     subject,
     message,
-    logger,
-    configuration,
     files=[],
     custom_sender=None
 ):
@@ -589,13 +614,14 @@ def send_email(
     """
 
     _logger = configuration.logger
+
     gpg_sign = False
     if configuration.site_gpg_passphrase is not None:
         if gnupg is None:
-            logger.warning("the gnupg module is required for gpg signing")
+            _logger.warning("the gnupg module is required for gpg signing")
         else:
             gpg_sign = True
-            logger.debug("enabling automatic gpg signing of email")
+            _logger.debug("enabling automatic gpg signing of email")
 
     if recipients.find(', ') > -1:
         recipients_list = recipients.split(', ')
@@ -631,7 +657,7 @@ def send_email(
         basemsg = MIMEText(force_utf8(message), "plain", "utf8")
         mime_msg.attach(basemsg)
         if gpg_sign:
-            logger.info("signing message with gpg")
+            _logger.info("signing message with gpg")
             gpg = gnupg.GPG()
             basetext = basemsg.as_string().replace('\n', '\r\n')
             signature = gpg.sign(basetext, detach=True,
@@ -643,7 +669,7 @@ def send_email(
                 msg_sig.set_payload("%s" % signature)
                 mime_msg.attach(msg_sig)
             else:
-                logger.warning("failed to create gnupg signature")
+                _logger.warning("failed to create gnupg signature")
 
         for name in files:
             part = MIMEBase('application', "octet-stream")
@@ -652,7 +678,7 @@ def send_email(
             part.add_header('Content-Disposition',
                             'attachment', filename=os.path.basename(name))
             mime_msg.attach(part)
-        logger.debug('sending email from %s to %s:\n%s' %
+        _logger.debug('sending email from %s to %s:\n%s' %
                      (from_email, recipients, mime_msg.as_string()))
         server = smtplib.SMTP(configuration.smtp_server)
         server.set_debuglevel(0)
@@ -664,10 +690,10 @@ def send_email(
                             % errors)
             return False
         else:
-            logger.debug('Email was sent to %s' % recipients)
+            _logger.debug('Email was sent to %s' % recipients)
             return True
     except Exception as err:
-        logger.error('Sending email to %s through %s failed!: %s'
+        _logger.error('Sending email to %s through %s failed!: %s'
                      % (recipients, configuration.smtp_server, err))
         return False
 
@@ -819,8 +845,8 @@ def notify_user(
 
                     continue
 
-                if send_email(single_dest, header, message, logger,
-                              configuration, custom_sender=email_sender):
+                if send_email(configuration, single_dest, header, message,
+                              custom_sender=email_sender):
                     logger.info('email sent to %s telling that %s %s'
                                 % (single_dest, jobid, status))
                 else:
@@ -906,7 +932,7 @@ Resource creation command to run from 'mig' base directory:
         os.path.basename(pending_file),
     )
 
-    status = send_email(recipients, subject, txt, logger, configuration)
+    status = send_email(configuration, recipients, subject, txt)
     if status:
         msg += '\nEmail was sent to admins'
     else:
@@ -961,3 +987,13 @@ def send_system_notification(user_id, category, message, configuration):
     return send_message_to_grid_notify(pickled_notification,
                                        configuration.logger,
                                        configuration)
+
+
+class Notifier:
+    def __init__(self, configuration):
+        self.configuration = configuration
+
+    def send_email(self, recipients, subject, message, files=[], custom_sender=None):
+        return direct_send_email(self.configuration, recipients, subject, message,
+                                                        files=[],
+                                                        custom_sender=None)

@@ -740,8 +740,7 @@ The %(short_title)s Admins
         logger.info('Send email: to: %s, header: %s, smtp_server: %s'
                     % (email, email_header, smtp_server))
         logger.debug('email body:  %s' % email_msg)
-        if not send_email(email, email_header, email_msg, logger,
-                          configuration):
+        if not send_email(configuration, email, email_header, email_msg):
             output_objects.append({
                 'object_type': 'error_text', 'text': """An error occurred trying
 to send your account welcome email. Please contact support (%s) and include the

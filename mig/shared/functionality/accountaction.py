@@ -141,11 +141,10 @@ Renewed account:
         email_msg = email_header + email_msg_template
         recipient = user_dict.get('email', '')
         # Notify user
-        notify_status = send_email(recipient,
+        notify_status = send_email(configuration,
+                                   recipient,
                                    email_subject,
-                                   email_msg,
-                                   _logger,
-                                   configuration)
+                                   email_msg)
         if not notify_status:
             _logger.error("Failed to send account renew notification to %s"
                           % recipient)
@@ -155,11 +154,10 @@ Renewed account:
             email_header = "Your %s external peer made an account renewal\n\n" \
                 % configuration.short_title
             email_msg = email_header + email_msg_template
-            notify_status = send_email(recipient,
+            notify_status = send_email(configuration,
+                                       recipient,
                                        email_subject,
-                                       email_msg,
-                                       _logger,
-                                       configuration)
+                                       email_msg)
             if not notify_status:
                 _logger.error("Failed to send account renew notification" \
                               + " to peer %s" % recipient)

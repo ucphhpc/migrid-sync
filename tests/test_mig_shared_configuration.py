@@ -38,11 +38,6 @@ from mig.shared.configuration import Configuration, \
     _CONFIGURATION_ARGUMENTS, _CONFIGURATION_PROPERTIES
 
 
-def _to_dict(obj):
-    return {k: v for k, v in inspect.getmembers(obj)
-            if not (k.startswith('__') or inspect.ismethod(v) or inspect.isfunction(v))}
-
-
 class MigSharedConfiguration__static_definitions(MigTestCase):
     """Coverage of the static definitions underlying Configuration objects."""
 
@@ -349,7 +344,7 @@ class MigSharedConfiguration__new_instance(MigTestCase, FixtureAssertMixin):
         configuration.state_path = '/some/place/state'
         configuration.mig_path = '/some/place/mig'
 
-        actual_values = _to_dict(configuration)
+        actual_values = Configuration.to_dict(configuration)
 
         prepared_fixture.assertAgainstFixture(actual_values)
 
