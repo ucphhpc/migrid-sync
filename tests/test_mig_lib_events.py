@@ -80,7 +80,7 @@ class MigLibEvents(MigTestCase):
         """Test loading crontab from file"""
         crontab_path = os.path.join(self.configuration.user_settings,
                                     DUMMY_CLIENT_DIR, DUMMY_CRONTAB_NAME)
-        os.makedirs(os.path.dirname(crontab_path), exist_ok=True)
+        ensure_dirs_exist(os.path.dirname(crontab_path))
         with open(crontab_path, 'w') as fd:
             fd.write(DUMMY_CRONTAB_CONTENT)
 
@@ -91,7 +91,7 @@ class MigLibEvents(MigTestCase):
         """Test loading atjobs from file"""
         atjobs_path = os.path.join(self.configuration.user_settings,
                                    DUMMY_CLIENT_DIR, DUMMY_ATJOBS_NAME)
-        os.makedirs(os.path.dirname(atjobs_path), exist_ok=True)
+        ensure_dirs_exist(os.path.dirname(atjobs_path))
         with open(atjobs_path, 'w') as fd:
             fd.write(DUMMY_ATJOBS_CONTENT)
 
@@ -189,7 +189,7 @@ class MigLibEvents(MigTestCase):
         """Test parsing valid crontab file"""
         crontab_path = os.path.join(self.configuration.user_settings,
                                     DUMMY_CLIENT_DIR, DUMMY_CRONTAB_NAME)
-        os.makedirs(os.path.dirname(crontab_path), exist_ok=True)
+        ensure_dirs_exist(os.path.dirname(crontab_path))
         with open(crontab_path, 'w') as fd:
             fd.write(DUMMY_CRONTAB_CONTENT)
 
@@ -201,7 +201,7 @@ class MigLibEvents(MigTestCase):
         """Test parsing empty crontab file"""
         crontab_path = os.path.join(self.configuration.user_settings,
                                     DUMMY_CLIENT_DIR, DUMMY_CRONTAB_NAME)
-        os.makedirs(os.path.dirname(crontab_path), exist_ok=True)
+        ensure_dirs_exist(os.path.dirname(crontab_path))
         open(crontab_path, 'a').close()  # Create empty file
 
         parsed = parse_crontab(self.configuration, DUMMY_USER_DN, crontab_path)
@@ -211,7 +211,7 @@ class MigLibEvents(MigTestCase):
         """Test parsing valid atjobs file"""
         atjobs_path = os.path.join(self.configuration.user_settings,
                                    DUMMY_CLIENT_DIR, DUMMY_ATJOBS_NAME)
-        os.makedirs(os.path.dirname(atjobs_path), exist_ok=True)
+        ensure_dirs_exist(os.path.dirname(atjobs_path))
         with open(atjobs_path, 'w') as fd:
             fd.write(DUMMY_ATJOBS_CONTENT)
 
@@ -223,7 +223,7 @@ class MigLibEvents(MigTestCase):
         """Test parsing empty atjobs file"""
         atjobs_path = os.path.join(self.configuration.user_settings,
                                    DUMMY_CLIENT_DIR, DUMMY_ATJOBS_NAME)
-        os.makedirs(os.path.dirname(atjobs_path), exist_ok=True)
+        ensure_dirs_exist(os.path.dirname(atjobs_path))
         open(atjobs_path, 'a').close()  # Create empty file
 
         parsed = parse_atjobs(self.configuration, DUMMY_USER_DN, atjobs_path)
