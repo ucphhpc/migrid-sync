@@ -350,6 +350,7 @@ def run_cron_command(
     except Exception as exc:
         logger.error('(%s) failed to lookup function matching command %s' %
                      (pid, command_str))
+        raise exc
 
     form_method = 'post'
     target_op = "%s" % function
@@ -433,6 +434,7 @@ def run_events_command(
     except Exception as exc:
         logger.error('(%s) failed to lookup function matching command %s' %
                      (pid, command_str))
+        raise exc
 
     form_method = 'post'
     target_op = "%s" % function
