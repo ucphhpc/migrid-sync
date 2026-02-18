@@ -63,14 +63,12 @@ except ImportError:
 from mig.lib.daemon import check_stop, register_stop_handler, stop_running
 from mig.lib.events import CACHE_EXPIRE_SIZE, DEFAULT_PERIOD, DEFAULT_TIME, \
     MISS_CACHE_TTL, RATE_LIMIT_FIELD, SETTLE_TIME_FIELD, TRIGGER_EVENT, \
-    UNIT_PERIODS, get_path_expand_map
+    UNIT_PERIODS, get_path_expand_map, run_events_command
 from mig.shared.base import force_utf8
-from mig.shared.cmdapi import parse_command_args
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
-    workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
+    workflows_log_size, workflows_log_cnt, default_vgrid
 from mig.shared.fileio import makedirs_rec, pickle, unpickle, scandir, walk
-from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.job import fill_mrsl_template, new_job
 from mig.shared.listhandling import frange
 from mig.shared.logger import daemon_logger, register_hangup_handler
@@ -372,82 +370,6 @@ def recently_modified(path, time_stamp, slack=2.0):
         # logger.debug('(%s) OSError: %s' % (pid, exc))
 
     return result
-
-
-def run_command(
-    command_list,
-    target_path,
-    rule,
-    configuration,
-):
-    """Run backend command built from command_list on behalf of user from
-    rule and with args mapped to the backend variables.
-    """
-
-    pid = multiprocessing.current_process().pid
-    client_id = rule['run_as']
-    command_str = ' '.join(command_list)
-    logger.info('(%s) run command for %s: %s' % (pid, target_path,
-                                                 command_list))
-
-    # logger.debug('(%s) run %s on behalf of %s' % (pid, command_str,
-    #             client_id))
-
-    (function, user_arguments_dict) = parse_command_args(configuration,
-                                                         command_list)
-
-    form_method = 'post'
-    target_op = "%s" % function
-    csrf_limit = get_csrf_limit(configuration)
-    csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                 client_id, csrf_limit)
-    user_arguments_dict[csrf_field] = [csrf_token]
-
-    # logger.debug('(%s) import main from %s' % (pid, function))
-
-    main = id
-    txt_format = id
-    try:
-        exec('from mig.shared.functionality.%s import main' % function)
-        exec('from mig.shared.output import txt_format')
-
-        # logger.debug('(%s) run %s on %s for %s' % \
-        #              (pid, function, user_arguments_dict, client_id))
-
-        # Fake HTTP POST manually setting fields required for CSRF check
-
-        os.environ['HTTP_USER_AGENT'] = 'grid events daemon'
-        os.environ['PATH_INFO'] = '%s.py' % function
-        os.environ['REQUEST_METHOD'] = form_method.upper()
-        # We may need a REMOTE_ADDR for gdplog call even if not really enabled
-        os.environ['REMOTE_ADDR'] = '127.0.0.1'
-        (output_objects, (ret_code, ret_msg)) = main(client_id,
-                                                     user_arguments_dict)
-    except Exception as exc:
-        logger.error('(%s) failed to run %s main on %s: %s' %
-                     (pid, function, user_arguments_dict, exc))
-        import traceback
-        logger.info('traceback:\n%s' % traceback.format_exc())
-        raise exc
-    logger.info('(%s) done running command for %s: %s' %
-                (pid, target_path, command_str))
-
-    # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
-
-    try:
-        txt_out = txt_format(configuration, ret_code, ret_msg,
-                             output_objects)
-    except Exception as exc:
-        txt_out = 'internal command output text formatting failed'
-        logger.error('(%s) text formating failed: %s\nraw output is: %s %s %s'
-                     % (pid, exc, ret_code, ret_msg, output_objects))
-    if ret_code != 0:
-        logger.warning('(%s) command finished but with error code %d :\n%s'
-                       % (pid, ret_code, output_objects))
-        raise Exception('command error: %s' % txt_out)
-
-    # logger.debug('(%s) result was %s : %s:\n%s' % (pid, ret_code,
-    #                                               ret_msg, txt_out))
 
 
 def strip_base_dirs(path):
@@ -987,7 +909,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                      (argument, filled_argument))
                 command_list.append(filled_argument)
             try:
-                run_command(command_list, target_path, rule, configuration)
+                run_events_command(command_list, target_path, rule,
+                                   configuration)
                 logger.info('(%s) done running command for %s: %s' %
                             (pid, target_path, ' '.join(command_list)))
                 self.__workflow_info(configuration, rule['vgrid_name'],

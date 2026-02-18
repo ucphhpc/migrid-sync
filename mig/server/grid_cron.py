@@ -38,7 +38,6 @@ from __future__ import absolute_import
 import datetime
 import fnmatch
 import glob
-import importlib
 import logging
 import logging.handlers
 import multiprocessing
@@ -59,17 +58,14 @@ except ImportError:
 
 from mig.lib.daemon import check_stop, register_stop_handler, stop_running
 from mig.lib.events import get_time_expand_map, parse_crontab, cron_match, \
-    parse_atjobs, at_remain
+    parse_atjobs, at_remain, run_cron_command
 from mig.shared.base import force_utf8, client_dir_id, client_id_dir
-from mig.shared.cmdapi import parse_command_args
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import crontab_name, atjobs_name, cron_output_dir, \
-    cron_log_name, cron_log_size, cron_log_cnt, csrf_field
+    cron_log_name, cron_log_size, cron_log_cnt
 from mig.shared.fileio import makedirs_rec, scandir, walk
-from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.job import fill_mrsl_template, new_job
 from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.output import txt_format
 
 # Global cron entry dictionaries with crontabs for all users
 
@@ -86,82 +82,6 @@ shared_state['crontab_inotify'] = None
 shared_state['crontab_handler'] = None
 
 (configuration, logger) = (None, None)
-
-
-def run_command(
-    command_list,
-    target_path,
-    crontab_entry,
-    configuration,
-):
-    """Run backend command built from command_list on behalf of user from
-    crontab_entry and with args mapped to the backend variables.
-    """
-
-    pid = multiprocessing.current_process().pid
-    client_id = crontab_entry['run_as']
-    command_str = ' '.join(command_list)
-    logger.info('(%s) run command for %s: %s' % (pid, target_path,
-                                                 command_list))
-
-    # logger.debug('(%s) run %s on behalf of %s' % (pid, command_str,
-    #             client_id))
-
-    (function, user_arguments_dict) = parse_command_args(configuration,
-                                                         command_list)
-
-    form_method = 'post'
-    target_op = "%s" % function
-    csrf_limit = get_csrf_limit(configuration)
-    csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                 client_id, csrf_limit)
-    user_arguments_dict[csrf_field] = [csrf_token]
-
-    # logger.debug('(%s) import main from %s' % (pid, function))
-
-    main = None
-    try:
-        main = importlib.import_module('mig.shared.functionality.%s' %
-                                       function).main
-
-        # logger.debug('(%s) run %s on %s for %s' % \
-        #              (pid, function, user_arguments_dict, client_id))
-
-        # Fake HTTP POST manually setting fields required for CSRF check
-
-        os.environ['HTTP_USER_AGENT'] = 'grid cron daemon'
-        os.environ['BACKEND_NAME'] = '%s' % function
-        os.environ['PATH_INFO'] = '%s.py' % function
-        os.environ['REQUEST_METHOD'] = form_method.upper()
-        # We may need a REMOTE_ADDR for gdplog call even if not really enabled
-        os.environ['REMOTE_ADDR'] = '127.0.0.1'
-        (output_objects, (ret_code, ret_msg)) = main(client_id,
-                                                     user_arguments_dict)
-    except Exception as exc:
-        logger.error('(%s) failed to run %s main on %s: %s' %
-                     (pid, function, user_arguments_dict, exc))
-        import traceback
-        logger.info('traceback:\n%s' % traceback.format_exc())
-        raise exc
-    logger.info('(%s) done running command for %s: %s' %
-                (pid, target_path, command_str))
-
-    # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
-
-    try:
-        txt_out = txt_format(configuration, ret_code, ret_msg,
-                             output_objects)
-    except Exception as exc:
-        txt_out = 'internal command output text formatting failed'
-        logger.error('(%s) text formating failed: %s\nraw output is: %s %s %s'
-                     % (pid, exc, ret_code, ret_msg, output_objects))
-    if ret_code != 0:
-        logger.warning('(%s) command finished but with error code %d :\n%s'
-                       % (pid, ret_code, output_objects))
-        raise Exception('command error: %s' % txt_out)
-
-    # logger.debug('(%s) result was %s : %s:\n%s' % (pid, ret_code,
-    #                                               ret_msg, txt_out))
 
 
 class MiGCrontabEventHandler(PatternMatchingEventHandler):
@@ -389,7 +309,7 @@ def __handle_cronjob(configuration, client_id, timestamp, crontab_entry):
                     (argument, filled_argument))
         command_list.append(filled_argument)
     try:
-        run_command(command_list, client_id, crontab_entry, configuration)
+        run_cron_command(command_list, client_id, crontab_entry, configuration)
         logger.info('(%s) done running command for %s: %s' %
                     (pid, client_id, ' '.join(command_list)))
         __cron_info(configuration, client_id,

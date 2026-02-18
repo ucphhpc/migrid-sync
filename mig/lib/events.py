@@ -33,13 +33,18 @@ from __future__ import absolute_import
 
 import datetime
 import fnmatch
+import importlib
+import multiprocessing
 import os
 import re
 import shlex
 
 from mig.shared.base import client_id_dir
-from mig.shared.defaults import crontab_name, atjobs_name
+from mig.shared.cmdapi import parse_command_args
+from mig.shared.defaults import crontab_name, csrf_field, atjobs_name
 from mig.shared.fileio import read_file, read_file_lines, write_file
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.output import txt_format
 
 # Init global crontab regexp once and for all
 # Format: minute hour dayofmonth month dayofweek command
@@ -297,6 +302,158 @@ def at_remain(configuration, at_time, entry):
     """Return the number of minutes remaining before entry should run"""
     _logger = configuration.logger
     return int((entry['time_stamp'] - at_time).total_seconds() // 60)
+
+
+def run_cron_command(
+    command_list,
+    target_path,
+    crontab_entry,
+    configuration,
+):
+    """Run backend command built from command_list on behalf of user from
+    crontab_entry and with args mapped to the backend variables.
+    """
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+    client_id = crontab_entry['run_as']
+    command_str = ' '.join(command_list)
+    logger.info('(%s) run command for %s: %s' % (pid, target_path,
+                                                 command_list))
+
+    # logger.debug('(%s) run %s on behalf of %s' % (pid, command_str,
+    #             client_id))
+
+    (function, user_arguments_dict) = parse_command_args(configuration,
+                                                         command_list)
+
+    form_method = 'post'
+    target_op = "%s" % function
+    csrf_limit = get_csrf_limit(configuration)
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    user_arguments_dict[csrf_field] = [csrf_token]
+
+    # logger.debug('(%s) import main from %s' % (pid, function))
+
+    main = None
+    try:
+        main = importlib.import_module('mig.shared.functionality.%s' %
+                                       function).main
+
+        # logger.debug('(%s) run %s on %s for %s' % \
+        #              (pid, function, user_arguments_dict, client_id))
+
+        # Fake HTTP POST manually setting fields required for CSRF check
+
+        os.environ['HTTP_USER_AGENT'] = 'grid cron daemon'
+        os.environ['BACKEND_NAME'] = '%s' % function
+        os.environ['PATH_INFO'] = '%s.py' % function
+        os.environ['REQUEST_METHOD'] = form_method.upper()
+        # We may need a REMOTE_ADDR for gdplog call even if not really enabled
+        os.environ['REMOTE_ADDR'] = '127.0.0.1'
+        (output_objects, (ret_code, ret_msg)) = main(client_id,
+                                                     user_arguments_dict)
+    except Exception as exc:
+        logger.error('(%s) failed to run %s main on %s: %s' %
+                     (pid, function, user_arguments_dict, exc))
+        import traceback
+        logger.info('traceback:\n%s' % traceback.format_exc())
+        raise exc
+    logger.info('(%s) done running command for %s: %s' %
+                (pid, target_path, command_str))
+
+    # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
+
+    try:
+        txt_out = txt_format(configuration, ret_code, ret_msg,
+                             output_objects)
+    except Exception as exc:
+        txt_out = 'internal command output text formatting failed'
+        logger.error('(%s) text formating failed: %s\nraw output is: %s %s %s'
+                     % (pid, exc, ret_code, ret_msg, output_objects))
+    if ret_code != 0:
+        logger.warning('(%s) command finished but with error code %d :\n%s'
+                       % (pid, ret_code, output_objects))
+        raise Exception('command error: %s' % txt_out)
+
+    # logger.debug('(%s) result was %s : %s:\n%s' % (pid, ret_code,
+    #                                               ret_msg, txt_out))
+
+
+def run_events_command(
+    command_list,
+    target_path,
+    rule,
+    configuration,
+):
+    """Run backend command built from command_list on behalf of user from
+    rule and with args mapped to the backend variables.
+    """
+    logger = configuration.logger
+    pid = multiprocessing.current_process().pid
+    client_id = rule['run_as']
+    command_str = ' '.join(command_list)
+    logger.info('(%s) run command for %s: %s' % (pid, target_path,
+                                                 command_list))
+
+    # logger.debug('(%s) run %s on behalf of %s' % (pid, command_str,
+    #             client_id))
+
+    (function, user_arguments_dict) = parse_command_args(configuration,
+                                                         command_list)
+
+    form_method = 'post'
+    target_op = "%s" % function
+    csrf_limit = get_csrf_limit(configuration)
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    user_arguments_dict[csrf_field] = [csrf_token]
+
+    # logger.debug('(%s) import main from %s' % (pid, function))
+
+    main = id
+    txt_format = id
+    try:
+        exec('from mig.shared.functionality.%s import main' % function)
+        exec('from mig.shared.output import txt_format')
+
+        # logger.debug('(%s) run %s on %s for %s' % \
+        #              (pid, function, user_arguments_dict, client_id))
+
+        # Fake HTTP POST manually setting fields required for CSRF check
+
+        os.environ['HTTP_USER_AGENT'] = 'grid events daemon'
+        os.environ['PATH_INFO'] = '%s.py' % function
+        os.environ['REQUEST_METHOD'] = form_method.upper()
+        # We may need a REMOTE_ADDR for gdplog call even if not really enabled
+        os.environ['REMOTE_ADDR'] = '127.0.0.1'
+        (output_objects, (ret_code, ret_msg)) = main(client_id,
+                                                     user_arguments_dict)
+    except Exception as exc:
+        logger.error('(%s) failed to run %s main on %s: %s' %
+                     (pid, function, user_arguments_dict, exc))
+        import traceback
+        logger.info('traceback:\n%s' % traceback.format_exc())
+        raise exc
+    logger.info('(%s) done running command for %s: %s' %
+                (pid, target_path, command_str))
+
+    # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
+
+    try:
+        txt_out = txt_format(configuration, ret_code, ret_msg,
+                             output_objects)
+    except Exception as exc:
+        txt_out = 'internal command output text formatting failed'
+        logger.error('(%s) text formating failed: %s\nraw output is: %s %s %s'
+                     % (pid, exc, ret_code, ret_msg, output_objects))
+    if ret_code != 0:
+        logger.warning('(%s) command finished but with error code %d :\n%s'
+                       % (pid, ret_code, output_objects))
+        raise Exception('command error: %s' % txt_out)
+
+    # logger.debug('(%s) result was %s : %s:\n%s' % (pid, ret_code,
+    #                                               ret_msg, txt_out))
 
 
 if __name__ == '__main__':
