@@ -305,6 +305,26 @@ def at_remain(configuration, at_time, entry):
     return int((entry['time_stamp'] - at_time).total_seconds() // 60)
 
 
+def _save_env(environ=None):
+    """Save a copy of environ for later restore. If environ is left unset
+    os.environ will be used.
+    """
+    if environ is None:
+        environ = os.environ
+    return dict(environ)
+
+
+def _restore_env(saved, environ=None):
+    """Restore a previously saved enviroment dict into environ. If environ is
+    left unset os.environ will be used.
+    """
+    if environ is None:
+        environ = os.environ
+    environ.clear()
+    environ.update(saved)
+    return environ
+
+
 def run_cron_command(
     command_list,
     target_path,
@@ -341,6 +361,7 @@ def run_cron_command(
     # logger.debug('(%s) import main from %s' % (pid, function))
 
     main = None
+    saved_environ = _save_env(os.environ)
     try:
         main = importlib.import_module('mig.shared.functionality.%s' %
                                        function).main
@@ -358,11 +379,13 @@ def run_cron_command(
         os.environ['REMOTE_ADDR'] = '127.0.0.1'
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                                                      user_arguments_dict)
+        _restore_env(saved_environ, os.environ)
     except Exception as exc:
         logger.error('(%s) failed to run %s main on %s: %s' %
                      (pid, function, user_arguments_dict, exc))
         import traceback
         logger.info('traceback:\n%s' % traceback.format_exc())
+        _restore_env(saved_environ, os.environ)
         raise exc
     logger.info('(%s) done running command for %s: %s' %
                 (pid, target_path, command_str))
@@ -422,6 +445,7 @@ def run_events_command(
 
     main = id
     txt_format = id
+    saved_environ = _save_env(os.environ)
     try:
         main = importlib.import_module('mig.shared.functionality.%s' %
                                        function).main
@@ -432,17 +456,20 @@ def run_events_command(
         # Fake HTTP POST manually setting fields required for CSRF check
 
         os.environ['HTTP_USER_AGENT'] = 'grid events daemon'
+        os.environ['BACKEND_NAME'] = '%s' % function
         os.environ['PATH_INFO'] = '%s.py' % function
         os.environ['REQUEST_METHOD'] = form_method.upper()
         # We may need a REMOTE_ADDR for gdplog call even if not really enabled
         os.environ['REMOTE_ADDR'] = '127.0.0.1'
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                                                      user_arguments_dict)
+        _restore_env(saved_environ, os.environ)
     except Exception as exc:
         logger.error('(%s) failed to run %s main on %s: %s' %
                      (pid, function, user_arguments_dict, exc))
         import traceback
         logger.info('traceback:\n%s' % traceback.format_exc())
+        _restore_env(saved_environ, os.environ)
         raise exc
     logger.info('(%s) done running command for %s: %s' %
                 (pid, target_path, command_str))
