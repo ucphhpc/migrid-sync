@@ -163,27 +163,38 @@ class MigLibEvents(MigTestCase):
         self.assertIn('+SCHEDYEAR+', expanded)
         self.assertEqual(expanded['+SCHEDYEAR+'], '2023')
 
-    def test_run_cron_command(self):
-        """Test running cron command"""
+    def test_run_cron_command_touch_succeeds(self):
+        """Test running cron command touch succeeds"""
         target_path = 'test.txt'
         command_list = ['touch', target_path]
         crontab_entry = {'run_as': DUMMY_USER_DN}
+        abs_target_path = os.path.join(self.configuration.user_home,
+                                       DUMMY_CLIENT_DIR, target_path)
+        if os.path.exists(abs_target_path):
+            os.remove(abs_target_path)
+        self.assertFalse(os.path.exists(abs_target_path))
+
         try:
             run_cron_command(command_list, target_path, crontab_entry,
                              self.configuration)
             self.assertTrue(True)  # If no exception, test passes
+            self.assertTrue(os.path.exists(abs_target_path))
         except Exception as exc:
             self.fail("run_cron_command raised an exception: %s" % exc)
 
-    def test_run_events_command(self):
-        """Test running events command"""
+    def test_run_events_command_touch_succeeds(self):
+        """Test running events command touch succeeds"""
         target_path = 'test.txt'
         command_list = ['touch', target_path]
         rule = {'run_as': DUMMY_USER_DN}
+        abs_target_path = os.path.join(self.configuration.user_home,
+                                       DUMMY_CLIENT_DIR, target_path)
+        self.assertFalse(os.path.exists(abs_target_path))
         try:
             run_events_command(command_list, target_path, rule,
                                self.configuration)
             self.assertTrue(True)  # If no exception, test passes
+            self.assertTrue(os.path.exists(abs_target_path))
         except Exception as exc:
             self.fail("run_events_command raised an exception: %s" % exc)
 
