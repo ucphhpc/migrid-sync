@@ -29,8 +29,6 @@
 
 import datetime
 import os
-import shutil
-import time
 import unittest
 
 from mig.lib.events import _restore_env, _save_env, at_remain, cron_match, \
@@ -39,7 +37,6 @@ from mig.lib.events import main as events_main
 from mig.lib.events import parse_and_save_atjobs, parse_and_save_crontab, \
     parse_atjobs, parse_atjobs_contents, parse_crontab, \
     parse_crontab_contents, run_cron_command, run_events_command
-from mig.shared.base import distinguished_name_to_user
 from tests.support import MigTestCase, ensure_dirs_exist
 
 DUMMY_USER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
@@ -518,7 +515,7 @@ class MigLibEvents(MigTestCase):
         trigger_path = ""
         rule = {"vgrid_name": "test", "run_as": DUMMY_USER_DN}
         with self.assertRaises(ValueError):
-            expanded = get_path_expand_map(trigger_path, rule, "modified")
+            get_path_expand_map(trigger_path, rule, "modified")
 
     def test_get_time_expand_map_leap_year(self):
         """Test time expansion with leap year"""
@@ -1884,7 +1881,7 @@ invalid line
         }
         # NOTE: throws exception before log since values must be strings
         with self.assertRaises(Exception):
-            result = cron_match(self.configuration, now, test_job)
+            cron_match(self.configuration, now, test_job)
 
     # NOTE: no datetime support https://github.com/python/cpython/issues/67762
     @unittest.skip("enable if leap second handling is ever implemented")
@@ -1997,7 +1994,7 @@ invalid line
         }
         # NOTE: throws exception before log since values must be strings
         with self.assertRaises(Exception):
-            result = cron_match(self.configuration, now, test_job)
+            cron_match(self.configuration, now, test_job)
 
     # NOTE: no datetime support https://github.com/python/cpython/issues/67762
     @unittest.skip("enable if leap second handling is ever implemented")
@@ -2121,7 +2118,7 @@ invalid line
         }
         # NOTE: throws exception before log since values must be strings
         with self.assertRaises(Exception):
-            result = cron_match(self.configuration, now, test_job)
+            cron_match(self.configuration, now, test_job)
 
     def test_at_remain_with_future_leap_year(self):
         """Test at_remain with future leap year"""
@@ -2201,7 +2198,7 @@ invalid line
         }
         # NOTE: throws exception before log since values must be strings
         with self.assertRaises(Exception):
-            result = cron_match(self.configuration, now, test_job)
+            cron_match(self.configuration, now, test_job)
 
     def test_at_remain_with_past_leap_year(self):
         """Test at_remain with past leap year"""
