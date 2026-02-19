@@ -283,7 +283,7 @@ def parse_and_save_atjobs(atjobs, client_id, configuration):
     return (status, msg)
 
 
-def cron_match(configuration, cron_time, entry):
+def cron_match(configuration, cron_time, entry, _warn_mismatch=False):
     """Check if cron_time matches the time specs in entry"""
     _logger = configuration.logger
     time_vals = {'minute': cron_time.minute, 'hour': cron_time.hour,
@@ -293,8 +293,11 @@ def cron_match(configuration, cron_time, entry):
     for (name, val) in time_vals.items():
         # Strip any leading zeros before integer match
         if not fnmatch.fnmatch("%s" % val, entry[name].lstrip('0')):
-            _logger.debug("no cron_match on %s: %s vs %s" %
-                          (name, val, entry[name]))
+            msg = "no cron_match on %s: %s vs %s" % (name, val, entry[name])
+            if _warn_mismatch:
+                _logger.warning(msg)
+            else:
+                _logger.debug(msg)
             return False
     return True
 
