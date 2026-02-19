@@ -48,8 +48,8 @@ from mig.shared.output import txt_format
 
 # Init global crontab regexp once and for all
 # Format: minute hour dayofmonth month dayofweek command
-crontab_pattern = "^(\*|[0-9]{1,2}) (\*|[0-9]{1,2}) (\*|[0-9]{1,2}) "
-crontab_pattern += "(\*|[0-9]{1,2}) (\*|[0-6]) (.*)$"
+crontab_pattern = r"^(\*|[0-9]{1,2}) (\*|[0-9]{1,2}) (\*|[0-9]{1,2}) "
+crontab_pattern += r"(\*|[0-9]{1,2}) (\*|[0-6]) (.*)$"
 crontab_expr = re.compile(crontab_pattern)
 # Init global atjobs regexp once and for all
 # ISO format with space between date and time and without msecs:
