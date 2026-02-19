@@ -106,36 +106,34 @@ class MigLibEvents(MigTestCase):
 
     def test_parse_crontab_contents(self):
         """Test parsing crontab content lines"""
-        crontab_lines = DUMMY_CRONTAB_CONTENT.splitlines()
         parsed = parse_crontab_contents(
-            self.configuration, DUMMY_USER_DN, crontab_lines
+            self.configuration, DUMMY_USER_DN,
+            DUMMY_CRONTAB_CONTENT.splitlines()
         )
         self.assertEqual(len(parsed), 2)
         self.assertEqual(parsed[0]["command"], ["/bin/test_command"])
 
     def test_parse_atjobs_contents(self):
         """Test parsing atjobs content lines"""
-        atjobs_lines = DUMMY_ATJOBS_CONTENT.splitlines()
         parsed = parse_atjobs_contents(
-            self.configuration, DUMMY_USER_DN, atjobs_lines
+            self.configuration, DUMMY_USER_DN,
+            DUMMY_ATJOBS_CONTENT.splitlines()
         )
         self.assertEqual(len(parsed), 1)
         self.assertEqual(parsed[0]["command"], ["/bin/future_command"])
 
     def test_parse_and_save_crontab(self):
         """Test parsing and saving crontab"""
-        crontab = DUMMY_CRONTAB_CONTENT
         status, msg = parse_and_save_crontab(
-            crontab, DUMMY_USER_DN, self.configuration
+            DUMMY_CRONTAB_CONTENT, DUMMY_USER_DN, self.configuration
         )
         self.assertTrue(status)
         self.assertIn("valid crontab entries", msg)
 
     def test_parse_and_save_atjobs(self):
         """Test parsing and saving atjobs"""
-        atjobs = DUMMY_ATJOBS_CONTENT
         status, msg = parse_and_save_atjobs(
-            atjobs, DUMMY_USER_DN, self.configuration
+            DUMMY_ATJOBS_CONTENT, DUMMY_USER_DN, self.configuration
         )
         self.assertTrue(status)
         self.assertIn("valid atjobs entries", msg)
@@ -671,7 +669,8 @@ class MigLibEvents(MigTestCase):
             ),
         ]
         for job, expected in test_cases:
-            self.assertEqual(cron_match(self.configuration, now, job), expected)
+            self.assertEqual(cron_match(
+                self.configuration, now, job), expected)
 
     @unittest.skip("enable next if ever relevant - fails with TypeError")
     def test_at_remain_with_timezones(self):
@@ -699,7 +698,8 @@ class MigLibEvents(MigTestCase):
         trigger_path = "../relative/path/file.txt"
         rule = {"vgrid_name": "test", "run_as": DUMMY_USER_DN}
         expanded = get_path_expand_map(trigger_path, rule, "modified")
-        self.assertEqual(expanded["+TRIGGERPATH+"], "../relative/path/file.txt")
+        self.assertEqual(expanded["+TRIGGERPATH+"],
+                         "../relative/path/file.txt")
         self.assertEqual(expanded["+TRIGGERFILENAME+"], "file.txt")
         self.assertEqual(expanded["+TRIGGERPREFIX+"], "file")
         self.assertEqual(expanded["+TRIGGEREXTENSION+"], ".txt")
