@@ -54,8 +54,8 @@ crontab_expr = re.compile(crontab_pattern)
 # Init global atjobs regexp once and for all
 # ISO format with space between date and time and without msecs:
 # YYYY-MM-DD HH:MM:SS COMMAND
-atjobs_pattern = "^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2}):"
-atjobs_pattern += "([0-9]{2}) (.*)$"
+atjobs_pattern = r"^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2}):"
+atjobs_pattern += r"([0-9]{2}) (.*)$"
 atjobs_expr = re.compile(atjobs_pattern)
 
 TRIGGER_EVENT = "_trigger_event"
@@ -427,7 +427,8 @@ def run_cron_command(
         _restore_env(saved_environ, os.environ)
         raise exc
     logger.info(
-        "(%s) done running command for %s: %s" % (pid, target_path, command_str)
+        "(%s) done running command for %s: %s" % (
+            pid, target_path, command_str)
     )
 
     # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
@@ -526,7 +527,8 @@ def run_events_command(
         _restore_env(saved_environ, os.environ)
         raise exc
     logger.info(
-        "(%s) done running command for %s: %s" % (pid, target_path, command_str)
+        "(%s) done running command for %s: %s" % (
+            pid, target_path, command_str)
     )
 
     # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
