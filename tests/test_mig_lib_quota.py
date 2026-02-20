@@ -45,7 +45,7 @@ class MigLibQouta(MigTestCase):
     def test_invalid_quota_backend(self):
         """Test invalid quota_backend in configuration"""
         self.configuration.quota_backend = "NEVERNEVER"
-        with self.assertLogs(level='DEBUG') as log_capture:
+        with self.assertLogs(level='ERROR') as log_capture:
             update_quota(self.configuration)
-        self.assertTrue(any("quota_backend: 'NEVERNEVER' not in supported_quota_backends" in msg
-                            for msg in log_capture.output))
+        self.assertIn("quota_backend: 'NEVERNEVER' not in supported_quota_backends: ['lustre', 'lustre-gocryptfs']",
+                      log_capture.output)

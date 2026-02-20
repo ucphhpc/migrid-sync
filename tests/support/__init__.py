@@ -93,7 +93,7 @@ except EnvironmentError as enverr:
 
 from tests.support.assertover import AssertOver
 from tests.support.configsupp import FakeConfiguration
-from tests.support.loggersupp import FakeLogger
+from tests.support.loggersupp import FakeLogger, FakeLoggerChecker
 from tests.support.serversupp import make_wrapped_server
 
 
@@ -212,7 +212,9 @@ class MigTestCase(TestCase):
             return FakeConfiguration(logger=testcase.logger)
         elif configuration_to_make == 'testconfig':
             from mig.shared.conf import get_configuration_object
-            return get_configuration_object(skip_log=True, disable_auth_log=True)
+            configuration = get_configuration_object(skip_log=True, disable_auth_log=True)
+            configuration.logger = testcase.logger
+            return configuration
         else:
             raise AssertionError(
                 "MigTestCase: unknown configuration %r" % (configuration_to_make,))
@@ -321,6 +323,10 @@ included:
             absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
         return MigTestCase._absolute_path_kind(absolute_path)
 
+    def assertLogs(self, name=None, level=None):
+        assert level is not None
+        return FakeLoggerChecker(self.logger, level)
+
     @staticmethod
     def _absolute_path_kind(absolute_path):
         stat_result = os.lstat(absolute_path)
@@ -350,7 +356,7 @@ included:
         Provide a means to fabricate a useable test user on demand.
 
         Note that this method, along with a number of others, are defined in
-
+        the user portion of the test support libraries.
         """
         return UserAssertMixin._provision_test_user(testcase, distinguished_name)
 

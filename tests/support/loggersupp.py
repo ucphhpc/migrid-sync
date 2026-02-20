@@ -77,6 +77,12 @@ class FakeLogger:
             raise RuntimeError('errors reported to logger:\n%s' %
                                '\n'.join(channels_dict['error']))
 
+    def forgive_messages_on(self, channel_name=None):
+        """Allow log errors for cases where they are expected"""
+
+        assert channel_name in self.channels_dict, "unknown channel"
+        self.forgive_by_channel[channel_name] = True
+
     def forgive_errors(self):
         """Allow log errors for cases where they are expected"""
         self.forgive_by_channel['error'] = True
@@ -128,3 +134,33 @@ class FakeLogger:
         relative_outputfile = os.path.relpath(
             matched.groups('location')[0], start=TEST_BASE)
         return (relative_testfile, (lineno, relative_outputfile))
+
+
+class FakeLoggerChecker:
+    """
+    Adapter to expose a context manager that allows interacting with the
+    fake logger via assertLogs() and thus matching stdlib documentation.
+    """
+
+    def __init__(self, fake_logger, level):
+        self.fake_logger = fake_logger
+        self.level = level
+
+    @property
+    def output(self):
+        """Expose messages captured on the channel as a property."""
+
+        channel_name = self.level.lower()
+        channel_messages = self.fake_logger.channels_dict[channel_name]
+
+        # given the messages have been interrogated, mark the channel
+        # as no longer needing enforcement at test exit time
+        self.fake_logger.forgive_messages_on(channel_name)
+
+        return channel_messages
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
