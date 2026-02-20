@@ -35,6 +35,7 @@ import unittest
 
 from tests.support import MigTestCase, testmain, ensure_dirs_exist
 from tests.support.fixturesupp import FixtureAssertMixin
+from tests.support.usersupp import UserAssertMixin
 
 import mig.shared.accountreq as accountreq
 from mig.shared.base import canonical_user, distinguished_name_to_user, \
@@ -146,7 +147,7 @@ class MigSharedAccountreq__peers(MigTestCase, FixtureAssertMixin):
         self.assertTrue(success)
 
 
-class MigSharedAccountreq__filters(MigTestCase):
+class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
     """Unit tests for filter related functions within the accountreq module"""
 
     TEST_SERVICE = 'migoid'
@@ -254,11 +255,9 @@ class MigSharedAccountreq__filters(MigTestCase):
             self.assertEqual(checked['invalid'], [], "early validation failed")
 
     def test_early_validation_checks_valid_renew_existing(self):
-        test_int_client_dir = self._provision_test_user(self,
+        test_int_client_dir = self._provision_test_users(self,
+                                                        self.TEST_USER_DN,
                                                         self.TEST_INTERNAL_DN)
-        test_int_client_dir_name = os.path.basename(test_int_client_dir)
-        test_client_dir = self._provision_test_user(self, self.TEST_USER_DN)
-        test_client_dir_name = os.path.basename(test_client_dir)
         self.TEST_USER['peers_email'] = self.INT_USER['email']
         # TODO: sync password with saved hash and disable auth here
         self.TEST_USER['authorized'] = True
@@ -271,11 +270,9 @@ class MigSharedAccountreq__filters(MigTestCase):
         self.assertEqual(checked['invalid'], [], "early validation failed")
 
     def test_early_validation_checks_valid_renew_authorized(self):
-        test_int_client_dir = self._provision_test_user(self,
+        test_client_dir = self._provision_test_users(self,
+                                                        self.TEST_USER_DN,
                                                         self.TEST_INTERNAL_DN)
-        test_int_client_dir_name = os.path.basename(test_int_client_dir)
-        test_client_dir = self._provision_test_user(self, self.TEST_USER_DN)
-        test_client_dir_name = os.path.basename(test_client_dir)
         self.TEST_USER['peers_email'] = self.INT_USER['email']
         # Make sure password change is allowed if needed
         self.TEST_USER['authorized'] = True
