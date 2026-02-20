@@ -39,28 +39,16 @@ import pickle
 import shutil
 import stat
 import sys
+from types import SimpleNamespace
 from unittest import TestCase, main as testmain
 
 from tests.support.configsupp import FakeConfiguration
 from tests.support.fixturesupp import _PreparedFixture
 from tests.support.suppconst import MIG_BASE, TEST_BASE, \
     TEST_DATA_DIR, TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR
+from tests.support.usersupp import UserAssertMixin
 
 from tests.support._env import MIG_ENV, PY2
-
-# Allow the use of SimpleNamespace on PY2.
-
-if PY2:
-    class SimpleNamespace(dict):
-        """Bare minimum SimpleNamespace for Python 2."""
-
-        def __getattribute__(self, name):
-            if name == '__dict__':
-                return dict(**self)
-
-            return self[name]
-else:
-    from types import SimpleNamespace
 
 
 # Provide access to a configuration file for the active environment.
@@ -358,34 +346,13 @@ included:
 
     @staticmethod
     def _provision_test_user(testcase, distinguished_name):
-        """Provide a means to fabricate a useable test user on demand.
         """
+        Provide a means to fabricate a useable test user on demand.
 
-        self = testcase
+        Note that this method, along with a number of others, are defined in
 
-        # ensure a user home directory for our test user
-        conf_user_home = os.path.normpath(self.configuration.user_home)
-        from mig.shared.base import client_id_dir
-        test_client_dir_name = client_id_dir(distinguished_name)
-        test_user_dir = os.path.join(conf_user_home, test_client_dir_name)
-
-        # ensure a user db that includes our test user
-        conf_user_db_home = ensure_dirs_exist(self.configuration.user_db_home)
-        # note: this is a non-standard direct use of fixture preparation due
-        #       to this being bootstrap code and should not be used elsewhere
-        prepared_fixture = _PreparedFixture.from_relpath(
-            self,
-            'MiG-users.db--example',
-            fixture_format='json')
-        prepared_fixture.write_to_dir(conf_user_db_home, output_format='pickle')
-
-        # create the test user home directory
-        ensure_dirs_exist(test_user_dir)
-        # create the test user settings directory
-        user_settings_dir = os.path.join(self.configuration.user_settings, test_client_dir_name)
-        ensure_dirs_exist(user_settings_dir)
-
-        return test_user_dir
+        """
+        return UserAssertMixin._provision_test_user(testcase, distinguished_name)
 
 
 def is_path_within(path, start=None, _msg=None):

@@ -39,7 +39,7 @@ from types import SimpleNamespace
 from tests.support.suppconst import MIG_BASE, TEST_FIXTURE_DIR
 
 
-def _fixturefile_loadrelative(relative_path, fixture_format=None):
+def _fixturefile_loadrelative(fixture_name, fixture_format=None):
     """Support function for loading fixtures from their serialised format.
 
     Doing so is a little more involved than it may seem because serialisation
@@ -49,15 +49,11 @@ def _fixturefile_loadrelative(relative_path, fixture_format=None):
     """
 
     assert fixture_format is not None, "fixture format must be specified"
-    assert not os.path.isabs(
-        relative_path), "fixture is not relative to fixture folder"
-    relative_path_with_ext = "%s.%s" % (relative_path, fixture_format)
+    relative_path_with_ext = "%s.%s" % (fixture_name, fixture_format)
     tmp_path = os.path.join(TEST_FIXTURE_DIR, relative_path_with_ext)
     assert os.path.isfile(tmp_path), \
-        "fixture file for format is not present: %s" % \
-        (relative_path_with_ext,)
-    #_, extension = os.path.splitext(os.path.basename(tmp_path))
-    #assert fixture_format == extension, "fixture file does not match format"
+        'fixture named "%s" with format %s is not present: %s' % \
+        (fixture_name, fixture_format, relative_path_with_ext)
 
     data = None
 
@@ -68,7 +64,7 @@ def _fixturefile_loadrelative(relative_path, fixture_format=None):
         with open(tmp_path) as jsonfile:
             data = json.load(jsonfile, object_hook=_FixtureHint.object_hook)
             _hints_apply_from_instances_if_present(data)
-            _hints_apply_from_fixture_ini_if_present(tmp_path, data)
+            _hints_apply_from_fixture_ini_if_present(fixture_name, data)
     else:
         raise AssertionError(
             "unsupported fixture format: %s" % (fixture_format,))
@@ -211,14 +207,15 @@ def _hints_apply_from_instances_if_present(json_object):
             pass
 
 
-def _load_hints_ini_for_fixture_if_present(fixture_path):
+def _load_hints_ini_for_fixture_if_present(fixture_name):
     """Load any hints that may be specified for a given fixture."""
 
     hints = ConfigParser()
 
     # let's see if there are loading hints
     try:
-        hints_path = "%s.ini" % (fixture_path,)
+        hints_file = "%s.hints" % (fixture_name,)
+        hints_path = os.path.join(TEST_FIXTURE_DIR, hints_file)
         with open(hints_path) as hints_file:
             hints.read_file(hints_file)
     except FileNotFoundError:
@@ -232,13 +229,13 @@ def _load_hints_ini_for_fixture_if_present(fixture_path):
     return hints
 
 
-def _hints_apply_from_fixture_ini_if_present(fixture_path, json_object):
+def _hints_apply_from_fixture_ini_if_present(fixture_name, json_object):
     """
     Amend the supplied object loaded from a fixture in place as specified
     by an optional ini file corresponding to the fixture itself.
     """
 
-    hints = _load_hints_ini_for_fixture_if_present(fixture_path)
+    hints = _load_hints_ini_for_fixture_if_present(fixture_name)
 
     # apply any attriutes hints ahead of specified conversions such that any
     # key can be specified matching what is visible within the loaded fixture
@@ -308,14 +305,16 @@ class _PreparedFixture:
     Object representing a loaded fixture prepared for use within a test case.
     """
 
+    NO_DATA = object()
+
     def __init__(self, testcase,
-                 fixture_format,
-                 fixture_data,
-                 fixture_path):
+                 fixture_name,
+                 fixture_format='',
+                 fixture_data=NO_DATA):
         self.testcase = testcase
+        self.fixture_name = fixture_name
         self.fixture_format = fixture_format
         self.fixture_data = fixture_data
-        self.fixture_path = fixture_path
 
     def assertAgainstFixture(self, value):
         """Compare a value against fixture data ensuring that in the case of
@@ -334,8 +333,12 @@ class _PreparedFixture:
         finally:
             testcase.maxDiff = originalMaxDiff
         if raised_exception:
-            message = "value differed from fixture stored at %s\n\n%s" % (
-                _to_display_path(self.fixture_path), raised_exception)
+            if self.fixture_format:
+                message_infix = " with format %s" % (self.fixture_format,)
+            else:
+                message_infix = ''
+            message = "value differed from fixture named %s%s\n\n%s" % (
+                self.fixture_name, message_infix, raised_exception)
             raise AssertionError(message)
 
     def write_to_dir(self, target_dir, output_format=None):
@@ -344,16 +347,18 @@ class _PreparedFixture:
         directory applying any onwrite hints that may be specified.
         """
 
+        assert self.fixture_data is not self.NO_DATA, \
+                "fixture is not populated with data"
+
         assert os.path.isabs(target_dir)
-        fixture_basename = os.path.basename(self.fixture_path)
-        fixture_name = fixture_basename[0:-len(self.fixture_format) - 1]
-        normalised_path = _fixturefile_normname(fixture_name, prefix=target_dir)
-        fixture_file_target = self.testcase.temppath(normalised_path)
+
+        # convert fixture name (which includes the varaint) to the target file
+        fixture_file_target = _fixturefile_normname(self.fixture_name, prefix=target_dir)
 
         output_data = self.fixture_data
 
         # now apply any onwrite conversions
-        hints = _load_hints_ini_for_fixture_if_present(self.fixture_path)
+        hints = _load_hints_ini_for_fixture_if_present(self.fixture_name)
         for item_name in hints['ONWRITE']:
             if item_name not in _FIXTUREFILE_APPLIERS_ONWRITE:
                 raise AssertionError(
@@ -380,15 +385,15 @@ class _PreparedFixture:
                 "unsupported fixture format: %s" % (output_format,))
 
     @staticmethod
-    def from_relpath(testcase, fixture_relpath, fixture_format):
+    def from_relpath(testcase, fixture_name, fixture_format):
         """
         Obtain a prepared fixture given a relative path to the on-disk file
         containing its data.
         """
 
         fixture_data, fixture_path = _fixturefile_loadrelative(
-            fixture_relpath, fixture_format)
-        return _PreparedFixture(testcase, fixture_format, fixture_data, fixture_path)
+            fixture_name, fixture_format)
+        return _PreparedFixture(testcase, fixture_name, fixture_format, fixture_data)
 
 
 class FixtureAssertMixin:
