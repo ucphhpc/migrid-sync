@@ -316,8 +316,9 @@ def cron_match(configuration, cron_time, entry, _warn_mismatch=False):
     }
     # TODO: extend to support e.g. */5, 8-16 and the likes?
     for name, val in time_vals.items():
-        # Strip any leading zeros before integer match
-        if not fnmatch.fnmatch("%s" % val, entry[name].lstrip("0")):
+        # Strip any leading zeros before integer match but never last one
+        entry_val = entry[name][:-1].lstrip("0") + entry[name][-1]
+        if not fnmatch.fnmatch("%s" % val, entry_val):
             msg = "no cron_match on %s: %s vs %s" % (name, val, entry[name])
             if _warn_mismatch:
                 _logger.warning(msg)
