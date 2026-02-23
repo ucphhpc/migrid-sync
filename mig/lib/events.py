@@ -316,8 +316,14 @@ def cron_match(configuration, cron_time, entry, _warn_mismatch=False):
     }
     # TODO: extend to support e.g. */5, 8-16 and the likes?
     for name, val in time_vals.items():
-        # Strip any leading zeros before integer match
-        if not fnmatch.fnmatch("%s" % val, entry[name].lstrip("0")):
+        # Allow leading zeros in integer match for plain or wildcard patterns
+        # Namely, we want to allow 5, 05 to match 5 and 0* to match [0-9]
+        # while preserving that a single * matches any value.
+        entry_val = entry[name]
+        cmp_pattern = "%d"
+        if len(entry_val) > 1:
+            cmp_pattern = "%%.%dd" % len(entry_val)
+        if not fnmatch.fnmatch(cmp_pattern % val, entry_val):
             msg = "no cron_match on %s: %s vs %s" % (name, val, entry[name])
             if _warn_mismatch:
                 _logger.warning(msg)

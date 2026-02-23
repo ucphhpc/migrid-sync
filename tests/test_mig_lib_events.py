@@ -348,9 +348,9 @@ class MigLibEvents__timers(MigTestCase):
                     "hour": "*",
                     "dayofmonth": "*",
                     "month": "*",
-                    "dayofweek": "0",
+                    "dayofweek": "1",
                 },
-                now.weekday() == 0,
+                now.weekday() == 1,
             ),
         ]
         for job, expected in test_cases:
@@ -370,6 +370,318 @@ class MigLibEvents__timers(MigTestCase):
             "dayofweek": "*",
         }
         self.assertFalse(cron_match(self.configuration, now, test_job))
+
+    def test_cron_match_with_leading_zero_match(self):
+        """Test cron_match with various leading zero match combinations"""
+        now = datetime.datetime.now().replace(second=0, microsecond=0)
+        test_cases = [
+            (
+                {
+                    "minute": "0",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=0),
+            ),
+            (
+                {
+                    "minute": "00",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=0),
+            ),
+            (
+                {
+                    "minute": "000",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=0),
+            ),
+            (
+                {
+                    "minute": "05",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=5),
+            ),
+            (
+                {
+                    "minute": "*5",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=5),
+            ),
+            (
+                {
+                    "minute": "0*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=5),
+            ),
+            (
+                {
+                    "minute": "*2",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=42),
+            ),
+            (
+                {
+                    "minute": "4*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=42),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "0",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(hour=0),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "03",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(hour=3),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "04",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(day=4),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "06",
+                    "dayofweek": "*",
+                },
+                now.replace(month=6),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "0",
+                },
+                # Get first Monday of current month
+                now.replace(day=7).replace(
+                    day=now.replace(day=7).day - now.replace(day=7).weekday()),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "04",
+                },
+                # Get first Friday of current month
+                now.replace(day=7).replace(
+                    day=4 + now.replace(day=7).day - now.replace(day=7).weekday()),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "000",
+                },
+                # Get first Monday of current month
+                now.replace(day=7).replace(
+                    day=now.replace(day=7).day - now.replace(day=7).weekday()),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "004",
+                },
+                # Get first Friday of current month
+                now.replace(day=7).replace(
+                    day=4 + now.replace(day=7).day - now.replace(day=7).weekday()),
+            ),
+        ]
+        for job, now in test_cases:
+            self.assertTrue(cron_match(self.configuration, now, job))
+
+    def test_cron_match_with_leading_zero_mismatch(self):
+        """Test cron_match with various leading zero mismatch combinations"""
+        now = datetime.datetime.now().replace(second=0, microsecond=0)
+        test_cases = [
+            (
+                {
+                    "minute": "0",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=1),
+            ),
+            (
+                {
+                    "minute": "00",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=1),
+            ),
+            (
+                {
+                    "minute": "000",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=1),
+            ),
+            (
+                {
+                    "minute": "05",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=6),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "0",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(hour=1),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "03",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(hour=1),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "04",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(day=1),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "06",
+                    "dayofweek": "*",
+                },
+                now.replace(month=1),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "0",
+                },
+                # Get first Friday of current month
+                now.replace(day=7).replace(
+                    day=4 + now.replace(day=7).day - now.replace(day=7).weekday()),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "04",
+                },
+                # Get first Monday of current month
+                now.replace(day=7).replace(
+                    day=now.replace(day=7).day - now.replace(day=7).weekday()),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "000",
+                },
+                # Get first Friday of current month
+                now.replace(day=7).replace(
+                    day=4 + now.replace(day=7).day - now.replace(day=7).weekday()),
+            ),
+            (
+                {
+                    "minute": "*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "004",
+                },
+                # Get first Monday of current month
+                now.replace(day=7).replace(
+                    day=now.replace(day=7).day - now.replace(day=7).weekday()),
+            ),
+        ]
+        for job, now in test_cases:
+            self.assertFalse(cron_match(self.configuration, now, job))
 
     @unittest.skip("enable next if ever relevant - fails with TypeError")
     def test_at_remain_with_timezones(self):
@@ -529,8 +841,6 @@ class MigLibEvents__timers(MigTestCase):
         )
         test_job = {"time_stamp": t_plus_sixty}
         remaining = at_remain(self.configuration, leap_second, test_job)
-        # print("DEBUG: remaining now %s vs %s vs %s : %s" %
-        #      (t_minus_sixty, leap_second, t_plus_sixty, remaining))
         self.assertEqual(remaining, 1)
 
     def test_cron_match_with_invalid_chars(self):
@@ -676,12 +986,8 @@ class MigLibEvents__timers(MigTestCase):
         )
         test_job = {"time_stamp": leap_second}
         remaining = at_remain(self.configuration, t_plus_sixty, test_job)
-        # print("DEBUG: remaining now %s vs %s vs %s : %s" %
-        #      (t_minus_sixty, leap_second, t_plus_sixty, remaining))
         self.assertEqual(remaining, -1)
         remaining = at_remain(self.configuration, t_plus_sixtyone, test_job)
-        # print("DEBUG: remaining now %s vs %s vs %s : %s" %
-        #      (t_minus_sixty, leap_second, t_plus_sixtyone, remaining))
         self.assertEqual(remaining, -2)
 
     def test_cron_match_with_non_string_values(self):
@@ -730,8 +1036,6 @@ class MigLibEvents__timers(MigTestCase):
         )
         test_job = {"time_stamp": leap_second}
         remaining = at_remain(self.configuration, t_minus_sixty, test_job)
-        # print("DEBUG: remaining now %s vs %s vs %s : %s" %
-        #      (t_minus_sixty, leap_second, t_plus_sixty, remaining))
         self.assertEqual(remaining, 1)
 
     def test_cron_match_with_boolean_values(self):
