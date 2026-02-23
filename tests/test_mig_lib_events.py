@@ -417,6 +417,46 @@ class MigLibEvents__timers(MigTestCase):
             ),
             (
                 {
+                    "minute": "*5",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=5),
+            ),
+            (
+                {
+                    "minute": "0*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=5),
+            ),
+            (
+                {
+                    "minute": "*2",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=42),
+            ),
+            (
+                {
+                    "minute": "4*",
+                    "hour": "*",
+                    "dayofmonth": "*",
+                    "month": "*",
+                    "dayofweek": "*",
+                },
+                now.replace(minute=42),
+            ),
+            (
+                {
                     "minute": "*",
                     "hour": "0",
                     "dayofmonth": "*",
