@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_wsgi-bin - unit tests of the WSGI glue
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -33,8 +33,10 @@ import importlib
 import os
 import stat
 import sys
+import unittest
 
-from tests.support import PY2, MIG_BASE, MigTestCase, testmain, is_path_within
+from tests.support import PY2, MIG_BASE, MigTestCase, ensure_dirs_exist, \
+    testmain, is_path_within
 from tests.support.snapshotsupp import SnapshotAssertMixin
 from tests.support.wsgisupp import prepare_wsgi, WsgiAssertMixin
 
@@ -302,6 +304,130 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin, SnapshotAssertMixi
 
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
         self.assertSnapshotOfHtmlContent(output)
+
+
+class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin, SnapshotAssertMixin):
+
+    DUMMY_BYTES = 'dummyæøå-ßßß-value'.encode('utf-8')
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        self.fake_backend = FakeBackend()
+        self.fake_wsgi = None
+
+    # TODO: integrate all of this in the default prepare_wsgi?
+    def _prepare_test(self, form_overrides=None, custom_env=None):
+        """Override common setup with form and environ values as needed"""
+
+        # Set up a wsgi input with non-ascii bytes and open it in binary mode
+        # If form_overrides is passed a list of tuples like [('key' 'val')] it
+        # produces a fake_wsgi input on the form: b'key=val'
+        self.fake_wsgi = prepare_wsgi(self.configuration, 'http://localhost/',
+                                      form=form_overrides)
+        # override the default environ fields from wsgisupp
+        if custom_env:
+            self.fake_wsgi.environ.update(custom_env)
+
+        self.application_args = (
+            self.fake_wsgi.environ,
+            self.fake_wsgi.start_response,
+        )
+        self.application_kwargs = dict(
+            configuration=self.configuration,
+            _import_module=self.fake_backend.to_import_module(),
+            _set_os_environ=False,
+        )
+
+    # NOTE: enabled with underlying wsgi use of Fieldstorage fixed
+    def test_put_text_plain_with_binary_input_succeeds(self):
+        test_form = [('_csrf', self.DUMMY_BYTES)]
+        test_env = {
+            "REQUEST_METHOD": "PUT",
+            "CONTENT_TYPE": "text/plain",
+            "CONTENT_LENGTH": "100",
+        }
+        self._prepare_test(test_form, test_env)
+
+        output_objects = [
+            # workaround invalid HTML being generated with no title object
+            {
+                'object_type': 'title',
+                'text': 'TEST'
+            },
+            {
+                'object_type': 'text',
+                'text': 'some text',
+            }
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        # Must succeed with HTTP 200 when it parses input
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+
+    @unittest.skip("disabled with underlying wsgi use of Fieldstorage fixed")
+    def test_put_text_plain_with_binary_input_fails(self):
+        test_form = [('_csrf', self.DUMMY_BYTES)]
+        test_env = {
+            "REQUEST_METHOD": "PUT",
+            "CONTENT_TYPE": "text/plain",
+            "CONTENT_LENGTH": "100",
+        }
+        self._prepare_test(test_form, test_env)
+
+        output_objects = [
+            # workaround invalid HTML being generated with no title object
+            {
+                'object_type': 'title',
+                'text': 'TEST'
+            },
+            {
+                'object_type': 'text',
+                'text': 'some text',
+            }
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+
+        # TODO: can we add assertLogs to check error log explicitly?
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        # Must fail with HTTP 500 from failing to parse input
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 500)
+
+    def test_post_url_encoded_with_binary_input_succeeds(self):
+        test_form = [('_csrf', self.DUMMY_BYTES)]
+        test_env = None
+        self._prepare_test(test_form, test_env)
+
+        output_objects = [
+            # workaround invalid HTML being generated with no title object
+            {
+                'object_type': 'title',
+                'text': 'TEST'
+            },
+            {
+                'object_type': 'text',
+                'text': 'some text',
+            }
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        # Must succeed with HTTP 200 when it parses input
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
 
 
 if __name__ == '__main__':

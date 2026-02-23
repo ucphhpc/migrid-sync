@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -45,7 +46,7 @@ from mig.shared.conf import get_configuration_object
 from mig.shared.objecttypes import get_object_type_info
 from mig.shared.output import validate, format_output, dummy_main, reject_main
 from mig.shared.safeinput import valid_backend_name, html_escape, InputException
-from mig.shared.scriptinput import fieldstorage_to_dict
+from mig.shared.scriptinput import fieldstorage_to_dict, FixedFieldStorage
 
 
 def object_type_info(object_type):
@@ -190,7 +191,7 @@ def wrap_wsgi_errors(environ, configuration, max_line_len=100):
 
 
 def application(environ, start_response, configuration=None,
-        _import_module=importlib.import_module, _set_os_environ=True):
+                _import_module=importlib.import_module, _set_os_environ=True):
     """MiG app called automatically by WSGI.
 
     *environ* is a dictionary populated by the server with CGI-like variables
@@ -311,9 +312,18 @@ def application(environ, start_response, configuration=None,
         backend = requested_backend(environ, fallback=default_page)
         # _logger.debug('DEBUG: wsgi found backend %s and script %s' %
         #              (backend, script_name))
-        fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
-                                        environ=environ)
-        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+        try:
+            fieldstorage = FixedFieldStorage(fp=environ['wsgi.input'],
+                                             environ=environ)
+            # _logger.debug("extracted fieldstorage from wsgi request: %s" %
+            #              fieldstorage)
+            user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+            # _logger.debug("extracted user_arguments_dict from wsgi: %s" %
+            #              user_arguments_dict)
+        except Exception as exc:
+            _logger.error("wsgi %s failed to extract fieldstorage: %s" %
+                          (backend, exc))
+            raise exc
         output_format = get_output_format(configuration, user_arguments_dict)
 
         module_path = 'mig.shared.functionality.%s' % backend
@@ -354,7 +364,7 @@ def application(environ, start_response, configuration=None,
     for key in environ:
         if key.find('wsgi.') != -1:
             wsgi_env[key] = environ[key]
-    #_logger.debug('passing wsgi env to output handlers: %s' % wsgi_env)
+    # _logger.debug('passing wsgi env to output handlers: %s' % wsgi_env)
     wsgi_entry = {'object_type': 'wsgi', 'environ': wsgi_env}
     output_objs.append(wsgi_entry)
 
@@ -393,9 +403,9 @@ def application(environ, start_response, configuration=None,
     try:
         # IMPORTANT: headers must be on native string format here
         native_headers = force_native_str_rec(response_headers)
-        #_logger.debug("native headers: %s" % native_headers)
+        # _logger.debug("native headers: %s" % native_headers)
         start_response(status, native_headers)
-        #_logger.debug("started response to client")
+        # _logger.debug("started response to client")
 
         # NOTE: we consistently hit download error for archive files reaching ~2GB
         #       with showfreezefile.py on wsgi but the same on cgi does NOT suffer
@@ -414,8 +424,9 @@ def application(environ, start_response, configuration=None,
             # _logger.debug("WSGI %s yielding part %d / %d output parts" %
             #              (backend, i+1, chunk_parts))
             # end index may be after end of content - but no problem
-            part = output[i*download_block_size:(i+1)*download_block_size]
-            #_logger.debug("yield %r chunk to client" % backend)
+            part = output[i * download_block_size:(i + 1) *
+                          download_block_size]
+            # _logger.debug("yield %r chunk to client" % backend)
             # IMPORTANT: bytes are required here for all python versions
             yield force_utf8(part)
         if chunk_parts > 1:
@@ -435,7 +446,7 @@ def application(environ, start_response, configuration=None,
     _logger.debug("done and cleaning up to prevent further log noise")
     if user_arguments_dict:
         del user_arguments_dict
-    if fieldstorage:
+    if fieldstorage is not None:
         del fieldstorage
     _logger.debug("done cleaning up - detach wsgi error loggers")
     # TMP! uncomment next to test unhandled exception and error log
