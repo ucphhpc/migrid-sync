@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addcrontab - schedule new cron/at user tasks back end
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -33,9 +34,9 @@ xmlrpc/jsonrpc.
 
 from __future__ import absolute_import
 
+from mig.lib.events import load_crontab, load_atjobs, parse_and_save_crontab, \
+    parse_and_save_atjobs
 from mig.shared import returnvalues
-from mig.shared.events import load_crontab, load_atjobs, \
-    parse_and_save_crontab, parse_and_save_atjobs
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
@@ -85,7 +86,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
         return (output_objects, returnvalues.OK)
 
     logger.info('%s from %s' % (op_name, client_id))
-    #logger.debug('%s from %s: %s' % (op_name, client_id, accepted))
+    # logger.debug('%s from %s: %s' % (op_name, client_id, accepted))
 
     if not atjobs and not cronjobs:
         output_objects.append({'object_type': 'error_text', 'text':

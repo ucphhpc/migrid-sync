@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -35,39 +36,31 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import datetime
-import fnmatch
-import glob
-import importlib
 import logging
 import logging.handlers
 import multiprocessing
 import os
 import signal
 import sys
-import tempfile
 import time
 
 try:
     from watchdog.observers import Observer
     from watchdog.events import PatternMatchingEventHandler, \
-        FileModifiedEvent, FileCreatedEvent, FileDeletedEvent, \
-        DirModifiedEvent, DirCreatedEvent, DirDeletedEvent
+        FileModifiedEvent, FileCreatedEvent, DirCreatedEvent
 except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
+from mig.lib.daemon import check_stop, register_stop_handler, stop_running
+from mig.lib.events import get_time_expand_map, parse_crontab, cron_match, \
+    parse_atjobs, at_remain, run_cron_command
 from mig.shared.base import force_utf8, client_dir_id, client_id_dir
-from mig.shared.cmdapi import parse_command_args
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import crontab_name, atjobs_name, cron_output_dir, \
-    cron_log_name, cron_log_size, cron_log_cnt, csrf_field
-from mig.shared.events import get_time_expand_map, parse_crontab, cron_match, \
-    parse_atjobs, at_remain
-from mig.shared.fileio import makedirs_rec, scandir, walk
-from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.job import fill_mrsl_template, new_job
+    cron_log_name, cron_log_size, cron_log_cnt
+from mig.shared.fileio import scandir, walk
 from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.output import txt_format
 
 # Global cron entry dictionaries with crontabs for all users
 
@@ -83,92 +76,7 @@ shared_state['base_dir_len'] = 0
 shared_state['crontab_inotify'] = None
 shared_state['crontab_handler'] = None
 
-_cron_event = '_cron_event'
-stop_running = multiprocessing.Event()
 (configuration, logger) = (None, None)
-
-
-def stop_handler(sig, frame):
-    """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
-    # Print blank line to avoid mix with Ctrl-C line
-    print('')
-    stop_running.set()
-
-
-def run_command(
-    command_list,
-    target_path,
-    crontab_entry,
-    configuration,
-):
-    """Run backend command built from command_list on behalf of user from
-    crontab_entry and with args mapped to the backend variables.
-    """
-
-    pid = multiprocessing.current_process().pid
-    client_id = crontab_entry['run_as']
-    command_str = ' '.join(command_list)
-    logger.info('(%s) run command for %s: %s' % (pid, target_path,
-                                                 command_list))
-
-    # logger.debug('(%s) run %s on behalf of %s' % (pid, command_str,
-    #             client_id))
-
-    (function, user_arguments_dict) = parse_command_args(configuration,
-                                                         command_list)
-
-    form_method = 'post'
-    target_op = "%s" % function
-    csrf_limit = get_csrf_limit(configuration)
-    csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                 client_id, csrf_limit)
-    user_arguments_dict[csrf_field] = [csrf_token]
-
-    # logger.debug('(%s) import main from %s' % (pid, function))
-
-    main = None
-    try:
-        main = importlib.import_module('mig.shared.functionality.%s' %
-                                       function).main
-
-        # logger.debug('(%s) run %s on %s for %s' % \
-        #              (pid, function, user_arguments_dict, client_id))
-
-        # Fake HTTP POST manually setting fields required for CSRF check
-
-        os.environ['HTTP_USER_AGENT'] = 'grid cron daemon'
-        os.environ['BACKEND_NAME'] = '%s' % function
-        os.environ['PATH_INFO'] = '%s.py' % function
-        os.environ['REQUEST_METHOD'] = form_method.upper()
-        # We may need a REMOTE_ADDR for gdplog call even if not really enabled
-        os.environ['REMOTE_ADDR'] = '127.0.0.1'
-        (output_objects, (ret_code, ret_msg)) = main(client_id,
-                                                     user_arguments_dict)
-    except Exception as exc:
-        logger.error('(%s) failed to run %s main on %s: %s' %
-                     (pid, function, user_arguments_dict, exc))
-        import traceback
-        logger.info('traceback:\n%s' % traceback.format_exc())
-        raise exc
-    logger.info('(%s) done running command for %s: %s' %
-                (pid, target_path, command_str))
-
-    # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
-
-    try:
-        txt_out = txt_format(configuration, ret_code, ret_msg,
-                             output_objects)
-    except Exception as exc:
-        txt_out = 'internal command output text formatting failed'
-        logger.error('(%s) text formating failed: %s\nraw output is: %s %s %s'
-                     % (pid, exc, ret_code, ret_msg, output_objects))
-    if ret_code != 0:
-        logger.warning('(%s) command finished but with error code %d :\n%s'
-                       % (pid, ret_code, output_objects))
-        raise Exception('command error: %s' % txt_out)
-
-    # logger.debug('(%s) result was %s : %s:\n%s' % (pid, ret_code,
-    #                                               ret_msg, txt_out))
 
 
 class MiGCrontabEventHandler(PatternMatchingEventHandler):
@@ -396,7 +304,7 @@ def __handle_cronjob(configuration, client_id, timestamp, crontab_entry):
                     (argument, filled_argument))
         command_list.append(filled_argument)
     try:
-        run_command(command_list, client_id, crontab_entry, configuration)
+        run_cron_command(command_list, client_id, crontab_entry, configuration)
         logger.info('(%s) done running command for %s: %s' %
                     (pid, client_id, ' '.join(command_list)))
         __cron_info(configuration, client_id,
@@ -509,7 +417,7 @@ def monitor(configuration):
     # logger.debug('(%s) loaded initial crontabs:\n%s' % (pid,
     # all_crontab_files))
 
-    while not stop_running.is_set():
+    while not check_stop():
         try:
             loop_start = datetime.datetime.now()
             loop_minute = loop_start.replace(second=0, microsecond=0)
@@ -549,7 +457,7 @@ def monitor(configuration):
                     del all_atjobs[atjobs_path]
         except KeyboardInterrupt:
             print('(%s) caught interrupt' % pid)
-            stop_running.set()
+            stop_running()
         except Exception as exc:
             logger.error('unexpected exception in monitor: %s' % exc)
             import traceback
@@ -594,7 +502,7 @@ if __name__ == '__main__':
     register_hangup_handler(configuration)
 
     # Allow clean shutdown on SIGINT only to main process
-    signal.signal(signal.SIGINT, stop_handler)
+    register_stop_handler(configuration)
 
     if not configuration.site_enable_crontab:
         err_msg = "Cron support is disabled in configuration!"
@@ -621,11 +529,11 @@ unless it is available in mig/server/MiGserver.conf
 
     logger.debug('(%s) Starting main loop' % main_pid)
     print("%s: Start main loop" % os.getpid())
-    while not stop_running.is_set():
+    while not check_stop():
         try:
             time.sleep(1)
         except KeyboardInterrupt:
-            stop_running.set()
+            stop_running()
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to monitor child
             print("Interrupt requested - close monitor and shutdown")

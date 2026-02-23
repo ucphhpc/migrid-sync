@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # crontab - user task scheduling back end
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -47,14 +48,14 @@ import os
 import re
 import time
 
+from mig.lib.events import get_time_expand_map, load_crontab, load_atjobs, \
+    parse_and_save_crontab, parse_and_save_atjobs
 from mig.shared.base import client_id_dir
 from mig.shared.cmdapi import get_usage_map
 from mig.shared.defaults import crontab_name, cron_log_cnt, cron_output_dir, \
     cron_log_name, csrf_field
 from mig.shared import returnvalues
 from mig.shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
-from mig.shared.events import get_time_expand_map, load_crontab, load_atjobs, \
-    parse_and_save_crontab, parse_and_save_atjobs
 from mig.shared.fileio import makedirs_rec
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
@@ -264,7 +265,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
 
             # Make page with manage crontab and log tab
 
-            output_objects.append({'object_type': 'html_form', 'text':  '''
+            output_objects.append({'object_type': 'html_form', 'text': '''
     <div id="wrap-tabs" class="crontab-tabs">
 <ul>
 <li><a href="#manage-tab">Manage Tasks</a></li>
@@ -274,7 +275,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
 
             # Display existing crontab in form to edit
 
-            output_objects.append({'object_type': 'html_form', 'text':  '''
+            output_objects.append({'object_type': 'html_form', 'text': '''
 <div id="manage-tab">
 '''})
 
@@ -399,13 +400,13 @@ and so on. You have the following commands at your disposal:<br/>
             output_objects.append({'object_type': 'html_form', 'text':
                                    html % fill_helpers})
 
-            output_objects.append({'object_type': 'html_form', 'text':  '''
+            output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 '''})
 
             # Display recent logs for this vgrid
 
-            output_objects.append({'object_type': 'html_form', 'text':  '''
+            output_objects.append({'object_type': 'html_form', 'text': '''
     <div id="log-tab">
 '''})
             output_objects.append({'object_type': 'sectionheader',
@@ -415,7 +416,7 @@ and so on. You have the following commands at your disposal:<br/>
 
             output_objects.append({'object_type': 'crontab_log', 'log_content':
                                    log_content})
-            output_objects.append({'object_type': 'html_form', 'text':  '''
+            output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 </div>
 <div class="col-lg-12" style="height: 100px;"></div>

@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -59,27 +60,24 @@ except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
-try:
-    from mig.shared.base import force_utf8
-    from mig.shared.cmdapi import parse_command_args
-    from mig.shared.conf import get_configuration_object
-    from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
-        workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
-    from mig.shared.events import get_path_expand_map
-    from mig.shared.fileio import makedirs_rec, pickle, unpickle, scandir, walk
-    from mig.shared.handlers import get_csrf_limit, make_csrf_token
-    from mig.shared.job import fill_mrsl_template, new_job
-    from mig.shared.listhandling import frange
-    from mig.shared.logger import daemon_logger, register_hangup_handler
-    from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
-    from mig.shared.serial import load
-    from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
-        JOB_ID, JOB_CLIENT
-    from mig.shared.vgridaccess import check_vgrid_access
-    from mig.shared.workflows import get_wp_map, CONF
-except ImportError as ioe:
-    print("could not import mig modules!")
-    exit(1)
+from mig.lib.daemon import check_stop, register_stop_handler, stop_running
+from mig.lib.events import CACHE_EXPIRE_SIZE, DEFAULT_PERIOD, DEFAULT_TIME, \
+    MISS_CACHE_TTL, RATE_LIMIT_FIELD, SETTLE_TIME_FIELD, TRIGGER_EVENT, \
+    UNIT_PERIODS, get_path_expand_map, run_events_command
+from mig.shared.base import force_utf8
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
+    workflows_log_size, workflows_log_cnt, default_vgrid
+from mig.shared.fileio import makedirs_rec, pickle, unpickle, scandir, walk
+from mig.shared.job import fill_mrsl_template, new_job
+from mig.shared.listhandling import frange
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
+from mig.shared.serial import load
+from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
+    JOB_ID, JOB_CLIENT
+from mig.shared.vgridaccess import check_vgrid_access
+from mig.shared.workflows import get_wp_map, CONF
 
 # Global trigger rule dictionaries with rules for all VGrids
 
@@ -103,36 +101,9 @@ shared_state['file_handler'] = None
 shared_state['rule_handler'] = None
 shared_state['rule_inotify'] = None
 
-# Only cache rule misses for one minute at a time to catch rule updates.
-# Run complete expire cycle if miss cache exceeds expire size.
-
-_miss_cache_ttl = 60
-_cache_expire_size = 10000
-
-# Rate limit helpers
-
-(_rate_limit_field, _settle_time_field) = ('rate_limit', 'settle_time')
-_default_period = 'm'
-_default_time = '0'
-_unit_periods = {
-    's': 1,
-    'm': 60,
-    'h': 60 * 60,
-    'd': 24 * 60 * 60,
-    'w': 7 * 24 * 60 * 60,
-}
 _hits_lock = threading.Lock()
 _rule_monitor_lock = threading.Lock()
-_trigger_event = '_trigger_event'
-stop_running = multiprocessing.Event()
 (configuration, logger) = (None, None)
-
-
-def stop_handler(sig, frame):
-    """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
-    # Print blank line to avoid mix with Ctrl-C line
-    print('')
-    stop_running.set()
 
 
 def make_fake_event(path, state, is_directory=False):
@@ -152,7 +123,7 @@ def make_fake_event(path, state, is_directory=False):
 
     # mark it a trigger event
 
-    setattr(fake, _trigger_event, True)
+    setattr(fake, TRIGGER_EVENT, True)
     return fake
 
 
@@ -161,7 +132,7 @@ def is_fake_event(event):
     system change.
     """
 
-    return getattr(event, _trigger_event, False)
+    return getattr(event, TRIGGER_EVENT, False)
 
 
 def extract_time_in_secs(rule, field):
@@ -174,26 +145,26 @@ def extract_time_in_secs(rule, field):
 
     limit_str = rule.get(field, '')
     if not limit_str:
-        limit_str = "%s" % _default_time
+        limit_str = "%s" % DEFAULT_TIME
 
     # NOTE: format is 3(s) or 52m
     # extract unit suffix letter and fall back to a raw value with default unit
 
-    unit_key = _default_period
+    unit_key = DEFAULT_PERIOD
     if not limit_str[-1:].isdigit():
         val_str = limit_str[:-1]
-        if limit_str[-1] in _unit_periods:
+        if limit_str[-1] in UNIT_PERIODS:
             unit_key = limit_str[-1]
         else:
 
             # print "ERROR: invalid time value %s ... fall back to defaults" % \
             #      limit_str
 
-            (unit_key, val_str) = (_default_period, _default_time)
+            (unit_key, val_str) = (DEFAULT_PERIOD, DEFAULT_TIME)
     else:
         val_str = limit_str
     try:
-        secs = float(val_str) * _unit_periods[unit_key]
+        secs = float(val_str) * UNIT_PERIODS[unit_key]
     except Exception as exc:
         print('(%s) ERROR: failed to parse time %s (%s)!' % (pid,
                                                              limit_str, exc))
@@ -213,13 +184,13 @@ def extract_hit_limit(rule, field):
     # NOTE: format is 3(/m) or 52/h
     # split string on slash and fall back to no limit and default unit
 
-    parts = (limit_str.split('/', 1) + [_default_period])[:2]
+    parts = (limit_str.split('/', 1) + [DEFAULT_PERIOD])[:2]
     (number, unit) = parts
     if not number.isdigit():
         number = '-1'
-    if unit not in _unit_periods:
-        unit = _default_period
-    return (int(number), _unit_periods[unit])
+    if unit not in UNIT_PERIODS:
+        unit = DEFAULT_PERIOD
+    return (int(number), UNIT_PERIODS[unit])
 
 
 def update_rule_hits(
@@ -235,8 +206,8 @@ def update_rule_hits(
     """
 
     pid = multiprocessing.current_process().pid
-    (_, hit_period) = extract_hit_limit(rule, _rate_limit_field)
-    settle_period = extract_time_in_secs(rule, _settle_time_field)
+    (_, hit_period) = extract_hit_limit(rule, RATE_LIMIT_FIELD)
+    settle_period = extract_time_in_secs(rule, SETTLE_TIME_FIELD)
 
     # logger.debug('(%s) update rule hits at %s for %s and %s %s %s' % (
     #    pid,
@@ -265,9 +236,9 @@ def get_rule_hits(rule, limit_field):
 
     pid = multiprocessing.current_process().pid
 
-    if limit_field == _rate_limit_field:
+    if limit_field == RATE_LIMIT_FIELD:
         (hit_count, hit_period) = extract_hit_limit(rule, limit_field)
-    elif limit_field == _settle_time_field:
+    elif limit_field == SETTLE_TIME_FIELD:
         (hit_count, hit_period) = (1, extract_time_in_secs(rule, limit_field))
     else:
         logger.error('(%s) get_rule_hits invalid limit_field %s' %
@@ -351,7 +322,7 @@ def wait_settled(
 
     pid = multiprocessing.current_process().pid
 
-    limit_field = _settle_time_field
+    limit_field = SETTLE_TIME_FIELD
     (path_history, _, hit_period) = get_path_hits(rule, path,
                                                   limit_field)
     period_history = [i for i in path_history if time_stamp - i[3]
@@ -399,82 +370,6 @@ def recently_modified(path, time_stamp, slack=2.0):
         # logger.debug('(%s) OSError: %s' % (pid, exc))
 
     return result
-
-
-def run_command(
-    command_list,
-    target_path,
-    rule,
-    configuration,
-):
-    """Run backend command built from command_list on behalf of user from
-    rule and with args mapped to the backend variables.
-    """
-
-    pid = multiprocessing.current_process().pid
-    client_id = rule['run_as']
-    command_str = ' '.join(command_list)
-    logger.info('(%s) run command for %s: %s' % (pid, target_path,
-                                                 command_list))
-
-    # logger.debug('(%s) run %s on behalf of %s' % (pid, command_str,
-    #             client_id))
-
-    (function, user_arguments_dict) = parse_command_args(configuration,
-                                                         command_list)
-
-    form_method = 'post'
-    target_op = "%s" % function
-    csrf_limit = get_csrf_limit(configuration)
-    csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                 client_id, csrf_limit)
-    user_arguments_dict[csrf_field] = [csrf_token]
-
-    # logger.debug('(%s) import main from %s' % (pid, function))
-
-    main = id
-    txt_format = id
-    try:
-        exec('from mig.shared.functionality.%s import main' % function)
-        exec('from mig.shared.output import txt_format')
-
-        # logger.debug('(%s) run %s on %s for %s' % \
-        #              (pid, function, user_arguments_dict, client_id))
-
-        # Fake HTTP POST manually setting fields required for CSRF check
-
-        os.environ['HTTP_USER_AGENT'] = 'grid events daemon'
-        os.environ['PATH_INFO'] = '%s.py' % function
-        os.environ['REQUEST_METHOD'] = form_method.upper()
-        # We may need a REMOTE_ADDR for gdplog call even if not really enabled
-        os.environ['REMOTE_ADDR'] = '127.0.0.1'
-        (output_objects, (ret_code, ret_msg)) = main(client_id,
-                                                     user_arguments_dict)
-    except Exception as exc:
-        logger.error('(%s) failed to run %s main on %s: %s' %
-                     (pid, function, user_arguments_dict, exc))
-        import traceback
-        logger.info('traceback:\n%s' % traceback.format_exc())
-        raise exc
-    logger.info('(%s) done running command for %s: %s' %
-                (pid, target_path, command_str))
-
-    # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
-
-    try:
-        txt_out = txt_format(configuration, ret_code, ret_msg,
-                             output_objects)
-    except Exception as exc:
-        txt_out = 'internal command output text formatting failed'
-        logger.error('(%s) text formating failed: %s\nraw output is: %s %s %s'
-                     % (pid, exc, ret_code, ret_msg, output_objects))
-    if ret_code != 0:
-        logger.warning('(%s) command finished but with error code %d :\n%s'
-                       % (pid, ret_code, output_objects))
-        raise Exception('command error: %s' % txt_out)
-
-    # logger.debug('(%s) result was %s : %s:\n%s' % (pid, ret_code,
-    #                                               ret_msg, txt_out))
 
 
 def strip_base_dirs(path):
@@ -807,8 +702,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         # Run settle time check first to only trigger rate limit if settled
 
-        for (name, field) in [('settle time', _settle_time_field),
-                              ('rate limit', _rate_limit_field)]:
+        for (name, field) in [('settle time', SETTLE_TIME_FIELD),
+                              ('rate limit', RATE_LIMIT_FIELD)]:
             if above_path_limit(rule, src_path, field, time_stamp):
                 above_limit = True
                 logger.warning('(%s) skip %s due to %s: %s' %
@@ -844,7 +739,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         self.__workflow_info(configuration, rule['vgrid_name'],
                              'handle %s for %s %s' % (rule['action'],
                                                       state, rel_src))
-        settle_secs = extract_time_in_secs(rule, _settle_time_field)
+        settle_secs = extract_time_in_secs(rule, SETTLE_TIME_FIELD)
         if settle_secs > 0.0:
             wait_secs = settle_secs
         else:
@@ -1014,7 +909,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                      (argument, filled_argument))
                 command_list.append(filled_argument)
             try:
-                run_command(command_list, target_path, rule, configuration)
+                run_events_command(command_list, target_path, rule,
+                                   configuration)
                 logger.info('(%s) done running command for %s: %s' %
                             (pid, target_path, ' '.join(command_list)))
                 self.__workflow_info(configuration, rule['vgrid_name'],
@@ -1203,7 +1099,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             # event_id))
             return
 
-        if len(miss_cache) < _cache_expire_size:
+        if len(miss_cache) < CACHE_EXPIRE_SIZE:
             return
 
         logger.info('(%s) expire all old entries in miss cache' % pid)
@@ -1212,7 +1108,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         # NOTE: we need to iterate over a copy of keys for in-place edits
         for event_id in list(miss_cache):
             time_stamp = miss_cache[event_id]
-            if time_stamp + _miss_cache_ttl < now:
+            if time_stamp + MISS_CACHE_TTL < now:
                 del miss_cache[event_id]
         logger.info('(%s) miss cache entries left after expire: %d' %
                     (pid, len(miss_cache)))
@@ -1225,7 +1121,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         pid = multiprocessing.current_process().pid
         event_id = self._get_event_id(event)
         recent = miss_cache.get(event_id, -1)
-        if recent + _miss_cache_ttl > time.time():
+        if recent + MISS_CACHE_TTL > time.time():
             # logger.debug('(%s) found recent miss for %s: %s' % (pid, event_id,
             #                                                     recent))
             return True
@@ -1877,10 +1773,10 @@ def monitor(configuration, vgrid_name):
         if not load_status:
             logger.error('(%s) Failed to load / generate dir cache for: %s'
                          % (pid, vgrid_name))
-            stop_running.set()
+            stop_running()
 
     activated = False
-    while not stop_running.is_set():
+    while not check_stop():
 
         # NOTE: We delay launch of actual monitors until any rules are active,
         #       in order to avoid excessive load from vgrids without triggers.
@@ -1918,7 +1814,7 @@ def monitor(configuration, vgrid_name):
         except KeyboardInterrupt:
             print('(%s) caught interrupt' % pid)
             logger.info('(%s) caught interrupt' % pid)
-            stop_running.set()
+            stop_running()
 
     # Only save cache if rules were actually activated so dirs were monitored
     if activated:
@@ -1951,7 +1847,7 @@ if __name__ == '__main__':
     register_hangup_handler(configuration)
 
     # Allow clean shutdown on SIGINT only to main process
-    signal.signal(signal.SIGINT, stop_handler)
+    register_stop_handler(configuration)
 
     if not configuration.site_enable_events:
         err_msg = "Event trigger support is disabled in configuration!"
@@ -2000,14 +1896,14 @@ unless it is available in mig/server/MiGserver.conf
 
     logger.debug('(%s) Starting main loop' % main_pid)
     print("%s: Start main loop" % os.getpid())
-    while not stop_running.is_set():
+    while not check_stop():
         try:
 
             # Throttle down
 
             time.sleep(1)
         except KeyboardInterrupt:
-            stop_running.set()
+            stop_running()
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to all monitor children
             print("Interrupt requested - close monitors and shutdown")

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # lscrontab - list scheduled cron/at user tasks back end
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -30,11 +31,12 @@ alternative to the full crontab back end, which expects a complete crontab or
 atjobs textarea and therefore is a bit cumbersome to use from e.g.
 xmlrpc/jsonrpc.
 """
+
 from __future__ import absolute_import
 
+from mig.lib.events import load_crontab, load_atjobs
 from mig.shared.defaults import keyword_all, csrf_field
 from mig.shared import returnvalues
-from mig.shared.events import load_crontab, load_atjobs
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
@@ -81,7 +83,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
         return (output_objects, returnvalues.OK)
 
     logger.info('%s from %s' % (op_name, client_id))
-    #logger.debug('%s from %s: %s' % (op_name, client_id, accepted))
+    # logger.debug('%s from %s: %s' % (op_name, client_id, accepted))
 
     # Include handy CSRF helpers for use in subsequent client crontab changes
     csrf_helpers = {'csrf_field': csrf_field}
