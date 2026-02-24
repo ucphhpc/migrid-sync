@@ -883,6 +883,15 @@ just use the one that looks most familiar or try them in turn)"""
         result = requested_page(fake_env, fallback=fallback)
         self.assertEqual(result, fallback)
 
+    def test_requested_page_fallback_despite_os_environ_value(self):
+        """Test fallback to default"""
+        fake_env = {}
+        fallback = 'special.py'
+        os.environ['BACKEND_NAME'] = 'BOGUS'
+        result = requested_page(fake_env, fallback=fallback)
+        del os.environ['BACKEND_NAME']
+        self.assertEqual(result, fallback)
+
     def test_requested_url_base_normal(self):
         """Test requested_url_base with basic complete URL"""
         fake_env = {'SCRIPT_URI': 'https://example.com/path/to/script.py'}
