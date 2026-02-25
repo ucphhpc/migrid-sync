@@ -1029,6 +1029,7 @@ def js_tmpl_parts(configuration, csrf_tokens, environ):
     """Javascript parts to include in the page header"""
     (tfa_import, tfa_init, tfa_ready) = twofactor_wizard_js(configuration)
     # Resolve account request url based on auth flavor
+    request_account_url = ""
     (_, auth_flavor) = detect_client_auth(configuration, environ)
     bin_url = requested_page(os.environ).replace('-sid', '-bin')
     if auth_flavor == AUTH_MIG_OID:
