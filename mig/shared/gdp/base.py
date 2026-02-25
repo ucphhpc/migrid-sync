@@ -93,6 +93,7 @@ skip_client_id_rewrite = [
     'vgridman.py',
     'viewvgrid.py',
     'rmvgridowner.py',
+    'accountaction.py',
 ]
 
 valid_log_actions = [

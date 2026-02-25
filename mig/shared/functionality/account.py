@@ -33,18 +33,24 @@ from __future__ import absolute_import
 
 import datetime
 import os
+import copy
+import time
 
 from mig.lib.accounting import get_usage
 from mig.shared import returnvalues
 from mig.shared.accountreq import renew_account_access_template
 from mig.shared.accountstate import account_expire_info
-from mig.shared.defaults import csrf_field, user_home_label
+from mig.shared.base import extract_field, requested_page
+from mig.shared.defaults import csrf_field, user_home_label, AUTH_MIG_OID, \
+    AUTH_MIG_OIDC, AUTH_MIG_CERT
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import html_user_messages, man_base_js
 from mig.shared.httpsclient import detect_client_auth, find_auth_type_and_label
 from mig.shared.init import find_entry, initialize_main_variables
-from mig.shared.useradm import get_full_user_map
+from mig.shared.useradm import get_full_user_map, default_search, search_users, \
+    verify_user_peers
+from mig.shared.userdb import default_db_path
 
 _account_field_order = [('full_name', 'Full Name'),
                         ('organization', 'Organization'),
@@ -68,7 +74,7 @@ def html_tmpl(configuration, client_id, environ, title_entry):
         user_msg = html_user_messages(configuration, client_id)
         show_user_msg = ''
     user_map = get_full_user_map(configuration)
-    user_dict = user_map.get(client_id, None)
+    user_dict = user_map.get(client_id, {})
     user_account = ''
     if user_dict:
         # NOTE: set min days high enough to always return renew and extend_days
@@ -81,15 +87,18 @@ def html_tmpl(configuration, client_id, environ, title_entry):
         registered:
         </p>
         '''
+        show_account = {}
         for (field, label) in _account_field_order:
             field_hint = ''
             if not user_dict.get(field, False):
                 continue
+            show_account[field] = copy.deepcopy(user_dict[field])
             if field == 'expire':
                 # NOTE: translate epoch to proper datetime string
-                expire_dt = datetime.datetime.fromtimestamp(user_dict[field])
+                expire_dt = datetime.datetime.fromtimestamp(
+                    show_account[field])
                 # strip usec for user-friendly time stamp
-                user_dict[field] = expire_dt.replace(microsecond=0)
+                show_account[field] = expire_dt.replace(microsecond=0)
                 if extend_days > 0:
                     field_hint = """(web login auto-extends access for %d days,
 and sign up for %d days at a time)""" % (extend_days, renew_days)
@@ -97,7 +106,7 @@ and sign up for %d days at a time)""" % (extend_days, renew_days)
                     field_hint = """(renewal may extend it for up to %d days
 at a time depending on site policies)""" % renew_days
             user_account += '''%s: %s %s<br/>
-            ''' % (label, user_dict[field], field_hint)
+            ''' % (label, show_account[field], field_hint)
     # NOTE: ID token is only available for openid connect
     claim_dump, user_token = '', ''
     for (key, val) in os.environ.items():
@@ -111,8 +120,10 @@ at a time depending on site policies)""" % renew_days
         </p>'''
         user_token += claim_dump
     fill_helpers = {'short_title': configuration.short_title,
-                    'user_msg': user_msg, 'show_user_msg': show_user_msg,
-                    'home_label': user_home_label, 'user_account': user_account,
+                    'user_msg': user_msg,
+                    'show_user_msg': show_user_msg,
+                    'home_label': user_home_label,
+                    'user_account': user_account,
                     'user_token': user_token}
 
     html = '''
@@ -178,20 +189,48 @@ at a time depending on site policies)""" % renew_days
     fill_helpers.update({'target_op': target_op, 'form_method':
                          form_method, 'csrf_field': csrf_field,
                          'csrf_token': csrf_token})
-    # TODO: extend renew to active ext accounts?
-    if auth_type in show_local and user_dict.get('status', 'active') == 'temporal':
+    if auth_type in show_local:
         fill_helpers['account_action'] = "RENEW_ACCESS"
         fill_helpers['peer_acceptance_notice'] = ""
         if configuration.site_peers_mandatory:
-            peers_full_name = user_dict.get("peers_full_name", "")
             peers_email = user_dict.get("peers_email", "")
             peers_list = user_dict.get("peers", [])
-            if peers_full_name and peers_email:
-                show_peers = "%s &lt;%s&gt;" % (peers_full_name, peers_email)
-            elif peers_list:
-                show_peers = ', '.join(peers_list)
-            else:
-                show_peers = ''
+            search_filter = default_search()
+            search_filter['email'] = peers_email
+            configuration.logger.info("peers_email: %r" % peers_email)
+            (_, hits) = search_users(search_filter,
+                                     configuration,
+                                     default_db_path(configuration),
+                                     regex_match=['email'])
+            possible_peers = [ent[0] for ent in hits]
+            possible_peers.extend(peers_list)
+            configuration.logger.info("possible_peers: %r" % possible_peers)
+            valid_peers_list = []
+            for verify_peer in possible_peers:
+                configuration.logger.info("verify_peer: %r" % verify_peer)
+                try:
+                    (verified_peer_list, _) \
+                        = verify_user_peers(configuration,
+                                            default_db_path(configuration),
+                                            client_id,
+                                            user_dict,
+                                            time.time(),
+                                            verify_peer,
+                                            0,
+                                            False,
+                                            False)
+                except Exception as err:
+                    logger.warning("Failed to verify user peers: %s" % err)
+                    continue
+                logger.info("verified_peer_list: %r"
+                            % verified_peer_list)
+                valid_peers_list.extend([peer for peer in verified_peer_list
+                                         if peer not in valid_peers_list])
+            show_peers = ''
+            for peer in valid_peers_list:
+                show_peers += "%s &lt;%s&gt;" \
+                    % (extract_field(peer, 'full_name'),
+                        extract_field(peer, 'email'))
             if show_peers:
                 fill_helpers['peer_acceptance_notice'] = """
 Apparently %s accepted you as a peer
@@ -201,12 +240,28 @@ obtain or await explicit extension or peer assignment from someone else before
 your access renewal can proceed.
                 """ % show_peers
             else:
+                bin_url = requested_page(os.environ).replace('-sid', '-bin')
+                if fill_helpers.get('auth_flavor', '') == AUTH_MIG_OID:
+                    fill_helpers['target_op'] \
+                        = os.path.join(os.path.dirname(bin_url),
+                                       'reqoid')
+                elif fill_helpers.get('auth_flavor', '') == AUTH_MIG_OIDC:
+                    fill_helpers['target_op'] \
+                        = os.path.join(os.path.dirname(bin_url),
+                                       'reqoidc')
+                elif auth_flavor == AUTH_MIG_CERT:
+                    fill_helpers['target_op'] \
+                        = os.path.join(os.path.dirname(bin_url),
+                                       'migcert')
                 fill_helpers['peer_acceptance_notice'] = """
 It looks like you may need someone with authority to appoint you as their peer
 before your access renewal can be accepted.
                 """
         fill_helpers['renew_helper'] = renew_account_access_template(
-            configuration, default_values=fill_helpers) % fill_helpers
+            configuration,
+            valid_peers_list,
+            environ,
+            default_values=fill_helpers) % fill_helpers
         html += '''
             <div class="renew-account-access__header col-12">
                 <h3>Renew Account Access</h3>
@@ -224,8 +279,8 @@ before your access renewal can be accepted.
     if configuration.site_enable_accounting:
         account_usage = get_usage(configuration, client_id)
         if account_usage is None:
-            logger.error("Failed to load acount usage for user: %r" \
-                    % client_id)
+            logger.error("Failed to load acount usage for user: %r"
+                         % client_id)
             account_usage = {}
         accounting = account_usage.get('accounting', {})
         accounting_dt = datetime.datetime.fromtimestamp(

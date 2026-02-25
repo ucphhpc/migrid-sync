@@ -35,9 +35,11 @@ import os
 from mig.shared import returnvalues
 from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import get_xgi_bin, requested_page
-from mig.shared.defaults import csrf_field
+from mig.shared.defaults import csrf_field, AUTH_MIG_OID, AUTH_MIG_OIDC, \
+    AUTH_MIG_CERT
 from mig.shared.fileio import write_named_tempfile
 from mig.shared.functional import validate_input_and_cert
+from mig.shared.functionality.account import html_tmpl as account_html_tmpl
 from mig.shared.gdp.all import ensure_gdp_user, get_projects, get_users, \
     get_active_project_client_id, get_short_id_from_user_id, \
     project_accept_user, project_create, project_remove, \
@@ -53,6 +55,7 @@ from mig.shared.settings import load_twofactor, parse_and_save_twofactor
 from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
 from mig.shared.useradm import get_full_user_map
 from mig.shared.vgrid import vgrid_create_allowed, vgrid_manage_allowed
+from mig.shared.httpsclient import detect_client_auth
 
 
 def signature():
@@ -139,7 +142,8 @@ def html_tmpl(
         action,
         client_id,
         csrf_token,
-        status_msg):
+        status_msg,
+        environ):
     """HTML main template for GDP manager"""
 
     fill_entries = {'csrf_field': csrf_field,
@@ -286,6 +290,8 @@ def html_tmpl(
             preselected_tab = tab_count
         tab_count += 1
     if twofactor_enabled:
+        html += """<li><a href='#account_tab'>Account</a></li>"""
+        tab_count += 1
         html += """<li><a href='#logout_tab'>Logout</a></li>"""
         tab_count += 1
 
@@ -971,6 +977,9 @@ def html_tmpl(
     setOTPProgress(['otp_intro', 'otp_install', 'otp_import', 'otp_verify',
                     'otp_ready']);
 </script>
+    <div id='account_tab'>
+        %(account_helper)s
+    </div>
     <div id='logout_tab'>
     <table class='gm_projects_table' style='border-spacing=0;'>
     <thead>
@@ -1004,6 +1013,10 @@ def html_tmpl(
 """
     fill_helpers.update({
         'client_id': client_id,
+        'account_helper': account_html_tmpl(configuration,
+                                            client_id,
+                                            environ,
+                                            {}),
     })
 
     fill_entries.update(fill_helpers)
@@ -1012,15 +1025,29 @@ def html_tmpl(
     return html
 
 
-def js_tmpl_parts(configuration, csrf_token):
+def js_tmpl_parts(configuration, csrf_tokens, environ):
     """Javascript parts to include in the page header"""
-
     (tfa_import, tfa_init, tfa_ready) = twofactor_wizard_js(configuration)
-    fill_entries = {'csrf_field': csrf_field,
-                    'csrf_token': csrf_token,
-                    'tfa_init': tfa_init,
-                    'tfa_ready': tfa_ready,
-                    }
+    # Resolve account request url based on auth flavor
+    (_, auth_flavor) = detect_client_auth(configuration, environ)
+    bin_url = requested_page(os.environ).replace('-sid', '-bin')
+    if auth_flavor == AUTH_MIG_OID:
+        request_account_url = os.path.join(os.path.dirname(bin_url),
+                                           'reqoid.py')
+    elif auth_flavor == AUTH_MIG_OIDC:
+        request_account_url = os.path.join(os.path.dirname(bin_url),
+                                           'reqoidc.py')
+    elif auth_flavor == AUTH_MIG_CERT:
+        request_account_url = os.path.join(os.path.dirname(bin_url),
+                                           'migcert.py')
+    fill_entries = {
+        'csrf_field': csrf_field,
+        'csrf_token_gdpman': csrf_tokens.get('gdpman', ''),
+        'csrf_token_accountaction': csrf_tokens.get('accountaction', ''),
+        'tfa_init': tfa_init,
+        'tfa_ready': tfa_ready,
+        'request_account_url': request_account_url,
+    }
     js_import = ''
     js_import += '<script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>'
     js_import += '<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>'
@@ -1028,7 +1055,9 @@ def js_tmpl_parts(configuration, csrf_token):
     # TODO: move this code to stand-alone js file
     js_init = """
     var csrf_field = '%(csrf_field)s';
-    var csrf_map = {'gdpman': '%(csrf_token)s'};
+    var csrf_map = {'gdpman': '%(csrf_token_gdpman)s',
+                    'accountaction': '%(csrf_token_accountaction)s'};
+    var request_account_url = '%(request_account_url)s';
     var preselected_tab = 0;
     var category_map = {};
 
@@ -1338,6 +1367,13 @@ def js_tmpl_parts(configuration, csrf_token):
             if (!handleStaticFields(project_action, '', '', '')) return false;
             $('#gm_project_submit_form').submit();
         }
+        else if (project_action == 'request_account') {
+            window.open(request_account_url, '_blank');
+        }
+        else if (project_action == 'renew_account_access') {
+            if (!handleStaticFields(project_action, '', '', '')) return false;
+            ajax_renew_account_access(showRenewAccountAccessDialog);
+        }
     }
     function showProjectInfoDialog(project_name, project_info) {
         var html = '';
@@ -1432,7 +1468,6 @@ def js_tmpl_parts(configuration, csrf_token):
         $('#info_dialog').html('<p>'+html+'</p>');
         $('#info_dialog').dialog('open');
     }
-
     function showRemoveDialog(project_action) {
         var project_name = extractProject(project_action);
         var title = 'Remove Project ' + project_name;
@@ -1444,7 +1479,30 @@ def js_tmpl_parts(configuration, csrf_token):
         $('#remove_dialog').html('<p>'+html+'</p>');
         $('#remove_dialog').dialog('open');
     }
-
+    function showRenewAccountAccessDialog(result) {
+        var html = '';
+        var body = '';
+        if (result.OK.length > 0) {
+            for (var i=0; i<result.OK.length; i++) {
+                html += '<p>'+result.OK[i]+'</p>';
+            }
+        }
+        if (result.ERROR.length > 0) {
+            for (var i=0; i<result.ERROR.length; i++) {
+                html += '<p class=\"errortext\">' +
+                        'Error: '+result.ERROR[i]+'</p>';
+            }
+        }
+        if (result.WARNING.length > 0) {
+            for (var i=0; i<result.WARNING.length; i++) {
+                html += '<p class=\"warningtext\">' +
+                        'Warning: '+ result.WARNING[i]+'</p>';
+            }
+        }
+        $('#info_dialog').dialog('option', 'title', 'Renew Account Access');
+        $('#info_dialog').html('<p>'+html+'</p>');
+        $('#info_dialog').dialog('open');
+    }
     function showProjectInfo() {
         var project_name = extractProject('project_info');
         if (project_name === null) {
@@ -1514,8 +1572,13 @@ def main(client_id, user_arguments_dict, environ=None):
     client_addr = environ.get('REMOTE_ADDR', None)
     req_url = environ.get('SCRIPT_URI', None)
     csrf_limit = get_csrf_limit(configuration)
-    csrf_token = make_csrf_token(configuration, 'post', op_name,
-                                 client_id, csrf_limit)
+    csrf_tokens = {}
+    for operation in [op_name, 'accountaction']:
+        csrf_tokens[operation] = make_csrf_token(configuration,
+                                                 'post',
+                                                 operation,
+                                                 client_id,
+                                                 csrf_limit)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -1553,7 +1616,8 @@ def main(client_id, user_arguments_dict, environ=None):
         title_entry = find_entry(output_objects, 'title')
         title_entry['text'] = title_text
         add_import, add_init, add_ready = js_tmpl_parts(configuration,
-                                                        csrf_token)
+                                                        csrf_tokens,
+                                                        environ)
         title_entry['script']['advanced'] = add_import
         title_entry['script']['init'] = add_init
         title_entry['script']['ready'] = add_ready
@@ -1655,7 +1719,7 @@ Please contact the site admins %s if you think it should be enabled.
                                client_id,
                                autologout=True)
             return_url = req_url.replace(environ.get('SCRIPT_URL', ''),
-                                     configuration.site_autolaunch_page)
+                                         configuration.site_autolaunch_page)
             redirect_url = build_autologout_url(configuration,
                                                 environ,
                                                 client_id,
@@ -2037,8 +2101,12 @@ Please contact the site admins %s if you think it should be enabled.
             action_msg = validate_msg
 
         if output_format != 'json':
-            html = html_tmpl(configuration, action, client_id, csrf_token,
-                             action_msg)
+            html = html_tmpl(configuration,
+                             action,
+                             client_id,
+                             csrf_tokens.get(op_name, ''),
+                             action_msg,
+                             environ)
             output_objects.append({'object_type': 'html_form',
                                    'text': html})
 

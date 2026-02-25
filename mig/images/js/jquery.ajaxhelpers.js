@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.ajaxhelpers - jquery based ajax helpers for managers
-  # Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2026  The MiG Project lead by the Science HPC Center at UCPH
   #
   # This file is part of MiG.
   #
@@ -1122,6 +1122,63 @@ function prepare_seafile_settings(reg_url, username, integration,
             $("#"+status_prefix+"status").addClass("error iconleftpad");
             $("#"+status_prefix+"msg").addClass("status_offline");
             select_seafile_section(save_prefix);
+        }
+    });
+}
+
+/* User account access renew helper */
+function ajax_renew_account_access(callback) {
+    console.debug("ajax_renew_account_access");
+    var result = { OK: [], WARNING: [], ERROR: [] };
+    var target_op = "accountaction";
+    console.info("Lookup CSRF token for " + target_op);
+
+    var jsonSettings = {
+        output_format: "json",
+        action: "RENEW_ACCESS"
+    };
+    if (csrf_map[target_op] !== undefined) {
+        jsonSettings[csrf_field] = csrf_map[target_op];
+        console.info("Found CSRF token " + jsonSettings["_csrf"]);
+    } else {
+        console.info("No CSRF token for " + target_op);
+    }
+
+    $.ajax({
+        url: target_op + ".py",
+        data: jsonSettings,
+        type: "POST",
+        dataType: "json",
+        cache: false,
+        success: function(jsonRes) {
+            for (var i = 0; i < jsonRes.length; i++) {
+                console.debug("jsonRes: " + JSON.stringify(jsonRes[i]));
+                if (jsonRes[i].object_type === "text") {
+                    console.debug("ajax_renew_account_access: " +
+                      JSON.stringify(jsonRes[i].text));
+                    result.OK.push(jsonRes[i].text);
+                } else if (jsonRes[i]["object_type"] === "warning") {
+                    console.warning(
+                        "ajax_renew_account_access: " + jsonRes[i].text
+                    );
+                    result.WARNING.push(jsonRes[i].text);
+                } else if (jsonRes[i]["object_type"] === "error_text") {
+                    console.error("ajax_gdp_project_info: " + jsonRes[i].text);
+                    result.ERROR.push(jsonRes[i].text);
+                }
+            }
+            callback(result);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error(
+                "ajax_renew_account_access: " +
+                    "status: " +
+                    textStatus +
+                    "error: " +
+                    errorThrown
+            );
+            result.ERROR.push(textStatus);
+            result.ERROR.push(errorThrown);
         }
     });
 }

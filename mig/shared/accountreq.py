@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountreq - helpers for certificate/OpenID account requests
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -45,7 +45,8 @@ except ImportError:
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import auth_type_description, canonical_user, \
     client_id_dir, distinguished_name_to_user, fill_distinguished_name, \
-    fill_user, force_utf8, force_native_str_rec, get_user_id, mask_creds
+    fill_user, force_utf8, force_native_str_rec, get_user_id, mask_creds, \
+    requested_backend
 from mig.shared.defaults import peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
     gdp_distinguished_field
@@ -660,7 +661,10 @@ and select which authentication method you want to change password for.
     return html
 
 
-def renew_account_access_template(configuration, default_values={}):
+def renew_account_access_template(configuration,
+                                  valid_peers,
+                                  environ,
+                                  default_values={}):
     """A general form template used for renewing account access."""
 
     html = """
@@ -668,6 +672,8 @@ def renew_account_access_template(configuration, default_values={}):
 """
 
     _logger = configuration.logger
+    script = requested_backend(environ)
+    # Create auth type filter
     auth_map = auth_type_description(configuration)
     show_auth_types = [(key, auth_map[key]) for key in
                        default_values.get('show', auth_map.keys())]
@@ -681,6 +687,24 @@ No matching local authentication methods enabled on this site, so no account
 access to renew here.
 </p>
 """
+    elif not valid_peers:
+        html += """
+<p>
+Account renewal request is needed.
+%(peer_acceptance_notice)s
+</p>
+"""
+        if script == "gdpman":
+            html += """
+<a class='ui-button' id='request_account_button' href='#' onclick='submitform(\"request_account\"); return false;'>Request Account Access</a>
+"""
+        else:
+            html += """
+<!-- use post here to avoid field contents in URL -->
+<form target='_blank' method='%(form_method)s' action='%(target_op)s.py'>
+    <input id='submit_button' type=submit value='Request Account Access'/>
+</form>
+"""
     else:
         html += """
 <p>
@@ -688,11 +712,18 @@ Account access automatically expires after a while and needs to be actively
 renewed.
 %(peer_acceptance_notice)s
 </p>
+"""
+        if script == "gdpman":
+            html += """
+<a class='ui-button' id='renew_account_button' href='#' onclick='submitform(\"renew_account_access\"); return false;'>Renew Account Access</a>
+"""
+        else:
+            html += """
 <!-- use post here to avoid field contents in URL -->
 <form method='%(form_method)s' action='%(target_op)s.py'>
     <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
     <input type='hidden' name='action' value='%(account_action)s'/>
-    <input id='submit_button' type=submit value='Renew %(auth_label)s Account Access'/>
+    <input id='submit_button' type=submit value='Renew Account Access'/>
 </form>
 """
 
@@ -1302,7 +1333,7 @@ def save_account_request(configuration, req_dict):
     """Save req_dict account request as pickle in configured user_pending
     location.
     Returns a tuple of save status and output, where the latter is the request
-    path on success or the error message otherwise. 
+    path on success or the error message otherwise.
     """
     req_path = None
     try:
