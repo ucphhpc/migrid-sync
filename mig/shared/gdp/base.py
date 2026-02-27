@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - gdp base helper functions related to GDP actions
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
