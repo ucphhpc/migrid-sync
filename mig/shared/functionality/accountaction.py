@@ -110,25 +110,31 @@ def renew_access(configuration, client_id, user_dict, auth_flavor):
     # Notify user and peer(s) that account was renewed
 
     if renew_status:
-        new_expire_dt \
-            = datetime.datetime.fromtimestamp(user_dict.get('expire', 0))
-        email_subject = '%s account renewed for %s' \
-            % (configuration.short_title, user_dict.get('full_name', ''))
-        email_msg_template = "Renewed account:\n" \
-            + " * Full Name: %s\n" \
-            % user_dict.get('full_name', '') \
-            + " * Organization: %s\n" \
-            % user_dict.get('organization', '') \
-            + " * State: %s\n" \
-            % user_dict.get('state', '') \
-            + " * Country: %s\n" \
-            % user_dict.get('country', '') \
-            + " * Email: %s\n" \
-            % user_dict.get('email', '') \
-            + " * New Expire: %s\n" \
-            % new_expire_dt
-        email_header = "Your %s user account was renewed\n\n" \
-            % configuration.short_title
+        expire_dt = datetime.datetime.fromtimestamp(user_dict.get('expire', 0))
+        email_fill_helper = {'title': configuration.short_title,
+                          'full_name': '',
+                          'organization': '',
+                          'state': '',
+                          'country': '',
+                          'email': '',
+                          'expire_dt': expire_dt,
+                          }
+        for key in ['full_name', 'organization', 'state', 'country', 'email']:
+            if key in user_dict:
+                email_fill_helper[key] = user_dict[key]
+        email_subject = "%(title)s account renewed for %(full_name)s" \
+            % email_fill_helper
+        email_msg_template = '''
+Renewed account:
+ * Full Name: %(full_name)s
+ * Organization: %(organization)s
+ * State: %(state)s
+ * Country: %(country)s
+ * Email: %(email)s
+ * New Expire: %(expire_dt)s
+ ''' % email_fill_helper
+        email_header = "Your %(title)s user account was renewed\n" \
+            % email_fill_helper
         email_msg = email_header + email_msg_template
         recipient = user_dict.get('email', '')
         # Notify user
