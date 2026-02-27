@@ -197,17 +197,17 @@ at a time depending on site policies)""" % renew_days
             peers_list = user_dict.get("peers", [])
             search_filter = default_search()
             search_filter['email'] = peers_email
-            configuration.logger.info("peers_email: %r" % peers_email)
+            logger.debug("peers_email: %r" % peers_email)
             (_, hits) = search_users(search_filter,
                                      configuration,
                                      default_db_path(configuration),
                                      regex_match=['email'])
             possible_peers = [ent[0] for ent in hits]
             possible_peers.extend(peers_list)
-            configuration.logger.info("possible_peers: %r" % possible_peers)
+            logger.debug("possible_peers: %r" % possible_peers)
             valid_peers_list = []
             for verify_peer in possible_peers:
-                configuration.logger.info("verify_peer: %r" % verify_peer)
+                logger.debug("verify_peer: %r" % verify_peer)
                 try:
                     (verified_peer_list, _) \
                         = verify_user_peers(configuration,
@@ -222,8 +222,7 @@ at a time depending on site policies)""" % renew_days
                 except Exception as err:
                     logger.warning("Failed to verify user peers: %s" % err)
                     continue
-                logger.info("verified_peer_list: %r"
-                            % verified_peer_list)
+                logger.debug("verified_peer_list: %r" % verified_peer_list)
                 valid_peers_list.extend([peer for peer in verified_peer_list
                                          if peer not in valid_peers_list])
             show_peers = ''
