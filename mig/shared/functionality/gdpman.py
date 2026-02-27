@@ -1031,7 +1031,7 @@ def js_tmpl_parts(configuration, csrf_tokens, environ):
     # Resolve account request url based on auth flavor
     request_account_url = ""
     (_, auth_flavor) = detect_client_auth(configuration, environ)
-    bin_url = requested_page(os.environ).replace('-sid', '-bin')
+    bin_url = requested_page(environ).replace('-sid', '-bin')
     if auth_flavor == AUTH_MIG_OID:
         request_account_url = os.path.join(os.path.dirname(bin_url),
                                            'reqoid.py')
