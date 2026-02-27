@@ -158,8 +158,8 @@ Renewed account:
                                        _logger,
                                        configuration)
             if not notify_status:
-                _logger.error("Failed to send account renew notification to %s"
-                              % recipient)
+                _logger.error("Failed to send account renew notification" \
+                              + " to peer %s" % recipient)
     return (renew_status, renew_err)
 
 
