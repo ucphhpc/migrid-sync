@@ -916,7 +916,7 @@ function ajax_gdp_project_info(callback, project_name) {
     console.debug("ajax_gdp_project_info: " + project_name);
     var result = { OK: [], WARNING: [], ERROR: [] };
     var target_op = "gdpman";
-    console.info("Lookup CSRF token for " + target_op);
+    console.debug("Lookup CSRF token for " + target_op);
 
     var jsonSettings = {
         base_vgrid_name: project_name,
@@ -925,9 +925,9 @@ function ajax_gdp_project_info(callback, project_name) {
     };
     if (csrf_map[target_op] !== undefined) {
         jsonSettings[csrf_field] = csrf_map[target_op];
-        console.info("Found CSRF token " + jsonSettings["_csrf"]);
+        console.debug("Found CSRF token " + jsonSettings["_csrf"]);
     } else {
-        console.info("No CSRF token for " + target_op);
+        console.error("No CSRF token for " + target_op);
     }
 
     $.ajax({
@@ -1131,7 +1131,7 @@ function ajax_renew_account_access(callback) {
     console.debug("ajax_renew_account_access");
     var result = { OK: [], WARNING: [], ERROR: [] };
     var target_op = "accountaction";
-    console.info("Lookup CSRF token for " + target_op);
+    console.debug("Lookup CSRF token for " + target_op);
 
     var jsonSettings = {
         output_format: "json",
@@ -1139,9 +1139,9 @@ function ajax_renew_account_access(callback) {
     };
     if (csrf_map[target_op] !== undefined) {
         jsonSettings[csrf_field] = csrf_map[target_op];
-        console.info("Found CSRF token " + jsonSettings["_csrf"]);
+        console.debug("Found CSRF token " + jsonSettings["_csrf"]);
     } else {
-        console.info("No CSRF token for " + target_op);
+        console.error("No CSRF token for " + target_op);
     }
 
     $.ajax({
@@ -1163,7 +1163,7 @@ function ajax_renew_account_access(callback) {
                     );
                     result.WARNING.push(jsonRes[i].text);
                 } else if (jsonRes[i]["object_type"] === "error_text") {
-                    console.error("ajax_gdp_project_info: " + jsonRes[i].text);
+                    console.error("ajax_renew_account_access: " + jsonRes[i].text);
                     result.ERROR.push(jsonRes[i].text);
                 }
             }
