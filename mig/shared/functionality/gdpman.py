@@ -1040,7 +1040,7 @@ def js_tmpl_parts(configuration, csrf_tokens, environ):
                                            'reqoidc.py')
     elif auth_flavor == AUTH_MIG_CERT:
         request_account_url = os.path.join(os.path.dirname(bin_url),
-                                           'migcert.py')
+                                           'reqcert.py')
     fill_entries = {
         'csrf_field': csrf_field,
         'csrf_token_gdpman': csrf_tokens.get('gdpman', ''),
