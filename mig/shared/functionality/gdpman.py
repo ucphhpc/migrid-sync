@@ -1041,10 +1041,13 @@ def js_tmpl_parts(configuration, csrf_tokens, environ):
     elif auth_flavor == AUTH_MIG_CERT:
         request_account_url = os.path.join(os.path.dirname(bin_url),
                                            'reqcert.py')
+    csrf_map = "{"
+    for key, value in csrf_tokens.items():
+        csrf_map += "\n'%s': '%s'," % (key, value)
+    csrf_map += "}"
     fill_entries = {
         'csrf_field': csrf_field,
-        'csrf_token_gdpman': csrf_tokens.get('gdpman', ''),
-        'csrf_token_accountaction': csrf_tokens.get('accountaction', ''),
+        'csrf_map': csrf_map,
         'tfa_init': tfa_init,
         'tfa_ready': tfa_ready,
         'request_account_url': request_account_url,
@@ -1056,8 +1059,7 @@ def js_tmpl_parts(configuration, csrf_tokens, environ):
     # TODO: move this code to stand-alone js file
     js_init = """
     var csrf_field = '%(csrf_field)s';
-    var csrf_map = {'gdpman': '%(csrf_token_gdpman)s',
-                    'accountaction': '%(csrf_token_accountaction)s'};
+    var csrf_map = %(csrf_map)s;
     var request_account_url = '%(request_account_url)s';
     var preselected_tab = 0;
     var category_map = {};
