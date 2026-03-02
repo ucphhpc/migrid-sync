@@ -195,9 +195,6 @@ at a time depending on site policies)"""
     (auth_type, auth_label) = find_auth_type_and_label(
         configuration, auth_type_name, auth_flavor
     )
-    show_local = [
-        i for i in configuration.site_login_methods if i.startswith("mig")
-    ]
     fill_helpers.update(
         {
             "auth_type": auth_type,
@@ -206,34 +203,42 @@ at a time depending on site policies)"""
             "auth_label": auth_label,
         }
     )
-    html += (
-        """
-        <div id="manage-container" class="row">
-            <div class="manage-page__header col-12">
-                <h2>Manage Account</h2>
-                <p class="sub-title">Depending on your %(short_title)s account
-                type you have access to one or more account management actions
-                below.
-                </p>
-            </div>
-            """
-        % fill_helpers
-    )
-    form_method = "post"
-    csrf_limit = get_csrf_limit(configuration)
-    target_op = "accountaction"
-    csrf_token = make_csrf_token(
-        configuration, form_method, target_op, client_id, csrf_limit
-    )
-    fill_helpers.update(
-        {
-            "target_op": target_op,
-            "form_method": form_method,
-            "csrf_field": csrf_field,
-            "csrf_token": csrf_token,
-        }
-    )
+    show_local = [
+        i for i in configuration.site_login_methods if i.startswith("mig")
+    ]
+    # TODO: Let extoid(c) users renew for configuration.X_valid_days ?
+    # show_remote = [
+    #    i for i in configuration.site_login_methods if i.startswith("ext")
+    # ]
     if auth_type in show_local:
+        html += (
+            """
+            <div id="manage-container" class="row">
+                <div class="manage-page__header col-12">
+                    <h2>Manage Account</h2>
+                    <p class="sub-title">Depending on your %(short_title)s account
+                    type you have access to one or more account management actions
+                    below.
+                    </p>
+                </div>
+                """
+            % fill_helpers
+        )
+        form_method = "post"
+        csrf_limit = get_csrf_limit(configuration)
+        target_op = "accountaction"
+        csrf_token = make_csrf_token(
+            configuration, form_method, target_op, client_id, csrf_limit
+        )
+        fill_helpers.update(
+            {
+                "target_op": target_op,
+                "form_method": form_method,
+                "csrf_field": csrf_field,
+                "csrf_token": csrf_token,
+            }
+        )
+        show_peers = ""
         fill_helpers["account_action"] = "RENEW_ACCESS"
         fill_helpers["peer_acceptance_notice"] = ""
         if configuration.site_peers_mandatory:
@@ -277,43 +282,44 @@ at a time depending on site policies)"""
                         if peer not in valid_peers_list
                     ]
                 )
-            show_peers = ""
             for peer in valid_peers_list:
                 show_peers += "%s &lt;%s&gt;" % (
                     extract_field(peer, "full_name"),
                     extract_field(peer, "email"),
                 )
-            if show_peers:
-                fill_helpers["peer_acceptance_notice"] = (
-                    """
-Apparently %s accepted you as a peer
-and if that peer appointment has not yet ended you can renew your access here
-without further operator or peer contact involvement. Otherwise you may need to
-obtain or await explicit extension or peer assignment from someone else before
-your access renewal can proceed.
+        if show_peers:
+            fill_helpers["peer_acceptance_notice"] = (
                 """
-                    % show_peers
+%s accepted you as a peer and you can now renew your access here.
+            """
+                % show_peers
+            )
+        elif not configuration.site_peers_mandatory:
+            fill_helpers["peer_acceptance_notice"] = (
+                """
+You can renew your access here.
+            """
+            )
+        else:
+            bin_url = requested_page(os.environ).replace("-sid", "-bin")
+            if fill_helpers.get("auth_flavor", "") == AUTH_MIG_OID:
+                fill_helpers["target_op"] = os.path.join(
+                    os.path.dirname(bin_url), "reqoid"
                 )
-            else:
-                bin_url = requested_page(os.environ).replace("-sid", "-bin")
-                if fill_helpers.get("auth_flavor", "") == AUTH_MIG_OID:
-                    fill_helpers["target_op"] = os.path.join(
-                        os.path.dirname(bin_url), "reqoid"
-                    )
-                elif fill_helpers.get("auth_flavor", "") == AUTH_MIG_OIDC:
-                    fill_helpers["target_op"] = os.path.join(
-                        os.path.dirname(bin_url), "reqoidc"
-                    )
-                elif auth_flavor == AUTH_MIG_CERT:
-                    fill_helpers["target_op"] = os.path.join(
-                        os.path.dirname(bin_url), "migcert"
-                    )
-                fill_helpers[
-                    "peer_acceptance_notice"
-                ] = """
+            elif fill_helpers.get("auth_flavor", "") == AUTH_MIG_OIDC:
+                fill_helpers["target_op"] = os.path.join(
+                    os.path.dirname(bin_url), "reqoidc"
+                )
+            elif auth_flavor == AUTH_MIG_CERT:
+                fill_helpers["target_op"] = os.path.join(
+                    os.path.dirname(bin_url), "migcert"
+                )
+            fill_helpers[
+                "peer_acceptance_notice"
+            ] = """
 It looks like you may need someone with authority to appoint you as their peer
 before your access renewal can be accepted.
-                """
+            """
         fill_helpers["renew_helper"] = (
             renew_account_access_template(
                 configuration,
@@ -333,10 +339,10 @@ before your access renewal can be accepted.
             % fill_helpers
         )
 
-    html += """
-            <div class="col-lg-12 vertical-spacer"></div>
-        </div>
-    """
+        html += """
+                <div class="col-lg-12 vertical-spacer"></div>
+            </div>
+        """
 
     # Show storage accounting information if enabled
 

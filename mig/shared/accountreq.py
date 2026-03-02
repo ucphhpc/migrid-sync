@@ -687,7 +687,7 @@ No matching local authentication methods enabled on this site, so no account
 access to renew here.
 </p>
 """
-    elif not valid_peers:
+    elif configuration.site_peers_mandatory and not valid_peers:
         html += """
 <p>
 Account renewal request is needed.
