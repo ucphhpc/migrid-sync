@@ -121,6 +121,8 @@ def main(client_id, user_arguments_dict, environ=None):
     # based on client_id and without changing access method (CGI vs. WSGI).
     if client_id:
         (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+        html = "<p>You're logged in as %s</p>" % client_id
+        output_objects.append({'object_type': 'html_form', 'text': html})
         bin_url = requested_page(os.environ).replace('-sid', '-bin')
         if auth_flavor == AUTH_MIG_OID:
             migoid_url = os.path.join(os.path.dirname(bin_url), 'reqoid.py')
