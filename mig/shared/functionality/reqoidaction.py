@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqoidaction - handle OpenID account requests and send email to admins
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -246,7 +246,7 @@ You may also read more about the Peers system in the site documentation.
     fill_distinguished_name(user_dict)
 
     # NOTE: allow registered site admins to request alternative login access
-    if not signup_prefilter_allowed(configuration, raw_user,
+    if not signup_prefilter_allowed(configuration, user_dict,
                                     configuration.admin_list):
         output_objects.append({'object_type': 'error_text', 'text':
                                '''Invalid sign up request:
