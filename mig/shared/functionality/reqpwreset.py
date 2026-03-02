@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqpwreset - Account password reset request backend
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -121,6 +121,8 @@ def main(client_id, user_arguments_dict, environ=None):
     # based on client_id and without changing access method (CGI vs. WSGI).
     if client_id:
         (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+        html = "<p>You're logged in as %s</p>" % client_id
+        output_objects.append({'object_type': 'html_form', 'text': html})
         bin_url = requested_page(os.environ).replace('-sid', '-bin')
         if auth_flavor == AUTH_MIG_OID:
             migoid_url = os.path.join(os.path.dirname(bin_url), 'reqoid.py')
@@ -135,7 +137,7 @@ def main(client_id, user_arguments_dict, environ=None):
                             (configuration.user_mig_oid_title, auth_type)}
             output_objects.append(migoidc_link)
         elif auth_flavor == AUTH_MIG_CERT:
-            migcert_url = os.path.join(os.path.dirname(bin_url), 'migcert.py')
+            migcert_url = os.path.join(os.path.dirname(bin_url), 'reqcert.py')
             migcert_link = {'object_type': 'link', 'destination': migcert_url,
                             'text': 'Change %s %s password' %
                             (configuration.user_mig_cert_title, auth_type)}
