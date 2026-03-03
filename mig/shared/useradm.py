@@ -2428,6 +2428,52 @@ def search_users(search_filter, conf_path, db_path,
     return (configuration, hits)
 
 
+def search_peers(contact_id, search_filter, conf_path, db_path,
+                 verbose=False, regex_match=[]):
+    """Search the registered peers of contact_id for users matching
+    search_filter. The optional regex_match is a list of keys in search_filter
+    to apply regular expression match rather than the usual fnmatch for.
+    """
+    hits = []
+    if verbose:
+        print("INFO: looking for peers of %r matching search %s" % (contact_id,
+                                                                    search_filter))
+    if conf_path:
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
+    else:
+        configuration = get_configuration_object()
+    _logger = configuration.logger
+    client_dir = client_id_dir(contact_id)
+    peers_path = os.path.join(configuration.user_settings, client_dir,
+                              peers_filename)
+    peers = load(peers_path)
+    if not peers:
+        return (configuration, hits)
+    hits = []
+    for peer_id in peers:
+        peer_dict = peers[peer_id]
+        match = True
+        for (key, val) in search_filter.items():
+            if key in regex_match and \
+                    not re.match(val, "%s" % peer_dict.get(key, '')):
+                match = False
+                break
+            elif key not in regex_match and \
+                    not fnmatch.fnmatch("%s" % peer_dict.get(key, ''), val):
+                match = False
+                break
+        if not match:
+            continue
+        if verbose:
+            print("INFO: found peer %r of %r matching search filter" %
+                  (peer_id, contact_id))
+        hits.append((peer_id, peer_dict))
+    return (configuration, hits)
+
+
 def _user_general_notify(user_id, targets, conf_path, db_path,
                          verbose=False, get_fields=[], do_lock=True):
     """Find notification addresses for user_id and targets"""
