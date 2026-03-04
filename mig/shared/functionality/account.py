@@ -238,6 +238,7 @@ at a time depending on site policies)"""
                 "csrf_token": csrf_token,
             }
         )
+        valid_peers_list = []
         show_peers = ""
         fill_helpers["account_action"] = "RENEW_ACCESS"
         fill_helpers["peer_acceptance_notice"] = ""
@@ -256,7 +257,6 @@ at a time depending on site policies)"""
             possible_peers = [ent[0] for ent in hits]
             possible_peers.extend(peers_list)
             logger.debug("possible_peers: %r" % possible_peers)
-            valid_peers_list = []
             for verify_peer in possible_peers:
                 logger.debug("verify_peer: %r" % verify_peer)
                 try:
