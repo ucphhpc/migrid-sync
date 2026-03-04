@@ -71,7 +71,10 @@ def renew_access(configuration, client_id, user_dict, auth_flavor):
     """Helper to actually renew access for the RENEW_ACCESS requests."""
     _logger = configuration.logger
     renew_status, renew_err = False, 'Not fully implemented yet'
-    peer_pattern = keyword_auto
+    if configuration.site_peers_mandatory:
+        peer_pattern = keyword_auto
+    else:
+        peer_pattern = None
     db_path = default_db_path(configuration)
     old_expire = user_dict.get('expire', -1)
     if auth_flavor == AUTH_MIG_CERT:
