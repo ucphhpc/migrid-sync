@@ -38,6 +38,8 @@ py_code_files = [
     "../%s" % PLAIN,
     "../bin/%s" % PLAIN,
     "../sbin/%s" % PLAIN,
+    "../tests/%s" % PLAIN,
+    "../tests/support/%s" % PLAIN,
     "%s" % PLAIN,
     "lib/%s" % PLAIN,
     "cgi-bin/%s" % PLAIN,
