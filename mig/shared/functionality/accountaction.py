@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountaction - handle account actions like change pw and renew access
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -31,9 +31,10 @@ from __future__ import absolute_import
 
 import os
 import time
+import datetime
 
 from mig.shared import returnvalues
-from mig.shared.base import is_gdp_user
+from mig.shared.base import extract_field, is_gdp_user
 from mig.shared.defaults import keyword_auto, AUTH_MIG_CERT, AUTH_MIG_OID, \
     AUTH_MIG_OIDC
 from mig.shared.functional import validate_input, REJECT_UNSET
@@ -45,6 +46,7 @@ from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.htmlgen import themed_styles, themed_scripts
 from mig.shared.httpsclient import detect_client_auth, find_auth_type_and_label
 from mig.shared.init import initialize_main_variables
+from mig.shared.notification import send_email
 from mig.shared.userdb import default_db_path
 from mig.shared.useradm import default_search, search_users, create_user
 
@@ -69,7 +71,10 @@ def renew_access(configuration, client_id, user_dict, auth_flavor):
     """Helper to actually renew access for the RENEW_ACCESS requests."""
     _logger = configuration.logger
     renew_status, renew_err = False, 'Not fully implemented yet'
-    peer_pattern = keyword_auto
+    if configuration.site_peers_mandatory:
+        peer_pattern = keyword_auto
+    else:
+        peer_pattern = None
     db_path = default_db_path(configuration)
     old_expire = user_dict.get('expire', -1)
     if auth_flavor == AUTH_MIG_CERT:
@@ -105,7 +110,59 @@ def renew_access(configuration, client_id, user_dict, auth_flavor):
     except Exception as exc:
         _logger.warning("Error renewing user %r: %s" % (client_id, exc))
 
-    # TODO: send email on renew?
+    # Notify user and peer(s) that account was renewed
+
+    if renew_status:
+        expire_dt = datetime.datetime.fromtimestamp(user_dict.get('expire', 0))
+        email_fill_helper = {'title': configuration.short_title,
+                          'full_name': '',
+                          'organization': '',
+                          'state': '',
+                          'country': '',
+                          'email': '',
+                          'expire_dt': expire_dt,
+                          }
+        for key in ['full_name', 'organization', 'state', 'country', 'email']:
+            if key in user_dict:
+                email_fill_helper[key] = user_dict[key]
+        email_subject = "%(title)s account renewed for %(full_name)s" \
+            % email_fill_helper
+        email_msg_template = '''
+Renewed account:
+ * Full Name: %(full_name)s
+ * Organization: %(organization)s
+ * State: %(state)s
+ * Country: %(country)s
+ * Email: %(email)s
+ * New Expire: %(expire_dt)s
+ ''' % email_fill_helper
+        email_header = "Your %(title)s user account was renewed\n" \
+            % email_fill_helper
+        email_msg = email_header + email_msg_template
+        recipient = user_dict.get('email', '')
+        # Notify user
+        notify_status = send_email(recipient,
+                                   email_subject,
+                                   email_msg,
+                                   _logger,
+                                   configuration)
+        if not notify_status:
+            _logger.error("Failed to send account renew notification to %s"
+                          % recipient)
+        # Notify peers
+        for peer in user_dict.get('peers', []):
+            recipient = extract_field(peer, 'email')
+            email_header = "Your %s external peer made an account renewal\n\n" \
+                % configuration.short_title
+            email_msg = email_header + email_msg_template
+            notify_status = send_email(recipient,
+                                       email_subject,
+                                       email_msg,
+                                       _logger,
+                                       configuration)
+            if not notify_status:
+                _logger.error("Failed to send account renew notification" \
+                              + " to peer %s" % recipient)
     return (renew_status, renew_err)
 
 
@@ -245,7 +302,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 <div class="vertical-spacer"></div>
 <div class="error leftpad errortext">
 '''})
-        output_objects.append({'object_type': 'text', 'text': """
+        output_objects.append({'object_type': 'error_text', 'text': """
 Invalid input or rate limit exceeded - please wait %d seconds before retrying.
 """ % delay_retry
                                })
