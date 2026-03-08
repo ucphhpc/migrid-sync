@@ -77,15 +77,15 @@ class FakeLogger:
             raise RuntimeError('errors reported to logger:\n%s' %
                                '\n'.join(channels_dict['error']))
 
-    def forgive_messages_on(self, channel_name=None):
+    def forgive_errors(self):
         """Allow log errors for cases where they are expected"""
+        self.forgive_messages_on(channel_name="error")
+
+    def forgive_messages_on(self, *, channel_name=None):
+        """Allow any log messages to a channel where they are expected"""
 
         assert channel_name in self.channels_dict, "unknown channel"
         self.forgive_by_channel[channel_name] = True
-
-    def forgive_errors(self):
-        """Allow log errors for cases where they are expected"""
-        self.forgive_by_channel['error'] = True
 
     # logger interface
 
@@ -155,7 +155,7 @@ class FakeLoggerChecker:
 
         # given the messages have been interrogated, mark the channel
         # as no longer needing enforcement at test exit time
-        self.fake_logger.forgive_messages_on(channel_name)
+        self.fake_logger.forgive_messages_on(channel_name=channel_name)
 
         return channel_messages
 

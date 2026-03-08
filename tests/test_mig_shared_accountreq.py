@@ -33,14 +33,12 @@ import pickle
 import sys
 import unittest
 
-from tests.support import MigTestCase, testmain, ensure_dirs_exist
+import mig.shared.accountreq as accountreq
+from mig.shared.base import distinguished_name_to_user, fill_distinguished_name
+from mig.shared.defaults import keyword_auto
+from tests.support import MigTestCase, ensure_dirs_exist, testmain
 from tests.support.fixturesupp import FixtureAssertMixin
 from tests.support.usersupp import UserAssertMixin
-
-import mig.shared.accountreq as accountreq
-from mig.shared.base import canonical_user, distinguished_name_to_user, \
-    fill_distinguished_name, get_client_id
-from mig.shared.defaults import keyword_auto
 
 
 class MigSharedAccountreq__peers(MigTestCase, FixtureAssertMixin):
@@ -100,6 +98,7 @@ class MigSharedAccountreq__peers(MigTestCase, FixtureAssertMixin):
         ensure_dirs_exist(self.configuration.user_settings)
         ensure_dirs_exist(self.configuration.mrsl_files_dir)
         ensure_dirs_exist(self.configuration.resource_pending)
+        ensure_dirs_exist(self.configuration.mig_system_files)
 
     def test_a_new_peer(self):
         # precondition
@@ -213,7 +212,7 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
 
     def test_signup_prefilter_email_accept_site_admins(self):
         user = distinguished_name_to_user(self.TEST_ADMIN_DN)
-        admin_list = [get_client_id(user)]
+        admin_list = [self.TEST_ADMIN_DN]
         self.configuration.site_signup_prefilter = [
             ('email', r'^.+(?<!(@|\.)ku\.dk)$')]
         check = accountreq.signup_prefilter_allowed(self.configuration, user)
@@ -237,6 +236,7 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
             self.assertFalse(check)
 
     def test_early_validation_checks_valid_new_simple(self):
+        self._provision_test_user(self, self.TEST_USER_DN)
         checked = accountreq.early_validation_checks(self.configuration,
                                                      self.EXT_USER,
                                                      self.TEST_SERVICE,
@@ -246,6 +246,7 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
         self.assertEqual(checked['invalid'], [], "early validation failed")
 
     def test_early_validation_checks_valid_new_peers(self):
+        self._provision_test_user(self, self.TEST_USER_DN)
         self.configuration.site_enable_peers = True
         self.configuration.site_peers_explicit_fields = ['full_name', 'email']
         for addr in self.TEST_INTERNAL_EMAILS:
@@ -289,6 +290,7 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
         self.assertEqual(checked['invalid'], [], "early validation failed")
 
     def test_early_validation_checks_invalid_new_simple(self):
+        self._provision_test_user(self, self.TEST_USER_DN)
         self.EXT_USER['full_name'] = 'InvalidNameWithoutSpace'
         checked = accountreq.early_validation_checks(self.configuration,
                                                      self.EXT_USER,
@@ -299,6 +301,7 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
         self.assertTrue(checked['invalid'], "early validation failed")
 
     def test_early_validation_checks_invalid_new_peers(self):
+        self._provision_test_user(self, self.TEST_USER_DN)
         self.configuration.site_enable_peers = True
         self.configuration.site_peers_explicit_fields = ['full_name', 'email']
         self.EXT_USER['peers_full_name'] = self.INT_USER['full_name']
