@@ -499,8 +499,7 @@ def run_events_command(
 
     # logger.debug('(%s) import main from %s' % (pid, function))
 
-    main = id
-    txt_format = id
+    main = None
     saved_environ = _save_env(os.environ)
     try:
         main = importlib.import_module(
