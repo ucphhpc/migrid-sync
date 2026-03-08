@@ -41,8 +41,8 @@ from mig.shared.vgrid import get_vgrid_workflow_jobs, legacy_main, \
     vgrid_is_owner, vgrid_is_owner_or_member, vgrid_is_trigger, vgrid_list, \
     vgrid_list_parents, vgrid_list_subvgrids, vgrid_list_vgrids, \
     vgrid_match_resources, vgrid_nest_sep, vgrid_remove_entities, \
-    vgrid_restrict_write, vgrid_set_entities, vgrid_set_owners, \
-    vgrid_settings
+    vgrid_restrict_write, vgrid_set_entities, vgrid_set_members, \
+    vgrid_set_owners, vgrid_set_workflow_jobs, vgrid_settings
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 
@@ -79,6 +79,7 @@ class TestMigSharedVgrid(MigTestCase):
         ensure_dirs_exist(self.configuration.mrsl_files_dir)
         ensure_dirs_exist(self.configuration.workflows_home)
         ensure_dirs_exist(self.configuration.workflows_db_home)
+        ensure_dirs_exist(self.configuration.mig_system_files)
         self.configuration.site_vgrid_label = 'VGridLabel'
         self.configuration.vgrid_owners = 'owners.pck'
         self.configuration.vgrid_members = 'members.pck'
@@ -104,9 +105,9 @@ class TestMigSharedVgrid(MigTestCase):
         self.test_subvgrid_path = os.path.join(
             self.configuration.vgrid_home, self.test_subvgrid)
         ensure_dirs_exist(self.test_subvgrid_path)
-        vgrid_add_owners(self.configuration, self.test_vgrid, [])
-        vgrid_add_members(self.configuration, self.test_vgrid, [])
-        vgrid_add_workflow_jobs(self.configuration, self.test_vgrid, [])
+        vgrid_set_owners(self.configuration, self.test_vgrid, [])
+        vgrid_set_members(self.configuration, self.test_vgrid, [])
+        vgrid_set_workflow_jobs(self.configuration, self.test_vgrid, [])
 
     def test_vgrid_is_default_match(self):
         """Test default vgrid detection with match"""
