@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_base - unit tests for shared base helpers
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -1014,29 +1014,49 @@ just use the one that looks most familiar or try them in turn)"""
     def test_verify_local_url_relative_path(self):
         """Test verify_local_url with relative path"""
         test_url = "subdir/script.py"
-        self.assertFalse(verify_local_url(self.configuration, test_url))
+        with self.assertLogs(level='ERROR') as log_capture:
+            status = verify_local_url(self.configuration, test_url)
+        self.assertFalse(status)
+        self.assertTrue(any('request verification failed' in msg for msg in
+                            log_capture.output))
 
     def test_verify_local_url_external_domain(self):
         """Test verify_local_url rejects external domains"""
         test_url = "https://evil.com/malicious.py"
-        self.assertFalse(verify_local_url(self.configuration, test_url))
+        with self.assertLogs(level='ERROR') as log_capture:
+            status = verify_local_url(self.configuration, test_url)
+        self.assertFalse(status)
+        self.assertTrue(any('request verification failed' in msg for msg in
+                            log_capture.output))
 
     def test_verify_local_url_invalid_url(self):
         """Test verify_local_url rejects invalid/malformed URLs"""
         test_url = "javascript:alert('xss')"
-        self.assertFalse(verify_local_url(self.configuration, test_url))
+        with self.assertLogs(level='ERROR') as log_capture:
+            status = verify_local_url(self.configuration, test_url)
+        self.assertFalse(status)
+        self.assertTrue(any('request verification failed' in msg for msg in
+                            log_capture.output))
 
     def test_verify_local_url_missing_https(self):
         """Test verify_local_url with HTTP when only HTTPS supported"""
         test_url = "http://mig.cert/cgi-bin/home.py"
         self.configuration.migserver_https_mig_cert_url = "https://mig.cert"
-        self.assertFalse(verify_local_url(self.configuration, test_url))
+        with self.assertLogs(level='ERROR') as log_capture:
+            status = verify_local_url(self.configuration, test_url)
+        self.assertFalse(status)
+        self.assertTrue(any('request verification failed' in msg for msg in
+                            log_capture.output))
 
     def test_verify_local_url_different_port(self):
         """Test verify_local_url rejects same domain with different port"""
         self.configuration.migserver_https_ext_cert_url = "https://ext.cert:443"
         test_url = "https://ext.cert:444/cgi-bin/file.py"
-        self.assertFalse(verify_local_url(self.configuration, test_url))
+        with self.assertLogs(level='ERROR') as log_capture:
+            status = verify_local_url(self.configuration, test_url)
+        self.assertFalse(status)
+        self.assertTrue(any('request verification failed' in msg for msg in
+                            log_capture.output))
 
     def test_invisible_path_file(self):
         """Test invisible_path detects names in invisible files"""
