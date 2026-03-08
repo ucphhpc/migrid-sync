@@ -35,8 +35,8 @@ import unittest
 
 # NOTE: wrap next imports in try except to prevent autopep8 shuffling up
 try:
-    from tests.support import MigTestCase, testmain, ensure_dirs_exist
     import mig.shared.fileio as fileio
+    from tests.support import MigTestCase, ensure_dirs_exist, testmain
 except ImportError as ioe:
     print("Failed to import mig core modules: %s" % ioe)
     exit(1)
@@ -932,12 +932,14 @@ class MigSharedFileio__delete_symlink(MigTestCase):
     @unittest.skip("TODO: implement check in tested function and enable again")
     def test_rejects_regular_file(self):
         """Test delete_symlink returns False when path is a regular file"""
-        self.logger.forgive_errors()
         with open(self.tmp_link, 'w') as fh:
             fh.write(DUMMY_TEXT)
 
-        result = fileio.delete_symlink(self.tmp_link, self.logger)
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = fileio.delete_symlink(self.tmp_link, self.logger)
         self.assertFalse(result)
+        self.assertTrue(any('Could not remove' in msg for msg in
+                            log_capture.output))
 
     def test_deletes_broken_symlink(self):
         """Test delete_symlink removes broken symlink"""
@@ -1116,8 +1118,11 @@ class MigSharedFileio__remove_rec(MigTestCase):
     def test_rejects_regular_file(self):
         """Test remove_rec returns False when path is a regular file"""
         file_path = os.path.join(self.tmp_path, DUMMY_FILE_ONE)
-        result = fileio.remove_rec(file_path, self.configuration)
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = fileio.remove_rec(file_path, self.configuration)
         self.assertFalse(result)
+        self.assertTrue(any('Could not remove' in msg for msg in
+                            log_capture.output))
         self.assertTrue(os.path.exists(file_path))
 
 
