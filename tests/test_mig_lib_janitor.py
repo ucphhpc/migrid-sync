@@ -332,7 +332,7 @@ class MigLibJanitor(MigTestCase):
         os.utime(req_path, (req_age, req_age))
 
         # NOTE: when using real user mail we currently hit send email errors.
-        #       We forgive those errors here and only check collision warnings.
+        #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
         # TODO: rework to handle expire before stale to avoid duplicate here
@@ -382,7 +382,7 @@ class MigLibJanitor(MigTestCase):
                  (expire_time, expire_time))
 
         # NOTE: when using real user mail we currently hit send email errors.
-        #       We forgive those errors here and only check collision warnings.
+        #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
         # TODO: rework to handle expire before stale to avoid duplicate here
@@ -429,7 +429,7 @@ class MigLibJanitor(MigTestCase):
         task_triggers.clear()
 
         # NOTE: when using real user mail we currently hit send email errors.
-        #       We forgive those errors here and only check collision warnings.
+        #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
         # Run task handler and verify all tasks executed
@@ -608,7 +608,7 @@ class MigLibJanitor(MigTestCase):
         req_id = os.path.basename(req_path)
 
         # NOTE: when using real user mail we currently hit send email errors.
-        #       We forgive those errors here and only check collision warnings.
+        #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
         with self.assertLogs(level='WARNING') as log_capture:
@@ -878,7 +878,7 @@ class MigLibJanitor(MigTestCase):
             os.utime(req_path, (mtime, mtime))
 
         # NOTE: when using real user mail we currently hit send email errors.
-        #       We forgive those errors here and only check collision warnings.
+        #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
         handled = remind_and_expire_user_pending(self.configuration, now=now)
