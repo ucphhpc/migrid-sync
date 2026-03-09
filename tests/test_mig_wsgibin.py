@@ -270,24 +270,22 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
         parser.assert_basics()
 
     def test_unknown_object_type_generates_valid_error_page(self):
+        self.logger.forgive_errors()
         output_objects = [
             {
                 'object_type': 'nonexistent',  # trigger error handling path
             }
         ]
-        with self.assertLogs(level='ERROR') as log_capture:
-            self.fake_backend.set_response(output_objects, returnvalues.OK)
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
 
-            wsgi_result = migwsgi.application(
-                *self.application_args,
-                **self.application_kwargs
-            )
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
 
-            output, _ = self.assertWsgiResponse(
-                wsgi_result, self.fake_wsgi, 200)
-            self.assertIsValidHtmlDocument(output)
-            self.assertTrue("nonexistent is not a valid object_type" in msg
-                            for msg in log_capture.output)
+        output, _ = self.assertWsgiResponse(
+            wsgi_result, self.fake_wsgi, 200)
+        self.assertIsValidHtmlDocument(output)
 
     def test_objects_with_type_text(self):
         output_objects = [

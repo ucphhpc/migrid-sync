@@ -29,6 +29,7 @@
 import datetime
 import errno
 import os
+import pickle
 
 from mig.shared.base import client_id_dir
 
@@ -112,6 +113,11 @@ class UserAssertMixin:
         conf_user_settings = os.path.normpath(self.configuration.user_settings)
         test_user_settings_dir = os.path.join(conf_user_settings, test_client_dir_name)
         os.makedirs(test_user_settings_dir)
+
+        # create an empty user settings file
+        test_user_settings_file = os.path.join(test_user_settings_dir, 'settings')
+        with open(test_user_settings_file, 'wb') as outfile:
+            pickle.dump({}, outfile)
 
         return test_user_dir
 

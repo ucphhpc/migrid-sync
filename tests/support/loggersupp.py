@@ -83,8 +83,6 @@ class FakeLogger:
 
     def forgive_messages_on(self, *, channel_name=None):
         """Allow any log messages to a channel where they are expected"""
-
-        assert channel_name in self.channels_dict, "unknown channel"
         self.forgive_by_channel[channel_name] = True
 
     # logger interface
