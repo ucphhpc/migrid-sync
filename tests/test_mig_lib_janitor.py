@@ -46,15 +46,14 @@ from mig.shared.accountreq import save_account_request
 from mig.shared.base import distinguished_name_to_user, client_id_dir
 from mig.shared.pwcrypto import generate_reset_token
 from tests.support import MigTestCase, ensure_dirs_exist
-from tests.support.usersupp import UserAssertMixin, TEST_USER_DN
 
 # IMPORTANT: do NOT change these values without updating fixtures accordingly
 TEST_USER_FULLNAME = "Test User"
 TEST_USER_ORG = "Test Org"
 TEST_USER_EMAIL = "test@example.com"
-# TODO: move next to usersupp?
-# TEST_USER_DN = '/C=DK/ST=NA/L=NA/O=%s/OU=NA/CN=%s/emailAddress=%s' % \
-#    (TEST_USER_ORG, TEST_USER_FULLNAME, TEST_USER_EMAIL)
+# TODO: move next to support.usersupp?
+TEST_USER_DN = '/C=DK/ST=NA/L=NA/O=%s/OU=NA/CN=%s/emailAddress=%s' % \
+    (TEST_USER_ORG, TEST_USER_FULLNAME, TEST_USER_EMAIL)
 TEST_SKIP_EMAIL = ''
 # TODO: adjust password reset token helpers to handle configured services
 #       it currently silently fails if not in migoid(c) or migcert
@@ -74,7 +73,7 @@ TEST_INVALID_PW_PBKDF2 = \
 INVALID_TEST_TOKEN = 'THIS_RESET_TOKEN_WAS_NEVER_VALID'
 
 
-class MigLibJanitor(MigTestCase, UserAssertMixin):
+class MigLibJanitor(MigTestCase):
     """Unit tests for janitor related helper functions"""
 
     def _provide_configuration(self):
