@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_accountreq - unit test of the corresponding mig lib module
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -67,22 +67,26 @@ class MigSharedAccountreq__peers(MigTestCase, FixtureAssertMixin):
                 return str(value, 'utf8')
             else:
                 return value
-        return {_string_if_bytes(x): _string_if_bytes(y) for x, y in value.items()}
+        return {_string_if_bytes(x): _string_if_bytes(y)
+                for x, y in value.items()}
 
     def _peer_dict_from_fixture(self):
-        prepared_fixture = self.prepareFixtureAssert("peer_user_dict", fixture_format="json")
+        prepared_fixture = self.prepareFixtureAssert("peer_user_dict",
+                                                     fixture_format="json")
         fixture_data = prepared_fixture.fixture_data
         assert fixture_data["distinguished_name"] == self.TEST_PEER_DN
         return fixture_data
 
-    def _record_peer_acceptance(self, test_client_dir_name, peer_distinguished_name):
+    def _record_peer_acceptance(self, test_client_dir_name,
+                                peer_distinguished_name):
         """Fabricate a peer acceptance record in a particular user settings dir.
         """
 
         test_user_accepted_peers_file = os.path.join(
             self.user_settings_dir, test_client_dir_name, "peers")
         expire_tomorrow = datetime.date.today() + datetime.timedelta(days=1)
-        with open(test_user_accepted_peers_file, "wb") as test_user_accepted_peers:
+        with open(test_user_accepted_peers_file, "wb") as \
+                test_user_accepted_peers:
             pickle.dump({peer_distinguished_name:
                          {'expire': str(expire_tomorrow)}},
                         test_user_accepted_peers)
@@ -256,8 +260,8 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
 
     def test_early_validation_checks_valid_renew_existing(self):
         test_int_client_dir = self._provision_test_users(self,
-                                                        self.TEST_USER_DN,
-                                                        self.TEST_INTERNAL_DN)
+                                                         self.TEST_USER_DN,
+                                                         self.TEST_INTERNAL_DN)
         self.TEST_USER['peers_email'] = self.INT_USER['email']
         # TODO: sync password with saved hash and disable auth here
         self.TEST_USER['authorized'] = True
@@ -271,8 +275,8 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
 
     def test_early_validation_checks_valid_renew_authorized(self):
         test_client_dir = self._provision_test_users(self,
-                                                        self.TEST_USER_DN,
-                                                        self.TEST_INTERNAL_DN)
+                                                     self.TEST_USER_DN,
+                                                     self.TEST_INTERNAL_DN)
         self.TEST_USER['peers_email'] = self.INT_USER['email']
         # Make sure password change is allowed if needed
         self.TEST_USER['authorized'] = True
@@ -319,7 +323,8 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
                                                      self.TEST_SERVICE,
                                                      self.TEST_USER['email'],
                                                      self.TEST_USER_PW)
-        # print("DEBUG: early checks on invalid renew collision req: %s" % checked)
+        # print("DEBUG: early checks on invalid renew collision req: %s" %
+        #      checked)
         self.assertTrue(checked['invalid'], "early validation failed")
 
     def test_early_validation_checks_invalid_renew_pw_change(self):
@@ -330,7 +335,8 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
                                                      self.TEST_SERVICE,
                                                      self.TEST_USER['email'],
                                                      self.TEST_USER_PW + 'N3w')
-        # print("DEBUG: early checks on invalid renew pw change req: %s" % checked)
+        # print("DEBUG: early checks on invalid renew pw change req: %s" %
+        #      checked)
         self.assertTrue(checked['invalid'], "early validation failed")
 
     def test_early_validation_checks_invalid_renew_suspended(self):
@@ -343,7 +349,8 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
                                                      self.TEST_SERVICE,
                                                      self.TEST_USER['email'],
                                                      self.TEST_USER_PW)
-        # print("DEBUG: early checks on invalid renew suspended req: %s" % checked)
+        # print("DEBUG: early checks on invalid renew suspended req: %s" %
+        #      checked)
         self.assertTrue(checked['invalid'], "early validation failed")
 
 
