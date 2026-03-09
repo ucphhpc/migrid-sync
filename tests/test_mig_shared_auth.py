@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_auth - unit tests for authentication helpers
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -36,11 +36,13 @@ import time
 import unittest
 from unittest.mock import patch
 
-from tests.support import MigTestCase, testmain, ensure_dirs_exist
-
+# Imports of the code under test
 import mig.shared.auth as auth
+# Imports required for the unit test wrapping
 from mig.shared.base import client_id_dir
-from mig.shared.defaults import twofactor_key_bytes, twofactor_cookie_ttl
+from mig.shared.defaults import twofactor_cookie_ttl, twofactor_key_bytes
+# Imports required for the unit tests themselves
+from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 TEST_USER_DN = \
     '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
@@ -82,12 +84,19 @@ class MigSharedAuth__twofactor(MigTestCase):
     def test_twofactor_available(self):
         """Test pyotp availability detection"""
         # Positive case (assuming pyotp is installed)
-        self.assertTrue(auth.twofactor_available(self.configuration))
+        status = auth.twofactor_available(self.configuration)
+        self.assertTrue(status)
 
         # Simulate missing pyotp
         original_pyotp = auth.pyotp
         auth.pyotp = None
-        self.assertFalse(auth.twofactor_available(self.configuration))
+        with self.assertLogs(level="ERROR") as log_capture:
+            status = auth.twofactor_available(self.configuration)
+            self.assertFalse(status)
+            self.assertTrue(
+                any("pyotp module is missing" in msg
+                    for msg in log_capture.output)
+            )
         auth.pyotp = original_pyotp
 
     def test_get_twofactor_secrets_generates_valid_key(self):
@@ -456,13 +465,18 @@ class MigSharedAuth__twofactor(MigTestCase):
         with open(session_path, 'wb') as fh:
             fh.write(b'invalid pickle content')
 
-        # Attempt to load should return empty dict
-        session_data = auth.load_twofactor_session(self.configuration,
-                                                   session_key)
-        self.assertEqual(session_data.get('client_id', ''), 'UNKNOWN',
-                         'should handle malformed session files gracefully')
-        self.assertEqual(session_data.get('user_addr', ''), 'UNKNOWN',
-                         'should handle malformed session files gracefully')
+        # Attempt to load should return empty dict and log unpickle error
+        with self.assertLogs(level="ERROR") as log_capture:
+            session_data = auth.load_twofactor_session(self.configuration,
+                                                       session_key)
+            self.assertEqual(session_data.get('client_id', ''), 'UNKNOWN',
+                             'should handle malformed session files gracefully')
+            self.assertEqual(session_data.get('user_addr', ''), 'UNKNOWN',
+                             'should handle malformed session files gracefully')
+            self.assertTrue(
+                any("could not open/unpickle" in msg
+                    for msg in log_capture.output)
+            )
 
     @unittest.skipIf(os.getuid() == 0, "Permissions don't work for priv users")
     def test_session_file_access_restriction(self):
