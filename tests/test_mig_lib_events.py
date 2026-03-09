@@ -2618,8 +2618,6 @@ class MigLibEvents__runners(MigTestCase):
         abs_target_path = os.path.join(
             self.configuration.user_home, DUMMY_CLIENT_DIR, target_path
         )
-        if os.path.exists(abs_target_path):
-            os.remove(abs_target_path)
         self.assertFalse(os.path.exists(abs_target_path))
 
         try:
@@ -2639,8 +2637,6 @@ class MigLibEvents__runners(MigTestCase):
         abs_target_path = os.path.join(
             self.configuration.user_home, DUMMY_CLIENT_DIR, target_path
         )
-        if os.path.exists(abs_target_path):
-            os.remove(abs_target_path)
         self.assertFalse(os.path.exists(abs_target_path))
         try:
             run_events_command(
