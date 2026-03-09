@@ -27,7 +27,6 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
-from past.builtins import basestring
 import binascii
 import difflib
 import io
@@ -36,15 +35,19 @@ import pwd
 import sys
 import unittest
 
-from tests.support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
-    FakeConfiguration, testmain, cleanpath, is_path_within
+from past.builtins import basestring
+
+# Imports required for the unit test wrapping
+from mig.shared.defaults import DEFAULT_USER_ID_FORMAT, htaccess_filename, \
+    keyword_auto
+# Imports of the code under test
+from mig.shared.useradm import _ensure_dirs_needed_for_userdb, \
+    assure_current_htaccess, create_user
+# Imports required for the unit tests themselves
+from tests.support import MIG_BASE, TEST_OUTPUT_DIR, FakeConfiguration, \
+    MigTestCase, cleanpath, ensure_dirs_exist, is_path_within, testmain
 from tests.support.fixturesupp import FixtureAssertMixin
 from tests.support.picklesupp import PickleAssertMixin
-
-from mig.shared.defaults import keyword_auto, htaccess_filename, \
-    DEFAULT_USER_ID_FORMAT
-from mig.shared.useradm import assure_current_htaccess, create_user, \
-    _ensure_dirs_needed_for_userdb
 
 DUMMY_USER = 'dummy-user'
 DUMMY_STALE_USER = 'dummy-stale-user'
@@ -101,6 +104,7 @@ class TestMigSharedUsedadm_create_user(MigTestCase,
             configuration.user_db_home)
         self.expected_user_db_file = os.path.join(
             self.expected_user_db_home, 'MiG-users.db')
+        ensure_dirs_exist(self.configuration.mig_system_files)
 
     def _provide_configuration(self):
         return 'testconfig'

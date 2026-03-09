@@ -2,8 +2,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# configsupp - configuration helpers for unit tests
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# usersupp - user related helpers for unit tests
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -19,7 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -29,6 +30,7 @@
 import datetime
 import errno
 import os
+import pickle
 
 from mig.shared.base import client_id_dir
 
@@ -112,6 +114,11 @@ class UserAssertMixin:
         conf_user_settings = os.path.normpath(self.configuration.user_settings)
         test_user_settings_dir = os.path.join(conf_user_settings, test_client_dir_name)
         os.makedirs(test_user_settings_dir)
+
+        # create an empty user settings file
+        test_user_settings_file = os.path.join(test_user_settings_dir, 'settings')
+        with open(test_user_settings_file, 'wb') as outfile:
+            pickle.dump({}, outfile)
 
         return test_user_dir
 

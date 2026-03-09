@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_base - unit tests for shared base helpers
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,7 @@ import os
 import sys
 import unittest
 
+# Imports of the code under test
 from mig.shared.base import allow_script, auth_type_description, brief_list, \
     canonical_user, canonical_user_with_peers, client_alias, client_dir_id, \
     client_id_dir, distinguished_name_to_user, expand_openid_alias, \
@@ -40,8 +41,10 @@ from mig.shared.base import allow_script, auth_type_description, brief_list, \
     legacy_main, mask_creds, pretty_format_user, requested_backend, \
     requested_page, requested_url_base, sandbox_resource, string_snippet, \
     unhexlify, user_base_dir, valid_dir_input, verify_local_url
+# Imports required for the unit test wrapping
 from mig.shared.defaults import cert_field_order, csrf_field, \
     gdp_distinguished_field, valid_gdp_anon_scripts, valid_gdp_auth_scripts
+# Imports required for the unit tests themselves
 from tests.support import FakeConfiguration, MigTestCase, testmain
 
 TEST_USER_ID = "/C=DK/O=Test Org/CN=John Doe/emailAddress=john@doe.org"
@@ -1014,29 +1017,49 @@ just use the one that looks most familiar or try them in turn)"""
     def test_verify_local_url_relative_path(self):
         """Test verify_local_url with relative path"""
         test_url = "subdir/script.py"
-        self.assertFalse(verify_local_url(self.configuration, test_url))
+        with self.assertLogs(level='ERROR') as log_capture:
+            status = verify_local_url(self.configuration, test_url)
+        self.assertFalse(status)
+        self.assertTrue(any('request verification failed' in msg for msg in
+                            log_capture.output))
 
     def test_verify_local_url_external_domain(self):
         """Test verify_local_url rejects external domains"""
         test_url = "https://evil.com/malicious.py"
-        self.assertFalse(verify_local_url(self.configuration, test_url))
+        with self.assertLogs(level='ERROR') as log_capture:
+            status = verify_local_url(self.configuration, test_url)
+        self.assertFalse(status)
+        self.assertTrue(any('request verification failed' in msg for msg in
+                            log_capture.output))
 
     def test_verify_local_url_invalid_url(self):
         """Test verify_local_url rejects invalid/malformed URLs"""
         test_url = "javascript:alert('xss')"
-        self.assertFalse(verify_local_url(self.configuration, test_url))
+        with self.assertLogs(level='ERROR') as log_capture:
+            status = verify_local_url(self.configuration, test_url)
+        self.assertFalse(status)
+        self.assertTrue(any('request verification failed' in msg for msg in
+                            log_capture.output))
 
     def test_verify_local_url_missing_https(self):
         """Test verify_local_url with HTTP when only HTTPS supported"""
         test_url = "http://mig.cert/cgi-bin/home.py"
         self.configuration.migserver_https_mig_cert_url = "https://mig.cert"
-        self.assertFalse(verify_local_url(self.configuration, test_url))
+        with self.assertLogs(level='ERROR') as log_capture:
+            status = verify_local_url(self.configuration, test_url)
+        self.assertFalse(status)
+        self.assertTrue(any('request verification failed' in msg for msg in
+                            log_capture.output))
 
     def test_verify_local_url_different_port(self):
         """Test verify_local_url rejects same domain with different port"""
         self.configuration.migserver_https_ext_cert_url = "https://ext.cert:443"
         test_url = "https://ext.cert:444/cgi-bin/file.py"
-        self.assertFalse(verify_local_url(self.configuration, test_url))
+        with self.assertLogs(level='ERROR') as log_capture:
+            status = verify_local_url(self.configuration, test_url)
+        self.assertFalse(status)
+        self.assertTrue(any('request verification failed' in msg for msg in
+                            log_capture.output))
 
     def test_invisible_path_file(self):
         """Test invisible_path detects names in invisible files"""

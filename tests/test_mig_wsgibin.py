@@ -2,7 +2,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# test_mig_wsgi-bin - unit tests of the WSGI glue
+# test_mig_wsgibin - unit tests of the WSGI glue
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -28,27 +28,24 @@
 """Unit tests for the MiG WSGI glue"""
 
 import codecs
-from configparser import ConfigParser
 import importlib
 import os
 import stat
 import sys
 import unittest
+from configparser import ConfigParser
+from html.parser import HTMLParser
 
-from tests.support import PY2, MIG_BASE, MigTestCase, ensure_dirs_exist, \
-    testmain, is_path_within
-from tests.support.snapshotsupp import SnapshotAssertMixin
-from tests.support.wsgisupp import prepare_wsgi, WsgiAssertMixin
-
-from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
-    invisible_path, allow_script, brief_list
-from mig.shared.compat import SimpleNamespace
+# Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
-
-if PY2:
-    from HTMLParser import HTMLParser
-else:
-    from html.parser import HTMLParser
+from mig.shared.base import allow_script, brief_list, client_dir_id, \
+    client_id_dir, get_short_id, invisible_path
+from mig.shared.compat import SimpleNamespace
+# Imports required for the unit tests themselves
+from tests.support import MIG_BASE, MigTestCase, ensure_dirs_exist, \
+    is_path_within, testmain
+from tests.support.snapshotsupp import SnapshotAssertMixin
+from tests.support.wsgisupp import WsgiAssertMixin, prepare_wsgi
 
 
 class DocumentBasicsHtmlParser(HTMLParser):
@@ -138,7 +135,8 @@ class TitleExtractingHtmlParser(DocumentBasicsHtmlParser):
 
 def _import_forcibly(module_name, relative_module_dir=None):
     """Custom import function to allow an import of a file for testing
-    that resides within a non-module directory."""
+    that resides within a non-module directory.
+    """
 
     module_path = os.path.join(MIG_BASE, 'mig')
     if relative_module_dir is not None:
@@ -149,6 +147,7 @@ def _import_forcibly(module_name, relative_module_dir=None):
     return mod
 
 
+# Imports of the code under test (indirect import needed here)
 migwsgi = _import_forcibly('migwsgi', relative_module_dir='wsgi-bin')
 
 
@@ -156,7 +155,8 @@ class FakeBackend:
     """Object with programmable behaviour that behave like a backend and
     captures details about the calls made to it. It allows the tests to
     assert against known outcomes as well as selectively trigger a wider
-    range of codepaths."""
+    range of codepaths.
+    """
 
     def __init__(self):
         self.output_objects = [
@@ -243,7 +243,9 @@ class MigWsgibin(MigTestCase, SnapshotAssertMixin, WsgiAssertMixin):
         self.assertSnapshot(output, extension='html')
 
 
-class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin, SnapshotAssertMixin):
+class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
+                                SnapshotAssertMixin):
+    """Unit tests for output_object related part of wsgi functions."""
 
     def _provide_configuration(self):
         return 'testconfig'
@@ -268,6 +270,7 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin, SnapshotAssertMixi
         parser.assert_basics()
 
     def test_unknown_object_type_generates_valid_error_page(self):
+        self.logger.forgive_errors()
         output_objects = [
             {
                 'object_type': 'nonexistent',  # trigger error handling path
@@ -280,7 +283,8 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin, SnapshotAssertMixi
             **self.application_kwargs
         )
 
-        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        output, _ = self.assertWsgiResponse(
+            wsgi_result, self.fake_wsgi, 200)
         self.assertIsValidHtmlDocument(output)
 
     def test_objects_with_type_text(self):
@@ -306,7 +310,9 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin, SnapshotAssertMixi
         self.assertSnapshotOfHtmlContent(output)
 
 
-class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin, SnapshotAssertMixin):
+class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin,
+                              SnapshotAssertMixin):
+    """Unit tests for input_object related part of wsgi functions."""
 
     DUMMY_BYTES = 'dummyæøå-ßßß-value'.encode('utf-8')
 

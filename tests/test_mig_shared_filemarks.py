@@ -34,8 +34,10 @@ import tempfile
 import time
 import unittest
 
-from mig.shared.filemarks import update_filemark, get_filemark, reset_filemark
-from tests.support import ensure_dirs_exist, MigTestCase, testmain
+# Imports of the code under test
+from mig.shared.filemarks import get_filemark, reset_filemark, update_filemark
+# Imports required for the unit tests themselves
+from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 TEST_MARKS_DIR = 'TestMarks'
 TEST_MARKS_FILE = 'file.mark'
@@ -157,10 +159,13 @@ class TestMigSharedFilemarks(MigTestCase):
         # Create a file in the way to prevent subdir creation
         self._prepare_mark_for_test('obstruct')
 
-        result = update_filemark(self.configuration, self.marks_base,
-                                 os.path.join('obstruct', 'test.mark'),
-                                 time.time())
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = update_filemark(self.configuration, self.marks_base,
+                                     os.path.join('obstruct', 'test.mark'),
+                                     time.time())
         self.assertFalse(result)
+        self.assertTrue(any('in the way' in msg or 'could not create' in msg
+                            for msg in log_capture.output))
 
     @unittest.skipIf(os.getuid() == 0, "access check is ignored as priv user")
     def test_update_filemark_directory_perms_failure(self):
@@ -168,10 +173,13 @@ class TestMigSharedFilemarks(MigTestCase):
         # Create a read-only parent directory to prevent subdir creation
         os.chmod(self.marks_base, stat.S_IRUSR)  # Remove write permissions
 
-        result = update_filemark(self.configuration, self.marks_base,
-                                 os.path.join('noaccess', 'test.mark'),
-                                 time.time())
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = update_filemark(self.configuration, self.marks_base,
+                                     os.path.join('noaccess', 'test.mark'),
+                                     time.time())
         self.assertFalse(result)
+        self.assertTrue(any('Permission denied' in msg for msg in
+                            log_capture.output))
 
     @unittest.skipIf(os.getuid() == 0, "access check is ignored as priv user")
     def test_get_filemark_permission_denied(self):
@@ -198,9 +206,12 @@ class TestMigSharedFilemarks(MigTestCase):
 
     def test_reset_filemark_invalid_mark_list(self):
         """Test reset_filemark fails with invalid mark_list type"""
-        reset_result = reset_filemark(self.configuration, self.marks_base,
-                                      {'invalid': 'type'})
+        with self.assertLogs(level='ERROR') as log_capture:
+            reset_result = reset_filemark(self.configuration, self.marks_base,
+                                          {'invalid': 'type'})
         self.assertFalse(reset_result)
+        self.assertTrue(any('invalid mark list' in msg for msg in
+                            log_capture.output))
 
     def test_reset_filemark_all_missing_dir(self):
         """Test reset_filemark handles missing directory when mark_list=None"""
@@ -219,9 +230,12 @@ class TestMigSharedFilemarks(MigTestCase):
         self._prepare_mark_for_test(invalid_mark)
         os.chmod(invalid_path, stat.S_IRUSR)  # Remove write permissions
 
-        reset_result = reset_filemark(self.configuration, self.marks_base,
-                                      [valid_mark, invalid_mark])
+        with self.assertLogs(level='ERROR') as log_capture:
+            reset_result = reset_filemark(self.configuration, self.marks_base,
+                                          [valid_mark, invalid_mark])
         self.assertFalse(reset_result)  # Should fail due to partial failure
+        self.assertTrue(any('Permission denied' in msg for msg in
+                            log_capture.output))
 
         self._verify_mark_after_test(valid_mark, 0)
 
@@ -234,9 +248,12 @@ class TestMigSharedFilemarks(MigTestCase):
         # Create a file in the way to prevent subdir creation
         self._prepare_mark_for_test('obstruct')
 
-        reset_result = reset_filemark(self.configuration, self.marks_base,
-                                      [valid_mark, invalid_mark])
+        with self.assertLogs(level='ERROR') as log_capture:
+            reset_result = reset_filemark(self.configuration, self.marks_base,
+                                          [valid_mark, invalid_mark])
         self.assertFalse(reset_result)  # Should fail due to partial failure
+        self.assertTrue(any('in the way' in msg or 'could not create' in msg
+                            for msg in log_capture.output))
 
         self._verify_mark_after_test(valid_mark, 0)
 

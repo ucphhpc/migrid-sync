@@ -31,12 +31,15 @@ import os
 import time
 import unittest
 
+# Imports required for the unit test wrapping
 from mig.shared.base import distinguished_name_to_user
 from mig.shared.fileio import delete_file
 from mig.shared.serial import loads, dumps
+# Imports of the code under test
 from mig.shared.userdb import default_db_path, load_user_db, load_user_dict, \
     lock_user_db, save_user_db, save_user_dict, unlock_user_db, \
     update_user_dict
+# Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 TEST_USER_ID = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'

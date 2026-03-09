@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # loggersupp - logging helpers for unit tests
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -79,7 +80,11 @@ class FakeLogger:
 
     def forgive_errors(self):
         """Allow log errors for cases where they are expected"""
-        self.forgive_by_channel['error'] = True
+        self.forgive_messages_on(channel_name="error")
+
+    def forgive_messages_on(self, *, channel_name=None):
+        """Allow any log messages to a channel where they are expected"""
+        self.forgive_by_channel[channel_name] = True
 
     # logger interface
 
@@ -128,3 +133,33 @@ class FakeLogger:
         relative_outputfile = os.path.relpath(
             matched.groups('location')[0], start=TEST_BASE)
         return (relative_testfile, (lineno, relative_outputfile))
+
+
+class FakeLoggerChecker:
+    """
+    Adapter to expose a context manager that allows interacting with the
+    fake logger via assertLogs() and thus matching stdlib documentation.
+    """
+
+    def __init__(self, fake_logger, level):
+        self.fake_logger = fake_logger
+        self.level = level
+
+    @property
+    def output(self):
+        """Expose messages captured on the channel as a property."""
+
+        channel_name = self.level.lower()
+        channel_messages = self.fake_logger.channels_dict[channel_name]
+
+        # given the messages have been interrogated, mark the channel
+        # as no longer needing enforcement at test exit time
+        self.fake_logger.forgive_messages_on(channel_name=channel_name)
+
+        return channel_messages
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
