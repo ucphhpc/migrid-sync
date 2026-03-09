@@ -842,6 +842,17 @@ class TestMigSharedVgridAccess(MigTestCase, UserAssertMixin):
             self.configuration, self.TEST_OWNER_DN)
         self.assertIn(self.TEST_RESOURCE_ALIAS, visible)
 
+    def test_user_visible_user_confs(self):
+        """Minimal test for user_visible_user_confs"""
+        # Owners should see themselves in auto map
+        # NOTE: use provision users to skip fixtures here
+        self._provision_test_users(self, self.TEST_OWNER_DN,
+                                   self.TEST_MEMBER_DN)
+        force_update_user_map(self.configuration)
+        visible = user_visible_user_confs(
+            self.configuration, self.TEST_OWNER_DN)
+        self.assertIn(self.TEST_OWNER_UUID, visible)
+
     def test_get_re_provider_map(self):
         """Test RE provider map includes test resource"""
         test_re = 'Python'
