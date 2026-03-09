@@ -31,6 +31,7 @@ import os
 import sys
 import unittest
 
+# Imports of the code under test
 from mig.shared.base import allow_script, auth_type_description, brief_list, \
     canonical_user, canonical_user_with_peers, client_alias, client_dir_id, \
     client_id_dir, distinguished_name_to_user, expand_openid_alias, \
@@ -40,8 +41,10 @@ from mig.shared.base import allow_script, auth_type_description, brief_list, \
     legacy_main, mask_creds, pretty_format_user, requested_backend, \
     requested_page, requested_url_base, sandbox_resource, string_snippet, \
     unhexlify, user_base_dir, valid_dir_input, verify_local_url
+# Imports required for the unit test wrapping
 from mig.shared.defaults import cert_field_order, csrf_field, \
     gdp_distinguished_field, valid_gdp_anon_scripts, valid_gdp_auth_scripts
+# Imports required for the unit tests themselves
 from tests.support import FakeConfiguration, MigTestCase, testmain
 
 TEST_USER_ID = "/C=DK/O=Test Org/CN=John Doe/emailAddress=john@doe.org"

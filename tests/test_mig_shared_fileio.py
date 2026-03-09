@@ -33,13 +33,10 @@ import sys
 import time
 import unittest
 
-# NOTE: wrap next imports in try except to prevent autopep8 shuffling up
-try:
-    import mig.shared.fileio as fileio
-    from tests.support import MigTestCase, ensure_dirs_exist, testmain
-except ImportError as ioe:
-    print("Failed to import mig core modules: %s" % ioe)
-    exit(1)
+# Imports of the code under test
+import mig.shared.fileio as fileio
+# Imports required for the unit tests themselves
+from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 DUMMY_BYTES = binascii.unhexlify('DEADBEEF')  # 4 bytes
 DUMMY_BYTES_LENGTH = 4

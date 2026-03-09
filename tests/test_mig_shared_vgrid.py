@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_vgrid - unit tests for vgrid helper functions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -32,8 +32,10 @@ import os
 import time
 import unittest
 
+# Imports required for the unit test wrapping
 from mig.shared.base import client_id_dir
 from mig.shared.serial import dump
+# Imports of the code under test
 from mig.shared.vgrid import get_vgrid_workflow_jobs, legacy_main, \
     vgrid_add_entities, vgrid_add_members, vgrid_add_owners, \
     vgrid_add_resources, vgrid_add_workflow_jobs, vgrid_allow_restrict_write, \
@@ -43,6 +45,7 @@ from mig.shared.vgrid import get_vgrid_workflow_jobs, legacy_main, \
     vgrid_match_resources, vgrid_nest_sep, vgrid_remove_entities, \
     vgrid_restrict_write, vgrid_set_entities, vgrid_set_members, \
     vgrid_set_owners, vgrid_set_workflow_jobs, vgrid_settings
+# Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
 
