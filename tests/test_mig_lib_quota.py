@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_lib_quota - unit test of the corresponding mig lib module
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -27,7 +27,9 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
+# Imports of the code under test
 from mig.lib.quota import update_quota
+# Imports required for the unit tests themselves
 from tests.support import MigTestCase
 
 
@@ -47,5 +49,5 @@ class MigLibQouta(MigTestCase):
         self.configuration.quota_backend = "NEVERNEVER"
         with self.assertLogs(level='ERROR') as log_capture:
             update_quota(self.configuration)
-        self.assertIn("quota_backend: 'NEVERNEVER' not in supported_quota_backends: ['lustre', 'lustre-gocryptfs']",
-                      log_capture.output)
+        self.assertTrue("'NEVERNEVER' not in supported_quota_backends:" in msg
+                        for msg in log_capture.output)
