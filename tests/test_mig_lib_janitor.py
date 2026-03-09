@@ -43,35 +43,38 @@ from mig.lib.janitor import EXPIRE_DUMMY_JOBS_DAYS, EXPIRE_REQ_DAYS, \
     manage_single_req, manage_trivial_user_requests, \
     remind_and_expire_user_pending, task_triggers
 from mig.shared.accountreq import save_account_request
-from mig.shared.base import distinguished_name_to_user
+from mig.shared.base import distinguished_name_to_user, client_id_dir
 from mig.shared.pwcrypto import generate_reset_token
 from tests.support import MigTestCase, ensure_dirs_exist
+from tests.support.usersupp import UserAssertMixin, TEST_USER_DN
 
-DUMMY_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
-DUMMY_FULL_NAME = "Test User"
-DUMMY_ORGANIZATION = "Test Org"
-DUMMY_EMAIL = "test@example.com"
-DUMMY_SKIP_EMAIL = ''
-DUMMY_CLIENT_DIR = '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_User+emailAddress=test@example.com'
+# IMPORTANT: do NOT change these values without updating fixtures accordingly
+TEST_USER_FULLNAME = "Test User"
+TEST_USER_ORG = "Test Org"
+TEST_USER_EMAIL = "test@example.com"
+# TODO: move next to usersupp?
+# TEST_USER_DN = '/C=DK/ST=NA/L=NA/O=%s/OU=NA/CN=%s/emailAddress=%s' % \
+#    (TEST_USER_ORG, TEST_USER_FULLNAME, TEST_USER_EMAIL)
+TEST_SKIP_EMAIL = ''
 # TODO: adjust password reset token helpers to handle configured services
 #       it currently silently fails if not in migoid(c) or migcert
-# DUMMY_SERVICE = 'dummy-svc'
-DUMMY_AUTH = DUMMY_SERVICE = 'migoid'
-DUMMY_USERDB = 'MiG-users.db'
-DUMMY_PEER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com'
+# TEST_SERVICE = 'dummy-svc'
+TEST_AUTH = TEST_SERVICE = 'migoid'
+TEST_USERDB = 'MiG-users.db'
+TEST_PEER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com'
 # NOTE: these passwords are not and should not ever be used outside unit tests
-DUMMY_MODERN_PW = 'QZFnCp7hmI1G'
-DUMMY_MODERN_PW_PBKDF2 = \
+TEST_MODERN_PW = 'QZFnCp7hmI1G'
+TEST_MODERN_PW_PBKDF2 = \
     "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$B22uw6C7C4VFiYAe4Vf10n58FHrn1pjX"
-DUMMY_NEW_MODERN_PW_PBKDF2 = \
+TEST_NEW_MODERN_PW_PBKDF2 = \
     "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$B22uw6C7C4VFiYAe4Vf10n581pjXFHrn"
-DUMMY_INVALID_PW_PBKDF2 = \
+TEST_INVALID_PW_PBKDF2 = \
     "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$B22uw6C7C4VFiYAe4Vf1rn1pjX0n58FH"
 # NOTE: tokens always should contain a multiple of 4 chars
-INVALID_DUMMY_TOKEN = 'THIS_RESET_TOKEN_WAS_NEVER_VALID'
+INVALID_TEST_TOKEN = 'THIS_RESET_TOKEN_WAS_NEVER_VALID'
 
 
-class MigLibJanitor(MigTestCase):
+class MigLibJanitor(MigTestCase, UserAssertMixin):
     """Unit tests for janitor related helper functions"""
 
     def _provide_configuration(self):
@@ -84,7 +87,7 @@ class MigLibJanitor(MigTestCase):
             udb.write(pickle.dumps(user_db_dict))
 
     # TODO: migrate or remove this helper if no longer needed
-    def _init_test_user_db(self, user_id=DUMMY_USER_DN):
+    def _init_test_user_db(self, user_id=TEST_USER_DN):
         """Write a user_db_dict to user database - truncating any contents"""
         user_dict = distinguished_name_to_user(user_id)
         self._write_user_db({user_id: user_dict})
@@ -99,12 +102,12 @@ class MigLibJanitor(MigTestCase):
         """Set up test configuration and reset state before each test"""
         self.configuration.site_enable_jobs = True
         # Certain pw reset tests require auth method to match signup
-        self.configuration.site_signup_methods.append(DUMMY_AUTH)
-        self.configuration.site_login_methods.append(DUMMY_AUTH)
+        self.configuration.site_signup_methods.append(TEST_AUTH)
+        self.configuration.site_login_methods.append(TEST_AUTH)
         # Prevent admin email during reject, etc.
-        self.configuration.admin_email = DUMMY_SKIP_EMAIL
+        self.configuration.admin_email = TEST_SKIP_EMAIL
         self.user_db_path = os.path.join(self.configuration.user_db_home,
-                                         DUMMY_USERDB)
+                                         TEST_USERDB)
         # Create fake fs layout matching real systems
         ensure_dirs_exist(self.configuration.user_pending)
         ensure_dirs_exist(self.configuration.user_db_home)
@@ -124,7 +127,7 @@ class MigLibJanitor(MigTestCase):
         ensure_dirs_exist(dummy_job)
 
         # Prepare user DB with a single dummy user for all tests
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
 
         # Reset task triggers
         global task_triggers
@@ -282,15 +285,15 @@ class MigLibJanitor(MigTestCase):
         """Test pending user request management"""
         req_id = 'req_id'
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
-            'password_hash': DUMMY_MODERN_PW_PBKDF2,
-            'password': DUMMY_MODERN_PW,
-            'peers': [DUMMY_PEER_DN],
-            'email': DUMMY_EMAIL,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
+            'password': TEST_MODERN_PW,
+            'peers': [TEST_PEER_DN],
+            'email': TEST_USER_EMAIL,
         }
 
         self.assertDirEmpty(self.configuration.user_pending)
@@ -302,7 +305,8 @@ class MigLibJanitor(MigTestCase):
         os.utime(req_path, (req_age, req_age))
 
         # Need user DB and path to simulate existing user
-        user_dir = os.path.join(self.configuration.user_home, DUMMY_CLIENT_DIR)
+        user_dir = os.path.join(self.configuration.user_home,
+                                client_id_dir(TEST_USER_DN))
         os.makedirs(user_dir, exist_ok=True)
         handled = manage_trivial_user_requests(self.configuration)
         self.assertEqual(handled, 1)
@@ -311,14 +315,14 @@ class MigLibJanitor(MigTestCase):
         """Test pending user request expiration reminders"""
         req_id = 'expired_req'
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
-            'password': DUMMY_MODERN_PW,
-            'peers': [DUMMY_PEER_DN],
-            'email': DUMMY_EMAIL,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
+            'password': TEST_MODERN_PW,
+            'peers': [TEST_PEER_DN],
+            'email': TEST_USER_EMAIL,
         }
         self.assertDirEmpty(self.configuration.user_pending)
         saved, req_path = save_account_request(self.configuration, req_dict)
@@ -337,15 +341,15 @@ class MigLibJanitor(MigTestCase):
         """Test combined request handling"""
         # Create requests (valid, expired)
         valid_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
-            'password_hash': DUMMY_MODERN_PW_PBKDF2,
-            'password': DUMMY_MODERN_PW,
-            'peers': [DUMMY_PEER_DN],
-            'email': DUMMY_EMAIL,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
+            'password': TEST_MODERN_PW,
+            'peers': [TEST_PEER_DN],
+            'email': TEST_USER_EMAIL,
         }
         self.assertDirEmpty(self.configuration.user_pending)
         saved, valid_req_path = save_account_request(self.configuration,
@@ -356,14 +360,14 @@ class MigLibJanitor(MigTestCase):
 
         expired_id = 'expired_req'
         expired_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
-            'password': DUMMY_MODERN_PW,
-            'peers': [DUMMY_PEER_DN],
-            'email': DUMMY_EMAIL,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
+            'password': TEST_MODERN_PW,
+            'peers': [TEST_PEER_DN],
+            'email': TEST_USER_EMAIL,
         }
         saved, expired_req_path = save_account_request(
             self.configuration, expired_dict)
@@ -394,14 +398,14 @@ class MigLibJanitor(MigTestCase):
 
         req_id = 'expired_request'
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
-            'password': DUMMY_MODERN_PW,
-            'peers': [DUMMY_PEER_DN],
-            'email': DUMMY_EMAIL,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
+            'password': TEST_MODERN_PW,
+            'peers': [TEST_PEER_DN],
+            'email': TEST_USER_EMAIL,
         }
         self.assertDirEmpty(self.configuration.user_pending)
         saved, req_path = save_account_request(self.configuration, req_dict)
@@ -466,14 +470,14 @@ class MigLibJanitor(MigTestCase):
     def test_manage_single_req_invalid(self):
         """Test request handling for invalid request"""
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
             'invalid': ['Missing required field: organization'],
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'password_hash': DUMMY_MODERN_PW_PBKDF2,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
             # NOTE: disable email to prevent send failing on reject
-            'email': DUMMY_SKIP_EMAIL,
+            'email': TEST_SKIP_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
@@ -495,28 +499,28 @@ class MigLibJanitor(MigTestCase):
     def test_manage_single_req_expired_token(self):
         """Test request handling with expired reset token"""
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
             # NOTE: disable email to prevent send failing on reject
-            'email': DUMMY_SKIP_EMAIL,
-            'password_hash': DUMMY_MODERN_PW_PBKDF2,
+            'email': TEST_SKIP_EMAIL,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
             'expire': time.time() + SECS_PER_DAY,
         }
         user_dict = {}
         user_dict.update(req_dict)
         # We need to save user in DB with password_hash for reset_token check
-        self._write_user_db({DUMMY_USER_DN: user_dict})
+        self._write_user_db({TEST_USER_DN: user_dict})
         # Mimic proper but old expired token
         timestamp = 42
         # IMPORTANT: we can't use a fixed token here due to dynamic crypto seed
         req_dict['reset_token'] = generate_reset_token(self.configuration,
-                                                       req_dict, DUMMY_SERVICE,
+                                                       req_dict, TEST_SERVICE,
                                                        timestamp)
         # Change password_hash here to mimic pw change
-        req_dict['password_hash'] = DUMMY_NEW_MODERN_PW_PBKDF2
+        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
@@ -538,24 +542,24 @@ class MigLibJanitor(MigTestCase):
     def test_manage_single_req_invalid_token(self):
         """Test request handling with invalid reset token"""
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
             # NOTE: disable email to prevent send failing on reject
-            'email': DUMMY_SKIP_EMAIL,
-            'password_hash': DUMMY_MODERN_PW_PBKDF2,
+            'email': TEST_SKIP_EMAIL,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
             'expire': time.time() - SECS_PER_DAY,
         }
         user_dict = {}
         user_dict.update(req_dict)
         # We need to save user in DB with password_hash for reset_token check
-        self._write_user_db({DUMMY_USER_DN: user_dict})
+        self._write_user_db({TEST_USER_DN: user_dict})
         # Inject known invalid reset token
-        req_dict['reset_token'] = INVALID_DUMMY_TOKEN
+        req_dict['reset_token'] = INVALID_TEST_TOKEN
         # Change password_hash here to mimic pw change
-        req_dict['password_hash'] = DUMMY_NEW_MODERN_PW_PBKDF2
+        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
@@ -576,24 +580,25 @@ class MigLibJanitor(MigTestCase):
     def test_manage_single_req_collision(self):
         """Test request handling with existing user collision"""
         # Setup existing user
-        user_dir = os.path.join(self.configuration.user_home, DUMMY_CLIENT_DIR)
+        user_dir = os.path.join(self.configuration.user_home,
+                                client_id_dir(TEST_USER_DN))
         os.makedirs(user_dir, exist_ok=True)
         # Create dummy user DB
-        user_entry = {'distinguished_name': DUMMY_USER_DN}
-        self._write_user_db({DUMMY_USER_DN: user_entry})
+        user_entry = {'distinguished_name': TEST_USER_DN}
+        self._write_user_db({TEST_USER_DN: user_entry})
 
         changed_full_name = "Changed Test Name"
         req_dict = {
-            'client_id': DUMMY_USER_DN.replace(DUMMY_FULL_NAME,
-                                               changed_full_name),
-            'distinguished_name': DUMMY_USER_DN.replace(DUMMY_FULL_NAME,
-                                                        changed_full_name),
-            'auth': [DUMMY_AUTH],
+            'client_id': TEST_USER_DN.replace(TEST_USER_FULLNAME,
+                                              changed_full_name),
+            'distinguished_name': TEST_USER_DN.replace(TEST_USER_FULLNAME,
+                                                       changed_full_name),
+            'auth': [TEST_AUTH],
             'full_name': changed_full_name,
-            'organization': DUMMY_ORGANIZATION,
-            'password_hash': DUMMY_MODERN_PW_PBKDF2,
+            'organization': TEST_USER_ORG,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
             # NOTE: disable email to prevent send failing on reject
-            'email': DUMMY_SKIP_EMAIL,
+            'email': TEST_SKIP_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
@@ -614,23 +619,23 @@ class MigLibJanitor(MigTestCase):
     def test_manage_single_req_auth_change(self):
         """Test request handling with auth password change"""
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
             # NOTE: disable email to prevent send failing on reject
-            'email': DUMMY_SKIP_EMAIL,
+            'email': TEST_SKIP_EMAIL,
             'password': '',
-            'password_hash': DUMMY_MODERN_PW_PBKDF2,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
             'expire': time.time() + SECS_PER_DAY,
         }
         user_dict = {}
         user_dict.update(req_dict)
         # We need to save user in DB with password_hash for reset_token check
-        self._write_user_db({DUMMY_USER_DN: user_dict})
+        self._write_user_db({TEST_USER_DN: user_dict})
         # Change password_hash here to mimic pw change
-        req_dict['password_hash'] = DUMMY_NEW_MODERN_PW_PBKDF2
+        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
         req_dict['authorized'] = True
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
@@ -730,14 +735,14 @@ class MigLibJanitor(MigTestCase):
     def test_manage_single_req_nonexistent_userdb(self):
         """Test manage_single_req with missing user database"""
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
-            'password_hash': DUMMY_MODERN_PW_PBKDF2,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
             # NOTE: disable email to prevent send failing on reject
-            'email': DUMMY_SKIP_EMAIL,
+            'email': TEST_SKIP_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
@@ -760,26 +765,26 @@ class MigLibJanitor(MigTestCase):
     def test_verify_reset_token_failure_logging(self):
         """Test token verification failure creates proper log entries"""
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
             # NOTE: disable email to prevent send failing on reject
-            'email': DUMMY_SKIP_EMAIL,
-            'password_hash': DUMMY_MODERN_PW_PBKDF2,
+            'email': TEST_SKIP_EMAIL,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
             'expire': time.time() + SECS_PER_DAY,  # Future expiration
         }
         user_dict = {}
         user_dict.update(req_dict)
         # We need to save user in DB with password_hash for reset_token check
-        self._write_user_db({DUMMY_USER_DN: user_dict})
+        self._write_user_db({TEST_USER_DN: user_dict})
         timestamp = time.time()
 
         # Now change to another pw hash and generate invalid token from it
-        req_dict['password_hash'] = DUMMY_INVALID_PW_PBKDF2
+        req_dict['password_hash'] = TEST_INVALID_PW_PBKDF2
         req_dict['reset_token'] = generate_reset_token(self.configuration,
-                                                       req_dict, DUMMY_SERVICE,
+                                                       req_dict, TEST_SERVICE,
                                                        timestamp)
 
         saved, req_path = save_account_request(self.configuration, req_dict)
@@ -802,27 +807,27 @@ class MigLibJanitor(MigTestCase):
     def test_verify_reset_token_success(self):
         """Test token verification success with valid token"""
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
             # NOTE: disable email to prevent send failing on reject
-            'email': DUMMY_SKIP_EMAIL,
+            'email': TEST_SKIP_EMAIL,
             'password': '',
-            'password_hash': DUMMY_MODERN_PW_PBKDF2,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
             'expire': time.time() + SECS_PER_DAY,  # Future expiration
         }
         user_dict = {}
         user_dict.update(req_dict)
         # We need to save user in DB with password_hash for reset_token check
-        self._write_user_db({DUMMY_USER_DN: user_dict})
+        self._write_user_db({TEST_USER_DN: user_dict})
         timestamp = time.time()
         reset_token = generate_reset_token(self.configuration, req_dict,
-                                           DUMMY_SERVICE, timestamp)
+                                           TEST_SERVICE, timestamp)
         req_dict['reset_token'] = reset_token
         # Change password_hash here to mimic pw change
-        req_dict['password_hash'] = DUMMY_NEW_MODERN_PW_PBKDF2
+        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
@@ -851,13 +856,13 @@ class MigLibJanitor(MigTestCase):
         for (req_id, mtime) in test_cases:
             req_path = os.path.join(self.configuration.user_pending, req_id)
             req_dict = {
-                'client_id': DUMMY_USER_DN,
-                'distinguished_name': DUMMY_USER_DN,
-                'auth': [DUMMY_AUTH],
-                'full_name': DUMMY_FULL_NAME,
-                'organization': DUMMY_ORGANIZATION,
-                'password': DUMMY_MODERN_PW,
-                'email': DUMMY_EMAIL,
+                'client_id': TEST_USER_DN,
+                'distinguished_name': TEST_USER_DN,
+                'auth': [TEST_AUTH],
+                'full_name': TEST_USER_FULLNAME,
+                'organization': TEST_USER_ORG,
+                'password': TEST_MODERN_PW,
+                'email': TEST_USER_EMAIL,
             }
             saved, req_path = save_account_request(
                 self.configuration, req_dict)
@@ -965,14 +970,14 @@ class MigLibJanitor(MigTestCase):
     def test_janitor_task_cleanup_after_reject(self):
         """Verify proper cleanup after request rejection"""
         req_dict = {
-            'client_id': DUMMY_USER_DN,
-            'distinguished_name': DUMMY_USER_DN,
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
             'invalid': ['Test intentional invalid'],
-            'auth': [DUMMY_AUTH],
-            'full_name': DUMMY_FULL_NAME,
-            'organization': DUMMY_ORGANIZATION,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
             # NOTE: disable email to prevent send failing on reject
-            'email': DUMMY_SKIP_EMAIL,
+            'email': TEST_SKIP_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
