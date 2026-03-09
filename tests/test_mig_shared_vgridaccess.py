@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_vgridaccess - unit tests for vgridaccess helper functions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -19,7 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -424,7 +425,8 @@ class TestMigSharedVgridAccess(MigTestCase, UserAssertMixin):
 
     def test_user_allowed_user_confs(self):
         """Test user_allowed_user_confs returns allowed user confs"""
-        self._provision_test_users(self, self.TEST_OWNER_DN, self.TEST_MEMBER_DN)
+        self._provision_test_users(self, self.TEST_OWNER_DN,
+                                   self.TEST_MEMBER_DN)
 
         self._create_vgrid(self.TEST_VGRID_NAME, owners=[self.TEST_OWNER_DN],
                            members=[self.TEST_MEMBER_DN])
@@ -516,7 +518,7 @@ class TestMigSharedVgridAccess(MigTestCase, UserAssertMixin):
         self._verify_vgrid_map_integrity(initial_vgrid_map)
         self.assertIn(self.TEST_VGRID_NAME, initial_vgrid_map.get(VGRIDS, {}))
         allowed_vgrids = user_vgrid_access(self.configuration,
-                                        TEST_USER_DN)
+                                           TEST_USER_DN)
         self.assertIn(self.TEST_VGRID_NAME, allowed_vgrids)
 
     def test_res_vgrid_access(self):
@@ -660,7 +662,8 @@ class TestMigSharedVgridAccess(MigTestCase, UserAssertMixin):
     def test_user_map_fields(self):
         """Verify user map includes complete profile/settings data"""
         # First add a couple of test users
-        self._provision_test_users(self, self.TEST_OWNER_DN, self.TEST_MEMBER_DN)
+        self._provision_test_users(self, self.TEST_OWNER_DN,
+                                   self.TEST_MEMBER_DN)
 
         # Force fresh user map
         initial_vgrid_map = force_update_vgrid_map(self.configuration)
@@ -832,7 +835,8 @@ class TestMigSharedVgridAccess(MigTestCase, UserAssertMixin):
     def test_user_visible_res_confs(self):
         """Minimal test for user_visible_res_confs"""
         # Owner should see owned resources even without vgrid access
-        self._create_resource(self.TEST_RESOURCE_ID, owners=[self.TEST_OWNER_DN])
+        self._create_resource(self.TEST_RESOURCE_ID,
+                              owners=[self.TEST_OWNER_DN])
         force_update_resource_map(self.configuration)
         visible = user_visible_res_confs(
             self.configuration, self.TEST_OWNER_DN)
@@ -905,7 +909,8 @@ class TestMigSharedVgridAccess(MigTestCase, UserAssertMixin):
 
     def test_empty_member_access(self):
         """Verify members-only vgrid rejects outsiders"""
-        self._create_vgrid(self.TEST_VGRID_NAME, owners=[], members=[self.TEST_MEMBER_DN])
+        self._create_vgrid(self.TEST_VGRID_NAME, owners=[],
+                           members=[self.TEST_MEMBER_DN])
         initial_vgrid_map = force_update_vgrid_map(self.configuration)
         self._verify_vgrid_map_integrity(initial_vgrid_map)
         self.assertIn(self.TEST_VGRID_NAME, initial_vgrid_map.get(VGRIDS, {}))
