@@ -36,7 +36,6 @@ import unittest
 # Imports of the code under test
 import mig.shared.accountreq as accountreq
 # Imports required for the unit test wrapping
-
 from mig.shared.base import distinguished_name_to_user, fill_distinguished_name
 from mig.shared.defaults import keyword_auto
 # Imports required for the unit tests themselves
