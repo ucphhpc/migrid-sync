@@ -147,6 +147,10 @@ class MigSharedAccountreq__peers(MigTestCase, FixtureAssertMixin):
                                                             request_dict)
         arranged_req_id = os.path.basename(req_path)
 
+        # NOTE: when using real user mail we currently hit send email errors.
+        #       We forgive those errors here and only check collision warnings.
+        # TODO: integrate generic skip email support and adjust here to fit
+        self.logger.forgive_errors()
         success, message = accountreq.accept_account_req(arranged_req_id,
                                                          self.configuration,
                                                          keyword_auto)
