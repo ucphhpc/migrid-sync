@@ -6,6 +6,11 @@ ifndef PY
 	PY = 3
 endif
 
+FORMAT_ENFORCE_DIRS = state/
+FORMAT_EXCLUDE_REGEX = '.*'
+FORMAT_EXCLUDE_GLOB = '*'
+FORMAT_LINE_LENGTH = 80
+
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
 ifdef PYTHON_BIN
@@ -35,7 +40,37 @@ ifneq ($(MIG_ENV),'local')
 	@echo "unavailable outside local development environment"
 	@exit 1
 endif
-	$(LOCAL_PYTHON_BIN) -m autopep8 --ignore E402 -i
+	@make format-python
+
+.PHONY:format-python
+format-python:
+	@$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
+			--line-length=$(FORMAT_LINE_LENGTH) \
+			--exclude=$(FORMAT_EXCLUDE_REGEX)
+	@$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
+			--profile=black \
+			--line-length=$(FORMAT_LINE_LENGTH) \
+			--skip-glob=$(FORMAT_EXCLUDE_GLOB)
+
+.PHONY: lint
+lint:
+ifneq ($(MIG_ENV),'local')
+	@echo "unavailable outside local development environment"
+	@exit 1
+endif
+	@make lint-python
+
+.PHONY: lint-python
+lint-python:
+	@$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
+			--check \
+			--line-length=$(FORMAT_LINE_LENGTH) \
+			--exclude $(FORMAT_EXCLUDE_REGEX)
+	@$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
+			--check-only \
+			--profile=black \
+			--line-length=$(FORMAT_LINE_LENGTH) \
+			--skip-glob=$(FORMAT_EXCLUDE_GLOB)
 
 .PHONY: clean
 clean:
