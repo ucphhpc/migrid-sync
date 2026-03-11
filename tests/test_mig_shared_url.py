@@ -32,8 +32,8 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.support import MigTestCase, FakeConfiguration, testmain
 from mig.shared.url import _get_site_urls, check_local_site_url
+from tests.support import FakeConfiguration, MigTestCase, testmain
 
 
 def _generate_dynamic_site_urls(url_base_list):

@@ -32,25 +32,12 @@ import os
 import sys
 import unittest
 
-from tests.support import (
-    MigTestCase,
-    FakeConfiguration,
-    cleanpath,
-    temppath,
-    testmain,
-)
-
-from mig.shared.defaults import (
-    POLICY_NONE,
-    POLICY_WEAK,
-    POLICY_MEDIUM,
-    POLICY_HIGH,
-    POLICY_MODERN,
-    POLICY_CUSTOM,
-    PASSWORD_POLICIES,
-)
-from mig.shared.pwcrypto import main as pwcrypto_main
+from mig.shared.defaults import PASSWORD_POLICIES, POLICY_CUSTOM, POLICY_HIGH, \
+    POLICY_MEDIUM, POLICY_MODERN, POLICY_NONE, POLICY_WEAK
 from mig.shared.pwcrypto import *
+from mig.shared.pwcrypto import main as pwcrypto_main
+from tests.support import FakeConfiguration, MigTestCase, cleanpath, temppath, \
+    testmain
 
 DUMMY_USER = "dummy-user"
 DUMMY_ID = "dummy-id"

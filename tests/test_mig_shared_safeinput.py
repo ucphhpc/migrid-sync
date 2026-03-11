@@ -30,23 +30,16 @@
 import base64
 import codecs
 import sys
+
 from past.builtins import basestring, unicode
 
+from mig.shared.safeinput import VALID_NAME_CHARACTERS, InputException, \
+    filter_commonname
+from mig.shared.safeinput import main as safeinput_main
+from mig.shared.safeinput import valid_alphanumeric, valid_base_url, \
+    valid_commonname, valid_complex_url, valid_path, valid_printable, \
+    valid_url
 from tests.support import MigTestCase, testmain
-
-from mig.shared.safeinput import (
-    main as safeinput_main,
-    InputException,
-    filter_commonname,
-    valid_alphanumeric,
-    valid_commonname,
-    valid_path,
-    valid_printable,
-    valid_base_url,
-    valid_url,
-    valid_complex_url,
-    VALID_NAME_CHARACTERS,
-)
 
 PY2 = sys.version_info[0] == 2
 

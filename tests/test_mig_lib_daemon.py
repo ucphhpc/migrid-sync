@@ -31,22 +31,10 @@ import os
 import signal
 import time
 
-from mig.lib.daemon import (
-    _run_event,
-    _stop_event,
-    check_run,
-    check_stop,
-    do_run,
-    interruptible_sleep,
-    register_run_handler,
-    register_stop_handler,
-    reset_run,
-    reset_stop,
-    run_handler,
-    stop_handler,
-    stop_running,
-    unregister_signal_handlers,
-)
+from mig.lib.daemon import _run_event, _stop_event, check_run, check_stop, \
+    do_run, interruptible_sleep, register_run_handler, register_stop_handler, \
+    reset_run, reset_stop, run_handler, stop_handler, stop_running, \
+    unregister_signal_handlers
 from tests.support import FakeConfiguration, FakeLogger, MigTestCase
 
 

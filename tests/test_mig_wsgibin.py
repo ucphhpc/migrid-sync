@@ -38,24 +38,12 @@ from html.parser import HTMLParser
 
 # Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
-from mig.shared.base import (
-    allow_script,
-    brief_list,
-    client_dir_id,
-    client_id_dir,
-    get_short_id,
-    invisible_path,
-)
+from mig.shared.base import allow_script, brief_list, client_dir_id, \
+    client_id_dir, get_short_id, invisible_path
 from mig.shared.compat import SimpleNamespace
-
 # Imports required for the unit tests themselves
-from tests.support import (
-    MIG_BASE,
-    MigTestCase,
-    ensure_dirs_exist,
-    is_path_within,
-    testmain,
-)
+from tests.support import MIG_BASE, MigTestCase, ensure_dirs_exist, \
+    is_path_within, testmain
 from tests.support.snapshotsupp import SnapshotAssertMixin
 from tests.support.wsgisupp import WsgiAssertMixin, prepare_wsgi
 

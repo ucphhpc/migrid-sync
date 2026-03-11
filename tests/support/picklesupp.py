@@ -29,8 +29,8 @@
 
 import pickle
 
-from tests.support.suppconst import TEST_OUTPUT_DIR
 from tests.support.fixturesupp import _HINTS_APPLIERS_ARGLESS
+from tests.support.suppconst import TEST_OUTPUT_DIR
 
 
 class PickleAssertMixin:

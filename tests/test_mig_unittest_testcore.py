@@ -31,9 +31,8 @@ import importlib
 import os
 import sys
 
-from tests.support import MigTestCase, testmain
-
 from mig.unittest.testcore import main as testcore_main
+from tests.support import MigTestCase, testmain
 
 
 class MigUnittestTestcore(MigTestCase):

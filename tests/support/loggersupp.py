@@ -28,9 +28,9 @@
 
 """Logger related details within the test support library."""
 
-from collections import defaultdict
 import os
 import re
+from collections import defaultdict
 
 from tests.support.suppconst import MIG_BASE, TEST_BASE
 

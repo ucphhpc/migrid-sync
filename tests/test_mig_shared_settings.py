@@ -32,18 +32,10 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.support import (
-    TEST_OUTPUT_DIR,
-    MigTestCase,
-    FakeConfiguration,
-    cleanpath,
-    testmain,
-)
-from mig.shared.settings import (
-    load_settings,
-    update_settings,
-    parse_and_save_settings,
-)
+from mig.shared.settings import load_settings, parse_and_save_settings, \
+    update_settings
+from tests.support import TEST_OUTPUT_DIR, FakeConfiguration, MigTestCase, \
+    cleanpath, testmain
 
 DUMMY_USER = "dummy-user"
 DUMMY_SETTINGS_DIR = "dummy_user_settings"

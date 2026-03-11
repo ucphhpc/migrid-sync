@@ -30,9 +30,8 @@
 import os
 import sys
 
-from tests.support import MigTestCase, temppath, testmain
-
 from mig.shared.serial import *
+from tests.support import MigTestCase, temppath, testmain
 
 
 class BasicSerial(MigTestCase):

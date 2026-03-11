@@ -33,7 +33,6 @@ import os
 import pickle
 
 from mig.shared.base import client_id_dir
-
 from tests.support.fixturesupp import _PreparedFixture
 
 TEST_USER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"

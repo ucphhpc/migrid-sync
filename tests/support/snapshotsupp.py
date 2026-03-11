@@ -28,8 +28,8 @@
 
 import difflib
 import errno
-import re
 import os
+import re
 
 from tests.support.suppconst import TEST_BASE
 

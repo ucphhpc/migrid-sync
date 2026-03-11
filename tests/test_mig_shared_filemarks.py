@@ -36,7 +36,6 @@ import unittest
 
 # Imports of the code under test
 from mig.shared.filemarks import get_filemark, reset_filemark, update_filemark
-
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 

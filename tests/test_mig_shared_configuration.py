@@ -31,14 +31,10 @@ import inspect
 import os
 import unittest
 
-from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain
+from mig.shared.configuration import _CONFIGURATION_ARGUMENTS, \
+    _CONFIGURATION_PROPERTIES, Configuration
+from tests.support import PY2, TEST_DATA_DIR, MigTestCase, testmain
 from tests.support.fixturesupp import FixtureAssertMixin
-
-from mig.shared.configuration import (
-    Configuration,
-    _CONFIGURATION_ARGUMENTS,
-    _CONFIGURATION_PROPERTIES,
-)
 
 
 def _to_dict(obj):

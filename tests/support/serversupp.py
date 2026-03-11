@@ -27,7 +27,8 @@
 
 """Server threading related details within the test support library"""
 
-from threading import Thread, Event as ThreadEvent
+from threading import Event as ThreadEvent
+from threading import Thread
 
 
 class ServerWithinThreadExecutor:

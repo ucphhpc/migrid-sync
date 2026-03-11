@@ -30,11 +30,8 @@
 import os
 import pickle
 
-from mig.lib.accounting import (
-    get_usage,
-    human_readable_filesize,
-    update_accounting,
-)
+from mig.lib.accounting import get_usage, human_readable_filesize, \
+    update_accounting
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import peers_filename
 from tests.support import MigTestCase, ensure_dirs_exist

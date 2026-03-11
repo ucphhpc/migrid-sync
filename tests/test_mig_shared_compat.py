@@ -31,9 +31,8 @@ import binascii
 import os
 import sys
 
-from tests.support import MigTestCase, testmain
-
 from mig.shared.compat import PY2, ensure_native_string
+from tests.support import MigTestCase, testmain
 
 DUMMY_BYTECHARS = b"DEADBEEF"
 DUMMY_BYTESRAW = binascii.unhexlify("DEADBEEF")  # 4 bytes

@@ -28,21 +28,15 @@
 """Unit tests for the tests module pointed to in the filename"""
 
 from __future__ import print_function
+
 import os
 import sys
 import unittest
 
-from tests.support import (
-    MigTestCase,
-    PY2,
-    testmain,
-    temppath,
-    AssertOver,
-    FakeConfiguration,
-)
-
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
+from tests.support import PY2, AssertOver, FakeConfiguration, MigTestCase, \
+    temppath, testmain
 
 
 class InstrumentedAssertOver(AssertOver):

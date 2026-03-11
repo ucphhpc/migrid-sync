@@ -27,8 +27,8 @@
 
 """Test support library for WSGI."""
 
-from collections import namedtuple
 import codecs
+from collections import namedtuple
 from io import BytesIO
 from urllib.parse import urlencode, urlparse
 

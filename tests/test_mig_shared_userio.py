@@ -29,11 +29,11 @@
 
 import os
 import sys
+
 from past.builtins import basestring, unicode
 
-from tests.support import MigTestCase, testmain
-
 from mig.shared.userio import main as userio_main
+from tests.support import MigTestCase, testmain
 
 
 class MigSharedUserIO(MigTestCase):

@@ -33,7 +33,7 @@ import importlib
 import os
 import sys
 
-from tests.support import MIG_BASE, MigTestCase, testmain, cleanpath
+from tests.support import MIG_BASE, MigTestCase, cleanpath, testmain
 
 
 def _import_generateconfs():

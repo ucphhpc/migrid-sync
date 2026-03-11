@@ -8,6 +8,7 @@ endif
 
 FORMAT_ENFORCE_DIRS = ./mig/lib ./tests
 FORMAT_EXCLUDE_REGEX = '.git|tests/data/|tests/fixture/'
+FORMAT_EXCLUDE_GLOB = '.git/* tests/data/* tests/fixture/*'
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
 ifdef PYTHON_BIN
@@ -38,8 +39,12 @@ ifneq ($(MIG_ENV),'local')
 	@exit 1
 endif
 	$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
-			-l 80 \
-			--exclude $(FORMAT_EXCLUDE_REGEX)
+			--line-length=80 \
+			--exclude=$(FORMAT_EXCLUDE_REGEX)
+	$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
+			--line-length=80 -m=HANGING_INDENT \
+			--skip-glob=$(FORMAT_EXCLUDE_GLOB) \
+			--skip-gitignore
 
 .PHONY: lint
 lint:
@@ -49,7 +54,7 @@ ifneq ($(MIG_ENV),'local')
 endif
 	$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
 			--check \
-			-l 80 \
+			--line-length=80 \
 			--exclude $(FORMAT_EXCLUDE_REGEX)
 
 .PHONY: clean

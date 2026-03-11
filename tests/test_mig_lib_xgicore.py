@@ -30,9 +30,8 @@
 import os
 import sys
 
-from tests.support import MigTestCase, FakeConfiguration, testmain
-
 from mig.lib.xgicore import *
+from tests.support import FakeConfiguration, MigTestCase, testmain
 
 
 class MigLibXgicore__get_output_format(MigTestCase):

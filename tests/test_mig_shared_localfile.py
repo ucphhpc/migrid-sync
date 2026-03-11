@@ -27,18 +27,17 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
-from contextlib import contextmanager
 import errno
 import fcntl
 import os
 import sys
+from contextlib import contextmanager
 
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tests.support import MigTestCase, temppath, testmain
-
-from mig.shared.serverfile import LOCK_EX
 from mig.shared.localfile import LocalFile
+from mig.shared.serverfile import LOCK_EX
+from tests.support import MigTestCase, temppath, testmain
 
 DUMMY_FILE = "some_file"
 

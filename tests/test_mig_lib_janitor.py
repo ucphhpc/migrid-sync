@@ -32,36 +32,18 @@ import pickle
 import time
 import unittest
 
-from mig.lib.janitor import (
-    EXPIRE_DUMMY_JOBS_DAYS,
-    EXPIRE_REQ_DAYS,
-    EXPIRE_STATE_DAYS,
-    EXPIRE_TWOFACTOR_DAYS,
-    MANAGE_TRIVIAL_REQ_MINUTES,
-    REMIND_REQ_DAYS,
-    SECS_PER_DAY,
-    SECS_PER_HOUR,
-    SECS_PER_MINUTE,
-    _clean_stale_state_files,
-    _lookup_last_run,
-    _update_last_run,
-    clean_mig_system_files,
-    clean_no_job_helpers,
-    clean_sessid_to_mrls_link_home,
-    clean_twofactor_sessions,
-    clean_webserver_home,
-    handle_cache_updates,
-    handle_janitor_tasks,
-    handle_pending_requests,
-    handle_session_cleanup,
-    handle_state_cleanup,
-    manage_single_req,
-    manage_trivial_user_requests,
-    remind_and_expire_user_pending,
-    task_triggers,
-)
+from mig.lib.janitor import EXPIRE_DUMMY_JOBS_DAYS, EXPIRE_REQ_DAYS, \
+    EXPIRE_STATE_DAYS, EXPIRE_TWOFACTOR_DAYS, MANAGE_TRIVIAL_REQ_MINUTES, \
+    REMIND_REQ_DAYS, SECS_PER_DAY, SECS_PER_HOUR, SECS_PER_MINUTE, \
+    _clean_stale_state_files, _lookup_last_run, _update_last_run, \
+    clean_mig_system_files, clean_no_job_helpers, \
+    clean_sessid_to_mrls_link_home, clean_twofactor_sessions, \
+    clean_webserver_home, handle_cache_updates, handle_janitor_tasks, \
+    handle_pending_requests, handle_session_cleanup, handle_state_cleanup, \
+    manage_single_req, manage_trivial_user_requests, \
+    remind_and_expire_user_pending, task_triggers
 from mig.shared.accountreq import save_account_request
-from mig.shared.base import distinguished_name_to_user, client_id_dir
+from mig.shared.base import client_id_dir, distinguished_name_to_user
 from mig.shared.pwcrypto import generate_reset_token
 from tests.support import MigTestCase, ensure_dirs_exist
 

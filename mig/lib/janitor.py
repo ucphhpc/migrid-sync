@@ -36,11 +36,8 @@ import fnmatch
 import os
 import time
 
-from mig.shared.accountreq import (
-    accept_account_req,
-    existing_user_collision,
-    reject_account_req,
-)
+from mig.shared.accountreq import accept_account_req, existing_user_collision, \
+    reject_account_req
 from mig.shared.base import get_user_id
 from mig.shared.fileio import delete_file, listdir
 from mig.shared.pwcrypto import verify_reset_token

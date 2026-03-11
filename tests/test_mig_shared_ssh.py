@@ -32,18 +32,10 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.support import (
-    TEST_OUTPUT_DIR,
-    MigTestCase,
-    FakeConfiguration,
-    cleanpath,
-    testmain,
-)
-from mig.shared.ssh import (
-    supported_pub_key_parsers,
-    parse_pub_key,
-    generate_ssh_rsa_key_pair,
-)
+from mig.shared.ssh import generate_ssh_rsa_key_pair, parse_pub_key, \
+    supported_pub_key_parsers
+from tests.support import TEST_OUTPUT_DIR, FakeConfiguration, MigTestCase, \
+    cleanpath, testmain
 
 
 class MigSharedSsh(MigTestCase):

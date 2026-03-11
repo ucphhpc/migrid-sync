@@ -27,28 +27,21 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
-from past.builtins import basestring
 import binascii
-from configparser import ConfigParser, NoSectionError, NoOptionError
 import difflib
 import io
 import os
 import pwd
 import sys
+from configparser import ConfigParser, NoOptionError, NoSectionError
 
-from tests.support import (
-    MIG_BASE,
-    TEST_OUTPUT_DIR,
-    MigTestCase,
-    testmain,
-    temppath,
-    cleanpath,
-    is_path_within,
-)
-from tests.support.fixturesupp import fixturepath
+from past.builtins import basestring
 
 from mig.shared.defaults import keyword_auto
 from mig.shared.install import determine_timezone, generate_confs
+from tests.support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, cleanpath, \
+    is_path_within, temppath, testmain
+from tests.support.fixturesupp import fixturepath
 
 
 class DummyPwInfo:
