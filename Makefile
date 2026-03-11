@@ -6,6 +6,8 @@ ifndef PY
 	PY = 3
 endif
 
+FORMAT_ENFORCE_DIRS = ./mig/lib ./tests
+FORMAT_EXCLUDE_REGEX = '.git|tests/data/|tests/fixture/'
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
 ifdef PYTHON_BIN
@@ -35,7 +37,20 @@ ifneq ($(MIG_ENV),'local')
 	@echo "unavailable outside local development environment"
 	@exit 1
 endif
-	$(LOCAL_PYTHON_BIN) -m autopep8 --ignore E402 -i
+	$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
+			-l 80 \
+			--exclude $(FORMAT_EXCLUDE_REGEX)
+
+.PHONY: lint
+lint:
+ifneq ($(MIG_ENV),'local')
+	@echo "unavailable outside local development environment"
+	@exit 1
+endif
+	$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
+			--check \
+			-l 80 \
+			--exclude $(FORMAT_EXCLUDE_REGEX)
 
 .PHONY: clean
 clean:
