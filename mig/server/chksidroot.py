@@ -34,8 +34,7 @@ actual real path to stdout so that apache can use the daemon from RewriteMap
 and rewrite to fail or success depending on output.
 """
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import os
 import re
@@ -64,44 +63,46 @@ configuration, logger = None, None
 
 INVALID_MARKER = "_OUT_OF_BOUNDS_"
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     configuration = get_configuration_object()
     verbose = False
     log_level = configuration.loglevel
-    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+    if sys.argv[1:] and sys.argv[1] in ["debug", "info", "warning", "error"]:
         log_level = sys.argv[1]
         verbose = True
 
     if verbose:
-        print(os.environ.get('MIG_CONF', 'DEFAULT'), configuration.server_fqdn)
+        print(os.environ.get("MIG_CONF", "DEFAULT"), configuration.server_fqdn)
 
     # Use separate logger
-    logger = daemon_logger("chksidroot", configuration.user_chksidroot_log,
-                           log_level)
+    logger = daemon_logger(
+        "chksidroot", configuration.user_chksidroot_log, log_level
+    )
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
     register_hangup_handler(configuration)
 
     if verbose:
-        print('''This is simple SID chroot check helper daemon which just
+        print("""This is simple SID chroot check helper daemon which just
 prints the real path for all allowed path requests and the invalid marker for
 illegal ones.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-''')
-        print('Starting chksidroot helper daemon - Ctrl-C to quit')
+""")
+        print("Starting chksidroot helper daemon - Ctrl-C to quit")
 
     # NOTE: we use sys stdin directly
 
     chksidroot_stdin = sys.stdin
 
     addr_path_pattern = re.compile(
-        "^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})::(/.*)$")
+        "^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})::(/.*)$"
+    )
     keep_running = True
     if verbose:
-        print('Reading commands from sys stdin')
+        print("Reading commands from sys stdin")
     while keep_running:
         try:
             client_ip = "UNKNOWN"
@@ -115,16 +116,17 @@ unless it is available in mig/server/MiGserver.conf
                 raw_path = path = match.group(2)
             logger.info("chksidroot from %s got path: %r" % (client_ip, path))
             if not os.path.isabs(path):
-                logger.error("not an absolute path from %s: %r" %
-                             (client_ip, path))
+                logger.error(
+                    "not an absolute path from %s: %r" % (client_ip, path)
+                )
                 print(INVALID_MARKER)
                 continue
             # NOTE: extract sid dir before ANY expansion to avoid escape
             #       with e.g. /PATH/TO/OWNID/../OTHERID/somefile.txt
             # Where sid may be share link or session link id.
             doc_root = configuration.webserver_home
-            sharelink_prefix = os.path.join(doc_root, 'share_redirect')
-            session_prefix = os.path.join(doc_root, 'sid_redirect')
+            sharelink_prefix = os.path.join(doc_root, "share_redirect")
+            session_prefix = os.path.join(doc_root, "sid_redirect")
             is_sharelink = False
             is_file = False
             # Make sure absolute but unexpanded path is inside sid dir
@@ -137,8 +139,9 @@ unless it is available in mig/server/MiGserver.conf
                 root = session_prefix.rstrip(os.sep) + os.sep
             else:
                 # Only warn to avoid excessive noise from scanners
-                logger.warning("got path from %s with invalid root: %r" %
-                               (client_ip, path))
+                logger.warning(
+                    "got path from %s with invalid root: %r" % (client_ip, path)
+                )
                 print(INVALID_MARKER)
                 continue
             # Extract sid name as first component after root base
@@ -152,22 +155,24 @@ unless it is available in mig/server/MiGserver.conf
             # outside base, which is checked later.
             path = os.path.abspath(path)
             if not path.startswith(full_prefix):
-                logger.error("got path from %s outside sid base: %r" %
-                             (client_ip, path))
+                logger.error(
+                    "got path from %s outside sid base: %r" % (client_ip, path)
+                )
                 print(INVALID_MARKER)
                 continue
             if is_sharelink:
                 # Share links use Alias to map directly into sharelink_home
                 # and with first char mapping into access mode sub-dir there.
-                (access_dir, _) = extract_mode_id(configuration, sid_name)
-                real_root = os.path.join(configuration.sharelink_home,
-                                         access_dir) + os.sep
+                access_dir, _ = extract_mode_id(configuration, sid_name)
+                real_root = (
+                    os.path.join(configuration.sharelink_home, access_dir)
+                    + os.sep
+                )
             else:
                 # Session links are directly in webserver_home and they map
                 # either into mig_system_files for empty jobs or into specific
                 # user_home for real job input/output.
-                real_root = configuration.webserver_home.rstrip(os.sep) + \
-                    os.sep
+                real_root = configuration.webserver_home.rstrip(os.sep) + os.sep
 
             # NOTE: we cannot completely trust linked path to be safe,
             # so we first check full prefix on normalized path above to avoid
@@ -185,22 +190,27 @@ unless it is available in mig/server/MiGserver.conf
                 real_target = None
             if not link_target or not os.path.exists(link_path):
                 # Only warn to avoid excessive noise from scanners
-                logger.warning("not a valid link from %s for path %r: %r" %
-                               (client_ip, path, link_path))
+                logger.warning(
+                    "not a valid link from %s for path %r: %r"
+                    % (client_ip, path, link_path)
+                )
                 print(INVALID_MARKER)
                 continue
 
             # Find default wide base root depending on target
             if link_target.startswith(configuration.user_home):
-                user_dir = link_target.replace(configuration.user_home, '')
+                user_dir = link_target.replace(configuration.user_home, "")
                 user_dir = user_dir.lstrip(os.sep).split(os.sep)[0]
                 base_path = os.path.join(configuration.user_home, user_dir)
-            elif not is_sharelink and \
-                    link_target.startswith(configuration.mig_system_files):
+            elif not is_sharelink and link_target.startswith(
+                configuration.mig_system_files
+            ):
                 base_path = configuration.mig_system_files.rstrip(os.sep)
             else:
-                logger.error("unexpected link target from %s for path %r: %r"
-                             % (client_ip, path, link_target))
+                logger.error(
+                    "unexpected link target from %s for path %r: %r"
+                    % (client_ip, path, link_target)
+                )
                 print(INVALID_MARKER)
                 continue
 
@@ -209,12 +219,15 @@ unless it is available in mig/server/MiGserver.conf
                 is_file = not os.path.isdir(real_target)
                 base_path = real_target
             else:
-                logger.warning("could not narrow down base root link from %s: %r" %
-                               (client_ip, link_target))
+                logger.warning(
+                    "could not narrow down base root link from %s: %r"
+                    % (client_ip, link_target)
+                )
 
             # We manually expand sid base.
-            logger.debug("found target %r for link %r" % (link_target,
-                                                          link_path))
+            logger.debug(
+                "found target %r for link %r" % (link_target, link_path)
+            )
             # Single file sharelinks use direct link to file. If so we
             # manually expand to direct target. Otherwise we only replace
             # that prefix of path to translate it to a sharelink dir path.
@@ -226,18 +239,29 @@ unless it is available in mig/server/MiGserver.conf
                 path = path.replace(full_prefix, link_target, 1)
 
             real_path = os.path.realpath(path)
-            logger.info("check path from %s in base %s or chroot: %r" %
-                        (client_ip, base_path, path))
+            logger.info(
+                "check path from %s in base %s or chroot: %r"
+                % (client_ip, base_path, path)
+            )
             # Exact match to sid dir does not make sense as we expect a file
             # IMPORTANT: use path and not real_path here in order to test both
-            if not valid_user_path(configuration, path, base_path,
-                                   allow_equal=is_file, apache_scripts=True):
-                logger.error("request from %s is outside sid chroot %s: %r (%r)" %
-                             (client_ip, base_path, raw_path, real_path))
+            if not valid_user_path(
+                configuration,
+                path,
+                base_path,
+                allow_equal=is_file,
+                apache_scripts=True,
+            ):
+                logger.error(
+                    "request from %s is outside sid chroot %s: %r (%r)"
+                    % (client_ip, base_path, raw_path, real_path)
+                )
                 print(INVALID_MARKER)
                 continue
-            logger.info("found valid sid chroot path from %s: %r" %
-                        (client_ip, real_path))
+            logger.info(
+                "found valid sid chroot path from %s: %r"
+                % (client_ip, real_path)
+            )
             print(real_path)
 
             # Throttle down a bit to yield
@@ -249,8 +273,8 @@ unless it is available in mig/server/MiGserver.conf
             logger.error("unexpected exception: %s" % exc)
             print(INVALID_MARKER)
             if verbose:
-                print('Caught unexpected exception: %s' % exc)
+                print("Caught unexpected exception: %s" % exc)
 
     if verbose:
-        print('chksidroot helper daemon shutting down')
+        print("chksidroot helper daemon shutting down")
     sys.exit(0)

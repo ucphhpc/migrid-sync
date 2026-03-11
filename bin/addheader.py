@@ -159,14 +159,11 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
             END_MARKER,
         )
     if block_wrap:
-        lic = (
-            """
+        lic = """
 /*
 %s
 */
-"""
-            % lic
-        )
+""" % lic
 
     module_header.append(lic)
     # Make sure there's a blank line between license header and code

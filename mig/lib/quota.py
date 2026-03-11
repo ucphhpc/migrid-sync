@@ -30,20 +30,22 @@
 
 from mig.lib.lustrequota import update_lustre_quota
 
-
-supported_quota_backends = ['lustre', 'lustre-gocryptfs']
+supported_quota_backends = ["lustre", "lustre-gocryptfs"]
 
 
 def update_quota(configuration):
     """Update quota for users and vgrids"""
     retval = False
     logger = configuration.logger
-    if configuration.quota_backend == 'lustre' \
-            or configuration.quota_backend == 'lustre-gocryptfs':
+    if (
+        configuration.quota_backend == "lustre"
+        or configuration.quota_backend == "lustre-gocryptfs"
+    ):
         retval = update_lustre_quota(configuration)
     else:
-        logger.error("quota_backend: %r not in supported_quota_backends: %r"
-                     % (configuration.quota_backend,
-                        supported_quota_backends))
+        logger.error(
+            "quota_backend: %r not in supported_quota_backends: %r"
+            % (configuration.quota_backend, supported_quota_backends)
+        )
 
     return retval

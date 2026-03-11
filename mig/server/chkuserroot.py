@@ -34,8 +34,7 @@ actual real path to stdout so that apache can use the daemon from RewriteMap
 and rewrite to fail or success depending on output.
 """
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import os
 import re
@@ -65,44 +64,46 @@ configuration, logger = None, None
 
 INVALID_MARKER = "_OUT_OF_BOUNDS_"
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     configuration = get_configuration_object()
     verbose = False
     log_level = configuration.loglevel
-    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+    if sys.argv[1:] and sys.argv[1] in ["debug", "info", "warning", "error"]:
         log_level = sys.argv[1]
         verbose = True
 
     if verbose:
-        print(os.environ.get('MIG_CONF', 'DEFAULT'), configuration.server_fqdn)
+        print(os.environ.get("MIG_CONF", "DEFAULT"), configuration.server_fqdn)
 
     # Use separate logger
-    logger = daemon_logger("chkuserroot", configuration.user_chkuserroot_log,
-                           log_level)
+    logger = daemon_logger(
+        "chkuserroot", configuration.user_chkuserroot_log, log_level
+    )
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
     register_hangup_handler(configuration)
 
     if verbose:
-        print('''This is simple user chroot check helper daemon which just
+        print("""This is simple user chroot check helper daemon which just
 prints the real path for all allowed path requests and the invalid marker for
 illegal ones.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-''')
-        print('Starting chkuserroot helper daemon - Ctrl-C to quit')
+""")
+        print("Starting chkuserroot helper daemon - Ctrl-C to quit")
 
     # NOTE: we use sys stdin directly
 
     chkuserroot_stdin = sys.stdin
 
     addr_path_pattern = re.compile(
-        "^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})::(/.*)$")
+        "^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})::(/.*)$"
+    )
     keep_running = True
     if verbose:
-        print('Reading commands from sys stdin')
+        print("Reading commands from sys stdin")
     while keep_running:
         try:
             client_ip = "UNKNOWN"
@@ -116,8 +117,9 @@ unless it is available in mig/server/MiGserver.conf
                 raw_path = path = match.group(2)
             logger.info("chkuserroot from %s got path: %r" % (client_ip, path))
             if not os.path.isabs(path):
-                logger.error("not an absolute path from %s: %r" %
-                             (client_ip, path))
+                logger.error(
+                    "not an absolute path from %s: %r" % (client_ip, path)
+                )
                 print(INVALID_MARKER)
                 continue
             # NOTE: extract home dir before ANY expansion to avoid escape
@@ -125,8 +127,9 @@ unless it is available in mig/server/MiGserver.conf
             root = configuration.user_home.rstrip(os.sep) + os.sep
             if not path.startswith(root):
                 # Only warn to avoid excessive noise from scanners
-                logger.warning("got path from %s with invalid root: %r" %
-                               (client_ip, path))
+                logger.warning(
+                    "got path from %s with invalid root: %r" % (client_ip, path)
+                )
                 print(INVALID_MARKER)
                 continue
             # Extract name of home as first component after root base
@@ -141,31 +144,45 @@ unless it is available in mig/server/MiGserver.conf
             # outside home, which is checked later.
             path = os.path.abspath(path)
             if not path.startswith(home_path):
-                logger.error("got path from %s outside user home: %r" %
-                             (client_ip, raw_path))
+                logger.error(
+                    "got path from %s outside user home: %r"
+                    % (client_ip, raw_path)
+                )
                 print(INVALID_MARKER)
                 continue
 
             real_path = os.path.realpath(path)
-            logger.debug("check path %r in home %s or chroot" % (path,
-                                                                 home_path))
+            logger.debug(
+                "check path %r in home %s or chroot" % (path, home_path)
+            )
             # Exact match to user home does not make sense as we expect a file
             # IMPORTANT: use path and not real_path here in order to test both
-            if not valid_user_path(configuration, path, home_path,
-                                   allow_equal=False, apache_scripts=True):
-                logger.error("path from %s outside user chroot %s: %r (%r)" %
-                             (client_ip, home_path, raw_path, real_path))
+            if not valid_user_path(
+                configuration,
+                path,
+                home_path,
+                allow_equal=False,
+                apache_scripts=True,
+            ):
+                logger.error(
+                    "path from %s outside user chroot %s: %r (%r)"
+                    % (client_ip, home_path, raw_path, real_path)
+                )
                 print(INVALID_MARKER)
                 continue
-            elif not check_account_accessible(configuration, user_id, 'https'):
+            elif not check_account_accessible(configuration, user_id, "https"):
                 # Only warn to avoid excessive noise from scanners
-                logger.warning("path from %s in inaccessible %s account: %r (%r)"
-                               % (client_ip, user_id, raw_path, real_path))
+                logger.warning(
+                    "path from %s in inaccessible %s account: %r (%r)"
+                    % (client_ip, user_id, raw_path, real_path)
+                )
                 print(INVALID_MARKER)
                 continue
 
-            logger.info("found valid user chroot path from %s: %r" %
-                        (client_ip, real_path))
+            logger.info(
+                "found valid user chroot path from %s: %r"
+                % (client_ip, real_path)
+            )
             print(real_path)
 
             # Throttle down a bit to yield
@@ -177,8 +194,8 @@ unless it is available in mig/server/MiGserver.conf
             logger.error("unexpected exception: %s" % exc)
             print(INVALID_MARKER)
             if verbose:
-                print('Caught unexpected exception: %s' % exc)
+                print("Caught unexpected exception: %s" % exc)
 
     if verbose:
-        print('chkuserroot helper daemon shutting down')
+        print("chkuserroot helper daemon shutting down")
     sys.exit(0)

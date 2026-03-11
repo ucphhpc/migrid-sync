@@ -29,25 +29,22 @@
 flooding.
 """
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-from builtins import range
-import os
 import multiprocessing
+import os
 import signal
 import sys
 import time
+from builtins import range
 from datetime import datetime
 
-from mig.shared.base import extract_field, expand_openid_alias
+from mig.shared.base import expand_openid_alias, extract_field
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import ignore_file_names
-from mig.shared.fileio import unpickle, delete_file
-from mig.shared.logger import daemon_logger, \
-    register_hangup_handler
+from mig.shared.fileio import delete_file, unpickle
+from mig.shared.logger import daemon_logger, register_hangup_handler
 from mig.shared.notification import send_email
-
 
 stop_running = multiprocessing.Event()
 notify_interval = 60
@@ -57,7 +54,7 @@ received_notifications = {}
 def stop_handler(sig, frame):
     """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
     # Print blank line to avoid mix with Ctrl-C line
-    print('')
+    print("")
     stop_running.set()
 
 
@@ -72,12 +69,14 @@ def cleanup_notify_home(configuration, notified_users=[], timestamp=None):
     # Remove notification files for notified users
 
     for client_id in notified_users:
-        cleanup_files = received_notifications.get(
-            client_id, {}).get('files', [])
+        cleanup_files = received_notifications.get(client_id, {}).get(
+            "files", []
+        )
         if not cleanup_files:
             logger.error(
                 "Expected _NON_ empty files list for client_id: '%s'"
-                % client_id)
+                % client_id
+            )
         for filepath in cleanup_files:
             # logger.debug("Removing notification file: '%s'" % filepath)
             delete_file(filepath, logger)
@@ -106,43 +105,45 @@ def send_notifications(configuration):
     logger = configuration.logger
     # logger.debug("send_notifications")
     result = []
-    for (client_id, client_dict) in received_notifications.items():
-        timestamp = client_dict.get('timestamp', 0)
+    for client_id, client_dict in received_notifications.items():
+        timestamp = client_dict.get("timestamp", 0)
 
-        timestr = (datetime.fromtimestamp(timestamp)
-                   ).strftime('%d/%m/%Y %H:%M:%S')
-        client_name = extract_field(client_id, 'full_name')
-        client_email = extract_field(client_id, 'email')
-        recipient = "%s <%s>" % (client_name,
-                                 client_email)
+        timestr = (datetime.fromtimestamp(timestamp)).strftime(
+            "%d/%m/%Y %H:%M:%S"
+        )
+        client_name = extract_field(client_id, "full_name")
+        client_email = extract_field(client_id, "email")
+        recipient = "%s <%s>" % (client_name, client_email)
         total_events = 0
         notify_message = ""
-        messages_dict = client_dict.get('messages', {})
-        for (header, value) in messages_dict.items():
+        messages_dict = client_dict.get("messages", {})
+        for header, value in messages_dict.items():
             if notify_message:
                 notify_message += "\n\n"
             notify_message += "= %s =\n" % header
-            for (message, events) in value.items():
+            for message, events in value.items():
                 notify_message += "#%s : %s\n" % (events, message)
                 total_events += events
-        subject = "%s system notification: %s new events" % \
-                  (configuration.short_title, total_events)
-        notify_message = "Found %s new events since: %s\n\n" \
-            % (total_events, timestr) \
+        subject = "%s system notification: %s new events" % (
+            configuration.short_title,
+            total_events,
+        )
+        notify_message = (
+            "Found %s new events since: %s\n\n" % (total_events, timestr)
             + notify_message
+        )
         status = send_email(
-            recipient,
-            subject,
-            notify_message,
-            logger,
-            configuration)
+            recipient, subject, notify_message, logger, configuration
+        )
         if status:
-            logger.info("Send email with %s events to: %s"
-                        % (total_events, recipient))
+            logger.info(
+                "Send email with %s events to: %s" % (total_events, recipient)
+            )
             result.append(client_id)
         else:
-            logger.error("Failed to send email to: '%s', '%s'" %
-                         (recipient, client_id))
+            logger.error(
+                "Failed to send email to: '%s', '%s'" % (recipient, client_id)
+            )
 
     return result
 
@@ -156,7 +157,7 @@ def recv_notification(configuration, path):
     if not new_notification:
         logger.error("Failed to unpickle: %s" % path)
         return False
-    user_id = new_notification.get('user_id', '')
+    user_id = new_notification.get("user_id", "")
     # logger.debug("Received user_id: '%s'" % user_id)
     if not user_id:
         status = False
@@ -164,42 +165,43 @@ def recv_notification(configuration, path):
     else:
         client_id = expand_openid_alias(user_id, configuration)
         # logger.debug("resolved client_id: '%s'" % client_id)
-        if not client_id or not extract_field(client_id, 'email'):
+        if not client_id or not extract_field(client_id, "email"):
             status = False
-            logger.error("Failed to resolve client_id from user_id: '%s'"
-                         % user_id)
+            logger.error(
+                "Failed to resolve client_id from user_id: '%s'" % user_id
+            )
     if status:
-        category = new_notification.get('category', [])
+        category = new_notification.get("category", [])
         # logger.debug("Received category: %s" % category)
         if not isinstance(category, list):
             status = False
             logger.error("Received category: %s must be a list" % category)
     if status:
-        logger.info("Received event: %s, from: '%s'"
-                    % (category, client_id))
-        new_timestamp = new_notification.get('timestamp')
-        message = new_notification.get('message', '')
+        logger.info("Received event: %s, from: '%s'" % (category, client_id))
+        new_timestamp = new_notification.get("timestamp")
+        message = new_notification.get("message", "")
         # logger.debug("Received message: %s" % message)
         client_dict = received_notifications.get(client_id, {})
         if not client_dict:
             received_notifications[client_id] = client_dict
-        files_list = client_dict.get('files', [])
+        files_list = client_dict.get("files", [])
         if not files_list:
-            client_dict['files'] = files_list
+            client_dict["files"] = files_list
         if path in files_list:
             logger.warning(
-                "Skipping previously received notification: '%s'" % path)
+                "Skipping previously received notification: '%s'" % path
+            )
         else:
             files_list.append(path)
-            client_dict['timestamp'] = min(
-                client_dict.get('timestamp', sys.maxsize),
-                new_timestamp)
-            messages_dict = client_dict.get('messages', {})
+            client_dict["timestamp"] = min(
+                client_dict.get("timestamp", sys.maxsize), new_timestamp
+            )
+            messages_dict = client_dict.get("messages", {})
             if not messages_dict:
-                client_dict['messages'] = messages_dict
+                client_dict["messages"] = messages_dict
             header = " ".join(category)
             if not header:
-                header = '* UNKNOWN *'
+                header = "* UNKNOWN *"
             body_dict = messages_dict.get(header, {})
             if not body_dict:
                 messages_dict[header] = body_dict
@@ -226,9 +228,11 @@ def handle_notifications(configuration):
                     recv_notification(configuration, abspath)
             notified_users = send_notifications(configuration)
             last_notification = time.time()
-            cleanup_notify_home(configuration,
-                                notified_users=notified_users,
-                                timestamp=last_notification - 84600)
+            cleanup_notify_home(
+                configuration,
+                notified_users=notified_users,
+                timestamp=last_notification - 84600,
+            )
             received_notifications.clear()
             logger.debug("----- Sleeping %s seconds -----" % notify_interval)
             time.sleep(notify_interval)
@@ -247,8 +251,10 @@ def unittest(configuration, emailaddr, delay):
     """Unit test for grid_notify.py"""
     signal.signal(signal.SIGINT, stop_handler)
     from mig.shared.notification import send_system_notification
-    print("Starting unittest: emailaddr: %s" % emailaddr
-          + ", delay: %s" % delay)
+
+    print(
+        "Starting unittest: emailaddr: %s" % emailaddr + ", delay: %s" % delay
+    )
     if delay > 0:
         print("Waiting %s secs before executing unit test" % delay)
         time.sleep(delay)
@@ -259,34 +265,37 @@ def unittest(configuration, emailaddr, delay):
     for i in range(nr_debug_users):
         client_ids.append(
             "/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Grid Notify %i/emailAddress=%s"
-            % (i, emailaddr))
+            % (i, emailaddr)
+        )
     print("=============================")
     print("======= Starting test =======")
     print("=============================")
     for client_id in client_ids:
         for i in range(5):
-            for protocol in ['SFTP', 'WebDAVS']:
+            for protocol in ["SFTP", "WebDAVS"]:
                 if stop_running.is_set():
                     return
                 category = [protocol]
                 msg = "__UNITTEST__: %s" % protocol
-                print("unittest: Sending notification: %s"
-                      ", category: %s: %s" % (i, category, client_id))
-                send_system_notification(client_id,
-                                         category,
-                                         msg,
-                                         configuration)
-                for event in ['Invalid password', 'Expired 2FA session']:
+                print(
+                    "unittest: Sending notification: %s"
+                    ", category: %s: %s" % (i, category, client_id)
+                )
+                send_system_notification(
+                    client_id, category, msg, configuration
+                )
+                for event in ["Invalid password", "Expired 2FA session"]:
                     if stop_running.is_set():
                         return
                     category = [protocol, event]
                     msg = "__UNITTEST__: %s" % client_id
-                    print("unittest: Sending notification: %s" % i
-                          + ", category: %s: %s" % (category, client_id))
-                    send_system_notification(client_id,
-                                             category,
-                                             msg,
-                                             configuration)
+                    print(
+                        "unittest: Sending notification: %s" % i
+                        + ", category: %s: %s" % (category, client_id)
+                    )
+                    send_system_notification(
+                        client_id, category, msg, configuration
+                    )
 
 
 if __name__ == "__main__":
@@ -297,11 +306,15 @@ if __name__ == "__main__":
     emailaddr = None
     delay = 0
     argpos = 1
-    if sys.argv[argpos:] and sys.argv[argpos] \
-            in ['debug', 'info', 'warning', 'error']:
+    if sys.argv[argpos:] and sys.argv[argpos] in [
+        "debug",
+        "info",
+        "warning",
+        "error",
+    ]:
         log_level = sys.argv[argpos]
         argpos += 1
-    if sys.argv[argpos:] and len(sys.argv[argpos].split('@')) == 2:
+    if sys.argv[argpos:] and len(sys.argv[argpos].split("@")) == 2:
         emailaddr = sys.argv[argpos]
         argpos += 1
     if sys.argv[argpos:]:
@@ -319,13 +332,14 @@ if __name__ == "__main__":
     # Start unittest if requested
 
     if emailaddr:
-        unittest_proc = multiprocessing.Process(target=unittest,
-                                                args=(configuration,
-                                                      emailaddr,
-                                                      delay))
+        unittest_proc = multiprocessing.Process(
+            target=unittest, args=(configuration, emailaddr, delay)
+        )
         unittest_proc.start()
-        info_msg = "Starting unit test process: email: %s, delay: %s" \
-            % (emailaddr, delay)
+        info_msg = "Starting unit test process: email: %s, delay: %s" % (
+            emailaddr,
+            delay,
+        )
         print(info_msg)
         logger.info("(%s) %s" % (unittest_proc.pid, info_msg))
 
@@ -341,21 +355,22 @@ if __name__ == "__main__":
         print(err_msg)
         sys.exit(1)
 
-    print('''This is the MiG system notify daemon which notify users about system events.
+    print(
+        """This is the MiG system notify daemon which notify users about system events.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-''')
+"""
+    )
 
     main_pid = os.getpid()
     print("Starting notify daemon - Ctrl-C to quit")
     logger.info("(%s) Starting notify daemon" % main_pid)
-    (exit_code, exit_msg) = handle_notifications(configuration)
+    exit_code, exit_msg = handle_notifications(configuration)
     stop_msg = "Stopping notify daemon"
     if exit_code == 0:
         print(stop_msg)
-        logger.info("(%s) %s"
-                    % (main_pid, stop_msg))
+        logger.info("(%s) %s" % (main_pid, stop_msg))
     else:
         stop_msg += ", exit_code: %s, %s" % (exit_code, exit_msg)
         print(stop_msg)

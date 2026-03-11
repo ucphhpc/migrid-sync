@@ -30,10 +30,8 @@
 
 """Grep for sftp negotiation in sftp.log and translate source IP to FQDN"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-from past.builtins import cmp
 import getopt
 import multiprocessing
 import os
@@ -41,11 +39,13 @@ import re
 import socket
 import sys
 
+from past.builtins import cmp
+
 from mig.shared.conf import get_configuration_object
 from mig.shared.useradm import init_user_adm
 
 
-def usage(name='sftpfailinfo.py'):
+def usage(name="sftpfailinfo.py"):
     """Usage help"""
 
     print("""%(doc)s
@@ -58,7 +58,7 @@ Where OPTIONS may be one or more of:
    -v                  Verbose output
    -x TRUSTED_IP       Trust IPs starting with this prefix (multiple allowed)
    -X TRUSTED_DOMAIN   Trust FQDNs ending with this suffix (multiple allowed)
-""" % {'doc': __doc__, 'name': name})
+""" % {"doc": __doc__, "name": name})
 
 
 def dns_lookup(ip_addr):
@@ -72,40 +72,40 @@ def dns_lookup(ip_addr):
     return (ip_addr, fqdn)
 
 
-if '__main__' == __name__:
-    (args, app_dir, db_path) = init_user_adm()
+if "__main__" == __name__:
+    args, app_dir, db_path = init_user_adm()
     conf_path = None
     # Never blacklist localhost IPs
-    trust_ip_list = ['127.0.']
+    trust_ip_list = ["127.0."]
     # NOTE: 123.31.32.0/19 in Vietnam maps to 'localhost' - don't trust DNS
     trust_fqdn_list = []
     verbose = False
-    opt_args = 'c:hvx:X:'
+    opt_args = "c:hvx:X:"
     try:
-        (opts, args) = getopt.getopt(args, opt_args)
+        opts, args = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    for (opt, val) in opts:
-        if opt == '-c':
+    for opt, val in opts:
+        if opt == "-c":
             conf_path = val
-        elif opt == '-h':
+        elif opt == "-h":
             usage()
             sys.exit(0)
-        elif opt == '-v':
+        elif opt == "-v":
             verbose = True
-        elif opt == '-x':
+        elif opt == "-x":
             trust_ip_list.append(val.strip())
-        elif opt == '-X':
+        elif opt == "-X":
             trust_fqdn_list.append(val.strip())
         else:
-            print('Error: %s not supported!' % opt)
+            print("Error: %s not supported!" % opt)
             sys.exit(1)
 
     if conf_path:
-        os.environ['MIG_CONF'] = conf_path
+        os.environ["MIG_CONF"] = conf_path
     configuration = get_configuration_object()
     matches = []
     extract_pattern = r"(.+) WARNING client negotiation errors for "
@@ -117,7 +117,7 @@ if '__main__' == __name__:
         print("Searching for SFTP negotiation errors in %s" % sftp_log)
     log_fd = open(sftp_log)
     for line in log_fd:
-        if line.find('WARNING client negotiation errors ') != -1:
+        if line.find("WARNING client negotiation errors ") != -1:
             matches.append(line)
     log_fd.close()
     if verbose:
@@ -128,11 +128,11 @@ if '__main__' == __name__:
         if match:
             stamp, source_ip, source_port, err_cond = match.group(1, 2, 3, 4)
             if not source_ip in ip_fail_map:
-                ip_fail_map[source_ip] = {'source_ip': source_ip}
+                ip_fail_map[source_ip] = {"source_ip": source_ip}
             if not err_cond in ip_fail_map[source_ip]:
                 ip_fail_map[source_ip][err_cond] = 0
             ip_fail_map[source_ip][err_cond] += 1
-            ip_fail_map[source_ip]['last'] = stamp
+            ip_fail_map[source_ip]["last"] = stamp
 
     if not ip_fail_map:
         if verbose:
@@ -145,7 +145,7 @@ if '__main__' == __name__:
     workers = multiprocessing.Pool(processes=64)
     rdns_results = workers.map(dns_lookup, list(ip_fail_map))
     fqdn_fail_map = {}
-    for (source_ip, source_fqdn) in rdns_results:
+    for source_ip, source_fqdn in rdns_results:
         fqdn_fail_map[source_fqdn] = ip_fail_map[source_ip]
 
     print("")
@@ -153,24 +153,25 @@ if '__main__' == __name__:
     print("----------------------")
     sorted_hosts = list(fqdn_fail_map)
     # Try to sort in a more intuitive way where TLD is considered first
-    sorted_hosts.sort(cmp=lambda a, b: cmp(a.split(".")[::-1],
-                                           b.split(".")[::-1]))
+    sorted_hosts.sort(
+        cmp=lambda a, b: cmp(a.split(".")[::-1], b.split(".")[::-1])
+    )
     show_limit, offender_limit = 8, 32
     for source_fqdn in sorted_hosts:
         err_map = fqdn_fail_map[source_fqdn]
-        source_ip = err_map['source_ip']
-        last = err_map['last']
+        source_ip = err_map["source_ip"]
+        last = err_map["last"]
         host_stats = "%s (%s): " % (source_fqdn, source_ip)
         host_errs = []
         total = 0
-        for (err_cond, err_count) in err_map.items():
-            if err_cond in ['source_ip', 'last']:
+        for err_cond, err_count in err_map.items():
+            if err_cond in ["source_ip", "last"]:
                 continue
             host_errs.append("%s: %d" % (err_cond, err_count))
             total += err_count
-        host_stats += ' , '.join(host_errs)
-        host_stats += ' , total: %d' % total
-        host_stats += ' , last: %s' % last
+        host_stats += " , ".join(host_errs)
+        host_stats += " , total: %d" % total
+        host_stats += " , last: %s" % last
         # Only display repeated offenders and honor trust
         trust = False
         for trust_prefix in trust_ip_list:
@@ -189,6 +190,8 @@ if '__main__' == __name__:
             if total > offender_limit:
                 print(" *  You may want to verify origin and block if fishy:")
                 print("\twhois %(source_ip)s|grep 'descr:'" % err_map)
-                print("\tsudo iptables -I INPUT -s %(source_ip)s/32 -j DROP"
-                      % err_map)
+                print(
+                    "\tsudo iptables -I INPUT -s %(source_ip)s/32 -j DROP"
+                    % err_map
+                )
             print("")

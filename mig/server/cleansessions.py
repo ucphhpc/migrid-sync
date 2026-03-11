@@ -29,18 +29,19 @@
 Relies on psutil to lookup established connections for comparison.
 """
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import getopt
 import sys
 
 from mig.shared.conf import get_configuration_object
-from mig.shared.griddaemons.sessions import expire_dead_sessions, \
-    expire_dead_sessions_chunked
+from mig.shared.griddaemons.sessions import (
+    expire_dead_sessions,
+    expire_dead_sessions_chunked,
+)
 
 
-def usage(name='cleansessions.py'):
+def usage(name="cleansessions.py"):
     """Usage help"""
 
     print("""Clean stale sessions from griddaemons.
@@ -54,55 +55,57 @@ Where OPTIONS may be one or more of:
    -u USERNAME         Username to specifically target in session clean up
 where PROTO is one or more specific IO protocols or all if it is left out.
 Sessions of all users are cleaned unless a specific username is requested.
-""" % {'name': name})
+""" % {"name": name})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = None
     chunked = False
     force = False
     verbose = False
     username = None
-    opt_args = 'cfhvu:'
+    opt_args = "cfhvu:"
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
+        opts, args = getopt.getopt(sys.argv[1:], opt_args)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    for (opt, val) in opts:
-        if opt == '-c':
+    for opt, val in opts:
+        if opt == "-c":
             chunked = True
-        elif opt == '-f':
+        elif opt == "-f":
             force = True
-        elif opt == '-h':
+        elif opt == "-h":
             usage()
             sys.exit(0)
-        elif opt == '-v':
+        elif opt == "-v":
             verbose = True
-        elif opt == '-u':
+        elif opt == "-u":
             username = val
         else:
-            print('Error: %s not supported!' % opt)
+            print("Error: %s not supported!" % opt)
 
-    proto_list = ['davs', 'sftp', 'ftps']
+    proto_list = ["davs", "sftp", "ftps"]
     if args:
-        proto_list = [proto for proto in args
-                      if proto in proto_list]
+        proto_list = [proto for proto in args if proto in proto_list]
 
     configuration = get_configuration_object()
 
     if verbose:
-        print('Clean up stale sessions for protocol(s) %r and user %s' %
-              (" ".join(proto_list), username))
+        print(
+            "Clean up stale sessions for protocol(s) %r and user %s"
+            % (" ".join(proto_list), username)
+        )
     retval = 0
     cleaned = []
     configuration = get_configuration_object(skip_log=True)
     for cur_proto in proto_list:
         if chunked:
-            expired = expire_dead_sessions_chunked(configuration, cur_proto,
-                                                   username)
+            expired = expire_dead_sessions_chunked(
+                configuration, cur_proto, username
+            )
         else:
             expired = expire_dead_sessions(configuration, cur_proto, username)
         cleaned += list(expired)
@@ -110,7 +113,9 @@ if __name__ == '__main__':
     if cleaned:
         if verbose:
             print("\n### Session Clean Summary ###")
-        print('Cleaned %s stale %s sessions:\n%s' %
-              (len(cleaned), " ".join(proto_list), '\n'.join(cleaned)))
+        print(
+            "Cleaned %s stale %s sessions:\n%s"
+            % (len(cleaned), " ".join(proto_list), "\n".join(cleaned))
+        )
         retval = len(cleaned)
     sys.exit(retval)

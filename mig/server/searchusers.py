@@ -27,18 +27,18 @@
 
 """Find all users with given data base field(s)"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-from past.builtins import basestring
 import getopt
 import sys
 import time
 
-from mig.shared.useradm import init_user_adm, search_users, default_search
+from past.builtins import basestring
+
+from mig.shared.useradm import default_search, init_user_adm, search_users
 
 
-def usage(name='searchusers.py'):
+def usage(name="searchusers.py"):
     """Usage help"""
 
     print("""Search in MiG user database.
@@ -62,73 +62,74 @@ Where SEARCH_OPTIONS may be one or more of:
    -v                  Verbose output
 
 Each search value can be a string or a pattern with * and ? as wildcards.
-""" % {'name': name})
+""" % {"name": name})
 
 
-if '__main__' == __name__:
-    (args, app_dir, db_path) = init_user_adm()
+if "__main__" == __name__:
+    args, app_dir, db_path = init_user_adm()
     conf_path = None
     verbose = False
     user_dict = {}
-    opt_args = 'a:b:c:C:d:E:f:F:hI:nO:r:S:v'
+    opt_args = "a:b:c:C:d:E:f:F:hI:nO:r:S:v"
     search_filter = default_search()
     expire_before, expire_after = None, None
     only_fields = []
     try:
-        (opts, args) = getopt.getopt(args, opt_args)
+        opts, args = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    for (opt, val) in opts:
-        if opt == '-a':
-            search_filter['expire_after'] = int(val)
-        elif opt == '-b':
-            search_filter['expire_before'] = int(val)
-        elif opt == '-c':
+    for opt, val in opts:
+        if opt == "-a":
+            search_filter["expire_after"] = int(val)
+        elif opt == "-b":
+            search_filter["expire_before"] = int(val)
+        elif opt == "-c":
             conf_path = val
-        elif opt == '-d':
+        elif opt == "-d":
             db_path = val
-        elif opt == '-f':
+        elif opt == "-f":
             only_fields.append(val)
-        elif opt == '-h':
+        elif opt == "-h":
             usage()
             sys.exit(0)
-        elif opt == '-I':
-            search_filter['distinguished_name'] = val
-        elif opt == '-n':
-            only_fields.append('full_name')
-        elif opt == '-C':
-            search_filter['country'] = val
-        elif opt == '-E':
-            search_filter['email'] = val
-        elif opt == '-F':
-            search_filter['full_name'] = val
-        elif opt == '-O':
-            search_filter['organization'] = val
-        elif opt == '-r':
-            search_filter['role'] = val
-        elif opt == '-S':
-            search_filter['state'] = val
-        elif opt == '-v':
+        elif opt == "-I":
+            search_filter["distinguished_name"] = val
+        elif opt == "-n":
+            only_fields.append("full_name")
+        elif opt == "-C":
+            search_filter["country"] = val
+        elif opt == "-E":
+            search_filter["email"] = val
+        elif opt == "-F":
+            search_filter["full_name"] = val
+        elif opt == "-O":
+            search_filter["organization"] = val
+        elif opt == "-r":
+            search_filter["role"] = val
+        elif opt == "-S":
+            search_filter["state"] = val
+        elif opt == "-v":
             verbose = True
         else:
-            print('Error: %s not supported!' % opt)
+            print("Error: %s not supported!" % opt)
             usage()
             sys.exit(0)
 
     regex_patterns = []
-    for (key, val) in search_filter.items():
-        if isinstance(val, basestring) and val.find('|') != -1:
+    for key, val in search_filter.items():
+        if isinstance(val, basestring) and val.find("|") != -1:
             regex_patterns.append(key)
 
-    (configuration, hits) = search_users(search_filter, conf_path, db_path,
-                                         verbose, regex_match=regex_patterns)
+    configuration, hits = search_users(
+        search_filter, conf_path, db_path, verbose, regex_match=regex_patterns
+    )
     print("Matching users:")
-    for (uid, user_dict) in hits:
+    for uid, user_dict in hits:
         if only_fields:
-            field_list = ["%s" % user_dict.get(i, '') for i in only_fields]
-            print('%s' % ' : '.join(field_list))
+            field_list = ["%s" % user_dict.get(i, "") for i in only_fields]
+            print("%s" % " : ".join(field_list))
         else:
-            print('%s : %s' % (uid, user_dict))
+            print("%s : %s" % (uid, user_dict))

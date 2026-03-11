@@ -433,8 +433,7 @@ def run_cron_command(
         _restore_env(saved_environ, os.environ)
         raise exc
     logger.info(
-        "(%s) done running command for %s: %s" % (
-            pid, target_path, command_str)
+        "(%s) done running command for %s: %s" % (pid, target_path, command_str)
     )
 
     # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
@@ -532,8 +531,7 @@ def run_events_command(
         _restore_env(saved_environ, os.environ)
         raise exc
     logger.info(
-        "(%s) done running command for %s: %s" % (
-            pid, target_path, command_str)
+        "(%s) done running command for %s: %s" % (pid, target_path, command_str)
     )
 
     # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
@@ -624,5 +622,6 @@ def legacy_main(conf, print=print, _exit=sys.exit):
 
 if __name__ == "__main__":
     from mig.shared.conf import get_configuration_object
+
     conf = get_configuration_object(skip_log=True, disable_auth_log=True)
     legacy_main(conf)

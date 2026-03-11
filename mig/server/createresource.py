@@ -29,6 +29,7 @@
 # Modifications by Martin Rehr
 
 """Add MiG resource from pending request file"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -38,31 +39,31 @@ from mig.shared.conf import get_configuration_object
 from mig.shared.resource import create_resource
 
 
-def usage(name='createresource.py'):
+def usage(name="createresource.py"):
     """Usage help"""
     return """Usage:
 %(name)s RESOURCE_FQDN OWNER_ID RESOURCE_CONFIG
 
-The script adds .COUNTER to the resources unique id"""\
-         % {'name': name}
+The script adds .COUNTER to the resources unique id""" % {"name": name}
 
 
 # ## Main ###
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     if not sys.argv[3:]:
         print(usage())
         sys.exit(1)
-        
+
     resource_name = sys.argv[1].strip().lower()
     client_id = sys.argv[2].strip()
     pending_file = sys.argv[3].strip()
-    
+
     configuration = get_configuration_object()
 
-    (create_status, msg) = create_resource(configuration, client_id,
-                                           resource_name, pending_file)
+    create_status, msg = create_resource(
+        configuration, client_id, resource_name, pending_file
+    )
     if create_status:
-        print('Resource created with ID: %s.%s' % (resource_name, msg))
+        print("Resource created with ID: %s.%s" % (resource_name, msg))
     else:
-        print('Resource creation failed: %s' % msg)
+        print("Resource creation failed: %s" % msg)

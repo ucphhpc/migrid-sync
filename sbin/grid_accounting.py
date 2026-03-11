@@ -37,20 +37,25 @@ import time
 import traceback
 
 from mig.lib.accounting import update_accounting
-from mig.lib.daemon import check_run, check_stop, interruptible_sleep, \
-    register_run_handler, register_stop_handler, reset_run, stop_running
+from mig.lib.daemon import (
+    check_run,
+    check_stop,
+    interruptible_sleep,
+    register_run_handler,
+    register_stop_handler,
+    reset_run,
+    stop_running,
+)
 from mig.shared.conf import get_configuration_object
 from mig.shared.logger import daemon_logger, register_hangup_handler
 
 if __name__ == "__main__":
-    print(
-        """This is the MiG accounting daemon that collect storage accounting
+    print("""This is the MiG accounting daemon that collect storage accounting
         information for users and their associated vgrids, archives and peers.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-"""
-    )
+""")
     # Force no log init since we use separate logger
     configuration = get_configuration_object(skip_log=True)
 
@@ -60,9 +65,9 @@ unless it is available in mig/server/MiGserver.conf
 
     # Use separate logger
 
-    logger = daemon_logger("accounting",
-                           configuration.user_accounting_log,
-                           log_level)
+    logger = daemon_logger(
+        "accounting", configuration.user_accounting_log, log_level
+    )
     configuration.logger = logger
 
     # Check if accounting is enabled
@@ -70,9 +75,7 @@ unless it is available in mig/server/MiGserver.conf
     if not configuration.site_enable_accounting:
         msg = "Accounting support is disabled in configuration!"
         logger.error(msg)
-        print("%s ERROR: %s"
-              % (datetime.datetime.now(), msg),
-              file=sys.stderr)
+        print("%s ERROR: %s" % (datetime.datetime.now(), msg), file=sys.stderr)
         sys.exit(1)
 
     # Allow e.g. logrotate to force log re-open after rotates
@@ -86,8 +89,10 @@ unless it is available in mig/server/MiGserver.conf
 
     throttle_secs = float(configuration.accounting_update_interval)
     main_pid = os.getpid()
-    msg = "(%s) Starting accounting daemon with throttle: %d secs" \
-        % (main_pid, throttle_secs)
+    msg = "(%s) Starting accounting daemon with throttle: %d secs" % (
+        main_pid,
+        throttle_secs,
+    )
     logger.info(msg)
     print("%s %s" % (datetime.datetime.now(), msg))
 
@@ -95,16 +100,20 @@ unless it is available in mig/server/MiGserver.conf
     while not check_stop():
         try:
             if throttle:
-                interruptible_sleep(configuration, throttle_secs,
-                                    (check_run, check_stop))
+                interruptible_sleep(
+                    configuration, throttle_secs, (check_run, check_stop)
+                )
                 reset_run()
             if check_stop():
                 break
             t1 = time.time()
             status = update_accounting(configuration, verbose=True)
             t2 = time.time()
-            msg = "(%s) Updated accounting in %d secs with status: %s" \
-                % (os.getpid(), int(t2-t1), status)
+            msg = "(%s) Updated accounting in %d secs with status: %s" % (
+                os.getpid(),
+                int(t2 - t1),
+                status,
+            )
             logger.info(msg)
             print("%s %s" % (datetime.datetime.now(), msg))
             throttle = True
@@ -112,18 +121,19 @@ unless it is available in mig/server/MiGserver.conf
             stop_running()
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to monitor child
-            msg = "(%s) Interrupt requested - shutdown" \
-                % os.getpid()
+            msg = "(%s) Interrupt requested - shutdown" % os.getpid()
             logger.info(msg)
             print("%s %s" % (datetime.datetime.now(), msg))
         except Exception as exc:
             throttle = True
-            msg = "(%s) Caught unexpected exception:\n%s" \
-                  % (os.getpid(), traceback.format_exc())
+            msg = "(%s) Caught unexpected exception:\n%s" % (
+                os.getpid(),
+                traceback.format_exc(),
+            )
             logger.error(msg)
-            print("%s ERROR: %s"
-                  % (datetime.datetime.now(), msg),
-                  file=sys.stderr)
+            print(
+                "%s ERROR: %s" % (datetime.datetime.now(), msg), file=sys.stderr
+            )
 
     msg = "(%s) Accounting daemon shutting down" % main_pid
     logger.info(msg)

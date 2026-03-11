@@ -39,7 +39,7 @@ from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import gdp_distinguished_field
 
 
-def usage(name='showaccounting.py'):
+def usage(name="showaccounting.py"):
     """Usage help"""
 
     print("""Create accounting information based on quota.
@@ -53,33 +53,31 @@ Where ACCOUNTING_OPTIONS may be one or more of:
    -m Minimum usage    Only show accounts using more than
                        minimum usage (TB).
    -t TIMESTAMP        Use specific timestamp, latest if unset
-""" % {'name': name})
+""" % {"name": name})
 
 
-def show_accounting(configuration,
-                    timestamp,
-                    user_filter,
-                    minimum_usage,
-                    verbose):
+def show_accounting(
+    configuration, timestamp, user_filter, minimum_usage, verbose
+):
     """Print user accounting report"""
     user_filter_re = None
     if user_filter:
         try:
             user_filter_re = re.compile(user_filter)
         except Exception as err:
-            print("ERROR: Failed to compile user_filter: %r error: %s"
-                  % (user_filter, err))
+            print(
+                "ERROR: Failed to compile user_filter: %r error: %s"
+                % (user_filter, err)
+            )
             return
 
-    usage = get_usage(configuration,
-                      timestamp=timestamp,
-                      verbose=verbose)
+    usage = get_usage(configuration, timestamp=timestamp, verbose=verbose)
 
-    accounting = usage.get('accounting', {})
-    accounting_timestamp = usage.get('timestamp', 0)
-    accounting_datestr \
-        = datetime.datetime.fromtimestamp(accounting_timestamp) \
-        .strftime('%d/%m/%Y-%H:%M:%S')
+    accounting = usage.get("accounting", {})
+    accounting_timestamp = usage.get("timestamp", 0)
+    accounting_datestr = datetime.datetime.fromtimestamp(
+        accounting_timestamp
+    ).strftime("%d/%m/%Y-%H:%M:%S")
 
     # Sorted by total bytes and print usage for users
 
@@ -91,14 +89,19 @@ def show_accounting(configuration,
     for username, values in accounting.items():
         # Do not show GDP project users
         # projects are accounted for by the main user
-        if configuration.site_enable_gdp \
-                and username.find("/%s=" % gdp_distinguished_field) != -1:
+        if (
+            configuration.site_enable_gdp
+            and username.find("/%s=" % gdp_distinguished_field) != -1
+        ):
             continue
         report_total_users += 1
-        total_bytes = values.get('total_bytes', 0)
+        total_bytes = values.get("total_bytes", 0)
         report_total_bytes += total_bytes
-        if total_bytes < minimum_usage \
-                or user_filter_re and not user_filter_re.fullmatch(username):
+        if (
+            total_bytes < minimum_usage
+            or user_filter_re
+            and not user_filter_re.fullmatch(username)
+        ):
             continue
         report_shown_users += 1
         report_shown_bytes += total_bytes
@@ -107,33 +110,36 @@ def show_accounting(configuration,
         total_bytes_map[total_bytes] = total_bytes_map_userlist
     sorted_total_bytes = sorted(list(total_bytes_map), reverse=True)
 
-    print("\nAccounting (%d) %s for storage quota(s):"
-          % (accounting_timestamp, accounting_datestr))
-    for quota_fs, values in usage.get('quota', {}).items():
-        quota_mtime = values.get('mtime', 0)
-        quota_datestr = datetime.datetime.fromtimestamp(quota_mtime) \
-            .strftime('%d/%m/%Y-%H:%M:%S')
-        print(" - %s (%d) %s" % (quota_fs,
-                                 quota_mtime,
-                                 quota_datestr))
+    print(
+        "\nAccounting (%d) %s for storage quota(s):"
+        % (accounting_timestamp, accounting_datestr)
+    )
+    for quota_fs, values in usage.get("quota", {}).items():
+        quota_mtime = values.get("mtime", 0)
+        quota_datestr = datetime.datetime.fromtimestamp(quota_mtime).strftime(
+            "%d/%m/%Y-%H:%M:%S"
+        )
+        print(" - %s (%d) %s" % (quota_fs, quota_mtime, quota_datestr))
 
-    print("Found a total of %s users using %s storage"
-          % (report_total_users,
-             human_readable_filesize(report_total_bytes)))
-    print("Showing details for %s users using %s storage "
-          % (report_shown_users,
-             human_readable_filesize(report_shown_bytes)))
+    print(
+        "Found a total of %s users using %s storage"
+        % (report_total_users, human_readable_filesize(report_total_bytes))
+    )
+    print(
+        "Showing details for %s users using %s storage "
+        % (report_shown_users, human_readable_filesize(report_shown_bytes))
+    )
     print("User filter: %r" % user_filter)
     print("Minimum usage: %s" % human_readable_filesize(minimum_usage))
     for total_bytes in sorted_total_bytes:
         total_bytes_human = human_readable_filesize(total_bytes)
         for username in total_bytes_map[total_bytes]:
             report = accounting[username]
-            home_report = report.get('home_report', '')
-            freeze_report = report.get('freeze_report', '')
-            vgrid_report = report.get('vgrid_report', '')
-            ext_users_report = report.get('ext_users_report', '')
-            peers_report = report.get('peers_report', '')
+            home_report = report.get("home_report", "")
+            freeze_report = report.get("freeze_report", "")
+            vgrid_report = report.get("vgrid_report", "")
+            ext_users_report = report.get("ext_users_report", "")
+            peers_report = report.get("peers_report", "")
             print("\n%s:" % username)
             print("Total usage: %s" % total_bytes_human)
             if home_report:
@@ -148,46 +154,44 @@ def show_accounting(configuration,
                 print(peers_report)
 
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     conf_path = None
     user_filter = None
     timestamp = 0
     minimum_usage = 0
     verbose = False
-    opt_args = 'hvc:f:m:t:'
+    opt_args = "hvc:f:m:t:"
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
-        for (opt, val) in opts:
-            if opt == '-h':
+        opts, args = getopt.getopt(sys.argv[1:], opt_args)
+        for opt, val in opts:
+            if opt == "-h":
                 usage()
                 sys.exit(0)
-            if opt == '-v':
+            if opt == "-v":
                 verbose = True
-            elif opt == '-c':
+            elif opt == "-c":
                 conf_path = val
-            elif opt == '-f':
+            elif opt == "-f":
                 user_filter = val
-            elif opt == '-m':
-                minimum_usage = float(val)*(1024**4)
-            elif opt == '-t':
+            elif opt == "-m":
+                minimum_usage = float(val) * (1024**4)
+            elif opt == "-t":
                 timestamp = int(val)
             else:
-                print('Error: %s not supported!' % opt)
+                print("Error: %s not supported!" % opt)
                 usage()
                 sys.exit(1)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    configuration = get_configuration_object(config_file=conf_path,
-                                             skip_log=True,
-                                             disable_auth_log=True)
+    configuration = get_configuration_object(
+        config_file=conf_path, skip_log=True, disable_auth_log=True
+    )
 
-    show_accounting(configuration,
-                    timestamp,
-                    user_filter,
-                    minimum_usage,
-                    verbose)
+    show_accounting(
+        configuration, timestamp, user_filter, minimum_usage, verbose
+    )
 
     sys.exit(0)

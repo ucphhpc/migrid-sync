@@ -27,8 +27,7 @@
 
 """Show basic stats about site users and storage use"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import getopt
 import os
@@ -39,14 +38,14 @@ from mig.shared.base import extract_field
 from mig.shared.defaults import freeze_meta_filename, keyword_auto
 from mig.shared.fileio import unpickle, walk
 from mig.shared.notification import send_email
-from mig.shared.safeeval import subprocess_popen, subprocess_pipe
+from mig.shared.safeeval import subprocess_pipe, subprocess_popen
 from mig.shared.serial import dump
-from mig.shared.useradm import init_user_adm, search_users, default_search
+from mig.shared.useradm import default_search, init_user_adm, search_users
 
-valid_output_formats = ['csv', 'txt', 'pickle', 'json', 'yaml']
+valid_output_formats = ["csv", "txt", "pickle", "json", "yaml"]
 
 
-def usage(name='usagestats.py'):
+def usage(name="usagestats.py"):
     """Usage help"""
 
     print("""Collect site stats based on MiG user database and file system.
@@ -64,46 +63,57 @@ Where OPTIONS may be one or more of:
    -t FS_TYPE          Limit disk stats to mounts of given FS_TYPE
    -v                  Verbose output
    -q                  Quiet mode e.g. for cron use
-""" % {'name': name})
+""" % {"name": name})
 
 
 def compact_stats(configuration, stats, sep):
     """Helper to flatten stats for use in txt and csv output"""
     fill = {}
-    fill['sep'] = sep
-    fill['disk_use'] = '\n'.join([sep.join(i) for i in stats['disk']['use']])
-    fill['disk_mounts'] = '\n'.join([sep.join(i)
-                                     for i in stats['disk']['mounts']])
-    fill['totals_all_users'] = stats['totals']['all_users']
-    fill['totals_active_users'] = stats['totals']['active_users']
-    fill['totals_vgrids'] = stats['totals']['vgrids']
-    fill['totals_archives'] = stats['totals']['archives']
-    fill['weekly_register_users'] = stats['weekly']['register_users']
-    fill['weekly_expire_users'] = stats['weekly']['expire_users']
-    fill['weekly_vgrids'] = stats['weekly']['vgrids']
-    fill['weekly_archives'] = stats['weekly']['archives']
+    fill["sep"] = sep
+    fill["disk_use"] = "\n".join([sep.join(i) for i in stats["disk"]["use"]])
+    fill["disk_mounts"] = "\n".join(
+        [sep.join(i) for i in stats["disk"]["mounts"]]
+    )
+    fill["totals_all_users"] = stats["totals"]["all_users"]
+    fill["totals_active_users"] = stats["totals"]["active_users"]
+    fill["totals_vgrids"] = stats["totals"]["vgrids"]
+    fill["totals_archives"] = stats["totals"]["archives"]
+    fill["weekly_register_users"] = stats["weekly"]["register_users"]
+    fill["weekly_expire_users"] = stats["weekly"]["expire_users"]
+    fill["weekly_vgrids"] = stats["weekly"]["vgrids"]
+    fill["weekly_archives"] = stats["weekly"]["archives"]
 
-    fill['users_by_org'] = ''
-    org_list = list(stats['org_counts']['all_users'])
+    fill["users_by_org"] = ""
+    org_list = list(stats["org_counts"]["all_users"])
     org_list.sort()
     for org in org_list:
-        total_cnt = stats['org_counts']['all_users'][org]
-        active_cnt = stats['org_counts']['active_users'].get(org, 0)
-        fill['users_by_org'] += '%d%s%d%s%s\n' % (
-            total_cnt, sep, active_cnt, sep, org)
+        total_cnt = stats["org_counts"]["all_users"][org]
+        active_cnt = stats["org_counts"]["active_users"].get(org, 0)
+        fill["users_by_org"] += "%d%s%d%s%s\n" % (
+            total_cnt,
+            sep,
+            active_cnt,
+            sep,
+            org,
+        )
 
-    fill['users_by_domain'] = ''
-    domain_list = list(stats['domain_counts']['all_users'])
+    fill["users_by_domain"] = ""
+    domain_list = list(stats["domain_counts"]["all_users"])
     domain_list.sort()
     for domain in domain_list:
-        total_cnt = stats['domain_counts']['all_users'][domain]
-        active_cnt = stats['domain_counts']['active_users'].get(domain, 0)
-        fill['users_by_domain'] += '%d%s%d%s%s\n' % (
-            total_cnt, sep, active_cnt, sep, domain)
+        total_cnt = stats["domain_counts"]["all_users"][domain]
+        active_cnt = stats["domain_counts"]["active_users"].get(domain, 0)
+        fill["users_by_domain"] += "%d%s%d%s%s\n" % (
+            total_cnt,
+            sep,
+            active_cnt,
+            sep,
+            domain,
+        )
     return fill
 
 
-def format_txt(configuration, stats, sep='\t'):
+def format_txt(configuration, stats, sep="\t"):
     """Format stats for plain text output"""
     fill = compact_stats(configuration, stats, sep)
     txt = """=== Disk Use ===
@@ -154,7 +164,7 @@ Where
     return txt % fill
 
 
-def format_csv(configuration, stats, sep=';'):
+def format_csv(configuration, stats, sep=";"):
     """Format stats for plain text output"""
     fill = compact_stats(configuration, stats, sep)
     # TODO: improve csv format
@@ -194,23 +204,23 @@ def write_sitestats(configuration, stats, path_prefix, output_format):
 
     for ext in output_format:
         dst_path = "%s.%s" % (path_prefix, ext)
-        if ext == 'csv':
+        if ext == "csv":
             out = format_csv(configuration, stats)
             with open(dst_path, "w") as fh:
                 fh.write(out)
-        elif ext == 'txt':
+        elif ext == "txt":
             out = format_txt(configuration, stats)
             with open(dst_path, "w") as fh:
                 fh.write(out)
-        elif ext in ['json', 'yaml', 'pickle']:
+        elif ext in ["json", "yaml", "pickle"]:
             dump(stats, dst_path, serializer=ext)
         else:
             return False
     return True
 
 
-if '__main__' == __name__:
-    (args, app_dir, db_path) = init_user_adm()
+if "__main__" == __name__:
+    args, app_dir, db_path = init_user_adm()
     conf_path = None
     only_fs_types = []
     expire = None
@@ -221,77 +231,88 @@ if '__main__' == __name__:
     output_formats = []
     search_filter = default_search()
     expire_before, expire_after = None, None
-    opt_args = 'a:b:c:d:fho:qs:t:u:v'
+    opt_args = "a:b:c:d:fho:qs:t:u:v"
     try:
-        (opts, args) = getopt.getopt(args, opt_args)
+        opts, args = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    for (opt, val) in opts:
-        if opt == '-a':
-            search_filter['expire_after'] = int(val)
-        elif opt == '-b':
-            search_filter['expire_before'] = int(val)
-        elif opt == '-c':
+    for opt, val in opts:
+        if opt == "-a":
+            search_filter["expire_after"] = int(val)
+        elif opt == "-b":
+            search_filter["expire_before"] = int(val)
+        elif opt == "-c":
             conf_path = val
-        elif opt == '-d':
+        elif opt == "-d":
             db_path = val
-        elif opt == '-f':
+        elif opt == "-f":
             force = True
-        elif opt == '-h':
+        elif opt == "-h":
             usage()
             sys.exit(0)
-        elif opt == '-o':
+        elif opt == "-o":
             for ext in val.split():
                 if ext in valid_output_formats:
                     output_formats.append(ext)
                 else:
                     print("Error: unsupported output format: %s" % ext)
-        elif opt == '-q':
+        elif opt == "-q":
             quiet = True
             verbose = False
-        elif opt == '-s':
+        elif opt == "-s":
             sitestats_home = val
-        elif opt == '-t':
+        elif opt == "-t":
             only_fs_types += val.split()
-        elif opt == '-v':
+        elif opt == "-v":
             verbose = True
             quiet = False
         else:
-            print('Error: %s not supported!' % opt)
+            print("Error: %s not supported!" % opt)
             sys.exit(1)
 
     if conf_path and not os.path.isfile(conf_path):
-        print('Failed to read configuration file: %s' % conf_path)
+        print("Failed to read configuration file: %s" % conf_path)
         sys.exit(1)
 
-    (configuration, all_hits) = search_users(
-        default_search(), conf_path, db_path)
+    configuration, all_hits = search_users(default_search(), conf_path, db_path)
     logger = configuration.logger
     cmd_env = os.environ
     now = time.time()
-    site_stats = {'created': now, 'disk': {'use': [], 'mounts': []},
-                  'totals': {'all_users': 0, 'active_users': 0, 'vgrids': 0,
-                             'archives': 0},
-                  'weekly': {'all_users': 0, 'active_users': 0, 'vgrids': 0,
-                             'archives': 0},
-                  'org_counts': {'all_users': {}, 'active_users': {}},
-                  'domain_counts': {'all_users': {}, 'active_users': {}}
-                  }
+    site_stats = {
+        "created": now,
+        "disk": {"use": [], "mounts": []},
+        "totals": {
+            "all_users": 0,
+            "active_users": 0,
+            "vgrids": 0,
+            "archives": 0,
+        },
+        "weekly": {
+            "all_users": 0,
+            "active_users": 0,
+            "vgrids": 0,
+            "archives": 0,
+        },
+        "org_counts": {"all_users": {}, "active_users": {}},
+        "domain_counts": {"all_users": {}, "active_users": {}},
+    }
 
     if sitestats_home == keyword_auto:
         sitestats_home = configuration.sitestats_home
 
     sitestats_path = None
     if sitestats_home:
-        sitestats_path = os.path.join(sitestats_home, 'usagestats-%d' % now)
+        sitestats_path = os.path.join(sitestats_home, "usagestats-%d" % now)
         if not output_formats:
-            output_formats = ['json']
+            output_formats = ["json"]
         if not quiet:
-            print("Writing collected site stats in %s.{%s}" %
-                  (sitestats_path, ','.join(output_formats)))
+            print(
+                "Writing collected site stats in %s.{%s}"
+                % (sitestats_path, ",".join(output_formats))
+            )
 
     if not verbose and sitestats_path is None:
         print("Neither verbose nor writing site stats - boring!")
@@ -299,29 +320,31 @@ if '__main__' == __name__:
     df_opts = []
     # NOTE: df expects multiple file system types as individual options
     for fs_type in only_fs_types:
-        df_opts += ['-t', fs_type]
+        df_opts += ["-t", fs_type]
     # NOTE: we want utf8-encoded output as text str for concat below
-    proc = subprocess_popen(['/bin/df'] + df_opts, stdout=subprocess_pipe,
-                            text=True, env=cmd_env)
+    proc = subprocess_popen(
+        ["/bin/df"] + df_opts, stdout=subprocess_pipe, text=True, env=cmd_env
+    )
     proc.wait()
     for line in proc.stdout.readlines():
-        site_stats['disk']['use'].append(line.strip().split())
+        site_stats["disk"]["use"].append(line.strip().split())
     if verbose:
         print("=== Disk Use ===")
-        print('\n'.join(['\t'.join(i) for i in site_stats['disk']['use']]))
+        print("\n".join(["\t".join(i) for i in site_stats["disk"]["use"]]))
 
     # NOTE: mount expects multiple file system types as single comma-sep arg
     mount_opts = []
-    mount_opts += ['-t', ','.join(only_fs_types)]
+    mount_opts += ["-t", ",".join(only_fs_types)]
     # NOTE: we want utf8-encoded output as text str for concat below
-    proc = subprocess_popen(['mount'] + mount_opts, stdout=subprocess_pipe,
-                            text=True)
+    proc = subprocess_popen(
+        ["mount"] + mount_opts, stdout=subprocess_pipe, text=True
+    )
     proc.wait()
     for line in proc.stdout.readlines():
-        site_stats['disk']['mounts'].append(line.strip().split())
+        site_stats["disk"]["mounts"].append(line.strip().split())
     if verbose:
         print("=== Disk Mounts ===")
-        print('\n'.join(['\t'.join(i) for i in site_stats['disk']['mounts']]))
+        print("\n".join(["\t".join(i) for i in site_stats["disk"]["mounts"]]))
         print("""Where
  * vgrid_files_home is all vgrid shared folders
  * vgrid_private_base/vgrid_public_base are all vgrid web portals
@@ -332,14 +355,14 @@ if '__main__' == __name__:
     all_uids = [uid for (uid, user_dict) in all_hits]
     # all_uids.sort()
     # print("DEBUG: %s" % all_uids)
-    site_stats['totals']['all_users'] = len(all_uids)
+    site_stats["totals"]["all_users"] = len(all_uids)
     if verbose:
         print("== Totals ==")
         print("=== Registered Local Users ===")
-        print(site_stats['totals']['all_users'])
+        print(site_stats["totals"]["all_users"])
 
-    search_filter['expire_after'] = now
-    (_, active_hits) = search_users(search_filter, conf_path, db_path)
+    search_filter["expire_after"] = now
+    _, active_hits = search_users(search_filter, conf_path, db_path)
     # only_fields = ['distinguished_name']
     # for (uid, user_dict) in active_hits:
     #    if only_fields:
@@ -348,32 +371,32 @@ if '__main__' == __name__:
     #    print(uid)
     active_uids = [uid for (uid, user_dict) in active_hits]
     # active_uids.sort()
-    site_stats['totals']['active_users'] = len(active_uids)
+    site_stats["totals"]["active_users"] = len(active_uids)
     # print("DEBUG: %s" % active_uids)
     if verbose:
         print("=== Active Local Users ===")
-        print(site_stats['totals']['active_users'])
+        print(site_stats["totals"]["active_users"])
 
     # Extract dirs recursively in root of vgrid_home
-    for (root, dirs, files) in walk(configuration.vgrid_home):
+    for root, dirs, files in walk(configuration.vgrid_home):
         # Filter dot dirs
-        for i in [j for j in dirs if j.startswith('.')]:
+        for i in [j for j in dirs if j.startswith(".")]:
             dirs.remove(i)
         if not dirs:
             continue
         # print("DEBUG: %s %s" % (root, dirs))
-        site_stats['totals']['vgrids'] += len(dirs)
+        site_stats["totals"]["vgrids"] += len(dirs)
     if verbose:
         print("=== Registered VGrids ===")
-        print(site_stats['totals']['vgrids'])
+        print(site_stats["totals"]["vgrids"])
 
     # Archives are in root and in user ID subdirs
     archive_count = 0
-    for (root, dirs, files) in walk(configuration.freeze_home):
+    for root, dirs, files in walk(configuration.freeze_home):
         # Filter dot dirs
-        for i in [j for j in dirs if j.startswith('.')]:
+        for i in [j for j in dirs if j.startswith(".")]:
             dirs.remove(i)
-        sub_dir = root.replace(configuration.freeze_home, '').strip(os.sep)
+        sub_dir = root.replace(configuration.freeze_home, "").strip(os.sep)
         sub_parts = sub_dir.split(os.sep)
         if len(sub_parts) > 2:
             # Stop recursion
@@ -381,17 +404,19 @@ if '__main__' == __name__:
             for i in dirs:
                 dirs.remove(i)
             continue
-        if sub_parts[-1].find('archive-') != -1 and \
-                freeze_meta_filename in files:
+        if (
+            sub_parts[-1].find("archive-") != -1
+            and freeze_meta_filename in files
+        ):
             # print("DEBUG: %s" % root)
-            site_stats['totals']['archives'] += 1
+            site_stats["totals"]["archives"] += 1
             # Stop recursion
             for i in dirs:
                 dirs.remove(i)
 
     if verbose:
         print("=== Frozen Archives ===")
-        print(site_stats['totals']['archives'])
+        print(site_stats["totals"]["archives"])
 
     # TODO: this is inaccurate as it does not apply for e.g. short term peers.
     #       We can eventually switch to the new created and renewed user fields.
@@ -399,34 +424,34 @@ if '__main__' == __name__:
     # We simply lookup all users with expire more than 358 days from now.
     nearly_a_year = now + (365 - 7) * 24 * 3600
     search_filter = default_search()
-    search_filter['expire_after'] = nearly_a_year
-    (_, reg_hits) = search_users(search_filter, conf_path, db_path)
+    search_filter["expire_after"] = nearly_a_year
+    _, reg_hits = search_users(search_filter, conf_path, db_path)
     reg_uids = [uid for (uid, user_dict) in reg_hits]
     # reg_uids.sort()
-    site_stats['weekly']['register_users'] = len(reg_uids)
+    site_stats["weekly"]["register_users"] = len(reg_uids)
 
     if verbose:
         print("== This Week ==")
         print("=== Registered and Renewed Local Users ===")
-        print(site_stats['weekly']['register_users'])
+        print(site_stats["weekly"]["register_users"])
 
     a_week_ago = now - 7 * 24 * 3600
     search_filter = default_search()
-    search_filter['expire_after'] = a_week_ago
-    search_filter['expire_before'] = now
-    (_, exp_hits) = search_users(search_filter, conf_path, db_path)
+    search_filter["expire_after"] = a_week_ago
+    search_filter["expire_before"] = now
+    _, exp_hits = search_users(search_filter, conf_path, db_path)
     exp_uids = [uid for (uid, user_dict) in exp_hits]
     # exp_uids.sort()
-    site_stats['weekly']['expire_users'] = len(exp_uids)
+    site_stats["weekly"]["expire_users"] = len(exp_uids)
     if verbose:
         print("=== Recently expired Local Users ===")
-        print(site_stats['weekly']['expire_users'])
+        print(site_stats["weekly"]["expire_users"])
 
     # NOTE: no maxdepth since nested vgrids are allowed, mindepth is known for target, however
     # NOTE: vgrid_home/X ctime also gets updated on any file changes in that dir
-    for (root, dirs, files) in walk(configuration.vgrid_home):
+    for root, dirs, files in walk(configuration.vgrid_home):
         # Filter dot dirs
-        for i in [j for j in dirs if j.startswith('.')]:
+        for i in [j for j in dirs if j.startswith(".")]:
             dirs.remove(i)
         if root == configuration.vgrid_home:
             continue
@@ -434,92 +459,96 @@ if '__main__' == __name__:
         if root_mtime < a_week_ago:
             continue
         # print("DEBUG: %s" % root)
-        site_stats['weekly']['vgrids'] += 1
+        site_stats["weekly"]["vgrids"] += 1
 
     if verbose:
         print("=== Registered and Updated VGrids ===")
-        print(site_stats['weekly']['vgrids'])
+        print(site_stats["weekly"]["vgrids"])
 
     # NOTE: meta.pck file never changes for archives
     # TODO: update to fit only new client_id location when migrated
-    for (root, dirs, files) in walk(configuration.freeze_home):
+    for root, dirs, files in walk(configuration.freeze_home):
         # Filter dot dirs
-        for i in [j for j in dirs if j.startswith('.')]:
+        for i in [j for j in dirs if j.startswith(".")]:
             dirs.remove(i)
-        sub_dir = root.replace(configuration.freeze_home, '').strip(os.sep)
+        sub_dir = root.replace(configuration.freeze_home, "").strip(os.sep)
         sub_parts = sub_dir.split(os.sep)
         if len(sub_parts) > 3:
             # Stop recursion
             for i in dirs:
                 dirs.remove(i)
             continue
-        if sub_parts[-1].find('archive-') == -1 or \
-                not freeze_meta_filename in files:
+        if (
+            sub_parts[-1].find("archive-") == -1
+            or not freeze_meta_filename in files
+        ):
             continue
         meta_path = os.path.join(root, freeze_meta_filename)
         meta_mtime = os.path.getmtime(meta_path)
         if meta_mtime > a_week_ago and meta_mtime < now:
-            site_stats['weekly']['archives'] += 1
+            site_stats["weekly"]["archives"] += 1
             # print("DEBUG: %s" % root)
 
     if verbose:
         print("=== Frozen Archives ===")
-        print(site_stats['weekly']['archives'])
+        print(site_stats["weekly"]["archives"])
 
     # Organization and email domain stats
     # All users
     org_map = {}
     domain_map = {}
-    for (uid, user_dict) in all_hits:
-        org = user_dict.get('organization', 'UNKNOWN')
+    for uid, user_dict in all_hits:
+        org = user_dict.get("organization", "UNKNOWN")
         if org not in org_map:
             org_map[org] = 0
         org_map[org] += 1
-        email = user_dict.get('email', 'UNKNOWN')
-        domain = email.split('@', 1)[1].strip()
+        email = user_dict.get("email", "UNKNOWN")
+        domain = email.split("@", 1)[1].strip()
         if domain not in domain_map:
             domain_map[domain] = 0
         domain_map[domain] += 1
-    site_stats['org_counts']['all_users'].update(org_map)
-    site_stats['domain_counts']['all_users'].update(domain_map)
+    site_stats["org_counts"]["all_users"].update(org_map)
+    site_stats["domain_counts"]["all_users"].update(domain_map)
 
     # Active users
     org_map = {}
     domain_map = {}
-    for (uid, user_dict) in active_hits:
-        org = user_dict.get('organization', 'UNKNOWN')
+    for uid, user_dict in active_hits:
+        org = user_dict.get("organization", "UNKNOWN")
         if org not in org_map:
             org_map[org] = 0
         org_map[org] += 1
-        email = user_dict.get('email', 'UNKNOWN')
-        domain = email.split('@', 1)[1].strip()
+        email = user_dict.get("email", "UNKNOWN")
+        domain = email.split("@", 1)[1].strip()
         if domain not in domain_map:
             domain_map[domain] = 0
         domain_map[domain] += 1
-    site_stats['org_counts']['active_users'].update(org_map)
-    site_stats['domain_counts']['active_users'].update(domain_map)
+    site_stats["org_counts"]["active_users"].update(org_map)
+    site_stats["domain_counts"]["active_users"].update(domain_map)
 
     if verbose:
         print("== User Distribution ==")
         print("=== By Organization ===")
-        org_list = list(site_stats['org_counts']['all_users'])
+        org_list = list(site_stats["org_counts"]["all_users"])
         org_list.sort()
         for org in org_list:
-            total_cnt = site_stats['org_counts']['all_users'][org]
-            active_cnt = site_stats['org_counts']['active_users'].get(org, 0)
-            print('%d\t%d\t%s' % (total_cnt, active_cnt, org))
+            total_cnt = site_stats["org_counts"]["all_users"][org]
+            active_cnt = site_stats["org_counts"]["active_users"].get(org, 0)
+            print("%d\t%d\t%s" % (total_cnt, active_cnt, org))
 
         print("=== By Email Domain ===")
-        domain_list = list(site_stats['domain_counts']['all_users'])
+        domain_list = list(site_stats["domain_counts"]["all_users"])
         domain_list.sort()
         for domain in domain_list:
-            total_cnt = site_stats['domain_counts']['all_users'][domain]
-            active_cnt = site_stats['domain_counts']['active_users'].get(
-                domain, 0)
-            print('%d\t%d\t%s' % (total_cnt, active_cnt, domain))
+            total_cnt = site_stats["domain_counts"]["all_users"][domain]
+            active_cnt = site_stats["domain_counts"]["active_users"].get(
+                domain, 0
+            )
+            print("%d\t%d\t%s" % (total_cnt, active_cnt, domain))
 
-    if sitestats_path and not write_sitestats(configuration, site_stats,
-                                              sitestats_path, output_formats):
+    if sitestats_path and not write_sitestats(
+        configuration, site_stats, sitestats_path, output_formats
+    ):
         print("Error: writing site stats to %s failed!" % sitestats_path)
 
     sys.exit(0)

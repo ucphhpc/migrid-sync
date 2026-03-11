@@ -30,11 +30,16 @@
 import os
 import unittest
 
+# Imports required for the unit test wrapping
+from mig.shared.defaults import (
+    STRONG_TLS_CIPHERS,
+    STRONG_TLS_CURVES,
+    STRONG_TLS_LEGACY_CIPHERS,
+)
+
 # Imports of the code under test
 from mig.shared.tlsserver import hardened_ssl_context, ssl
-# Imports required for the unit test wrapping
-from mig.shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_LEGACY_CIPHERS, \
-    STRONG_TLS_CURVES
+
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase
 
@@ -136,14 +141,14 @@ class MigSharedTlsServer(MigTestCase):
 
     def _provide_configuration(self):
         """Prepare isolated test config"""
-        return 'testconfig'
+        return "testconfig"
 
     # TODO: move the key+cert e.g. to data/X with helper function to load them?
     def _prepare_key_cert(self, key_path, cert_path):
         """Save key and cert file for use in real ssl tests"""
-        with open(key_path, 'w') as key_fd:
+        with open(key_path, "w") as key_fd:
             key_fd.write(TEST_HOST_KEY)
-        with open(cert_path, 'w') as cert_fd:
+        with open(cert_path, "w") as cert_fd:
             cert_fd.write(TEST_HOST_CERT)
 
     def before_each(self):
@@ -164,21 +169,21 @@ class MigSharedTlsServer(MigTestCase):
             STRONG_TLS_CURVES,
             False,
             True,
-            False
+            False,
         )
 
         # Verify options are set
         expected_options = (
-            getattr(ssl, 'OP_NO_SSLv2', 0x1000000) |
-            getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(ssl, 'OP_NO_TLSv1', 0x4000000) |
-            getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000) |
-            getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
-            getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-            getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
-            getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000) |
-            getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000) |
-            getattr(ssl, 'OP_RENEGOTIATION', 0x40000000)
+            getattr(ssl, "OP_NO_SSLv2", 0x1000000)
+            | getattr(ssl, "OP_NO_SSLv3", 0x2000000)
+            | getattr(ssl, "OP_NO_TLSv1", 0x4000000)
+            | getattr(ssl, "OP_NO_TLSv1_1", 0x10000000)
+            | getattr(ssl, "OP_NO_COMPRESSION", 0x20000)
+            | getattr(ssl, "OP_CIPHER_SERVER_PREFERENCE", 0x400000)
+            | getattr(ssl, "OP_SINGLE_ECDH_USE", 0x80000)
+            | getattr(ssl, "OP_SINGLE_DH_USE", 0x100000)
+            | getattr(ssl, "OP_NO_RENEGOTIATION", 0x40000000)
+            | getattr(ssl, "OP_RENEGOTIATION", 0x40000000)
         )
 
         # Verify the options were OR'd into the context
@@ -198,20 +203,20 @@ class MigSharedTlsServer(MigTestCase):
             STRONG_TLS_CURVES,
             True,
             False,
-            False
+            False,
         )
 
         # Verify options are set
         expected_options = (
-            getattr(ssl, 'OP_NO_SSLv2', 0x1000000) |
-            getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000) |
-            getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
-            getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-            getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
-            getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000) |
-            getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000) |
-            getattr(ssl, 'OP_RENEGOTIATION', 0x40000000)
+            getattr(ssl, "OP_NO_SSLv2", 0x1000000)
+            | getattr(ssl, "OP_NO_SSLv3", 0x2000000)
+            | getattr(ssl, "OP_NO_TLSv1_2", 0x8000000)
+            | getattr(ssl, "OP_NO_COMPRESSION", 0x20000)
+            | getattr(ssl, "OP_CIPHER_SERVER_PREFERENCE", 0x400000)
+            | getattr(ssl, "OP_SINGLE_ECDH_USE", 0x80000)
+            | getattr(ssl, "OP_SINGLE_DH_USE", 0x100000)
+            | getattr(ssl, "OP_NO_RENEGOTIATION", 0x40000000)
+            | getattr(ssl, "OP_RENEGOTIATION", 0x40000000)
         )
 
         # Verify the options were OR'd into the context
@@ -231,22 +236,22 @@ class MigSharedTlsServer(MigTestCase):
             STRONG_TLS_CURVES,
             False,
             False,
-            False
+            False,
         )
 
         # Verify options are set
         expected_options = (
-            getattr(ssl, 'OP_NO_SSLv2', 0x1000000) |
-            getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(ssl, 'OP_NO_TLSv1', 0x4000000) |
-            getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000) |
-            getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000) |
-            getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
-            getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-            getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
-            getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000) |
-            getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000) |
-            getattr(ssl, 'OP_RENEGOTIATION', 0x40000000)
+            getattr(ssl, "OP_NO_SSLv2", 0x1000000)
+            | getattr(ssl, "OP_NO_SSLv3", 0x2000000)
+            | getattr(ssl, "OP_NO_TLSv1", 0x4000000)
+            | getattr(ssl, "OP_NO_TLSv1_1", 0x10000000)
+            | getattr(ssl, "OP_NO_TLSv1_2", 0x8000000)
+            | getattr(ssl, "OP_NO_COMPRESSION", 0x20000)
+            | getattr(ssl, "OP_CIPHER_SERVER_PREFERENCE", 0x400000)
+            | getattr(ssl, "OP_SINGLE_ECDH_USE", 0x80000)
+            | getattr(ssl, "OP_SINGLE_DH_USE", 0x100000)
+            | getattr(ssl, "OP_NO_RENEGOTIATION", 0x40000000)
+            | getattr(ssl, "OP_RENEGOTIATION", 0x40000000)
         )
 
         # Verify the options were OR'd into the context
@@ -266,26 +271,27 @@ class MigSharedTlsServer(MigTestCase):
             STRONG_TLS_CURVES,
             False,
             True,
-            True
+            True,
         )
 
         # Verify options are set
         expected_options = (
-            getattr(ssl, 'OP_NO_SSLv2', 0x1000000) |
-            getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(ssl, 'OP_NO_TLSv1', 0x4000000) |
-            getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000) |
-            getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
-            getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-            getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
-            getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000) |
-            getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000) |
-            getattr(ssl, 'OP_RENEGOTIATION', 0x40000000)
+            getattr(ssl, "OP_NO_SSLv2", 0x1000000)
+            | getattr(ssl, "OP_NO_SSLv3", 0x2000000)
+            | getattr(ssl, "OP_NO_TLSv1", 0x4000000)
+            | getattr(ssl, "OP_NO_TLSv1_1", 0x10000000)
+            | getattr(ssl, "OP_NO_COMPRESSION", 0x20000)
+            | getattr(ssl, "OP_CIPHER_SERVER_PREFERENCE", 0x400000)
+            | getattr(ssl, "OP_SINGLE_ECDH_USE", 0x80000)
+            | getattr(ssl, "OP_SINGLE_DH_USE", 0x100000)
+            | getattr(ssl, "OP_NO_RENEGOTIATION", 0x40000000)
+            | getattr(ssl, "OP_RENEGOTIATION", 0x40000000)
         )
 
         # Verify the options were OR'd into the context
         self.assertNotEqual(
-            context.options & expected_options, expected_options)
+            context.options & expected_options, expected_options
+        )
 
     def test_hardened_ssl_context_options_fail_tls1_1(self):
         """Test SSL context options fail when different"""
@@ -301,26 +307,27 @@ class MigSharedTlsServer(MigTestCase):
             STRONG_TLS_CURVES,
             True,
             True,
-            False
+            False,
         )
 
         # Verify options are set
         expected_options = (
-            getattr(ssl, 'OP_NO_SSLv2', 0x1000000) |
-            getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(ssl, 'OP_NO_TLSv1', 0x4000000) |
-            getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000) |
-            getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
-            getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-            getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
-            getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000) |
-            getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000) |
-            getattr(ssl, 'OP_RENEGOTIATION', 0x40000000)
+            getattr(ssl, "OP_NO_SSLv2", 0x1000000)
+            | getattr(ssl, "OP_NO_SSLv3", 0x2000000)
+            | getattr(ssl, "OP_NO_TLSv1", 0x4000000)
+            | getattr(ssl, "OP_NO_TLSv1_1", 0x10000000)
+            | getattr(ssl, "OP_NO_COMPRESSION", 0x20000)
+            | getattr(ssl, "OP_CIPHER_SERVER_PREFERENCE", 0x400000)
+            | getattr(ssl, "OP_SINGLE_ECDH_USE", 0x80000)
+            | getattr(ssl, "OP_SINGLE_DH_USE", 0x100000)
+            | getattr(ssl, "OP_NO_RENEGOTIATION", 0x40000000)
+            | getattr(ssl, "OP_RENEGOTIATION", 0x40000000)
         )
 
         # Verify the options were OR'd into the context
         self.assertNotEqual(
-            context.options & expected_options, expected_options)
+            context.options & expected_options, expected_options
+        )
 
     def test_hardened_ssl_context_options_fail_tls1_2(self):
         """Test SSL context options fail when different"""
@@ -336,26 +343,27 @@ class MigSharedTlsServer(MigTestCase):
             STRONG_TLS_CURVES,
             True,
             False,
-            False
+            False,
         )
 
         # Verify options are set
         expected_options = (
-            getattr(ssl, 'OP_NO_SSLv2', 0x1000000) |
-            getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(ssl, 'OP_NO_TLSv1', 0x4000000) |
-            getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000) |
-            getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
-            getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-            getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
-            getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000) |
-            getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000) |
-            getattr(ssl, 'OP_RENEGOTIATION', 0x40000000)
+            getattr(ssl, "OP_NO_SSLv2", 0x1000000)
+            | getattr(ssl, "OP_NO_SSLv3", 0x2000000)
+            | getattr(ssl, "OP_NO_TLSv1", 0x4000000)
+            | getattr(ssl, "OP_NO_TLSv1_1", 0x10000000)
+            | getattr(ssl, "OP_NO_COMPRESSION", 0x20000)
+            | getattr(ssl, "OP_CIPHER_SERVER_PREFERENCE", 0x400000)
+            | getattr(ssl, "OP_SINGLE_ECDH_USE", 0x80000)
+            | getattr(ssl, "OP_SINGLE_DH_USE", 0x100000)
+            | getattr(ssl, "OP_NO_RENEGOTIATION", 0x40000000)
+            | getattr(ssl, "OP_RENEGOTIATION", 0x40000000)
         )
 
         # Verify the options were OR'd into the context
         self.assertNotEqual(
-            context.options & expected_options, expected_options)
+            context.options & expected_options, expected_options
+        )
 
     def test_hardened_ssl_context_ciphers(self):
         """Test SSL context ciphers are set correctly"""
@@ -371,12 +379,12 @@ class MigSharedTlsServer(MigTestCase):
             STRONG_TLS_CURVES,
             False,
             True,
-            False
+            False,
         )
         # NOTE: this may be too platform specific
         expected_start = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
         expected_end = ":DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
-        result = ':'.join([spec['name'] for spec in context.get_ciphers()])
+        result = ":".join([spec["name"] for spec in context.get_ciphers()])
         self.assertTrue(result.startswith(expected_start))
         self.assertTrue(result.endswith(expected_end))
 
@@ -394,11 +402,11 @@ class MigSharedTlsServer(MigTestCase):
             STRONG_TLS_CURVES,
             False,
             True,
-            False
+            False,
         )
         # NOTE: this may be too platform specific
         expected_start = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
         expected_end = ":CAMELLIA256-SHA256:CAMELLIA128-SHA256"
-        result = ':'.join([spec['name'] for spec in context.get_ciphers()])
+        result = ":".join([spec["name"] for spec in context.get_ciphers()])
         self.assertTrue(result.startswith(expected_start))
         self.assertTrue(result.endswith(expected_end))

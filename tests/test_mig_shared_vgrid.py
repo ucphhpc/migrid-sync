@@ -1419,7 +1419,7 @@ class TestMigSharedVgrid__legacy_main(MigTestCase):
     """Unit tests for legacy vgrid self-checks"""
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     def test_existing_main(self):
         """Run the legacy self-tests directly in module"""
@@ -1433,14 +1433,20 @@ class TestMigSharedVgrid__legacy_main(MigTestCase):
                 else:
                     identifying_message = "unknown"
                 raise AssertionError(
-                    'legacy test failure: %s' % (identifying_message,))
+                    "legacy test failure: %s" % (identifying_message,)
+                )
+
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
             """Keep track of printed output"""
             raise_on_error_exit.last_print = value
 
-        legacy_main(self.configuration, print=record_last_print, _exit=raise_on_error_exit)
+        legacy_main(
+            self.configuration,
+            print=record_last_print,
+            _exit=raise_on_error_exit,
+        )
 
 
 if __name__ == "__main__":

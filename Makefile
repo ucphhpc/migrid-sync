@@ -6,11 +6,7 @@ ifndef PY
 	PY = 3
 endif
 
-FORMAT_ENFORCE_DIRS = state/
-FORMAT_EXCLUDE_REGEX = '.*'
-FORMAT_EXCLUDE_GLOB = '*'
-FORMAT_LINE_LENGTH = 80
-
+LINT_ENFORCE_DIRS = ./bin ./mig/lib ./sbin ./tests
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
 ifdef PYTHON_BIN
@@ -42,15 +38,10 @@ ifneq ($(MIG_ENV),'local')
 endif
 	@make format-python
 
-.PHONY:format-python
+.PHONY: format-python
 format-python:
-	@$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
-			--line-length=$(FORMAT_LINE_LENGTH) \
-			--exclude=$(FORMAT_EXCLUDE_REGEX)
-	@$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
-			--profile=black \
-			--line-length=$(FORMAT_LINE_LENGTH) \
-			--skip-glob=$(FORMAT_EXCLUDE_GLOB)
+	@$(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS)
+	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS)
 
 .PHONY: lint
 lint:
@@ -62,15 +53,8 @@ endif
 
 .PHONY: lint-python
 lint-python:
-	@$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
-			--check \
-			--line-length=$(FORMAT_LINE_LENGTH) \
-			--exclude $(FORMAT_EXCLUDE_REGEX)
-	@$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
-			--check-only \
-			--profile=black \
-			--line-length=$(FORMAT_LINE_LENGTH) \
-			--skip-glob=$(FORMAT_EXCLUDE_GLOB)
+	@$(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS) --check
+	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS) --check-only
 
 .PHONY: clean
 clean:

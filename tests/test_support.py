@@ -28,15 +28,21 @@
 """Unit tests for the tests module pointed to in the filename"""
 
 from __future__ import print_function
+
 import os
 import sys
 import unittest
 
-from tests.support import MigTestCase, PY2, testmain, temppath, \
-    AssertOver, FakeConfiguration
-
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
+from tests.support import (
+    PY2,
+    AssertOver,
+    FakeConfiguration,
+    MigTestCase,
+    temppath,
+    testmain,
+)
 
 
 class InstrumentedAssertOver(AssertOver):
@@ -62,6 +68,7 @@ class InstrumentedAssertOver(AssertOver):
         def _wrapped_check_callable():
             self._check_callable_called = True
             _check_callable()
+
         self._check_callable = _wrapped_check_callable
         return _wrapped_check_callable
 
@@ -71,8 +78,8 @@ class SupportTestCase(MigTestCase):
 
     def _class_attribute(self, name, **kwargs):
         cls = type(self)
-        if 'value' in kwargs:
-            setattr(cls, name, kwargs['value'])
+        if "value" in kwargs:
+            setattr(cls, name, kwargs["value"])
         else:
             return getattr(cls, name, None)
 
@@ -80,15 +87,17 @@ class SupportTestCase(MigTestCase):
         with self.assertRaises(AssertionError) as raised:
             self.configuration
         theexception = raised.exception
-        self.assertEqual(str(theexception),
-            "configuration access but testcase did not request it")
+        self.assertEqual(
+            str(theexception),
+            "configuration access but testcase did not request it",
+        )
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_unclosed_files_are_recorded(self):
         tmp_path = temppath("support-unclosed", self)
 
         def open_without_close():
-            with open(tmp_path, 'w'):
+            with open(tmp_path, "w"):
                 pass
             open(tmp_path)
             return
@@ -112,11 +121,13 @@ class SupportTestCase(MigTestCase):
             assert isinstance(value, int)
 
         attempt_wrapper = self.assert_over(
-            values=(1, 2, 3), _AssertOver=InstrumentedAssertOver)
+            values=(1, 2, 3), _AssertOver=InstrumentedAssertOver
+        )
 
         # record the wrapper on the test case so the subsequent test can assert against it
-        self._class_attribute('surviving_attempt_wrapper',
-                              value=attempt_wrapper)
+        self._class_attribute(
+            "surviving_attempt_wrapper", value=attempt_wrapper
+        )
 
         with attempt_wrapper as attempt:
             attempt(assert_is_int)
@@ -124,14 +135,15 @@ class SupportTestCase(MigTestCase):
 
         self.assertTrue(attempt_wrapper.has_check_callable())
         # cleanup was recorded
-        self.assertIn(attempt_wrapper.get_check_callable(),
-                      self._cleanup_checks)
+        self.assertIn(
+            attempt_wrapper.get_check_callable(), self._cleanup_checks
+        )
 
     def test_when_asserting_over_multiple_values_after(self):
         # test name is purposefully after ..._recorded in sort order
         # such that we can check the check function was called correctly
 
-        attempt_wrapper = self._class_attribute('surviving_attempt_wrapper')
+        attempt_wrapper = self._class_attribute("surviving_attempt_wrapper")
         self.assertTrue(attempt_wrapper.was_check_callable_called())
 
 
@@ -139,7 +151,7 @@ class SupportTestCase_using_fakeconfig(MigTestCase):
     """Coverage of a MiG Testcase hat requests a fakeconfig"""
 
     def _provide_configuration(self):
-        return 'fakeconfig'
+        return "fakeconfig"
 
     def test_provides_a_fake_configuration(self):
         configuration = self.configuration
@@ -157,10 +169,10 @@ class SupportTestCase_using_testconfig(MigTestCase):
     """Coverage of a MiG Testcase that requests a testconfig"""
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     def test_provides_the_test_configuration(self):
-        expected_last_dir = 'testconfs-py2' if PY2 else 'testconfs-py3'
+        expected_last_dir = "testconfs-py2" if PY2 else "testconfs-py3"
 
         configuration = self.configuration
 
@@ -173,5 +185,5 @@ class SupportTestCase_using_testconfig(MigTestCase):
         self.assertTrue(config_file_last_dir, expected_last_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

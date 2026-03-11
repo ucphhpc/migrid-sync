@@ -32,23 +32,31 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.support import TEST_OUTPUT_DIR, MigTestCase, FakeConfiguration, \
-    cleanpath, testmain
-from mig.shared.settings import load_settings, update_settings, \
-    parse_and_save_settings
+from mig.shared.settings import (
+    load_settings,
+    parse_and_save_settings,
+    update_settings,
+)
+from tests.support import (
+    TEST_OUTPUT_DIR,
+    FakeConfiguration,
+    MigTestCase,
+    cleanpath,
+    testmain,
+)
 
 DUMMY_USER = "dummy-user"
-DUMMY_SETTINGS_DIR = 'dummy_user_settings'
+DUMMY_SETTINGS_DIR = "dummy_user_settings"
 DUMMY_SETTINGS_PATH = os.path.join(TEST_OUTPUT_DIR, DUMMY_SETTINGS_DIR)
-DUMMY_SYSTEM_FILES_DIR = 'dummy_system_files'
+DUMMY_SYSTEM_FILES_DIR = "dummy_system_files"
 DUMMY_SYSTEM_FILES_PATH = os.path.join(TEST_OUTPUT_DIR, DUMMY_SYSTEM_FILES_DIR)
-DUMMY_TMP_DIR = 'dummy_tmp'
-DUMMY_TMP_FILE = 'settings.mRSL'
+DUMMY_TMP_DIR = "dummy_tmp"
+DUMMY_TMP_FILE = "settings.mRSL"
 DUMMY_TMP_PATH = os.path.join(TEST_OUTPUT_DIR, DUMMY_TMP_DIR)
 DUMMY_MRSL_PATH = os.path.join(DUMMY_TMP_PATH, DUMMY_TMP_FILE)
 
-DUMMY_USER_INTERFACE = ['V3', 'V42']
-DUMMY_DEFAULT_UI = 'V42'
+DUMMY_USER_INTERFACE = ["V3", "V42"]
+DUMMY_DEFAULT_UI = "V42"
 DUMMY_INIT_MRSL = """
 ::EMAIL::
 john@doe.org
@@ -65,10 +73,12 @@ jane@doe.org
 ::SITE_USER_MENU::
 people
 """
-DUMMY_CONF = FakeConfiguration(user_settings=DUMMY_SETTINGS_PATH,
-                               mig_system_files=DUMMY_SYSTEM_FILES_PATH,
-                               user_interface=DUMMY_USER_INTERFACE,
-                               new_user_default_ui=DUMMY_DEFAULT_UI)
+DUMMY_CONF = FakeConfiguration(
+    user_settings=DUMMY_SETTINGS_PATH,
+    mig_system_files=DUMMY_SYSTEM_FILES_PATH,
+    user_interface=DUMMY_USER_INTERFACE,
+    new_user_default_ui=DUMMY_DEFAULT_UI,
+)
 
 
 class MigSharedSettings(MigTestCase):
@@ -82,28 +92,31 @@ class MigSharedSettings(MigTestCase):
         os.makedirs(os.path.join(DUMMY_TMP_PATH))
         cleanpath(DUMMY_TMP_DIR, self)
 
-        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
+        with open(DUMMY_MRSL_PATH, "w") as mrsl_fd:
             mrsl_fd.write(DUMMY_INIT_MRSL)
         save_status, save_msg = parse_and_save_settings(
-            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
+            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF
+        )
         self.assertTrue(save_status)
         self.assertFalse(save_msg)
 
-        saved_path = os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER, 'settings')
+        saved_path = os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER, "settings")
         self.assertTrue(os.path.exists(saved_path))
 
         settings = load_settings(DUMMY_USER, DUMMY_CONF)
         # NOTE: updated should be a non-empty dict at this point
         self.assertTrue(isinstance(settings, dict))
-        self.assertEqual(settings['EMAIL'], ['john@doe.org'])
-        self.assertEqual(settings['SITE_USER_MENU'],
-                         ['sharelinks', 'people', 'peers'])
+        self.assertEqual(settings["EMAIL"], ["john@doe.org"])
+        self.assertEqual(
+            settings["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
         # NOTE: we no longer auto save default values for optional vars
         for key in settings.keys():
-            self.assertTrue(key in ['EMAIL', 'SITE_USER_MENU'])
+            self.assertTrue(key in ["EMAIL", "SITE_USER_MENU"])
         # Any saved USER_INTERFACE value must match configured default if set
-        self.assertEqual(settings.get('USER_INTERFACE', DUMMY_DEFAULT_UI),
-                         DUMMY_DEFAULT_UI)
+        self.assertEqual(
+            settings.get("USER_INTERFACE", DUMMY_DEFAULT_UI), DUMMY_DEFAULT_UI
+        )
 
     def test_settings_replace(self):
         os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
@@ -113,25 +126,27 @@ class MigSharedSettings(MigTestCase):
         os.makedirs(os.path.join(DUMMY_TMP_PATH))
         cleanpath(DUMMY_TMP_DIR, self)
 
-        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
+        with open(DUMMY_MRSL_PATH, "w") as mrsl_fd:
             mrsl_fd.write(DUMMY_INIT_MRSL)
         save_status, save_msg = parse_and_save_settings(
-            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
+            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF
+        )
         self.assertTrue(save_status)
         self.assertFalse(save_msg)
 
-        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
+        with open(DUMMY_MRSL_PATH, "w") as mrsl_fd:
             mrsl_fd.write(DUMMY_UPDATE_MRSL)
         save_status, save_msg = parse_and_save_settings(
-            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
+            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF
+        )
         self.assertTrue(save_status)
         self.assertFalse(save_msg)
 
         updated = load_settings(DUMMY_USER, DUMMY_CONF)
         # NOTE: updated should be a non-empty dict at this point
         self.assertTrue(isinstance(updated, dict))
-        self.assertEqual(updated['EMAIL'], ['jane@doe.org'])
-        self.assertEqual(updated['SITE_USER_MENU'], ['people'])
+        self.assertEqual(updated["EMAIL"], ["jane@doe.org"])
+        self.assertEqual(updated["SITE_USER_MENU"], ["people"])
 
     def test_update_settings(self):
         os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
@@ -141,20 +156,21 @@ class MigSharedSettings(MigTestCase):
         os.makedirs(os.path.join(DUMMY_TMP_PATH))
         cleanpath(DUMMY_TMP_DIR, self)
 
-        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
+        with open(DUMMY_MRSL_PATH, "w") as mrsl_fd:
             mrsl_fd.write(DUMMY_INIT_MRSL)
         save_status, save_msg = parse_and_save_settings(
-            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
+            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF
+        )
         self.assertTrue(save_status)
         self.assertFalse(save_msg)
 
-        changes = {'EMAIL': ['john@doe.org', 'jane@doe.org']}
+        changes = {"EMAIL": ["john@doe.org", "jane@doe.org"]}
         defaults = {}
         updated = update_settings(DUMMY_USER, DUMMY_CONF, changes, defaults)
         # NOTE: updated should be a non-empty dict at this point
         self.assertTrue(isinstance(updated, dict))
-        self.assertEqual(updated['EMAIL'], ['john@doe.org', 'jane@doe.org'])
+        self.assertEqual(updated["EMAIL"], ["john@doe.org", "jane@doe.org"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

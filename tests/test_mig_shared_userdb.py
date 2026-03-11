@@ -34,17 +34,26 @@ import unittest
 # Imports required for the unit test wrapping
 from mig.shared.base import distinguished_name_to_user
 from mig.shared.fileio import delete_file
-from mig.shared.serial import loads, dumps
+from mig.shared.serial import dumps, loads
+
 # Imports of the code under test
-from mig.shared.userdb import default_db_path, load_user_db, load_user_dict, \
-    lock_user_db, save_user_db, save_user_dict, unlock_user_db, \
-    update_user_dict
+from mig.shared.userdb import (
+    default_db_path,
+    load_user_db,
+    load_user_dict,
+    lock_user_db,
+    save_user_db,
+    save_user_dict,
+    unlock_user_db,
+    update_user_dict,
+)
+
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 
-TEST_USER_ID = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
-THIS_USER_ID = '/C=DK/ST=NA/L=NA/O=Local Org/OU=NA/CN=This User/emailAddress=this.user@here.org'
-OTHER_USER_ID = '/C=DK/ST=NA/L=NA/O=Other Org/OU=NA/CN=Other User/emailAddress=other.user@there.org'
+TEST_USER_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
+THIS_USER_ID = "/C=DK/ST=NA/L=NA/O=Local Org/OU=NA/CN=This User/emailAddress=this.user@here.org"
+OTHER_USER_ID = "/C=DK/ST=NA/L=NA/O=Other Org/OU=NA/CN=Other User/emailAddress=other.user@there.org"
 
 
 class TestMigSharedUserDB(MigTestCase):
@@ -52,7 +61,7 @@ class TestMigSharedUserDB(MigTestCase):
 
     def _provide_configuration(self):
         """Get test configuration"""
-        return 'testconfig'
+        return "testconfig"
 
     # Helper methods
     def _generate_sample_db(self, content=None):
@@ -60,7 +69,7 @@ class TestMigSharedUserDB(MigTestCase):
         if content is None:
             sample_db = {
                 TEST_USER_ID: distinguished_name_to_user(TEST_USER_ID),
-                THIS_USER_ID: distinguished_name_to_user(THIS_USER_ID)
+                THIS_USER_ID: distinguished_name_to_user(THIS_USER_ID),
             }
         else:
             sample_db = content
@@ -78,10 +87,12 @@ class TestMigSharedUserDB(MigTestCase):
         """Set up test configuration and reset user DB paths"""
         ensure_dirs_exist(self.configuration.user_db_home)
         ensure_dirs_exist(self.configuration.mig_server_home)
-        self.user_db_path = os.path.join(self.configuration.user_db_home,
-                                         "MiG-users.db")
-        self.legacy_db_path = os.path.join(self.configuration.mig_server_home,
-                                           "MiG-users.db")
+        self.user_db_path = os.path.join(
+            self.configuration.user_db_home, "MiG-users.db"
+        )
+        self.legacy_db_path = os.path.join(
+            self.configuration.mig_server_home, "MiG-users.db"
+        )
 
         # Clear any existing test DBs
         if os.path.exists(self.user_db_path):
@@ -95,15 +106,15 @@ class TestMigSharedUserDB(MigTestCase):
 
     def test_default_db_path(self):
         """Test default_db_path returns correct path structure"""
-        expected = os.path.join(self.configuration.user_db_home,
-                                "MiG-users.db")
+        expected = os.path.join(self.configuration.user_db_home, "MiG-users.db")
         result = default_db_path(self.configuration)
         self.assertEqual(result, expected)
 
         # Test legacy path fallback
-        self.configuration.user_db_home = '/no-such-dir'
-        expected_legacy = os.path.join(self.configuration.mig_server_home,
-                                       "MiG-users.db")
+        self.configuration.user_db_home = "/no-such-dir"
+        expected_legacy = os.path.join(
+            self.configuration.mig_server_home, "MiG-users.db"
+        )
         result = default_db_path(self.configuration)
         self.assertEqual(result, expected_legacy)
 
@@ -149,8 +160,7 @@ class TestMigSharedUserDB(MigTestCase):
 
     def test_load_user_db_missing(self):
         """Test loading missing user database"""
-        db_path = os.path.join(
-            self.configuration.user_db_home, "no-such-db.db")
+        db_path = os.path.join(self.configuration.user_db_home, "no-such-db.db")
         try:
             loaded = load_user_db(db_path)
         except Exception:
@@ -190,8 +200,9 @@ class TestMigSharedUserDB(MigTestCase):
         """Test loading non-existent user from DB"""
         self._create_sample_db()
         try:
-            loaded = load_user_dict(self.logger, "no-such-user",
-                                    self.user_db_path)
+            loaded = load_user_dict(
+                self.logger, "no-such-user", self.user_db_path
+            )
         except Exception:
             loaded = None
         self.assertIsNone(loaded)
@@ -200,8 +211,9 @@ class TestMigSharedUserDB(MigTestCase):
         """Test loading existing user from DB"""
         sample_db = self._create_sample_db()
         try:
-            test_user_data = load_user_dict(self.logger, TEST_USER_ID,
-                                            self.user_db_path)
+            test_user_data = load_user_dict(
+                self.logger, TEST_USER_ID, self.user_db_path
+            )
         except Exception:
             test_user_data = None
         self.assertEqual(test_user_data, sample_db[TEST_USER_ID])
@@ -209,8 +221,9 @@ class TestMigSharedUserDB(MigTestCase):
     def test_save_user_dict_new_user(self):
         """Test saving new user to database"""
         other_user = distinguished_name_to_user(OTHER_USER_ID)
-        save_status = save_user_dict(self.logger, OTHER_USER_ID,
-                                     other_user, self.user_db_path)
+        save_status = save_user_dict(
+            self.logger, OTHER_USER_ID, other_user, self.user_db_path
+        )
         self.assertTrue(save_status)
 
         with open(self.user_db_path, "rb") as fh:
@@ -223,8 +236,9 @@ class TestMigSharedUserDB(MigTestCase):
         sample_db = self._create_sample_db()
         changed = distinguished_name_to_user(THIS_USER_ID)
         changed.update({"Organization": "UPDATED", "new_field": "ADDED"})
-        save_status = save_user_dict(self.logger, THIS_USER_ID,
-                                     changed, self.user_db_path)
+        save_status = save_user_dict(
+            self.logger, THIS_USER_ID, changed, self.user_db_path
+        )
         self.assertTrue(save_status)
 
         with open(self.user_db_path, "rb") as fh:
@@ -235,9 +249,12 @@ class TestMigSharedUserDB(MigTestCase):
     def test_update_user_dict(self):
         """Test update_user_dict with partial changes"""
         sample_db = self._create_sample_db()
-        updated = update_user_dict(self.logger, THIS_USER_ID,
-                                   {"Organization": "CHANGED"},
-                                   self.user_db_path)
+        updated = update_user_dict(
+            self.logger,
+            THIS_USER_ID,
+            {"Organization": "CHANGED"},
+            self.user_db_path,
+        )
         self.assertEqual(updated["Organization"], "CHANGED")
 
         with open(self.user_db_path, "rb") as fh:
@@ -249,8 +266,12 @@ class TestMigSharedUserDB(MigTestCase):
         """Test update_user_dict with invalid user ID"""
         self.logger.forgive_errors()
         try:
-            result = update_user_dict(self.logger, "no-such-user",
-                                      {"field": "test"}, self.user_db_path)
+            result = update_user_dict(
+                self.logger,
+                "no-such-user",
+                {"field": "test"},
+                self.user_db_path,
+            )
         except Exception:
             result = None
         self.assertIsNone(result)
@@ -274,6 +295,7 @@ class TestMigSharedUserDB(MigTestCase):
             return loaded
 
         import threading
+
         delayed_thread = threading.Thread(target=delayed_load)
         delayed_thread.start()
         time.sleep(0.2)
@@ -308,7 +330,8 @@ class TestMigSharedUserDB(MigTestCase):
     def test_lock_user_db_invalid_path(self):
         """Test locking on non-existent database path"""
         invalid_path = os.path.join(
-            self.configuration.user_db_home, "missing", "MiG-users.db")
+            self.configuration.user_db_home, "missing", "MiG-users.db"
+        )
         flock = lock_user_db(invalid_path)
         self.assertIsNone(flock)
 
@@ -322,7 +345,7 @@ class TestMigSharedUserDB(MigTestCase):
 
     def test_load_user_db_corrupted(self):
         """Test loading corrupted user database"""
-        with open(self.user_db_path, 'w') as fh:
+        with open(self.user_db_path, "w") as fh:
             fh.write("invalid pickle content")
         with self.assertRaises(Exception):
             load_user_db(self.user_db_path)
@@ -354,8 +377,9 @@ class TestMigSharedUserDB(MigTestCase):
         """Test saving user with invalid characters in ID"""
         invalid_id = "../../invalid.user"
         user_dict = distinguished_name_to_user(TEST_USER_ID)
-        save_status = save_user_dict(self.logger, invalid_id,
-                                     user_dict, self.user_db_path)
+        save_status = save_user_dict(
+            self.logger, invalid_id, user_dict, self.user_db_path
+        )
         self.assertFalse(save_status)
 
     def test_update_user_dict_empty_changes(self):
@@ -364,8 +388,9 @@ class TestMigSharedUserDB(MigTestCase):
         self.logger.forgive_errors()
         sample_db = self._create_sample_db()
         original = sample_db[THIS_USER_ID].copy()
-        updated = update_user_dict(self.logger, THIS_USER_ID, {},
-                                   self.user_db_path)
+        updated = update_user_dict(
+            self.logger, THIS_USER_ID, {}, self.user_db_path
+        )
         self.assertEqual(updated, original)
 
     # TODO: adjust API to allow enabling the next test
@@ -395,5 +420,5 @@ class TestMigSharedUserDB(MigTestCase):
             unlock_user_db(flock)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

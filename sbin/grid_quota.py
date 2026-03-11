@@ -29,28 +29,32 @@
 
 from __future__ import absolute_import, print_function
 
+import datetime
 import os
 import sys
 import time
 import traceback
-import datetime
 
-from mig.lib.daemon import check_run, check_stop, interruptible_sleep, \
-    register_run_handler, register_stop_handler, reset_run, stop_running
-from mig.lib.quota import update_quota, supported_quota_backends
+from mig.lib.daemon import (
+    check_run,
+    check_stop,
+    interruptible_sleep,
+    register_run_handler,
+    register_stop_handler,
+    reset_run,
+    stop_running,
+)
+from mig.lib.quota import supported_quota_backends, update_quota
 from mig.shared.conf import get_configuration_object
 from mig.shared.logger import daemon_logger, register_hangup_handler
 
-
 if __name__ == "__main__":
-    print(
-        """This is the MiG quota daemon which collects storage quota
+    print("""This is the MiG quota daemon which collects storage quota
         information for users and vgrids.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-"""
-    )
+""")
     # Force no log init since we use separate logger
     configuration = get_configuration_object(skip_log=True)
 
@@ -60,9 +64,7 @@ unless it is available in mig/server/MiGserver.conf
 
     # Use separate logger
 
-    logger = daemon_logger("quota",
-                           configuration.user_quota_log,
-                           log_level)
+    logger = daemon_logger("quota", configuration.user_quota_log, log_level)
     configuration.logger = logger
 
     # Check if quota is enabled
@@ -70,21 +72,18 @@ unless it is available in mig/server/MiGserver.conf
     if not configuration.site_enable_quota:
         msg = "Quota support is disabled in configuration!"
         logger.error(msg)
-        print("%s ERROR: %s"
-              % (datetime.datetime.now(), msg),
-              file=sys.stderr)
+        print("%s ERROR: %s" % (datetime.datetime.now(), msg), file=sys.stderr)
         sys.exit(1)
 
     # Check quota backend
 
     if configuration.quota_backend not in supported_quota_backends:
-        msg = "Quota backend: %s not in supported backends: %s" \
-            % (configuration.quota_backend,
-               ", ".join(supported_quota_backends))
+        msg = "Quota backend: %s not in supported backends: %s" % (
+            configuration.quota_backend,
+            ", ".join(supported_quota_backends),
+        )
         logger.error(msg)
-        print("%s ERROR: %s"
-              % (datetime.datetime.now(), msg),
-              file=sys.stderr)
+        print("%s ERROR: %s" % (datetime.datetime.now(), msg), file=sys.stderr)
         sys.exit(1)
 
     # Allow e.g. logrotate to force log re-open after rotates
@@ -98,8 +97,10 @@ unless it is available in mig/server/MiGserver.conf
 
     throttle_secs = float(configuration.quota_update_interval)
     main_pid = os.getpid()
-    msg = "(%s) Starting quota daemon with throttle: %d secs" \
-        % (main_pid, throttle_secs)
+    msg = "(%s) Starting quota daemon with throttle: %d secs" % (
+        main_pid,
+        throttle_secs,
+    )
     logger.info(msg)
     print("%s %s" % (datetime.datetime.now(), msg))
 
@@ -107,16 +108,20 @@ unless it is available in mig/server/MiGserver.conf
     while not check_stop():
         try:
             if throttle:
-                interruptible_sleep(configuration, throttle_secs,
-                                    (check_run, check_stop))
+                interruptible_sleep(
+                    configuration, throttle_secs, (check_run, check_stop)
+                )
                 reset_run()
             if check_stop():
                 break
             t1 = time.time()
             status = update_quota(configuration)
             t2 = time.time()
-            msg = "(%s) Updated quota in %d secs with status: %s" \
-                % (os.getpid(), int(t2-t1), status)
+            msg = "(%s) Updated quota in %d secs with status: %s" % (
+                os.getpid(),
+                int(t2 - t1),
+                status,
+            )
             logger.info(msg)
             print("%s %s" % (datetime.datetime.now(), msg))
             throttle = True
@@ -124,18 +129,19 @@ unless it is available in mig/server/MiGserver.conf
             stop_running()
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to monitor child
-            msg = "(%s) Interrupt requested - shutdown" \
-                % os.getpid()
+            msg = "(%s) Interrupt requested - shutdown" % os.getpid()
             logger.info(msg)
             print("%s %s" % (datetime.datetime.now(), msg))
         except Exception as exc:
             throttle = True
-            msg = "(%s) Caught unexpected exception:\n%s" \
-                  % (os.getpid(), traceback.format_exc())
+            msg = "(%s) Caught unexpected exception:\n%s" % (
+                os.getpid(),
+                traceback.format_exc(),
+            )
             logger.error(msg)
-            print("%s ERROR: %s"
-                  % (datetime.datetime.now(), msg),
-                  file=sys.stderr)
+            print(
+                "%s ERROR: %s" % (datetime.datetime.now(), msg), file=sys.stderr
+            )
 
     msg = "(%s) Quota daemon shutting down" % main_pid
     logger.info(msg)
