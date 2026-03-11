@@ -28,8 +28,6 @@
 
 """Supporting functions for the unit test framework"""
 
-from collections import defaultdict
-from configparser import ConfigParser
 import difflib
 import errno
 import io
@@ -40,34 +38,40 @@ import pickle
 import shutil
 import stat
 import sys
+from collections import defaultdict
+from configparser import ConfigParser
 from types import SimpleNamespace
-from unittest import TestCase, main as testmain
-
-from tests.support.configsupp import FakeConfiguration
-from tests.support.fixturesupp import _PreparedFixture
-from tests.support.suppconst import MIG_BASE, TEST_BASE, \
-    TEST_DATA_DIR, TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR
-from tests.support.usersupp import UserAssertMixin
+from unittest import TestCase
+from unittest import main as testmain
 
 from tests.support._env import MIG_ENV, PY2
-
+from tests.support.configsupp import FakeConfiguration
+from tests.support.fixturesupp import _PreparedFixture
+from tests.support.suppconst import (
+    ENVHELP_OUTPUT_DIR,
+    MIG_BASE,
+    TEST_BASE,
+    TEST_DATA_DIR,
+    TEST_OUTPUT_DIR,
+)
+from tests.support.usersupp import UserAssertMixin
 
 # Provide access to a configuration file for the active environment.
 
-if MIG_ENV in ('local', 'docker'):
+if MIG_ENV in ("local", "docker"):
     # force local testconfig
-    _output_dir = os.path.join(MIG_BASE, 'envhelp/output')
+    _output_dir = os.path.join(MIG_BASE, "envhelp/output")
     _conf_dir_name = "testconfs-%s" % (MIG_ENV,)
     _conf_dir = os.path.join(_output_dir, _conf_dir_name)
-    _local_conf = os.path.join(_conf_dir, 'MiGserver.conf')
-    _config_file = os.getenv('MIG_CONF', None)
+    _local_conf = os.path.join(_conf_dir, "MiGserver.conf")
+    _config_file = os.getenv("MIG_CONF", None)
     if _config_file is None:
-        os.environ['MIG_CONF'] = _local_conf
+        os.environ["MIG_CONF"] = _local_conf
 
     # adjust the link through which confs are accessed to suit the environment
-    _conf_link = os.path.join(_output_dir, 'testconfs')
+    _conf_link = os.path.join(_output_dir, "testconfs")
     assert os.path.lexists(_conf_link)  # it must already exist
-    os.remove(_conf_link)              # blow it away
+    os.remove(_conf_link)  # blow it away
     os.symlink(_conf_dir, _conf_link)  # recreate it using the active MIG_BASE
 else:
     raise NotImplementedError()
@@ -96,7 +100,6 @@ from tests.support.assertover import AssertOver
 from tests.support.configsupp import FakeConfiguration
 from tests.support.loggersupp import FakeLogger, FakeLoggerChecker
 from tests.support.serversupp import make_wrapped_server
-
 
 # Basic global logging configuration for testing
 
@@ -181,7 +184,7 @@ class MigTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if MIG_ENV == 'docker':
+        if MIG_ENV == "docker":
             # the permissions story wrt running inside docker containers is
             # such that we can end up with files from previous test runs left
             # around that might subsequently cause spurious permissions errors
@@ -209,20 +212,24 @@ class MigTestCase(TestCase):
 
     @staticmethod
     def _make_configuration_instance(testcase, configuration_to_make):
-        if configuration_to_make == 'fakeconfig':
+        if configuration_to_make == "fakeconfig":
             return FakeConfiguration(logger=testcase.logger)
-        elif configuration_to_make == 'testconfig':
+        elif configuration_to_make == "testconfig":
             from mig.shared.conf import get_configuration_object
-            configuration = get_configuration_object(skip_log=True, 
-                                                     disable_auth_log=True)
+
+            configuration = get_configuration_object(
+                skip_log=True, disable_auth_log=True
+            )
             configuration.logger = testcase.logger
             return configuration
         else:
             raise AssertionError(
-                "MigTestCase: unknown configuration %r" % (configuration_to_make,))
+                "MigTestCase: unknown configuration %r"
+                % (configuration_to_make,)
+            )
 
     def _provide_configuration(self):
-        return 'unspecified'
+        return "unspecified"
 
     @property
     def configuration(self):
@@ -233,14 +240,16 @@ class MigTestCase(TestCase):
 
         configuration_to_make = self._provide_configuration()
 
-        if configuration_to_make == 'unspecified':
+        if configuration_to_make == "unspecified":
             raise AssertionError(
-                "configuration access but testcase did not request it")
+                "configuration access but testcase did not request it"
+            )
 
         configuration_instance = self._make_configuration_instance(
-            self, configuration_to_make)
+            self, configuration_to_make
+        )
 
-        if configuration_to_make == 'testconfig':
+        if configuration_to_make == "testconfig":
             # use the paths defined by the loaded configuration to create
             # the directories which are expected to be present by the code
             os.mkdir(configuration_instance.certs_path)
@@ -274,7 +283,8 @@ class MigTestCase(TestCase):
         """Make sure the supplied path is an empty directory"""
         path_kind = self.assertPathExists(relative_path)
         assert path_kind == "dir", "expected a directory but found %s" % (
-            path_kind, )
+            path_kind,
+        )
         absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
         entries = os.listdir(absolute_path)
         assert not entries, "directory is not empty"
@@ -283,7 +293,8 @@ class MigTestCase(TestCase):
         """Make sure the supplied path is a non-empty directory"""
         path_kind = self.assertPathExists(relative_path)
         assert path_kind == "dir", "expected a directory but found %s" % (
-            path_kind, )
+            path_kind,
+        )
         absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
         entries = os.listdir(absolute_path)
         assert entries, "directory is empty"
@@ -291,28 +302,35 @@ class MigTestCase(TestCase):
 
     def assertFileContentIdentical(self, file_actual, file_expected):
         """Make sure file_actual and file_expected are identical"""
-        with io.open(file_actual) as f_actual, io.open(file_expected) as f_expected:
+        with io.open(file_actual) as f_actual, io.open(
+            file_expected
+        ) as f_expected:
             lhs = f_actual.readlines()
             rhs = f_expected.readlines()
             different_lines = list(difflib.unified_diff(rhs, lhs))
             try:
                 self.assertEqual(len(different_lines), 0)
             except AssertionError:
-                raise AssertionError("""differences found between files
+                raise AssertionError(
+                    """differences found between files
 * %s
 * %s
 included:
 %s
-                    """ % (
-                    os.path.relpath(file_expected, MIG_BASE),
-                    os.path.relpath(file_actual, MIG_BASE),
-                    ''.join(different_lines)))
+                    """
+                    % (
+                        os.path.relpath(file_expected, MIG_BASE),
+                        os.path.relpath(file_actual, MIG_BASE),
+                        "".join(different_lines),
+                    )
+                )
 
     def assertFileExists(self, relative_path):
         """Make sure relative_path exists and is a file"""
         path_kind = self.assertPathExists(relative_path)
         assert path_kind == "file", "expected a file but found %s" % (
-            path_kind, )
+            path_kind,
+        )
         return os.path.join(TEST_OUTPUT_DIR, relative_path)
 
     def assertPathExists(self, relative_path):
@@ -342,13 +360,14 @@ included:
         """Make sure path is within start directory"""
         if not is_path_within(path, start=start):
             raise AssertionError(
-                "path %s is not within directory %s" % (path, start))
+                "path %s is not within directory %s" % (path, start)
+            )
 
     @staticmethod
     def pretty_display_path(absolute_path):
         assert os.path.isabs(absolute_path)
         relative_path = os.path.relpath(absolute_path, start=MIG_BASE)
-        assert not relative_path.startswith('..')
+        assert not relative_path.startswith("..")
         return relative_path
 
     @staticmethod
@@ -359,7 +378,9 @@ included:
         Note that this method, along with a number of others, are defined in
         the user portion of the test support libraries.
         """
-        return UserAssertMixin._provision_test_user(testcase, distinguished_name)
+        return UserAssertMixin._provision_test_user(
+            testcase, distinguished_name
+        )
 
 
 def is_path_within(path, start=None, _msg=None):
@@ -369,7 +390,7 @@ def is_path_within(path, start=None, _msg=None):
         relative = os.path.relpath(path, start=start)
     except:
         return False
-    return not relative.startswith('..')
+    return not relative.startswith("..")
 
 
 def ensure_dirs_exist(absolute_dir):
@@ -400,7 +421,7 @@ def temppath(relative_path, test_case, ensure_dir=False):
 
     # failsafe path checking that supplied paths are rooted within valid paths
     is_tmp_path_within_safe_dir = False
-    for start in (ENVHELP_OUTPUT_DIR):
+    for start in ENVHELP_OUTPUT_DIR:
         is_tmp_path_within_safe_dir = is_path_within(tmp_path, start=start)
         if is_tmp_path_within_safe_dir:
             break
@@ -413,7 +434,8 @@ def temppath(relative_path, test_case, ensure_dir=False):
         except OSError as oserr:
             if oserr.errno == errno.EEXIST:
                 raise AssertionError(
-                    "ABORT: use of unclean output path: %s" % tmp_path)
+                    "ABORT: use of unclean output path: %s" % tmp_path
+                )
     return tmp_path
 
 

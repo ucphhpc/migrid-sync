@@ -31,10 +31,22 @@ import os
 import signal
 import time
 
-from mig.lib.daemon import _run_event, _stop_event, check_run, check_stop, \
-    do_run, interruptible_sleep, register_run_handler, register_stop_handler, \
-    reset_run, reset_stop, run_handler, stop_handler, stop_running, \
-    unregister_signal_handlers
+from mig.lib.daemon import (
+    _run_event,
+    _stop_event,
+    check_run,
+    check_stop,
+    do_run,
+    interruptible_sleep,
+    register_run_handler,
+    register_stop_handler,
+    reset_run,
+    reset_stop,
+    run_handler,
+    stop_handler,
+    stop_running,
+    unregister_signal_handlers,
+)
 from tests.support import FakeConfiguration, FakeLogger, MigTestCase
 
 
@@ -42,19 +54,25 @@ class MigLibDaemon(MigTestCase):
     """Unit tests for daemon related helper functions"""
 
     # Signals registered across the tests and explicitly unregistered on init
-    _used_signals = [signal.SIGCONT, signal.SIGINT, signal.SIGALRM,
-                     signal.SIGABRT, signal.SIGUSR1, signal.SIGUSR2]
+    _used_signals = [
+        signal.SIGCONT,
+        signal.SIGINT,
+        signal.SIGALRM,
+        signal.SIGABRT,
+        signal.SIGUSR1,
+        signal.SIGUSR2,
+    ]
 
     def _provide_configuration(self):
         """Set up isolated test configuration and logger for the tests"""
-        return 'testconfig'
+        return "testconfig"
 
     def before_each(self):
         """Set up any test configuration and reset state before each test"""
 
         # Create dummy sig and frame values for isolated test use
-        self.sig = 'SIGNAL'
-        self.frame = 'FRAME'
+        self.sig = "SIGNAL"
+        self.frame = "FRAME"
 
         # Reset event states
         reset_run()
@@ -94,7 +112,7 @@ class MigLibDaemon(MigTestCase):
         max_secs = 4.2
         start = time.time()
         signal.alarm(1)
-        interruptible_sleep(self.configuration, max_secs, (check_run, ))
+        interruptible_sleep(self.configuration, max_secs, (check_run,))
         self.assertTrue(check_run())
         end = time.time()
         self.assertTrue(end - start < max_secs)
@@ -303,14 +321,17 @@ class MigLibDaemon(MigTestCase):
 
     def test_interruptible_sleep_immediate_break(self):
         """Test interruptible_sleep with immediate break condition"""
+
         def immediate_true():
             return True
 
         start = time.time()
         interruptible_sleep(self.configuration, 5.0, [immediate_true])
         duration = time.time() - start
-        self.assertTrue(duration < 0.1,
-                        "Sleep should exit immediately but took %s" % duration)
+        self.assertTrue(
+            duration < 0.1,
+            "Sleep should exit immediately but took %s" % duration,
+        )
 
     def test_reset_event_helpers(self):
         """Test simple event reset helpers"""
@@ -337,36 +358,41 @@ class MigLibDaemon(MigTestCase):
         register_stop_handler(self.configuration, signal.SIGABRT)
 
         # Verify handlers were set
-        self.assertEqual(signal.getsignal(signal.SIGALRM).__name__,
-                         'run_handler')
-        self.assertEqual(signal.getsignal(signal.SIGABRT).__name__,
-                         'stop_handler')
+        self.assertEqual(
+            signal.getsignal(signal.SIGALRM).__name__, "run_handler"
+        )
+        self.assertEqual(
+            signal.getsignal(signal.SIGABRT).__name__, "stop_handler"
+        )
 
         # Unregister specific signals
-        unregister_signal_handlers(self.configuration, [signal.SIGALRM,
-                                                        signal.SIGABRT])
+        unregister_signal_handlers(
+            self.configuration, [signal.SIGALRM, signal.SIGABRT]
+        )
         self.assertEqual(signal.getsignal(signal.SIGALRM), signal.SIG_IGN)
         self.assertEqual(signal.getsignal(signal.SIGABRT), signal.SIG_IGN)
 
     def test_interruptible_sleep_condition_after_interval(self):
         """Test interruptible_sleep break condition after one interval"""
-        state = {'count': 0}
+        state = {"count": 0}
 
         def counter_condition():
-            state['count'] += 1
-            return state['count'] >= 2
+            state["count"] += 1
+            return state["count"] >= 2
 
         start = time.time()
-        interruptible_sleep(self.configuration, 5.0, [counter_condition],
-                            nap_secs=0.1)
+        interruptible_sleep(
+            self.configuration, 5.0, [counter_condition], nap_secs=0.1
+        )
         duration = time.time() - start
         self.assertAlmostEqual(duration, 0.2, delta=0.15)
 
     def test_interruptible_sleep_maxsecs_equals_napsecs(self):
         """Test interruptible_sleep with max_secs exactly matching nap_secs"""
         start = time.time()
-        interruptible_sleep(self.configuration, 0.1, [lambda: False],
-                            nap_secs=0.1)
+        interruptible_sleep(
+            self.configuration, 0.1, [lambda: False], nap_secs=0.1
+        )
         duration = time.time() - start
         self.assertAlmostEqual(duration, 0.1, delta=0.05)
 
@@ -379,8 +405,9 @@ class MigLibDaemon(MigTestCase):
             self.logger.error(SLEEP_ERR)
 
         start = time.time()
-        interruptible_sleep(self.configuration, 0.1, [faulty_condition],
-                            nap_secs=0.01)
+        interruptible_sleep(
+            self.configuration, 0.1, [faulty_condition], nap_secs=0.01
+        )
         duration = time.time() - start
         self.assertAlmostEqual(duration, 0.1, delta=0.05)
         try:
@@ -402,22 +429,26 @@ class MigLibDaemon(MigTestCase):
         self.assertEqual(signal.getsignal(signal.SIGCONT), signal.SIG_IGN)
         self.assertEqual(signal.getsignal(signal.SIGUSR2), signal.SIG_IGN)
         # Verify custom signals remain after default unregister
-        self.assertEqual(signal.getsignal(signal.SIGINT).__name__,
-                         'run_handler')
-        self.assertEqual(signal.getsignal(signal.SIGALRM).__name__,
-                         'stop_handler')
+        self.assertEqual(
+            signal.getsignal(signal.SIGINT).__name__, "run_handler"
+        )
+        self.assertEqual(
+            signal.getsignal(signal.SIGALRM).__name__, "stop_handler"
+        )
 
     def test_register_default_signal(self):
         """Test handler registration with default signal values"""
         # Run handler should default to SIGCONT
         register_run_handler(self.configuration)
-        self.assertEqual(signal.getsignal(signal.SIGCONT).__name__,
-                         'run_handler')
+        self.assertEqual(
+            signal.getsignal(signal.SIGCONT).__name__, "run_handler"
+        )
 
         # Stop handler should default to SIGINT
         register_stop_handler(self.configuration)
-        self.assertEqual(signal.getsignal(signal.SIGINT).__name__,
-                         'stop_handler')
+        self.assertEqual(
+            signal.getsignal(signal.SIGINT).__name__, "stop_handler"
+        )
 
     def test_reset_unregistered_signals(self):
         """Test unregister responds gracefully to previously unregistered signals"""
@@ -440,21 +471,22 @@ class MigLibDaemon(MigTestCase):
 
     def test_interruptible_sleep_all_conditions_checked(self):
         """Verify all break conditions are checked each sleep interval"""
-        counter = {'count': 0}
+        counter = {"count": 0}
         max_checks = 3
 
         def counter_condition():
-            if counter['count'] < max_checks:
-                counter['count'] += 1
-            return counter['count'] >= max_checks
+            if counter["count"] < max_checks:
+                counter["count"] += 1
+            return counter["count"] >= max_checks
 
         start = time.time()
-        interruptible_sleep(self.configuration, 5.0, [counter_condition],
-                            nap_secs=0.1)
+        interruptible_sleep(
+            self.configuration, 5.0, [counter_condition], nap_secs=0.1
+        )
         duration = time.time() - start
         # Should run for ~0.3 sec (3 naps of 0.1 sec)
         self.assertAlmostEqual(duration, 0.3, delta=0.15)
-        self.assertEqual(counter['count'], max_checks)
+        self.assertEqual(counter["count"], max_checks)
 
     def test_interruptible_sleep_naps_remaining(self):
         """Test interruptible_sleep counts down remaining naps correctly"""
@@ -517,21 +549,20 @@ class MigLibDaemon(MigTestCase):
 
     def test_signal_handler_dispatch(self):
         """Verify signal handlers dispatch correct signals"""
-        test_signals = {
-            'run': [signal.SIGUSR1],
-            'stop': [signal.SIGUSR2]
-        }
+        test_signals = {"run": [signal.SIGUSR1], "stop": [signal.SIGUSR2]}
 
-        for func, sigs in [(register_run_handler, test_signals['run']),
-                           (register_stop_handler, test_signals['stop'])]:
+        for func, sigs in [
+            (register_run_handler, test_signals["run"]),
+            (register_stop_handler, test_signals["stop"]),
+        ]:
             for sig in sigs:
                 func(self.configuration, sig)
                 # Verify handler registration
                 dispatch = signal.getsignal(sig)
                 if func == register_run_handler:
-                    self.assertEqual(dispatch.__name__, 'run_handler')
+                    self.assertEqual(dispatch.__name__, "run_handler")
                 else:
-                    self.assertEqual(dispatch.__name__, 'stop_handler')
+                    self.assertEqual(dispatch.__name__, "stop_handler")
 
     def test_event_set_unset_lifecycle(self):
         """Verify full event lifecycle"""

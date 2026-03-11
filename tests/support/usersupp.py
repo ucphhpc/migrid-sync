@@ -33,15 +33,11 @@ import os
 import pickle
 
 from mig.shared.base import client_id_dir
-
 from tests.support.fixturesupp import _PreparedFixture
 
+TEST_USER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
 
-TEST_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
-
-_FIXTURE_NAME_BY_USER_DN = {
-    TEST_USER_DN: 'MiG-users.db--example'
-}
+_FIXTURE_NAME_BY_USER_DN = {TEST_USER_DN: "MiG-users.db--example"}
 
 
 class UserAssertMixin:
@@ -59,9 +55,9 @@ class UserAssertMixin:
         conf_user_db_home = testcase.configuration.user_db_home
         os.makedirs(conf_user_db_home, exist_ok=True)
 
-        user_db_file = os.path.join(conf_user_db_home, 'MiG-users.db')
+        user_db_file = os.path.join(conf_user_db_home, "MiG-users.db")
         if os.path.exists(user_db_file):
-            raise AssertionError('a user database file already exists')
+            raise AssertionError("a user database file already exists")
 
         return conf_user_db_home
 
@@ -79,19 +75,19 @@ class UserAssertMixin:
         try:
             fixture_relpath = _FIXTURE_NAME_BY_USER_DN[distinguished_name]
         except KeyError:
-            raise AssertionError('supplied test user is not known as a fixture')
+            raise AssertionError("supplied test user is not known as a fixture")
 
         # note: this is a non-standard direct use of fixture preparation due
         #       to this being bootstrap code and should not be used elsewhere
         prepared_fixture = _PreparedFixture.from_relpath(
-            testcase,
-            fixture_relpath,
-            fixture_format='json'
+            testcase, fixture_relpath, fixture_format="json"
         )
         # write out the user database fixture containing the user
-        prepared_fixture.write_to_dir(conf_user_db_home, output_format='pickle')
+        prepared_fixture.write_to_dir(conf_user_db_home, output_format="pickle")
 
-        test_user_dir = UserAssertMixin._provision_test_user_dirs(testcase, distinguished_name)
+        test_user_dir = UserAssertMixin._provision_test_user_dirs(
+            testcase, distinguished_name
+        )
 
         return test_user_dir
 
@@ -112,12 +108,16 @@ class UserAssertMixin:
 
         # create the test user settings directory
         conf_user_settings = os.path.normpath(self.configuration.user_settings)
-        test_user_settings_dir = os.path.join(conf_user_settings, test_client_dir_name)
+        test_user_settings_dir = os.path.join(
+            conf_user_settings, test_client_dir_name
+        )
         os.makedirs(test_user_settings_dir)
 
         # create an empty user settings file
-        test_user_settings_file = os.path.join(test_user_settings_dir, 'settings')
-        with open(test_user_settings_file, 'wb') as outfile:
+        test_user_settings_file = os.path.join(
+            test_user_settings_dir, "settings"
+        )
+        with open(test_user_settings_file, "wb") as outfile:
             pickle.dump({}, outfile)
 
         return test_user_dir
@@ -154,9 +154,11 @@ class UserAssertMixin:
         # write out all the users we have assembled by populating an empty
         # fixture with their data but using a known fixture name and thus one
         # suitably hinted so a production format pickle file ends up on-disk
-        prepared_fixture = _PreparedFixture(testcase, 'MiG-users.db--example')
+        prepared_fixture = _PreparedFixture(testcase, "MiG-users.db--example")
         prepared_fixture.fixture_data = users_by_dn
-        prepared_fixture.write_to_dir(conf_user_db_home, output_format='pickle')
+        prepared_fixture.write_to_dir(conf_user_db_home, output_format="pickle")
 
         for distinguished_name in distinguished_names:
-            UserAssertMixin._provision_test_user_dirs(testcase, distinguished_name)
+            UserAssertMixin._provision_test_user_dirs(
+                testcase, distinguished_name
+            )

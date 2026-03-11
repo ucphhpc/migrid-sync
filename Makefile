@@ -6,11 +6,9 @@ ifndef PY
 	PY = 3
 endif
 
-FORMAT_ENFORCE_DIRS = state/
-FORMAT_EXCLUDE_REGEX = '.*'
-FORMAT_EXCLUDE_GLOB = '*'
+FORMAT_ENFORCE_DIRS = ./bin ./mig/lib ./sbin ./tests
+FORMAT_EXCLUDE_REGEX = '.git|tests/data/|tests/fixture/|bin/checkconf.py|bin/createresource.py|bin/notifypassword.py|sbin/grid\_ftps.py|sbin/grid\_openid.py|sbin/grid\_sftp.py|sbin/grid\_webdavs.py'
 FORMAT_LINE_LENGTH = 80
-
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
 ifdef PYTHON_BIN
@@ -49,8 +47,7 @@ format-python:
 			--exclude=$(FORMAT_EXCLUDE_REGEX)
 	@$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
 			--profile=black \
-			--line-length=$(FORMAT_LINE_LENGTH) \
-			--skip-glob=$(FORMAT_EXCLUDE_GLOB)
+			--line-length=$(FORMAT_LINE_LENGTH)
 
 .PHONY: lint
 lint:

@@ -64,16 +64,14 @@ setup.
 Inspired by https://gist.github.com/lonetwin/3b5982cf88c598c0e169
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
-from builtins import object
+from __future__ import absolute_import, print_function
 
 import io
 import os
 import sys
 import threading
 import time
+from builtins import object
 
 try:
     from paramiko.server import ServerInterface
@@ -95,8 +93,11 @@ try:
     from mig.server.grid_sftp import SimpleSftpServer as SftpServerImpl
     from mig.shared.conf import get_configuration_object
     from mig.shared.fileio import user_chroot_exceptions
-    from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
-        register_hangup_handler
+    from mig.shared.logger import (
+        daemon_gdp_logger,
+        daemon_logger,
+        register_hangup_handler,
+    )
 except ImportError:
     print("ERROR: the migrid modules must be in PYTHONPATH")
     sys.exit(1)
@@ -126,7 +127,7 @@ class IOSocketAdapter(object):
 
     def send(self, data, flags=0):
         """Fake send"""
-        #logger.debug("IOSocketAdapter send: %s" % [data])
+        # logger.debug("IOSocketAdapter send: %s" % [data])
         self._stdout.flush()
         self._stdout.write(data)
         self._stdout.flush()
@@ -135,12 +136,12 @@ class IOSocketAdapter(object):
     def recv(self, bufsize, flags=0):
         """Fake recv"""
         data = self._stdin.read(bufsize)
-        #logger.debug("IOSocketAdapter recvd: %s" % [data])
+        # logger.debug("IOSocketAdapter recvd: %s" % [data])
         return data
 
     def close(self):
         """Fake close"""
-        #logger.debug("IOSocketAdapter close")
+        # logger.debug("IOSocketAdapter close")
         self._stdin.close()
         self._stdout.close()
 
@@ -151,7 +152,7 @@ class IOSocketAdapter(object):
     def get_name(self):
         """Used for paramiko logging"""
         # NOTE: we still need to set transport log explicitly
-        return 'sftp'
+        return "sftp"
 
     def get_transport(self):
         """Lazy transport init and getter"""
@@ -160,42 +161,46 @@ class IOSocketAdapter(object):
         return self._transport
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # We need to manualy extract MiG conf path since running from openssh
-    conf_path = os.path.join(os.path.dirname(__file__), 'MiGserver.conf')
-    os.putenv('MIG_CONF', conf_path)
+    conf_path = os.path.join(os.path.dirname(__file__), "MiGserver.conf")
+    os.putenv("MIG_CONF", conf_path)
     # Force no log init since we use separate logger
     configuration = get_configuration_object(skip_log=True)
     log_level = configuration.loglevel
     # Use separate logger
-    logger = daemon_logger('sftp-subsys', configuration.user_sftp_subsys_log,
-                           log_level)
+    logger = daemon_logger(
+        "sftp-subsys", configuration.user_sftp_subsys_log, log_level
+    )
     configuration.logger = logger
     auth_logger = daemon_logger(
-        "sftp-subsys-auth", configuration.user_auth_log, log_level)
+        "sftp-subsys-auth", configuration.user_auth_log, log_level
+    )
     configuration.auth_logger = auth_logger
     if configuration.site_enable_gdp:
-        gdp_logger = daemon_gdp_logger("sftp-subsys-gdp",
-                                       level=log_level)
+        gdp_logger = daemon_gdp_logger("sftp-subsys-gdp", level=log_level)
         configuration.gdp_logger = gdp_logger
     # Allow e.g. logrotate to force log re-open after rotates
     register_hangup_handler(configuration)
     pid = os.getpid()
-    logger.info('(%d) Basic sftp subsystem initialized' % pid)
+    logger.info("(%d) Basic sftp subsystem initialized" % pid)
     # IMPORTANT: for security reasons we only allow restricted launch
     #            The login shell should NOT evaluate arbitrary user code from
     #            profile or shell rc files and should preferably call this
     #            script directly. More info in the module doc-string above.
-    fallback_shells = ['/bin/sh']
-    login_shell = os.environ.get('SHELL', 'UNKNOWN')
-    if sys.argv[1:] == ['-c', __file__]:
+    fallback_shells = ["/bin/sh"]
+    login_shell = os.environ.get("SHELL", "UNKNOWN")
+    if sys.argv[1:] == ["-c", __file__]:
         login_shell = sys.argv[0]
     if login_shell in fallback_shells:
-        logger.warning("sftp subsystem not using direct launch but %s" %
-                       login_shell)
+        logger.warning(
+            "sftp subsystem not using direct launch but %s" % login_shell
+        )
     elif login_shell != __file__:
-        logger.error("sftp subsystem launched with illegal/unsafe shell: %s"
-                     % login_shell)
+        logger.error(
+            "sftp subsystem launched with illegal/unsafe shell: %s"
+            % login_shell
+        )
         sys.exit(1)
 
     # Lookup chroot exceptions once and for all
@@ -204,55 +209,56 @@ if __name__ == '__main__':
     # in acceptable_chmod helper.
     chmod_exceptions = []
     configuration.daemon_conf = {
-        'root_dir': os.path.abspath(configuration.user_home),
-        'chroot_exceptions': chroot_exceptions,
-        'chmod_exceptions': chmod_exceptions,
-        'allow_password': 'password' in configuration.user_sftp_auth,
-        'allow_digest': False,
-        'allow_publickey': 'publickey' in configuration.user_sftp_auth,
-        'user_alias': configuration.user_sftp_alias,
+        "root_dir": os.path.abspath(configuration.user_home),
+        "chroot_exceptions": chroot_exceptions,
+        "chmod_exceptions": chmod_exceptions,
+        "allow_password": "password" in configuration.user_sftp_auth,
+        "allow_digest": False,
+        "allow_publickey": "publickey" in configuration.user_sftp_auth,
+        "user_alias": configuration.user_sftp_alias,
         # Lock needed here due to threaded creds updates
-        'creds_lock': threading.Lock(),
-        'users': [],
-        'jobs': [],
-        'shares': [],
-        'jupyter_mounts': [],
-        'login_map': {},
-        'hash_cache': {},
-        'time_stamp': 0,
-        'logger': logger,
-        'stop_running': threading.Event(),
+        "creds_lock": threading.Lock(),
+        "users": [],
+        "jobs": [],
+        "shares": [],
+        "jupyter_mounts": [],
+        "login_map": {},
+        "hash_cache": {},
+        "time_stamp": 0,
+        "logger": logger,
+        "stop_running": threading.Event(),
     }
 
     try:
-        logger.debug('Create socket adaptor')
+        logger.debug("Create socket adaptor")
         socket_adapter = IOSocketAdapter(sys.stdin, sys.stdout)
-        logger.debug('Create server interface')
+        logger.debug("Create server interface")
         server_if = ServerInterface()
-        logger.debug('Create sftp server')
+        logger.debug("Create sftp server")
         # Pass helper vars directly on class to avoid API tampering
         SftpServerImpl.configuration = configuration
         SftpServerImpl.conf = configuration.daemon_conf
         SftpServerImpl.logger = logger
-        sftp_server = SFTPServer(socket_adapter, 'sftp', server=server_if,
-                                 sftp_si=SftpServerImpl)
+        sftp_server = SFTPServer(
+            socket_adapter, "sftp", server=server_if, sftp_si=SftpServerImpl
+        )
         # IMPORTANT: make sure spawned client handler thread uses main log
-        socket_adapter.get_transport().set_log_channel('sftp-subsys')
-        logger.info('(%s) Start sftp subsys server' % pid)
+        socket_adapter.get_transport().set_log_channel("sftp-subsys")
+        logger.info("(%s) Start sftp subsys server" % pid)
         # NOTE: we explicitly loop and join thread to act on hangup signal
         try:
             sftp_server.setDaemon(False)
             sftp_server.start()
         except Exception as exc:
             logger.error("(%d) Crashed with exception: %s" % (pid, exc))
-            configuration.daemon_conf['stop_running'].set()
+            configuration.daemon_conf["stop_running"].set()
 
-        logger.info('(%s) Handling client' % pid)
+        logger.info("(%s) Handling client" % pid)
         while True:
             try:
-                if configuration.daemon_conf['stop_running'].is_set():
+                if configuration.daemon_conf["stop_running"].is_set():
                     # TODO: should we terminate sftp_server here?
-                    logger.info('(%d) Join sftp subsys server worker' % pid)
+                    logger.info("(%d) Join sftp subsys server worker" % pid)
                     sftp_server.join()
                     break
                 else:
@@ -262,16 +268,17 @@ if __name__ == '__main__':
                     if not sftp_server.is_alive():
                         # logger.debug(
                         #     '(%d) Joined sftp subsys server worker' % pid)
-                        configuration.daemon_conf['stop_running'].set()
+                        configuration.daemon_conf["stop_running"].set()
                         break
             except KeyboardInterrupt:
                 logger.info("(%d) Received user interrupt" % pid)
-                configuration.daemon_conf['stop_running'].set()
+                configuration.daemon_conf["stop_running"].set()
             except Exception as exc:
                 logger.error("(%d) Crashed with exception: %s" % (pid, exc))
-                configuration.daemon_conf['stop_running'].set()
-        logger.info('(%d) Finished sftp subsys server' % pid)
+                configuration.daemon_conf["stop_running"].set()
+        logger.info("(%d) Finished sftp subsys server" % pid)
     except Exception as exc:
-        logger.error('(%d) Failed to run sftp subsys server: %s' % (pid, exc))
+        logger.error("(%d) Failed to run sftp subsys server: %s" % (pid, exc))
         import traceback
+
         logger.error(traceback.format_exc())

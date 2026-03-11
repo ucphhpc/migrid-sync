@@ -32,8 +32,7 @@ configured.
 Requires watchdog module (https://pypi.python.org/pypi/watchdog).
 """
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import datetime
 import logging
@@ -45,20 +44,36 @@ import sys
 import time
 
 try:
+    from watchdog.events import (
+        DirCreatedEvent,
+        FileCreatedEvent,
+        FileModifiedEvent,
+        PatternMatchingEventHandler,
+    )
     from watchdog.observers import Observer
-    from watchdog.events import PatternMatchingEventHandler, \
-        FileModifiedEvent, FileCreatedEvent, DirCreatedEvent
 except ImportError:
-    print('ERROR: the python watchdog module is required for this daemon')
+    print("ERROR: the python watchdog module is required for this daemon")
     sys.exit(1)
 
 from mig.lib.daemon import check_stop, register_stop_handler, stop_running
-from mig.lib.events import get_time_expand_map, parse_crontab, cron_match, \
-    parse_atjobs, at_remain, run_cron_command
-from mig.shared.base import force_utf8, client_dir_id, client_id_dir
+from mig.lib.events import (
+    at_remain,
+    cron_match,
+    get_time_expand_map,
+    parse_atjobs,
+    parse_crontab,
+    run_cron_command,
+)
+from mig.shared.base import client_dir_id, client_id_dir, force_utf8
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import crontab_name, atjobs_name, cron_output_dir, \
-    cron_log_name, cron_log_size, cron_log_cnt
+from mig.shared.defaults import (
+    atjobs_name,
+    cron_log_cnt,
+    cron_log_name,
+    cron_log_size,
+    cron_output_dir,
+    crontab_name,
+)
 from mig.shared.fileio import scandir, walk
 from mig.shared.logger import daemon_logger, register_hangup_handler
 
@@ -71,16 +86,15 @@ all_crontabs, all_atjobs = {}, {}
 # Global state helpers used in a number of functions and methods
 
 shared_state = {}
-shared_state['base_dir'] = None
-shared_state['base_dir_len'] = 0
-shared_state['crontab_inotify'] = None
-shared_state['crontab_handler'] = None
+shared_state["base_dir"] = None
+shared_state["base_dir_len"] = 0
+shared_state["crontab_inotify"] = None
+shared_state["crontab_handler"] = None
 
-(configuration, logger) = (None, None)
+configuration, logger = (None, None)
 
 
 class MiGCrontabEventHandler(PatternMatchingEventHandler):
-
     """Crontab pattern-matching event handler to take care of crontab/atjobs
     changes and update the global crontab database.
     """
@@ -95,9 +109,12 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
         """Constructor"""
 
         PatternMatchingEventHandler.__init__(
-            self, patterns=patterns, ignore_patterns=ignore_patterns,
+            self,
+            patterns=patterns,
+            ignore_patterns=ignore_patterns,
             ignore_directories=ignore_directories,
-            case_sensitive=case_sensitive)
+            case_sensitive=case_sensitive,
+        )
 
     def __update_crontab_monitor(
         self,
@@ -108,25 +125,28 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
 
         pid = multiprocessing.current_process().pid
 
-        if state == 'created':
+        if state == "created":
 
             # logger.debug('(%s) Updating crontab monitor for src_path: %s, event: %s'
             #              % (pid, src_path, state))
 
-            print('(%s) Updating crontab monitor for src_path: %s, event: %s'
-                  % (pid, src_path, state))
+            print(
+                "(%s) Updating crontab monitor for src_path: %s, event: %s"
+                % (pid, src_path, state)
+            )
 
             if os.path.exists(src_path):
 
                 # _crontab_monitor_lock.acquire()
 
-                if src_path not in shared_state['crontab_inotify']._wd_for_path:
+                if src_path not in shared_state["crontab_inotify"]._wd_for_path:
 
                     # logger.debug('(%s) Adding watch for: %s' % (pid,
                     #             src_path))
 
-                    shared_state['crontab_inotify'].add_watch(
-                        force_utf8(src_path))
+                    shared_state["crontab_inotify"].add_watch(
+                        force_utf8(src_path)
+                    )
 
                     # Fire 'modified' events for all dirs and files in subpath
                     # to ensure that all crontab files are loaded
@@ -137,23 +157,25 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
                             # logger.debug('(%s) Dispatch DirCreatedEvent for: %s'
                             #         % (pid, ent.path))
 
-                            shared_state['crontab_handler'].dispatch(
-                                DirCreatedEvent(ent.path))
-                        elif ent.path.find(configuration.user_settings) \
-                                > -1:
+                            shared_state["crontab_handler"].dispatch(
+                                DirCreatedEvent(ent.path)
+                            )
+                        elif ent.path.find(configuration.user_settings) > -1:
 
                             # logger.debug('(%s) Dispatch FileCreatedEvent for: %s'
                             #         % (pid, ent.path))
 
-                            shared_state['crontab_handler'].dispatch(
-                                FileCreatedEvent(ent.path))
+                            shared_state["crontab_handler"].dispatch(
+                                FileCreatedEvent(ent.path)
+                            )
 
                 # else:
                 #    logger.debug('(%s) crontab_monitor watch already exists for: %s'
                 #                  % (pid, src_path))
         else:
-            logger.debug('(%s) unhandled event: %s for: %s' % (pid,
-                                                               state, src_path))
+            logger.debug(
+                "(%s) unhandled event: %s for: %s" % (pid, state, src_path)
+            )
 
     def update_crontabs(self, event):
         """Handle all crontab updates"""
@@ -165,52 +187,59 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
         if event.is_directory:
             self.__update_crontab_monitor(configuration, src_path, state)
         elif os.path.basename(src_path) == crontab_name:
-            logger.debug('(%s) %s -> Updating crontab for: %s' % (pid,
-                                                                  state, src_path))
-            rel_path = src_path[len(configuration.user_settings):]
+            logger.debug(
+                "(%s) %s -> Updating crontab for: %s" % (pid, state, src_path)
+            )
+            rel_path = src_path[len(configuration.user_settings) :]
             client_dir = os.path.basename(os.path.dirname(src_path))
             client_id = client_dir_id(client_dir)
             user_home = os.path.join(configuration.user_home, client_dir)
-            logger.info('(%s) refresh %s crontab from %s' % (pid,
-                                                             client_id, src_path))
-            if state == 'deleted':
+            logger.info(
+                "(%s) refresh %s crontab from %s" % (pid, client_id, src_path)
+            )
+            if state == "deleted":
                 cur_crontab = []
-                logger.debug("(%s) deleted crontab from '%s'" %
-                             (pid, src_path))
+                logger.debug("(%s) deleted crontab from '%s'" % (pid, src_path))
             else:
                 cur_crontab = parse_crontab(configuration, client_id, src_path)
-                logger.debug("(%s) loaded new crontab from '%s':\n%s" %
-                             (pid, src_path, cur_crontab))
+                logger.debug(
+                    "(%s) loaded new crontab from '%s':\n%s"
+                    % (pid, src_path, cur_crontab)
+                )
 
             # Replace crontabs for this user
 
             all_crontabs[src_path] = cur_crontab
-            logger.debug('(%s) all crontabs: %s' % (pid, all_crontabs))
+            logger.debug("(%s) all crontabs: %s" % (pid, all_crontabs))
         elif os.path.basename(src_path) == atjobs_name:
-            logger.debug('(%s) %s -> Updating atjobs for: %s' % (pid,
-                                                                 state, src_path))
-            rel_path = src_path[len(configuration.user_settings):]
+            logger.debug(
+                "(%s) %s -> Updating atjobs for: %s" % (pid, state, src_path)
+            )
+            rel_path = src_path[len(configuration.user_settings) :]
             client_dir = os.path.basename(os.path.dirname(src_path))
             client_id = client_dir_id(client_dir)
             user_home = os.path.join(configuration.user_home, client_dir)
-            logger.info('(%s) refresh %s atjobs from %s' % (pid,
-                                                            client_id, src_path))
-            if state == 'deleted':
+            logger.info(
+                "(%s) refresh %s atjobs from %s" % (pid, client_id, src_path)
+            )
+            if state == "deleted":
                 cur_atjobs = []
-                logger.debug("(%s) deleted atjobs from '%s'" %
-                             (pid, src_path))
+                logger.debug("(%s) deleted atjobs from '%s'" % (pid, src_path))
             else:
                 cur_atjobs = parse_atjobs(configuration, client_id, src_path)
-                logger.debug("(%s) loaded new atjobs from '%s':\n%s" %
-                             (pid, src_path, cur_atjobs))
+                logger.debug(
+                    "(%s) loaded new atjobs from '%s':\n%s"
+                    % (pid, src_path, cur_atjobs)
+                )
 
             # Replace atjobs for this user
 
             all_atjobs[src_path] = cur_atjobs
-            logger.debug('(%s) all atjobs: %s' % (pid, all_atjobs))
+            logger.debug("(%s) all atjobs: %s" % (pid, all_atjobs))
         else:
-            logger.debug('(%s) %s skipping non-cron file: %s' % (pid,
-                                                                 state, src_path))
+            logger.debug(
+                "(%s) %s skipping non-cron file: %s" % (pid, state, src_path)
+            )
 
     def on_modified(self, event):
         """Handle modified crontab file"""
@@ -232,24 +261,26 @@ def __cron_log(configuration, client_id, msg, level="info"):
     """Wrapper to send a single msg to user cron log file"""
 
     client_dir = client_id_dir(client_id)
-    log_dir_path = os.path.join(configuration.user_home, client_dir,
-                                cron_output_dir)
+    log_dir_path = os.path.join(
+        configuration.user_home, client_dir, cron_output_dir
+    )
     log_path = os.path.join(log_dir_path, cron_log_name)
     if not os.path.exists(log_dir_path):
         try:
             os.makedirs(log_dir_path)
         except:
             pass
-    cron_logger = logging.getLogger('cron')
+    cron_logger = logging.getLogger("cron")
     cron_logger.setLevel(logging.INFO)
     handler = logging.handlers.RotatingFileHandler(
-        log_path, maxBytes=cron_log_size, backupCount=cron_log_cnt - 1)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        log_path, maxBytes=cron_log_size, backupCount=cron_log_cnt - 1
+    )
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
     handler.setFormatter(formatter)
     cron_logger.addHandler(handler)
-    if level == 'error':
+    if level == "error":
         cron_logger.error(msg)
-    elif level == 'warning':
+    elif level == "warning":
         cron_logger.warning(msg)
     else:
         cron_logger.info(msg)
@@ -261,60 +292,76 @@ def __cron_log(configuration, client_id, msg, level="info"):
 def __cron_err(configuration, client_id, msg):
     """Wrapper to send a single error msg to client_id cron log"""
 
-    __cron_log(configuration, client_id, msg, 'error')
+    __cron_log(configuration, client_id, msg, "error")
 
 
 def __cron_warn(configuration, client_id, msg):
     """Wrapper to send a single warning msg to client_id cron log"""
 
-    __cron_log(configuration, client_id, msg, 'warning')
+    __cron_log(configuration, client_id, msg, "warning")
 
 
 def __cron_info(configuration, client_id, msg):
     """Wrapper to send a single info msg to client_id cron log"""
 
-    __cron_log(configuration, client_id, msg, 'info')
+    __cron_log(configuration, client_id, msg, "info")
 
 
 def __handle_cronjob(configuration, client_id, timestamp, crontab_entry):
     """Actually handle valid crontab entry which is due"""
 
     pid = multiprocessing.current_process().pid
-    logger.info('(%s) in handling of %s for %s' % (pid,
-                                                   crontab_entry['command'],
-                                                   client_id))
-    __cron_info(configuration, client_id, 'handle %s for %s' %
-                (crontab_entry['command'], client_id))
+    logger.info(
+        "(%s) in handling of %s for %s"
+        % (pid, crontab_entry["command"], client_id)
+    )
+    __cron_info(
+        configuration,
+        client_id,
+        "handle %s for %s" % (crontab_entry["command"], client_id),
+    )
 
-    if crontab_entry['run_as'] != client_id:
-        logger.error('(%s) skipping due to owner mismatch for %s and %s!' %
-                     (pid, client_id, crontab_entry))
+    if crontab_entry["run_as"] != client_id:
+        logger.error(
+            "(%s) skipping due to owner mismatch for %s and %s!"
+            % (pid, client_id, crontab_entry)
+        )
         return False
 
     # Expand dynamic time variables in argument once and for all
 
     expand_map = get_time_expand_map(timestamp, crontab_entry)
-    command_list = crontab_entry['command'][:1]
-    for argument in crontab_entry['command'][1:]:
+    command_list = crontab_entry["command"][:1]
+    for argument in crontab_entry["command"][1:]:
         filled_argument = argument
-        for (key, val) in expand_map.items():
+        for key, val in expand_map.items():
             filled_argument = filled_argument.replace(key, val)
-        __cron_info(configuration, client_id,
-                    'expanded argument %s to %s' %
-                    (argument, filled_argument))
+        __cron_info(
+            configuration,
+            client_id,
+            "expanded argument %s to %s" % (argument, filled_argument),
+        )
         command_list.append(filled_argument)
     try:
         run_cron_command(command_list, client_id, crontab_entry, configuration)
-        logger.info('(%s) done running command for %s: %s' %
-                    (pid, client_id, ' '.join(command_list)))
-        __cron_info(configuration, client_id,
-                    'ran command: %s' % ' '.join(command_list))
+        logger.info(
+            "(%s) done running command for %s: %s"
+            % (pid, client_id, " ".join(command_list))
+        )
+        __cron_info(
+            configuration, client_id, "ran command: %s" % " ".join(command_list)
+        )
     except Exception as exc:
-        command_str = ' '.join(command_list)
-        logger.error('(%s) failed to run command for %s: %s (%s)' %
-                     (pid, client_id, command_str, exc))
-        __cron_err(configuration, client_id,
-                   'failed to run command: %s (%s)' % (command_str, exc))
+        command_str = " ".join(command_list)
+        logger.error(
+            "(%s) failed to run command for %s: %s (%s)"
+            % (pid, client_id, command_str, exc)
+        )
+        __cron_err(
+            configuration,
+            client_id,
+            "failed to run command: %s (%s)" % (command_str, exc),
+        )
 
 
 def run_handler(configuration, client_id, timestamp, crontab_entry):
@@ -329,10 +376,10 @@ def run_handler(configuration, client_id, timestamp, crontab_entry):
     waiting_for_worker_resources = True
     while waiting_for_worker_resources:
         try:
-            worker = \
-                multiprocessing.Process(target=__handle_cronjob,
-                                        args=(configuration, client_id,
-                                              timestamp, crontab_entry))
+            worker = multiprocessing.Process(
+                target=__handle_cronjob,
+                args=(configuration, client_id, timestamp, crontab_entry),
+            )
             worker.daemon = True
             worker.start()
             waiting_for_worker_resources = False
@@ -349,44 +396,48 @@ def monitor(configuration):
 
     pid = multiprocessing.current_process().pid
 
-    print('Starting global crontab monitor process')
-    logger.info('Starting global crontab monitor process')
+    print("Starting global crontab monitor process")
+    logger.info("Starting global crontab monitor process")
 
     # Set base_dir and base_dir_len
 
-    shared_state['base_dir'] = os.path.join(configuration.user_settings)
-    shared_state['base_dir_len'] = len(shared_state['base_dir'])
+    shared_state["base_dir"] = os.path.join(configuration.user_settings)
+    shared_state["base_dir_len"] = len(shared_state["base_dir"])
 
     # Allow e.g. logrotate to force log re-open after rotates
     register_hangup_handler(configuration)
 
     # Monitor crontab configurations
 
-    crontab_monitor_home = shared_state['base_dir']
+    crontab_monitor_home = shared_state["base_dir"]
     recursive_crontab_monitor = True
 
     crontab_monitor = Observer()
-    crontab_pattern = os.path.join(crontab_monitor_home, '*', crontab_name)
-    atjobs_pattern = os.path.join(crontab_monitor_home, '*', atjobs_name)
-    shared_state['crontab_handler'] = MiGCrontabEventHandler(
-        patterns=[crontab_pattern, atjobs_pattern], ignore_directories=False,
-        case_sensitive=True)
+    crontab_pattern = os.path.join(crontab_monitor_home, "*", crontab_name)
+    atjobs_pattern = os.path.join(crontab_monitor_home, "*", atjobs_name)
+    shared_state["crontab_handler"] = MiGCrontabEventHandler(
+        patterns=[crontab_pattern, atjobs_pattern],
+        ignore_directories=False,
+        case_sensitive=True,
+    )
 
-    crontab_monitor.schedule(shared_state['crontab_handler'],
-                             configuration.user_settings,
-                             recursive=recursive_crontab_monitor)
+    crontab_monitor.schedule(
+        shared_state["crontab_handler"],
+        configuration.user_settings,
+        recursive=recursive_crontab_monitor,
+    )
     crontab_monitor.start()
 
     if len(crontab_monitor._emitters) != 1:
-        logger.error('(%s) Number of crontab_monitor._emitters != 1' % pid)
+        logger.error("(%s) Number of crontab_monitor._emitters != 1" % pid)
         return 1
     crontab_monitor_emitter = min(crontab_monitor._emitters)
-    if not hasattr(crontab_monitor_emitter, '_inotify'):
-        logger.error('(%s) crontab_monitor_emitter require inotify' % pid)
+    if not hasattr(crontab_monitor_emitter, "_inotify"):
+        logger.error("(%s) crontab_monitor_emitter require inotify" % pid)
         return 1
-    shared_state['crontab_inotify'] = crontab_monitor_emitter._inotify._inotify
+    shared_state["crontab_inotify"] = crontab_monitor_emitter._inotify._inotify
 
-    logger.info('(%s) trigger crontab and atjobs refresh' % (pid, ))
+    logger.info("(%s) trigger crontab and atjobs refresh" % (pid,))
 
     # Fake touch event on all crontab files to load initial crontabs
 
@@ -398,7 +449,7 @@ def monitor(configuration):
 
     all_crontab_files, all_atjobs_files = [], []
 
-    for (root, _, files) in walk(crontab_monitor_home):
+    for root, _, files in walk(crontab_monitor_home):
         if crontab_name in files:
             crontab_path = os.path.join(root, crontab_name)
             all_crontab_files.append(crontab_path)
@@ -408,11 +459,11 @@ def monitor(configuration):
 
     for target_path in all_crontab_files + all_atjobs_files:
 
-        logger.debug('(%s) trigger load on cron/at file in %s' %
-                     (pid, target_path))
+        logger.debug(
+            "(%s) trigger load on cron/at file in %s" % (pid, target_path)
+        )
 
-        shared_state['crontab_handler'].dispatch(
-            FileModifiedEvent(target_path))
+        shared_state["crontab_handler"].dispatch(FileModifiedEvent(target_path))
 
     # logger.debug('(%s) loaded initial crontabs:\n%s' % (pid,
     # all_crontab_files))
@@ -421,81 +472,88 @@ def monitor(configuration):
         try:
             loop_start = datetime.datetime.now()
             loop_minute = loop_start.replace(second=0, microsecond=0)
-            logger.debug('main loop started with %d crontabs and %d atjobs' %
-                         (len(all_crontabs), len(all_atjobs)))
-            for (crontab_path, user_crontab) in all_crontabs.items():
+            logger.debug(
+                "main loop started with %d crontabs and %d atjobs"
+                % (len(all_crontabs), len(all_atjobs))
+            )
+            for crontab_path, user_crontab in all_crontabs.items():
                 client_dir = os.path.basename(os.path.dirname(crontab_path))
                 client_id = client_dir_id(client_dir)
                 for entry in user_crontab:
-                    logger.debug('inspect cron entry for %s: %s' %
-                                 (client_id, entry))
+                    logger.debug(
+                        "inspect cron entry for %s: %s" % (client_id, entry)
+                    )
                     if cron_match(configuration, loop_minute, entry):
-                        logger.info('run matching cron entry: %s' % entry)
-                        run_handler(configuration, client_id, loop_minute,
-                                    entry)
+                        logger.info("run matching cron entry: %s" % entry)
+                        run_handler(
+                            configuration, client_id, loop_minute, entry
+                        )
             # NOTE: we need a copy of all_atjobs to avoid errors on inline edit
-            for (atjobs_path, user_atjobs) in list(all_atjobs.items()):
+            for atjobs_path, user_atjobs in list(all_atjobs.items()):
                 client_dir = os.path.basename(os.path.dirname(atjobs_path))
                 client_id = client_dir_id(client_dir)
                 remaining = []
                 for entry in user_atjobs:
-                    logger.debug('inspect atjobs entry for %s: %s' %
-                                 (client_id, entry))
+                    logger.debug(
+                        "inspect atjobs entry for %s: %s" % (client_id, entry)
+                    )
                     remain_mins = at_remain(configuration, loop_minute, entry)
                     if remain_mins == 0:
-                        logger.info('run matching at entry: %s' % entry)
-                        run_handler(configuration, client_id, loop_minute,
-                                    entry)
+                        logger.info("run matching at entry: %s" % entry)
+                        run_handler(
+                            configuration, client_id, loop_minute, entry
+                        )
                     elif remain_mins > 0:
                         remaining.append(entry)
                     else:
-                        logger.info('removing expired at job: %s' % entry)
+                        logger.info("removing expired at job: %s" % entry)
                 # Update remaining jobs to clean up expired
                 if remaining:
                     all_atjobs[atjobs_path] = remaining
                 else:
                     del all_atjobs[atjobs_path]
         except KeyboardInterrupt:
-            print('(%s) caught interrupt' % pid)
+            print("(%s) caught interrupt" % pid)
             stop_running()
         except Exception as exc:
-            logger.error('unexpected exception in monitor: %s' % exc)
+            logger.error("unexpected exception in monitor: %s" % exc)
             import traceback
+
             print(traceback.format_exc())
 
         # Throttle down until next minute
 
         loop_time = (datetime.datetime.now() - loop_start).seconds
         if loop_time > 60:
-            logger.warning('(%s) loop did not finish before next tick: %s' %
-                           (os.getpid(), loop_time))
+            logger.warning(
+                "(%s) loop did not finish before next tick: %s"
+                % (os.getpid(), loop_time)
+            )
             loop_time = 59
         # Target sleep until start of next minute
         sleep_time = max(60 - (loop_time + loop_start.second), 1)
         # TODO: this debug log never shows up - conflict with user info log?
         #       at least it does if changed to info.
-        logger.debug('main loop sleeping %ds' % sleep_time)
+        logger.debug("main loop sleeping %ds" % sleep_time)
         # print('main loop sleeping %ds' % sleep_time)
         time.sleep(sleep_time)
 
-    print('(%s) Exiting crontab monitor' % pid)
-    logger.info('(%s) Exiting crontab monitor' % pid)
+    print("(%s) Exiting crontab monitor" % pid)
+    logger.info("(%s) Exiting crontab monitor" % pid)
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Force no log init since we use separate logger
     configuration = get_configuration_object(skip_log=True)
 
     log_level = configuration.loglevel
-    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning',
-                                        'error']:
+    if sys.argv[1:] and sys.argv[1] in ["debug", "info", "warning", "error"]:
         log_level = sys.argv[1]
 
     # Use separate logger
 
-    logger = daemon_logger('cron', configuration.user_cron_log,
-                           log_level)
+    logger = daemon_logger("cron", configuration.user_cron_log, log_level)
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
@@ -510,24 +568,25 @@ if __name__ == '__main__':
         print(err_msg)
         sys.exit(1)
 
-    print('''This is the MiG cron handler daemon which monitors user crontab
+    print("""This is the MiG cron handler daemon which monitors user crontab
 files and reacts to any configured actions when time is up.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-''')
+""")
 
     main_pid = os.getpid()
-    print('Starting Cron handler daemon - Ctrl-C to quit')
-    logger.info('(%s) Starting Cron handler daemon' % main_pid)
+    print("Starting Cron handler daemon - Ctrl-C to quit")
+    logger.info("(%s) Starting Cron handler daemon" % main_pid)
 
     # Start a single global monitor for all crontabs
 
-    crontab_monitor = multiprocessing.Process(target=monitor,
-                                              args=(configuration, ))
+    crontab_monitor = multiprocessing.Process(
+        target=monitor, args=(configuration,)
+    )
     crontab_monitor.start()
 
-    logger.debug('(%s) Starting main loop' % main_pid)
+    logger.debug("(%s) Starting main loop" % main_pid)
     print("%s: Start main loop" % os.getpid())
     while not check_stop():
         try:
@@ -537,27 +596,29 @@ unless it is available in mig/server/MiGserver.conf
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to monitor child
             print("Interrupt requested - close monitor and shutdown")
-            logger.info('(%s) Shut down monitor and wait' % os.getpid())
+            logger.info("(%s) Shut down monitor and wait" % os.getpid())
             mon_pid = crontab_monitor.pid
             if mon_pid is not None:
-                logger.debug('send exit signal to monitor %s' % mon_pid)
+                logger.debug("send exit signal to monitor %s" % mon_pid)
                 os.kill(mon_pid, signal.SIGINT)
             break
         except Exception as exc:
-            logger.error('(%s) Caught unexpected exception: %s' % (os.getpid(),
-                                                                   exc))
+            logger.error(
+                "(%s) Caught unexpected exception: %s" % (os.getpid(), exc)
+            )
 
     mon_pid = crontab_monitor.pid
-    logger.info('Wait for crontab monitors to clean up')
+    logger.info("Wait for crontab monitors to clean up")
     crontab_monitor.join(5)
     if crontab_monitor.is_alive():
-        logger.warning("force kill %s: %s" % (mon_pid,
-                                              crontab_monitor.is_alive()))
+        logger.warning(
+            "force kill %s: %s" % (mon_pid, crontab_monitor.is_alive())
+        )
         crontab_monitor.terminate()
     else:
-        logger.debug('crontab monitor %s: done' % mon_pid)
+        logger.debug("crontab monitor %s: done" % mon_pid)
 
-    print('Cron handler daemon shutting down')
-    logger.info('(%s) Cron handler daemon shutting down' % main_pid)
+    print("Cron handler daemon shutting down")
+    logger.info("(%s) Cron handler daemon shutting down" % main_pid)
 
     sys.exit(0)

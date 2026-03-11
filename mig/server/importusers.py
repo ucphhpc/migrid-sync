@@ -27,8 +27,7 @@
 
 """Import any missing users from provided URI"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import getopt
 import os
@@ -39,23 +38,33 @@ import time
 
 from mig.shared import returnvalues
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import fill_user, distinguished_name_to_user, \
-     force_native_str
+from mig.shared.base import (
+    distinguished_name_to_user,
+    fill_user,
+    force_native_str,
+)
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import csrf_field, keyword_auto, valid_auth_types
 from mig.shared.functionality.sendrequestaction import main
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.output import format_output
-from mig.shared.pwcrypto import generate_random_password, unscramble_password, \
-    scramble_password
+from mig.shared.pwcrypto import (
+    generate_random_password,
+    scramble_password,
+    unscramble_password,
+)
 from mig.shared.safeinput import valid_password_chars
 from mig.shared.url import urlopen
-from mig.shared.useradm import init_user_adm, default_search, create_user, \
-    search_users
+from mig.shared.useradm import (
+    create_user,
+    default_search,
+    init_user_adm,
+    search_users,
+)
 from mig.shared.vgridaccess import refresh_user_map
 
 
-def usage(name='importusers.py'):
+def usage(name="importusers.py"):
     """Usage help"""
 
     print("""Import users from an external plain text or XML source URI.
@@ -78,7 +87,7 @@ Where URI may be an URL or local file and OPTIONS may be one or more of:
    -p PEER_PATTERN     Verify in Peers of existing account matching PEER_PATTERN
    -P PASSWORD         Optional PASSWORD to set for user (AUTO to generate one)
    -v                  Verbose output
-""" % {'name': name})
+""" % {"name": name})
 
 
 def dump_contents(url, key_path=None, cert_path=None):
@@ -106,17 +115,17 @@ def parse_contents(user_data):
     """
 
     users = []
-    for user_creds in re.findall('/[a-zA-Z]+=[^<\n]+', user_data):
-        #print "DEBUG: handling user %s" % user_creds
+    for user_creds in re.findall("/[a-zA-Z]+=[^<\n]+", user_data):
+        # print "DEBUG: handling user %s" % user_creds
         user_dict = distinguished_name_to_user(user_creds.strip())
         users.append(user_dict)
     return users
 
 
-if '__main__' == __name__:
-    (args, app_dir, db_path) = init_user_adm()
+if "__main__" == __name__:
+    args, app_dir, db_path = init_user_adm()
     conf_path = None
-    auth_type = 'custom'
+    auth_type = "custom"
     key_path = None
     cert_path = None
     expire = None
@@ -125,50 +134,50 @@ if '__main__' == __name__:
     verbose = False
     vgrids = []
     override_fields = {}
-    opt_args = 'a:C:c:d:e:fhK:m:p:P:v'
+    opt_args = "a:C:c:d:e:fhK:m:p:P:v"
     try:
-        (opts, args) = getopt.getopt(args, opt_args)
+        opts, args = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    for (opt, val) in opts:
-        if opt == '-a':
+    for opt, val in opts:
+        if opt == "-a":
             auth_type = val
-        elif opt == '-c':
+        elif opt == "-c":
             conf_path = val
-        elif opt == '-d':
+        elif opt == "-d":
             db_path = val
-        elif opt == '-e':
+        elif opt == "-e":
             expire = int(val)
-            override_fields['expire'] = expire
-            override_fields['status'] = 'temporal'
-        elif opt == '-f':
+            override_fields["expire"] = expire
+            override_fields["status"] = "temporal"
+        elif opt == "-f":
             force = True
-        elif opt == '-h':
+        elif opt == "-h":
             usage()
             sys.exit(0)
-        elif opt == '-C':
+        elif opt == "-C":
             cert_path = val
-        elif opt == '-K':
+        elif opt == "-K":
             key_path = val
-        elif opt == '-m':
+        elif opt == "-m":
             vgrids.append(val)
-        elif opt == '-p':
+        elif opt == "-p":
             peer_pattern = val
-            override_fields['peer_pattern'] = peer_pattern
-            override_fields['status'] = 'temporal'
-        elif opt == '-P':
+            override_fields["peer_pattern"] = peer_pattern
+            override_fields["status"] = "temporal"
+        elif opt == "-P":
             password = val
-        elif opt == '-v':
+        elif opt == "-v":
             verbose = True
         else:
-            print('Error: %s not supported!' % opt)
+            print("Error: %s not supported!" % opt)
             sys.exit(1)
 
     if not args:
-        print('Must provide one or more URIs to import from')
+        print("Must provide one or more URIs to import from")
         usage()
         sys.exit(1)
 
@@ -176,27 +185,32 @@ if '__main__' == __name__:
     for url in args:
         url_dump = dump_contents(url, key_path, cert_path)
         users += parse_contents(url_dump)
-    #print "DEBUG: raw users to import: %s" % users
+    # print "DEBUG: raw users to import: %s" % users
 
     if auth_type not in valid_auth_types:
-        print('Error: invalid account auth type %r requested (allowed: %s)' %
-              (auth_type, ', '.join(valid_auth_types)))
+        print(
+            "Error: invalid account auth type %r requested (allowed: %s)"
+            % (auth_type, ", ".join(valid_auth_types))
+        )
         usage()
         sys.exit(1)
 
     new_users = []
     for user_dict in users:
         id_search = default_search()
-        id_search['distinguished_name'] = user_dict['distinguished_name']
-        (configuration, hits) = search_users(id_search, conf_path, db_path,
-                                             verbose)
+        id_search["distinguished_name"] = user_dict["distinguished_name"]
+        configuration, hits = search_users(
+            id_search, conf_path, db_path, verbose
+        )
         if hits:
             if verbose:
-                print('Not adding existing user: %(distinguished_name)s' %
-                      user_dict)
+                print(
+                    "Not adding existing user: %(distinguished_name)s"
+                    % user_dict
+                )
             continue
         new_users.append(user_dict)
-    #print "DEBUG: new users to import: %s" % new_users
+    # print "DEBUG: new users to import: %s" % new_users
 
     configuration = get_configuration_object()
 
@@ -205,30 +219,31 @@ if '__main__' == __name__:
 
     for user_dict in new_users:
         fill_user(user_dict)
-        client_id = user_dict['distinguished_name']
-        user_dict['comment'] = 'imported from external URI'
+        client_id = user_dict["distinguished_name"]
+        user_dict["comment"] = "imported from external URI"
         if password == keyword_auto:
-            print('Auto generating password for user: %s' % client_id)
-            user_dict['password'] = generate_random_password(configuration)
+            print("Auto generating password for user: %s" % client_id)
+            user_dict["password"] = generate_random_password(configuration)
         elif password:
-            print('Setting provided password for user: %s' % client_id)
-            user_dict['password'] = password
+            print("Setting provided password for user: %s" % client_id)
+            user_dict["password"] = password
         else:
-            print('Setting empty password for user: %s' % client_id)
-            user_dict['password'] = ''
+            print("Setting empty password for user: %s" % client_id)
+            user_dict["password"] = ""
 
         # Encode password if set but not already encoded
-        if user_dict['password']:
+        if user_dict["password"]:
             if verbose:
-                print('Scrambling password for user: %s' % client_id)
-            user_dict['password'] = scramble_password(
-                configuration.site_password_salt, user_dict['password'])
+                print("Scrambling password for user: %s" % client_id)
+            user_dict["password"] = scramble_password(
+                configuration.site_password_salt, user_dict["password"]
+            )
 
         # Force expire
-        user_dict['expire'] = expire
+        user_dict["expire"] = expire
 
         # NOTE: let non-ID command line values override loaded values
-        for (key, val) in list(override_fields.items()):
+        for key, val in list(override_fields.items()):
             user_dict[key] = val
 
         try:
@@ -236,47 +251,63 @@ if '__main__' == __name__:
         except Exception as exc:
             print(exc)
             continue
-        print('Created %s in user database and in file system' % client_id)
+        print("Created %s in user database and in file system" % client_id)
 
     # NOTE: force update user_map before calling sendrequestaction!
     #       create_user does NOT necessarily update it due to caching time.
     refresh_user_map(configuration)
 
     # Needed for CSRF check in safe_handler
-    form_method = 'post'
+    form_method = "post"
     csrf_limit = get_csrf_limit(configuration)
-    target_op = 'sendrequestaction'
-    os.environ.update({'SCRIPT_URL': '%s.py' % target_op,
-                       'REQUEST_METHOD': form_method})
+    target_op = "sendrequestaction"
+    os.environ.update(
+        {"SCRIPT_URL": "%s.py" % target_op, "REQUEST_METHOD": form_method}
+    )
     for user_dict in new_users:
         fill_user(user_dict)
-        client_id = user_dict['distinguished_name']
-        csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                     client_id, csrf_limit)
+        client_id = user_dict["distinguished_name"]
+        csrf_token = make_csrf_token(
+            configuration, form_method, target_op, client_id, csrf_limit
+        )
         for name in vgrids:
-            request = {'vgrid_name': [name], 'request_type': ['vgridmember'],
-                       'request_text':
-                       ['automatic request from importusers script'],
-                       csrf_field: [csrf_token]}
-            (output_objs, status) = main(client_id, request)
+            request = {
+                "vgrid_name": [name],
+                "request_type": ["vgridmember"],
+                "request_text": ["automatic request from importusers script"],
+                csrf_field: [csrf_token],
+            }
+            output_objs, status = main(client_id, request)
             if status == returnvalues.OK:
-                print('Request for %s membership in %s sent to owners' %
-                      (client_id, name))
+                print(
+                    "Request for %s membership in %s sent to owners"
+                    % (client_id, name)
+                )
             else:
-                print('Request for %s membership in %s with %s failed:' %
-                      (client_id, name, request))
-                output_format = 'text'
-                (ret_code, ret_msg) = status
-                output = format_output(configuration, target_op, ret_code,
-                                       ret_msg, output_objs, output_format)
+                print(
+                    "Request for %s membership in %s with %s failed:"
+                    % (client_id, name, request)
+                )
+                output_format = "text"
+                ret_code, ret_msg = status
+                output = format_output(
+                    configuration,
+                    target_op,
+                    ret_code,
+                    ret_msg,
+                    output_objs,
+                    output_format,
+                )
 
                 # Explicit None means error during output formatting
 
                 if output is None:
-                    print("ERROR: %s output formatting failed: %s" %
-                          (output_format, output_objs))
-                    output = 'Error: output could not be correctly delivered!'
+                    print(
+                        "ERROR: %s output formatting failed: %s"
+                        % (output_format, output_objs)
+                    )
+                    output = "Error: output could not be correctly delivered!"
                 else:
                     print(output)
 
-    print('%d new users imported' % len(new_users))
+    print("%d new users imported" % len(new_users))

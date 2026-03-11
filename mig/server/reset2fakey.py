@@ -27,24 +27,26 @@
 
 """(Re)set user 2FA key"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-from builtins import range
 import base64
 import datetime
 import getopt
 import os
 import sys
 import tempfile
+from builtins import range
 
 import pyotp
 
 from mig.shared.auth import reset_twofactor_key, valid_otp_window
 from mig.shared.base import client_id_dir
-from mig.shared.defaults import twofactor_filename, twofactor_key_name, \
-    twofactor_interval_name
 from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import (
+    twofactor_filename,
+    twofactor_interval_name,
+    twofactor_key_name,
+)
 from mig.shared.fileio import delete_file
 from mig.shared.gdp.all import project_close
 from mig.shared.settings import load_twofactor, parse_and_save_twofactor
@@ -61,23 +63,24 @@ def enable2fa(configuration, user_id, verbose, force=False):
         if current_twofactor_dict:
             return True
     keywords_dict = twofactor_keywords(configuration)
-    topic_mrsl = ''
+    topic_mrsl = ""
     for keyword in keywords_dict:
-        topic_mrsl += '''::%s::
+        topic_mrsl += """::%s::
 %s
 
-''' % (keyword.upper(), 'True')
+""" % (keyword.upper(), "True")
 
     try:
-        (filehandle, tmptopicfile) = tempfile.mkstemp(text=True)
+        filehandle, tmptopicfile = tempfile.mkstemp(text=True)
         os.write(filehandle, topic_mrsl)
         os.close(filehandle)
     except Exception as exc:
         msg = "Error: Problem writing temporary topic file on server."
         print("%s : %s" % (msg, exc))
         return False
-    (parse_status, _) = parse_and_save_twofactor(tmptopicfile, user_id,
-                                                 configuration)
+    parse_status, _ = parse_and_save_twofactor(
+        tmptopicfile, user_id, configuration
+    )
     if parse_status:
         print("Enabled all two-factor services for user: %r" % user_id)
     else:
@@ -120,13 +123,14 @@ def remove2fa(configuration, user_id, verbose, force=False):
     twofactor_settings_path = os.path.join(settings_dir, twofactor_filename)
     if verbose:
         print("Removing twofactor file: %s" % twofactor_settings_path)
-    status = delete_file(twofactor_settings_path, _logger,
-                         allow_missing=allow_missing)
+    status = delete_file(
+        twofactor_settings_path, _logger, allow_missing=allow_missing
+    )
 
     return status
 
 
-def usage(name='reset2fakey.py'):
+def usage(name="reset2fakey.py"):
     """Usage help"""
 
     print("""(Re)set user 2FA key.
@@ -140,13 +144,12 @@ Where OPTIONS may be one or more of:
    -a                  Enable 2fa for all services
    -r                  Remove 2fa for all services
    -v                  Verbose output
-"""
-          % {'name': name})
+""" % {"name": name})
 
 
 # ## Main ###
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     conf_path = None
     force = False
     verbose = False
@@ -156,62 +159,62 @@ if '__main__' == __name__:
     seed_file = None
     interval = None
     remove = False
-    opt_args = 'c:fhari:v'
+    opt_args = "c:fhari:v"
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
+        opts, args = getopt.getopt(sys.argv[1:], opt_args)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    for (opt, val) in opts:
-        if opt == '-c':
+    for opt, val in opts:
+        if opt == "-c":
             conf_path = val
-        elif opt == '-f':
+        elif opt == "-f":
             force = True
-        elif opt == '-h':
+        elif opt == "-h":
             usage()
             sys.exit(0)
-        elif opt == '-i':
+        elif opt == "-i":
             user_id = val
-        elif opt == '-a':
+        elif opt == "-a":
             enable_all = True
-        elif opt == '-r':
+        elif opt == "-r":
             remove = True
-        elif opt == '-v':
+        elif opt == "-v":
             verbose = True
         else:
-            print('Error: %s not supported!' % opt)
+            print("Error: %s not supported!" % opt)
 
     if conf_path and not os.path.isfile(conf_path):
-        print('Failed to read configuration file: %s' % conf_path)
+        print("Failed to read configuration file: %s" % conf_path)
         sys.exit(1)
 
     if verbose:
         if conf_path:
-            os.environ['MIG_CONF'] = conf_path
-            print('using configuration in %s' % conf_path)
+            os.environ["MIG_CONF"] = conf_path
+            print("using configuration in %s" % conf_path)
         else:
-            print('using configuration from MIG_CONF (or default)')
+            print("using configuration from MIG_CONF (or default)")
 
     configuration = get_configuration_object(skip_log=True)
     if not configuration.site_enable_twofactor:
-        print('Error: Two-factor authentication disabled for site')
+        print("Error: Two-factor authentication disabled for site")
         sys.exit(1)
 
     if not user_id:
-        print('Error: Existing user ID is required')
+        print("Error: Existing user ID is required")
         usage()
         sys.exit(1)
 
     if configuration.site_enable_gdp:
-        status = project_close(configuration,
-                               'https',
-                               '127.0.0.1',
-                               user_id=user_id)
+        status = project_close(
+            configuration, "https", "127.0.0.1", user_id=user_id
+        )
         if not status:
             print(
-                'Warning: Project close failed, user probably not logged in to any projects')
+                "Warning: Project close failed, user probably not logged in to any projects"
+            )
 
     if remove:
         status = remove2fa(configuration, user_id, verbose, force)
@@ -223,7 +226,7 @@ if '__main__' == __name__:
             sys.exit(1)
 
     if not enable2fa(configuration, user_id, verbose, enable_all):
-        print('Error: Failed to enable two-factor authentication')
+        print("Error: Failed to enable two-factor authentication")
         sys.exit(1)
 
     if args:
@@ -238,7 +241,7 @@ if '__main__' == __name__:
     if seed_file:
         # TODO: port to read_file helper
         try:
-            s_fd = open(seed_file, 'r')
+            s_fd = open(seed_file, "r")
             seed = s_fd.read().strip()
             s_fd.close()
         except Exception as exc:
@@ -275,8 +278,9 @@ if '__main__' == __name__:
         if interval:
             print("using interval: %s" % interval)
 
-    twofa_key = reset_twofactor_key(user_id, configuration,
-                                    seed=seed, interval=interval)
+    twofa_key = reset_twofactor_key(
+        user_id, configuration, seed=seed, interval=interval
+    )
     if verbose:
         print("New two factor key: %s" % twofa_key)
 
@@ -290,19 +294,30 @@ if '__main__' == __name__:
                 totp_custom_totp = pyotp.TOTP(twofa_key, interval=interval)
 
             if valid_otp_window == 0:
-                print("default interval, code: %s"
-                      % totp_default.at(current_time, 0))
+                print(
+                    "default interval, code: %s"
+                    % totp_default.at(current_time, 0)
+                )
                 if totp_custom_totp:
-                    print("interval: %d, code: %s"
-                          % (interval, totp_custom_totp.at(current_time, 0)))
+                    print(
+                        "interval: %d, code: %s"
+                        % (interval, totp_custom_totp.at(current_time, 0))
+                    )
             else:
                 for i in range(-valid_otp_window, valid_otp_window + 1):
-                    print("default interval, window: %d, code: %s"
-                          % (i, totp_default.at(current_time, i)))
+                    print(
+                        "default interval, window: %d, code: %s"
+                        % (i, totp_default.at(current_time, i))
+                    )
                     if totp_custom_totp:
-                        print("interval: %d, window: %d, code: %s"
-                              % (interval, i,
-                                 totp_custom_totp.at(current_time, i)))
+                        print(
+                            "interval: %d, window: %d, code: %s"
+                            % (
+                                interval,
+                                i,
+                                totp_custom_totp.at(current_time, i),
+                            )
+                        )
     else:
         print("Failed to reset two factor key")
         sys.exit(1)

@@ -32,10 +32,18 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.support import TEST_OUTPUT_DIR, MigTestCase, FakeConfiguration, \
-    cleanpath, testmain
-from mig.shared.ssh import supported_pub_key_parsers, parse_pub_key, \
-    generate_ssh_rsa_key_pair
+from mig.shared.ssh import (
+    generate_ssh_rsa_key_pair,
+    parse_pub_key,
+    supported_pub_key_parsers,
+)
+from tests.support import (
+    TEST_OUTPUT_DIR,
+    FakeConfiguration,
+    MigTestCase,
+    cleanpath,
+    testmain,
+)
 
 
 class MigSharedSsh(MigTestCase):
@@ -45,11 +53,11 @@ class MigSharedSsh(MigTestCase):
         parsers = supported_pub_key_parsers()
         # NOTE: should return a non-empty dict of algos and parsers
         self.assertTrue(parsers)
-        self.assertTrue('ssh-rsa' in parsers)
+        self.assertTrue("ssh-rsa" in parsers)
 
         # Generate common sized keys and parse the result
         for keysize in (2048, 3072, 4096):
-            (priv_key, pub_key) = generate_ssh_rsa_key_pair(size=keysize)
+            priv_key, pub_key = generate_ssh_rsa_key_pair(size=keysize)
             self.assertTrue(priv_key)
             self.assertTrue(pub_key)
 
@@ -57,15 +65,16 @@ class MigSharedSsh(MigTestCase):
             try:
                 parsed = parse_pub_key(pub_key)
             except ValueError as vae:
-                #print("Error in parsing pub key: %r" % vae)
+                # print("Error in parsing pub key: %r" % vae)
                 parsed = None
             self.assertIsNotNone(parsed)
 
-            (priv_key, pub_key) = generate_ssh_rsa_key_pair(size=keysize,
-                                                            encode_utf8=True)
+            priv_key, pub_key = generate_ssh_rsa_key_pair(
+                size=keysize, encode_utf8=True
+            )
             self.assertTrue(priv_key)
             self.assertTrue(pub_key)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

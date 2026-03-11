@@ -31,28 +31,28 @@ import importlib
 import os
 import sys
 
-from tests.support import MigTestCase, testmain
-
 from mig.unittest.testcore import main as testcore_main
+from tests.support import MigTestCase, testmain
 
 
 class MigUnittestTestcore(MigTestCase):
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     def test_existing_main(self):
         def raise_on_error_exit(exit_code, identifying_message=None):
             if exit_code != 0:
                 if identifying_message is None:
-                    identifying_message = 'unknown'
+                    identifying_message = "unknown"
                 raise AssertionError(
-                    'failure in unittest/testcore: %s' % (identifying_message,))
+                    "failure in unittest/testcore: %s" % (identifying_message,)
+                )
 
-        print("") # account for wrapped tests printing to console
+        print("")  # account for wrapped tests printing to console
 
         testcore_main(self.configuration, _exit=raise_on_error_exit)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

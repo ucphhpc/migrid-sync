@@ -28,14 +28,14 @@
 
 import difflib
 import errno
-import re
 import os
+import re
 
 from tests.support.suppconst import TEST_BASE
 
-HTML_TAG = '<html>'
-MARKER_CONTENT_BEGIN = '<!-- Begin UI container -->'
-MARKER_CONTENT_END = '<!-- End UI container -->'
+HTML_TAG = "<html>"
+MARKER_CONTENT_BEGIN = "<!-- Begin UI container -->"
+MARKER_CONTENT_END = "<!-- End UI container -->"
 TEST_SNAPSHOTS_DIR = os.path.join(TEST_BASE, "snapshots")
 
 try:
@@ -57,9 +57,9 @@ def _html_content_only(value):
     # set the index after the content marker
     content_start_index += len(MARKER_CONTENT_BEGIN)
     # we now need to remove the container div inside it ..first find it
-    content_start_inner_div = value.find('<div', content_start_index)
+    content_start_inner_div = value.find("<div", content_start_index)
     # reset the content start to exclude up the end of the container div
-    content_start_index = value.find('>', content_start_inner_div) + 1
+    content_start_index = value.find(">", content_start_inner_div) + 1
 
     content_end_index = value.find(MARKER_CONTENT_END)
     assert content_end_index > -1, "unable to locate end of content"
@@ -77,7 +77,7 @@ def _delimited_lines(value):
     lines = []
 
     while from_index < last_index:
-        found_index = value.find('\n', from_index)
+        found_index = value.find("\n", from_index)
         if found_index == -1:
             break
         found_index += 1
@@ -93,8 +93,8 @@ def _delimited_lines(value):
 def _force_refresh_snapshots():
     """Check whether the environment specifies snapshots should be refreshed."""
 
-    env_refresh_snapshots = os.environ.get('REFRESH_SNAPSHOTS', 'no').lower()
-    return env_refresh_snapshots in ('true', 'yes', '1')
+    env_refresh_snapshots = os.environ.get("REFRESH_SNAPSHOTS", "no").lower()
+    return env_refresh_snapshots in ("true", "yes", "1")
 
 
 class SnapshotAssertMixin:
@@ -107,7 +107,7 @@ class SnapshotAssertMixin:
         In the case a snapshot does not exist it is saved on first invocation.
         """
 
-        file_name = ''.join([self._testMethodName, ".", extension])
+        file_name = "".join([self._testMethodName, ".", extension])
         file_path = os.path.join(TEST_SNAPSHOTS_DIR, file_name)
 
         if not os.path.isfile(file_path) or _force_refresh_snapshots():
@@ -126,11 +126,12 @@ class SnapshotAssertMixin:
         udiff = difflib.unified_diff(
             _delimited_lines(expected_content),
             _delimited_lines(actual_content),
-            'expected',
-            'actual'
+            "expected",
+            "actual",
         )
         raise AssertionError(
-            "content did not match snapshot\n\n%s" % (''.join(udiff),))
+            "content did not match snapshot\n\n%s" % ("".join(udiff),)
+        )
 
     def assertSnapshot(self, actual_content, extension=None):
         """Load a snapshot corresponding to the named test and check that what
@@ -148,4 +149,4 @@ class SnapshotAssertMixin:
         """
 
         actual_content = _html_content_only(actual_content)
-        self._snapshotsupp_compare_snapshot('html', actual_content)
+        self._snapshotsupp_compare_snapshot("html", actual_content)

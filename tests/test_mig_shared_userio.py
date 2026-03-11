@@ -29,11 +29,11 @@
 
 import os
 import sys
+
 from past.builtins import basestring, unicode
 
-from tests.support import MigTestCase, testmain
-
 from mig.shared.userio import main as userio_main
+from tests.support import MigTestCase, testmain
 
 
 class MigSharedUserIO(MigTestCase):
@@ -45,9 +45,11 @@ class MigSharedUserIO(MigTestCase):
                 if raise_on_error_exit.last_print is not None:
                     identifying_message = raise_on_error_exit.last_print
                 else:
-                    identifying_message = 'unknown'
+                    identifying_message = "unknown"
                 raise AssertionError(
-                    'failure in unittest/testcore: %s' % (identifying_message,))
+                    "failure in unittest/testcore: %s" % (identifying_message,)
+                )
+
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
@@ -56,5 +58,5 @@ class MigSharedUserIO(MigTestCase):
         userio_main(_exit=raise_on_error_exit, _print=record_last_print)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

@@ -28,20 +28,22 @@
 """Edit MiG GDP user in the GDP database and all related GDP project users
 in the MiG user database and file system"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import getopt
 import os
 import sys
 
 from mig.shared.conf import get_configuration_object
-from mig.shared.gdp.all import edit_gdp_user, reset_account_roles, \
-    set_account_state
+from mig.shared.gdp.all import (
+    edit_gdp_user,
+    reset_account_roles,
+    set_account_state,
+)
 from mig.shared.useradm import init_user_adm
 
 
-def usage(name='editgdpuser.py'):
+def usage(name="editgdpuser.py"):
     """Usage help"""
 
     print("""Edit existing GDP user in the GDP database,
@@ -60,15 +62,14 @@ Where OPTIONS may be one or more of:
    -r                  Reset project logins
    -S ACCOUNT_STATE    Change GDP user account state to ACCOUNT_STATE
    -v                  Verbose output
-"""
-          % {'name': name})
+""" % {"name": name})
 
 
 # ## Main ###
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     flock = None
-    (args, app_dir, mig_db_path) = init_user_adm()
+    args, app_dir, mig_db_path = init_user_adm()
     gdp_db_path = None
     conf_path = None
     force = False
@@ -81,61 +82,61 @@ if '__main__' == __name__:
     # NOTE: Remove fields is NOT supported through 'editgdpuser',
     #       user 'edituser' to remove fields
     remove_fields = []
-    opt_args = 'c:g:d:fhri:S:v'
+    opt_args = "c:g:d:fhri:S:v"
     try:
-        (opts, args) = getopt.getopt(args, opt_args)
+        opts, args = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    for (opt, val) in opts:
-        if opt == '-c':
+    for opt, val in opts:
+        if opt == "-c":
             conf_path = val
-        elif opt == '-d':
+        elif opt == "-d":
             mig_db_path = val
-        elif opt == '-f':
+        elif opt == "-f":
             force = True
-        elif opt == '-g':
+        elif opt == "-g":
             gdp_db_path = val
-        elif opt == '-h':
+        elif opt == "-h":
             usage()
             sys.exit(0)
-        elif opt == '-i':
+        elif opt == "-i":
             user_id = val
-        elif opt == '-r':
+        elif opt == "-r":
             reset_roles = True
-        elif opt == '-S':
+        elif opt == "-S":
             account_state = val
-        elif opt == '-v':
+        elif opt == "-v":
             verbose = True
         else:
-            print('Error: %s not supported!' % opt)
+            print("Error: %s not supported!" % opt)
 
     if conf_path and not os.path.isfile(conf_path):
-        print('Failed to read configuration file: %s' % conf_path)
+        print("Failed to read configuration file: %s" % conf_path)
         sys.exit(1)
 
     if verbose:
         if conf_path:
-            print('using configuration in %s' % conf_path)
+            print("using configuration in %s" % conf_path)
         else:
-            print('using configuration from MIG_CONF (or default)')
+            print("using configuration from MIG_CONF (or default)")
 
     configuration = get_configuration_object(config_file=conf_path)
 
     if not user_id:
-        print('Error: Existing user ID is required')
+        print("Error: Existing user ID is required")
         usage()
         sys.exit(1)
 
     if args:
         try:
-            user_dict['full_name'] = args[0]
-            user_dict['organization'] = args[1]
-            user_dict['state'] = args[2]
-            user_dict['country'] = args[3]
-            user_dict['email'] = args[4]
+            user_dict["full_name"] = args[0]
+            user_dict["organization"] = args[1]
+            user_dict["state"] = args[2]
+            user_dict["country"] = args[3]
+            user_dict["email"] = args[4]
         except IndexError:
 
             # Ignore missing optional arguments
@@ -143,9 +144,11 @@ if '__main__' == __name__:
             pass
 
     elif not (account_state or reset_roles):
-        print("Error: Missing one or more of the arguments: "
-              + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
-              + "[EMAIL]")
+        print(
+            "Error: Missing one or more of the arguments: "
+            + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
+            + "[EMAIL]"
+        )
         sys.exit(1)
 
     # Remove empty value fields
@@ -155,22 +158,18 @@ if '__main__' == __name__:
             del user_dict[key]
 
     if account_state:
-        (status, msg) = set_account_state(
-            configuration,
-            user_id,
-            account_state,
-            gdp_db_path=gdp_db_path)
+        status, msg = set_account_state(
+            configuration, user_id, account_state, gdp_db_path=gdp_db_path
+        )
         print(msg)
     elif reset_roles:
-        (status, msg) = reset_account_roles(
-            configuration,
-            user_id,
-            gdp_db_path=gdp_db_path,
-            verbose=verbose)
+        status, msg = reset_account_roles(
+            configuration, user_id, gdp_db_path=gdp_db_path, verbose=verbose
+        )
     else:
         if force:
             print("WARNING: -f disables rollback !!!")
-        (status, msg) = edit_gdp_user(
+        status, msg = edit_gdp_user(
             configuration,
             user_id,
             user_dict,
@@ -179,7 +178,8 @@ if '__main__' == __name__:
             mig_db_path,
             gdp_db_path=gdp_db_path,
             force=force,
-            verbose=verbose)
+            verbose=verbose,
+        )
     if not verbose:
         # NOTE: If verbose everything is printed from functions in GDP
         if not status:

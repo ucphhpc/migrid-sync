@@ -34,8 +34,7 @@ address or email from Distinguished Name field of user entry. If user
 configured additional messaging protocols they can also be used.
 """
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import getopt
 import sys
@@ -45,7 +44,7 @@ from mig.shared.notification import notify_user
 from mig.shared.useradm import init_user_adm, user_account_notify
 
 
-def usage(name='notifymigoid.py'):
+def usage(name="notifymigoid.py"):
     """Usage help"""
 
     print("""Send internal OpenID account create/renew intro to user from user
@@ -65,55 +64,55 @@ Where NOTIFY_OPTIONS may be one or more of:
 
 One or more destinations may be set by combining multiple -e, -s and -a
 options.
-""" % {'name': name})
+""" % {"name": name})
 
 
-if '__main__' == __name__:
-    (args, app_dir, db_path) = init_user_adm()
+if "__main__" == __name__:
+    args, app_dir, db_path = init_user_adm()
     conf_path = None
     verbose = False
     admin_copy = False
     raw_targets = {}
     user_id = None
-    opt_args = 'ac:Cd:e:hI:s:v'
+    opt_args = "ac:Cd:e:hI:s:v"
     try:
-        (opts, args) = getopt.getopt(args, opt_args)
+        opts, args = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    for (opt, val) in opts:
-        if opt == '-a':
-            raw_targets['email'] = raw_targets.get('email', [])
-            raw_targets['email'].append(keyword_auto)
-        elif opt == '-c':
+    for opt, val in opts:
+        if opt == "-a":
+            raw_targets["email"] = raw_targets.get("email", [])
+            raw_targets["email"].append(keyword_auto)
+        elif opt == "-c":
             conf_path = val
-        elif opt == '-C':
+        elif opt == "-C":
             admin_copy = True
-        elif opt == '-d':
+        elif opt == "-d":
             db_path = val
-        elif opt == '-e':
-            raw_targets['email'] = raw_targets.get('email', [])
-            raw_targets['email'].append(val)
-        elif opt == '-h':
+        elif opt == "-e":
+            raw_targets["email"] = raw_targets.get("email", [])
+            raw_targets["email"].append(val)
+        elif opt == "-h":
             usage()
             sys.exit(0)
-        elif opt == '-I':
+        elif opt == "-I":
             user_id = val
-        elif opt == '-s':
+        elif opt == "-s":
             val = val.lower()
             raw_targets[val] = raw_targets.get(val, [])
-            raw_targets[val].append('SETTINGS')
-        elif opt == '-v':
+            raw_targets[val].append("SETTINGS")
+        elif opt == "-v":
             verbose = True
         else:
-            print('Error: %s not supported!' % opt)
+            print("Error: %s not supported!" % opt)
             usage()
             sys.exit(0)
 
     if args:
-        print('Error: Non-option arguments are not supported - missing quotes?')
+        print("Error: Non-option arguments are not supported - missing quotes?")
         usage()
         sys.exit(1)
 
@@ -121,13 +120,13 @@ if '__main__' == __name__:
         print("No user_id provided!")
         sys.exit(1)
 
-    (configuration, username, full_name, addresses, errors) = \
-        user_account_notify(user_id, raw_targets, conf_path, db_path, verbose,
-                            admin_copy)
+    configuration, username, full_name, addresses, errors = user_account_notify(
+        user_id, raw_targets, conf_path, db_path, verbose, admin_copy
+    )
 
     if errors:
         print("Address lookup errors:")
-        print('\n'.join(errors))
+        print("\n".join(errors))
 
     if not addresses:
         print("Error: found no suitable addresses")
@@ -136,11 +135,19 @@ if '__main__' == __name__:
         print("Error: found no username")
         sys.exit(1)
     logger = configuration.logger
-    notify_dict = {'JOB_ID': 'NOJOBID', 'USER_CERT': user_id, 'NOTIFY': []}
-    for (proto, address_list) in addresses.items():
+    notify_dict = {"JOB_ID": "NOJOBID", "USER_CERT": user_id, "NOTIFY": []}
+    for proto, address_list in addresses.items():
         for address in address_list:
-            notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
-    print("Sending internal OpenID account intro for '%s' to:\n%s" %
-          (user_id, '\n'.join(notify_dict['NOTIFY'])))
-    notify_user(notify_dict, [user_id, username, full_name], 'ACCOUNTINTRO',
-                logger, '', configuration)
+            notify_dict["NOTIFY"].append("%s: %s" % (proto, address))
+    print(
+        "Sending internal OpenID account intro for '%s' to:\n%s"
+        % (user_id, "\n".join(notify_dict["NOTIFY"]))
+    )
+    notify_user(
+        notify_dict,
+        [user_id, username, full_name],
+        "ACCOUNTINTRO",
+        logger,
+        "",
+        configuration,
+    )

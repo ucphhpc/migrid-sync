@@ -35,8 +35,15 @@ import os
 import sys
 import time
 
-from mig.lib.daemon import check_run, check_stop, interruptible_sleep, \
-    register_run_handler, register_stop_handler, reset_run, stop_running
+from mig.lib.daemon import (
+    check_run,
+    check_stop,
+    interruptible_sleep,
+    register_run_handler,
+    register_stop_handler,
+    reset_run,
+    stop_running,
+)
 from mig.lib.janitor import handle_janitor_tasks
 from mig.shared.conf import get_configuration_object
 from mig.shared.logger import daemon_logger, register_hangup_handler
@@ -45,7 +52,7 @@ from mig.shared.logger import daemon_logger, register_hangup_handler
 SHORT_THROTTLE_SECS = 5.0
 LONG_THROTTLE_SECS = 30.0
 
-(configuration, logger) = (None, None)
+configuration, logger = (None, None)
 
 
 if __name__ == "__main__":
@@ -58,8 +65,7 @@ if __name__ == "__main__":
 
     # Use separate logger
 
-    logger = daemon_logger("janitor", configuration.user_janitor_log,
-                           log_level)
+    logger = daemon_logger("janitor", configuration.user_janitor_log, log_level)
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
@@ -77,14 +83,12 @@ if __name__ == "__main__":
         print(err_msg)
         sys.exit(1)
 
-    print(
-        """This is the MiG janitor daemon which cleans up stale state data,
+    print("""This is the MiG janitor daemon which cleans up stale state data,
 updates internal caches and prunes pending requests.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-"""
-    )
+""")
 
     main_pid = os.getpid()
     print("Starting janitor daemon - Ctrl-C to quit")
@@ -98,15 +102,18 @@ unless it is available in mig/server/MiGserver.conf
             now = time.time()
             if last_failed:
                 # Throttle on general exception in main loop
-                interruptible_sleep(configuration, LONG_THROTTLE_SECS,
-                                    (check_run, check_stop))
+                interruptible_sleep(
+                    configuration, LONG_THROTTLE_SECS, (check_run, check_stop)
+                )
                 last_failed = False
             elif handle_janitor_tasks(configuration, now) <= 0:
-                interruptible_sleep(configuration, LONG_THROTTLE_SECS,
-                                    (check_run, check_stop))
+                interruptible_sleep(
+                    configuration, LONG_THROTTLE_SECS, (check_run, check_stop)
+                )
             else:
-                interruptible_sleep(configuration, SHORT_THROTTLE_SECS,
-                                    (check_run, check_stop))
+                interruptible_sleep(
+                    configuration, SHORT_THROTTLE_SECS, (check_run, check_stop)
+                )
             reset_run()
         except KeyboardInterrupt:
             stop_running()

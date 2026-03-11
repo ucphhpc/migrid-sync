@@ -27,8 +27,7 @@
 
 """Verify Archive intergrity by comparing archive cache with actual contents"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import fnmatch
 import getopt
@@ -37,10 +36,17 @@ import sys
 import time
 
 from mig.shared.base import client_dir_id, distinguished_name_to_user
-from mig.shared.defaults import freeze_meta_filename, freeze_lock_filename, \
-    public_archive_index, public_archive_files, public_archive_doi, \
-    keyword_pending, keyword_final, keyword_any
-from mig.shared.freezefunctions import sorted_hash_algos, checksum_file
+from mig.shared.defaults import (
+    freeze_lock_filename,
+    freeze_meta_filename,
+    keyword_any,
+    keyword_final,
+    keyword_pending,
+    public_archive_doi,
+    public_archive_files,
+    public_archive_index,
+)
+from mig.shared.freezefunctions import checksum_file, sorted_hash_algos
 from mig.shared.serial import load
 
 
@@ -50,11 +56,16 @@ def fuzzy_match(i, j, offset=2.0):
     Useful for comparing e.g. file timestamps with minor fluctuations due to
     I/O times and rounding.
     """
-    return (i - offset < j and j < i + offset)
+    return i - offset < j and j < i + offset
 
 
-def check_archive_integrity(configuration, user_id, freeze_path,
-                            required_state=keyword_any, verbose=False):
+def check_archive_integrity(
+    configuration,
+    user_id,
+    freeze_path,
+    required_state=keyword_any,
+    verbose=False,
+):
     """Inspect Archives in freeze_path and compare contents to pickled cache.
     The cache is a list with one dictionary per file using the format:
     {'sha512sum': '...', 'name': 'relpath/to/file.ext',
@@ -69,15 +80,22 @@ def check_archive_integrity(configuration, user_id, freeze_path,
         print("Compare cache and contents for %s" % freeze_path)
     cache_path = "%s.cache" % freeze_path
     meta_path = os.path.join(freeze_path, freeze_meta_filename)
-    ignore_files = [freeze_lock_filename, freeze_meta_filename, '%s.lock' %
-                    freeze_meta_filename, public_archive_index,
-                    public_archive_files, public_archive_doi]
+    ignore_files = [
+        freeze_lock_filename,
+        freeze_meta_filename,
+        "%s.lock" % freeze_meta_filename,
+        public_archive_index,
+        public_archive_files,
+        public_archive_doi,
+    ]
     # NOTE: if archive has no actual files it has no cache file either
     if not os.path.exists(cache_path):
         archive_list = os.listdir(freeze_path)
         if [i for i in archive_list if not i in ignore_files]:
-            print("Archive %s has data content but no file cache in %s" %
-                  (freeze_path, cache_path))
+            print(
+                "Archive %s has data content but no file cache in %s"
+                % (freeze_path, cache_path)
+            )
             return False
         else:
             return True
@@ -86,69 +104,92 @@ def check_archive_integrity(configuration, user_id, freeze_path,
         cache = load(cache_path)
         meta = load(meta_path)
     except Exception as exc:
-        print("Could not open archive helpers %s and %s for verification: %s" %
-              (cache_path, meta_path, exc))
+        print(
+            "Could not open archive helpers %s and %s for verification: %s"
+            % (cache_path, meta_path, exc)
+        )
         return False
-    meta_state = meta.get('STATE', keyword_pending)
+    meta_state = meta.get("STATE", keyword_pending)
     if required_state != keyword_any and meta_state != required_state:
-        print("Archive in %s is in %r state but check demanded state %r" %
-              (freeze_path, meta_state, required_state))
+        print(
+            "Archive in %s is in %r state but check demanded state %r"
+            % (freeze_path, meta_state, required_state)
+        )
         return False
     for entry in cache:
-        if entry['name'] in ignore_files:
+        if entry["name"] in ignore_files:
             continue
-        archive_path = os.path.join(freeze_path, entry['name'])
+        archive_path = os.path.join(freeze_path, entry["name"])
         try:
             archived_stat = os.stat(archive_path)
             archived_size = archived_stat.st_size
             archived_created = archived_stat.st_ctime
             archived_modified = archived_stat.st_mtime
-            if archived_size != entry['size']:
+            if archived_size != entry["size"]:
                 if meta_state == keyword_final:
-                    print("Archive entry %s has wrong size %d (expected %d)" %
-                          (archive_path, archived_size, entry['size']))
+                    print(
+                        "Archive entry %s has wrong size %d (expected %d)"
+                        % (archive_path, archived_size, entry["size"])
+                    )
                     return False
                 elif verbose:
-                    print("ignore size mismatch on non-final %s" %
-                          archive_path)
+                    print("ignore size mismatch on non-final %s" % archive_path)
             # NOTE: we allow a minor time offset to accept various fs hiccups
-            elif not fuzzy_match(entry['timestamp'], archived_created) and \
-                    not fuzzy_match(entry['timestamp'], archived_modified) and \
-                    not fuzzy_match(entry.get('file_mtime', -1), archived_modified):
+            elif (
+                not fuzzy_match(entry["timestamp"], archived_created)
+                and not fuzzy_match(entry["timestamp"], archived_modified)
+                and not fuzzy_match(
+                    entry.get("file_mtime", -1), archived_modified
+                )
+            ):
                 if meta_state == keyword_final:
-                    print("Archive entry %s has wrong timestamp %f / %f (expected %f, %s)" %
-                          (archive_path, archived_created, archived_modified,
-                           entry['timestamp'], archived_stat))
+                    print(
+                        "Archive entry %s has wrong timestamp %f / %f (expected %f, %s)"
+                        % (
+                            archive_path,
+                            archived_created,
+                            archived_modified,
+                            entry["timestamp"],
+                            archived_stat,
+                        )
+                    )
                     chksum_verified = False
                     for algo in sorted_hash_algos:
-                        chksum = entry.get(algo, '')
-                        if not chksum or ' ' in chksum:
+                        chksum = entry.get(algo, "")
+                        if not chksum or " " in chksum:
                             continue
-                        print("Checking that %s of %r matches %r" %
-                              (algo, archive_path, chksum))
-                        verify_chksum = checksum_file(archive_path, algo,
-                                                      max_chunks=-1)
+                        print(
+                            "Checking that %s of %r matches %r"
+                            % (algo, archive_path, chksum)
+                        )
+                        verify_chksum = checksum_file(
+                            archive_path, algo, max_chunks=-1
+                        )
                         if verify_chksum == chksum:
                             chksum_verified = True
                             break
                     if chksum_verified:
-                        print("Verified that %s of %r matches %r" %
-                              (algo, archive_path, chksum))
+                        print(
+                            "Verified that %s of %r matches %r"
+                            % (algo, archive_path, chksum)
+                        )
                     else:
                         return False
                 elif verbose:
-                    print("ignore ctime mismatch on non-final %s" %
-                          archive_path)
+                    print(
+                        "ignore ctime mismatch on non-final %s" % archive_path
+                    )
         except Exception as exc:
-            print("Archive entry %s failed verification: %s" %
-                  (archive_path, exc))
+            print(
+                "Archive entry %s failed verification: %s" % (archive_path, exc)
+            )
             return False
         if verbose:
             print("Archive entry %s passed verification" % archive_path)
     return True
 
 
-def usage(name='verifyarchives.py'):
+def usage(name="verifyarchives.py"):
     """Usage help"""
 
     print("""Verify Archive integrity using cache and actual contents.
@@ -163,109 +204,122 @@ Where VERIFY_OPTIONS may be one or more of:
    -n ARCHIVE_NAME     Filter to specific Archive name(s) (pattern)
    -s REQUIRED_STATE   Fail if Archive is not in REQUIRED_STATE (default is ANY)
    -v                  Verbose output
-""" % {'name': name})
+""" % {"name": name})
 
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     conf_path = None
     verbose = False
-    opt_args = 'A:B:c:hI:n:s:v'
+    opt_args = "A:B:c:hI:n:s:v"
     now = int(time.time())
     created_after, created_before = 0, now
-    distinguished_name = '*'
-    archive_name = '*'
+    distinguished_name = "*"
+    archive_name = "*"
     required_state = keyword_any
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
+        opts, args = getopt.getopt(sys.argv[1:], opt_args)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    for (opt, val) in opts:
-        if opt == '-A':
+    for opt, val in opts:
+        if opt == "-A":
             after = now
-            if val.startswith('+'):
+            if val.startswith("+"):
                 after += int(val[1:])
-            elif val.startswith('-'):
+            elif val.startswith("-"):
                 after -= int(val[1:])
             else:
                 after = int(val)
             created_after = after
-        elif opt == '-B':
+        elif opt == "-B":
             before = now
-            if val.startswith('+'):
+            if val.startswith("+"):
                 before += int(val[1:])
-            elif val.startswith('-'):
+            elif val.startswith("-"):
                 before -= int(val[1:])
             else:
                 before = int(val)
             created_before = before
-        elif opt == '-c':
+        elif opt == "-c":
             conf_path = val
-        elif opt == '-h':
+        elif opt == "-h":
             usage()
             sys.exit(0)
-        elif opt == '-I':
+        elif opt == "-I":
             distinguished_name = val
-        elif opt == '-n':
+        elif opt == "-n":
             archive_name = val
-        elif opt == '-s':
+        elif opt == "-s":
             required_state = val
-        elif opt == '-v':
+        elif opt == "-v":
             verbose = True
         else:
-            print('Error: %s not supported!' % opt)
+            print("Error: %s not supported!" % opt)
             usage()
             sys.exit(0)
 
     archive_hits = {}
     archive_fails = 0
     from mig.shared.conf import get_configuration_object
+
     configuration = get_configuration_object()
-    print("searching for Archives with creation stamp between %d and %d" %
-          (created_after, created_before))
+    print(
+        "searching for Archives with creation stamp between %d and %d"
+        % (created_after, created_before)
+    )
     for user_dir in os.listdir(configuration.freeze_home):
         base_path = os.path.join(configuration.freeze_home, user_dir)
         # Skip non-dirs and dirs not matching user IDs
-        if not os.path.isdir(base_path) or user_dir.find('+') == -1:
+        if not os.path.isdir(base_path) or user_dir.find("+") == -1:
             continue
         user_id = client_dir_id(user_dir)
         user_dict = distinguished_name_to_user(user_id)
         if not fnmatch.fnmatch(user_id, distinguished_name):
             if verbose:
-                print("skip Archives for %s not matching owner pattern %s" %
-                      (user_id, distinguished_name))
+                print(
+                    "skip Archives for %s not matching owner pattern %s"
+                    % (user_id, distinguished_name)
+                )
             continue
 
         for freeze_name in os.listdir(base_path):
             # NOTE: tempfile increased random part from 6 to 8 chars in py3
-            if not fnmatch.fnmatch(freeze_name, "archive-??????") and \
-               not fnmatch.fnmatch(freeze_name, "archive-????????"):
+            if not fnmatch.fnmatch(
+                freeze_name, "archive-??????"
+            ) and not fnmatch.fnmatch(freeze_name, "archive-????????"):
                 continue
             if not fnmatch.fnmatch(freeze_name, archive_name):
                 if verbose:
-                    print("filter Archive %s not matching name pattern %s" %
-                          (freeze_name, archive_name))
+                    print(
+                        "filter Archive %s not matching name pattern %s"
+                        % (freeze_name, archive_name)
+                    )
                 continue
             freeze_path = os.path.join(base_path, freeze_name)
             created_time = int(round(os.path.getctime(freeze_path)))
             if created_time < created_after or created_time > created_before:
                 if verbose:
-                    print("skip Archive %s outside creation window %d - %d" %
-                          (freeze_name, created_after, created_before))
+                    print(
+                        "skip Archive %s outside creation window %d - %d"
+                        % (freeze_name, created_after, created_before)
+                    )
                 continue
             elif verbose:
-                print("found %s for %s from %d to verify" %
-                      (freeze_name, user_id, created_time))
+                print(
+                    "found %s for %s from %d to verify"
+                    % (freeze_name, user_id, created_time)
+                )
             archive_hits[user_id] = archive_hits.get(user_id, [])
             archive_hits[user_id].append(freeze_path)
 
     print("Archive integrity checks:")
-    for (user_id, archive_list) in archive_hits.items():
+    for user_id, archive_list in archive_hits.items():
         for freeze_path in archive_list:
             verified = check_archive_integrity(
-                configuration, user_id, freeze_path, required_state, verbose)
+                configuration, user_id, freeze_path, required_state, verbose
+            )
             if verified:
                 print("%s [PASS]" % freeze_path)
             else:

@@ -27,8 +27,7 @@
 
 """Wraps the vm-proxy daemon in a way suitable for use in the init script"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import os
 import signal
@@ -47,17 +46,16 @@ def handle_stop(signum, stack):
     raise KeyboardInterrupt
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Force no log init since we use separate logger
     configuration = get_configuration_object(skip_log=True)
 
     log_level = configuration.loglevel
-    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+    if sys.argv[1:] and sys.argv[1] in ["debug", "info", "warning", "error"]:
         log_level = sys.argv[1]
 
     # Use separate logger
-    logger = daemon_logger("vmproxy", configuration.user_vmproxy_log,
-                           log_level)
+    logger = daemon_logger("vmproxy", configuration.user_vmproxy_log, log_level)
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
@@ -79,8 +77,8 @@ Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 """)
 
-    vm_proxy_base = os.path.join(configuration.mig_code_base, 'vm-proxy')
-    daemon_name = 'migproxy.py'
+    vm_proxy_base = os.path.join(configuration.mig_code_base, "vm-proxy")
+    daemon_name = "migproxy.py"
     daemon_path = os.path.join(vm_proxy_base, daemon_name)
     if not os.path.exists(daemon_path):
         err_msg = "VMachines proxy helper not found!"
@@ -90,15 +88,16 @@ unless it is available in mig/server/MiGserver.conf
 
     keep_running = True
 
-    print('Starting VM proxy helper daemon - Ctrl-C to quit')
+    print("Starting VM proxy helper daemon - Ctrl-C to quit")
     logger.info("Starting VM proxy daemon")
 
     daemon_proc = None
     while keep_running:
         try:
             # Run vm-proxy helper in the foreground from corresponding dir
-            daemon_proc = subprocess_popen([daemon_path, '-n'],
-                                           cwd=vm_proxy_base)
+            daemon_proc = subprocess_popen(
+                [daemon_path, "-n"], cwd=vm_proxy_base
+            )
             retval = daemon_proc.wait()
             logger.info("daemon returned %s" % retval)
             daemon_proc = None
@@ -106,15 +105,15 @@ unless it is available in mig/server/MiGserver.conf
             keep_running = False
             break
         except Exception as exc:
-            msg = 'Caught unexpected exception: %s' % exc
+            msg = "Caught unexpected exception: %s" % exc
             logger.error(msg)
             print(msg)
         # Throttle down
         time.sleep(30)
 
     if daemon_proc is not None:
-        logger.info('Killing spawned proxy daemon')
+        logger.info("Killing spawned proxy daemon")
         daemon_proc.terminate() or daemon_proc.kill()
 
-    print('VM proxy daemon shutting down')
+    print("VM proxy daemon shutting down")
     sys.exit(0)

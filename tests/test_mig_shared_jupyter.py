@@ -34,9 +34,14 @@ import unittest
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.support import TEST_OUTPUT_DIR, MigTestCase, FakeConfiguration, \
-    cleanpath, testmain
 from mig.shared.jupyter import gen_openid_template
+from tests.support import (
+    TEST_OUTPUT_DIR,
+    FakeConfiguration,
+    MigTestCase,
+    cleanpath,
+    testmain,
+)
 
 
 def noop(*args):
@@ -48,7 +53,8 @@ class MigSharedJupyter(MigTestCase):
 
     def test_jupyter_gen_openid_template_openid_auth(self):
         filled = gen_openid_template(
-            "/some-jupyter-url", "MyDefine", "OpenID", _print=noop)
+            "/some-jupyter-url", "MyDefine", "OpenID", _print=noop
+        )
         expected = """
 <IfDefine MyDefine>
     <Location /some-jupyter-url>
@@ -63,7 +69,8 @@ class MigSharedJupyter(MigTestCase):
 
     def test_jupyter_gen_openid_template_oidc_auth(self):
         filled = gen_openid_template(
-            "/some-jupyter-url", "MyDefine", "openid-connect", _print=noop)
+            "/some-jupyter-url", "MyDefine", "openid-connect", _print=noop
+        )
 
         expected = """
 <IfDefine MyDefine>
@@ -79,26 +86,26 @@ class MigSharedJupyter(MigTestCase):
 
     def test_jupyter_gen_openid_template_invalid_url_type(self):
         with self.assertRaises(AssertionError):
-            filled = gen_openid_template(None, "MyDefine",
-                                         "openid-connect")
+            filled = gen_openid_template(None, "MyDefine", "openid-connect")
 
     def test_jupyter_gen_openid_template_invalid_define_type(self):
         with self.assertRaises(AssertionError):
-            filled = gen_openid_template("/some-jupyter-url", None,
-                                         "no-such-auth-type")
+            filled = gen_openid_template(
+                "/some-jupyter-url", None, "no-such-auth-type"
+            )
 
     def test_jupyter_gen_openid_template_missing_auth_type(self):
         with self.assertRaises(AssertionError):
-            filled = gen_openid_template("/some-jupyter-url", "MyDefine",
-                                         None)
+            filled = gen_openid_template("/some-jupyter-url", "MyDefine", None)
 
     def test_jupyter_gen_openid_template_invalid_auth_type(self):
         with self.assertRaises(AssertionError):
-            filled = gen_openid_template("/some-jupyter-url", "MyDefine",
-                                         "no-such-auth-type")
+            filled = gen_openid_template(
+                "/some-jupyter-url", "MyDefine", "no-such-auth-type"
+            )
 
     # TODO: add more coverage of module
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

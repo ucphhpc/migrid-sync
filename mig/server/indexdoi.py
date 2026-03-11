@@ -27,8 +27,7 @@
 
 """Build index page listing all imported site DOIs - useful from cron job"""
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import datetime
 import glob
@@ -38,8 +37,12 @@ import sys
 
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import public_archive_doi, public_doi_index
-from mig.shared.htmlgen import get_xgi_html_header, get_xgi_html_footer, \
-    themed_styles, themed_scripts
+from mig.shared.htmlgen import (
+    get_xgi_html_footer,
+    get_xgi_html_header,
+    themed_scripts,
+    themed_styles,
+)
 
 
 def extract_imported_doi_dicts(configuration):
@@ -49,11 +52,12 @@ def extract_imported_doi_dicts(configuration):
     """
     _logger = configuration.logger
     all_imported = []
-    doi_import_pattern = os.path.join(configuration.wwwpublic, 'archives',
-                                      '*', public_archive_doi)
+    doi_import_pattern = os.path.join(
+        configuration.wwwpublic, "archives", "*", public_archive_doi
+    )
     for doi_dump_path in glob.glob(doi_import_pattern):
         try:
-            json_fd = open(doi_dump_path, 'rb')
+            json_fd = open(doi_dump_path, "rb")
             doi_import = json.load(json_fd)
             json_fd.close()
             all_imported.append((os.path.getctime(doi_dump_path), doi_import))
@@ -65,8 +69,8 @@ def extract_imported_doi_dicts(configuration):
     return date_sorted
 
 
-if __name__ == '__main__':
-    if '-h' in sys.argv[1:]:
+if __name__ == "__main__":
+    if "-h" in sys.argv[1:]:
         print("""USAGE:
 indexdoi.py [OPTIONS]
 
@@ -98,17 +102,22 @@ to build an index page of all locally published archives with DOIs registered.
             print("handling entry for %s" % plain_doi)
 
         doi_url = entry.get("id", None)
-        archive_url = entry.get('url', '')
+        archive_url = entry.get("url", "")
         archive_id = os.path.basename(os.path.dirname(archive_url))
         if not archive_id or not doi_url:
-            print("WARNING DOI or archive ID missing from %s (%s %s)" %
-                  (entry, archive_id, doi_url))
+            print(
+                "WARNING DOI or archive ID missing from %s (%s %s)"
+                % (entry, archive_id, doi_url)
+            )
             continue
-        archive_root = os.path.join(configuration.wwwpublic, 'archives',
-                                    archive_id)
+        archive_root = os.path.join(
+            configuration.wwwpublic, "archives", archive_id
+        )
         if not os.path.isdir(archive_root):
-            print("ERROR No archive %s for DOI %s data" %
-                  (archive_root, plain_doi))
+            print(
+                "ERROR No archive %s for DOI %s data"
+                % (archive_root, plain_doi)
+            )
             continue
         doi_path = os.path.join(archive_root, public_archive_doi)
         if os.path.exists(doi_path):
@@ -118,11 +127,12 @@ to build an index page of all locally published archives with DOIs registered.
             doi_count += 1
 
     if dump:
-        fill_helpers = {'short_title': configuration.short_title,
-                        'update_stamp': now,
-                        'doi_count': doi_count,
-                        }
-        publish_title = '%(short_title)s DOI Index' % fill_helpers
+        fill_helpers = {
+            "short_title": configuration.short_title,
+            "update_stamp": now,
+            "doi_count": doi_count,
+        }
+        publish_title = "%(short_title)s DOI Index" % fill_helpers
 
         # Fake manager themed style setup for tablesorter layout with site style
         style_entry = themed_styles(configuration, user_settings={})
@@ -132,16 +142,20 @@ to build an index page of all locally published archives with DOIs registered.
         # NOTE: use mark_static to insert classic page top logo like on V2 pages
         # using staticpage class for flexible skinning. Otherwise index has no
         # branding/skin whatsoever.
-        contents = get_xgi_html_header(configuration, publish_title, '',
-                                       style_map=style_entry,
-                                       script_map=script_entry,
-                                       frame=False,
-                                       menu=False,
-                                       widgets=False,
-                                       userstyle=False,
-                                       mark_static=True)
+        contents = get_xgi_html_header(
+            configuration,
+            publish_title,
+            "",
+            style_map=style_entry,
+            script_map=script_entry,
+            frame=False,
+            menu=False,
+            widgets=False,
+            userstyle=False,
+            mark_static=True,
+        )
 
-        contents += '''
+        contents += """
 <div id="doi-index" class="staticpage">
 <h2 class="staticpage">%(short_title)s DOI Index</h2>
 <div class="doi-index-intro">
@@ -154,36 +168,40 @@ Last auto-generated on %(update_stamp)s
 </div>
 <div class="vertical-spacer"></div>
 <div class="doi-list">
-'''
+"""
 
-        doi_lines = ''
-        for (doi, url) in doi_exports:
-            doi_lines += '''
+        doi_lines = ""
+        for doi, url in doi_exports:
+            doi_lines += """
         <p class="doi-line">
             <a class="url urllink leftpad" target=_blank href="%s">%s</a>
         </p>
-''' % (url, doi)
+""" % (url, doi)
         contents += doi_lines
-        contents += '''
+        contents += """
 </div>
 </div>
 %s
-''' % get_xgi_html_footer(configuration, widgets=False, mark_static=True)
+""" % get_xgi_html_footer(configuration, widgets=False, mark_static=True)
 
         try:
-            index_fd = open(doi_index_path, 'w')
+            index_fd = open(doi_index_path, "w")
             index_fd.write(contents % fill_helpers)
             index_fd.close()
-            msg = "Published index of %d DOIs in %s" % \
-                  (doi_count, doi_index_path)
+            msg = "Published index of %d DOIs in %s" % (
+                doi_count,
+                doi_index_path,
+            )
             _logger.info(msg)
             if verbose:
                 print(msg)
         except Exception as exc:
             msg = "failed to write %s: %s" % (doi_index_path, exc)
             _logger.error(msg)
-            print("Error writing index of %d DOIs in %s" %
-                  (doi_count, doi_index_path))
+            print(
+                "Error writing index of %d DOIs in %s"
+                % (doi_count, doi_index_path)
+            )
             sys.exit(1)
 
     sys.exit(0)

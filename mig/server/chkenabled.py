@@ -29,8 +29,7 @@
 detecting which daemons to handle and ignore in init scripts.
 """
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import getopt
 import os
@@ -46,7 +45,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from mig.shared.conf import get_configuration_object
 
 
-def usage(name='chkenabled.py'):
+def usage(name="chkenabled.py"):
     """Usage help"""
 
     print("""Lookup site_enable_FEATURE value in MiGserver.conf.
@@ -57,45 +56,45 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
-""" % {'name': name})
+""" % {"name": name})
 
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     args = sys.argv[1:]
     conf_path = None
     force = False
     verbose = False
-    feature = 'UNSET'
-    opt_args = 'c:fhv'
+    feature = "UNSET"
+    opt_args = "c:fhv"
     try:
-        (opts, args) = getopt.getopt(args, opt_args)
+        opts, args = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
-        print('Error: ', err.msg)
+        print("Error: ", err.msg)
         usage()
         sys.exit(1)
 
-    for (opt, val) in opts:
-        if opt == '-c':
+    for opt, val in opts:
+        if opt == "-c":
             conf_path = val
-        elif opt == '-f':
+        elif opt == "-f":
             force = True
-        elif opt == '-h':
+        elif opt == "-h":
             usage()
             sys.exit(0)
-        elif opt == '-v':
+        elif opt == "-v":
             verbose = True
         else:
-            print('Error: %s not supported!' % opt)
+            print("Error: %s not supported!" % opt)
 
     if conf_path and not os.path.isfile(conf_path):
-        print('Failed to read configuration file: %s' % conf_path)
+        print("Failed to read configuration file: %s" % conf_path)
         sys.exit(1)
 
     if verbose:
         if conf_path:
-            print('using configuration in %s' % conf_path)
+            print("using configuration in %s" % conf_path)
         else:
-            print('using configuration from MIG_CONF (or default)')
+            print("using configuration from MIG_CONF (or default)")
 
     if len(args) == 1:
         feature = args[0]
@@ -104,13 +103,13 @@ if '__main__' == __name__:
         sys.exit(1)
 
     if verbose:
-        print('Lookup configuration value for %s' % feature)
+        print("Lookup configuration value for %s" % feature)
     retval = 42
     try:
         configuration = get_configuration_object(skip_log=True)
         enabled = getattr(configuration, "site_enable_%s" % feature)
         if verbose:
-            print('Configuration value for %s: %s' % (feature, enabled))
+            print("Configuration value for %s: %s" % (feature, enabled))
         if enabled:
             retval = 0
     except Exception as err:
