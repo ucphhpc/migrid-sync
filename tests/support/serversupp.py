@@ -50,7 +50,7 @@ class ServerWithinThreadExecutor:
         """Mimic the same method from the standard thread API"""
         server_args, server_kwargs = self._arguments
 
-        server_kwargs['on_start'] = lambda _: self._started.set()
+        server_kwargs["on_start"] = lambda _: self._started.set()
 
         self._wrapped = self._serverclass(*server_args, **server_kwargs)
 

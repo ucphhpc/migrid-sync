@@ -36,8 +36,15 @@ import os
 import pwd
 import sys
 
-from tests.support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
-    testmain, temppath, cleanpath, is_path_within
+from tests.support import (
+    MIG_BASE,
+    TEST_OUTPUT_DIR,
+    MigTestCase,
+    testmain,
+    temppath,
+    cleanpath,
+    is_path_within,
+)
 from tests.support.fixturesupp import fixturepath
 
 from mig.shared.defaults import keyword_auto
@@ -70,40 +77,43 @@ class MigSharedInstall__determine_timezone(MigTestCase):
 
     def test_determines_tz_utc_fallback(self):
         timezone = determine_timezone(
-            _environ={}, _path_exists=lambda _: False, _print=noop)
+            _environ={}, _path_exists=lambda _: False, _print=noop
+        )
 
-        self.assertEqual(timezone, 'UTC')
+        self.assertEqual(timezone, "UTC")
 
     def test_determines_tz_via_environ(self):
-        example_environ = {
-            'TZ': 'Example/Enviromnent'
-        }
+        example_environ = {"TZ": "Example/Enviromnent"}
         timezone = determine_timezone(_environ=example_environ)
 
-        self.assertEqual(timezone, 'Example/Enviromnent')
+        self.assertEqual(timezone, "Example/Enviromnent")
 
     def test_determines_tz_via_localtime(self):
         def exists_localtime(value):
-            saw_call = value == '/etc/localtime'
+            saw_call = value == "/etc/localtime"
             exists_localtime.was_called = saw_call
             return saw_call
+
         exists_localtime.was_called = False
 
         timezone = determine_timezone(
-            _environ={}, _path_exists=exists_localtime)
+            _environ={}, _path_exists=exists_localtime
+        )
 
         self.assertTrue(exists_localtime.was_called)
         self.assertIsNotNone(timezone)
 
     def test_determines_tz_via_timedatectl(self):
         def exists_timedatectl(value):
-            saw_call = value == '/usr/bin/timedatectl'
+            saw_call = value == "/usr/bin/timedatectl"
             exists_timedatectl.was_called = saw_call
             return saw_call
+
         exists_timedatectl.was_called = False
 
         timezone = determine_timezone(
-            _environ={}, _path_exists=exists_timedatectl, _print=noop)
+            _environ={}, _path_exists=exists_timedatectl, _print=noop
+        )
 
         self.assertTrue(exists_timedatectl.was_called)
         self.assertIsNotNone(timezone)
@@ -131,46 +141,48 @@ class MigSharedInstall__generate_confs(MigTestCase):
         self.assertEqual(actual, expected)
 
     def test_creates_output_directory_and_adds_active_symlink(self):
-        symlink_path = temppath('confs', self)
-        cleanpath('confs-foobar', self)
+        symlink_path = temppath("confs", self)
+        cleanpath("confs-foobar", self)
 
-        generate_confs(self.output_path, destination_suffix='-foobar')
+        generate_confs(self.output_path, destination_suffix="-foobar")
 
-        path_kind = self.assertPathExists('confs-foobar')
+        path_kind = self.assertPathExists("confs-foobar")
         self.assertEqual(path_kind, "dir")
-        path_kind = self.assertPathExists('confs')
+        path_kind = self.assertPathExists("confs")
         self.assertEqual(path_kind, "symlink")
 
     def test_creates_output_directory_and_repairs_active_symlink(self):
-        expected_generated_dir = cleanpath('confs-foobar', self)
-        symlink_path = temppath('confs', self)
-        nowhere_path = temppath('confs-nowhere', self)
+        expected_generated_dir = cleanpath("confs-foobar", self)
+        symlink_path = temppath("confs", self)
+        nowhere_path = temppath("confs-nowhere", self)
         # arrange pre-existing symlink pointing nowhere
         os.symlink(nowhere_path, symlink_path)
 
-        generate_confs(self.output_path, destination_suffix='-foobar')
+        generate_confs(self.output_path, destination_suffix="-foobar")
 
         generated_dir = os.path.realpath(symlink_path)
         self.assertEqual(generated_dir, expected_generated_dir)
 
-    def test_creates_output_directory_containing_a_standard_local_configuration(self):
+    def test_creates_output_directory_containing_a_standard_local_configuration(
+        self,
+    ):
         fixture_dir = fixturepath("confs-stdlocal")
-        expected_generated_dir = cleanpath('confs-stdlocal', self)
-        symlink_path = temppath('confs', self)
+        expected_generated_dir = cleanpath("confs-stdlocal", self)
+        symlink_path = temppath("confs", self)
 
         generate_confs(
             self.output_path,
-            destination_suffix='-stdlocal',
-            user='testuser',
-            group='testgroup',
-            mig_code='/home/mig/mig',
-            mig_certs='/home/mig/certs',
-            mig_state='/home/mig/state',
-            timezone='Test/Place',
-            crypto_salt='_TEST_CRYPTO_SALT'.zfill(32),
-            digest_salt='_TEST_DIGEST_SALT'.zfill(32),
-            seafile_secret='_test-seafile-secret='.zfill(44),
-            seafile_ccnetid='_TEST_SEAFILE_CCNETID'.zfill(40),
+            destination_suffix="-stdlocal",
+            user="testuser",
+            group="testgroup",
+            mig_code="/home/mig/mig",
+            mig_certs="/home/mig/certs",
+            mig_state="/home/mig/state",
+            timezone="Test/Place",
+            crypto_salt="_TEST_CRYPTO_SALT".zfill(32),
+            digest_salt="_TEST_DIGEST_SALT".zfill(32),
+            seafile_secret="_test-seafile-secret=".zfill(44),
+            seafile_ccnetid="_TEST_SEAFILE_CCNETID".zfill(40),
             _getpwnam=create_dummy_gpwnam(4321, 1234),
         )
 
@@ -193,10 +205,11 @@ class MigSharedInstall__generate_confs(MigTestCase):
         def capture_defaulted(*args, **kwargs):
             capture_defaulted.kwargs = kwargs
             return args[0]
+
         capture_defaulted.kwargs = None
 
-        (options, _) = generate_confs(
-            '/some/arbitrary/path',
+        options, _ = generate_confs(
+            "/some/arbitrary/path",
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=capture_defaulted,
             _writefiles=noop,
@@ -204,123 +217,139 @@ class MigSharedInstall__generate_confs(MigTestCase):
         )
 
         defaulted = capture_defaulted.kwargs
-        self.assertPathWithin(defaulted['mig_certs'], MIG_BASE)
-        self.assertPathWithin(defaulted['mig_state'], MIG_BASE)
+        self.assertPathWithin(defaulted["mig_certs"], MIG_BASE)
+        self.assertPathWithin(defaulted["mig_state"], MIG_BASE)
 
     def test_creates_output_files_with_datasafety(self):
         fixture_dir = fixturepath("confs-stdlocal")
-        expected_generated_dir = cleanpath('confs-stdlocal', self)
-        symlink_path = temppath('confs', self)
+        expected_generated_dir = cleanpath("confs-stdlocal", self)
+        symlink_path = temppath("confs", self)
 
         generate_confs(
             self.output_path,
             destination=symlink_path,
-            destination_suffix='-stdlocal',
-            datasafety_link='TEST_DATASAFETY_LINK',
-            datasafety_text='TEST_DATASAFETY_TEXT',
+            destination_suffix="-stdlocal",
+            datasafety_link="TEST_DATASAFETY_LINK",
+            datasafety_text="TEST_DATASAFETY_TEXT",
             _getpwnam=create_dummy_gpwnam(4321, 1234),
         )
 
-        actual_file = self.assertFileExists('confs-stdlocal/MiGserver.conf')
+        actual_file = self.assertFileExists("confs-stdlocal/MiGserver.conf")
 
         self.assertConfigKey(
-            actual_file, 'SITE', 'datasafety_link', expected='TEST_DATASAFETY_LINK')
+            actual_file,
+            "SITE",
+            "datasafety_link",
+            expected="TEST_DATASAFETY_LINK",
+        )
         self.assertConfigKey(
-            actual_file, 'SITE', 'datasafety_text', expected='TEST_DATASAFETY_TEXT')
+            actual_file,
+            "SITE",
+            "datasafety_text",
+            expected="TEST_DATASAFETY_TEXT",
+        )
 
     def test_creates_output_files_with_permanent_freeze(self):
         fixture_dir = fixturepath("confs-stdlocal")
-        expected_generated_dir = cleanpath('confs-stdlocal', self)
-        symlink_path = temppath('confs', self)
+        expected_generated_dir = cleanpath("confs-stdlocal", self)
+        symlink_path = temppath("confs", self)
 
-        for arg_val in ('yes', 'no', 'foo bar baz'):
+        for arg_val in ("yes", "no", "foo bar baz"):
             generate_confs(
                 self.output_path,
                 destination=symlink_path,
-                destination_suffix='-stdlocal',
+                destination_suffix="-stdlocal",
                 permanent_freeze=arg_val,
                 _getpwnam=create_dummy_gpwnam(4321, 1234),
             )
 
-            actual_file = self.assertFileExists('confs-stdlocal/MiGserver.conf')
+            actual_file = self.assertFileExists("confs-stdlocal/MiGserver.conf")
 
             self.assertConfigKey(
-                actual_file, 'SITE', 'permanent_freeze', expected=arg_val)
+                actual_file, "SITE", "permanent_freeze", expected=arg_val
+            )
 
     def test_options_for_source_auto(self):
-        (options, _) = generate_confs(
-            '/some/arbitrary/path',
+        options, _ = generate_confs(
+            "/some/arbitrary/path",
             source=keyword_auto,
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
             _instructions=noop,
         )
-        expected_template_dir = os.path.join(MIG_BASE, 'mig/install')
+        expected_template_dir = os.path.join(MIG_BASE, "mig/install")
 
-        self.assertEqual(options['template_dir'], expected_template_dir)
+        self.assertEqual(options["template_dir"], expected_template_dir)
 
     def test_options_for_source_relative(self):
-        (options, _) = generate_confs(
-            '/current/working/directory/mig/install',
-            source='.',
+        options, _ = generate_confs(
+            "/current/working/directory/mig/install",
+            source=".",
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
             _instructions=noop,
         )
 
-        self.assertEqual(options['template_dir'],
-                         '/current/working/directory/mig/install')
+        self.assertEqual(
+            options["template_dir"], "/current/working/directory/mig/install"
+        )
 
     def test_options_for_destination_auto(self):
-        (options, _) = generate_confs(
-            '/some/arbitrary/path',
+        options, _ = generate_confs(
+            "/some/arbitrary/path",
             destination=keyword_auto,
-            destination_suffix='_suffix',
+            destination_suffix="_suffix",
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
             _instructions=noop,
         )
 
-        self.assertEqual(options['destination_link'],
-                         '/some/arbitrary/path/confs')
-        self.assertEqual(options['destination_dir'],
-                         '/some/arbitrary/path/confs_suffix')
+        self.assertEqual(
+            options["destination_link"], "/some/arbitrary/path/confs"
+        )
+        self.assertEqual(
+            options["destination_dir"], "/some/arbitrary/path/confs_suffix"
+        )
 
     def test_options_for_destination_relative(self):
-        (options, _) = generate_confs(
-            '/current/working/directory',
-            destination='generate-confs',
-            destination_suffix='_suffix',
+        options, _ = generate_confs(
+            "/current/working/directory",
+            destination="generate-confs",
+            destination_suffix="_suffix",
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
             _instructions=noop,
         )
 
-        self.assertEqual(options['destination_link'],
-                         '/current/working/directory/generate-confs')
-        self.assertEqual(options['destination_dir'],
-                         '/current/working/directory/generate-confs_suffix')
+        self.assertEqual(
+            options["destination_link"],
+            "/current/working/directory/generate-confs",
+        )
+        self.assertEqual(
+            options["destination_dir"],
+            "/current/working/directory/generate-confs_suffix",
+        )
 
     def test_options_for_destination_absolute(self):
-        (options, _) = generate_confs(
-            '/current/working/directory',
-            destination='/some/other/place/confs',
-            destination_suffix='_suffix',
+        options, _ = generate_confs(
+            "/current/working/directory",
+            destination="/some/other/place/confs",
+            destination_suffix="_suffix",
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
             _instructions=noop,
         )
 
-        self.assertEqual(options['destination_link'],
-                         '/some/other/place/confs')
-        self.assertEqual(options['destination_dir'],
-                         '/some/other/place/confs_suffix')
+        self.assertEqual(options["destination_link"], "/some/other/place/confs")
+        self.assertEqual(
+            options["destination_dir"], "/some/other/place/confs_suffix"
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

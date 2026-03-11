@@ -33,7 +33,10 @@ import os
 import mig.shared.returnvalues as returnvalues
 from mig.shared.defaults import CSRF_MINIMAL
 from mig.shared.base import client_id_dir
-from mig.shared.functionality.datatransfer import _main as submain, main as realmain
+from mig.shared.functionality.datatransfer import (
+    _main as submain,
+    main as realmain,
+)
 
 from tests.support import (
     MigTestCase,
@@ -66,25 +69,27 @@ def _only_output_objects(output_objects, with_object_type=None):
 class MigSharedFunctionalityDataTransfer(MigTestCase):
     """Wrap unit tests for the corresponding module"""
 
-    TEST_CLIENT_ID = (
-        "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
-    )
+    TEST_CLIENT_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
 
     def _provide_configuration(self):
         return "testconfig"
 
     def before_each(self):
-        self.test_user_dir = self._provision_test_user(self, self.TEST_CLIENT_ID)
+        self.test_user_dir = self._provision_test_user(
+            self, self.TEST_CLIENT_ID
+        )
         self.test_environ = create_http_environ(self.configuration)
 
     def test_default_disabled_site_transfer(self):
         self.assertFalse(self.configuration.site_enable_transfers)
 
         result = realmain(self.TEST_CLIENT_ID, {}, self.test_environ)
-        (output_objects, status) = result
+        output_objects, status = result
         self.assertEqual(status, returnvalues.OK)
 
-        text_objects = _only_output_objects(output_objects, with_object_type="text")
+        text_objects = _only_output_objects(
+            output_objects, with_object_type="text"
+        )
         self.assertEqual(len(text_objects), 1)
         self.assertIn("text", text_objects[0])
         text_object = text_objects[0]["text"]
@@ -95,7 +100,7 @@ class MigSharedFunctionalityDataTransfer(MigTestCase):
         payload = {"action": ["show"]}
         self.configuration.site_enable_transfers = True
 
-        (output_objects, status) = submain(
+        output_objects, status = submain(
             self.configuration,
             self.logger,
             client_id=self.TEST_CLIENT_ID,
@@ -105,17 +110,22 @@ class MigSharedFunctionalityDataTransfer(MigTestCase):
         self.assertEqual(status, returnvalues.OK)
 
         # We don't expect any text messages here
-        text_objects = _only_output_objects(output_objects, with_object_type="text")
+        text_objects = _only_output_objects(
+            output_objects, with_object_type="text"
+        )
         self.assertEqual(len(text_objects), 0)
 
     def test_deltransfer_without_transfer_id(self):
         non_existing_transfer_id = "non-existing-transfer-id"
-        payload = {"action": ["deltransfer"], "transfer_id": [non_existing_transfer_id]}
+        payload = {
+            "action": ["deltransfer"],
+            "transfer_id": [non_existing_transfer_id],
+        }
         self.configuration.site_enable_transfers = True
         self.configuration.site_csrf_protection = CSRF_MINIMAL
         self.test_environ["REQUEST_METHOD"] = "post"
 
-        (output_objects, status) = submain(
+        output_objects, status = submain(
             self.configuration,
             self.logger,
             client_id=self.TEST_CLIENT_ID,
@@ -129,7 +139,8 @@ class MigSharedFunctionalityDataTransfer(MigTestCase):
         )
         self.assertEqual(len(error_text_objects), 1)
         self.assertEqual(
-            error_text_objects[0]["text"], "existing transfer_id is required for delete"
+            error_text_objects[0]["text"],
+            "existing transfer_id is required for delete",
         )
 
     def test_redotransfer_without_transfer_id(self):
@@ -142,7 +153,7 @@ class MigSharedFunctionalityDataTransfer(MigTestCase):
         self.configuration.site_csrf_protection = CSRF_MINIMAL
         self.test_environ["REQUEST_METHOD"] = "post"
 
-        (output_objects, status) = submain(
+        output_objects, status = submain(
             self.configuration,
             self.logger,
             client_id=self.TEST_CLIENT_ID,

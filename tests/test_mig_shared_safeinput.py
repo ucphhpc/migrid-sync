@@ -34,10 +34,19 @@ from past.builtins import basestring, unicode
 
 from tests.support import MigTestCase, testmain
 
-from mig.shared.safeinput import main as safeinput_main, InputException, \
-    filter_commonname, valid_alphanumeric, valid_commonname, valid_path, \
-    valid_printable, valid_base_url, valid_url, valid_complex_url, \
-    VALID_NAME_CHARACTERS
+from mig.shared.safeinput import (
+    main as safeinput_main,
+    InputException,
+    filter_commonname,
+    valid_alphanumeric,
+    valid_commonname,
+    valid_path,
+    valid_printable,
+    valid_base_url,
+    valid_url,
+    valid_complex_url,
+    VALID_NAME_CHARACTERS,
+)
 
 PY2 = sys.version_info[0] == 2
 
@@ -46,18 +55,18 @@ def as_string_of_unicode(value):
     assert isinstance(value, basestring)
     if not is_string_of_unicode(value):
         assert PY2, "unreachable unless Python 2"
-        return unicode(codecs.decode(value, 'utf8'))
+        return unicode(codecs.decode(value, "utf8"))
     return value
 
 
 def is_string_of_unicode(value):
-    return type(value) == type(u'')
+    return type(value) == type("")
 
 
 def _hex_wrap(val):
     """Insert a clearly marked hex representation of val"""
     # Please keep aligned with helper in mig/shared/functionality/autocreate.py
-    return ".X%s" % base64.b16encode(val.encode('utf8')).decode('utf8')
+    return ".X%s" % base64.b16encode(val.encode("utf8")).decode("utf8")
 
 
 class TestMigSharedSafeInput(MigTestCase):
@@ -69,7 +78,7 @@ class TestMigSharedSafeInput(MigTestCase):
     PRINTABLE_CHARS = "abc123!@#"
     ACCENTED_VALID = "Renée Müller"
     ACCENTED_INVALID_EXOTIC = "Źaćâř"
-    DECOMPOSED_UNICODE = u"å"  # a + combining ring above
+    DECOMPOSED_UNICODE = "å"  # a + combining ring above
 
     # Commonname specific test constants
     APOSTROPHE_FULL_NAME = "John O'Connor"
@@ -77,26 +86,28 @@ class TestMigSharedSafeInput(MigTestCase):
     APOSTROPHE_FULL_NAME_HEX = "John O.X27Connor"
 
     COMMONNAME_PERMITTED = (
-        'Firstname Lastname',
-        'Test Æøå',
-        'Test Überh4x0r',
-        'Harry S. Truman',
-        u'Unicode æøå')
+        "Firstname Lastname",
+        "Test Æøå",
+        "Test Überh4x0r",
+        "Harry S. Truman",
+        "Unicode æøå",
+    )
 
     COMMONNAME_PROHIBITED = (
         "Invalid D'Angelo",
-        'Test Maybe Invalid Źacãŕ',
-        'Test Invalid ?',
-        'Test HTML Invalid <code/>')
+        "Test Maybe Invalid Źacãŕ",
+        "Test Invalid ?",
+        "Test HTML Invalid <code/>",
+    )
 
-    BASE_URL = 'https://www.migrid.org'
-    REGULAR_URL = 'https://www.migrid.org/wsgi-bin/ls.py?path=README&flags=v'
-    COMPLEX_URL = 'https://www.migrid.org/abc123@some.org/ls.py?path=R+D#HERE'
-    INVALID_URL = 'https://www.migrid.org/¾½§'
+    BASE_URL = "https://www.migrid.org"
+    REGULAR_URL = "https://www.migrid.org/wsgi-bin/ls.py?path=README&flags=v"
+    COMPLEX_URL = "https://www.migrid.org/abc123@some.org/ls.py?path=R+D#HERE"
+    INVALID_URL = "https://www.migrid.org/¾½§"
 
     def _provide_configuration(self):
         """Provide test configuration"""
-        return 'testconfig'
+        return "testconfig"
 
     def test_commonname_valid(self):
         """Test valid_commonname with acceptable and prohibited names"""
@@ -130,7 +141,7 @@ class TestMigSharedSafeInput(MigTestCase):
             self.assertTrue(len(filtered_cn) < len(test_cn_unicode))
             # With default skip all chars in filtered_cn must be in original
             overlap = [i for i in filtered_cn if i in test_cn_unicode]
-            self.assertEqual(''.join(overlap), filtered_cn)
+            self.assertEqual("".join(overlap), filtered_cn)
 
     def test_commonname_filter_hexlify_illegal(self):
         """Test filter_commonname with hex encoding of illegal chars"""
@@ -145,21 +156,23 @@ class TestMigSharedSafeInput(MigTestCase):
             filtered_cn = filter_commonname(test_cn, illegal_handler=_hex_wrap)
             # Invalid should be replaced with hexlify illegal_handler
             self.assertNotEqual(filtered_cn, test_cn_unicode)
-            self.assertIn('.X', filtered_cn)
+            self.assertIn(".X", filtered_cn)
             self.assertTrue(len(filtered_cn) > len(test_cn_unicode))
 
     def test_filter_commonname_apostrophe_name_skip_illegal(self):
         """Test apostrophe handling with skip illegal_handler"""
-        result = filter_commonname(self.APOSTROPHE_FULL_NAME,
-                                   illegal_handler=None)
+        result = filter_commonname(
+            self.APOSTROPHE_FULL_NAME, illegal_handler=None
+        )
         self.assertNotEqual(result, self.APOSTROPHE_FULL_NAME)
         self.assertNotIn("'", result)
         self.assertEqual(result, self.APOSTROPHE_FULL_NAME_SKIP)
 
     def test_filter_commonname_apostrophe_name_hexlify_illegal(self):
         """Test apostrophe handling with hex encode illegal_handler"""
-        result = filter_commonname(self.APOSTROPHE_FULL_NAME,
-                                   illegal_handler=_hex_wrap)
+        result = filter_commonname(
+            self.APOSTROPHE_FULL_NAME, illegal_handler=_hex_wrap
+        )
         self.assertNotEqual(result, self.APOSTROPHE_FULL_NAME)
         self.assertNotIn("'", result)
         self.assertEqual(result, self.APOSTROPHE_FULL_NAME_HEX)
@@ -283,14 +296,17 @@ class TestMigSharedSafeInput__legacy(MigTestCase):
     # TODO: migrate all legacy self-check functionality into the above?
     def test_existing_main(self):
         """Run built-in self-tests and check output"""
+
         def raise_on_error_exit(exit_code):
             if exit_code != 0:
                 if raise_on_error_exit.last_print is not None:
                     identifying_message = raise_on_error_exit.last_print
                 else:
-                    identifying_message = 'unknown'
+                    identifying_message = "unknown"
                 raise AssertionError(
-                    'failure in unittest/testcore: %s' % (identifying_message,))
+                    "failure in unittest/testcore: %s" % (identifying_message,)
+                )
+
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
@@ -300,5 +316,5 @@ class TestMigSharedSafeInput__legacy(MigTestCase):
         safeinput_main(_exit=raise_on_error_exit, _print=record_last_print)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

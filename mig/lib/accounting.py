@@ -41,11 +41,9 @@ from mig.shared.useradm import get_accepted_peers
 from mig.shared.vgrid import vgrid_list, vgrid_list_vgrids
 
 
-def __init_accounting_entry(user_bytes=0,
-                            freeze_bytes=0,
-                            vgrid_bytes=None,
-                            peers=None,
-                            ext_users=None):
+def __init_accounting_entry(
+    user_bytes=0, freeze_bytes=0, vgrid_bytes=None, peers=None, ext_users=None
+):
     """Return new user account dict entry"""
     if vgrid_bytes is None:
         vgrid_bytes = {}
@@ -54,11 +52,13 @@ def __init_accounting_entry(user_bytes=0,
     if ext_users is None:
         ext_users = {}
 
-    return {'user_bytes': user_bytes,
-            'freeze_bytes': freeze_bytes,
-            'vgrid_bytes': vgrid_bytes,
-            'peers': peers,
-            'ext_users': ext_users}
+    return {
+        "user_bytes": user_bytes,
+        "freeze_bytes": freeze_bytes,
+        "vgrid_bytes": vgrid_bytes,
+        "peers": peers,
+        "ext_users": ext_users,
+    }
 
 
 def __get_owned_vgrid(configuration, verbose=False):
@@ -67,17 +67,16 @@ def __get_owned_vgrid(configuration, verbose=False):
     NOTE: First owner of top-vgrid is primary owner"""
     logger = configuration.logger
     result = {}
-    (status, vgrids) = vgrid_list_vgrids(configuration)
+    status, vgrids = vgrid_list_vgrids(configuration)
     if status:
         for vgrid_name in vgrids:
             # print("checking vgrid: %s" % check_vgrid_name)
-            (owners_status, owners_list) = vgrid_list(vgrid_name,
-                                                      'owners',
-                                                      configuration,
-                                                      recursive=True)
+            owners_status, owners_list = vgrid_list(
+                vgrid_name, "owners", configuration, recursive=True
+            )
             # Find first non-zero owner
             # NOTE: Some owner files contain empty owners)
-            owner = ''
+            owner = ""
             if owners_status and owners_list:
                 owner = next(ent for ent in owners_list if ent)
             if owner:
@@ -85,8 +84,7 @@ def __get_owned_vgrid(configuration, verbose=False):
                 owned_vgrids.append(vgrid_name)
                 result[owner] = owned_vgrids
             else:
-                msg = "Failed to find owner for vgrid: %s" \
-                    % vgrid_name
+                msg = "Failed to find owner for vgrid: %s" % vgrid_name
                 logger.warning(msg)
                 if verbose:
                     print("WARNING: %s" % msg)
@@ -108,36 +106,37 @@ def __get_peers_map(configuration, verbose=False):
             accepted_peers = get_accepted_peers(configuration, client_id)
             for ext_client_id, value in accepted_peers.items():
                 if not isinstance(value, dict):
-                    msg = "Invalid peers format: %s: %s: %s" \
-                          % (client_id, ext_client_id, value)
+                    msg = "Invalid peers format: %s: %s: %s" % (
+                        client_id,
+                        ext_client_id,
+                        value,
+                    )
                     logger.warning(msg)
                     if verbose:
                         print("WARNING: %s" % msg)
                     continue
                 # Map external users to their peer
-                ext_users = peer_result.get('ext_users', {})
+                ext_users = peer_result.get("ext_users", {})
                 ext_users[ext_client_id] = value
-                peer_result['ext_users'] = ext_users
+                peer_result["ext_users"] = ext_users
                 # Map peers to their external user
                 ext_result = result.get(ext_client_id, {})
-                peers = ext_result.get('peers', {})
+                peers = ext_result.get("peers", {})
                 peers[client_id] = value
-                ext_result['peers'] = peers
+                ext_result["peers"] = peers
                 result[ext_client_id] = ext_result
             result[client_id] = peer_result
 
     return result
 
 
-def update_accounting(configuration,
-                      verbose=False):
+def update_accounting(configuration, verbose=False):
     """Update user accounting information"""
     logger = configuration.logger
     retval = True
-    result = {'accounting': {},
-              'quota': {}}
-    accounting = result['accounting']
-    result['timestamp'] = int(time.time())
+    result = {"accounting": {}, "quota": {}}
+    accounting = result["accounting"]
+    result["timestamp"] = int(time.time())
 
     # Map vgrid to their primary owner
     msg = "Creating vgrid owners map ..."
@@ -184,27 +183,24 @@ def update_accounting(configuration,
                 quota_info_json = entry.path
                 quota_fs = entry.name.replace(".json", "")
             else:
-                logger.debug("Skipping non quota info entry: %s"
-                             % entry.name)
+                logger.debug("Skipping non quota info entry: %s" % entry.name)
                 continue
             quota_info = None
             # Try .pck first then .json
             if quota_info_pck:
                 quota_info = unpickle(quota_info_pck, configuration.logger)
             elif quota_info_json:
-                quota_info = load_json(quota_info_json,
-                                       configuration.logger,
-                                       convert_utf8=False)
+                quota_info = load_json(
+                    quota_info_json, configuration.logger, convert_utf8=False
+                )
             if not quota_info:
-                msg = "Failed to load quota info for FS entry: %s" \
-                    % entry.name
+                msg = "Failed to load quota info for FS entry: %s" % entry.name
                 logger.error(msg)
                 if verbose:
                     print("ERROR: %s" % msg)
                 retval = False
                 continue
-            quota_basepath = os.path.join(configuration.quota_home,
-                                          quota_fs)
+            quota_basepath = os.path.join(configuration.quota_home, quota_fs)
             if not os.path.isdir(quota_basepath):
                 msg = "Missing quota_basepath: %r" % quota_basepath
                 logger.error(msg)
@@ -212,14 +208,15 @@ def update_accounting(configuration,
                     print("ERROR: %s" % msg)
                 retval = False
                 continue
-            quota_mtime = quota_info.get('mtime', 0)
-            quota_datestr = datetime.datetime.fromtimestamp(quota_mtime) \
-                .strftime('%d/%m/%Y-%H:%M:%S')
-            result['quota'][quota_fs] = {'mtime': quota_mtime}
+            quota_mtime = quota_info.get("mtime", 0)
+            quota_datestr = datetime.datetime.fromtimestamp(
+                quota_mtime
+            ).strftime("%d/%m/%Y-%H:%M:%S")
+            result["quota"][quota_fs] = {"mtime": quota_mtime}
 
             # User quota
 
-            user_path = os.path.join(quota_basepath, 'user')
+            user_path = os.path.join(quota_basepath, "user")
             if not os.path.isdir(user_path):
                 msg = "Missing quota user path: %r" % user_path
                 logger.error(msg)
@@ -228,11 +225,12 @@ def update_accounting(configuration,
                 retval = False
                 continue
 
-            msg = "Scanning %s user quota (%d) %s %r" \
-                % (quota_fs,
-                   quota_mtime,
-                   quota_datestr,
-                   user_path)
+            msg = "Scanning %s user quota (%d) %s %r" % (
+                quota_fs,
+                quota_mtime,
+                quota_datestr,
+                user_path,
+            )
             logger.info(msg)
             if verbose:
                 print(msg)
@@ -241,30 +239,34 @@ def update_accounting(configuration,
                 for user_entry in it2:
                     if user_entry.name.endswith(".pck"):
                         client_id = client_dir_id(
-                            user_entry.name.replace('.pck', ''))
+                            user_entry.name.replace(".pck", "")
+                        )
                     elif user_entry.name.endswith(".json"):
                         client_id = client_dir_id(
-                            user_entry.name.replace('.json', ''))
+                            user_entry.name.replace(".json", "")
+                        )
                     else:
-                        logger.debug("Skipping non-user entry: %s"
-                                     % user_entry.name)
+                        logger.debug(
+                            "Skipping non-user entry: %s" % user_entry.name
+                        )
                         continue
                     user_quota_files[client_id] = user_entry.path
 
             t2 = time.time()
-            msg = "Scanned %s user quota (%d) %s %r in %d secs" \
-                % (quota_fs,
-                   quota_mtime,
-                   quota_datestr,
-                   user_path,
-                   (t2 - t1))
+            msg = "Scanned %s user quota (%d) %s %r in %d secs" % (
+                quota_fs,
+                quota_mtime,
+                quota_datestr,
+                user_path,
+                (t2 - t1),
+            )
             logger.info(msg)
             if verbose:
                 print(msg)
 
             # Vgrid quota
 
-            vgrid_path = os.path.join(quota_basepath, 'vgrid')
+            vgrid_path = os.path.join(quota_basepath, "vgrid")
             if not os.path.isdir(vgrid_path):
                 msg = "Missing quota vgrid path: %r" % vgrid_path
                 logger.error(msg)
@@ -273,11 +275,12 @@ def update_accounting(configuration,
                 retval = False
                 continue
 
-            msg = "Scanning %s vgrid quota (%d) %s %r" \
-                % (quota_fs,
-                   quota_mtime,
-                   quota_datestr,
-                   vgrid_path)
+            msg = "Scanning %s vgrid quota (%d) %s %r" % (
+                quota_fs,
+                quota_mtime,
+                quota_datestr,
+                vgrid_path,
+            )
             logger.info(msg)
             if verbose:
                 print(msg)
@@ -286,26 +289,29 @@ def update_accounting(configuration,
                 for vgrid_entry in it2:
                     if vgrid_entry.name.endswith(".pck"):
                         vgrid_name = force_native_str(
-                            vgrid_entry.name.replace('.pck', ''))
+                            vgrid_entry.name.replace(".pck", "")
+                        )
                     elif vgrid_entry.name.endswith(".json"):
                         vgrid_name = force_native_str(
-                            vgrid_entry.name.replace('.json', ''))
+                            vgrid_entry.name.replace(".json", "")
+                        )
                     else:
                         # logger.debug("Skipping non-vgrid entry: %s"
                         #              % vgrid_entry.name)
                         continue
                     # NOTE: sub-vgrids uses ':'
                     # as delimiter in 'vgrid_files_writable'
-                    vgrid_name = vgrid_name.replace(':', '/')
+                    vgrid_name = vgrid_name.replace(":", "/")
                     # print("%s: %s" % (vgrid_name, vgrid_entry.path))
                     vgrid_quota_files[vgrid_name] = vgrid_entry.path
             t2 = time.time()
-            msg = "Scanned %s vgrid quota (%d) %s %r in %d secs" \
-                % (quota_fs,
-                   quota_mtime,
-                   quota_datestr,
-                   vgrid_path,
-                   (t2 - t1))
+            msg = "Scanned %s vgrid quota (%d) %s %r in %d secs" % (
+                quota_fs,
+                quota_mtime,
+                quota_datestr,
+                vgrid_path,
+                (t2 - t1),
+            )
             logger.info(msg)
             if verbose:
                 print(msg)
@@ -313,7 +319,7 @@ def update_accounting(configuration,
             # Freeze quota
 
             if configuration.site_enable_freeze:
-                freeze_path = os.path.join(quota_basepath, 'freeze')
+                freeze_path = os.path.join(quota_basepath, "freeze")
                 if not os.path.isdir(freeze_path):
                     msg = "Missing quota freeze path: %r" % freeze_path
                     logger.error(msg)
@@ -322,11 +328,12 @@ def update_accounting(configuration,
                     retval = False
                     continue
 
-                msg = "Scanning %s freeze quota (%d) %s %r" \
-                    % (quota_fs,
-                       quota_mtime,
-                       quota_datestr,
-                       freeze_path)
+                msg = "Scanning %s freeze quota (%d) %s %r" % (
+                    quota_fs,
+                    quota_mtime,
+                    quota_datestr,
+                    freeze_path,
+                )
                 logger.info(msg)
                 if verbose:
                     print(msg)
@@ -335,23 +342,27 @@ def update_accounting(configuration,
                     for freeze_entry in it2:
                         if freeze_entry.name.endswith(".pck"):
                             freeze_client_id = client_dir_id(
-                                freeze_entry.name.replace('.pck', ''))
+                                freeze_entry.name.replace(".pck", "")
+                            )
                         elif freeze_entry.name.endswith(".json"):
                             freeze_client_id = client_dir_id(
-                                freeze_entry.name.replace('.json', ''))
+                                freeze_entry.name.replace(".json", "")
+                            )
                         else:
-                            logger.debug("Skipping non-freeze entry: %s"
-                                         % freeze_entry.name)
+                            logger.debug(
+                                "Skipping non-freeze entry: %s"
+                                % freeze_entry.name
+                            )
                             continue
-                        freeze_quota_files[freeze_client_id] \
-                            = freeze_entry.path
+                        freeze_quota_files[freeze_client_id] = freeze_entry.path
                 t2 = time.time()
-                msg = "Scanned %s freeze quota (%d) %s %r in %d secs" \
-                      % (quota_fs,
-                         quota_mtime,
-                         quota_datestr,
-                         freeze_path,
-                         (t2 - t1))
+                msg = "Scanned %s freeze quota (%d) %s %r in %d secs" % (
+                    quota_fs,
+                    quota_mtime,
+                    quota_datestr,
+                    freeze_path,
+                    (t2 - t1),
+                )
                 logger.info(msg)
                 if verbose:
                     print(msg)
@@ -361,17 +372,18 @@ def update_accounting(configuration,
     vgrids_accounted = []
     for client_id, user_quota_filepath in user_quota_files.items():
         # Init user accounting
-        peers = peers_map.get(client_id, {}).get('peers', {})
-        ext_users = peers_map.get(client_id, {}).get('ext_users', {})
-        accounting[client_id] = __init_accounting_entry(peers=peers,
-                                                        ext_users=ext_users)
+        peers = peers_map.get(client_id, {}).get("peers", {})
+        ext_users = peers_map.get(client_id, {}).get("ext_users", {})
+        accounting[client_id] = __init_accounting_entry(
+            peers=peers, ext_users=ext_users
+        )
         # Extract user bytes
-        if user_quota_filepath.endswith('.pck'):
+        if user_quota_filepath.endswith(".pck"):
             user_quota = unpickle(user_quota_filepath, configuration)
-        elif user_quota_filepath.endswith('.json'):
-            user_quota = load_json(user_quota_filepath,
-                                   configuration.logger,
-                                   convert_utf8=False)
+        elif user_quota_filepath.endswith(".json"):
+            user_quota = load_json(
+                user_quota_filepath, configuration.logger, convert_utf8=False
+            )
         else:
             msg = "Invalid user quota file: %r" % user_quota_filepath
             logger.error(msg)
@@ -380,11 +392,13 @@ def update_accounting(configuration,
             retval = False
             continue
         try:
-            accounting[client_id]['user_bytes'] = user_quota['bytes']
+            accounting[client_id]["user_bytes"] = user_quota["bytes"]
         except Exception as err:
-            accounting[client_id]['user_bytes'] = 0
-            msg = "Failed to load user quota: %r, error: %s" \
-                  % (user_quota_filepath, err)
+            accounting[client_id]["user_bytes"] = 0
+            msg = "Failed to load user quota: %r, error: %s" % (
+                user_quota_filepath,
+                err,
+            )
             logger.error(msg)
             if verbose:
                 print("ERROR: %s" % msg)
@@ -394,27 +408,28 @@ def update_accounting(configuration,
         # Extract vgrid bytes for user 'client_id'
 
         for vgrid_name in owned_vgrid.get(client_id, []):
-            vgrid_quota_filepath = vgrid_quota_files.get(vgrid_name, '')
+            vgrid_quota_filepath = vgrid_quota_files.get(vgrid_name, "")
             if not os.path.exists(vgrid_quota_filepath):
                 if verbose:
                     # NOTE: Legacy vgrids are accounted at by top-vgrid
-                    vgrid_array = vgrid_name.split('/')
-                    legacy_vgrid = os.path.join(configuration.vgrid_files_home,
-                                                vgrid_name)
-                    if not os.path.isdir(legacy_vgrid) \
-                            or len(vgrid_array) == 1:
-                        msg = "Missing quota for vgrid: %r" \
-                            % vgrid_name
+                    vgrid_array = vgrid_name.split("/")
+                    legacy_vgrid = os.path.join(
+                        configuration.vgrid_files_home, vgrid_name
+                    )
+                    if not os.path.isdir(legacy_vgrid) or len(vgrid_array) == 1:
+                        msg = "Missing quota for vgrid: %r" % vgrid_name
                         logger.warning(msg)
                         if verbose:
                             print("WARNING: %s" % msg)
                 continue
-            if vgrid_quota_filepath.endswith('.pck'):
+            if vgrid_quota_filepath.endswith(".pck"):
                 vgrid_quota = unpickle(vgrid_quota_filepath, configuration)
-            elif vgrid_quota_filepath.endswith('.json'):
-                vgrid_quota = load_json(vgrid_quota_filepath,
-                                        configuration.logger,
-                                        convert_utf8=False)
+            elif vgrid_quota_filepath.endswith(".json"):
+                vgrid_quota = load_json(
+                    vgrid_quota_filepath,
+                    configuration.logger,
+                    convert_utf8=False,
+                )
             else:
                 msg = "Invalid vgrid quota file: %r" % vgrid_quota_filepath
                 logger.error(msg)
@@ -423,12 +438,15 @@ def update_accounting(configuration,
                 retval = False
                 continue
             try:
-                accounting[client_id]['vgrid_bytes'][vgrid_name] \
-                    = vgrid_quota['bytes']
+                accounting[client_id]["vgrid_bytes"][vgrid_name] = vgrid_quota[
+                    "bytes"
+                ]
             except Exception as err:
-                accounting[client_id]['vgrid_bytes'][vgrid_name] = 0
-                msg = "Failed to load vgrid quota: %r, error: %s" \
-                      % (vgrid_quota_filepath, err)
+                accounting[client_id]["vgrid_bytes"][vgrid_name] = 0
+                msg = "Failed to load vgrid quota: %r, error: %s" % (
+                    vgrid_quota_filepath,
+                    err,
+                )
                 logger.error(msg)
                 if verbose:
                     print("ERROR: %s" % msg)
@@ -442,13 +460,15 @@ def update_accounting(configuration,
 
     for vgrid_name in vgrid_quota_files:
         if vgrid_name not in vgrids_accounted:
-            vgridowner = ''
+            vgridowner = ""
             for owner, owned_vgrids in owned_vgrid.items():
                 if vgrid_name in owned_vgrids:
                     vgridowner = owner
                     break
-            msg = "no accounting for vgrid: %r, missing owner?: %r" \
-                  % (vgrid_name, vgridowner)
+            msg = "no accounting for vgrid: %r, missing owner?: %r" % (
+                vgrid_name,
+                vgridowner,
+            )
             logger.warning(msg)
             if verbose:
                 print("WARNING: %s" % msg)
@@ -457,24 +477,25 @@ def update_accounting(configuration,
 
     for freeze_name, freeze_quota_filepath in freeze_quota_files.items():
         # Extract client_id from legacy freeze archive format
-        if freeze_name.startswith('archive-'):
-            legacy_freeze_meta_filepath \
-                = os.path.join(configuration.freeze_home,
-                               freeze_name,
-                               'meta.pck')
-            legacy_freeze_meta = unpickle(legacy_freeze_meta_filepath,
-                                          configuration.logger)
+        if freeze_name.startswith("archive-"):
+            legacy_freeze_meta_filepath = os.path.join(
+                configuration.freeze_home, freeze_name, "meta.pck"
+            )
+            legacy_freeze_meta = unpickle(
+                legacy_freeze_meta_filepath, configuration.logger
+            )
             if not legacy_freeze_meta:
-                msg = "Missing metadata for archive: %r" \
-                      % freeze_name
+                msg = "Missing metadata for archive: %r" % freeze_name
                 logger.warning(msg)
                 if verbose:
                     print("WARNING: %s" % msg)
                 continue
-            client_id = legacy_freeze_meta.get('CREATOR', '')
+            client_id = legacy_freeze_meta.get("CREATOR", "")
             if not client_id:
-                msg = "Failed to extract client_id from: %r" \
-                      % legacy_freeze_meta_filepath
+                msg = (
+                    "Failed to extract client_id from: %r"
+                    % legacy_freeze_meta_filepath
+                )
                 logger.error(msg)
                 if verbose:
                     print("ERROR: %s" % msg)
@@ -486,12 +507,12 @@ def update_accounting(configuration,
         # Load freeze quota
 
         freeze_bytes = 0
-        if freeze_quota_filepath.endswith('.pck'):
+        if freeze_quota_filepath.endswith(".pck"):
             freeze_quota = unpickle(freeze_quota_filepath, configuration)
-        elif freeze_quota_filepath.endswith('.json'):
-            freeze_quota = load_json(freeze_quota_filepath,
-                                     configuration.logger,
-                                     convert_utf8=False)
+        elif freeze_quota_filepath.endswith(".json"):
+            freeze_quota = load_json(
+                freeze_quota_filepath, configuration.logger, convert_utf8=False
+            )
         else:
             msg = "Invalid freeze quota file: %r" % freeze_quota_filepath
             logger.error(msg)
@@ -500,11 +521,13 @@ def update_accounting(configuration,
             retval = False
             continue
         try:
-            freeze_bytes = int(freeze_quota['bytes'])
+            freeze_bytes = int(freeze_quota["bytes"])
         except Exception as err:
             freeze_bytes = 0
-            msg = "Failed to fetch freeze quota: %r, error: %s" \
-                  % (freeze_quota_filepath, err)
+            msg = "Failed to fetch freeze quota: %r, error: %s" % (
+                freeze_quota_filepath,
+                err,
+            )
             logger.error(msg)
             if verbose:
                 print("ERROR: %s" % msg)
@@ -512,24 +535,27 @@ def update_accounting(configuration,
             continue
 
         if freeze_bytes > 0:
-            freeze_accounting = accounting.get(client_id, '')
+            freeze_accounting = accounting.get(client_id, "")
             if not freeze_accounting:
-                msg = "added missing archive user: %r : %d" \
-                      % (client_id, freeze_bytes)
+                msg = "added missing archive user: %r : %d" % (
+                    client_id,
+                    freeze_bytes,
+                )
                 logger.warning(msg)
                 if verbose:
                     print("WARNING: %s" % msg)
                 accounting[client_id] = __init_accounting_entry()
                 freeze_accounting = accounting[client_id]
-            freeze_accounting['freeze_bytes'] += freeze_bytes
+            freeze_accounting["freeze_bytes"] += freeze_bytes
 
     # Save accounting result
 
-    accounting_filepath = os.path.join(configuration.accounting_home,
-                                       "%s.pck" % result['timestamp'])
+    accounting_filepath = os.path.join(
+        configuration.accounting_home, "%s.pck" % result["timestamp"]
+    )
     status = pickle(result, accounting_filepath, configuration.logger)
     if status:
-        latest = os.path.join(configuration.accounting_home, 'latest')
+        latest = os.path.join(configuration.accounting_home, "latest")
         status = make_symlink(accounting_filepath, latest, logger, force=True)
     if not status:
         retval = False
@@ -546,33 +572,26 @@ def human_readable_filesize(filesize):
         return "0 B"
     try:
         p = int(math.floor(math.log(filesize, 2) / 10))
-        return "%.3f %s" % (filesize / math.pow(1024, p),
-                            ['B',
-                             'KiB',
-                             'MiB',
-                             'GiB',
-                             'TiB',
-                             'PiB',
-                             'EiB',
-                             'ZiB',
-                             'YiB'][p])
+        return "%.3f %s" % (
+            filesize / math.pow(1024, p),
+            ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"][p],
+        )
     except (ValueError, TypeError, IndexError):
-        return 'NaN'
+        return "NaN"
 
 
-def get_usage(configuration,
-              userlist=[],
-              timestamp=0,
-              verbose=False):
+def get_usage(configuration, userlist=[], timestamp=0, verbose=False):
     """Generate and return 'storage' usage"""
     # Load accounting if it exists
     logger = configuration.logger
     if timestamp == 0:
-        accounting_filepath = os.path.join(configuration.accounting_home,
-                                           "latest")
+        accounting_filepath = os.path.join(
+            configuration.accounting_home, "latest"
+        )
     else:
-        accounting_filepath = os.path.join(configuration.accounting_home,
-                                           "%s.pck" % timestamp)
+        accounting_filepath = os.path.join(
+            configuration.accounting_home, "%s.pck" % timestamp
+        )
     data = unpickle(accounting_filepath, configuration.logger)
     if not data:
         msg = "Failed to load accounting data from: %r" % accounting_filepath
@@ -581,7 +600,7 @@ def get_usage(configuration,
             print("ERROR: %s" % msg)
         return None
 
-    accounting = data.get('accounting', {})
+    accounting = data.get("accounting", {})
 
     # Do not show external users as main accounts unless requested
     # or if the user act as both peer and external user
@@ -590,10 +609,13 @@ def get_usage(configuration,
     peer_users = []
     skip_ext_users = []
     for values in accounting.values():
-        ext_users.extend(list(values.get('ext_users', {})))
-        peer_users.extend(list(values.get('peers', {})))
-    skip_ext_users = [user for user in ext_users
-                      if user not in userlist and user not in peer_users]
+        ext_users.extend(list(values.get("ext_users", {})))
+        peer_users.extend(list(values.get("peers", {})))
+    skip_ext_users = [
+        user
+        for user in ext_users
+        if user not in userlist and user not in peer_users
+    ]
 
     # Create accounting report
 
@@ -610,7 +632,7 @@ def get_usage(configuration,
 
         # Home usage
 
-        home_bytes = values.get('user_bytes', 0)
+        home_bytes = values.get("user_bytes", 0)
         total_bytes += home_bytes
         home_report = ""
         if create_reports:
@@ -619,7 +641,7 @@ def get_usage(configuration,
 
         # Freeze archive usage
 
-        freeze_bytes = values.get('freeze_bytes', 0)
+        freeze_bytes = values.get("freeze_bytes", 0)
         total_bytes += freeze_bytes
         freeze_report = ""
         if create_reports and freeze_bytes > 0:
@@ -630,32 +652,34 @@ def get_usage(configuration,
 
         vgrid_report = ""
         vgrid_total = 0
-        for vgrid_name, vgrid_bytes in values.get('vgrid_bytes', {}).items():
+        for vgrid_name, vgrid_bytes in values.get("vgrid_bytes", {}).items():
             vgrid_total += vgrid_bytes
             if create_reports:
                 vgrid_bytes_human = human_readable_filesize(vgrid_bytes)
-                vgrid_report += "\n - %s: %s" \
-                    % (vgrid_name, vgrid_bytes_human)
+                vgrid_report += "\n - %s: %s" % (vgrid_name, vgrid_bytes_human)
         if vgrid_report:
-            vgrid_report = "%s usage (total: %s)%s" \
-                % (configuration.site_vgrid_label,
-                           human_readable_filesize(vgrid_total),
-                           vgrid_report)
+            vgrid_report = "%s usage (total: %s)%s" % (
+                configuration.site_vgrid_label,
+                human_readable_filesize(vgrid_total),
+                vgrid_report,
+            )
         total_bytes += vgrid_total
 
         # Create account usage entry
 
-        account_usage[username] = {'total_bytes': total_bytes,
-                                   'home_total': home_bytes,
-                                   'vgrid_total': vgrid_total,
-                                   'freeze_total': freeze_bytes,
-                                   'ext_users_total': 0,
-                                   'total_report': '',
-                                   'home_report': home_report,
-                                   'freeze_report': freeze_report,
-                                   'vgrid_report': vgrid_report,
-                                   'ext_users_report': '',
-                                   'peers_report': ''}
+        account_usage[username] = {
+            "total_bytes": total_bytes,
+            "home_total": home_bytes,
+            "vgrid_total": vgrid_total,
+            "freeze_total": freeze_bytes,
+            "ext_users_total": 0,
+            "total_report": "",
+            "home_report": home_report,
+            "freeze_report": freeze_report,
+            "vgrid_report": vgrid_report,
+            "ext_users_report": "",
+            "peers_report": "",
+        }
 
     # Create external users report
     # NOTE: We need total bytes and therefore we need the above full report
@@ -667,13 +691,12 @@ def get_usage(configuration,
         if userlist and username not in userlist:
             continue
         # Create ext_users report
-        ext_users = values.get('ext_users', {})
-        peers = values.get('peers', {})
+        ext_users = values.get("ext_users", {})
+        peers = values.get("peers", {})
         if not ext_users:
             continue
         if ext_users and peers:
-            msg = "User %r acts as both peer and external user" \
-                  % username
+            msg = "User %r acts as both peer and external user" % username
             logger.warning(msg)
             if verbose:
                 print("WARNING: %s" % msg)
@@ -683,20 +706,25 @@ def get_usage(configuration,
         ext_users_report = ""
         ext_users_total = 0
         for ext_user in ext_users:
-            ext_user_total_bytes = account_usage.get(
-                ext_user, {}).get('total_bytes', 0)
+            ext_user_total_bytes = account_usage.get(ext_user, {}).get(
+                "total_bytes", 0
+            )
             ext_users_total += ext_user_total_bytes
             ext_user_total_bytes_human = human_readable_filesize(
-                ext_user_total_bytes)
-            ext_users_report += "\n - %s: %s" % (ext_user,
-                                                 ext_user_total_bytes_human)
+                ext_user_total_bytes
+            )
+            ext_users_report += "\n - %s: %s" % (
+                ext_user,
+                ext_user_total_bytes_human,
+            )
         if ext_users_report:
-            ext_users_report = "External users usage (total: %s):%s" \
-                % (human_readable_filesize(ext_users_total),
-                   ext_users_report)
-        account_usage[username]['ext_users_total'] = ext_users_total
-        account_usage[username]['ext_users_report'] = ext_users_report
-        account_usage[username]['total_bytes'] += ext_users_total
+            ext_users_report = "External users usage (total: %s):%s" % (
+                human_readable_filesize(ext_users_total),
+                ext_users_report,
+            )
+        account_usage[username]["ext_users_total"] = ext_users_total
+        account_usage[username]["ext_users_report"] = ext_users_report
+        account_usage[username]["total_bytes"] += ext_users_total
 
         # Create peers report
 
@@ -705,22 +733,26 @@ def get_usage(configuration,
             peers_report += "\n - %s" % peer
         if peers_report:
             peers_report = "Accepted by the following peer:%s" % peers_report
-        account_usage[username]['peers_report'] = peers_report
+        account_usage[username]["peers_report"] = peers_report
 
     # Create total usage report for each user
 
     for usage in account_usage.values():
-        usage['total_report'] = "Total usage: %s" \
-            % human_readable_filesize(usage['total_bytes'])
+        usage["total_report"] = "Total usage: %s" % human_readable_filesize(
+            usage["total_bytes"]
+        )
 
     # External users are accounted for by their peer
     # unless the external user also act as a peer
 
     result = {}
-    result['timestamp'] = data.get('timestamp', 0)
-    result['quota'] = data.get('quota', {})
-    result['accounting'] = {username: values for username, values
-                            in account_usage.items()
-                            if not userlist or username in userlist
-                            and username not in skip_ext_users}
+    result["timestamp"] = data.get("timestamp", 0)
+    result["quota"] = data.get("quota", {})
+    result["accounting"] = {
+        username: values
+        for username, values in account_usage.items()
+        if not userlist
+        or username in userlist
+        and username not in skip_ext_users
+    }
     return result

@@ -29,11 +29,13 @@
 
 class NoBlockError(AssertionError):
     """Decorate AssertionError for our own convenience"""
+
     pass
 
 
 class NoCasesError(AssertionError):
     """Decorate AssertionError for our own convenience"""
+
     pass
 
 
@@ -76,10 +78,15 @@ class AssertOver:
         if not any(self._attempts):
             return True
 
-        value_lines = ["- <%r> : %s" % (attempt[0], str(attempt[1])) for
-                       attempt in self._attempts if attempt]
-        raise AssertionError("assertions raised for the following values:\n%s"
-                             % '\n'.join(value_lines))
+        value_lines = [
+            "- <%r> : %s" % (attempt[0], str(attempt[1]))
+            for attempt in self._attempts
+            if attempt
+        ]
+        raise AssertionError(
+            "assertions raised for the following values:\n%s"
+            % "\n".join(value_lines)
+        )
 
     def record_attempt(self, attempt_info):
         """Record the result of a test attempt"""
@@ -89,7 +96,9 @@ class AssertOver:
         def raise_unless_consulted():
             if not self._consulted:
                 raise AssertionError(
-                    "no examiniation made of assertion of multiple values")
+                    "no examiniation made of assertion of multiple values"
+                )
+
         return raise_unless_consulted
 
     def assert_success(self):
@@ -103,4 +112,7 @@ class AssertOver:
             block.__call__(block_value)
             return None
         except Exception as blockexc:
-            return (block_value, blockexc,)
+            return (
+                block_value,
+                blockexc,
+            )

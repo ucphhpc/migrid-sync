@@ -34,9 +34,8 @@ from tests.support import MigTestCase, testmain
 
 from mig.shared.safeeval import *
 
-
 PWD_STR = os.getcwd()
-PWD_BYTES = PWD_STR.encode('utf8')
+PWD_BYTES = PWD_STR.encode("utf8")
 
 
 class MigSharedSafeeval(MigTestCase):
@@ -44,49 +43,60 @@ class MigSharedSafeeval(MigTestCase):
 
     def test_subprocess_call(self):
         """Check that pwd call without args succeeds"""
-        retval = subprocess_call(['pwd'], stdout=subprocess_pipe)
+        retval = subprocess_call(["pwd"], stdout=subprocess_pipe)
         self.assertEqual(retval, 0, "unexpected subprocess call pwd retval")
 
     def test_subprocess_call_invalid(self):
         """Check that pwd call with invalid arg fails"""
-        retval = subprocess_call(['pwd', '-h'], stderr=subprocess_pipe)
-        self.assertNotEqual(retval, 0,
-                            "unexpected subprocess call nosuchcommand retval")
+        retval = subprocess_call(["pwd", "-h"], stderr=subprocess_pipe)
+        self.assertNotEqual(
+            retval, 0, "unexpected subprocess call nosuchcommand retval"
+        )
 
     def test_subprocess_check_output(self):
         """Check that pwd command output matches getcwd as bytes"""
-        data = subprocess_check_output(['pwd'], stdout=subprocess_pipe,
-                                       stderr=subprocess_pipe).strip()
-        self.assertEqual(data, PWD_BYTES,
-                         "mismatch in subprocess check pwd output")
+        data = subprocess_check_output(
+            ["pwd"], stdout=subprocess_pipe, stderr=subprocess_pipe
+        ).strip()
+        self.assertEqual(
+            data, PWD_BYTES, "mismatch in subprocess check pwd output"
+        )
 
     def test_subprocess_check_output_text(self):
         """Check that pwd command output matches getcwd as string"""
-        data = subprocess_check_output(['pwd'], stdout=subprocess_pipe,
-                                       stderr=subprocess_pipe,
-                                       text=True).strip()
-        self.assertEqual(data, PWD_STR,
-                         "mismatch in subprocess check pwd output")
+        data = subprocess_check_output(
+            ["pwd"], stdout=subprocess_pipe, stderr=subprocess_pipe, text=True
+        ).strip()
+        self.assertEqual(
+            data, PWD_STR, "mismatch in subprocess check pwd output"
+        )
 
     def test_subprocess_popen(self):
         """Check that pwd popen output matches getcwd as bytes"""
-        proc = subprocess_popen(['pwd'], stdout=subprocess_pipe,
-                                stderr=subprocess_stdout)
+        proc = subprocess_popen(
+            ["pwd"], stdout=subprocess_pipe, stderr=subprocess_stdout
+        )
         retval = proc.wait()
         data = proc.stdout.read().strip()
-        self.assertEqual(data, PWD_BYTES,
-                         "mismatch in subprocess popen pwd output")
+        self.assertEqual(
+            data, PWD_BYTES, "mismatch in subprocess popen pwd output"
+        )
 
     def test_subprocess_popen_text(self):
         """Check that pwd popen output matches getcwd as string"""
         orig = os.getcwd()
-        proc = subprocess_popen(['pwd'], stdout=subprocess_pipe,
-                                stderr=subprocess_stdout, text=True)
+        proc = subprocess_popen(
+            ["pwd"],
+            stdout=subprocess_pipe,
+            stderr=subprocess_stdout,
+            text=True,
+        )
         retval = proc.wait()
         data = proc.stdout.read().strip()
-        self.assertEqual(data, PWD_STR,
-                         "mismatch in subprocess popen pwd output")
+        self.assertEqual(
+            data, PWD_STR, "mismatch in subprocess popen pwd output"
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

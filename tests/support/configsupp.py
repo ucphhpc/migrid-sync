@@ -30,17 +30,19 @@
 from tests.support.loggersupp import FakeLogger
 
 from mig.shared.compat import SimpleNamespace
-from mig.shared.configuration import \
-    _CONFIGURATION_ARGUMENTS, _CONFIGURATION_PROPERTIES
+from mig.shared.configuration import (
+    _CONFIGURATION_ARGUMENTS,
+    _CONFIGURATION_PROPERTIES,
+)
 
 
 def _ensure_only_configuration_keys(thedict):
-    """Check a dictionary contains only keys valid as Configuration properties.
-    """
+    """Check a dictionary contains only keys valid as Configuration properties."""
 
     unknown_keys = set(thedict.keys()) - set(_CONFIGURATION_ARGUMENTS)
-    assert len(unknown_keys) == 0, \
-        "non-Configuration keys: %s" % (', '.join(unknown_keys),)
+    assert len(unknown_keys) == 0, "non-Configuration keys: %s" % (
+        ", ".join(unknown_keys),
+    )
 
 
 def _generate_namespace_kwargs():
@@ -49,7 +51,7 @@ def _generate_namespace_kwargs():
     """
 
     properties_and_defaults = dict(_CONFIGURATION_PROPERTIES)
-    properties_and_defaults['logger'] = None
+    properties_and_defaults["logger"] = None
     return properties_and_defaults
 
 

@@ -43,13 +43,13 @@ class TestsSupportConfigsupp_FakeConfiguration(MigTestCase):
         self.maxDiff = None
         self.assertEqual(
             Configuration.to_dict(default_configuration),
-            Configuration.to_dict(fake_configuration)
+            Configuration.to_dict(fake_configuration),
         )
 
     def test_only_configuration_keys(self):
         with self.assertRaises(AssertionError):
-            FakeConfiguration(bar='1')
+            FakeConfiguration(bar="1")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

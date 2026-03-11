@@ -44,7 +44,7 @@ class PickleAssertMixin:
         having been optionally transformed as requested by hints.
         """
 
-        with open(pickle_file_path, 'rb') as picklefile:
+        with open(pickle_file_path, "rb") as picklefile:
             pickled = pickle.load(picklefile)
 
         if not apply_hints:
