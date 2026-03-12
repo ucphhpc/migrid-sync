@@ -6,8 +6,13 @@ ifndef PY
 	PY = 3
 endif
 
+# TODO: enable enforcement on the ./bin and ./sbin dirs as well when ready.
+#       Right now it greedily follows symlinks e.g. into mig/server/ however.
+#FORMAT_ENFORCE_DIRS = ./mig/lib ./bin ./sbin ./tests
 FORMAT_ENFORCE_DIRS = ./mig/lib ./tests
+#FORMAT_EXCLUDE_REGEX = '.git|tests/data/|tests/fixture/|mig/server/'
 FORMAT_EXCLUDE_REGEX = '.git|tests/data/|tests/fixture/'
+#FORMAT_EXCLUDE_GLOB = '.git/* tests/data/* tests/fixture/* mig/server/*'
 FORMAT_EXCLUDE_GLOB = '.git/* tests/data/* tests/fixture/*'
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
@@ -28,12 +33,15 @@ info:
 	@echo
 	@echo "The following should help you get started:"
 	@echo
-	@echo "'make test'      - run the test suite (default python 3)"
-	@echo "'make PYVER=X.Y' - run the test suite (python version X.Y)"
-	@echo "'make unittest'  - execute tests locally for development"
+	@echo "'make test'         - run the test suite (default python 3)"
+	@echo "'make PYVER=X.Y'    - run the test suite (python version X.Y)"
+	@echo "'make unittest'     - execute tests locally for development"
+	@echo "'make formatcode'   - format code to match migrid coding style"
+	@echo "'make checkformat'  - test if code matches migrid coding style"
 
-.PHONY: fmt
-fmt:
+.PHONY: fmt formatcode
+fmt: formatcode
+formatcode:
 ifneq ($(MIG_ENV),'local')
 	@echo "unavailable outside local development environment"
 	@exit 1
@@ -47,8 +55,10 @@ endif
 			--skip-glob=$(FORMAT_EXCLUDE_GLOB) \
 			--skip-gitignore
 
-.PHONY: lint
-lint:
+.PHONY: lint chkfmt checkformat
+lint: checkformat
+chkfmt: checkformat
+checkformat:
 ifneq ($(MIG_ENV),'local')
 	@echo "unavailable outside local development environment"
 	@exit 1
