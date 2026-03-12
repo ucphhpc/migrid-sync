@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # wsgisupp - test support library for WSGI
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -19,7 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -29,15 +30,9 @@
 from collections import namedtuple
 import codecs
 from io import BytesIO
+from urllib.parse import urlencode, urlparse
+
 from werkzeug.datastructures import MultiDict
-
-from tests.support._env import PY2
-
-if PY2:
-    from urllib import urlencode
-    from urlparse import urlparse
-else:
-    from urllib.parse import urlencode, urlparse
 
 
 # named type representing the tuple that is passed to WSGI handlers
@@ -85,7 +80,10 @@ def create_wsgi_environ(configuration, wsgi_url, method='GET', query=None, heade
         wsgi_input = ()
 
     class _errors:
-        def close():
+        """Internal helper to ignore wsgi.errors close method calls"""
+
+        def close(self, *ars, **kwargs):
+            """"Simply ignore"""
             pass
 
     environ = {}
