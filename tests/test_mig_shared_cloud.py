@@ -34,10 +34,18 @@ import unittest
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
-from mig.shared.cloud import allowed_cloud_images, cloud_load_instance, \
-    cloud_save_instance
-from tests.support import TEST_OUTPUT_DIR, FakeConfiguration, MigTestCase, \
-    cleanpath, testmain
+from mig.shared.cloud import (
+    allowed_cloud_images,
+    cloud_load_instance,
+    cloud_save_instance,
+)
+from tests.support import (
+    TEST_OUTPUT_DIR,
+    FakeConfiguration,
+    MigTestCase,
+    cleanpath,
+    testmain,
+)
 
 DUMMY_USER = "dummy-user"
 DUMMY_SETTINGS_DIR = "dummy_user_settings"

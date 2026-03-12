@@ -41,13 +41,24 @@ except ImportError:
     psutil = None
 
 from mig.shared.base import force_unicode
-from mig.shared.fileio import make_symlink, makedirs_rec, pickle, save_json, \
-    scandir, unpickle, walk, write_file
+from mig.shared.fileio import (
+    make_symlink,
+    makedirs_rec,
+    pickle,
+    save_json,
+    scandir,
+    unpickle,
+    walk,
+    write_file,
+)
 from mig.shared.vgrid import vgrid_flat_name
 
 try:
-    from lustreclient.lfs import lfs_get_project_quota, lfs_set_project_id, \
-        lfs_set_project_quota
+    from lustreclient.lfs import (
+        lfs_get_project_quota,
+        lfs_set_project_id,
+        lfs_set_project_quota,
+    )
 except ImportError:
     lfs_set_project_id = None
     lfs_get_project_quota = None

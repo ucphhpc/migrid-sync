@@ -35,16 +35,39 @@ import unittest
 # Imports required for the unit test wrapping
 from mig.shared.base import client_id_dir
 from mig.shared.serial import dump
+
 # Imports of the code under test
-from mig.shared.vgrid import get_vgrid_workflow_jobs, legacy_main, \
-    vgrid_add_entities, vgrid_add_members, vgrid_add_owners, \
-    vgrid_add_resources, vgrid_add_workflow_jobs, vgrid_allow_restrict_write, \
-    vgrid_exists, vgrid_flat_name, vgrid_is_default, vgrid_is_member, \
-    vgrid_is_owner, vgrid_is_owner_or_member, vgrid_is_trigger, vgrid_list, \
-    vgrid_list_parents, vgrid_list_subvgrids, vgrid_list_vgrids, \
-    vgrid_match_resources, vgrid_nest_sep, vgrid_remove_entities, \
-    vgrid_restrict_write, vgrid_set_entities, vgrid_set_members, \
-    vgrid_set_owners, vgrid_set_workflow_jobs, vgrid_settings
+from mig.shared.vgrid import (
+    get_vgrid_workflow_jobs,
+    legacy_main,
+    vgrid_add_entities,
+    vgrid_add_members,
+    vgrid_add_owners,
+    vgrid_add_resources,
+    vgrid_add_workflow_jobs,
+    vgrid_allow_restrict_write,
+    vgrid_exists,
+    vgrid_flat_name,
+    vgrid_is_default,
+    vgrid_is_member,
+    vgrid_is_owner,
+    vgrid_is_owner_or_member,
+    vgrid_is_trigger,
+    vgrid_list,
+    vgrid_list_parents,
+    vgrid_list_subvgrids,
+    vgrid_list_vgrids,
+    vgrid_match_resources,
+    vgrid_nest_sep,
+    vgrid_remove_entities,
+    vgrid_restrict_write,
+    vgrid_set_entities,
+    vgrid_set_members,
+    vgrid_set_owners,
+    vgrid_set_workflow_jobs,
+    vgrid_settings,
+)
+
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 

@@ -31,8 +31,11 @@ import inspect
 import os
 import unittest
 
-from mig.shared.configuration import _CONFIGURATION_ARGUMENTS, \
-    _CONFIGURATION_PROPERTIES, Configuration
+from mig.shared.configuration import (
+    _CONFIGURATION_ARGUMENTS,
+    _CONFIGURATION_PROPERTIES,
+    Configuration,
+)
 from tests.support import PY2, TEST_DATA_DIR, MigTestCase, testmain
 from tests.support.fixturesupp import FixtureAssertMixin
 

@@ -38,9 +38,11 @@ from unittest.mock import patch
 
 # Imports of the code under test
 import mig.shared.auth as auth
+
 # Imports required for the unit test wrapping
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import twofactor_cookie_ttl, twofactor_key_bytes
+
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 

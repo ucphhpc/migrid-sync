@@ -32,18 +32,54 @@ import sys
 import unittest
 
 # Imports of the code under test
-from mig.shared.base import allow_script, auth_type_description, brief_list, \
-    canonical_user, canonical_user_with_peers, client_alias, client_dir_id, \
-    client_id_dir, distinguished_name_to_user, expand_openid_alias, \
-    extract_field, fill_distinguished_name, fill_user, generate_https_urls, \
-    get_client_id, get_short_id, get_site_base_url, get_user_id, get_xgi_bin, \
-    hexlify, invisible_dir, invisible_file, invisible_path, is_gdp_user, \
-    legacy_main, mask_creds, pretty_format_user, requested_backend, \
-    requested_page, requested_url_base, sandbox_resource, string_snippet, \
-    unhexlify, user_base_dir, valid_dir_input, verify_local_url
+from mig.shared.base import (
+    allow_script,
+    auth_type_description,
+    brief_list,
+    canonical_user,
+    canonical_user_with_peers,
+    client_alias,
+    client_dir_id,
+    client_id_dir,
+    distinguished_name_to_user,
+    expand_openid_alias,
+    extract_field,
+    fill_distinguished_name,
+    fill_user,
+    generate_https_urls,
+    get_client_id,
+    get_short_id,
+    get_site_base_url,
+    get_user_id,
+    get_xgi_bin,
+    hexlify,
+    invisible_dir,
+    invisible_file,
+    invisible_path,
+    is_gdp_user,
+    legacy_main,
+    mask_creds,
+    pretty_format_user,
+    requested_backend,
+    requested_page,
+    requested_url_base,
+    sandbox_resource,
+    string_snippet,
+    unhexlify,
+    user_base_dir,
+    valid_dir_input,
+    verify_local_url,
+)
+
 # Imports required for the unit test wrapping
-from mig.shared.defaults import cert_field_order, csrf_field, \
-    gdp_distinguished_field, valid_gdp_anon_scripts, valid_gdp_auth_scripts
+from mig.shared.defaults import (
+    cert_field_order,
+    csrf_field,
+    gdp_distinguished_field,
+    valid_gdp_anon_scripts,
+    valid_gdp_auth_scripts,
+)
+
 # Imports required for the unit tests themselves
 from tests.support import FakeConfiguration, MigTestCase, testmain
 
@@ -709,8 +745,11 @@ just use the one that looks most familiar or try them in turn)"""
 
     def test_auth_type_description_individual(self):
         """Test auth_type_description returns expected strings for each type"""
-        from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_CONNECT, \
-            AUTH_OPENID_V2
+        from mig.shared.defaults import (
+            AUTH_CERTIFICATE,
+            AUTH_OPENID_CONNECT,
+            AUTH_OPENID_V2,
+        )
 
         # Setup titles in configuration
         self.configuration.user_mig_oid_title = "MiG OpenID"
@@ -745,8 +784,11 @@ just use the one that looks most familiar or try them in turn)"""
 
     def test_auth_type_description_empty_titles(self):
         """Test auth_type_description handles empty titles in configuration"""
-        from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_CONNECT, \
-            AUTH_OPENID_V2
+        from mig.shared.defaults import (
+            AUTH_CERTIFICATE,
+            AUTH_OPENID_CONNECT,
+            AUTH_OPENID_V2,
+        )
 
         self.configuration.user_mig_oid_title = ""
         self.configuration.user_mig_cert_title = ""

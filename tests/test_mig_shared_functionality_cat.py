@@ -38,8 +38,15 @@ import unittest
 from mig.shared.base import client_id_dir
 from mig.shared.functionality.cat import _main as submain
 from mig.shared.functionality.cat import main as realmain
-from tests.support import MIG_BASE, PY2, TEST_DATA_DIR, MigTestCase, \
-    ensure_dirs_exist, temppath, testmain
+from tests.support import (
+    MIG_BASE,
+    PY2,
+    TEST_DATA_DIR,
+    MigTestCase,
+    ensure_dirs_exist,
+    temppath,
+    testmain,
+)
 
 
 def create_http_environ(configuration):

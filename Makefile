@@ -42,7 +42,8 @@ endif
 			--line-length=80 \
 			--exclude=$(FORMAT_EXCLUDE_REGEX)
 	$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
-			--line-length=80 -m=HANGING_INDENT \
+			--profile=black \
+			--line-length=80 \
 			--skip-glob=$(FORMAT_EXCLUDE_GLOB) \
 			--skip-gitignore
 
@@ -56,6 +57,12 @@ endif
 			--check \
 			--line-length=80 \
 			--exclude $(FORMAT_EXCLUDE_REGEX)
+	$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
+			--check-only \
+			--profile=black \
+			--line-length=80 \
+			--skip-glob=$(FORMAT_EXCLUDE_GLOB) \
+			--skip-gitignore
 
 .PHONY: clean
 clean:

@@ -35,8 +35,13 @@ import unittest
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
 from mig.shared.jupyter import gen_openid_template
-from tests.support import TEST_OUTPUT_DIR, FakeConfiguration, MigTestCase, \
-    cleanpath, testmain
+from tests.support import (
+    TEST_OUTPUT_DIR,
+    FakeConfiguration,
+    MigTestCase,
+    cleanpath,
+    testmain,
+)
 
 
 def noop(*args):

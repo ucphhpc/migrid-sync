@@ -32,12 +32,28 @@ import os
 import unittest
 
 # Imports of the code under test
-from mig.lib.events import _restore_env, _save_env, at_remain, cron_match, \
-    get_path_expand_map, get_time_expand_map, load_atjobs, load_crontab
+from mig.lib.events import (
+    _restore_env,
+    _save_env,
+    at_remain,
+    cron_match,
+    get_path_expand_map,
+    get_time_expand_map,
+    load_atjobs,
+    load_crontab,
+)
 from mig.lib.events import main as events_main
-from mig.lib.events import parse_and_save_atjobs, parse_and_save_crontab, \
-    parse_atjobs, parse_atjobs_contents, parse_crontab, \
-    parse_crontab_contents, run_cron_command, run_events_command
+from mig.lib.events import (
+    parse_and_save_atjobs,
+    parse_and_save_crontab,
+    parse_atjobs,
+    parse_atjobs_contents,
+    parse_crontab,
+    parse_crontab_contents,
+    run_cron_command,
+    run_events_command,
+)
+
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist
 

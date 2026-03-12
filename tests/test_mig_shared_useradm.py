@@ -38,14 +38,30 @@ import unittest
 from past.builtins import basestring
 
 # Imports required for the unit test wrapping
-from mig.shared.defaults import DEFAULT_USER_ID_FORMAT, htaccess_filename, \
-    keyword_auto
+from mig.shared.defaults import (
+    DEFAULT_USER_ID_FORMAT,
+    htaccess_filename,
+    keyword_auto,
+)
+
 # Imports of the code under test
-from mig.shared.useradm import _ensure_dirs_needed_for_userdb, \
-    assure_current_htaccess, create_user
+from mig.shared.useradm import (
+    _ensure_dirs_needed_for_userdb,
+    assure_current_htaccess,
+    create_user,
+)
+
 # Imports required for the unit tests themselves
-from tests.support import MIG_BASE, TEST_OUTPUT_DIR, FakeConfiguration, \
-    MigTestCase, cleanpath, ensure_dirs_exist, is_path_within, testmain
+from tests.support import (
+    MIG_BASE,
+    TEST_OUTPUT_DIR,
+    FakeConfiguration,
+    MigTestCase,
+    cleanpath,
+    ensure_dirs_exist,
+    is_path_within,
+    testmain,
+)
 from tests.support.fixturesupp import FixtureAssertMixin
 from tests.support.picklesupp import PickleAssertMixin
 

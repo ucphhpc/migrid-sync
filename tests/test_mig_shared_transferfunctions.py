@@ -31,11 +31,22 @@ import os
 import sys
 import tempfile
 
-from mig.shared.transferfunctions import create_data_transfer, \
-    delete_data_transfer, get_transfers_path, load_data_transfers, \
-    lock_data_transfers, unlock_data_transfers
-from tests.support import TEST_OUTPUT_DIR, FakeConfiguration, MigTestCase, \
-    cleanpath, temppath, testmain
+from mig.shared.transferfunctions import (
+    create_data_transfer,
+    delete_data_transfer,
+    get_transfers_path,
+    load_data_transfers,
+    lock_data_transfers,
+    unlock_data_transfers,
+)
+from tests.support import (
+    TEST_OUTPUT_DIR,
+    FakeConfiguration,
+    MigTestCase,
+    cleanpath,
+    temppath,
+    testmain,
+)
 
 DUMMY_USER = "dummy-user"
 DUMMY_ID = "dummy-id"

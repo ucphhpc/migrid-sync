@@ -28,8 +28,10 @@
 """Configuration related details within the test support library."""
 
 from mig.shared.compat import SimpleNamespace
-from mig.shared.configuration import _CONFIGURATION_ARGUMENTS, \
-    _CONFIGURATION_PROPERTIES
+from mig.shared.configuration import (
+    _CONFIGURATION_ARGUMENTS,
+    _CONFIGURATION_PROPERTIES,
+)
 from tests.support.loggersupp import FakeLogger
 
 

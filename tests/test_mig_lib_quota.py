@@ -29,6 +29,7 @@
 
 # Imports of the code under test
 from mig.lib.quota import update_quota
+
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase
 

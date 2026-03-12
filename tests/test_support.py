@@ -35,8 +35,14 @@ import unittest
 
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
-from tests.support import PY2, AssertOver, FakeConfiguration, MigTestCase, \
-    temppath, testmain
+from tests.support import (
+    PY2,
+    AssertOver,
+    FakeConfiguration,
+    MigTestCase,
+    temppath,
+    testmain,
+)
 
 
 class InstrumentedAssertOver(AssertOver):

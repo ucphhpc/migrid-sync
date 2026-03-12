@@ -35,10 +35,19 @@ import unittest
 from mig.shared.base import distinguished_name_to_user
 from mig.shared.fileio import delete_file
 from mig.shared.serial import dumps, loads
+
 # Imports of the code under test
-from mig.shared.userdb import default_db_path, load_user_db, load_user_dict, \
-    lock_user_db, save_user_db, save_user_dict, unlock_user_db, \
-    update_user_dict
+from mig.shared.userdb import (
+    default_db_path,
+    load_user_db,
+    load_user_dict,
+    lock_user_db,
+    save_user_db,
+    save_user_dict,
+    unlock_user_db,
+    update_user_dict,
+)
+
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
 

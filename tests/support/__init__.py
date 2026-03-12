@@ -47,8 +47,13 @@ from unittest import main as testmain
 from tests.support._env import MIG_ENV, PY2
 from tests.support.configsupp import FakeConfiguration
 from tests.support.fixturesupp import _PreparedFixture
-from tests.support.suppconst import ENVHELP_OUTPUT_DIR, MIG_BASE, TEST_BASE, \
-    TEST_DATA_DIR, TEST_OUTPUT_DIR
+from tests.support.suppconst import (
+    ENVHELP_OUTPUT_DIR,
+    MIG_BASE,
+    TEST_BASE,
+    TEST_DATA_DIR,
+    TEST_OUTPUT_DIR,
+)
 from tests.support.usersupp import UserAssertMixin
 
 # Provide access to a configuration file for the active environment.
