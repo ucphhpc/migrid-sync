@@ -33,7 +33,6 @@ from io import BytesIO
 
 from werkzeug.datastructures import MultiDict
 
-
 if PY2:
     from urllib import urlencode
 
@@ -92,7 +91,7 @@ def create_wsgi_environ(
         """Internal helper to ignore wsgi.errors close method calls"""
 
         def close(self, *ars, **kwargs):
-            """"Simply ignore"""
+            """Simply ignore"""
             pass
 
     environ = {}
