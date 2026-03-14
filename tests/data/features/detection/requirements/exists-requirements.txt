@@ -1,0 +1,3 @@
+# deliberately choose a package that is always installed in development
+# such that requesting detection will find it and skip its installation
+autopep8

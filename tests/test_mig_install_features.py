@@ -148,6 +148,7 @@ class MigInstallFeatures_logic(MigTestCase):
         args = SimpleNamespace(
             command='install',
             check=True,
+            detect_installed=False,
             c=None,
             dotenv=os.path.join(example_dir, '.env--enable-foo'),
             env=None
@@ -161,7 +162,26 @@ class MigInstallFeatures_logic(MigTestCase):
             f"pip install -r {os.path.join(example_dir, 'requirements/foo-requirements.txt')}",
         ])
 
-    def test_overridden_package_version(self):
+    def test_command_install_conflicting_package_versions(self):
+        fake_print = FakePrint()
+        example_dir, features = _make_example_features_instance('detection')
+        args = SimpleNamespace(
+            command='install',
+            check=True,
+            detect_installed=True,
+            c=None,
+            dotenv=None,
+            env={
+                'ENABLE_EXISTS': 'true'
+            }
+        )
+
+        ret = args_main(args, print=fake_print, features=features)
+
+        self.assertEqual(ret, 0)
+        self.assertOutputLines(fake_print, [])
+
+    def test_command_install_overridden_package_version(self):
         fake_print = FakePrint()
         example_dir, features = _make_example_features_instance('basic',
                 overrides_supported={
@@ -172,6 +192,7 @@ class MigInstallFeatures_logic(MigTestCase):
         args = SimpleNamespace(
             command='install',
             check=True,
+            detect_installed=False,
             c=None,
             dotenv=None,
             env={
@@ -187,7 +208,6 @@ class MigInstallFeatures_logic(MigTestCase):
             f"pip install -r {os.path.join(example_dir, 'requirements/baz-requirements.txt')}",
             "pip install somepkg==4.5.5 otherpkg==4.5.6",
         ])
-
 
 
 class MigInstallFeatures_smoke(MigTestCase):

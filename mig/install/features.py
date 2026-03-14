@@ -4,6 +4,7 @@ import argparse
 from collections import defaultdict
 from configparser import ConfigParser
 from enum import Enum
+import importlib
 import os
 import pip
 import sys
@@ -80,7 +81,7 @@ class Features:
 
         return self._enabled_by_feature[feature_name]
 
-    def generate_pip_args(self):
+    def generate_pip_args(self, detect_installed=False):
         """
         Create pip arguments for each enabled feature.
         """
@@ -88,19 +89,24 @@ class Features:
         per_package_args = []
 
         for feature_name in self.list_enabled_features():
-            per_package_args.append(self.generate_pip_args_for_feature(feature_name))
+            installable_packages = self.generate_pip_args_for_feature(feature_name,
+                                        detect_installed=detect_installed)
+            if not installable_packages:
+                continue
+            per_package_args.append(installable_packages)
 
         return per_package_args
 
-    def generate_pip_args_for_feature(self, feature_name):
+    def generate_pip_args_for_feature(self, feature_name, *, detect_installed):
         """
         Create pip arguments for a particular feature.
         """
 
-        overrides = self._overrides_by_feature.get(feature_name, None)
+        overrides = self._overrides_by_feature.get(feature_name, {})
 
-        if not overrides:
-            # no overiddes detected therefore we can install
+        if not (overrides or detect_installed):
+            # no overrides detected and we do not need to check for the
+            # dependencies being already installed therefore we can install
             # by simply using the requirements file as-is
             return ['-r', self._requirements_file_by_feature[feature_name]]
 
@@ -111,10 +117,24 @@ class Features:
         for package_name in overridden_package_names:
             package_args.append(f"{package_name}=={overrides[package_name]}")
 
+        if detect_installed:
+            packages_to_detect = self.required_package_names(feature_name)
+        else:
+            packages_to_detect = set()
+
         # add the remaining packages based on the requirements file
         for entry in self._requirements_by_feature[feature_name]:
             package_name = Features._strip_version_if_present(entry.requirement)
             if package_name in overridden_package_names:
+                continue
+
+            should_detect = package_name in packages_to_detect
+            if should_detect:
+                skip_installation = Features._is_package_present(package_name)
+            else:
+                skip_installation = False
+
+            if skip_installation:
                 continue
             package_args.append(entry.requirement)
 
@@ -127,6 +147,10 @@ class Features:
 
         return return_as((feature_name for feature_name in self.feature_names
                                         if self._enabled_by_feature[feature_name]))
+
+    def required_package_names(self, feature_name):
+        return set((Features._strip_version_if_present(entry.requirement)
+                    for entry in self._requirements_by_feature[feature_name]))
 
     @staticmethod
     def _interpret_feature_definition(feature_name, feature_definition, requirements_dir):
@@ -149,6 +173,15 @@ class Features:
             requirements=requirements,
             requirements_file=requirements_file,
         )
+
+    @staticmethod
+    def _is_package_present(package_name):
+        try:
+            importlib.util.find_spec(package_name)
+
+            return True
+        except ModuleNotFoundError as exc:
+            return False
 
     @staticmethod
     def _strip_version_if_present(requirement):
@@ -270,7 +303,7 @@ def main_install(features, args, print=print, warn=warn):
         warn("no feature coniguration available; showing those enabled by default only")
         warn()
 
-    all_pip_args = features.generate_pip_args()
+    all_pip_args = features.generate_pip_args(detect_installed=args.detect_installed)
 
     if args.check:
         for pip_args in all_pip_args:
@@ -305,6 +338,7 @@ def main(argv):
     install_command = subparsers.add_parser('install')
     install_command.add_argument('-c', default=None)
     install_command.add_argument('--check', action='store_true', default=False)
+    install_command.add_argument('--detect_installed', action='store_true', default=False)
     install_command.add_argument('--dotenv', default=None, type=os.path.abspath)
     install_command.add_argument('--env', action='store_const', const=os.environ)
 
