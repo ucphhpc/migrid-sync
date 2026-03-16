@@ -5,6 +5,9 @@
 
 name: Python Sanity Checks
 
+permissions:
+  contents: read
+
 on:
   # Triggers the workflow on push or pull request events but only for this git branch
   push:
