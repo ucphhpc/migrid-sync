@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # tlsserver - Shared functions for all SSL/TLS-secured servers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
