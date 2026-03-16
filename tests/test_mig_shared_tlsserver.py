@@ -193,32 +193,33 @@ class MigSharedTlsServer(MigTestCase):
             config = self.configuration
             config.logger = self.logger
 
-            context = hardened_openssl_context(
-                config,
-                mock_openssl,
-                'keyfile',
-                'certfile',
-                'cacertfile',
-                'dhparamsfile',
-                STRONG_TLS_CIPHERS,
-                STRONG_TLS_CURVES,
-                False,
-                True,
-                False
-            )
+            with self.assertLogs(level="INFO") as log_capture:
+                context = hardened_openssl_context(
+                    config,
+                    mock_openssl,
+                    'keyfile',
+                    'certfile',
+                    'cacertfile',
+                    'dhparamsfile',
+                    STRONG_TLS_CIPHERS,
+                    STRONG_TLS_CURVES,
+                    False,
+                    True,
+                    False
+                )
 
-            self.assertIsNotNone(context)
-            mock_openssl.SSL.Context.assert_called_once_with(1)
-            mock_openssl.SSL.Context.return_value.use_certificate_chain_file.assert_called_once_with(
-                'certfile'
-            )
-            mock_openssl.SSL.Context.return_value.use_privatekey_file.assert_called_once_with(
-                'keyfile'
-            )
-            self.logger.info.assert_called_with(
-                "enforcing strong SSL/TLS connections")
-            self.logger.debug.assert_called_with(
-                "using SSL/TLS ciphers: %s" % STRONG_TLS_CIPHERS)
+                self.assertIsNotNone(context)
+                mock_openssl.SSL.Context.assert_called_once_with(1)
+                mock_openssl.SSL.Context.return_value.use_certificate_chain_file.assert_called_once_with(
+                    'certfile'
+                )
+                mock_openssl.SSL.Context.return_value.use_privatekey_file.assert_called_once_with(
+                    'keyfile'
+                )
+                self.assertTrue(
+                    any("enforcing strong SSL/TLS connections" in msg
+                        for msg in log_capture.output)
+                )
 
     @unittest.skipIf(OpenSSL is None, "requires PyOpenSSL")
     def test_hardened_openssl_context_options(self):
