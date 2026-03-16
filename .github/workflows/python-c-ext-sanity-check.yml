@@ -5,6 +5,10 @@
 
 name: Python C-Extension Sanity Checks
 
+# No need for more than read permission
+permissions:
+  contents: read
+
 # Ignore the following paths
 # Format: PATH1|PATH2|PATH3
 env:
@@ -67,9 +71,6 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   lint-c-ext-python3-latest:
