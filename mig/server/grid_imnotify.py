@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_imnotify - IM notifier daemon
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -294,7 +294,7 @@ def on_join(connection, event):
         # login to bitlbee
 
         login_msg = 'identify %s' % bitlbee_password
-        print(login_msg)
+        print(login_msg.replace(bitlbee_password, '**REDACTED**'))
         connection.privmsg('root', login_msg)
     else:
         print('someone joined channel: %s'
