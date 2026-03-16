@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vncsession - Start a new VNC session
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -172,15 +172,15 @@ def main(client_id, user_arguments_dict):
         for i in range(start_display, VNC_port_count + start_display):
             free_display_found = False
             try:
-                S = socket.socket()
-                S.bind(('', baseVNCport + i))
+                vnc_sock = socket.socket()
+                vnc_sock.bind((configuration.server_fqdn, baseVNCport + i))
                 display_number = i
                 vnc_port = baseVNCport + display_number
                 free_display_found = True
             except Exception as exc:
                 error = exc
-            S.close()
-            S = None
+            vnc_sock.close()
+            vnc_sock = None
 
             if free_display_found:
 
