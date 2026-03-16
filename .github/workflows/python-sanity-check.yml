@@ -5,6 +5,10 @@
 
 name: Python Sanity Checks
 
+# No need for more than read permission
+permissions:
+  contents: read
+
 on:
   # Triggers the workflow on push or pull request events but only for this git branch
   push:
@@ -58,9 +62,6 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   lint-python3-latest:
