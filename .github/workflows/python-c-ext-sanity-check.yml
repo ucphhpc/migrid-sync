@@ -5,6 +5,9 @@
 
 name: Python C-Extension Sanity Checks
 
+permissions:
+  contents: read
+
 # Ignore the following paths
 # Format: PATH1|PATH2|PATH3
 env:
