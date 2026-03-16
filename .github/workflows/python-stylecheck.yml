@@ -3,6 +3,7 @@
 
 name: Python Style Checks
 
+# No need for more than read permission
 permissions:
   contents: read
 
