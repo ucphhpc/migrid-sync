@@ -207,7 +207,7 @@ def main():
     vgrid_name = None
     try:
         opts, args = getopt.getopt(
-            sys.argv[1:], "hvac:n:", ["help", "verbose", "config=", "name="]
+            sys.argv[1:], "hvc:n:", ["help", "verbose", "config=", "name="]
         )
         for opt, arg in opts:
             if opt in ("-h", "--help"):
