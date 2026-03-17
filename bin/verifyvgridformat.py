@@ -93,7 +93,7 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
         vgrid_files_home = os.path.join(
             configuration.vgrid_files_home, vgrid_name
         )
-        if os.path.isdir(vgrid_files_home):
+        if not os.path.islink(vgrid_files_home):
             print(
                 "vgrid: %r is using legacy format: %r"
                 % (vgrid_name, vgrid_files_home)
