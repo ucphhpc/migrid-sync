@@ -393,17 +393,6 @@ def server_cleanup(
             logger.info('could not remove %s during server_clean_up %s'
                         % (sandboxgetinputfileslink, err))
 
-    # Only oneclick sandboxes create this link, so we don't fail if it does not exists.
-
-    oneclickexelink = os.path.join(
-        configuration.webserver_home, sessionid + '.jvm')
-    if os.path.islink(oneclickexelink):
-        try:
-            os.remove(oneclickexelink)
-        except Exception as err:
-            logger.info('could not remove %s during server_clean_up %s'
-                        % (oneclickexelink, err))
-
     return success
 
 
