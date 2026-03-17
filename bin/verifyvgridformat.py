@@ -201,8 +201,8 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
 
 
 def main():
-    """Create backup on target side"""
-    conf_file = "/etc/lustrebackup.conf"
+    """verifyvgridformat"""
+    conf_file = None
     verbose = False
     vgrid_name = None
     try:
