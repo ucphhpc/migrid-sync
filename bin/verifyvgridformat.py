@@ -177,7 +177,7 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
                 if os.path.islink(vgrid_oldpath) and os.path.isdir(
                     vgrid_newpath
                 ):
-                    if not os.readlink(vgrid_oldpath) == vgrid_newpath:
+                    if os.readlink(vgrid_oldpath) != vgrid_newpath:
                         print(
                             "vgrid: %r found link mismatch: %r -> %r"
                             % (
