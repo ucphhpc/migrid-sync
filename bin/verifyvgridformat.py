@@ -78,7 +78,7 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
             vgrid_dirpath = os.path.join(root, dirent)
             owners_filepath = os.path.join(vgrid_dirpath, "owners")
             if os.path.isfile(owners_filepath):
-                vgrid = vgrid_dirpath[len(configuration.vgrid_home) :]
+                vgrid = vgrid_dirpath[len(configuration.vgrid_home):].strip(os.sep)
                 vgrid_mapping[vgrid] = vgrid_flat_name(vgrid, configuration)
 
     # Check vgrid format
