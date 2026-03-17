@@ -155,9 +155,9 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
             if not (
                 os.path.islink(vgrid_oldpath) and os.path.isdir(vgrid_newpath)
             ):
-                print("$> mv %r -> %r" % (vgrid_oldpath, vgrid_newpath))
+                print("mv %r -> %r" % (vgrid_oldpath, vgrid_newpath))
                 print(
-                    "$> cd %r && ln -s %r ."
+                    "cd %r && ln -s %r ."
                     % (configuration.vgrid_files_home, vgrid_newpath)
                 )
             curr_vgrid = topvgrid
@@ -192,8 +192,8 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
                             )
                         )
                 else:
-                    print("$> mv %r -> %r" % (vgrid_oldpath, vgrid_newpath))
-                    print("$> cd %r && ln -s %r ." % (curr_path, vgrid_newpath))
+                    print("mv %r -> %r" % (vgrid_oldpath, vgrid_newpath))
+                    print("cd %r && ln -s %r ." % (curr_path, vgrid_newpath))
 
                 curr_vgrid = os.path.join(curr_vgrid, subvgrid)
 
