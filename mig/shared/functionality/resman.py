@@ -319,14 +319,6 @@ Live resource status is available in the resource monitor page with all
                 'title': 'Administrate and monitor your sandbox resources',
                 'text': 'Administrate %s sandbox resources' %
                 configuration.short_title})
-            output_objects.append({'object_type': 'sectionheader', 'text': ''})
-            output_objects.append({
-                'object_type': 'link',
-                'destination': 'oneclick.py',
-                'class': 'sandboxlink iconspace',
-                'title': 'Run a One-click resource in your browser',
-                'text': 'Use this computer as One-click %s resource' %
-                configuration.short_title})
 
     logger.info("%s %s end for %s" % (op_name, operation, client_id))
     return (output_objects, status)

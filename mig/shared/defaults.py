@@ -115,7 +115,7 @@ cert_field_order = [
 
 valid_filter_methods = ['', 'skip', 'hexlify']
 
-sandbox_names = ['sandbox', 'oneclick', 'ps3live']
+sandbox_names = ['sandbox', 'ps3live']
 
 email_keyword_list = ['mail', 'email']
 
