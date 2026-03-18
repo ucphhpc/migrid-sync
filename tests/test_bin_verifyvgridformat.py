@@ -103,6 +103,26 @@ class TestBinVerifyVgridFormat(MigTestCase):
         os.symlink(writable_path, link_path)
         return link_path
 
+    def _make_subvgrid_writable_symlink(self, parent_vgrid, subvgrid):
+        """Create a symlink inside the parent's writable dir pointing to the
+        sub-vgrid's flat writable dir, as required by the modern nested format.
+        Assumes the parent vgrid is already in modern format (symlink exists).
+        """
+        full_name = os.path.join(parent_vgrid, subvgrid)
+        flat_full = vgrid_flat_name(full_name, self.configuration)
+        flat_parent = vgrid_flat_name(parent_vgrid, self.configuration)
+        writable_target = os.path.join(
+            self.configuration.vgrid_files_writable, flat_full
+        )
+        ensure_dirs_exist(writable_target)
+        parent_writable = os.path.join(
+            self.configuration.vgrid_files_writable, flat_parent
+        )
+        ensure_dirs_exist(parent_writable)
+        link_path = os.path.join(parent_writable, subvgrid)
+        os.symlink(writable_target, link_path)
+        return link_path
+
     def test_no_vgrids_returns_true(self):
         """Verify returns True when no vgrids are present in vgrid_home."""
         result = verifyvgridformat.verify_vgrid_format(self.configuration)
@@ -129,15 +149,36 @@ class TestBinVerifyVgridFormat(MigTestCase):
         result = verifyvgridformat.verify_vgrid_format(self.configuration)
         self.assertTrue(result)
 
-    def test_subvgrid_with_symlink_but_top_not_symlink_returns_false(self):
-        """Verify returns False when sub-vgrid has files symlink but top does not.
+    def test_subvgrid_modern_format_returns_true(self):
+        """Verify returns True when both top and sub-vgrid use modern format.
 
-        This is the 'Missing vgrid files' error case: the sub-vgrid path in
-        vgrid_files_home is a symlink, but the top-level vgrid path is not,
-        indicating an inconsistent format mix that cannot be resolved."""
+        The top-level vgrid has a symlink in vgrid_files_home pointing to its
+        writable dir, and inside that writable dir the sub-vgrid entry is also
+        a symlink pointing to the sub-vgrid's own flat writable dir."""
         self._make_vgrid("testvgrid")
         self._make_vgrid("testvgrid/subvgrid")
-        # Top vgrid: plain dir (not a symlink)
+        self._make_vgrid_files_symlink("testvgrid")
+        self._make_subvgrid_writable_symlink("testvgrid", "subvgrid")
+        result = verifyvgridformat.verify_vgrid_format(self.configuration)
+        self.assertTrue(result)
+
+    def test_vgrid_with_missing_files_dir_returns_false(self):
+        """Verify returns False when a vgrid exists but has no directory in
+        vgrid_files_home."""
+        self._make_vgrid("testvgrid")
+        # Intentionally do NOT create any directory in vgrid_files_home
+        result = verifyvgridformat.verify_vgrid_format(self.configuration)
+        self.assertFalse(result)
+
+    def test_subvgrid_with_symlink_inside_plain_dir_top_returns_true(self):
+        """Verify returns True when top vgrid uses legacy format but sub-vgrid
+        has a symlink inside the plain-dir parent.
+
+        Both vgrid data directories are accessible, so the format is valid
+        (though the top-level vgrid is flagged for reformatting)."""
+        self._make_vgrid("testvgrid")
+        self._make_vgrid("testvgrid/subvgrid")
+        # Top vgrid: plain dir (legacy format)
         self._make_vgrid_files_dir("testvgrid")
         # Sub-vgrid: symlink inside the plain-dir parent
         flat_subvgrid = vgrid_flat_name(
@@ -152,7 +193,7 @@ class TestBinVerifyVgridFormat(MigTestCase):
         )
         os.symlink(writable_target, subvgrid_link)
         result = verifyvgridformat.verify_vgrid_format(self.configuration)
-        self.assertFalse(result)
+        self.assertTrue(result)
 
     def test_specific_vgrid_name_modern_format_returns_true(self):
         """Verify returns True when targeting a named vgrid in modern format."""
