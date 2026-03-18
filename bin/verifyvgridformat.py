@@ -78,13 +78,16 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
             vgrid_dirpath = os.path.join(root, dirent)
             owners_filepath = os.path.join(vgrid_dirpath, "owners")
             if os.path.isfile(owners_filepath):
-                vgrid = vgrid_dirpath[len(configuration.vgrid_home):].strip(os.sep)
+                vgrid = vgrid_dirpath[len(configuration.vgrid_home):].strip(
+                    os.sep
+                )
                 vgrid_mapping[vgrid] = vgrid_flat_name(vgrid, configuration)
 
     # Check vgrid format
 
     old_format_vgrids = {}
     for vgrid_name in vgrid_mapping:
+        valid_vgrid_format = True
         vgrid_name_arr = vgrid_name.split(os.sep)
         topvgrid = vgrid_name_arr[0]
         topvgrid_files_home = os.path.join(
@@ -93,7 +96,14 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
         vgrid_files_home = os.path.join(
             configuration.vgrid_files_home, vgrid_name
         )
-        if not os.path.islink(vgrid_files_home):
+        if not os.path.isdir(vgrid_files_home):
+            retval = valid_vgrid_format = False
+            print(
+                "Missing vgrid files for: %r in %r"
+                % (vgrid_name, vgrid_files_home)
+            )
+        elif not os.path.islink(vgrid_files_home):
+            valid_vgrid_format = False
             print(
                 "vgrid: %r is using legacy format: %r"
                 % (vgrid_name, vgrid_files_home)
@@ -112,6 +122,7 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
                 if os.path.islink(vgrid_files_path):
                     vgrid_files_dirpath = os.readlink(vgrid_files_path)
                     if not os.path.isdir(vgrid_files_dirpath):
+                        retval = valid_vgrid_format = False
                         print(
                             "vgrid: %r found dead dir link: %r -> %r"
                             % (
@@ -122,17 +133,15 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
                         )
                     vgrid_files_path = vgrid_files_dirpath
                 if not os.path.isdir(vgrid_files_path):
+                    retval = valid_vgrid_format = False
                     print(
                         "vgrid: %r is missing data path: %r"
                         % (vgrid_name, vgrid_files_path)
                     )
                     old_format_vgrids[vgrid_name] = vgrid_mapping[vgrid_name]
                 curr_vgrid = os.path.join(curr_vgrid, subvgrid)
-        else:
-            retval = False
-            print("Missing vgrid files for: %r" % vgrid_name)
 
-        if verbose and vgrid_name not in old_format_vgrids:
+        if verbose and valid_vgrid_format:
             print("vgrid: %r is up to date" % vgrid_name)
 
     # Show reformat suggestions if in verbose mode
