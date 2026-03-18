@@ -371,7 +371,7 @@ This makes is possible to get a total statistic for all jobs in a project.
     specs.append(('PLATFORM', {
         'Title': 'Platform',
         'Description': 'Specifies the platform architecture used for the execution of the job.',
-        'Example': 'ONE-CLICK',
+        'Example': '',
         'Type': 'string',
         'Value': '',
         'Editor': 'invisible',

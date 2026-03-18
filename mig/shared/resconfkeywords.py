@@ -343,7 +343,7 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
     specs.append(('PLATFORM', {
         'Title': 'Platform',
         'Description': 'Specifies a platform architecture this resource supports.',
-        'Example': 'ONE-CLICK',
+        'Example': '',
         'Type': 'string',
         'Value': '',
         'Editor': 'invisible',

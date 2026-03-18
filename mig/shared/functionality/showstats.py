@@ -316,12 +316,10 @@ The query you have requested did not return any data.
         keys = set([date[-1] for date in lookupdict])
         datarows = []
 
-        # machine view should present only a sum of all "oneclick" and
-        # "sandbox" resources. We sum all matching machines in all fields
+        # machine view should present only a sum of all "sandbox" resources.
+        # We sum all matching machines in all fields
         if display == 'machine':
-            sums = [[((d, 'oneclick (sum)'),
-                      dict([(n, 0) for n in table_names])),
-                     ((d, 'sandbox (sum)'),
+            sums = [[((d, 'sandbox (sum)'),
                       dict([(n, 0) for n in table_names]))]
                     for d in dates]
 
@@ -330,15 +328,7 @@ The query you have requested did not return any data.
 
             new_keys = []
             for k in keys:
-                if re.match("oneclick", k):
-                    new_keys.append('oneclick (sum)')
-                    for d in dates:
-                        if (d, k) in lookupdict:
-                            for n in table_names:
-                                sumdict[(d, 'oneclick (sum)')
-                                        ][n] += lookupdict[(d, k)][n]
-                            del lookupdict[(d, k)]
-                elif re.match("sandbox", k):
+                if re.match("sandbox", k):
                     new_keys.append('sandbox (sum)')
                     for d in dates:
                         if (d, k) in lookupdict:
@@ -372,7 +362,7 @@ The query you have requested did not return any data.
         def key_to_show(key):
             if display == 'machine':
                 # these are members of Generic, so show them (sum. see above)
-                if re.match("sandbox", key) or re.match("oneclick", key):
+                if re.match("sandbox", key):
                     return True
 
                 # Problem: this function returned True for Generic! (bug)

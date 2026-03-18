@@ -346,68 +346,7 @@ def create_job_script(
                                           localjobname + '.getinputfiles')
             os.rename(inputfiles_path, webserver_path)
 
-            # ########## ATTENTION HACK TO MAKE JVM SANDBOXES WORK ############
-            # This should be changed to use the (to be developed) RE pre/post
-            # processing framework. For now the user must have a jvm dir in his
-            # home dir where the classfiles is located this should be changed
-            # so that the execution homepath can be specified in the mRSL
-            # jobfile
-            # Martin Rehr 08/09/06
-
-            # If this is a oneclick job link the users jvm dir to
-            # webserver_home/sandboxkey.oneclick
-            # This is done because the client applet uses the
-            # codebase from which it is originaly loaded
-            # Therefore the codebase must be dynamicaly changed
-            # for every job
-
-            if 'PLATFORM' in resource_config and \
-                    resource_config['PLATFORM'] == 'ONE-CLICK':
-
-                # A two step link is made.
-                # First sandboxkey.oneclick is made to point to
-                # sessiondid.jvm
-                # Second sessionid.jvm is set to point to
-                # USER_HOME/jvm
-                # This is done for security and easy cleanup,
-                # sessionid.jvm is cleaned up
-                # by the server upon job finish/timeout and
-                # thereby leaving no open entryes to the users
-                # jvm dir.
-
-                linkintermediate = configuration.webserver_home + \
-                    sessionid + '.jvm'
-
-                if client_dir == configuration.empty_job_name:
-                    linkdest = os.path.abspath(configuration.javabin_home)
-                else:
-                    linkdest = configuration.user_home + client_dir + \
-                        os.sep + 'jvm'
-
-                # Make link sessionid.jvm -> USER_HOME/jvm
-
-                make_symlink(linkdest, linkintermediate, logger)
-
-                linkloc = configuration.webserver_home + \
-                    resource_config['SANDBOXKEY'] + '.oneclick'
-
-                # Remove previous symlink
-                # This must be done in a try/catch as the symlink,
-                # may be a dead link and 'if os.path.exists(linkloc):'
-                # will then return false, even though the link exists.
-
-                try:
-                    os.remove(linkloc)
-                except:
-                    pass
-
-                # Make link sandboxkey.oneclick -> sessionid.jvm
-
-                make_symlink(linkintermediate, linkloc, logger)
         except Exception as err:
-
-            # ######### End JVM SANDBOX HACK ###########
-
             msg = "File '%s' was not copied to the webserver home." % \
                   inputfiles_path
             print('\nERROR: ' + "%s" % (err))
