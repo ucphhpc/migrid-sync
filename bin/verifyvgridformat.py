@@ -116,9 +116,7 @@ def verify_vgrid_format(configuration, vgrid_name=None, verbose=False):
                     configuration.vgrid_files_writable,
                     vgrid_flat_name(curr_vgrid, configuration),
                 )
-                vgrid_files_path = os.path.join(
-                    configuration.vgrid_files_writable, curr_path, subvgrid
-                )
+                vgrid_files_path = os.path.join(curr_path, subvgrid)
                 if os.path.islink(vgrid_files_path):
                     vgrid_files_dirpath = os.readlink(vgrid_files_path)
                     if not os.path.isdir(vgrid_files_dirpath):
