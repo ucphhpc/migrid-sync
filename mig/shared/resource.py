@@ -940,7 +940,7 @@ above - there should be some error output
         return (status, resource_identifier)
 
 
-# TODO: switch sss and ps3 sandboxes to use create_resource()
+# TODO: switch sss sandbox to use create_resource()
 
 def create_resource(configuration, client_id, resource_name, pending_file):
     """Create unique resource home dir and fill with resource config based on
