@@ -27,37 +27,18 @@
 
 """Unit tests for bin/verifyvgridformat.py"""
 
-import importlib
 import io
 import os
 import sys
 import unittest
 from unittest.mock import patch
 
+from bin.verifyvgridformat import verify_vgrid_format
 # Imports required for building the vgrid test fixtures
 from mig.shared.vgrid import vgrid_flat_name
 
 # Imports required for the unit tests themselves
 from tests.support import MIG_BASE, MigTestCase, ensure_dirs_exist, testmain
-
-
-def _import_forcibly(module_name, relative_module_dir=None):
-    """Custom import function to allow an import of a file for testing
-    that resides within a non-module directory.
-    """
-    module_path = MIG_BASE
-    if relative_module_dir is not None:
-        module_path = os.path.join(module_path, relative_module_dir)
-    sys.path.append(module_path)
-    mod = importlib.import_module(module_name)
-    sys.path.pop(-1)  # do not leave the forced module path
-    return mod
-
-
-# Imports of the code under test (indirect import needed here)
-verifyvgridformat = _import_forcibly(
-    "verifyvgridformat", relative_module_dir="bin"
-)
 
 
 class TestBinVerifyVgridFormat(MigTestCase):
@@ -125,28 +106,36 @@ class TestBinVerifyVgridFormat(MigTestCase):
 
     def test_no_vgrids_returns_true(self):
         """Verify returns True when no vgrids are present in vgrid_home."""
-        result = verifyvgridformat.verify_vgrid_format(self.configuration)
+        result = verify_vgrid_format(self.configuration)
         self.assertTrue(result)
 
     def test_invalid_vgrid_name_returns_false(self):
         """Verify returns False when named vgrid has no owners file."""
-        result = verifyvgridformat.verify_vgrid_format(
-            self.configuration, vgrid_name="nonexistent"
-        )
+        captured = io.StringIO()
+        with patch("sys.stdout", captured):
+            result = verify_vgrid_format(
+                self.configuration, vgrid_name="nonexistent"
+            )
         self.assertFalse(result)
+        output = captured.getvalue()
+        self.assertIn("Invalid vgrid", output)
 
     def test_top_vgrid_legacy_format_returns_true(self):
         """Verify returns True for top-level vgrid using legacy format (plain dir)."""
         self._make_vgrid("testvgrid")
         self._make_vgrid_files_dir("testvgrid")
-        result = verifyvgridformat.verify_vgrid_format(self.configuration)
+        captured = io.StringIO()
+        with patch("sys.stdout", captured):
+            result = verify_vgrid_format(self.configuration)
         self.assertTrue(result)
+        output = captured.getvalue()
+        self.assertIn("legacy format", output)
 
     def test_top_vgrid_modern_format_returns_true(self):
         """Verify returns True for top-level vgrid using modern format (symlink)."""
         self._make_vgrid("testvgrid")
         self._make_vgrid_files_symlink("testvgrid")
-        result = verifyvgridformat.verify_vgrid_format(self.configuration)
+        result = verify_vgrid_format(self.configuration)
         self.assertTrue(result)
 
     def test_subvgrid_modern_format_returns_true(self):
@@ -159,16 +148,20 @@ class TestBinVerifyVgridFormat(MigTestCase):
         self._make_vgrid("testvgrid/subvgrid")
         self._make_vgrid_files_symlink("testvgrid")
         self._make_subvgrid_writable_symlink("testvgrid", "subvgrid")
-        result = verifyvgridformat.verify_vgrid_format(self.configuration)
+        result = verify_vgrid_format(self.configuration)
         self.assertTrue(result)
 
     def test_vgrid_with_missing_files_dir_returns_false(self):
         """Verify returns False when a vgrid exists but has no directory in
         vgrid_files_home."""
         self._make_vgrid("testvgrid")
-        # Intentionally do NOT create any directory in vgrid_files_home
-        result = verifyvgridformat.verify_vgrid_format(self.configuration)
+        captured = io.StringIO()
+        with patch("sys.stdout", captured):
+            # Intentionally do NOT create any directory in vgrid_files_home
+            result = verify_vgrid_format(self.configuration)
         self.assertFalse(result)
+        output = captured.getvalue()
+        self.assertIn("Missing vgrid files", output)
 
     def test_subvgrid_with_symlink_inside_plain_dir_top_returns_true(self):
         """Verify returns True when top vgrid uses legacy format but sub-vgrid
@@ -192,14 +185,19 @@ class TestBinVerifyVgridFormat(MigTestCase):
             self.configuration.vgrid_files_home, "testvgrid", "subvgrid"
         )
         os.symlink(writable_target, subvgrid_link)
-        result = verifyvgridformat.verify_vgrid_format(self.configuration)
+
+        captured = io.StringIO()
+        with patch("sys.stdout", captured):
+            result = verify_vgrid_format(self.configuration)
         self.assertTrue(result)
+        output = captured.getvalue()
+        self.assertIn("legacy format", output)
 
     def test_specific_vgrid_name_modern_format_returns_true(self):
         """Verify returns True when targeting a named vgrid in modern format."""
         self._make_vgrid("testvgrid")
         self._make_vgrid_files_symlink("testvgrid")
-        result = verifyvgridformat.verify_vgrid_format(
+        result = verify_vgrid_format(
             self.configuration, vgrid_name="testvgrid"
         )
         self.assertTrue(result)
@@ -208,16 +206,20 @@ class TestBinVerifyVgridFormat(MigTestCase):
         """Verify returns True when targeting a named vgrid in legacy format."""
         self._make_vgrid("testvgrid")
         self._make_vgrid_files_dir("testvgrid")
-        result = verifyvgridformat.verify_vgrid_format(
-            self.configuration, vgrid_name="testvgrid"
-        )
+        captured = io.StringIO()
+        with patch("sys.stdout", captured):
+            result = verify_vgrid_format(
+                self.configuration, vgrid_name="testvgrid"
+            )
         self.assertTrue(result)
+        output = captured.getvalue()
+        self.assertIn("legacy format", output)
 
     def test_verbose_no_vgrids_produces_no_output(self):
         """Verify verbose mode with no vgrids produces no output and returns True."""
         captured = io.StringIO()
         with patch("sys.stdout", captured):
-            result = verifyvgridformat.verify_vgrid_format(
+            result = verify_vgrid_format(
                 self.configuration, verbose=True
             )
         self.assertTrue(result)
@@ -229,7 +231,7 @@ class TestBinVerifyVgridFormat(MigTestCase):
         self._make_vgrid_files_symlink("testvgrid")
         captured = io.StringIO()
         with patch("sys.stdout", captured):
-            result = verifyvgridformat.verify_vgrid_format(
+            result = verify_vgrid_format(
                 self.configuration, verbose=True
             )
         self.assertTrue(result)
@@ -241,7 +243,7 @@ class TestBinVerifyVgridFormat(MigTestCase):
         self._make_vgrid_files_dir("testvgrid")
         captured = io.StringIO()
         with patch("sys.stdout", captured):
-            result = verifyvgridformat.verify_vgrid_format(
+            result = verify_vgrid_format(
                 self.configuration, verbose=True
             )
         self.assertTrue(result)
