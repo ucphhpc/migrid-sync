@@ -410,11 +410,6 @@ def gen_job_script(
             localjobname,
             path_without_extension,
         )
-    elif script_language == 'java':
-        generator = genjobscriptjava.GenJobScriptJava(
-            job_dictionary, resource_config,
-            configuration.migserver_https_sid_url,
-            localjobname, path_without_extension)
     else:
         print('Unknown script language! (is in configuration but not in ' +
               'jobscriptgenerator) %s ' % script_language)

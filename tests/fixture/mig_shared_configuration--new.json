@@ -51,7 +51,6 @@
   "hg_path": "",
   "hgweb_scripts": "",
   "im_notify_stdin": "",
-  "javabin_home": "",
   "job_cond_green": [
     "ARCHITECTURE",
     "PLATFORM",

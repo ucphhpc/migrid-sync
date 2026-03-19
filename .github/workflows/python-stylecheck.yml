@@ -26,7 +26,6 @@ on:
       - 'mig/src/**'
       - 'mig/apache/**'
       - 'mig/bin/**'
-      - 'mig/java-bin/**'
     branches:
       - experimental
       - next
@@ -53,7 +52,6 @@ on:
       - 'mig/src/**'
       - 'mig/apache/**'
       - 'mig/bin/**'
-      - 'mig/java-bin/**'
     branches:
       - experimental
       - next

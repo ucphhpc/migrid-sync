@@ -261,7 +261,6 @@ def fix_missing(config_file, verbose=True):
         'quota_home': '~/state/quota_home/',
         'accounting_home': '~/state/accounting_home/',
         'public_key_file': '',
-        'javabin_home': '~/mig/java-bin',
         'events_home': '~/state/events_home/',
         'twofactor_home': '~/state/twofactor_home/',
         'gdp_home': '~/state/gdp_home/',
@@ -517,7 +516,6 @@ _CONFIGURATION_PROPERTIES = {
     'freeze_home': '',
     'freeze_tape': '',
     'sharelink_home': '',
-    'javabin_home': '',
     'events_home': '',
     'twofactor_home': '',
     'gdp_home': '',
@@ -1140,8 +1138,6 @@ location.""" % self.config_file)
         else:
             self.mig_code_base = os.path.dirname(
                 self.mig_server_home.rstrip(os.sep))
-        if config.has_option('GLOBAL', 'javabin_home'):
-            self.javabin_home = config.get('GLOBAL', 'javabin_home')
         if config.has_option('GLOBAL', 'events_home'):
             self.events_home = config.get('GLOBAL', 'events_home')
         if config.has_option('GLOBAL', 'twofactor_home'):
