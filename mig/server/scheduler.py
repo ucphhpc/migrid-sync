@@ -1853,7 +1853,7 @@ class Scheduler(object):
                                             resource_conf)
             self.logger.info('backfill remaining: %(CPUCOUNT)s %(NODECOUNT)s'
                              % remaining)
-            next_job = self.schedule(remaining, must_match={
+            next_job = self.schedule(remaining, must_match={  # pylint: disable=assignment-from-none
                                      'USER_CERT': best_job['USER_CERT'], 'JOBTYPE': 'bulk'})
             if not next_job:
                 break
