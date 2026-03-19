@@ -690,9 +690,6 @@ function ajax_resman(caching) {
                           ownerlink = format_link(resource.resownerlink);
                       }
                       res_type = "real";
-                      if (resource.SANDBOX) {
-                          res_type = 'sandbox';
-                      }
                       res_hint = 'class="'+res_type+'res iconspace iconleftpad" title="'+res_type+
                           ' resource"';
                       rte_hint = center_class+' title="'+
