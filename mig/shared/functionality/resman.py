@@ -32,7 +32,6 @@ from __future__ import absolute_import
 import time
 
 from mig.shared import returnvalues
-from mig.shared.base import sandbox_resource
 from mig.shared.defaults import default_pager_entries, csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
@@ -51,8 +50,7 @@ allowed_operations = list(set(list_operations + show_operations))
 def signature():
     """Signature of the main function"""
 
-    defaults = {'show_sandboxes': ['false'], 'operation': ['show'],
-                'caching': ['false']}
+    defaults = {'operation': ['show'], 'caching': ['false']}
     return ['resources', defaults]
 
 
@@ -76,7 +74,6 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    show_sandboxes = (accepted['show_sandboxes'][-1] != 'false')
     operation = accepted['operation'][-1]
     caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
 
@@ -184,8 +181,6 @@ to open resource management.
             if visible_res_name in anon_map:
                 unique_resource_name = anon_map[visible_res_name]
 
-            if not show_sandboxes and sandbox_resource(unique_resource_name):
-                continue
             res_obj = {'object_type': 'resource', 'name': visible_res_name}
 
             # NOTE: res may not yet have been added to res_map here
@@ -264,23 +259,6 @@ to open resource management.
                            'resources': resources})
 
     if operation in show_operations:
-        if configuration.site_enable_sandboxes:
-            if show_sandboxes:
-                output_objects.append({'object_type': 'link',
-                                       'destination': '?show_sandboxes=false',
-                                       'class': 'removeitemlink iconspace',
-                                       'title': 'Hide sandbox resources',
-                                       'text': 'Exclude sandbox resources',
-                                       })
-
-            else:
-                output_objects.append({'object_type': 'link',
-                                       'destination': '?show_sandboxes=true',
-                                       'class': 'additemlink iconspace',
-                                       'title': 'Show sandbox resources',
-                                       'text': 'Include sandbox resources',
-                                       })
-
         output_objects.append(
             {'object_type': 'sectionheader', 'text': 'Resource Status'})
         output_objects.append({'object_type': 'text',
@@ -310,15 +288,6 @@ Live resource status is available in the resource monitor page with all
                                configuration.short_title,
                                })
         output_objects.append({'object_type': 'sectionheader', 'text': ''})
-
-        if configuration.site_enable_sandboxes:
-            output_objects.append({
-                'object_type': 'link',
-                'destination': 'ssslogin.py',
-                'class': 'adminlink iconspace',
-                'title': 'Administrate and monitor your sandbox resources',
-                'text': 'Administrate %s sandbox resources' %
-                configuration.short_title})
 
     logger.info("%s %s end for %s" % (op_name, operation, client_id))
     return (output_objects, status)

@@ -47,7 +47,7 @@ from mig.shared.accountstate import update_account_expire_cache, \
     update_account_status_cache
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
     get_client_id, extract_field, fill_user, fill_distinguished_name, \
-    is_gdp_user, mask_creds, sandbox_resource, force_native_str, \
+    is_gdp_user, mask_creds, force_native_str, \
     force_native_str_rec, native_str_escape, native_args
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
@@ -2273,8 +2273,6 @@ def fix_entities(
                 for kind in ('members', 'owners'):
                     kind_path = os.path.join(base_dir, entry_name, kind)
                     if not os.path.isfile(kind_path):
-                        continue
-                    if sandbox_resource(entry_name):
                         continue
                     if verbose:
                         print('updating %s in %s' % (client_id, kind_path))

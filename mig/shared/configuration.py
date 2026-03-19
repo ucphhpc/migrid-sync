@@ -253,8 +253,6 @@ def fix_missing(config_file, verbose=True):
         'server_cert': '~/certs/cert.pem',
         'server_key': '~/certs/key.pem',
         'ca_cert': '~/certs/ca.pem',
-        'sss_home': '~/state/sss_home/',
-        'sandbox_home': '~/state/sandbox_home',
         'freeze_home': '~/state/freeze_home',
         'freeze_tape': '~/state/freeze_tape',
         'sharelink_home': '~/state/sharelink_home',
@@ -398,7 +396,7 @@ def fix_missing(config_file, verbose=True):
     feasibility_section = {'resource_seen_within_hours': '24',
                            'skip_validation': '',
                            'job_cond_green': 'ARCHITECTURE PLATFORM \
-                          RUNTIMEENVIRONMENT VERIFYFILES VGRID SANDBOX',
+                          RUNTIMEENVIRONMENT VERIFYFILES VGRID',
                            'job_cond_yellow': 'DISK MEMORY CPUTIME',
                            'job_cond_orange': 'CPUCOUNT NODECOUNT',
                            'job_cond_red': 'EXECUTABLES INPUTFILES REGISTERED \
@@ -519,8 +517,6 @@ _CONFIGURATION_PROPERTIES = {
     'user_db_home': '',
     'user_cache': '',
     'user_messages': '',
-    'sss_home': '',
-    'sandbox_home': '',
     'freeze_home': '',
     'freeze_tape': '',
     'sharelink_home': '',
@@ -745,7 +741,7 @@ _CONFIGURATION_PROPERTIES = {
     'resource_seen_within_hours': 24,
     'skip_validation': [],
     'job_cond_green': ['ARCHITECTURE', 'PLATFORM', 'RUNTIMEENVIRONMENT',
-                       'VERIFYFILES', 'VGRID', 'SANDBOX'],
+                       'VERIFYFILES', 'VGRID'],
     'job_cond_yellow': ['DISK', 'MEMORY', 'CPUTIME'],
     'job_cond_orange': ['CPUCOUNT', 'NODECOUNT'],
     'job_cond_red': ['EXECUTABLES', 'INPUTFILES', 'REGISTERED', 'SEEN_WITHIN_X'],
@@ -1157,10 +1153,6 @@ location.""" % self.config_file)
         else:
             self.mig_code_base = os.path.dirname(
                 self.mig_server_home.rstrip(os.sep))
-        if config.has_option('GLOBAL', 'sss_home'):
-            self.sss_home = config.get('GLOBAL', 'sss_home')
-        if config.has_option('GLOBAL', 'sandbox_home'):
-            self.sandbox_home = config.get('GLOBAL', 'sandbox_home')
         if config.has_option('GLOBAL', 'javabin_home'):
             self.javabin_home = config.get('GLOBAL', 'javabin_home')
         if config.has_option('GLOBAL', 'events_home'):
@@ -2271,11 +2263,6 @@ location.""" % self.config_file)
                 'SITE', 'enable_griddk')
         else:
             self.site_enable_griddk = False
-        if config.has_option('SITE', 'enable_sandboxes'):
-            self.site_enable_sandboxes = config.getboolean(
-                'SITE', 'enable_sandboxes')
-        else:
-            self.site_enable_sandboxes = False
         if config.has_option('SITE', 'enable_freeze'):
             self.site_enable_freeze = config.getboolean(
                 'SITE', 'enable_freeze')
@@ -2677,7 +2664,6 @@ location.""" % self.config_file)
             self.site_enable_live_jobs = False
             self.site_enable_sshmux = False
             self.site_enable_vmachines = False
-            self.site_enable_sandboxes = False
             # NOTE: every operation must be clearly logged with explicit actor
             #       so at least analyse thoroughly before GDP-enabling these.
             self.site_enable_crontab = False

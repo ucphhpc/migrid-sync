@@ -115,8 +115,6 @@ cert_field_order = [
 
 valid_filter_methods = ['', 'skip', 'hexlify']
 
-sandbox_names = ['sandbox', 'ps3live']
-
 email_keyword_list = ['mail', 'email']
 
 pending_states = ['PARSE', 'QUEUED', 'EXECUTING', 'RETRY', 'FROZEN']
@@ -377,7 +375,7 @@ csrf_field = "_csrf"
 # 0|~/mig > ./codegrep.py safe_handler|grep import|sort|awk '{ print $1; }'| \
 #               sed 's@.*/functionality/\(.*\).py:from@\\"\1\\",@g'|xargs
 csrf_backends = [
-    "addresowner", "addvgridmember", "addvgridowner", "addvgridres", "addvgridtrigger", "autocreate", "chksum", "cleanallstores", "cleanexe", "cleanfe", "cleanstore", "cp", "createfreeze", "createre", "createvgrid", "datatransfer", "deletefreeze", "deletere", "delres", "editfile", "extcertaction", "extoidaction", "imagepreview", "jobaction", "jobfeasible", "jobobjsubmit", "jobschedule", "liveio", "mkdir", "mqueue", "mv", "pack", "rejectresreq", "rejectvgridreq", "reqcertaction", "reseditaction", "restartallexes", "restartallstores", "restartexe", "restartfe", "restartstore", "resubmit", "rmdir", "rm", "rmresowner", "rmvgridmember", "rmvgridowner", "rmvgridres", "rmvgridtrigger", "scripts", "sendrequestaction", "settingsaction", "sharelink", "sssadmin", "ssscreateimg", "stopallexes", "stopallstores", "stopexe", "stopfe", "stopstore", "submitfields", "submit", "tar", "testresupport", "textarea", "touch", "truncate", "unpack", "untar", "unzip", "updateresconfig", "updatevgrid", "uploadchunked", "upload", "vgridforum", "vgridsettings", "vmachines", "zip",
+    "addresowner", "addvgridmember", "addvgridowner", "addvgridres", "addvgridtrigger", "autocreate", "chksum", "cleanallstores", "cleanexe", "cleanfe", "cleanstore", "cp", "createfreeze", "createre", "createvgrid", "datatransfer", "deletefreeze", "deletere", "delres", "editfile", "extcertaction", "extoidaction", "imagepreview", "jobaction", "jobfeasible", "jobobjsubmit", "jobschedule", "liveio", "mkdir", "mqueue", "mv", "pack", "rejectresreq", "rejectvgridreq", "reqcertaction", "reseditaction", "restartallexes", "restartallstores", "restartexe", "restartfe", "restartstore", "resubmit", "rmdir", "rm", "rmresowner", "rmvgridmember", "rmvgridowner", "rmvgridres", "rmvgridtrigger", "scripts", "sendrequestaction", "settingsaction", "sharelink", "stopallexes", "stopallstores", "stopexe", "stopfe", "stopstore", "submitfields", "submit", "tar", "testresupport", "textarea", "touch", "truncate", "unpack", "untar", "unzip", "updateresconfig", "updatevgrid", "uploadchunked", "upload", "vgridforum", "vgridsettings", "vmachines", "zip",
 ]
 
 # freeze archive flavor

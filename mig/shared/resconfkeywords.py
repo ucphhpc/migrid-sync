@@ -304,24 +304,6 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         'Editor': 'input',
         'Required': False,
     }))
-    specs.append(('SANDBOX', {
-        'Title': 'Sandbox',
-        'Description': 'Specifies whether resource is a sandbox. If 0 or false, the resource is not a sandbox, if 1 or true, the resource is a sandbox. Sandbox resources are less trusted and thus can only handle explicitly allowed sandbox jobs.',
-        'Example': '0',
-        'Type': 'boolean',
-        'Value': False,
-        'Editor': 'invisible',
-        'Required': False,
-    }))
-    specs.append(('SANDBOXKEY', {
-        'Title': 'Sandbox Identifier',
-        'Description': 'Specifies the secret sandboxkey for a sandbox.',
-        'Example': '2AD32342423421111',
-        'Type': 'string',
-        'Value': '',
-        'Editor': 'invisible',
-        'Required': False,
-    }))
     specs.append(('MAXDOWNLOADBANDWIDTH', {
         'Title': 'Maximum Download Bandwidth (KB/s)',
         'Description': 'Specifies the max download bandwidth (in kB) the resource is allowed to use. If 0 or unset, there is no limit.',

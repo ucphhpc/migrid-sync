@@ -41,7 +41,6 @@ import sys
 import threading
 from time import sleep
 
-from mig.shared.base import sandbox_resource
 from mig.shared.conf import get_resource_configuration, \
     get_configuration_object
 from mig.shared.logger import daemon_logger, register_hangup_handler
@@ -153,8 +152,6 @@ unless it is available in mig/server/MiGserver.conf
         if not os.path.isdir(res_dir):
             continue
         dir_name = os.path.basename(res_dir)
-        if sandbox_resource(dir_name):
-            continue
         try:
             (status, res_conf) = \
                 get_resource_configuration(configuration.resource_home,

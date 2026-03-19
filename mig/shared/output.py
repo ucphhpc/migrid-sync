@@ -108,8 +108,6 @@ def filter_exc(configuration, exc):
                    configuration.resource_home,
                    configuration.webserver_home,
                    configuration.user_db_home,
-                   configuration.sss_home,
-                   configuration.sandbox_home,
                    configuration.freeze_home,
                    configuration.freeze_tape,
                    configuration.sharelink_home,
