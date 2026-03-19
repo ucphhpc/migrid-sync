@@ -72,10 +72,7 @@ echo -n "validating python $DISPLAY_PYVER container.. "
 # load a previously written docker image id if present
 IMAGEID_STORED=$(cat "$DOCKER_IMAGEID_FILE" 2>/dev/null || echo "")
 
-# explicit statement of the uid for use within the container for clarity
-CONTAINER_USER_UID=$LOCAL_USER_UID
-
-IMAGEID=$(${DOCKER_BIN} build -f "$DOCKER_FILE" . -q --build-arg "pyver=$PYVER" --build-arg "CONTAINER_USER_UID=$CONTAINER_USER_UID")
+IMAGEID=$(${DOCKER_BIN} build -f "$DOCKER_FILE" . -q --build-arg "pyver=$PYVER" --build-arg "CONTAINER_USER_UID=$LOCAL_USER_UID")
 if [ "$IMAGEID" != "$IMAGEID_STORED" ]; then
     echo "rebuilt for changes"
 
@@ -87,12 +84,11 @@ fi
 
 echo "using image id $IMAGEID"
 
-# execute python within the image passing the supplied arguments
+# execute python2 within the image passing the supplied arguments
 
 ${DOCKER_BIN} run -it --rm \
     --mount "type=bind,source=$MIG_BASE,target=/usr/src/app" \
     --env "PYTHONPATH=$PYTHONPATH" \
     --env "PYTHONPYCACHEPREFIX=$PYTHONPYCACHEPREFIX" \
     --env "MIG_ENV=$MIG_ENV" \
-    --user "$CONTAINER_USER_UID" \
     "$IMAGEID" "$DOCKER_PYTHON_BIN" $@
