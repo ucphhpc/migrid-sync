@@ -38,7 +38,6 @@ from copy import deepcopy
 
 from mig.server import genjobscriptpython
 from mig.server import genjobscriptsh
-from mig.server import genjobscriptjava
 from mig.shared.base import client_id_dir, hexlify
 from mig.shared.defaults import session_id_bytes, maxfill_fields, keyword_all
 from mig.shared.fileio import write_file, pickle, make_symlink
