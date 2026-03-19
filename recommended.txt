@@ -55,6 +55,7 @@ psutil
 # sslkeylog requires libssl-dev or similar system package to build
 #sslkeylog
 pyenchant
+pycurl
 
 # Screenshoot helper requires selenium
 selenium
