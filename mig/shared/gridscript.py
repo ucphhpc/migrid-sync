@@ -382,17 +382,6 @@ def server_cleanup(
                 logger.error('could not remove %s during server_clean_up %s'
                              % (empty_prefix, err))
 
-    # Only sandboxes create this link, so we don't fail if it does not exists.
-
-    sandboxgetinputfileslink = os.path.join(configuration.webserver_home,
-                                            localjobname + '.getinputfiles')
-    if os.path.islink(sandboxgetinputfileslink):
-        try:
-            os.remove(sandboxgetinputfileslink)
-        except Exception as err:
-            logger.info('could not remove %s during server_clean_up %s'
-                        % (sandboxgetinputfileslink, err))
-
     return success
 
 
@@ -431,7 +420,6 @@ def requeue_job(
         client_dir = client_id_dir(job_dict['USER_CERT'])
 
         # Remove job result files, if they have arrived as the result is not valid
-        # This can happen with sandboxes as they can't be stopped serverside
 
         status_prefix = os.path.join(configuration.user_home, client_dir,
                                      job_dict['JOB_ID'])

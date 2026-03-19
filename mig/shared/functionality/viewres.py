@@ -56,7 +56,7 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
     store_keywords = get_storenode_keywords(configuration)
     res_fields = ['PUBLICNAME', 'PUBLICINFO', 'CPUCOUNT', 'NODECOUNT',
                   'MEMORY', 'DISK', 'ARCHITECTURE', 'JOBTYPE',
-                  'MAXUPLOADBANDWIDTH', 'MAXDOWNLOADBANDWIDTH', 'SANDBOX']
+                  'MAXUPLOADBANDWIDTH', 'MAXDOWNLOADBANDWIDTH']
     exe_fields = ['cputime', 'nodecount']
     store_fields = ['storage_disk', 'storage_protocol']
     res_item = {

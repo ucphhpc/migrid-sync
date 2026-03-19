@@ -54,7 +54,6 @@ def signature():
         'cputime': ['10000'],
         'nodecount': ['1'],
         'localjobname': [''],
-        'sandboxkey': [''],
         'execution_delay': ['0'],
         'exe_pgid': ['0'],
         'sessionid': [''],
@@ -114,7 +113,6 @@ unique_resource_name = accepted['unique_resource_name'][-1]
 cputime = accepted['cputime'][-1]
 nodecount = accepted['nodecount'][-1]
 localjobname = accepted['localjobname'][-1]
-#sandboxkey = accepted['sandboxkey'][-1]
 execution_delay = accepted['execution_delay'][-1]
 #exe_pgid = accepted['exe_pgid'][-1]
 sessionid = accepted['sessionid'][-1]

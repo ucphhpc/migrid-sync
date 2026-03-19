@@ -77,12 +77,6 @@ class BestFitScheduler(Scheduler):
                               prio_mult)
             job_fitness += fit_rate * prio_mult
 
-        # Ordinary resources should avoid sandbox jobs unless there are no
-        # other suitable jobs around
-
-        if resource_conf.get('SANDBOX', False) != job.get('SANDBOX', False):
-            job_fitness *= 0.0001
-
         self.logger.debug('fitness: %f', job_fitness)
         return job_fitness
 

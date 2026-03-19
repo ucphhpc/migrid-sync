@@ -330,31 +330,6 @@ def create_job_script(
 
     inputfiles_path = path_without_extension + '.getinputfiles'
 
-    # hack to ensure that a resource has a sandbox keyword
-
-    if resource_config.get('SANDBOX', False):
-
-        # Move file to webserver_home for download as we can't push it to
-        # sandboxes
-
-        try:
-
-            # RA TODO: change download filename to something that
-            # includes sessionid
-
-            webserver_path = os.path.join(configuration.webserver_home,
-                                          localjobname + '.getinputfiles')
-            os.rename(inputfiles_path, webserver_path)
-
-        except Exception as err:
-            msg = "File '%s' was not copied to the webserver home." % \
-                  inputfiles_path
-            print('\nERROR: ' + "%s" % (err))
-            logger.error(msg)
-            return (None, msg)
-
-        return (job_dict, 'OK')
-
     # Copy file to the resource
 
     if not copy_file_to_resource(inputfiles_path,

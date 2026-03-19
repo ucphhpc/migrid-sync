@@ -199,8 +199,6 @@ submitstatus = {'object_type': 'submitstatus', 'required':
 fileuploadobj = {'object_type': 'fileuploadobj',
                  'required': ['submitmrsl', 'saved', 'extract_packages',
                               'size', 'name'], 'optional': ['message']}
-sandboxinfo = {'object_type': 'sandboxinfo', 'required':
-               ['username', 'resource', 'jobs'], 'optional': []}
 signature = {'object_type': 'signature', 'required':
              ['function', 'signature'], 'optional': []}
 objects = {'object_type': 'objects', 'required': ['objects'],
@@ -279,8 +277,6 @@ submitstatuslist = {'object_type': 'submitstatuslist',
 fileuploadobjs = {'object_type': 'fileuploadobjs',
                   'required_list': [('fileuploadobjs', 'fileuploadobj'
                                      )]}
-sandboxinfos = {'object_type': 'sandboxinfos',
-                'required_list': [('sandboxinfos', 'sandboxinfo')]}
 signatures = {'object_type': 'signatures',
               'required_list': [('signatures', 'signature')]}
 linklist = {'object_type': 'linklist', 'required_list': [('links',
@@ -391,8 +387,6 @@ valid_types_list = [
     resubmitobjs,
     submitstatuslist,
     submitstatus,
-    sandboxinfos,
-    sandboxinfo,
     fileuploadobjs,
     fileuploadobj,
     list,

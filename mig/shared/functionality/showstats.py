@@ -316,32 +316,6 @@ The query you have requested did not return any data.
         keys = set([date[-1] for date in lookupdict])
         datarows = []
 
-        # machine view should present only a sum of all "sandbox" resources.
-        # We sum all matching machines in all fields
-        if display == 'machine':
-            sums = [[((d, 'sandbox (sum)'),
-                      dict([(n, 0) for n in table_names]))]
-                    for d in dates]
-
-            def concat(l1, l2): return l1+l2
-            sumdict = dict(reduce(concat, sums))
-
-            new_keys = []
-            for k in keys:
-                if re.match("sandbox", k):
-                    new_keys.append('sandbox (sum)')
-                    for d in dates:
-                        if (d, k) in lookupdict:
-                            for n in table_names:
-                                sumdict[(d, 'sandbox (sum)')
-                                        ][n] += lookupdict[(d, k)][n]
-                            del lookupdict[(d, k)]
-                else:
-                    new_keys.append(k)
-
-            lookupdict = dict(list(lookupdict.items()) + list(sumdict.items()))
-            keys = list(set(new_keys))
-
         # keys should be shortened, especially only use the CN part of
         # user DNs. This will be called when building data rows
         def short_key(key_part):
@@ -361,10 +335,6 @@ The query you have requested did not return any data.
         #      (not mere membership, since everybody is Generic-member)
         def key_to_show(key):
             if display == 'machine':
-                # these are members of Generic, so show them (sum. see above)
-                if re.match("sandbox", key):
-                    return True
-
                 # Problem: this function returned True for Generic! (bug)
                 is_res_list = [vgrid.vgrid_is_resource(n, key, configuration)
                                for n in my_vgrids]

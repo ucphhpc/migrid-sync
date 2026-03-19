@@ -1227,27 +1227,6 @@ class Scheduler(object):
                     self.logger.info('job_fits_resource: %s of job does not fit resource (%s, %s)'
                                      % (attr, job[attr], res[attr]))
                     return False
-            if attr == 'SANDBOX':
-
-                # self.logger.info("SANDBOX")
-                # hack to ensure that a resource has a sandbox keyword
-
-                if attr not in res:
-                    res[attr] = False
-
-                # do not schedule non-sandbox jobs on a sandbox resource
-
-                if not job[attr] and res[attr]:
-
-                    # job is not allowed to run in a sandbox resource
-                    self.logger.info(
-                        "job is not allowed to run on a sandbox resource")
-                    return False
-
-                # sandbox jobs on non-sandbox resources are ok, however
-
-                # self.logger.info("SANDBOX DONE")
-
             if attr == 'PLATFORM':
 
                 # Default value for PLATFORM is the empty string

@@ -553,7 +553,7 @@ while [ 1 ]; do
         #echo "making directory job-dir_$localjobname" 1>> $frontendlog 2>> $frontendlog
         mkdir job-dir_$localjobname 1>> $frontendlog 2>> $frontendlog
         
-        # Write execution_node to job_dir (This used by sandbox timeout/kill)
+        # Write execution_node to job_dir
         echo "execution_node ${execution_node}" 1> job-dir_${localjobname}/${localjobname}.executionnode 2>> $frontendlog
         echo "$end_marker" >> job-dir_${localjobname}/${localjobname}.executionnode
         sync_complete job-dir_${localjobname}/${localjobname}.executionnode

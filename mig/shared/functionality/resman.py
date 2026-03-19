@@ -169,7 +169,7 @@ to open resource management.
         # Iterate through resources and show management for each one requested
 
         fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK',
-                  'ARCHITECTURE', 'SANDBOX', 'RUNTIMEENVIRONMENT']
+                  'ARCHITECTURE', 'RUNTIMEENVIRONMENT']
 
         # NOTE: only resources that user is allowed to access are listed.
         #       Resource with neither exes nor stores are not shown to anyone
@@ -280,13 +280,6 @@ Live resource status is available in the resource monitor page with all
             'object_type': 'text', 'text':
             'You can sign up spare or dedicated resources to the grid below.'
         })
-        output_objects.append({'object_type': 'link',
-                               'destination': 'resedit.py',
-                               'class': 'addlink iconspace',
-                               'title': 'Show sandbox resources',
-                               'text': 'Create a new %s resource' %
-                               configuration.short_title,
-                               })
         output_objects.append({'object_type': 'sectionheader', 'text': ''})
 
     logger.info("%s %s end for %s" % (op_name, operation, client_id))

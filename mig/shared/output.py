@@ -1377,25 +1377,6 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     lines.append('<tr><td>%s</td><td>%s</td></tr>'
                                  % (name, val))
                 lines.append('</table>')
-        elif i['object_type'] == 'sandboxinfos':
-            sandboxinfos = i['sandboxinfos']
-            lines.append('<table class="sandboxinfo"><tr><th>Username</th>'
-                         '<th>Resource(s)</th><th>Jobs</th><th>Walltime</th>'
-                         '</tr>')
-            row_number = 1
-            if not sandboxinfos:
-                help_text = 'No sandboxes found - please download a sandbox '
-                'below to proceed'
-                lines.append('<tr class="%s"><td colspan=4>%s</td></tr>' %
-                             (row_name[row_number], help_text))
-            for sandboxinfo in sandboxinfos:
-                row_class = row_name[row_number % 2]
-                lines.append('<tr class="%s">%s</tr>'
-                             % (row_class, html_table_if_have_keys(
-                                 sandboxinfo, ['username', 'resource', 'jobs',
-                                               'walltime'])))
-                row_number += 1
-            lines.append('</table>')
         elif i['object_type'] == 'runtimeenvironments':
             runtimeenvironments = i['runtimeenvironments']
             lines.append('''
@@ -2129,8 +2110,6 @@ want to reference the contents in a publication.
                 for obj in resources:
                     lines.append('<tr>')
                     res_type = 'real'
-                    if obj.get('SANDBOX', False):
-                        res_type = 'sandbox'
                     lines.append(
                         '<td class="%sres iconspace iconleftpad" title="%s resource">%s</td>' %
                         (res_type, res_type, obj['name']))
