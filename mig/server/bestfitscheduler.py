@@ -110,6 +110,7 @@ class BestFitScheduler(Scheduler):
 
         best_job = None
         best_fitness = 0.0
+        best_i = 0
 
         for i in range(0, qlen):
             job = self.job_queue.get_job(i)
