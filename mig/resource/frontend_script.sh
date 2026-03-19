@@ -1,14 +1,5 @@
 echo "`date`: starting" >> $frontendlog
 
-# Make sure sandboxes use the current MiG server when booted next time.
-# This is a workaround after our server migration, so that existing 
-# images can continue working as long as we redirect or proxy sandboxes 
-# to the new server at least once.
-
-if [ $sandbox -eq 1 ]; then
-    echo $migserver > /opt/mig/etc/serverfile
-fi
-
 # $Revision: 2580 $
 
 clean_command="rm -f"
@@ -21,12 +12,6 @@ end_marker="### END OF SCRIPT ###"
 clean_up_counter=0
 # Clean up after this many loops (with 2 second idle sleep this is less than once a day)
 clean_up_interval=43200
-# Timeout for sandboxes is checked by frontend
-# Don't check for timeout to often - interval is number of loops (> 1s each)
-# The initial value is 60 for responsiveness, but as sandbox resources increase 
-# in numbers the timeout_interval should be increased.
-sandbox_timeout_counter=0
-sandbox_timeout_interval=60
 
 send_pgid() {
     type=$1
@@ -187,12 +172,6 @@ request_job() {
     execution_delay="$5"
     exe_pgid="$6"
     
-    # if sandbox also send sandboxkey
-    #sandboxkey_string=""
-    #if [ $sandbox -eq 1 ]; then
-      #sandboxkey_string="\&amp\;sandboxkey=${sandboxkey}"
-    #fi
-    
     # request a new job, and check a number of times if it is received. If not a
     # request is sent again
     retry_counter=0
@@ -200,33 +179,10 @@ request_job() {
     while [ 1 ]; do
         retry_counter=$((retry_counter+1))
         # TODO: can we supply ca-cert to avoid insecure here?
-        curl --location --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/cgi-sid/requestnewjob?exe=${exe}\&amp\;unique_resource_name=${unique_resource_name}\&amp\;cputime=${cputime}\&amp\;nodecount=${nodecount}\&amp\;sandboxkey=${sandboxkey}\&amp\;localjobname=${localjobname}\&amp\;execution_delay=${execution_delay}\&amp\;exe_pgid=${exe_pgid} 1>> $frontendlog 2>> $frontendlog
+        curl --location --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/cgi-sid/requestnewjob?exe=${exe}\&amp\;unique_resource_name=${unique_resource_name}\&amp\;cputime=${cputime}\&amp\;nodecount=${nodecount}\&amp\;localjobname=${localjobname}\&amp\;execution_delay=${execution_delay}\&amp\;exe_pgid=${exe_pgid} 1>> $frontendlog 2>> $frontendlog
         retval=$?
         echo "a new job ${exe} ${nodecount} ${cputime} ${localjobname} ${execution_delay} ${exe_pgid} was requested ($retval)" 1>> $frontendlog 2>> $frontendlog
-        
-        if [ $sandbox -eq 1 ]; then
-            getinputfiles_retry=0
-            getinputfiles_max_retries=5
-            while [ ! -f ${localjobname}.getinputfiles ] && \
-                [ $getinputfiles_retry -lt $getinputfiles_max_retries ]; do
-                curl --location --fail --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/sid_redirect/${localjobname}.getinputfiles -o ${localjobname}.getinputfiles 1>> $frontendlog 2>> $frontendlog
-                retval=$?
-                # Loop until .getinputfiles is ready, curl returns 0,
-                # --fail must be set on curl command to do this, see 
-                # man curl
-                if [ "$retval" -ne "0" ]; then
-                    getinputfiles_retry=$((getinputfiles_retry+1))
-                    ${clean_command} ${localjobname}.getinputfiles
-                    echo ".getinputfiles script _NOT_ received yet ($retval)! (${getinputfiles_retry}/${getinputfiles_max_retries})" 1>> $frontendlog 2>> $frontendlog
-                    sleep 5
-                fi
-            done
-            if [ $getinputfiles_retry -eq $getinputfiles_max_retries ]; then
-                echo "No more request retries left!" 1>> $frontendlog 2>> $frontendlog
-                return 1
-            fi
-        fi
-        
+
         # loop until new job exists or timeout is reached
         counter=0
         while [ 1 ]; do
@@ -255,79 +211,15 @@ request_job() {
     return 0
 }
 
-sandbox_stop_exe() {
-    # Find newest job_dir, and generete list of old job_dirs
-    # NOTE: Sandboxes only has one executionnode, if that's changed,
-    #       we must find and check a newest jobdir for each executionnode
-    newest_job_dir=""
-    job_clean_list=""
-    for job_dir in job-dir_*; do
-        if [ -z $newest_job_dir ] || [ $job_dir -nt $newest_job_dir ]; then
-            newest_job_dir=$job_dir
-            job_clean_list="$job_clean_list $job_dir"
-        fi
-    done
-    
-    localjobname=${newest_job_dir#job-dir_}
-    if [ ! -f ${localjobname}.jobdone ] && \
-        [ -f ${newest_job_dir}/${localjobname}.iosessionid ] && \
-        [ -f ${newest_job_dir}/${localjobname}.executionnode ]; then
-        iosessionid=`cat ${newest_job_dir}/${localjobname}.iosessionid  2>> $frontendlog`
-        execution_node=`awk '/execution_node/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ${newest_job_dir}/${localjobname}.executionnode`
-        
-        # Check if newest_job is still active, if not issue the stop command returned by the MiG server
-        command="curl --location --insecure --stderr $curllog --connect-timeout 10 -m 10 $migserver/cgi-sid/isjobactive.py"
-        command="${command}?iosessionid=${iosessionid}&sandboxkey=${sandboxkey}&exe_name=${execution_node}"
-        status=`$command  2>> $frontendlog`
-        retval=$?
-        if [ $retval -eq 0 ] &&\
-            [ ${status:0:1} -eq 1 ]; then
-            stop_command=`echo ${status:2} | awk -F'stop_command: ' '{print $2}'`
-            if [ ! -z "$stop_command" ]; then
-                # Execute stop command                  
-                $stop_command 1>> $frontendlog 2>> $frontendlog
-                retval=$?
-                echo "sandbox_stop_exe: (${stop_command}) of job ($localjobname) returned (${retval})" 1>> $frontendlog 2>> $frontendlog
-                
-                # Cleanup files for the killed job and jobs older than the killed job
-                if [ $retval -eq 0 ]; then
-                    for job_dir_clean in $job_clean_list; do
-                        localjobname_clean=${job_dir_clean#job-dir_}
-                        
-                        # Remove EXE jobdir 
-                        ${clean_recursive} ${copy_execution_prefix}${execution_dir}/${job_dir_clean} 1>> $frontendlog 2>> $frontendlog
-                        
-                        # Remove run_handle_updates
-                        $clean_command ${copy_execution_prefix}${execution_dir}/run_handle_updates.${localjobname_clean}\
-                            1>> $frontendlog 2>> $frontendlog 
-                        
-                        # Remove FE jobdir
-                        ${clean_recursive} $job_dir_clean 1>> $frontendlog 2>> $frontendlog
-                        
-                        # Remove jobdone, we can't trust it at this stage
-                        ${clean_command} ${localjobname_clean}.jobdone 1>> $frontendlog 2>> $frontendlog
-                        
-                        echo "sandbox_stop_exe: Job ($localjobname_clean) was cleand up" 1>> $frontendlog 2>> $frontendlog
-                        sync_clean ${localjobname_clean}.jobdone
-                    done
-                fi
-            fi
-        fi
-    fi
-}
-
 ### MAIN ###
 
 # Send the frontend ProcessGroupID to the MiG server.
 pid=$$
 pgid=`ps -o pgid= -p $pid`
-# Sandboxes don't send pgid
-if [ $sandbox -eq 0 ]; then
-    send_pgid "FE" $pgid
-    retval=$?
-    if [ $retval -ne 0 ]; then
-        exit 1
-    fi
+send_pgid "FE" $pgid
+retval=$?
+if [ $retval -ne 0 ]; then
+    exit 1
 fi
 
 # Loop through job handling forever
@@ -750,13 +642,6 @@ while [ 1 ]; do
                 for i in "$inputfiles"; do
                     sync_clean $i
                 done
-                if [ $sandbox -eq 1 ]; then
-                    chown -R ${execution_user}:${execution_user} ${execution_dir}/job-dir_${localjobname}
-                    chown_ret=$?
-                    if [ $chown_ret -ne 0 ]; then
-                        echo "chown failed" 1>> $frontendlog 2>> $frontendlog
-                    fi
-                fi
                 break
             else
                 # continue until succesful
@@ -813,7 +698,6 @@ while [ 1 ]; do
     if [ $clean_up_counter -gt $clean_up_interval ]; then
         # Age clean up internal files after 30 days to avoid errors piling up.
         # This should never replace server initiated job clean up with privacy in mind.
-        # NB: We must use "find -mtime" here for sandbox resource to work.
         echo "cleaning up old files" 1>> $frontendlog 2>> $frontendlog
         for extension in givejob inputfiles_available getinputfiles sendoutputfiles job jobdone FAILED; do
             for old_file in `find . -name "*.${extension}" -mtime +30| xargs`; do
@@ -838,16 +722,6 @@ while [ 1 ]; do
         clean_up_counter=$((clean_up_counter+1))
     fi
     
-    # Sandbox job cancel/timeout
-    if [ $sandbox -eq 1 ]; then
-        if [ $sandbox_timeout_counter -gt $sandbox_timeout_interval ]; then
-            sandbox_stop_exe
-            sandbox_timeout_counter=0
-        else
-            sandbox_timeout_counter=$((sandbox_timeout_counter+1))
-        fi
-    fi
-
     # Slow down
     sleep 4
     

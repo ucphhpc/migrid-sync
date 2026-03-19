@@ -278,7 +278,6 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'enable_accounting',
         'enable_transfers',
         'enable_freeze',
-        'enable_sandboxes',
         'enable_jupyter',
         'enable_cloud',
         'enable_gdp',

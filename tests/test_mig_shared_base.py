@@ -39,7 +39,7 @@ from mig.shared.base import allow_script, auth_type_description, brief_list, \
     get_client_id, get_short_id, get_site_base_url, get_user_id, get_xgi_bin, \
     hexlify, invisible_dir, invisible_file, invisible_path, is_gdp_user, \
     legacy_main, mask_creds, pretty_format_user, requested_backend, \
-    requested_page, requested_url_base, sandbox_resource, string_snippet, \
+    requested_page, requested_url_base, string_snippet, \
     unhexlify, user_base_dir, valid_dir_input, verify_local_url
 # Imports required for the unit test wrapping
 from mig.shared.defaults import cert_field_order, csrf_field, \
@@ -1212,11 +1212,6 @@ just use the one that looks most familiar or try them in turn)"""
             self.configuration,
             "/CN=Regular User"
         ))
-
-    def test_sandbox_resource_identification(self):
-        """Test sandbox_resource identifies sandboxes"""
-        self.assertTrue(sandbox_resource("sandbox.12345"))
-        self.assertFalse(sandbox_resource("production.system.42"))
 
     def test_invisible_file_detection(self):
         """Test invisible_file detects hidden system files"""

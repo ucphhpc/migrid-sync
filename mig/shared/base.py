@@ -41,7 +41,7 @@ import sys
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from mig.shared.defaults import default_str_coding, default_fs_coding, \
-    keyword_all, keyword_auto, sandbox_names, _user_invisible_files, \
+    keyword_all, keyword_auto, _user_invisible_files, \
     _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, csrf_field, \
     gdp_distinguished_field, valid_gdp_auth_scripts, valid_gdp_anon_scripts, \
     STR_KIND, FS_KIND, AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_CERTIFICATE, \
@@ -330,12 +330,6 @@ def canonical_user_with_peers(configuration, user_dict, limit_fields):
         if current_val:
             canonical[peers_field] = current_val
     return canonical
-
-
-def sandbox_resource(unique_resource_name):
-    """Returns boolean indicating if the resource is a sandbox"""
-    fqdn = unique_resource_name.rsplit('.', 1)[0]
-    return fqdn in sandbox_names
 
 
 def invisible_file(filename):

@@ -359,15 +359,6 @@ This makes is possible to get a total statistic for all jobs in a project.
         'Editor': 'invisible',
         'Required': False,
         }))
-    specs.append(('SANDBOX', {
-        'Title': 'Allow Sandbox Execution',
-        'Description': 'Specifies whether the job may run in a sandbox. If 0 or false it may not, if 1 or true it may.',
-        'Example': 'True',
-        'Type': 'boolean',
-        'Value': False,
-        'Editor': 'select',
-        'Required': False,
-        }))
     specs.append(('PLATFORM', {
         'Title': 'Platform',
         'Description': 'Specifies the platform architecture used for the execution of the job.',

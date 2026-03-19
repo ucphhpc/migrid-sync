@@ -39,7 +39,7 @@ import os
 from mig.shared import returnvalues
 from mig.shared.accessrequests import list_access_requests, load_access_request, \
     build_accessrequestitem_object
-from mig.shared.base import sandbox_resource, hexlify
+from mig.shared.base import hexlify
 from mig.shared.defaults import default_pager_entries, csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
@@ -583,8 +583,6 @@ def main(client_id, user_arguments_dict):
     owned = 0
     res_map = get_resource_map(configuration)
     for unique_resource_name in res_map:
-        if sandbox_resource(unique_resource_name):
-            continue
         owner_list = res_map[unique_resource_name][OWNERS]
         resource_config = res_map[unique_resource_name][CONF]
         visible_res_name = res_map[unique_resource_name][RESID]
