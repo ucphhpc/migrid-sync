@@ -280,6 +280,13 @@ Live resource status is available in the resource monitor page with all
             'object_type': 'text', 'text':
             'You can sign up spare or dedicated resources to the grid below.'
         })
+        output_objects.append({'object_type': 'link',
+                               'destination': 'resedit.py',
+                               'class': 'addlink iconspace',
+                               'title': 'Create resource',
+                               'text': 'Create a new %s resource' %
+                               configuration.short_title,
+                               })
         output_objects.append({'object_type': 'sectionheader', 'text': ''})
 
     logger.info("%s %s end for %s" % (op_name, operation, client_id))
