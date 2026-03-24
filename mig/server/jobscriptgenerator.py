@@ -38,6 +38,7 @@ from copy import deepcopy
 
 from mig.server import genjobscriptpython
 from mig.server import genjobscriptsh
+from mig.server import genjobscriptjava
 from mig.shared.base import client_id_dir, hexlify
 from mig.shared.defaults import session_id_bytes, maxfill_fields, keyword_all
 from mig.shared.fileio import write_file, pickle, make_symlink
@@ -384,6 +385,11 @@ def gen_job_script(
             localjobname,
             path_without_extension,
         )
+    elif script_language == 'java':
+        generator = genjobscriptjava.GenJobScriptJava(
+            job_dictionary, resource_config,
+            configuration.migserver_https_sid_url,
+            localjobname, path_without_extension)
     else:
         print('Unknown script language! (is in configuration but not in ' +
               'jobscriptgenerator) %s ' % script_language)
