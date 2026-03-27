@@ -34,7 +34,7 @@ import os
 import sys
 from types import SimpleNamespace
 
-from tests.support import MIG_BASE, TEST_DATA_DIR, MigTestCase, testmain
+from tests.support import TEST_DATA_DIR, MigTestCase, testmain
 
 
 from mig.install.features import args_main, Features
