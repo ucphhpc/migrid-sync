@@ -26,37 +26,39 @@
 #
 
 import argparse
+import importlib
+import os
+import sys
 from collections import defaultdict
 from configparser import ConfigParser
 from enum import Enum
-import importlib
-import os
-import pip
-import sys
 from types import SimpleNamespace
+
+import pip
 from pip._internal.req.req_file import parse_requirements
 
-
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-_LOCAL_MIG_BASE = os.path.normpath(os.path.join(_SCRIPT_DIR, '../..'))
+_LOCAL_MIG_BASE = os.path.normpath(os.path.join(_SCRIPT_DIR, "../.."))
 
 sys.path.append(_LOCAL_MIG_BASE)
 
-FEATURES_FILE = os.path.join(_LOCAL_MIG_BASE, 'FEATURES.ini')
-FEATURES_REQUIREMENTS_DIR = os.path.join(_LOCAL_MIG_BASE, 'mig/install/requirements')
+FEATURES_FILE = os.path.join(_LOCAL_MIG_BASE, "FEATURES.ini")
+FEATURES_REQUIREMENTS_DIR = os.path.join(
+    _LOCAL_MIG_BASE, "mig/install/requirements"
+)
 PIP_OVERRIDES = {
-    'CLOUD': {
-        'openstacksdk': 'OPENSTACKSDK_VERSION_OVERRIDE',
+    "CLOUD": {
+        "openstacksdk": "OPENSTACKSDK_VERSION_OVERRIDE",
     },
-    'MIGUX': {
-        'migux': 'MIGUX_VERSION_OVERRIDE',
+    "MIGUX": {
+        "migux": "MIGUX_VERSION_OVERRIDE",
     },
 }
-_VERSIONCHARS = ('=', '<', '>')
-_TRUTH_STRINGS = set(('True', 'true', 'yes', '1'))
+_VERSIONCHARS = ("=", "<", ">")
+_TRUTH_STRINGS = set(("True", "true", "yes", "1"))
 
 
-def warn(msg=''):
+def warn(msg=""):
     """
     Wrapper function for printing to stderr.
     """
@@ -76,10 +78,17 @@ class Features:
         self._overrides_by_feature = {}
         self._overrides_supported = overrides_supported
 
-        for feature_name, interpretation in interpretation_by_feature_name.items():
+        for (
+            feature_name,
+            interpretation,
+        ) in interpretation_by_feature_name.items():
             self._enabled_by_feature[feature_name] = interpretation.enabled
-            self._requirements_by_feature[feature_name] = interpretation.requirements
-            self._requirements_file_by_feature[feature_name] = interpretation.requirements_file
+            self._requirements_by_feature[feature_name] = (
+                interpretation.requirements
+            )
+            self._requirements_file_by_feature[feature_name] = (
+                interpretation.requirements_file
+            )
 
     def apply_enabled(self, enabled_by_feature_name):
         """
@@ -117,8 +126,9 @@ class Features:
         per_package_args = []
 
         for feature_name in self.list_enabled_features():
-            installable_packages = self.generate_pip_args_for_feature(feature_name,
-                                        detect_installed=detect_installed)
+            installable_packages = self.generate_pip_args_for_feature(
+                feature_name, detect_installed=detect_installed
+            )
             if not installable_packages:
                 continue
             per_package_args.append(installable_packages)
@@ -136,7 +146,7 @@ class Features:
             # no overrides detected and we do not need to check for the
             # dependencies being already installed therefore we can install
             # by simply using the requirements file as-is
-            return ['-r', self._requirements_file_by_feature[feature_name]]
+            return ["-r", self._requirements_file_by_feature[feature_name]]
 
         package_args = []
         overridden_package_names = set(overrides.keys())
@@ -173,29 +183,46 @@ class Features:
         Return the names of features recorded as enabled.
         """
 
-        return return_as((feature_name for feature_name in self.feature_names
-                                        if self._enabled_by_feature[feature_name]))
+        return return_as(
+            (
+                feature_name
+                for feature_name in self.feature_names
+                if self._enabled_by_feature[feature_name]
+            )
+        )
 
     def required_package_names(self, feature_name):
         """
         Return the set of required packages for a named feature.
         """
-        return set((Features._strip_version_if_present(entry.requirement)
-                    for entry in self._requirements_by_feature[feature_name]))
+        return set(
+            (
+                Features._strip_version_if_present(entry.requirement)
+                for entry in self._requirements_by_feature[feature_name]
+            )
+        )
 
     @staticmethod
-    def _interpret_feature_definition(feature_name, feature_definition, requirements_dir):
+    def _interpret_feature_definition(
+        feature_name, feature_definition, requirements_dir
+    ):
         """
         Convert a named feature section within the features file to a
         structured intepretation suitable for consumption by the logic.
         """
 
-        enabled = feature_definition.getboolean('default_on', fallback=False)
-        has_requirements = feature_definition.getboolean('has_requirements', fallback=True)
+        enabled = feature_definition.getboolean("default_on", fallback=False)
+        has_requirements = feature_definition.getboolean(
+            "has_requirements", fallback=True
+        )
 
         if has_requirements:
-            requirements_file = os.path.join(requirements_dir, f"{feature_name.lower()}-requirements.txt")
-            requirements = list(parse_requirements(requirements_file, session=None))
+            requirements_file = os.path.join(
+                requirements_dir, f"{feature_name.lower()}-requirements.txt"
+            )
+            requirements = list(
+                parse_requirements(requirements_file, session=None)
+            )
         else:
             requirements = []
 
@@ -240,13 +267,17 @@ class Features:
         definitions_iterator = iter(definitions.items())
         next(definitions_iterator)  # skip default section
 
-        return {feature_name: Features._interpret_feature_definition(feature_name,
-                                                                     feature_definition,
-                                                                     requirements_dir)
-                for feature_name, feature_definition in definitions_iterator}
+        return {
+            feature_name: Features._interpret_feature_definition(
+                feature_name, feature_definition, requirements_dir
+            )
+            for feature_name, feature_definition in definitions_iterator
+        }
 
     @classmethod
-    def from_definitions_file(cls, features_file, requirements_dir, overrides_supported={}):
+    def from_definitions_file(
+        cls, features_file, requirements_dir, overrides_supported={}
+    ):
         """
         Return a Features instance populated with the features declared
         within the specified definitions file.
@@ -256,7 +287,10 @@ class Features:
         with open(features_file) as thefile:
             definitions = ConfigParser()
             definitions.read_file(thefile)
-            return cls(Features.expand_definitions(definitions, requirements_dir), overrides_supported)
+            return cls(
+                Features.expand_definitions(definitions, requirements_dir),
+                overrides_supported,
+            )
 
     @staticmethod
     def match_env_dict(features, env_dict):
@@ -278,9 +312,13 @@ class Features:
         overrides_by_feature_name = defaultdict(dict)
 
         for feature_name in features.feature_names:
-            enabled_by_feature_name[feature_name] = enabled_or_fallback(feature_name)
+            enabled_by_feature_name[feature_name] = enabled_or_fallback(
+                feature_name
+            )
 
-            env_override_flags = features._overrides_supported.get(feature_name, None)
+            env_override_flags = features._overrides_supported.get(
+                feature_name, None
+            )
             if not env_override_flags:
                 continue
 
@@ -288,7 +326,9 @@ class Features:
                 override_version = env_dict.get(flag_name, None)
                 if not override_version:
                     continue
-                overrides_by_feature_name[feature_name][package_name] = override_version
+                overrides_by_feature_name[feature_name][
+                    package_name
+                ] = override_version
 
         return enabled_by_feature_name, overrides_by_feature_name
 
@@ -312,16 +352,23 @@ class Features:
         """
 
         from mig.shared.conf import get_configuration_object
-        configuration = get_configuration_object(configuration_file, skip_log=True, disable_auth_log=True)
+
+        configuration = get_configuration_object(
+            configuration_file, skip_log=True, disable_auth_log=True
+        )
 
         def enabled_or_fallback(feature_name):
             try:
-                return getattr(configuration, f"site_enable_{feature_name.lower()}")
+                return getattr(
+                    configuration, f"site_enable_{feature_name.lower()}"
+                )
             except AttributeError:
                 return features.feature_is_enabled(feature_name)
 
-        enabled_by_feature_name = {feature_name: enabled_or_fallback(feature_name)
-                for feature_name in features.feature_names}
+        enabled_by_feature_name = {
+            feature_name: enabled_or_fallback(feature_name)
+            for feature_name in features.feature_names
+        }
         return enabled_by_feature_name, {}
 
 
@@ -331,16 +378,24 @@ def subcommand_enabled(features, args, print=print, warn=warn):
     """
 
     if args.c:
-        enabled_by_feature_name = Features.match_configuration_file(features, args.c)
+        enabled_by_feature_name = Features.match_configuration_file(
+            features, args.c
+        )
         features.apply_enabled(enabled_by_feature_name)
     elif args.dotenv:
-        enabled_by_feature_name, _ = Features.match_dotenv_file(features, args.dotenv)
+        enabled_by_feature_name, _ = Features.match_dotenv_file(
+            features, args.dotenv
+        )
         features.apply_enabled(enabled_by_feature_name)
     elif args.env:
-        enabled_by_feature_name, overrides_by_feature_name = Features.match_env_dict(features, args.env)
+        enabled_by_feature_name, overrides_by_feature_name = (
+            Features.match_env_dict(features, args.env)
+        )
         features.apply_enabled(enabled_by_feature_name)
     else:
-        warn("no feature coniguration available; showing those enabled by default only")
+        warn(
+            "no feature coniguration available; showing those enabled by default only"
+        )
     print(f"enabled features: {', '.join(features.list_enabled_features())}")
 
     return 0
@@ -352,20 +407,30 @@ def subcommand_install(features, args, print=print, warn=warn):
     """
 
     if args.c:
-        enabled_by_feature_name = Features.match_configuration_file(features, args.c)
+        enabled_by_feature_name = Features.match_configuration_file(
+            features, args.c
+        )
         features.apply_enabled(enabled_by_feature_name)
     elif args.dotenv:
-        enabled_by_feature_name, overrides_by_feature_name = Features.match_dotenv_file(features, args.dotenv)
+        enabled_by_feature_name, overrides_by_feature_name = (
+            Features.match_dotenv_file(features, args.dotenv)
+        )
         features.apply_enabled(enabled_by_feature_name)
     elif args.env:
-        enabled_by_feature_name, overrides_by_feature_name = Features.match_env_dict(features, args.env)
+        enabled_by_feature_name, overrides_by_feature_name = (
+            Features.match_env_dict(features, args.env)
+        )
         features.apply_enabled(enabled_by_feature_name)
         features.apply_overrides(overrides_by_feature_name)
     else:
-        warn("no feature coniguration available; showing those enabled by default only")
+        warn(
+            "no feature coniguration available; showing those enabled by default only"
+        )
         warn()
 
-    all_pip_args = features.generate_pip_args(detect_installed=args.detect_installed)
+    all_pip_args = features.generate_pip_args(
+        detect_installed=args.detect_installed
+    )
 
     if args.check:
         for pip_args in all_pip_args:
@@ -396,21 +461,27 @@ def main(argv):
     """
 
     parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(dest='command')
+    subparsers = parser.add_subparsers(dest="command")
 
-    show_command = subparsers.add_parser('show')
+    show_command = subparsers.add_parser("show")
 
-    enabled_command = subparsers.add_parser('enabled')
-    enabled_command.add_argument('-c', default=None)
-    enabled_command.add_argument('--dotenv', default=None, type=os.path.abspath)
-    enabled_command.add_argument('--env', action='store_const', const=os.environ)
+    enabled_command = subparsers.add_parser("enabled")
+    enabled_command.add_argument("-c", default=None)
+    enabled_command.add_argument("--dotenv", default=None, type=os.path.abspath)
+    enabled_command.add_argument(
+        "--env", action="store_const", const=os.environ
+    )
 
-    install_command = subparsers.add_parser('install')
-    install_command.add_argument('-c', default=None)
-    install_command.add_argument('--check', action='store_true', default=False)
-    install_command.add_argument('--detect_installed', action='store_true', default=False)
-    install_command.add_argument('--dotenv', default=None, type=os.path.abspath)
-    install_command.add_argument('--env', action='store_const', const=os.environ)
+    install_command = subparsers.add_parser("install")
+    install_command.add_argument("-c", default=None)
+    install_command.add_argument("--check", action="store_true", default=False)
+    install_command.add_argument(
+        "--detect_installed", action="store_true", default=False
+    )
+    install_command.add_argument("--dotenv", default=None, type=os.path.abspath)
+    install_command.add_argument(
+        "--env", action="store_const", const=os.environ
+    )
 
     args = parser.parse_args(args=argv)
 
@@ -419,6 +490,7 @@ def main(argv):
         return 0
 
     return args_main(parser.parse_args(args=argv))
+
 
 def args_main(args, *, print=print, warn=warn, features=None):
     """
@@ -440,5 +512,5 @@ def args_main(args, *, print=print, warn=warn, features=None):
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
