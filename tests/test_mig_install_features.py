@@ -228,7 +228,7 @@ class MigInstallFeatures_smoke(MigTestCase):
 
         self.assertEqual(ret, 0)
         self.assertOutputLines(fake_print, [
-            "available features: CLOUD, MIGUX",
+            "available features: CLOUD, MIGUX, WORKFLOWS",
         ])
 
 
