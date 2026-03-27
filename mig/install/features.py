@@ -1,4 +1,29 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# --- BEGIN_HEADER ---
+#
+# features - bootstrap tool for managing per-feature dependencies
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
 
 import argparse
 from collections import defaultdict
@@ -32,6 +57,9 @@ _TRUTH_STRINGS = set(('True', 'true', 'yes', '1'))
 
 
 def warn(msg=''):
+    """
+    Wrapper function for printing to stderr.
+    """
     print(msg, file=sys.stderr)
 
 
@@ -149,6 +177,9 @@ class Features:
                                         if self._enabled_by_feature[feature_name]))
 
     def required_package_names(self, feature_name):
+        """
+        Return the set of required packages for a named feature.
+        """
         return set((Features._strip_version_if_present(entry.requirement)
                     for entry in self._requirements_by_feature[feature_name]))
 
@@ -176,9 +207,12 @@ class Features:
 
     @staticmethod
     def _is_package_present(package_name):
+        """
+        Determine whether a package is available to the active interpreter.
+        """
+
         try:
             importlib.util.find_spec(package_name)
-
             return True
         except ModuleNotFoundError as exc:
             return False
@@ -213,6 +247,11 @@ class Features:
 
     @classmethod
     def from_definitions_file(cls, features_file, requirements_dir, overrides_supported={}):
+        """
+        Return a Features instance populated with the features declared
+        within the specified definitions file.
+        """
+
         assert os.path.isabs(features_file)
         with open(features_file) as thefile:
             definitions = ConfigParser()
@@ -221,6 +260,13 @@ class Features:
 
     @staticmethod
     def match_env_dict(features, env_dict):
+        """
+        Check the supplied dictionary for env-style flags (i.e. ENABLE_<NAME>)
+        which indicate whether the correspnding feature should be enabled and
+        optionally - based upon the definitions - for any applicable version
+        overrides being specified if such flags are supported.
+        """
+
         def enabled_or_fallback(feature_name):
             try:
                 enable_string = env_dict[f"ENABLE_{feature_name.upper()}"]
@@ -248,6 +294,10 @@ class Features:
 
     @staticmethod
     def match_dotenv_file(features, dotenv_file):
+        """
+        Match a .env file for feature enablement and overrides.
+        """
+
         from dotenv import dotenv_values
 
         assert os.path.isabs(dotenv_file)
@@ -257,6 +307,10 @@ class Features:
 
     @staticmethod
     def match_configuration_file(features, configuration_file):
+        """
+        Match a .configuration file for feature enablement and overrides.
+        """
+
         from mig.shared.conf import get_configuration_object
         configuration = get_configuration_object(configuration_file, skip_log=True, disable_auth_log=True)
 
@@ -271,7 +325,11 @@ class Features:
         return enabled_by_feature_name, {}
 
 
-def main_enabled(features, args, print=print, warn=warn):
+def subcommand_enabled(features, args, print=print, warn=warn):
+    """
+    'enabled' subcommand executor.
+    """
+
     if args.c:
         enabled_by_feature_name = Features.match_configuration_file(features, args.c)
         features.apply_enabled(enabled_by_feature_name)
@@ -288,7 +346,11 @@ def main_enabled(features, args, print=print, warn=warn):
     return 0
 
 
-def main_install(features, args, print=print, warn=warn):
+def subcommand_install(features, args, print=print, warn=warn):
+    """
+    'install' subcommand executor.
+    """
+
     if args.c:
         enabled_by_feature_name = Features.match_configuration_file(features, args.c)
         features.apply_enabled(enabled_by_feature_name)
@@ -313,18 +375,26 @@ def main_install(features, args, print=print, warn=warn):
     raise NotImplementedError("install is not currently implemented")
 
 
-def main_show(features, args, print=print, warn=warn):
+def subcommand_show(features, args, print=print, warn=warn):
+    """
+    'show' subcommand executor.
+    """
+
     print(f"available features: {', '.join(features.feature_names)}")
 
 
 _COMMAND_HANDLERS = dict(
-    enabled=main_enabled,
-    install=main_install,
-    show=main_show,
+    enabled=subcommand_enabled,
+    install=subcommand_install,
+    show=subcommand_show,
 )
 
 
 def main(argv):
+    """
+    Main entrypoint function.
+    """
+
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='command')
 
@@ -351,6 +421,10 @@ def main(argv):
     return args_main(parser.parse_args(args=argv))
 
 def args_main(args, *, print=print, warn=warn, features=None):
+    """
+    Internal helper for executing the parsed arguments.
+    """
+
     features = features or Features.from_definitions_file(
         FEATURES_FILE,
         FEATURES_REQUIREMENTS_DIR,
