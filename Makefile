@@ -31,7 +31,7 @@ info:
 	@echo "The following should help you get started:"
 	@echo
 	@echo "'make test'      - run the test suite (default python 3)"
-	@echo "'make PYVER=X.Y' - run the test suite (python version X.Y)"
+	@echo "'make test PYVER=X.Y' - run the test suite (python version X.Y)"
 	@echo "'make unittest'  - execute tests locally for development"
 
 .PHONY: fmt
