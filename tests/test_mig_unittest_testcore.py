@@ -33,25 +33,31 @@ import sys
 
 from tests.support import MigTestCase, testmain
 
-from mig.unittest.testcore import main as testcore_main
+from mig.unittest.testcore import legacy_main
 
 
-class MigUnittestTestcore(MigTestCase):
+class MigUnittestTestcore__legacy_main(MigTestCase):
 
     def _provide_configuration(self):
         return 'testconfig'
 
     def test_existing_main(self):
+        """Run the legacy self-tests directly in module"""
+
         def raise_on_error_exit(exit_code, identifying_message=None):
             if exit_code != 0:
                 if identifying_message is None:
                     identifying_message = 'unknown'
                 raise AssertionError(
-                    'failure in unittest/testcore: %s' % (identifying_message,))
+                    'legacy test failure: %s' % (identifying_message,))
 
-        print("") # account for wrapped tests printing to console
+        raise_on_error_exit.last_print = None
 
-        testcore_main(self.configuration, _exit=raise_on_error_exit)
+        def record_last_print(value):
+            """Keep track of printed output"""
+            raise_on_error_exit.last_print = value
+
+        legacy_main(self.configuration, print=record_last_print, _exit=raise_on_error_exit)
 
 
 if __name__ == '__main__':

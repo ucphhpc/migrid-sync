@@ -575,20 +575,18 @@ def __clean_test_files(configuration, test_path):
                                                            exc))
 
 
-def legacy_main(_exit=sys.exit, _print=print):
+def legacy_main(configuration, print=print, _exit=sys.exit, _argv=sys.argv):
     """Run module self-tests"""
     from mig.shared.base import client_id_dir
-    from mig.shared.conf import get_configuration_object
     from mig.shared.defaults import htaccess_filename
     print("Unit testing user I/O")
     client_id = "/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk"
     sub_dir = '.'
-    if sys.argv[1:]:
-        client_id = sys.argv[1]
-    if sys.argv[2:]:
-        sub_dir = sys.argv[2]
+    if _argv[1:]:
+        client_id = _argv[1]
+    if _argv[2:]:
+        sub_dir = _argv[2]
     client_dir = client_id_dir(client_id)
-    configuration = get_configuration_object()
     configuration.mig_server_id = "localhost"
     tmp_dir = os.path.join("userio-testdir", sub_dir)
     real_tmp = os.path.normpath(os.path.join(configuration.user_home,
@@ -680,6 +678,10 @@ def legacy_main(_exit=sys.exit, _print=print):
         events_path = os.path.join(configuration.events_home, name)
         print("%s : %db" % (name, os.stat(events_path).st_size))
 
+    _exit(0)
+
 
 if __name__ == "__main__":
-    legacy_main()
+    from mig.shared.conf import get_configuration_object
+    conf = get_configuration_object(skip_log=True, disable_auth_log=True)
+    legacy_main(conf)

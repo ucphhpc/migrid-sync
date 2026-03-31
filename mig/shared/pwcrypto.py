@@ -1028,10 +1028,8 @@ def generate_random_password(configuration, tries=42):
     raise ValueError("Failed to generate suitable password!")
 
 
-def main(_exit=sys.exit, _print=print):
+def legacy_main(configuration, print=print, _exit=sys.exit):
     """Run module self-tests"""
-    from mig.shared.conf import get_configuration_object
-    configuration = get_configuration_object()
     dummy_user = {'distinguished_name': 'Test User', 'password_hash': ''}
     pw_tests = (
         '', 'abc', 'dbey3h', 'abcdefgh', '12345678', 'test1234',
@@ -1117,6 +1115,10 @@ def main(_exit=sys.exit, _print=print):
             print(
                 "Failed to handle aesgcm static encrypt/decrypt %s : %s" % (pw, exc))
 
+    _exit(0)
+
 
 if __name__ == "__main__":
-    main()
+    from mig.shared.conf import get_configuration_object
+    conf = get_configuration_object(skip_log=True, disable_auth_log=True)
+    legacy_main(conf)

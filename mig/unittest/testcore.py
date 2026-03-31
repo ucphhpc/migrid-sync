@@ -36,48 +36,11 @@ import sys
 import time
 import logging
 
-sys.path.append(os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "../..")))
-from tests.support import MIG_BASE, PY2, is_path_within
-
 from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list
 
 
-_TEST_CONF_FILE = os.environ['MIG_CONF']
-_TEST_CONF_DIR = os.path.dirname(_TEST_CONF_FILE)
-_TEST_CONF_SYMLINK = os.path.join(MIG_BASE, "envhelp/output/testconfs")
-
-
-def _assert_local_config():
-    try:
-        #link_stat = os.lstat(_TEST_CONF_SYMLINK)
-        #assert stat.S_ISLNK(link_stat.st_mode)
-        _test_conf_dir = os.path.dirname(_TEST_CONF_DIR)
-        configdir_stat = os.stat(_test_conf_dir)
-        assert stat.S_ISDIR(configdir_stat.st_mode)
-        config = ConfigParser()
-        config.read([_TEST_CONF_FILE])
-        return config
-    except Exception as exc:
-        raise AssertionError(
-            'local configuration invalid or missing: %s' % (str(exc),))
-
-
-def _assert_local_config_global_values(config):
-    config_global_values = dict(config.items('GLOBAL'))
-
-    for path in ('mig_path', 'certs_path', 'state_path'):
-        path_value = config_global_values.get(path)
-        if not is_path_within(path_value, start=MIG_BASE):
-            raise AssertionError('local config contains bad path: %s=%s' % (path, path_value))
-
-    return config_global_values
-
-
-def main(configuration, _exit=sys.exit):
-    config = _assert_local_config()
-    config_global_values = _assert_local_config_global_values(config)
+def legacy_main(configuration, print=print, _exit=sys.exit):
 
     print("Running unit test on shared core functions ..")
 
@@ -188,4 +151,5 @@ def main(configuration, _exit=sys.exit):
 
 if __name__ == "__main__":
     from mig.shared.conf import get_configuration_object
-    main(get_configuration_object())
+    conf = get_configuration_object(skip_log=True, disable_auth_log=True)
+    legacy_main(conf)

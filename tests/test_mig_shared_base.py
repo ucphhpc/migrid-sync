@@ -1347,12 +1347,16 @@ just use the one that looks most familiar or try them in turn)"""
                          ['a', 'b', ' ... shortened ... ', 'f', 'g'])
 
 
-class TestMigSharedBase__legacy(MigTestCase):
+class TestMigSharedBase__legacy_main(MigTestCase):
     """Run mig.shared.base legacy self-test"""
+
+    def _provide_configuration(self):
+        return 'testconfig'
 
     # TODO: migrate all legacy self-check functionality into the above?
     def test_existing_main(self):
         """Run built-in self-tests and check output"""
+
         def raise_on_error_exit(exit_code):
             if exit_code != 0:
                 if raise_on_error_exit.last_print is not None:
@@ -1360,12 +1364,11 @@ class TestMigSharedBase__legacy(MigTestCase):
                 else:
                     identifying_message = 'unknown'
                 raise AssertionError(
-                    'failure in unittest/testcore: %s' %
-                    (identifying_message,))
+                    'legacy test failure: %s' % (identifying_message,))
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
             """Keep track of printed output"""
             raise_on_error_exit.last_print = value
 
-        legacy_main(_exit=raise_on_error_exit, _print=record_last_print)
+        legacy_main(self.configuration, print=record_last_print, _exit=raise_on_error_exit)

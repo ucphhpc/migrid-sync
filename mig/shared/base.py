@@ -951,7 +951,7 @@ def auth_type_description(configuration, auth_type=keyword_all):
         return auth_map.get(auth_type, 'UNKNOWN')
 
 
-def legacy_main(_exit=sys.exit, _print=print):
+def legacy_main(configuration, print=print, _exit=sys.exit):
     """Run module self-tests"""
     orig_id = '/C=DK/ST=NA/L=NA/O=Ajax Inc/OU=NA/CN=John Doe/emailAddress=john.doe@ajaxinc.org'
     client_dir = client_id_dir(orig_id)
@@ -986,9 +986,6 @@ def legacy_main(_exit=sys.exit, _print=print):
     for path in legal:
         print("  %s: %s" % (path, not invisible_path(path)))
 
-    from mig.shared.conf import get_configuration_object
-    configuration = get_configuration_object(
-        skip_log=True, disable_auth_log=True)
     print("check script restrictions:")
     for script_name in ['reqoid.py', 'ls.py', 'sharelink.py', 'put']:
         (allow, msg) = allow_script(configuration, script_name, '')
@@ -1035,6 +1032,10 @@ def legacy_main(_exit=sys.exit, _print=print):
         print("Found unsafe page for %r : %s" %
               (script_uri, requested_page(include_unsafe=True)))
 
+    _exit(0)
+
 
 if __name__ == '__main__':
-    legacy_main()
+    from mig.shared.conf import get_configuration_object
+    conf = get_configuration_object(skip_log=True, disable_auth_log=True)
+    legacy_main(conf)

@@ -557,11 +557,9 @@ def run_events_command(
     #                                               ret_msg, txt_out))
 
 
-def main(_exit=sys.exit, _print=print):
+def legacy_main(conf, print=print, _exit=sys.exit):
     """Run module self-tests"""
-    from mig.shared.conf import get_configuration_object
 
-    conf = get_configuration_object()
     client_id = "/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk"
     now = datetime.datetime.now()
     now = now.replace(second=0, microsecond=0)
@@ -621,6 +619,10 @@ def main(_exit=sys.exit, _print=print):
                 "At %s job is %dm in the future for rule" % (timestamp, remain)
             )
 
+    _exit(0)
+
 
 if __name__ == "__main__":
-    main()
+    from mig.shared.conf import get_configuration_object
+    conf = get_configuration_object(skip_log=True, disable_auth_log=True)
+    legacy_main(conf)
