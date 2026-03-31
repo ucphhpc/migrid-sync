@@ -492,10 +492,10 @@ class MigLibEvents__timers(MigTestCase):
                     "minute": "*",
                     "hour": "*",
                     "dayofmonth": "*",
-                    "month": "06",
+                    "month": "05",
                     "dayofweek": "*",
                 },
-                now.replace(month=6),
+                now.replace(month=5),
             ),
             (
                 {
