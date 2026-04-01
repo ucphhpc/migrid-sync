@@ -1,6 +1,6 @@
 = Introduction =
-This is the full MiG project code previously released under the migrid project at
-SourceForge but now solely developed and maintained at GitHub
+This is the Minimum intrusion Grid (MiG or migrid) project code developed and
+maintained at GitHub
 
 https://github.com/ucphhpc/migrid-sync
 
@@ -10,7 +10,7 @@ Development and maintenance continues with the Science HPC Center at University
 of Copenhagen taking over since Brian left UCPH.
 
 Please refer to the COPYING file in this directory for further information
-about the GPL v2 license under which MiG is distributed.
+about the GPL license in version 2 or later under which MiG is distributed.
 
 
 = Getting Started =
@@ -21,49 +21,76 @@ https://github.com/ucphhpc/migrid-sync/wiki
 
 
 = Requirements =
-A MiG server basically requires an Apache web server, the OpenSSH client
-tools and a Python interpreter with a few external modules.
--Apache 2.x (http://httpd.apache.org/)
--Apache SSL module (http://httpd.apache.org/docs/current/mod/mod_ssl.html)
--Apache proxy module (http://httpd.apache.org/docs/current/mod/mod_proxy.html)
--Apache Rewrite module (http://httpd.apache.org/docs/current/mod/mod_rewrite.html)
--OpenSSH clients (https://www.openssh.org/)
--Python 2.7 or later (https://www.python.org/)
--Python future module (https://pypi.org/project/future/)
+A MiG site basically requires an Apache web server and a Python interpreter
+with a few external modules.
+-Apache HTTP Server 2.4+ with bundled modules (http://httpd.apache.org/)
+-Python 3 (https://www.python.org/)
 
-Since early 2023 the Python 3.x support has been stabilizing and getting real
-world testing. The trunk / master branch has concentrated on the old stable 2.x
-version, while the main (a.k.a. edge) and next (a.k.a.  experimental) branches
-have focused on polishing the 3.x support. Since 2024 the complete switch to
-3.x has gradually taken place to align with popular Linux distributions
-using python-2.x as default reaching their End-of-Life.
+The migrid code can most easily be deployed using the docker-migrid wrapping
 
-Optional file synchronization, WSGI interface, OpenID 2.0 / Connect login,
-instant messaging service, efficient file access services, event handler
-service, JSONRPC access, background data transfer service, efficient
-sftp, spell checking, interactive computing, VGrid Wiki / SCM / tracker, 
-Jupyter, password strength testing and PDF generation features rely on
-the following additional software:
--Seafile server, community edition (https://www.seafile.com/en/download/)
+https://github.com/ucphhpc/docker-migrid
+
+using the instructions linked there.
+
+Since 2026 we only support Python 3.x in all development and releases. The old
+stable Python 2.x version is no longer maintained but archived in the
+legacy-python2 branch.
+We generally strive to keep all code compatible with long-term support releases
+of the popular RHEL/Rocky and Ubuntu/Debian Linux distributions and in
+particular the default python versions they provide. We do not really want or
+have the resources to maintain our own complete python stack, so we also rely
+on libraries and components packaged in those distributions whenever possible.
+In cases where no such packages or only severely outdated ones exist we review
+and rely on the best alternative public sources we can find on the Python
+Package Index (PyPI) or GitHub.
+
+== Optional Feature Requirements ==
+A more comprehensive list of optional features or external service
+integration include:
+ - WSGI optimized web provider
+ - OpenID 2.0 / Connect authentication
+ - Efficient (SFTP/FTPS/WebDAVS) data access services
+ - Multi-Factor Authentication (TOTP)
+ - Password strength testing
+ - Cracking prevention and rate limiting
+ - Scheduled and event-based user actions
+ - Background data transfers
+ - Collaborative Wiki / SCM / Issue tracker
+ - Grid jobs and resources
+ - Job workflow features
+ - Archives with DOI support
+ - Notification services
+ - Quota and accounting
+ - Site operator assistant
+ - LetsEncrypt server certificates
+ - Interactive analysis and visualization (Jupyter)
+ - Cloud integration (OpenStack)
+ - File synchronization (Seafile)
+ - Native or containerized unit testing
+ - PDF generation
+ - Instant messaging
+ - JSONRPC access
+ - Spell checking
+
+The software needed for the above optional components is mainly provided by:
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
 -Apache OpenID auth module (http://findingscience.com/mod_auth_openid/)
 -Apache OpenID Connect auth module (https://github.com/zmartzone/mod_auth_openidc)
 -Python OpenID module (https://github.com/openid/python-openid/)
--Python irclib module (https://pypi.python.org/pypi/python-irclib/)
 -Python Paramiko module (https://pypi.python.org/pypi/paramiko/)
 -Python FTPD library (https://pypi.python.org/pypi/pyftpdlib/)
 -Python OpenSSL module (https://pypi.python.org/pypi/pyOpenSSL/)
 -Python WSGI WebDAV module (http://wsgidav.readthedocs.org/)
 -Python watchdog module (https://pypi.python.org/pypi/watchdog/)
--Python scandir module (https://pypi.python.org/pypi/scandir/)
 -Python jsonrpclib module (https://pypi.python.org/pypi/jsonrpclib/)
+-Python irclib module (https://pypi.python.org/pypi/python-irclib/)
 -Python requests module (https://pypi.python.org/pypi/requests/)
 -Python cracklib module (https://pypi.org/project/cracklib/)
 -Python PDFKit module (https://github.com/Martin-Rehr/python-pdfkit/)
 -Python xvfb module (https://pypi.python.org/pypi/xvfbwrapper/)
 -Python OTP (https://pypi.org/project/pyotp/)
 -Python OpenStackClient (https://pypi.org/project/openstackclient)
--Python pyyaml (https://pypi.org/pyyaml/)
+-Python pyyaml (https://pypi.org/project/PyYAML/)
 -Python nbformat (https://pypi.org/project/nbformat/)
 -Python more-itertools (https://pypi.org/project/more-itertools/5.0.0/)
 -Python nbconvert (https://pypi.org/project/nbconvert/)
@@ -73,281 +100,79 @@ the following additional software:
 -Python email-validator (https://pypi.org/project/email-validator/)
 -Python dnspython (https://pypi.org/project/dnspython/)
 -Python sslkeylog (https://pypi.org/project/sslkeylog/)
--LFTP (http://lftp.yar.ru/)
--RSync (https://rsync.samba.org/)
--OpenSSH server (https://www.openssh.org/)
--PAM: Pluggable Authentication Modules (http://www.linux-pam.org/)
+-Python future module (https://pypi.org/project/future/)
 -Python Enchant module (https://pypi.python.org/pypi/pyenchant/)
+-Python iso3166 module https://pypi.org/project/iso3166/)
+-Python email-validator module https://pypi.org/project/email-validator/)
+-Python GDB module (https://pypi.org/project/pygdb/)
+-OpenSSH client and server (https://www.openssh.org/)
+-RSync (https://rsync.samba.org/)
+-LFTP (http://lftp.yar.ru/)
+-PAM: Pluggable Authentication Modules (http://www.linux-pam.org/)
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
 -Trac plugins (e.g. http://trac-hacks.org/)
 -Jupyter (https://jupyter.org/)
--Docker (https://www.docker.com/) or Podman (https://podman.io/)
+-OpenStack (https://www.openstack.org/)
+-Seafile server (community edition) (https://www.seafile.com/en/download/)
 -Fail2Ban (http://www.fail2ban.org/) w. IPSet (http://ipset.netfilter.org/)
+-Lustre (https://www.lustre.org/)
+-Docker (https://www.docker.com/) or Podman (https://podman.io/)
 
-The migrid code can most easily be deployed using the docker-migrid wrapping
 
-https://github.com/ucphhpc/docker-migrid
+= Overview of MiG =
+The MiG web interfaces are provided by an Apache httpd server with pages served
+either through old-fashioned CGI or through the optimized WSGI module. The page
+content is typically generated by shared functionality backends independently
+of the choice of CGI and WSGI delivery. In the simplest MiG deployment only
+web-based data storage with sharing facilities is included but various optional
+components can be enabled to enrichen the user experience.
+The classic grid resource and job execution handling relies on OpenSSH client
+commands like ssh and scp. Interactive analysis can be delivered with Jupyter,
+cloud integration with OpenStack and file synchronization with Seafile just to
+mention a few.
+MiG does not bundle any of these software components but they are automatically
+installed in the docker-migrid containers and can be manually installed through
+packages provided by your Linux distribution if you prefer manual deployment.
 
-using the instructions linked there.
+The MiG core services are provided by the MiG server daemons and they can be
+run through the service helper script or directly from the unpacked source code
+directory once a suitable server configuration is in place.
 
-For historical purposes we preserve the native install instructions below.
+MiG is mainly tested on RHEL/Rocky Linux using Apache 2.4+ with the built-in
+modules, but other distribution and Apache combinations should also work.
+MiG relies on Apache's ssl module for automatic X509 client certificate
+validation and access control where enabled, but it can also use e.g. the
+OpenID Connect module for user authentication. Furthermore quite a bit of
+rewrite rules are used for access and convenience so the built-in Apache
+rewrite module is required, too.
 
-= Native Installation =
-
-IMPORTANT: the following instructions are no longer current or maintained.
-
-On Debian/Ubuntu servers the corresponding basic packages can be
-installed with:
-sudo apt install apache2 openssh-client python python-pip python-setuptools \
-     python-dev build-essential
-and most of the optional dependencies similarly with:
-sudo apt install libapache2-mod-wsgi libapache2-mod-auth-openid \
-     libapache2-mod-auth-openidc python-irclib python-paramiko python-enchant \
-     python-jsonrpclib python-requests python-psutil python-future \
-     python-cracklib python-yaml python-cffi python-sendfile openssh-server \
-     libpam0g-dev mercurial trac trac-mercurial lftp rsync fail2ban ipset
-
-On RedHat/CentOS servers the basic packages can be installed with:
-sudo yum install epel-release
-sudo yum install httpd mod_ssl openssh-clients python python-pip \
-     python-setuptools python-devel gcc
-
-and most of the optional dependencies similarly with:
-sudo yum install mod_wsgi mod_auth_openid mod_auth_openidc python-paramiko \
-     python-enchant python-jsonrpclib python-requests python2-psutil \
-     python-future python2-cffi PyYAML pysendfile cracklib-python \
-     openssh-server pam-devel mercurial lftp rsync fail2ban ipset
-
-while the remaining ones need to be installed from EPEL
-sudo yum install trac trac-mercurial-plugin
-or alternatively directly from pypi:
-sudo pip install trac tracmercurial
-
-Apache comes with a number of modules natively included, so it is usually not
-necessary to explicitly install e.g. mod-proxy and mod-rewrite, only the modules
-explicitly packaged separately.
-
-We highly recommend installing the optional python openid module directly from
-upstream, because packaged versions are generally outdated even on pypi. 
-The packaged openid module lacks some security fixes and the upstream one can
-easily be installed with pip:
-sudo pip install https://github.com/openid/python-openid/archive/master.zip
-
-The stable wsgidav version used to lack proper chrooting support and a fix for
-upload/write access for OSX clients but it should have been fixed in pypi
-releases.
-We're currently in the process of migrating to a modern 3.x+ version of wsgidav
-in order to also support python 3 use. For the time being we recommend running
-the old and thoroughly tested legacy 1.3.x version for production setups on
-python 2.x and it can easily be installed with pip:
-sudo pip install 'wsgidav<2'
-
-On python 2 setups one can also try out the more recent 3.x series of wsgidav
-still maintained as stable and supported there. It can be installed with pip:
-sudo pip install 'more-itertools<6' 'jaraco.functools<3' 'jinja2<3' \
-         'markupsafe<2' 'pyyaml<6' 'importlib-metadata<3' cheroot 'wsgidav<4'
-
-On python 3 setups a more recent wsgidav 3.x or later is required. It
-can easily be installed with pip:
-sudo pip install cheroot wsgidav
-
-Additional packaged Trac extensions can be installed with:
-sudo aptitude install trac-customfieldadmin trac-graphviz \
-     trac-mastertickets trac-wikiprint trac-wikirename trac-wysiwyg
-
-and the unpackaged ones can be grabbed from trac-hacks.org with pip
-and easy_install:
-sudo easy_install https://trac-hacks.org/svn/wikicssplugin
-sudo easy_install https://trac-hacks.org/svn/fullblogplugin
-sudo easy_install https://trac-hacks.org/svn/discussionplugin
-sudo easy_install https://trac-hacks.org/svn/tracpasteplugin
-sudo easy_install https://trac-hacks.org/svn/downloadsplugin
-sudo pip install TracStats
-
-where 0.11 in the URLs may need to be changed to fit your particular version
-of Trac. Please note that the source code stats in the TracStats plugin
-do not currently work for Mercurial repositories!
-Additional plugins are available from http://trac-hacks.org/
-
-The downloads plugin currently needs patching to work. Please refer to
-the notes in the [downloads] section of the generated MiG trac.ini file.
-
-Please note that there may be subtle internal plugin dependencies and
-conflicts that e.g. can cause problems if plugins are not loaded in the
-right order. We have seen database upgrade problems if FullBlog,
-Watchlist and Discussion are enabled but not loaded in an order where
-Watchlist is loaded in between the other two.
-Similar issues appeared when we enabled the Pastebin and Downloads
-plugins in one step. It was necessary to either patch
-tracdownloads/db/db1.py to ignore errors for existing tables or to
-enable one plugin and upgrade all Trac environments before enabling the
-other plugin and upgrading again.
-Thus you may have to experiment with the installed plugins in a
-conservative way.
-
-With the inclusion of Trac we no longer rely on the MoinMoin software
-for stand-alone wikis.
-
-The optional grid_ftps daemon requires the pyftpdlib module in a recent
-version, so it is easiest to install it with pip:
-sudo pip install pyftpdlib
-Please note that a recent pyopenssl module is required for TLS elliptic curve
-cipher support, which may be needed by some clients like FileZilla. At least if
-MiGserver.conf does not explicitly configure grid_ftps to allow strong legacy
-ciphers with the enable_ftps_legacy_tls option.
-The ancient pyOpenSSL package in CentOS 7 is too old and pyopenssl from pip pulls
-in a recent cryptography dependency, which breaks the native python-paramiko
-package there. So in short on CentOS 7 we recommend either sticking with the old
-pyOpenSSL package and limited ftps cipher support or installing the
-centos-openstack-RELEASE package (where RELEASE is 'stein' or later) to enable
-the official extra openstack repo with newer cryptography, pyopenssl and
-paramiko packages without these conflicts. Please carefully read 
-https://docs.openstack.org/install-guide/environment-packages-rdo.html
-for the implications like potential EPEL conflicts if going with the latter.
-
-The optional grid_webdavs daemon requires the wsgidav module in a specific
-version (1.3.0+ or 3.x for python 2 and 3.x+ for python 3), so it is easiest
-to install it with pip as mentioned above.
-We also rely on either the sslkeylog library or our own custom _sslsession
-module in grid_webdavs in order to efficiently reuse client sessions rather
-than repeating the auth handshake for every single DAV operation.
-The former requires python 2.7.9+ and can be installed with
-pip install sslkeylog
-and the latter which is supported for older python versions but is limited to
-OpenSSL versions prior to 1.1 can similarly be installed with
-cd mig/src/sslsession && pip install .
-
-The optional grid_openid daemon requires the openid module in a recent
-version, so it is easiest to install it with pip as mentioned above.
-
-The optional grid_events daemon requires the watchdog and scandir modules
-which may be installed with:
-sudo pip install watchdog scandir
-it is likely that the inotify default settings are too low to handle any
-serious number of vgrid shares so you may have to additionally tune the sysctl
-settings e.g. by adding the following to your /etc/sysctl.conf :
-# For grid_events daemon
-# It may be necessary to increase the number of watched files
-fs.inotify.max_user_watches=1048576
-fs.inotify.max_user_instances=1024
-
-The optional grid_transfers daemon requires lftp and rsync clients to
-handle the background data transfers. Most Linux distributions come with
-versions that can be used right out of the box. However, the lftp 4.4.8
-in CentOS/RHEL 7 appears to have an annoying bug, so that it loops
-forever instead of just failing if the username/password is
-incorrect. From the changelog it sounds like it was fixed in version
-4.4.12, and neither the 4.4.13 version available in Ubuntu LTS (14.04)
-nor the 4.6 version on Debian stable exhibit this issue. Luckily the
-upstream project provides RPM's directly installable with yum as in:
-sudo yum install http://lftp.yar.ru/ftp/binaries/lftp-4.6.5-1.x86_64.rpm
-The only downside is that it then requires manual updates until the
-distro catches up.
-
-The optional interactive computing environment relies on one or more
-separate Jupyter hosts. The easiest way of setting that up is to use the
-existing jupyter swarm-spawner with docker packs to launch all user 
-sessions in isolated containers. This part is still work-in-progress so
-please get in touch for details. Only the python-requests module is
-needed for the actual MiG server-side integration.
-
-The optional PDF generator environment relies on python pdfkit and 
-xvfbwrapper which may be installed with:
-sudo pip install xvfbwrapper
-sudo pip install pip install git+https://github.com/Martin-Rehr/python-pdfkit.git
-xvfbwrapper require xorg-x11-server-Xvfb and pdfkit require
-wkhtmltopdf. If links are _NOT_ working in the generated PDF's then 
-try to install the latest stable version of wkhtmltopdf from:
-https://wkhtmltopdf.org/downloads.html
-
-If the generated PDFs are gibberish then xorg-x11-fonts are most likely
-missing on the system.
-
-The optional PyOTP module used for 2-factor authentication is not
-necessarily recent in distributions but then readily available with pip:
-sudo pip install pyotp
-
-The optional cloud integration relies on the Python openstackclient package for
-communicating with the associated OpenStack provider. On CentOS 7 it can
-be installed from upstream repos with:
-yum install https://rdoproject.org/repos/rdo-release.rpm
-yum install python-openstackclient
-in line with https://docs.openstack.org/install-guide/environment-packages-rdo.html
-If your platform is not listed there you might also have luck with pip:
-sudo pip install openstackclient
-but we experienced a bunch of package conflicts in that setup.
-
-The optional country code validation in certificate and OpenID account 
-request backends requires the iso3166 module which may be installed with:
-sudo pip install iso3166
-
-The optional pygdb module used for debugging is available with pip:
-sudo pip install pygdb
-
-The optional but recommended email-validator module used for verification e.g.
-of user email addresses during sign up is available with pip. It relies on
-the similarly pip installable dnspython library, which dropped python2 support
-in the 2.x series. Furthermore email-validator itself silently started
-migrating to python 3 in the 1.3.x and officially in 2.x version. Thus, for it
-to work with python2 versions the pip installation command requires quite
-explicit versions as in:
-sudo pip install 'dnspython<2.0' 'email-validator<1.3'
-For python 3 one can simply install with pip3 without such workarounds:
-sudo pip3 install email-validator
-
-The optional workflows module relies on the python special modules 
-nbformat, nbconvert to validate and produce correct Jupyter Notebook formatted files.
-Nbformat specifically requires that the more_itertools module is both installed beforehand
-and that it is pinned to version 5.0.0 to ensure Python 2.7 support. Other
-versioned dependencies were needed, too, on CentOS 7:
-sudo pip install more_itertools==5.0.0
-sudo pip install zipp==0.6.0
-sudo pip install nbformat==4.4.0
-sudo pip install pygments==2.4.2
-sudo pip install nbconvert==5.6.1
-In addition the workflows module creates yaml parameter files via the pyyaml module.
-To schedule and execute workflow tasks, the execution nodes are required to 
-provide the papermill module via the PAPERMILL environment variable,
-the notebook_parameterizer module via the NOTEBOOK_PARAMETERIZER environment variable,
-and the sshfs command via the SSHFS_MOUNT environment variable.
+Most of the MiG components can run as an unprivileged user and we recommend
+that for security reasons. Only the few components like Apache and OpenSSH
+daemons likely need raised privileges to bind to the default service ports.
+We typically run all other components purely in user space through a dedicated
+'mig' user on the Linux/UNIX system, but this naming is not a requirement; the
+Apache and MiG configurations just need to be modified appropriately to run as a
+different user or with other paths.
+It is important that Apache is configured so that the MiG web interfaces can
+read and write the files created by the MiG daemons and vice versa. This may
+require extra care if the MiG daemons and apache run as different system users.
+Again, such details are all handled by docker-migrid.
 
 = Installing MiG =
-If you want to run your own MiG server for your own grid or to develop
-MiG you should checkout / clone or download and unpack the source code
-(including this file) on a UNIX compatible computer as described below.
+If you want to run your own MiG server e.g. for your own storage hub or grid
+site or to develop MiG we recommend using the docker-migrid wrapping but it's
+also possible to fetch and use the source code from our repositories for manual
+installation.
 
-The MiG core services are provided by the MiG daemons from the mig/server
-directory and they can simply be run directly from the unpacked source
-code directory when a suitable server configuration is added.
+== Easily Installing MiG ==
+We recommend deploying MiG with docker-migrid to take care of all the software
+dependencies and site configuration. Please refer to the detailed install
+instructions included there.
 
-For the web interfaces to work you will need to run an apache server as
-described in the mig/install directory. Grid job handout relies on OpenSSH
-client commands like ssh and scp.
-MiG does not include the actual Apache web server or OpenSSH clients, so
-you will need to install those using either packages provided by your
-distribution or install it from source.
-
-MiG is tested on Debian/Ubuntu and Redhat/CentOS Linux using Apache 1.3 or 2.X
-with mod-ssl respectively but other distribution and apache combinations
-should also work.
-MiG relies on apache's mod-ssl for automatic certificate validation and
-access control. Furthermore quite a bit of rewrite rules are used for
-access and convenience so the mod-rewrite apache module is required
-too.
-
-You can read more about the apache configuration in
-the provided mig/install/README.Debian file.
-
-This server documentation expects the MiG code to run as a separate 'mig'
-user on the UNIX system, but this naming is not a requirement. Just modify your
-apache and MiG configurations appropriately if you want to run MiG as a
-different user or with other paths. 
-It is important to configure apache so that the MiG web interfaces can
-read and write the files created by the MiG daemons and vice versa.
-This may require extra care if the MiG installation and apache run as
-different system users. If you use the default setup you do not need to
-worry about this.
+== Manually Installing MiG ==
+This section goes into detail with the manual installation and you can skip it
+if you use the recommended docker-migrid wrapping.
 
 As root you can create an ordinary user, mig, for running the MiG server:
 # su -
@@ -364,11 +189,7 @@ the MiG server files.
 If you run MiG with different apache and mig users, you will most likely
 need to provide both users write access to the mig user home, though.
 
-Download and unpack the MiG source or make a checkout from svn at
-
-https://sourceforge.net/p/migrid/code/HEAD/tree/trunk/
-
-or a clone from github at
+Download and unpack the MiG source or make a clone from github at
 
 https://github.com/ucphhpc/migrid-sync
 
@@ -376,10 +197,15 @@ At this point it may be comfortable to copy some of the basic
 account configuration files from mig/install/mig-user to ~/ but this is
 not mandatory.
 
-Now you are ready to actually configure your installation.
+At this point you should install the dependencies required for your site.
+You can use your system package manager in combination with pip and the
+requirements.txt and recommended.txt files to handle that.
+
+With dependencies installed you are ready to actually configure your site
+installation.
 The easiest way to do that is to use the configuration generator in 
 mig/install/generateconfs.py to create configurations that match your
-setup.
+desired setup.
 For the default settings it could just be done as:
 cd mig/install/
 ./generateconfs.py
@@ -391,245 +217,19 @@ Usage:
 ./generateconfs.py [OPTIONS]
 Where supported options include -h/--help for this help or the conf
 settings:
---source=SOURCE
---destination=DESTINATION
---destination_suffix=DESTINATION_SUFFIX
---auto_add_filter_fields=AUTO_ADD_FILTER_FIELDS
---auto_add_filter_method=AUTO_ADD_FILTER_METHOD
---auto_add_user_permit=AUTO_ADD_USER_PERMIT
---base_fqdn=BASE_FQDN
---public_fqdn=PUBLIC_FQDN
---public_alias_fqdn=PUBLIC_ALIAS_FQDN
---public_sec_fqdn=PUBLIC_SEC_FQDN
---mig_cert_fqdn=MIG_CERT_FQDN
---ext_cert_fqdn=EXT_CERT_FQDN
---mig_oid_fqdn=MIG_OID_FQDN
---ext_oid_fqdn=EXT_OID_FQDN
---mig_oidc_fqdn=MIG_OIDC_FQDN
---ext_oidc_fqdn=EXT_OIDC_FQDN
---sid_fqdn=SID_FQDN
---io_fqdn=IO_FQDN
---cert_fqdn_extras=CERT_FQDN_EXTRAS
---seafile_fqdn=SEAFILE_FQDN
---seafile_base=SEAFILE_BASE
---seafmedia_base=SEAFMEDIA_BASE
---seafhttp_base=SEAFHTTP_BASE
---openid_address=OPENID_ADDRESS
---sftp_address=SFTP_ADDRESS
---sftp_subsys_address=SFTP_SUBSYS_ADDRESS
---ftps_address=FTPS_ADDRESS
---ftps_pasv_ports=FTPS_PASV_PORTS
---davs_address=DAVS_ADDRESS
---jupyter_services=JUPYTER_SERVICES
---jupyter_services_enable_proxy_https=JUPYTER_SERVICES_ENABLE_PROXY_HTTPS
---jupyter_services_proxy_config=JUPYTER_SERVICES_PROXY_CONFIG
---jupyter_services_desc=JUPYTER_SERVICES_DESC
---cloud_fqdn=CLOUD_FQDN
---cloud_services=CLOUD_SERVICES
---cloud_services_desc=CLOUD_SERVICES_DESC
---user=USER
---group=GROUP
---apache_version=APACHE_VERSION
---apache_etc=APACHE_ETC
---apache_run=APACHE_RUN
---apache_lock=APACHE_LOCK
---apache_log=APACHE_LOG
---openssh_version=OPENSSH_VERSION
---mig_code=MIG_CODE
---mig_state=MIG_STATE
---mig_certs=MIG_CERTS
---mig_oid_title=MIG_OID_TITLE
---mig_oid_provider=MIG_OID_PROVIDER
---ext_oid_title=EXT_OID_TITLE
---ext_oid_provider=EXT_OID_PROVIDER
---mig_oidc_title=MIG_OIDC_TITLE
---mig_oidc_provider_meta_url=MIG_OIDC_PROVIDER_META_URL
---ext_oidc_title=EXT_OIDC_TITLE
---ext_oidc_provider_meta_url=EXT_OIDC_PROVIDER_META_URL
---ext_oidc_provider_issuer=EXT_OIDC_PROVIDER_ISSUER
---ext_oidc_provider_authorization_endpoint=EXT_OIDC_PROVIDER_AUTHORIZATION_ENDPOINT
---ext_oidc_provider_verify_cert_files=EXT_OIDC_PROVIDER_VERIFY_CERT_FILES
---ext_oidc_provider_token_endpoint=EXT_OIDC_PROVIDER_TOKEN_ENDPOINT
---ext_oidc_provider_token_endpoint_auth=EXT_OIDC_PROVIDER_TOKEN_ENDPOINT_AUTH
---ext_oidc_provider_user_info_endpoint=EXT_OIDC_PROVIDER_USER_INFO_ENDPOINT
---ext_oidc_scope=EXT_OIDC_SCOPE
---ext_oidc_user_info_token_method=EXT_OIDC_USER_INFO_TOKEN_METHOD
---ext_oidc_public_key_files=EXT_OIDC_PUBLIC_KEY_FILES
---ext_oidc_private_key_files=EXT_OIDC_PRIVATE_KEY_FILES
---ext_oidc_response_type=EXT_OIDC_RESPONSE_TYPE
---ext_oidc_response_mode=EXT_OIDC_RESPONSE_MODE
---ext_oidc_client_id=EXT_OIDC_CLIENT_ID
---ext_oidc_client_name=EXT_OIDC_CLIENT_NAME
---ext_oidc_pkce_method=EXT_OIDC_PKCE_METHOD
---ext_oidc_id_token_encrypted_response_alg=EXT_OIDC_ID_TOKEN_ENCRYPTED_RESPONSE_ALG
---ext_oidc_id_token_encrypted_response_enc=EXT_OIDC_ID_TOKEN_ENCRYPTED_RESPONSE_ENC
---ext_oidc_user_info_signed_response_alg=EXT_OIDC_USER_INFO_SIGNED_RESPONSE_ALG
---ext_oidc_cookie_same_site=EXT_OIDC_COOKIE_SAME_SITE
---ext_oidc_pass_cookies=EXT_OIDC_PASS_COOKIES
---ext_oidc_remote_user_claim=EXT_OIDC_REMOTE_USER_CLAIM
---ext_oidc_pass_claim_as=EXT_OIDC_PASS_CLAIM_AS
---ext_oidc_rewrite_cookie=EXT_OIDC_REWRITE_COOKIE
---dhparams_path=DHPARAMS_PATH
---daemon_keycert=DAEMON_KEYCERT
---daemon_pubkey=DAEMON_PUBKEY
---daemon_show_address=DAEMON_SHOW_ADDRESS
---alias_field=ALIAS_FIELD
---peers_permit=PEERS_PERMIT
---vgrid_creators=VGRID_CREATORS
---vgrid_managers=VGRID_MANAGERS
---signup_methods=SIGNUP_METHODS
---login_methods=LOGIN_METHODS
---digest_salt=DIGEST_SALT
---crypto_salt=CRYPTO_SALT
---csrf_protection=CSRF_PROTECTION
---password_policy=PASSWORD_POLICY
---password_legacy_policy=PASSWORD_LEGACY_POLICY
---hg_path=HG_PATH
---hgweb_scripts=HGWEB_SCRIPTS
---trac_admin_path=TRAC_ADMIN_PATH
---trac_ini_path=TRAC_INI_PATH
---user_clause=USER_CLAUSE
---group_clause=GROUP_CLAUSE
---listen_clause=LISTEN_CLAUSE
---serveralias_clause=SERVERALIAS_CLAUSE
---distro=DISTRO
---autolaunch_page=AUTOLAUNCH_PAGE
---landing_page=LANDING_PAGE
---skin=SKIN
---title=TITLE
---short_title=SHORT_TITLE
---extra_userpage_scripts=EXTRA_USERPAGE_SCRIPTS
---extra_userpage_styles=EXTRA_USERPAGE_STYLES
---peers_explicit_fields=PEERS_EXPLICIT_FIELDS
---peers_contact_hint=PEERS_CONTACT_HINT
---external_doc=EXTERNAL_DOC
---secscan_addr=SECSCAN_ADDR
---user_interface=USER_INTERFACE
---vgrid_label=VGRID_LABEL
---default_menu=DEFAULT_MENU
---user_menu=USER_MENU
---collaboration_links=COLLABORATION_LINKS
---default_vgrid_links=DEFAULT_VGRID_LINKS
---advanced_vgrid_links=ADVANCED_VGRID_LINKS
---support_email=SUPPORT_EMAIL
---admin_email=ADMIN_EMAIL
---admin_list=ADMIN_LIST
---smtp_server=SMTP_SERVER
---smtp_sender=SMTP_SENDER
---log_level=LOG_LEVEL
---twofactor_mandatory_protos=TWOFACTOR_MANDATORY_PROTOS
---twofactor_auth_apps=TWOFACTOR_AUTH_APPS
---permanent_freeze=PERMANENT_FREEZE
---freeze_to_tape=FREEZE_TO_TAPE
---status_system_match=STATUS_SYSTEM_MATCH
---storage_protocols=STORAGE_PROTOCOLS
---duplicati_protocols=DUPLICATI_PROTOCOLS
---imnotify_address=IMNOTIFY_ADDRESS
---imnotify_channel=IMNOTIFY_CHANNEL
---imnotify_username=IMNOTIFY_USERNAME
---imnotify_password=IMNOTIFY_PASSWORD
---gdp_data_categories=GDP_DATA_CATEGORIES
---gdp_id_scramble=GDP_ID_SCRAMBLE
---gdp_path_scramble=GDP_PATH_SCRAMBLE
---quota_backend=QUOTA_BACKEND
---ca_fqdn=CA_FQDN
---ca_user=CA_USER
---ca_smtp=CA_SMTP
---datasafety_link=DATASAFETY_LINK
---datasafety_text=DATASAFETY_TEXT
---cert_valid_days=CERT_VALID_DAYS
---oid_valid_days=OID_VALID_DAYS
---oidc_valid_days=OIDC_VALID_DAYS
---generic_valid_days=GENERIC_VALID_DAYS
---apache_worker_procs=APACHE_WORKER_PROCS
---sftp_subsys_auth_procs=SFTP_SUBSYS_AUTH_PROCS
---wsgi_procs=WSGI_PROCS
---public_port=PUBLIC_PORT
---public_http_port=PUBLIC_HTTP_PORT
---public_https_port=PUBLIC_HTTPS_PORT
---mig_cert_port=MIG_CERT_PORT
---ext_cert_port=EXT_CERT_PORT
---mig_oid_port=MIG_OID_PORT
---ext_oid_port=EXT_OID_PORT
---mig_oidc_port=MIG_OIDC_PORT
---ext_oidc_port=EXT_OIDC_PORT
---sid_port=SID_PORT
---sftp_port=SFTP_PORT
---sftp_show_port=SFTP_SHOW_PORT
---sftp_subsys_port=SFTP_SUBSYS_PORT
---sftp_subsys_show_port=SFTP_SUBSYS_SHOW_PORT
---sftp_max_sessions=SFTP_MAX_SESSIONS
---davs_port=DAVS_PORT
---davs_show_port=DAVS_SHOW_PORT
---ftps_ctrl_port=FTPS_CTRL_PORT
---ftps_ctrl_show_port=FTPS_CTRL_SHOW_PORT
---openid_port=OPENID_PORT
---openid_show_port=OPENID_SHOW_PORT
---openid_session_lifetime=OPENID_SESSION_LIFETIME
---seafile_seahub_port=SEAFILE_SEAHUB_PORT
---seafile_seafhttp_port=SEAFILE_SEAFHTTP_PORT
---seafile_client_port=SEAFILE_CLIENT_PORT
---seafile_quota=SEAFILE_QUOTA
---quota_user_limit=QUOTA_USER_LIMIT
---quota_vgrid_limit=QUOTA_VGRID_LIMIT
---wwwserve_max_bytes=WWWSERVE_MAX_BYTES
---auto_add_cert_user=AUTO_ADD_CERT_USER
---auto_add_oid_user=AUTO_ADD_OID_USER
---auto_add_oidc_user=AUTO_ADD_OIDC_USER
---enable_migadmin=ENABLE_MIGADMIN
---enable_sftp=ENABLE_SFTP
---enable_sftp_subsys=ENABLE_SFTP_SUBSYS
---enable_davs=ENABLE_DAVS
---enable_ftps=ENABLE_FTPS
---enable_wsgi=ENABLE_WSGI
---enable_jobs=ENABLE_JOBS
---enable_resources=ENABLE_RESOURCES
---enable_workflows=ENABLE_WORKFLOWS
---enable_events=ENABLE_EVENTS
---enable_sharelinks=ENABLE_SHARELINKS
---enable_quota=ENABLE_QUOTA
---enable_transfers=ENABLE_TRANSFERS
---enable_freeze=ENABLE_FREEZE
---enable_sandboxes=ENABLE_SANDBOXES
---enable_vmachines=ENABLE_VMACHINES
---enable_preview=ENABLE_PREVIEW
---enable_jupyter=ENABLE_JUPYTER
---enable_cloud=ENABLE_CLOUD
---enable_gdp=ENABLE_GDP
---enable_hsts=ENABLE_HSTS
---enable_vhost_certs=ENABLE_VHOST_CERTS
---enable_verify_certs=ENABLE_VERIFY_CERTS
---enable_seafile=ENABLE_SEAFILE
---enable_duplicati=ENABLE_DUPLICATI
---enable_crontab=ENABLE_CRONTAB
---enable_notify=ENABLE_NOTIFY
---enable_imnotify=ENABLE_IMNOTIFY
---enable_dev_accounts=ENABLE_DEV_ACCOUNTS
---enable_twofactor=ENABLE_TWOFACTOR
---enable_twofactor_strict_address=ENABLE_TWOFACTOR_STRICT_ADDRESS
---enable_peers=ENABLE_PEERS
---peers_mandatory=PEERS_MANDATORY
---enable_cracklib=ENABLE_CRACKLIB
---enable_openid=ENABLE_OPENID
---enable_gravatars=ENABLE_GRAVATARS
---enable_sitestatus=ENABLE_SITESTATUS
---daemon_pubkey_from_dns=DAEMON_PUBKEY_FROM_DNS
---seafile_ro_access=SEAFILE_RO_ACCESS
---public_use_https=PUBLIC_USE_HTTPS
---prefer_python3=PREFER_PYTHON3
---io_account_expire=IO_ACCOUNT_EXPIRE
---gdp_email_notify=GDP_EMAIL_NOTIFY
+---source=SOURCE
+[long list of additonal options]
 
 All those values can also be set via environment variable, by setting the
 corresponding MIG_X environment variable where X is the option name in upper
-case. That is, instead of passing --enable_transfers=True as argument one could set
-MIG_ENABLE_TRANSFERS=True in the environment.
+case. That is, instead of passing --enable_wsgi=True as argument one could set
+MIG_ENABLE_WSGI=True in the environment.
 If the same option is set both as environment variable and CLI parameter, then
 the CLI parameter takes precedence.
 
-For a server running MiG as the 'mig' user with the code checked out directly
-in the home directory and Debian apache 2.4 without OpenID but with full grid
-jobs and resources and efficient data access services:
+For a simple MiG site running mostly as the 'mig' user with the code checked out
+directly in the home directory one could generate configurations for an apache
+2.4 setup with client certificate authentication and full grid jobs/resources like:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
@@ -639,23 +239,15 @@ jobs and resources and efficient data access services:
                    --io_fqdn=dk-io.migrid.org \
                    --user=mig --group=mig \
                    --apache_version=2.4 \
-                   --apache_etc=/etc/apache2 \
-                   --apache_run=/var/run/apache2 \
-                   --apache_lock=/var/lock/apache2 \
-                   --apache_log=/var/log/apache2 \
-                   --openssh_version=7.4 \
+                   --apache_etc=/etc/httpd \
+                   --apache_run=/var/run/httpd \
+                   --apache_lock=/var/lock/subsys/httpd \
+                   --apache_log=/var/log/httpd \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/apache2/MiG-certificates \
-                   --hg_path=/usr/bin/hg \
-                   --hgweb_scripts=/usr/share/doc/mercurial-common/examples \
-                   --trac_admin_path=/usr/bin/trac-admin \
-                   --trac_ini_path=/home/mig/mig/server/trac.ini \
                    --public_http_port=80 --mig_cert_port=443 --sid_port=443 \
                    --enable_jobs=True --enable_resources=True \
-                   --enable_ftps=True --enable_sftp_subsys=True \
-                   --enable_webdavs=True --enable_transfers=True \
-                   --enable_sandboxes=True --enable_vmachines=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' \
@@ -663,397 +255,37 @@ jobs and resources and efficient data access services:
                    --login_methods="migcert" \
                    --skin=migrid-basic \
                    --short_title=MiG
-                    
-or a similar setup with vhost-specific certificates from LetsEncrypt,
-additional web apps and OpenID 2.0 + Connect on CentOS:
-./generateconfs.py --source=. --destination=generated-confs \
-                   --destination_suffix="_svn$(svnversion -n ~/)" \
-                   --base_fqdn=migrid.org \
-                   --public_fqdn=www.migrid.org \
-                   --public_alias_fqdn=dk-www.migrid.org \
-                   --mig_cert_fqdn=dk-cert.migrid.org \
-                   --ext_cert_fqdn= \
-                   --mig_oid_fqdn=dk-ext.migrid.org \
-                   --ext_oidc_fqdn=dk-oidc.migrid.org \
-                   --sid_fqdn=dk-sid.migrid.org \
-                   --io_fqdn=dk-io.migrid.org \
-                   --daemon_show_address=dk-io.migrid.org \
-                   --user=mig --group=mig \
-                   --apache_version=2.4 \
-                   --apache_etc=/etc/httpd \
-                   --apache_run=/var/run/httpd \
-                   --apache_lock=/var/lock/subsys/httpd \
-                   --apache_log=/var/log/httpd \
-                   --openssh_version=8.4 \
-                   --mig_code=/home/mig/mig \
-                   --mig_state=/home/mig/state \
-                   --mig_certs=/etc/httpd/MiG-certificates \
-                   --hg_path=/usr/bin/hg \
-                   --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
-                   --trac_admin_path=/usr/bin/trac-admin \
-                   --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_http_port=80 --public_https_port=443 \
-                   --ext_cert_port=443 --mig_oid_port=443 \
-                   --ext_oidc_port=443 --sid_port=443 \
-                   --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
-                   --ext_oidc_provider_meta_url=https://id.ku.dk/nidp/oauth/nam/.well-known/openid-configuration \
-                   --ext_oidc_scope=AS_SIF-ERDA \
-                   --ext_oidc_client_name=erda_migrid-dk \
-                   --ext_oidc_remote_user_claim=upn \
-                   --enable_openid=True --enable_sftp_subsys=True \
-                   --enable_davs=True --enable_ftps=True \
-                   --enable_sandboxes=True --enable_jobs=True \
-                   --enable_resources=True --enable_notify=True \
-                   --enable_events=True --enable_imnotify=True \
-                   --enable_cracklib=True --enable_freeze=False \
-                   --enable_transfers=True --enable_gravatars=True \
-                   --enable_vhost_certs=True --enable_verify_certs=True \
-                   --enable_migadmin=True --enable_peers=True \
-                   --peers_mandatory=True --peers_explicit_fields='full_name email' \
-                   --peers_contact_hint='employed at UCPH and authorized to invite external users' \
-                   --user_clause=User --group_clause=Group \
-                   --listen_clause='#Listen' \
-                   --serveralias_clause='ServerAlias' --alias_field=email \
-                   --dhparams_path=~/certs/dhparams.pem \
-                   --daemon_keycert=~/certs/combined.pem \
-                   --daemon_keycert_sha256='FILE::/etc/httpd/MiG-certificates/combined.pem.sha256' \
-                   --daemon_pubkey=~/certs/combined.pub \
-                   --daemon_pubkey_from_dns=True \
-                   --daemon_pubkey_md5='FILE::/etc/httpd/MiG-certificates/combined.pub.md5' \
-                   --daemon_pubkey_sha256='FILE::/etc/httpd/MiG-certificates/combined.pub.sha256' \
-                   --signup_methods="extoidc migoid migcert" \
-                   --login_methods="extoidc migoid migcert" \
-                   --distro=centos --skin=migrid-basic \
-                   --default_menu="home files submitjob jobs vgrids account settings setup logout" \
-                   --user_menu="sharelinks people cloud crontab transfers runtimeenvs resources peers downloads docs dashboard migadmin" \
-                   --wsgi_procs=25 --sftp_subsys_auth_procs=20 \
-                   --sftp_max_sessions=16 \
-                   --collaboration_links="default advanced" \
-                   --default_vgrid_links="files web" \
-                   --advanced_vgrid_links="files web scm tracker workflows monitor" \
-                   --smtp_sender="Do Not Reply <no-reply@migrid.org>" \
-                   --support_email="MiGrid Support <support@migrid.org>" \
-                   --admin_email="MiGrid Info <info@migrid.org>" --log_level=info \
-                   --title="Minimum intrusion Grid" \
-                   --short_title="MiG" \
-                   --external_doc=https://www.migrid.org \
-                   --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
-                   --ext_oidc_title="KU/UCPH" \
-                   --auto_add_oid_user=True --auto_add_oidc_user=True \
-                   --auto_add_cert_user=True \
-                   --auto_add_user_permit='email:.+@([a-z0-9]+\.|)ku\.dk$' \
-                   --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
-                   --io_account_expire=True \
-                   --password_policy="MODERN:12" \
-                   --password_legacy_policy=MEDIUM \
-                   --peers_permit="role:.*(vip|tap)" \
-                   --status_system_match="MiGrid ALL" \
-                   --digest_salt="FILE::/home/mig/state/secrets/digest_salt.hex" \
-                   --crypto_salt="FILE::/home/mig/state/secrets/crypto_salt.hex" \
-                   --imnotify_address="FILE::/home/mig/state/secrets/imnotify_address.txt" \
-                   --imnotify_channel="FILE::/home/mig/state/secrets/imnotify_channel.txt" \
-                   --imnotify_username="FILE::/home/mig/state/secrets/imnotify_username.txt" \
-                   --imnotify_password="FILE::/home/mig/state/secrets/imnotify_password.txt" \
-                   --ca_fqdn=ca.migrid.org --ca_user=mig-ca --ca_smtp=migrid.science \
-                   --secscan_addr="130.225.104.199 130.226.158.3 130.225.213.72 192.38.10.137"
 
-and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
-optimized SFTP, WebDAVS FTPS, Data Transfers, external Seafile integration,
-local OpenID login, external OpenID Connect login and added Jupyter+cloud
-integration for data analysis:
-./generateconfs.py --source=. --destination=generated-confs \
-                   --destination_suffix="_svn$(svnversion -n ~/)" \
-                   --base_fqdn=erda.dk \
-                   --public_fqdn=www.erda.dk \
-                   --public_alias_fqdn=www.erda.dk \
-                   --public_sec_fqdn=erda.ku.dk \
-                   --mig_cert_fqdn= \
-                   --ext_cert_fqdn=cert.erda.dk \
-                   --mig_oid_fqdn=ext.erda.dk \
-                   --ext_oidc_fqdn=oidc.erda.dk \
-                   --sid_fqdn=sid.erda.dk \
-                   --io_fqdn=io.erda.dk \
-                   --seafile_fqdn=sid.erda.dk \
-                   --daemon_show_address=io.erda.dk \
-                   --sftp_show_port=22 --ftps_ctrl_show_port=21 \
-                   --ftps_pasv_ports=8030:8100 \
-                   --davs_show_port=443 --openid_show_port=443 \
-                   --user=mig --group=mig \
-                   --apache_version=2.4 \
-                   --apache_etc=/etc/httpd \
-                   --apache_run=/var/run/httpd \
-                   --apache_lock=/var/lock/subsys/httpd \
-                   --apache_log=/var/log/httpd \
-                   --openssh_version=7.4 \
-                   --mig_code=/home/mig/mig \
-                   --mig_state=/home/mig/state \
-                   --mig_certs=/etc/httpd/MiG-certificates \
-                   --hg_path=/usr/bin/hg \
-                   --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
-                   --trac_admin_path='' --trac_ini_path='' \
-                   --public_http_port=80 --public_https_port=443 \
-                   --ext_cert_port=443 --mig_oid_port=443 \
-                   --ext_oidc_port=443 --sid_port=443 \
-                   --mig_oid_provider=https://ext.erda.dk/openid/ \
-                   --ext_oidc_provider_meta_url=https://id.ku.dk/nidp/oauth/nam/.well-known/openid-configuration \
-                   --ext_oidc_scope=AS_SIF-ERDA \
-                   --ext_oidc_client_name=erda \
-                   --ext_oidc_remote_user_claim=upn \
-                   --enable_openid=True --enable_sftp_subsys=True \
-                   --enable_davs=True --enable_ftps=True \
-                   --enable_duplicati=True --enable_seafile=True \
-                   --seafile_fqdn=seafile.erda.dk \
-                   --seafile_ro_access=False --enable_cracklib=True \
-                   --enable_transfers=True --enable_gravatars=True \
-                   --enable_vhost_certs=True --enable_verify_certs=True \
-                   --enable_notify=True --enable_jupyter=True \
-                   --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://dag100.science' \
-                   --jupyter_services_proxy_config="{'DAG': {'SSLProxyCACertificateFile': '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem'}, 'MODI': {'SSLProxyCACertificateFile': '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem'}}"
-                   --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
-                   --enable_cloud=True --enable_migadmin=True \
-                   --enable_peers=True --peers_mandatory=True \
-                   --peers_explicit_fields='full_name email' \
-                   --peers_contact_hint='employed at UCPH and authorized to invite external users' \
-                   --user_clause=User --group_clause=Group \
-                   --listen_clause='#Listen' \
-                   --serveralias_clause='#ServerAlias' --alias_field=email \
-                   --dhparams_path=~/certs/dhparams.pem \
-                   --daemon_keycert=~/certs/combined.pem \
-                   --daemon_keycert_sha256='FILE::/etc/httpd/MiG-certificates/combined.pem.sha256' \
-                   --daemon_pubkey=~/certs/combined.pub \
-                   --daemon_pubkey_from_dns=True \
-                   --daemon_pubkey_md5='FILE::/etc/httpd/MiG-certificates/combined.pub.md5' \
-                   --daemon_pubkey_sha256='FILE::/etc/httpd/MiG-certificates/combined.pub.sha256' \
-                   --signup_methods="extoidc migoid extcert" \
-                   --login_methods="extoidc migoid extcert" \
-                   --distro=centos --skin=erda-ucph-science \
-                   --vgrid_label=Workgroup --apache_worker_procs=2048 \
-                   --davs_port=8020 --openid_port=8001 \
-                   --wsgi_procs=100 --sftp_subsys_auth_procs=50 \
-                   --sftp_max_sessions=16 \
-                   --default_menu="home files vgrids archives jupyter account settings setup logout" \
-                   --user_menu="sharelinks seafile crontab transfers cloud people downloads peers docs migadmin" \
-                   --collaboration_links="default advanced" \
-                   --default_vgrid_links="files web" \
-                   --advanced_vgrid_links="files web scm workflows monitor" \
-                   --smtp_sender="Do Not Reply <no-reply@erda.dk>" \
-                   --support_email="ERDA Support <support@erda.dk>" \
-                   --admin_email="ERDA Info <info@erda.dk>" --log_level=info \
-                   --title="University of Copenhagen - Electronic Research Data Archive" \
-                   --short_title="UCPH ERDA" \
-                   --external_doc=https://erda.ku.dk \
-                   --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
-                   --ext_oidc_title="KU/UCPH" \
-                   --auto_add_oid_user=True --auto_add_oidc_user=True \
-                   --auto_add_cert_user=True \
-                   --auto_add_user_permit='email:.+@([a-z0-9]+\.|)(ku|kb)\.dk$' \
-                   --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
-                   --permanent_freeze="freeze phd backup" --freeze_to_tape="4w" \
-                   --io_account_expire=True \
-                   --password_policy="MODERN:12" \
-                   --password_legacy_policy=MEDIUM \
-                   --peers_permit="role:.*(vip|tap)" \
-                   --vgrid_creators="role:.*(vip|tap)" \
-                   --status_system_match="ERDA IDMC SIF ALL" \
-                   --digest_salt="FILE::/home/mig/state/secrets/digest_salt.hex" \
-                   --crypto_salt="FILE::/home/mig/state/secrets/crypto_salt.hex" \
-                   --secscan_addr="130.225.104.199 130.226.158.3 130.225.213.72 192.38.10.137"
-
-Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web), 
-optimized SFTP, WebDAVS, strict access control and extensive logging to comply
-with the  General Data Protection Regulation (GDPR) imposed by EU:
-https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
-./generateconfs.py --source=. \
-                   --destination=generated-confs \
-                   --destination_suffix="_svn$(svnversion -n ~/)" \
-                   --support_email="SIF Support <support@sif.erda.dk>" \
-                   --admin_email="SIF Info <info@sif.erda.dk>"
-                   --admin_list="/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas \Bardino/emailAddress=bardino@nbi.ku.dk , /C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Martin Rehr/emailAddress=rehr@nbi.ku.dk" \
-                   --auto_add_cert_user=False \
-                   --auto_add_oid_user=False \
-                   --auto_add_filter_fields=full_name \
-                   --auto_add_filter_method=skip \
-                   --oid_valid_days=180 \
-                   --daemon_show_address=sif-io.erda.dk \
-                   --base_fqdn=sif.erda.dk \
-                   --public_fqdn=sif-www.erda.dk \
-                   --public_alias_fqdn=sif.ku.dk \
-                   --public_sec_fqdn=sif-www.erda.dk \
-                   --public_use_https=True \
-                   --mig_cert_fqdn='' \
-                   --ext_cert_fqdn='' \
-                   --mig_oid_fqdn=sif-ext.erda.dk \
-                   --ext_oid_fqdn=sif-oid.erda.dk \
-                   --sid_fqdn=sif-sid.erda.dk \
-                   --io_fqdn=sif-io.erda.dk \
-                   --user=mig \
-                   --group=mig \
-                   --apache_version=2.4 \
-                   --apache_etc=/etc/httpd \
-                   --apache_run=/var/run/httpd \
-                   --apache_lock=/var/lock/subsys/httpd \
-                   --apache_log=/var/log/httpd \
-                   --openssh_version=8.4 \
-                   --mig_code=/home/mig/mig \
-                   --mig_state=/home/mig/state \
-                   --mig_certs=/etc/httpd/MiG-certificates \
-                   --hg_path='' \
-                   --hgweb_scripts='' \
-                   --trac_admin_path='' \
-                   --trac_ini_path='' \
-                   --public_http_port=80 \
-                   --public_https_port=443 \
-                   --ext_cert_port=443 \
-                   --mig_oid_port=443 \
-                   --mig_oidc_port=443 \
-                   --ext_oid_port=443 \
-                   --sid_port=443 \
-                   --mig_oid_provider=https://sif-ext.erda.dk/openid/ \
-                   --ext_oid_provider=https://openid.ku.dk/ \
-                   --enable_openid=True \
-                   --enable_wsgi=True \
-                   --enable_sftp=True \
-                   --enable_sftp_subsys=False \
-                   --enable_davs=True \
-                   --enable_ftps=False \
-                   --enable_sharelinks=False \
-                   --enable_transfers=False \
-                   --enable_duplicati=False \
-                   --enable_seafile=False \
-                   --enable_sandboxes=False \
-                   --enable_vmachines=False \
-                   --enable_crontab=False \
-                   --enable_jobs=False \
-                   --enable_resources=False \
-                   --enable_events=False \
-                   --enable_freeze=False \
-                   --enable_preview=False \
-                   --enable_gdp=True \
-                   --enable_notify=True \
-                   --enable_twofactor=True \
-                   --enable_twofactor_strict_address=True \
-                   --enable_cracklib=True \
-                   --enable_hsts=True \
-                   --enable_vhost_certs=True \
-                   --enable_verify_certs=True \
-                   --user_clause=User \
-                   --group_clause=Group \
-                   --listen_clause=#Listen \
-                   --serveralias_clause=#ServerAlias \
-                   --alias_field=email \
-                   --dhparams_path=~/certs/dhparams.pem \
-                   --daemon_keycert=~/certs/combined.pem \
-                   --daemon_pubkey=~/certs/combined.pub \
-                   --daemon_pubkey_from_dns=True \
-                   --signup_methods="extoidc migoid" \
-                   --login_methods="extoidc migoid" \
-                   --password_policy=MODERN:12 \
-                   --password_legacy_policy=HIGH \
-                   --gdp_email_notify=True \
-                   --mig_oid_title="External" \
-                   --ext_oid_title="KU/UCPH" \
-                   --ext_oidc_title="KU/UCPH" \
-                   --vgrid_label="Project" \
-                   --vgrid_creators="role:.*(vip|tap)" \
-                   --vgrid_managers="role:.*(vip|tap)" \
-                   --smtp_sender='UCPH SIF Server <noreply@sif.erda.dk>' \
-                   --title="Sensitive Information Facility" \
-                   --short_title="SIF"  \
-                   --default_menu="files setup close logout" \
-                   --user_interface="V2" --csrf_protection="FULL" \
-                   --io_account_expire=True \
-                   --sftp_port=2222  \
-                   --sftp_subsys_port=22 \
-                   --sftp_show_port=22 \
-                   --davs_port=4443 \
-                   --davs_show_port=443 \
-                   --openid_port=8443 \
-                   --openid_show_port=443 \
-                   --digest_salt="FILE::/home/mig/state/secrets/digest_salt.hex" \
-                   --crypto_salt="FILE::/home/mig/state/secrets/crypto_salt.hex" \
-                   --distro=centos \
-                   --skin=sif-ucph-science \
-                   --wsgi_procs=25 \
-                   --secscan_addr="130.225.104.199 130.226.158.3 130.225.213.72 192.38.10.137" \
-                   --public_sec_fqdn=sif.ku.dk \
-                   --enable_peers=True \
-                   --peers_mandatory=True \
-                   --peers_explicit_fields="full_name email" --peers_contact_hint="employed at UCPH and authorized to invite external users" \
-                   --enable_migadmin=False \
-                   --external_doc="https://sif.ku.dk" \
-                   --oidc_valid_days=180 \
-                   --ext_oidc_fqdn=sif-oidc.erda.dk \
-                   --ext_oidc_port=443 \
-                   --ext_oidc_provider_meta_url=https://id.ku.dk/nidp/oauth/nam/.well-known/openid-configuration \
-                   --ext_oidc_client_name=erda_sif \
-                   --ext_oidc_client_id=64ced371-a92d-4182-8e0c-4f66e8088e00 \
-                   --ext_oidc_scope=AS_SIF-ERDA \
-                   --ext_oidc_remote_user_claim=upn \
-                   --ext_oidc_pass_claim_as=both \
-                   --auto_add_oidc_user=True \
-                   --daemon_pubkey_sha256="FILE::/etc/httpd/MiG-certificates/combined.pub.sha256" \
-                   --daemon_keycert_sha256="FILE::/etc/httpd/MiG-certificates/combined.pem.sha256" \
-                   --daemon_pubkey_md5="FILE::/etc/httpd/MiG-certificates/combined.pub.md5"
-
-Most of the arguments should be relatively straight forward, but you
-need to provide the MIG_CERTS path where your apache server key and
-certificates are available along with optional MiG x509 server
-certificates (used for MiG server to server communication).
-The actual keys and certificates can be added later, so you can just
-choose a suitable directory path at first.
+Most of the arguments should be relatively straight forward, but you need to
+provide the mig_certs path where your apache server key and certificates are
+available along with optional combined.pem server certificates (used for the
+optional openid, sftp, webdavs and ftps services).
+The actual keys and certificates can be added later, so you can just choose
+a suitable directory path at first.
 In practice one can purchase server certificates or generate them with
 LetsEncrypt.
-
-The hg and trac path pairs are optional and can be set to the 
-empty string if mercurial/trac is not available or if VGrid wikis,
-SCMs and trackers should simply not be enabled. If you want VGrid
-trackers including mercurial integration, but don't want the direct
-VGrid SCM links, you can set the trac_X and hg_X options but leave out
-the scm entry in the ordered list of vgrid_links in the SITE
-section. The same procedure applies for visibility of the other VGrid
-components.
-
-Similarly the mercurial package provides all required components for 
-VGrid SCMs on Debian/Ubuntu or RedHat/CentOS. The same applies for the trac
-and trac-mercurial packages.
-Paramiko is required for the optional grid_sftp daemon to work and the
-python-paramiko package provides all required components for it on
-recent Debian/Ubuntu. You want to use 1.15+ because it added significant
-performance improvements. Just pull it in from pip if your distribution
-only provides an older version.
-In case you want to run a high-performance SFTP frontend you can combine
-OpenSSH with the same paramiko SFTP backend through the use of the
-sftp_subsys.py module. You need to compile and configure the PAM and NSS
-modules in mig/src/libpam-mig and mig/src/libnss-mig as described in the README
-files there. Benchmarks show that it performs and scales far better to
-multiple clients.
-Python FTP server library (pyftpdlib) in a recent version (1.x+) is required
-for the optional grid_ftps daemon to work and the python-pyftpdlib
-package provides all required components for it on recent
-Debian/Ubuntu. If no recent version is available, it can still easily be
-installed with pip instead.
-WsgiDAV is required for the optional grid_webdavs daemon to work and a
-recent version is needed for full OSX client support. Thus it is
-recommended to install directly from github or with pip.
-All optional file server services like sftp, ftps and davs rely on
-one of the python pbkdf2 modules for password auth support and it is
-distributed with the MiG code base.
 
 The four CLAUSE arguments can be used to comment out the explicit
 setting of user, group, serveralias and ports in the apache conf by
 providing a '# User', '# Group', '# ServerAlias' and '# Listen'. This is
-mostly relevant if using apache2 with WSGI.
+mostly relevant if using apache with WSGI.
 
 The generator will inform you about the steps to install your
 configuration files in the right locations.
 
 
-== Running a MiG Server ==
-Before you run the MiG daemons you need to have a working configuration for
-your daemons in mig/server/MiGserver.conf or another location you can
-specify in the MIG_CONF environment variable. Please note that if you
-want to use this environment variable, it must be available to *all* MiG
-components to work. 
+= Running MiG =
+For the docker-migrid case you just need to launch the containers in order to
+launch the configured services.
+You can still use container tools for more fine-grained control of the
+individual services if you wish, but the next section is otherwise mainly
+relevant for manual installations as outlined above.
+
+== Manually Running or Controlling MiG Services ==
+In order to run the MiG daemons you need to have a working configuration for
+them in mig/server/MiGserver.conf or another location you can specify in the
+MIG_CONF environment variable. Please note that if you want to use this
+environment variable, it must be available to *all* MiG components to work.
 You can use the generator as mentioned above or manually modify e.g. the
 localhost example configuration in MiGserver-localhost.conf.
 At any time you can verify the validity of your configuration with the
@@ -1062,7 +294,7 @@ checkconf.py script in the same directory.
 Once set up you can use the provided init script to manage all services.
 It is also possible to run the services individually as explained below.
 
-In full grid compute setups the central daemon is grid_script.py, which takes
+In classic grid compute setups the central daemon is grid_script.py, which takes
 care of all job management on the server. If you want to include grid monitor
 web pages you should additionally run the grid_monitor.py daemon. The optional
 job notifications and ssh multiplexing daemons are available as
@@ -1078,42 +310,43 @@ export PYTHONPATH=/path/to/unpacked/mig/source
 python /path/to/unpacked/mig/source/mig/server/grid_script.py
 
 They rely on the conf file in the mig/server subdir but can be told to look
-for it in another locations provided in the environment: 
+for it in another locations provided in the environment:
 export MIG_CONF="/path/to/MiGserver.conf"
 python /path/to/unpacked/mig/source/mig/server/grid_script.py
 
 Each daemon will keep running until you actively stop it, so you probably need
 individual shell sessions for each daemon.
 
-For testing purposes this interactive execution is fine, but in more
-permanent setups you will probably want to run the MiG daemons as true
-daemons so that you can disconnect from the server and leave them
-running. One solution is to run the daemons inside a GNU Screen session:
+For testing purposes this interactive execution is fine, but in more permanent
+setups you will probably want to run the MiG daemons as true daemons so that
+you can disconnect from the server and leave them running. One solution is to
+run the daemons inside a GNU Screen session:
 screen -S MiG
 python /path/to/unpacked/mig/source/mig/server/grid_script.py
 [ctrl-a d to disconnect]
 
-Then you can disconnect from the server and resume the session any time
-later by reattaching the screen session:
+Then you can disconnect from the server and resume the session any time later
+by reattaching the screen session:
 screen -S MiG -R
 
-Please refer to 'man screen' or other screen documentation for further
-details.
+Please refer to 'man screen' or other screen documentation for further details.
 
-For production use we also provide a classic init script, useful for managing
-the services completely as background daemons. It is included as a part of the
-configuration generator output and can be copied/moved into place from there.
+For production use we also provide a classic service init script, useful for
+managing the services completely as background daemons. It is included as a
+part of the configuration generator output and can be copied/moved into place
+from there.
 When located in /etc/init.d it's easy to manage all enabled services as one or
 each individual one as described below:
 /etc/init.d/migrid
 Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]
 where daemon is left out for all or given along with DAEMON as one of the following
-(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)
+(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|accounting|all)
 
 
 == Adding users ==
-You need a either an OpenID 2.0, OpenID Connect login or a MiG certificate+key
-to fully interact with any MiG server as a user. 
+You need either an OpenID 2.0, OpenID Connect login or a MiG certificate+key
+to fully interact with any MiG server as a user. We recommend reading the
+UserManagement wiki page for an overview.
 
 For local username+password logins you can run the built-in OpenID 2.0 service and
 have users register there (https://SERVER/cgi-sid/reqoid.py) to combine login
@@ -1143,8 +376,7 @@ described below.
 To manually add a user to your MiG server you need to have the account fields
 at hand and run the createuser script:
 
-cd ~/mig/server
-./createuser.py
+~/mig/server/createuser.py
 
 You will be prompted for user details one by one before the user is
 added to the local MiG user database. Any user added to this database
@@ -1156,33 +388,6 @@ the same Distinguished Name format
 (/C=.*/ST=.*/O=.*/CN=.*/emailAddress=.*) you have to supply the -i DN
 option for the user to work.
 
-Example: adding myself as a user on a MiG server:
-
-# ./createuser.py
-Please enter the details for the new user:
-Full Name: Jonas Bardino
-Organization: NBI
-State: 
-2-letter Country Code: DK
-Email: bardino@nbi.ku.dk
-Comment: This is my own MiG user
-Password: 
-using user dict: {'comment': 'This is my own MiG user', 'country': 'DK',
-'state': '', 'full_name': 'Jonas Bardino', 'organization': 'NBI',
-'password': '*********************', 'email': 'bardino@nbi.ku.dk'}
-logging to: server.log ; level: info
-Creating dirs and files for new user: Jonas Bardino
-User name without spaces: Jonas_Bardino
-
-User Jonas Bardino was successfully added to user DB!
-DB entry and dirs for Jonas Bardino were created or updated
-
-My MiG certificate with Full Name Jonas Bardino and so on will now give
-me access to this development server and any others where the MiG CA is
-configured.
-You can find the certificate field details using openssl or by viewing the
-certificate imported in a browser.
-
 Users can also be mass created e.g. from a csv file with our importusers helper:
 cd ~/mig/server
 python parsecsvusers.py add-users.csv > add-users.list
@@ -1191,38 +396,47 @@ python parsecsvusers.py add-users.csv > add-users.list
 The csv file must have a header line to specify the field layout and then one
 line per user using that layout. It could look something like this:
 ### full_name;organization;email;country
-Jonas Bardino;NBI;bardino@nbi.ku.dk;DK
-Martin Garrigues Rehr;NBI;rehr@nbi.ku.dk;DK
+Jonas Bardino;NBI;jonas.bardino@some.domain.dk;DK
+Martin Garrigues Rehr;NBI;martin.rehr@another.domain.dk;DK
 ...
 
 
 == Adding resources ==
-When you have added yourself as a user on your MiG server, you can open
-your personal Resources page on the corresponding web interface and add
-resources of all kinds there. Please refer to the wiki pages online for
-explanations on each kind of resource and some examples of setups.
+When you have added yourself as a user on your MiG server, you can open your
+personal Resources page on the corresponding web interface and add resources of
+all kinds there. Please refer to the wiki pages online for explanations on each
+kind of resource and some examples of setups.
 
 
-== Stopping a MiG server ==
-All the daemons can be stopped with ctrl-c and most also support a
-SHUTDOWN message through the named input pipe defined in the
-configuration file:
+= Stopping MiG =
+For the docker-migrid case one can simply stop the service containers to bring
+a site offline.
+You can still use container tools to control the individual services if you
+wish, but the next section is otherwise mainly relevant for manual
+installations as outlined above.
+
+== Manually Stopping MiG services ==
+MiG daemons can be stopped with ctrl-c and most also support a SHUTDOWN message
+through the named input pipe defined in the configuration file:
 echo SHUTDOWN >> /path/to/server.stdin
 
-To completely stop MiG you need to stop all the MiG daemons and the
-apache server.
+To completely stop MiG you need to stop all the MiG daemons and the apache
+server.
 
 We provide migrid service scripts for easy integration on the common Linux
 distributions. In that way management of the services is just a matter of
 sudo service migrid ACTION
-and individual daemons can be controlled with: 
+and individual daemons can be controlled with:
 sudo service migrid ACTIONdaemon DAEMON 
 
 
 = Uninstalling MiG =
-The default server configuration template keeps all MiG files installed
-under the single directory where the MiG source code is unpacked, so
-uninstalling is simply a matter of deleting that directory. If you
-change your server configuration to save e.g. state files outside this
-directory you will have to manually clean up those directories as well
-to completely uninstall MiG.
+For the docker-migrid case one can simply stop the service containers to bring
+a site offline and delete the install and data folders.
+
+For manual installs as outlined above it is also simple. The default server
+configuration template keeps all MiG files installed under the single directory
+where the MiG source code is unpacked, so uninstalling is simply a matter of
+deleting that directory. If you change your server configuration to save e.g.
+state files outside this directory you will have to manually clean up those
+directories as well to completely uninstall MiG.
