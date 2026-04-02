@@ -7,7 +7,8 @@ ifndef PY
 endif
 
 FORMAT_ENFORCE_DIRS = ./bin ./mig/lib ./sbin ./tests
-FORMAT_EXCLUDE_REGEX = '.git|tests/data/|tests/fixture/|bin/checkconf.py|bin/createresource.py|bin/notifypassword.py|sbin/grid\_ftps.py|sbin/grid\_openid.py|sbin/grid\_sftp.py|sbin/grid\_webdavs.py'
+FORMAT_EXCLUDE_GLOB = '.git/*,tests/data/*,tests/fixture/*'
+FORMAT_EXCLUDE_REGEX = '.git|tests/data/|tests/fixture/'
 FORMAT_LINE_LENGTH = 80
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
@@ -40,6 +41,7 @@ ifneq ($(MIG_ENV),'local')
 endif
 	@make format-python
 
+# NOTE: black and isort use pyproject.toml to temporarily exclude a few paths
 .PHONY:format-python
 format-python:
 	@$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
@@ -47,7 +49,8 @@ format-python:
 			--exclude=$(FORMAT_EXCLUDE_REGEX)
 	@$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
 			--profile=black \
-			--line-length=$(FORMAT_LINE_LENGTH)
+			--line-length=$(FORMAT_LINE_LENGTH) \
+			--skip-glob=$(FORMAT_EXCLUDE_GLOB)
 
 .PHONY: lint
 lint:
@@ -57,12 +60,13 @@ ifneq ($(MIG_ENV),'local')
 endif
 	@make lint-python
 
+# NOTE: black and isort use pyproject.toml to temporarily exclude a few paths
 .PHONY: lint-python
 lint-python:
 	@$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
 			--check \
 			--line-length=$(FORMAT_LINE_LENGTH) \
-			--exclude $(FORMAT_EXCLUDE_REGEX)
+			--exclude=$(FORMAT_EXCLUDE_REGEX)
 	@$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
 			--check-only \
 			--profile=black \
