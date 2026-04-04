@@ -57,16 +57,19 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     #       https://wiki.mozilla.org/Security/Server_Side_TLS
     ssl_options |= getattr(ssl, 'OP_NO_SSLv2', 0x1000000)
     ssl_options |= getattr(ssl, 'OP_NO_SSLv3', 0x2000000)
+    ssl_options |= getattr(ssl, 'OP_NO_TLSv1', 0x4000000)
+    ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_1
     # NOTE: refuse weak TLS protocols unless allow_pre_tlsv12
     if not allow_pre_tlsv12:
-        ssl_options |= getattr(ssl, 'OP_NO_TLSv1', 0x4000000)
         ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000)
+        ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     # NOTE: refuse slightly dated TLS 1.2 protocol unless allow_pre_tlsv13
     if not allow_pre_tlsv13:
         if getattr(ssl, 'HAS_TLSv1_3', False):
             ssl_options |= getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000)
         else:
             _logger.warning("won't disable TLS 1.2 without TLS 1.3 support")
+        ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_3
     # NOTE: refuse client TLS renegotiation unless allow_renegotiation
     if not allow_renegotiation:
         ssl_options |= getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000)
