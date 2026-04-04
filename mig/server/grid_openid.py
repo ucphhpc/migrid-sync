@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_openid - openid server authenticating users against user database
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
