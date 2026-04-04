@@ -1606,10 +1606,9 @@ def limited_accept(self, *args, **kwargs):
     timeout = kwargs.get('timeout', 10)
     logger.debug("Accept connection from %s with timeout %s" % (addr, timeout))
     newsock.settimeout(timeout)
-    newsock = self.context.wrap_socket(newsock,
-                                       do_handshake_on_connect=self.do_handshake_on_connect,
-                                       suppress_ragged_eofs=self.suppress_ragged_eofs,
-                                       server_side=True)
+    newsock = self.context.wrap_socket(
+        newsock, do_handshake_on_connect=self.do_handshake_on_connect,
+        suppress_ragged_eofs=self.suppress_ragged_eofs, server_side=True)
     logger.debug('Done accepting connection.')
     return newsock, addr
 
@@ -1646,8 +1645,7 @@ def start_service(configuration):
             logger.error('No such server key: %s' % cert_path)
             sys.exit(1)
         logger.info('Wrapping connections in SSL')
-        ssl_ctx = hardened_ssl_context(configuration, key_path, cert_path,
-                                       dhparams_path)
+        ssl_ctx = hardened_ssl_context(configuration, key_path, cert_path, dhparams_path)
         httpserver.socket = ssl_ctx.wrap_socket(httpserver.socket,
                                                 server_side=True)
         # Override default SSLSocket accept function to inject timeout support
