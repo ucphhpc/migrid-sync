@@ -183,9 +183,11 @@ class MigSharedTlsServer(MigTestCase):
 
         # Verify the options were OR'd into the context
         self.assertEqual(context.options & expected_options, expected_options)
+        # Verify that the minimum TLS version is enforced
+        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_2)
 
-    def test_hardened_ssl_context_options_tls1_1_only(self):
-        """Test SSL context options are set correctly with TLS 1.1 only"""
+    def test_hardened_ssl_context_options_tls1_1(self):
+        """Test SSL context options are set correctly with TLS 1.1 enabled"""
         config = self.configuration
         config.logger = self.logger
 
@@ -197,7 +199,7 @@ class MigSharedTlsServer(MigTestCase):
             STRONG_TLS_CIPHERS,
             STRONG_TLS_CURVES,
             True,
-            False,
+            True,
             False
         )
 
@@ -205,7 +207,7 @@ class MigSharedTlsServer(MigTestCase):
         expected_options = (
             getattr(ssl, 'OP_NO_SSLv2', 0x1000000) |
             getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000) |
+            getattr(ssl, 'OP_NO_TLSv1', 0x4000000) |
             getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
             getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
             getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
@@ -216,6 +218,8 @@ class MigSharedTlsServer(MigTestCase):
 
         # Verify the options were OR'd into the context
         self.assertEqual(context.options & expected_options, expected_options)
+        # Verify that the minimum TLS version is enforced
+        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_1)
 
     def test_hardened_ssl_context_options_tls1_3_only(self):
         """Test SSL context options are set correctly with TLS 1.3 only"""
@@ -251,6 +255,8 @@ class MigSharedTlsServer(MigTestCase):
 
         # Verify the options were OR'd into the context
         self.assertEqual(context.options & expected_options, expected_options)
+        # Verify that the minimum TLS version is enforced
+        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_3)
 
     def test_hardened_ssl_context_options_fail_reneg(self):
         """Test SSL context options fail when different"""
