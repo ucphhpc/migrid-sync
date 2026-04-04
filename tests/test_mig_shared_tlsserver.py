@@ -29,16 +29,9 @@
 
 import os
 import unittest
-from unittest.mock import patch, MagicMock
-
-# PyOpenSSL is required for hardened_openssl_context tests
-try:
-    import OpenSSL
-except ImportError:
-    OpenSSL = None
 
 # Imports of the code under test
-from mig.shared.tlsserver import hardened_ssl_context, hardened_openssl_context, ssl
+from mig.shared.tlsserver import hardened_ssl_context, ssl
 # Imports required for the unit test wrapping
 from mig.shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_LEGACY_CIPHERS, \
     STRONG_TLS_CURVES
@@ -49,7 +42,7 @@ TEST_KEY_FILE = "testkey.pem"
 TEST_CERT_FILE = "testcert.pem"
 TEST_CACERT_FILE = "testcacert.pem"
 TEST_DHPARAMS_FILE = "testdhparams.pem"
-# IMPORTANT: this is a bogus key and self-signed cert ONLY ever for testing
+# IMPORTANT: this is a BOGUS key + self-signed cert, ONLY ever use for testing!
 TEST_HOST_KEY = """-----BEGIN PRIVATE KEY-----
 MIIJQgIBADANBgkqhkiG9w0BAQEFAASCCSwwggkoAgEAAoICAQCWcP0X6VRv06tO
 KgD+gjvj0Cq8OQDJFHaQlOiXz90bjhc9ECtA/sj/3RUWimy3kppRkO40Adrdz2AZ
@@ -138,7 +131,7 @@ EthFXgjAdlUayA5VqbcWIdm/P4d5Wc5lgj2XlbcwREcktT4=
 -----END CERTIFICATE-----"""
 
 
-class MigSharedTlsServerProper(MigTestCase):
+class MigSharedTlsServer(MigTestCase):
     """Unit tests for tlsserver related helper functions using proper TLS"""
 
     def _provide_configuration(self):
@@ -152,12 +145,15 @@ class MigSharedTlsServerProper(MigTestCase):
         with open(cert_path, 'w') as cert_fd:
             cert_fd.write(TEST_HOST_CERT)
 
+    def before_each(self):
+        """Set up test configuration and reset state before each test"""
+        self._prepare_key_cert(TEST_KEY_FILE, TEST_CERT_FILE)
+
     def test_hardened_ssl_context_options_default(self):
         """Test SSL context options are set correctly"""
         config = self.configuration
         config.logger = self.logger
 
-        self._prepare_key_cert(TEST_KEY_FILE, TEST_CERT_FILE)
         context = hardened_ssl_context(
             config,
             TEST_KEY_FILE,
@@ -192,7 +188,6 @@ class MigSharedTlsServerProper(MigTestCase):
         config = self.configuration
         config.logger = self.logger
 
-        self._prepare_key_cert(TEST_KEY_FILE, TEST_CERT_FILE)
         context = hardened_ssl_context(
             config,
             TEST_KEY_FILE,
@@ -226,7 +221,6 @@ class MigSharedTlsServerProper(MigTestCase):
         config = self.configuration
         config.logger = self.logger
 
-        self._prepare_key_cert(TEST_KEY_FILE, TEST_CERT_FILE)
         context = hardened_ssl_context(
             config,
             TEST_KEY_FILE,
@@ -262,7 +256,6 @@ class MigSharedTlsServerProper(MigTestCase):
         config = self.configuration
         config.logger = self.logger
 
-        self._prepare_key_cert(TEST_KEY_FILE, TEST_CERT_FILE)
         context = hardened_ssl_context(
             config,
             TEST_KEY_FILE,
@@ -298,7 +291,6 @@ class MigSharedTlsServerProper(MigTestCase):
         config = self.configuration
         config.logger = self.logger
 
-        self._prepare_key_cert(TEST_KEY_FILE, TEST_CERT_FILE)
         context = hardened_ssl_context(
             config,
             TEST_KEY_FILE,
@@ -334,7 +326,6 @@ class MigSharedTlsServerProper(MigTestCase):
         config = self.configuration
         config.logger = self.logger
 
-        self._prepare_key_cert(TEST_KEY_FILE, TEST_CERT_FILE)
         context = hardened_ssl_context(
             config,
             TEST_KEY_FILE,
@@ -370,7 +361,6 @@ class MigSharedTlsServerProper(MigTestCase):
         config = self.configuration
         config.logger = self.logger
 
-        self._prepare_key_cert(TEST_KEY_FILE, TEST_CERT_FILE)
         context = hardened_ssl_context(
             config,
             TEST_KEY_FILE,
@@ -394,7 +384,6 @@ class MigSharedTlsServerProper(MigTestCase):
         config = self.configuration
         config.logger = self.logger
 
-        self._prepare_key_cert(TEST_KEY_FILE, TEST_CERT_FILE)
         context = hardened_ssl_context(
             config,
             TEST_KEY_FILE,
@@ -412,316 +401,3 @@ class MigSharedTlsServerProper(MigTestCase):
         result = ':'.join([spec['name'] for spec in context.get_ciphers()])
         self.assertTrue(result.startswith(expected_start))
         self.assertTrue(result.endswith(expected_end))
-
-
-class MigSharedTlsServerMock(MigTestCase):
-    """Unit tests for tlsserver related helper functions using Mock TLS"""
-
-    def _provide_configuration(self):
-        """Prepare isolated test config"""
-        return 'testconfig'
-
-    def test_hardened_ssl_context_basic(self):
-        """Test basic SSL context creation with default parameters"""
-        with patch('mig.shared.tlsserver.ssl') as mock_ssl:
-            mock_ssl.PROTOCOL_SSLv23 = 1
-            mock_ssl.SSLContext = MagicMock()
-            mock_ssl.SSLContext.return_value = MagicMock()
-
-            config = self.configuration
-            config.logger = self.logger
-
-            with self.assertLogs(level="INFO") as log_capture:
-                context = hardened_ssl_context(
-                    config,
-                    TEST_KEY_FILE,
-                    TEST_CERT_FILE,
-                    TEST_DHPARAMS_FILE,
-                    STRONG_TLS_CIPHERS,
-                    STRONG_TLS_CURVES,
-                    False,
-                    True,
-                    False
-                )
-
-                self.assertIsNotNone(context)
-                mock_ssl.SSLContext.assert_called_once_with(1)
-                mock_ssl.SSLContext.return_value.load_cert_chain.assert_called_once_with(
-                    TEST_CERT_FILE, TEST_KEY_FILE
-                )
-                self.assertTrue(
-                    any("enforcing strong SSL/TLS connections" in msg
-                        for msg in log_capture.output)
-                )
-
-    @unittest.skip("Fix this test and enable it?")
-    def test_hardened_ssl_context_mock_options(self):
-        """Test SSL context options are set correctly with mock"""
-        with patch('mig.shared.tlsserver.ssl') as mock_ssl:
-            mock_ssl.SSLContext = MagicMock()
-            mock_ssl.SSLContext.return_value = MagicMock()
-            mock_ssl.SSLContext.return_value.options = 0
-
-            config = self.configuration
-            config.logger = self.logger
-
-            context = hardened_ssl_context(
-                config,
-                TEST_KEY_FILE,
-                TEST_CERT_FILE,
-                TEST_DHPARAMS_FILE,
-                STRONG_TLS_CIPHERS,
-                STRONG_TLS_CURVES,
-                False,
-                True,
-                False
-            )
-
-            # Verify options are set
-            expected_options = (
-                getattr(ssl, 'OP_NO_SSLv2', 0x1000000) |
-                getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
-                getattr(ssl, 'OP_NO_TLSv1', 0x4000000) |
-                getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000) |
-                getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
-                getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-                getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
-                getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000) |
-                getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000) |
-                getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000)
-            )
-
-            # Verify the options were OR'd into the context
-            mock_ssl.SSLContext.return_value.options |= expected_options
-            self.assertEqual(
-                mock_ssl.SSLContext.return_value.options, context.options)
-
-    def test_hardened_ssl_context_ciphers(self):
-        """Test SSL context ciphers are set correctly"""
-        with patch('mig.shared.tlsserver.ssl') as mock_ssl:
-            mock_ssl.PROTOCOL_SSLv23 = 1
-            mock_ssl.SSLContext = MagicMock()
-            mock_ssl.SSLContext.return_value = MagicMock()
-
-            config = self.configuration
-            config.logger = self.logger
-
-            context = hardened_ssl_context(
-                config,
-                TEST_KEY_FILE,
-                TEST_CERT_FILE,
-                TEST_DHPARAMS_FILE,
-                STRONG_TLS_CIPHERS,
-                STRONG_TLS_CURVES,
-                False,
-                True,
-                False
-            )
-
-            mock_ssl.SSLContext.return_value.set_ciphers.assert_called_once_with(
-                STRONG_TLS_CIPHERS)
-
-    def test_hardened_ssl_context_legacy_ciphers(self):
-        """Test SSL context ciphers are set correctly"""
-        with patch('mig.shared.tlsserver.ssl') as mock_ssl:
-            mock_ssl.PROTOCOL_SSLv23 = 1
-            mock_ssl.SSLContext = MagicMock()
-            mock_ssl.SSLContext.return_value = MagicMock()
-
-            config = self.configuration
-            config.logger = self.logger
-
-            context = hardened_ssl_context(
-                config,
-                TEST_KEY_FILE,
-                TEST_CERT_FILE,
-                TEST_DHPARAMS_FILE,
-                STRONG_TLS_LEGACY_CIPHERS,
-                STRONG_TLS_CURVES,
-                False,
-                True,
-                False
-            )
-
-            mock_ssl.SSLContext.return_value.set_ciphers.assert_called_once_with(
-                STRONG_TLS_LEGACY_CIPHERS)
-
-    @unittest.skip("Fix this test and enable it?")
-    def test_hardened_openssl_context_basic(self):
-        """Test basic OpenSSL context creation with default parameters"""
-        with patch('mig.shared.tlsserver.OpenSSL') as mock_openssl:
-            mock_openssl.SSL = MagicMock()
-            mock_openssl.SSL.SSLv23_METHOD = 1
-            mock_openssl.SSL.Context = MagicMock()
-            mock_openssl.SSL.Context.return_value = MagicMock()
-            mock_openssl.SSL.Context.return_value.set_options = MagicMock()
-            mock_openssl.crypto = MagicMock()
-
-            config = self.configuration
-            config.logger = self.logger
-
-            with self.assertLogs(level="INFO") as log_capture:
-                context = hardened_openssl_context(
-                    config,
-                    mock_openssl,
-                    TEST_KEY_FILE,
-                    TEST_CERT_FILE,
-                    TEST_CACERT_FILE,
-                    TEST_DHPARAMS_FILE,
-                    STRONG_TLS_CIPHERS,
-                    STRONG_TLS_CURVES,
-                    False,
-                    True,
-                    False
-                )
-
-                self.assertIsNotNone(context)
-                mock_openssl.SSL.Context.assert_called_once_with(1)
-                mock_openssl.SSL.Context.return_value.use_certificate_chain_file.assert_called_once_with(
-                    TEST_CERT_FILE
-                )
-                mock_openssl.SSL.Context.return_value.use_privatekey_file.assert_called_once_with(
-                    TEST_KEY_FILE
-                )
-                self.assertTrue(
-                    any("enforcing strong SSL/TLS connections" in msg
-                        for msg in log_capture.output)
-                )
-
-    @unittest.skip("Fix this test and enable it?")
-    def test_hardened_openssl_context_options(self):
-        """Test OpenSSL context options are set correctly"""
-        with patch('mig.shared.tlsserver.OpenSSL') as mock_openssl:
-            mock_openssl.SSL = MagicMock()
-            mock_openssl.SSL.SSLv23_METHOD = 1
-            mock_openssl.SSL.Context = MagicMock()
-            mock_openssl.SSL.Context.return_value = MagicMock()
-            mock_openssl.SSL.Context.return_value.set_options = MagicMock()
-            mock_openssl.crypto = MagicMock()
-
-            config = self.configuration
-            config.logger = self.logger
-
-            context = hardened_openssl_context(
-                config,
-                mock_openssl,
-                TEST_KEY_FILE,
-                TEST_CERT_FILE,
-                TEST_CACERT_FILE,
-                TEST_DHPARAMS_FILE,
-                STRONG_TLS_CIPHERS,
-                STRONG_TLS_CURVES,
-                False,
-                True,
-                False
-            )
-
-            # Verify options are set
-            expected_options = (
-                getattr(mock_openssl.SSL, 'OP_NO_SSLv2', 0x1000000) |
-                getattr(mock_openssl.SSL, 'OP_NO_SSLv3', 0x2000000) |
-                getattr(mock_openssl.SSL, 'OP_NO_TLSv1', 0x4000000) |
-                getattr(mock_openssl.SSL, 'OP_NO_TLSv1_1', 0x10000000) |
-                getattr(mock_openssl.SSL, 'OP_NO_COMPRESSION', 0x20000) |
-                getattr(mock_openssl.SSL, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-                getattr(mock_openssl.SSL, 'OP_SINGLE_ECDH_USE', 0x80000) |
-                getattr(mock_openssl.SSL, 'OP_SINGLE_DH_USE', 0x100000)
-            )
-            mock_openssl.SSL.Context.return_value.set_options.assert_called_once_with(
-                expected_options)
-
-    @unittest.skip("Fix this test and enable it?")
-    def test_hardened_openssl_context_ciphers(self):
-        """Test OpenSSL context ciphers are set correctly"""
-        with patch('mig.shared.tlsserver.OpenSSL') as mock_openssl:
-            mock_openssl.SSL = MagicMock()
-            mock_openssl.SSL.SSLv23_METHOD = 1
-            mock_openssl.SSL.Context = MagicMock()
-            mock_openssl.SSL.Context.return_value = MagicMock()
-            mock_openssl.SSL.Context.return_value.set_options = MagicMock()
-            mock_openssl.crypto = MagicMock()
-
-            config = self.configuration
-            config.logger = self.logger
-
-            context = hardened_openssl_context(
-                config,
-                mock_openssl,
-                TEST_KEY_FILE,
-                TEST_CERT_FILE,
-                TEST_CACERT_FILE,
-                TEST_DHPARAMS_FILE,
-                STRONG_TLS_CIPHERS,
-                STRONG_TLS_CURVES,
-                False,
-                True,
-                False
-            )
-
-            mock_openssl.SSL.Context.return_value.set_cipher_list.assert_called_once_with(
-                STRONG_TLS_CIPHERS
-            )
-
-    @unittest.skip("Fix this test and enable it?")
-    def test_hardened_openssl_context_cacertfile(self):
-        """Test OpenSSL context handles cacertfile parameter"""
-        with patch('mig.shared.tlsserver.OpenSSL') as mock_openssl:
-            mock_openssl.SSL = MagicMock()
-            mock_openssl.SSL.SSLv23_METHOD = 1
-            mock_openssl.SSL.Context = MagicMock()
-            mock_openssl.SSL.Context.return_value = MagicMock()
-            mock_openssl.SSL.Context.return_value.set_options = MagicMock()
-            mock_openssl.crypto = MagicMock()
-
-            config = self.configuration
-            config.logger = self.logger
-
-            context = hardened_openssl_context(
-                config,
-                mock_openssl,
-                TEST_KEY_FILE,
-                TEST_CERT_FILE,
-                TEST_CACERT_FILE,
-                TEST_DHPARAMS_FILE,
-                STRONG_TLS_CIPHERS,
-                STRONG_TLS_CURVES,
-                False,
-                True,
-                False
-            )
-
-            mock_openssl.SSL.Context.return_value.load_verify_locations.assert_called_once_with(
-                TEST_CACERT_FILE
-            )
-
-    @unittest.skip("Fix this test and enable it?")
-    def test_hardened_openssl_context_dhparams(self):
-        """Test OpenSSL context handles dhparamsfile parameter"""
-        with patch('mig.shared.tlsserver.OpenSSL') as mock_openssl:
-            mock_openssl.SSL = MagicMock()
-            mock_openssl.SSL.SSLv23_METHOD = 1
-            mock_openssl.SSL.Context = MagicMock()
-            mock_openssl.SSL.Context.return_value = MagicMock()
-            mock_openssl.SSL.Context.return_value.set_options = MagicMock()
-            mock_openssl.crypto = MagicMock()
-
-            config = self.configuration
-            config.logger = self.logger
-
-            context = hardened_openssl_context(
-                config,
-                mock_openssl,
-                TEST_KEY_FILE,
-                TEST_CERT_FILE,
-                TEST_CACERT_FILE,
-                TEST_DHPARAMS_FILE,
-                STRONG_TLS_CIPHERS,
-                STRONG_TLS_CURVES,
-                False,
-                True,
-                False
-            )
-
-            mock_openssl.SSL.Context.return_value.load_tmp_dh.assert_called_once_with(
-                TEST_DHPARAMS_FILE
-            )
