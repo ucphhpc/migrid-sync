@@ -72,7 +72,7 @@ from mig.shared.vgrid import (
 
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist, testmain
-from tests.support.usersupp import UserAssertMixin, TEST_USER_DN
+from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
 
 # Additional helper constants
 # Standard user IDs following X.500 DN format
@@ -82,7 +82,10 @@ TEST_MEMBER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Member/' \
     'emailAddress=member@example.com'
 TEST_OUTSIDER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Outsider/' \
     'emailAddress=outsider@example.com'
+TEST_UNKNOWN_DN = '/C=XX/ST=NA/L=NA/O=Test Org/OU=NA/CN=Unknown User/' \
+    'emailAddress=unknown@example.com'
 TEST_RESOURCE_ID = 'test.example.org'
+TEST_UNKNOWN_ID = 'no-such-resource.example.org'
 TEST_OWNER_DIR = '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_Owner+' \
     'emailAddress=owner@example.com'
 TEST_JOB_ID = '12345667890'
@@ -790,15 +793,14 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
     def test_init_vgrid_script_add_rem_add_owner_as_non_owner(self):
         """Test attempt to add owner without privileges"""
         # Ensure test users exist
-        self._provision_test_user(self, self.TEST_OWNER_DN)
-        self._provision_test_user(self, self.TEST_USER_DN)
-        self._provision_test_user(self, self.TEST_OUTSIDER_DN)
+        self._provision_test_users(self, TEST_OUTSIDER_DN,
+                                   TEST_USER_DN)
 
-        subject = self.TEST_USER_DN
+        subject = TEST_USER_DN
         subject_type = 'owner'
 
         status, msg, _ = init_vgrid_script_add_rem(
-            self.test_vgrid, self.TEST_OUTSIDER_DN, subject, subject_type,
+            self.test_vgrid, TEST_OUTSIDER_DN, subject, subject_type,
             self.configuration, from_remove=False
         )
         self.assertFalse(status)
@@ -807,15 +809,14 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
     def test_init_vgrid_script_add_rem_remove_owner_as_non_owner(self):
         """Test attempt to remove owner without privileges"""
         # Ensure test users exist
-        self._provision_test_user(self, self.TEST_OWNER_DN)
-        self._provision_test_user(self, self.TEST_USER_DN)
-        self._provision_test_user(self, self.TEST_OUTSIDER_DN)
+        self._provision_test_users(self, TEST_OUTSIDER_DN,
+                                   TEST_USER_DN)
 
-        subject = self.TEST_USER_DN
+        subject = TEST_USER_DN
         subject_type = 'owner'
 
         status, msg, _ = init_vgrid_script_add_rem(
-            self.test_vgrid, self.TEST_OUTSIDER_DN, subject, subject_type,
+            self.test_vgrid, TEST_OUTSIDER_DN, subject, subject_type,
             self.configuration, from_remove=True
         )
         self.assertFalse(status)
@@ -823,44 +824,44 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
 
     def test_init_vgrid_script_add_rem_add_unknown_resource(self):
         """Test addition of (e.g. pending) unknown resource always allowed"""
-        subject = self.TEST_UNKNOWN_ID
+        subject = TEST_UNKNOWN_ID
         subject_type = 'resource'
 
         status, msg, _ = init_vgrid_script_add_rem(
-            self.test_vgrid, self.TEST_OWNER_DN, subject, subject_type,
+            self.test_vgrid, TEST_OWNER_DN, subject, subject_type,
             self.configuration, from_remove=False
         )
         self.assertTrue(status, msg)
 
     def test_init_vgrid_script_add_rem_remove_unknown_resource(self):
         """Test removal of unknown resource always allowed"""
-        subject = self.TEST_UNKNOWN_ID
+        subject = TEST_UNKNOWN_ID
         subject_type = 'resource'
 
         status, msg, _ = init_vgrid_script_add_rem(
-            self.test_vgrid, self.TEST_OWNER_DN, subject, subject_type,
+            self.test_vgrid, TEST_OWNER_DN, subject, subject_type,
             self.configuration, from_remove=True
         )
         self.assertTrue(status, msg)
 
     def test_init_vgrid_script_add_rem_add_unknown_user(self):
         """Test addition of unknown user refused"""
-        unknown_user = self.TEST_UNKNOWN_DN
+        unknown_user = TEST_UNKNOWN_DN
         subject_type = 'member'
 
         status, msg, _ = init_vgrid_script_add_rem(
-            self.test_vgrid, self.TEST_OWNER_DN, unknown_user, subject_type,
+            self.test_vgrid, TEST_OWNER_DN, unknown_user, subject_type,
             self.configuration, from_remove=False
         )
         self.assertFalse(status, msg)
 
     def test_init_vgrid_script_add_rem_remove_unknown_user(self):
         """Test removal of unknown user always allowed"""
-        unknown_user = self.TEST_UNKNOWN_DN
+        unknown_user = TEST_UNKNOWN_DN
         subject_type = 'member'
 
         status, msg, _ = init_vgrid_script_add_rem(
-            self.test_vgrid, self.TEST_OWNER_DN, unknown_user, subject_type,
+            self.test_vgrid, TEST_OWNER_DN, unknown_user, subject_type,
             self.configuration, from_remove=True
         )
         self.assertTrue(status, msg)
@@ -868,8 +869,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
     def test_init_vgrid_script_add_rem_modify_trigger_as_non_owner(self):
         """Test modification attempt of trigger by non-owner"""
         # Ensure test users exist
-        self._provision_test_user(self, self.TEST_OWNER_DN)
-        self._provision_test_user(self, self.TEST_OUTSIDER_DN)
+        self._provision_test_users(self, TEST_OWNER_DN, TEST_OUTSIDER_DN)
 
         # Add test trigger
         test_trigger = {
@@ -877,7 +877,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
             'vgrid_name': self.test_vgrid,
             'path': '*.txt',
             'changes': ['modified'],
-            'run_as': self.TEST_OWNER_DN,
+            'run_as': TEST_OWNER_DN,
             'action': 'copy',
             'arguments': ['source', 'dest'],
             'match_files': True
@@ -886,7 +886,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
                            'triggers', [test_trigger])
 
         status, msg, _ = init_vgrid_script_add_rem(
-            self.test_vgrid, self.TEST_OUTSIDER_DN, 'test_rule', 'trigger',
+            self.test_vgrid, TEST_OUTSIDER_DN, 'test_rule', 'trigger',
             self.configuration, from_remove=False
         )
         self.assertFalse(status)
@@ -895,8 +895,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
     def test_init_vgrid_script_add_rem_remove_trigger_as_non_owner(self):
         """Test removal attempt of trigger by non-owner"""
         # Ensure test users exist
-        self._provision_test_user(self, self.TEST_OWNER_DN)
-        self._provision_test_user(self, self.TEST_OUTSIDER_DN)
+        self._provision_test_users(self, TEST_OWNER_DN, TEST_OUTSIDER_DN)
 
         # Add test trigger
         test_trigger = {
@@ -904,7 +903,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
             'vgrid_name': self.test_vgrid,
             'path': '*.txt',
             'changes': ['modified'],
-            'run_as': self.TEST_OWNER_DN,
+            'run_as': TEST_OWNER_DN,
             'action': 'copy',
             'arguments': ['source', 'dest'],
             'match_files': True
@@ -913,7 +912,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
                            'triggers', [test_trigger])
 
         status, msg, _ = init_vgrid_script_add_rem(
-            self.test_vgrid, self.TEST_OUTSIDER_DN, 'test_rule', 'trigger',
+            self.test_vgrid, TEST_OUTSIDER_DN, 'test_rule', 'trigger',
             self.configuration, from_remove=True
         )
         self.assertFalse(status)
@@ -922,7 +921,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
     def test_init_vgrid_script_add_rem_modify_trigger_as_owner(self):
         """Test modification attempt of trigger by trigger owner"""
         # Ensure test user exists
-        self._provision_test_user(self, self.TEST_OWNER_DN)
+        self._provision_test_users(self, TEST_OWNER_DN)
 
         # Add test trigger
         test_trigger = {
@@ -930,7 +929,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
             'vgrid_name': self.test_vgrid,
             'path': '*.txt',
             'changes': ['modified'],
-            'run_as': self.TEST_OWNER_DN,
+            'run_as': TEST_OWNER_DN,
             'action': 'copy',
             'arguments': ['source', 'dest'],
             'match_files': True
@@ -939,7 +938,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
                            'triggers', [test_trigger])
 
         status, msg, _ = init_vgrid_script_add_rem(
-            self.test_vgrid, self.TEST_OWNER_DN, 'test_rule', 'trigger',
+            self.test_vgrid, TEST_OWNER_DN, 'test_rule', 'trigger',
             self.configuration, from_remove=False
         )
         self.assertTrue(status, msg)
@@ -947,7 +946,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
     def test_init_vgrid_script_add_rem_remove_trigger_as_owner(self):
         """Test removal of trigger by trigger owner"""
         # Ensure test user exists
-        self._provision_test_user(self, self.TEST_OWNER_DN)
+        self._provision_test_users(self, TEST_OWNER_DN)
 
         # Add test trigger
         test_trigger = {
@@ -955,7 +954,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
             'vgrid_name': self.test_vgrid,
             'path': '*.txt',
             'changes': ['modified'],
-            'run_as': self.TEST_OWNER_DN,
+            'run_as': TEST_OWNER_DN,
             'action': 'copy',
             'arguments': ['source', 'dest'],
             'match_files': True
@@ -964,7 +963,7 @@ class TestMigSharedVgrid(MigTestCase, UserAssertMixin):
                            'triggers', [test_trigger])
 
         status, msg, _ = init_vgrid_script_add_rem(
-            self.test_vgrid, self.TEST_OWNER_DN, 'test_rule', 'trigger',
+            self.test_vgrid, TEST_OWNER_DN, 'test_rule', 'trigger',
             self.configuration, from_remove=True
         )
         self.assertTrue(status, msg)
