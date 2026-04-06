@@ -138,6 +138,7 @@ class MigSharedTlsServer(MigTestCase):
         """Prepare isolated test config"""
         return 'testconfig'
 
+    # TODO: move the key+cert e.g. to data/X with helper function to load them?
     def _prepare_key_cert(self, key_path, cert_path):
         """Save key and cert file for use in real ssl tests"""
         with open(key_path, 'w') as key_fd:
