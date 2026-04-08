@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # htmlgen - html generator helper functions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -125,16 +126,6 @@ menu_items['people'] = {'class': 'people fas fa-users', 'url': 'people.py',
 menu_items['migadmin'] = {'class': 'migadmin fas fa-user-lock', 'url': 'migadmin.py',
                           'title': 'Server Admin',
                           'hover': 'Administrate this server'}
-menu_items['vmachines'] = {'class': 'vmachines fas fa-desktop',
-                           'url': 'vmachines.py',
-                           'title': 'Virtual Machines',
-                           'hover': 'Manage Virtual Machines'}
-menu_items['vmrequest'] = {'class': 'vmrequest fas fa-tv', 'url': 'vmrequest.py',
-                           'title': 'Request Virtual Machine',
-                           'hover': 'Request Virtual Machine'}
-menu_items['vmconnect'] = {'class': 'vmconnect fas fa-plug', 'url': 'vmconnect.py',
-                           'title': 'Connect to Virtual Machine',
-                           'hover': 'Connect to Virtual Machine'}
 menu_items['logout'] = {'class': 'logout fas fa-sign-out-alt',
                         'url': 'logout.py', 'title': 'Logout',
                         'legacy_only': True, 'hover': 'Logout'}

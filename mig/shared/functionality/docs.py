@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -349,8 +350,6 @@ Web interfaces are served with the Apache HTTP Server:"""})
     io_daemons = []
     password_dep = False
     openssl_dep = False
-    if configuration.site_enable_vmachines:
-        openssl_dep = True
     if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
         io_daemons.append('sftp')
         password_dep = True
@@ -450,8 +449,8 @@ on the Cracklib module from:"""})
                                'text': 'Cracklib Module (LGPL license)'})
     if openssl_dep:
         output_objects.append({'object_type': 'text', 'text': """
-The OpenSSL crypto helpers in the optional FTPS/VMachines proxy servers rely
-on the PyOpenSSL module from:"""})
+The OpenSSL crypto helpers in the optional FTPS server rely on the PyOpenSSL
+module from:"""})
         output_objects.append({'object_type': 'link',
                                'destination':
                                'https://pypi.python.org/pypi/pyOpenSSL',

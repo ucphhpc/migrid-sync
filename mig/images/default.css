@@ -415,9 +415,6 @@ table.peers {
 .navmenu ul li.vgrids a, #legacy-ui-body .app-grid .fas.vgrids {
   background-image: url('/images/icons/chart_organisation.png');
 }
-.navmenu ul li.vmachines a, #legacy-ui-body .app-grid .fas.vmachines {
-  background-image: url('/images/icons/computer.png');
-}
 .navmenu ul li.resources a, #legacy-ui-body .app-grid .fas.resources {
   background-image: url('/images/icons/server.png');
 }

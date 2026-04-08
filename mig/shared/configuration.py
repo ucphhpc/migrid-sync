@@ -249,7 +249,6 @@ def fix_missing(config_file, verbose=True):
         'mig_system_storage': '~/state/mig_system_storage',
         'mig_system_run': '~/state/mig_system_run/',
         'wwwpublic': '~/state/wwwpublic/',
-        'vm_home': '~/state/vm_home',
         'server_cert': '~/certs/cert.pem',
         'server_key': '~/certs/key.pem',
         'ca_cert': '~/certs/ca.pem',
@@ -366,8 +365,6 @@ def fix_missing(config_file, verbose=True):
         'user_ext_cert_title': '',
         'user_monitor_log': 'monitor.log',
         'user_sshmux_log': 'sshmux.log',
-        'user_vmproxy_key': '~/certs/combined.pem',
-        'user_vmproxy_log': 'vmproxy.log',
         'user_events_log': 'events.log',
         'user_cron_log': 'cron.log',
         'user_janitor_log': 'janitor.log',
@@ -454,8 +451,8 @@ def fix_missing(config_file, verbose=True):
 
 
 def _configuraton_dict_without_noforward_keys(configuration_like):
-    return { k: v for k, v in configuration_like.__dict__.items()
-             if k not in _CONFIGURATION_NOFORWARD_KEYS }
+    return {k: v for k, v in configuration_like.__dict__.items()
+            if k not in _CONFIGURATION_NOFORWARD_KEYS}
 
 
 class NativeConfigParser(ConfigParser):
@@ -657,8 +654,6 @@ _CONFIGURATION_PROPERTIES = {
     'user_ext_cert_title': '',
     'user_monitor_log': 'monitor.log',
     'user_sshmux_log': 'sshmux.log',
-    'user_vmproxy_key': '',
-    'user_vmproxy_log': 'vmproxy.log',
     'user_events_log': 'events.log',
     'user_cron_log': 'cron.log',
     'user_janitor_log': 'janitor.log',
@@ -677,7 +672,6 @@ _CONFIGURATION_PROPERTIES = {
     'user_chkuserroot_log': 'chkchroot.log',
     'user_chksidroot_log': 'chkchroot.log',
     'server_home': '',
-    'vms_builder_home': '',
     'jupyter_mount_files_dir': '',
     'sessid_to_mrsl_link_home': '',
     'sessid_to_jupyter_mount_link_home': '',
@@ -703,13 +697,6 @@ _CONFIGURATION_PROPERTIES = {
     'public_key_file': '',
     'wwwpublic': '',
     'wwwserve_max_bytes': -1,
-    # Virtual machine VNC proxy helpers
-    'vm_home': '',
-    'vm_proxy_host': '',
-    'vm_proxy_port': 8112,
-    'vm_agent_port': 8112,
-    'vm_client_port': 8111,
-    'vm_applet_port': 8114,
     # Interactive job VNC port
     'job_vnc_ports': list(range(8080, 8099)),
     'enable_server_dist': False,
@@ -1176,8 +1163,6 @@ location.""" % self.config_file)
                                                 'workflows_db_home')
         if config.has_option('GLOBAL', 'notify_home'):
             self.notify_home = config.get('GLOBAL', 'notify_home')
-        if config.has_option('GLOBAL', 'vm_home'):
-            self.vm_home = config.get('GLOBAL', 'vm_home')
         if config.has_option('GLOBAL', 'freeze_home'):
             self.freeze_home = config.get('GLOBAL', 'freeze_home')
         if config.has_option('GLOBAL', 'freeze_tape'):
@@ -1202,11 +1187,6 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'sessid_to_jupyter_mount_link_home'):
             self.sessid_to_jupyter_mount_link_home = config.get(
                 'GLOBAL', 'sessid_to_jupyter_mount_link_home')
-        if config.has_option('GLOBAL', 'vms_builder_home'):
-            self.vms_builder_home = config.get('GLOBAL', 'vms_builder_home')
-        else:
-            self.vms_builder_home = os.path.join(
-                self.server_home, 'vms_builder')
 
         # Component settings
 
@@ -1756,26 +1736,6 @@ location.""" % self.config_file)
             self.site_enable_sshmux = True
         if config.has_option('GLOBAL', 'user_sshmux_log'):
             self.user_sshmux_log = config.get('GLOBAL', 'user_sshmux_log')
-        if config.has_option('SITE', 'enable_vmachines'):
-            self.site_enable_vmachines = config.getboolean('SITE',
-                                                           'enable_vmachines')
-        else:
-            self.site_enable_vmachines = False
-        if config.has_option('GLOBAL', 'user_vmproxy_key'):
-            self.user_vmproxy_key = config.get('GLOBAL',
-                                               'user_vmproxy_key')
-        if config.has_option('GLOBAL', 'user_vmproxy_log'):
-            self.user_vmproxy_log = config.get('GLOBAL', 'user_vmproxy_log')
-        if config.has_option('GLOBAL', 'vm_proxy_host'):
-            self.vm_proxy_host = config.get('GLOBAL', 'vm_proxy_host')
-        else:
-            self.vm_proxy_host = self.server_fqdn
-        if config.has_option('GLOBAL', 'vm_proxy_port'):
-            self.vm_proxy_port = config.getint('GLOBAL', 'vm_proxy_port')
-        if config.has_option('GLOBAL', 'vm_client_port'):
-            self.vm_client_port = config.getint('GLOBAL', 'vm_client_port')
-        if config.has_option('GLOBAL', 'vm_applet_port'):
-            self.vm_applet_port = config.getint('GLOBAL', 'vm_applet_port')
         if config.has_option('GLOBAL', 'job_vnc_ports'):
             text_range = config.get('GLOBAL', 'job_vnc_ports')
             first, last = text_range.split(':')[:2]
@@ -1788,7 +1748,7 @@ location.""" % self.config_file)
                                              'user_quota_log')
         if config.has_option('GLOBAL', 'user_accounting_log'):
             self.user_accounting_log = config.get('GLOBAL',
-                                             'user_accounting_log')
+                                                  'user_accounting_log')
         if config.has_option('GLOBAL', 'public_key_file'):
             self.public_key_file = config.get('GLOBAL', 'public_key_file')
         if config.has_option('GLOBAL', 'smtp_sender'):
@@ -1910,10 +1870,6 @@ location.""" % self.config_file)
             self.vgrid_files_writable = config.get(
                 'GLOBAL', 'vgrid_files_writable')
 
-        # vm_agent_port is just an alias for vm_proxy_port
-
-        self.vm_agent_port = self.vm_proxy_port
-
         # logger.debug('starting scheduler options')
 
         if config.has_option('SCHEDULER', 'algorithm'):
@@ -1980,63 +1936,6 @@ location.""" % self.config_file)
                 'RESOURCES', 'default_mount_re')
         else:
             self.res_default_mount_re = 'SSHFS-2.X-1'
-        if config.has_option('VMACHINES', 'default_os'):
-            self.vm_default_os = config.get('VMACHINES', 'default_os')
-        else:
-            self.vm_default_os = 'ubuntu-12.04'
-        if config.has_option('VMACHINES', 'default_flavor'):
-            self.vm_default_flavor = config.get('VMACHINES', 'default_flavor')
-        else:
-            self.vm_default_flavor = 'basic'
-        if config.has_option('VMACHINES', 'default_hypervisor'):
-            self.vm_default_hypervisor = config.get('VMACHINES',
-                                                    'default_hypervisor')
-        else:
-            self.vm_default_hypervisor = 'vbox4x'
-        if config.has_option('VMACHINES', 'default_disk_format'):
-            self.vm_default_disk_format = config.get('VMACHINES',
-                                                     'default_disk_format')
-        else:
-            self.vm_default_disk_format = 'vmdk'
-        if config.has_option('VMACHINES', 'default_hypervisor_re'):
-            self.vm_default_hypervisor_re = config.get(
-                'VMACHINES', 'default_hypervisor_re')
-        else:
-            self.vm_default_hypervisor_re = 'VIRTUALBOX-4.X-1'
-        if config.has_option('VMACHINES', 'default_sys_re'):
-            self.vm_default_sys_re = config.get('VMACHINES', 'default_sys_re')
-        else:
-            self.vm_default_sys_re = 'VBOX4.X-IMAGES-2012-1'
-        if config.has_option('VMACHINES', 'default_sys_base'):
-            self.vm_default_sys_base = config.get('VMACHINES',
-                                                  'default_sys_base')
-        else:
-            self.vm_default_sys_base = '$VBOXIMGDIR'
-        if config.has_option('VMACHINES', 'default_user_conf'):
-            self.vm_default_user_conf = config.get('VMACHINES',
-                                                   'default_user_conf')
-        else:
-            self.vm_default_user_conf = '$VBOXUSERCONF'
-        if config.has_option('VMACHINES', 'extra_os'):
-            self.vm_extra_os = config.get('VMACHINES',
-                                          'extra_os').split()
-        else:
-            self.vm_extra_os = []
-        if config.has_option('VMACHINES', 'extra_flavors'):
-            self.vm_extra_flavors = config.get('VMACHINES',
-                                               'extra_flavors').split()
-        else:
-            self.vm_extra_flavors = []
-        if config.has_option('VMACHINES', 'extra_hypervisor_re'):
-            self.vm_extra_hypervisor_re = config.get(
-                'VMACHINES', 'extra_hypervisor_re').split()
-        else:
-            self.vm_extra_hypervisor_re = []
-        if config.has_option('VMACHINES', 'extra_sys_re'):
-            self.vm_extra_sys_re = config.get('VMACHINES',
-                                              'extra_sys_re').split()
-        else:
-            self.vm_extra_sys_re = []
 
         if config.has_option('WORKFLOWS', 'vgrid_tasks_home'):
             self.workflows_vgrid_tasks_home = config.get(
@@ -2133,8 +2032,8 @@ location.""" % self.config_file)
             self.site_advanced_menu = ['home', 'submitjob', 'files',
                                        'jobs', 'vgrids', 'resources',
                                        'downloads', 'runtimeenvs', 'people',
-                                       'settings', 'crontab', 'vmachines',
-                                       'shell', 'docs', 'logout']
+                                       'settings', 'crontab', 'shell', 'docs',
+                                       'logout']
         if config.has_option('SITE', 'user_menu'):
             req = config.get('SITE', 'user_menu').split()
             self.site_user_menu = [i for i in req if i in menu_items]
@@ -2676,7 +2575,6 @@ location.""" % self.config_file)
             self.site_enable_jobs = False
             self.site_enable_live_jobs = False
             self.site_enable_sshmux = False
-            self.site_enable_vmachines = False
             self.site_enable_sandboxes = False
             # NOTE: every operation must be clearly logged with explicit actor
             #       so at least analyse thoroughly before GDP-enabling these.
@@ -2765,7 +2663,7 @@ location.""" % self.config_file)
         for _log_var in ('user_sftp_log', 'user_sftp_subsys_log',
                          'user_davs_log', 'user_ftps_log',
                          'user_openid_log', 'user_monitor_log',
-                         'user_sshmux_log', 'user_vmproxy_log',
+                         'user_sshmux_log',
                          'user_events_log', 'user_cron_log',
                          'user_janitor_log', 'user_transfers_log',
                          'user_notify_log', 'user_imnotify_log',
@@ -2934,7 +2832,8 @@ location.""" % self.config_file)
         return _configuraton_dict_without_noforward_keys(obj)
 
 
-_CONFIGURATION_ARGUMENTS = set(_CONFIGURATION_PROPERTIES.keys()) - _CONFIGURATION_NOFORWARD_KEYS
+_CONFIGURATION_ARGUMENTS = set(
+    _CONFIGURATION_PROPERTIES.keys()) - _CONFIGURATION_NOFORWARD_KEYS
 
 
 if '__main__' == __name__:
