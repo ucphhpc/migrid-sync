@@ -381,14 +381,17 @@ documentation.
         from_id = args_list[0]
         user_email = args_list[1]
         user_name = args_list[2]
+        user_expire = args_list[3]
         short_title = configuration.short_title
         migoid_title = configuration.user_mig_oid_title
         migoid_url = configuration.migserver_https_mig_oid_url
         entry_url = get_site_base_url(configuration)
+        expire = datetime.datetime.fromtimestamp(user_expire)
         # TODO: don't hardcode OpenID here
         header = 'Re: %s OpenID request for %s' % (short_title, user_name)
         txt += """This is an auto-generated intro message from %s to inform
-about the creation or renewal of your user account with OpenID login.
+about the creation or renewal of your user account with OpenID login active
+until %s unless extended.
 
 You can log in with username %s and your chosen password at
 %s
@@ -402,7 +405,8 @@ hold of your login.
 
 Regards,
 The %s Admins
-""" % (short_title, user_email, migoid_url, entry_url, short_title, short_title)
+""" % (short_title, expire, user_email, migoid_url, entry_url, short_title,
+            short_title)
     elif status == 'ACCOUNTEXPIRE':
         # TODO: don't hardcode OpenID here
         from_id = args_list[0]
@@ -430,7 +434,7 @@ The %s Admins
         txt += """This is a reminder that your %s account access will expire on %s.
 
 To ensure uninterrupted access, please extend your access before then.""" % \
-        (short_title, expire)
+            (short_title, expire)
         if "migoid" in affected or "migcert" in affected:
             if "migoid" in affected:
                 auth_access_url = auth_migoid_url
@@ -464,7 +468,7 @@ deleted. We will attempt to notify you again before taking any such action.
 Regards,
 The %s Admins
 """ % (short_title, auth_access_url, user_credentials, extend_days,
-       anon_migreq_url, req_name, id_query, short_title)
+                anon_migreq_url, req_name, id_query, short_title)
         else:
             if "extoid" in affected:
                 extend_days = oid_auto_extend_days

@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # --- END_HEADER ---
 #
@@ -2553,10 +2554,11 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
 
 def user_account_notify(user_id, targets, conf_path, db_path, verbose=False,
                         admin_copy=False, extra_copies=False):
-    """Find notification addresses for user_id and targets"""
+    """Find notification addresses and expire for user_id plus targets"""
     (configuration, fields, addresses, errors) = _user_general_notify(
         user_id, targets, conf_path, db_path, verbose, ['username',
-                                                        'full_name'])
+                                                        'full_name',
+                                                        'expire'])
     # Optionally send a copy to site admins
     if admin_copy and configuration.admin_email and \
             isinstance(configuration.admin_email, basestring):
@@ -2570,8 +2572,8 @@ def user_account_notify(user_id, targets, conf_path, db_path, verbose=False,
         addresses['email'] += admin_addresses
     if extra_copies:
         addresses['email'] += extra_copies
-    return (configuration, fields['username'], fields['full_name'], addresses,
-            errors)
+    return (configuration, fields['username'], fields['full_name'],
+            fields['expire'], addresses, errors)
 
 
 def user_request_reject(user_id, targets, conf_path, db_path, verbose=False,
