@@ -28,11 +28,13 @@
 """Unit tests for the migrid module pointed to in the filename"""
 
 import binascii
+import datetime
 import difflib
 import io
 import os
 import pwd
 import sys
+import time
 import unittest
 
 from past.builtins import basestring
@@ -420,6 +422,8 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
 class TestMigSharedUseradm__user_account_notify(MigTestCase, UserAssertMixin):
     """Coverage of useradm user_account_notify function."""
 
+    expected_expire = -1
+
     def _provide_configuration(self):
         """Return configuration to use"""
         return "testconfig"
@@ -437,24 +441,23 @@ class TestMigSharedUseradm__user_account_notify(MigTestCase, UserAssertMixin):
             self.expected_user_db_home, "MiG-users.db"
         )
         ensure_dirs_exist(self.configuration.mig_system_files)
+        self._provision_test_user(self, TEST_USER_DN)
+        adjusted_datetime = datetime.date.today() + datetime.timedelta(days=5)
+        self.expected_expire = int(time.mktime(adjusted_datetime.timetuple()))
 
     def test_default_address_and_expire(self):
         """Test addresses and expire for test account"""
-        self._provision_test_user(self, TEST_USER_DN)
-
         (_, username, full_name, expire, addresses, errors) = \
             user_account_notify(TEST_USER_DN, {'email': ['AUTO']},
                                 self.configuration,
                                 self.expected_user_db_file, False,
                                 False)
         self.assertEqual(addresses, {'email': [TEST_USER_EMAIL]})
-        self.assertEqual(expire, TEST_USER_EXPIRE)
+        self.assertEqual(expire, self.expected_expire)
         self.assertEqual(errors, [])
 
     def test_extra_address_and_expire(self):
         """Test addresses and expire for test with extra account"""
-        self._provision_test_user(self, TEST_USER_DN)
-
         (_, username, full_name, expire, addresses, errors) = \
             user_account_notify(TEST_USER_DN, {'email':
                                                ['AUTO', OTHER_USER_EMAIL]},
@@ -463,13 +466,11 @@ class TestMigSharedUseradm__user_account_notify(MigTestCase, UserAssertMixin):
                                 False)
         self.assertEqual(addresses, {'email':
                                      [TEST_USER_EMAIL, OTHER_USER_EMAIL]})
-        self.assertEqual(expire, TEST_USER_EXPIRE)
+        self.assertEqual(expire, self.expected_expire)
         self.assertEqual(errors, [])
 
     def test_missing_user_fails(self):
         """Test failure for missing user account"""
-        self._provision_test_user(self, TEST_USER_DN)
-
         (_, username, full_name, expire, addresses, errors) = \
             user_account_notify(OTHER_USER_DN, {'email': ['AUTO']},
                                 self.configuration,
