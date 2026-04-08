@@ -30,33 +30,38 @@
 import os
 import unittest
 
-from tests.support import MigTestCase, testmain, ensure_dirs_exist
-
+# Imports of the code under test
 from mig.shared.userio import ACTIONS, CREATE, MODIFY, MOVE, DELETE, \
     DEFAULT_COMPRESS, get_home_location, get_trash_location, _check_access, \
     _get_compression_helpers, _build_changes_path, _fill_changes, \
     prepare_changes, commit_changes, abort_changes, delete_path, remove_path, \
-    touch_path, main as userio_main
+    touch_path, legacy_main
+
+# Imports required for the unit test wrapping
 from mig.shared.vgrid import vgrid_set_entities
 
+# Imports required for the unit tests themselves
+from tests.support import MigTestCase, ensure_dirs_exist, testmain
+from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
+
 # TODO: gather shared constants in a tests.support library module
-DUMMY_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
-DUMMY_CLIENT_DIR = '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_User+emailAddress=test@example.com'
+TEST_USER_DIR = '+C=DK+ST=NA+L=NA+O=Test_Org+OU=NA+CN=Test_User+emailAddress=test@example.com'
 TEST_VGRID_NAME = 'testvgrid'
 TEST_OWNER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Owner/emailAddress=owner@example.org'
 
 
-class TestMigSharedUserIO_main(MigTestCase):
+class TestMigSharedUserIO_legacy_main(MigTestCase, UserAssertMixin):
     """Unit tests for userio related helper functions"""
 
     def _provide_configuration(self):
         """Prepare isolated test config"""
         return 'testconfig'
 
-    # TODO: migrate to support as _provision_vgrid or similar
-    def _create_vgrid(self, vgrid_name, owners=None, members=None,
-                      resources=None, settings=None, triggers=None):
+    # TODO: migrate this helper to support.vgridsup module or similar
+    def _provision_test_vgrid(self, vgrid_name, *, owners=None, members=None,
+                              resources=None, settings=None, triggers=None):
         """Helper to create valid skeleton vgrid for testing"""
+        ensure_dirs_exist(self.configuration.mig_system_files)
         for vgrid_base in (self.configuration.vgrid_home,
                            self.configuration.vgrid_files_home,
                            self.configuration.vgrid_files_writable,
@@ -119,19 +124,19 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test_get_home_location_user_home(self):
         """Test get_home_location with user_home path"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         user_path = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, 'file.txt')
+            self.configuration.user_home, TEST_USER_DIR, 'file.txt')
         with open(user_path, "w") as fd:
             fd.close()
         result = get_home_location(self.configuration, user_path)
         expected = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR)
+            self.configuration.user_home, TEST_USER_DIR)
         self.assertEqual(result, expected)
 
     def test_get_home_location_vgrid_files_home(self):
         """Test get_home_location with vgrid_files_home path"""
-        self._create_vgrid(TEST_VGRID_NAME, [TEST_OWNER_DN])
+        self._provision_test_vgrid(TEST_VGRID_NAME, owners=[TEST_OWNER_DN])
         vgrid_path = os.path.join(
             self.configuration.vgrid_files_home, TEST_VGRID_NAME, 'file.txt')
         with open(vgrid_path, "w") as fd:
@@ -144,7 +149,7 @@ class TestMigSharedUserIO_main(MigTestCase):
     @unittest.skip("TODO: fix read-only mount/copy of vgrid_files_writable and enable")
     def test_get_home_location_vgrid_files_writable(self):
         """Test get_home_location with vgrid_files_writable path"""
-        self._create_vgrid(TEST_VGRID_NAME, [TEST_OWNER_DN])
+        self._provision_test_vgrid(TEST_VGRID_NAME, owners=[TEST_OWNER_DN])
         writable_path = os.path.join(
             self.configuration.vgrid_files_writable, TEST_VGRID_NAME, 'file.txt')
         with open(writable_path, "w") as fd:
@@ -166,7 +171,7 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test_get_home_location_vgrid_private_base(self):
         """Test get_home_location with vgrid_private_base path"""
-        self._create_vgrid(TEST_VGRID_NAME, [TEST_OWNER_DN])
+        self._provision_test_vgrid(TEST_VGRID_NAME, owners=[TEST_OWNER_DN])
         priv_path = os.path.join(
             self.configuration.vgrid_private_base, TEST_VGRID_NAME, 'file.txt')
         with open(priv_path, "w") as fd:
@@ -178,7 +183,7 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test_get_home_location_vgrid_public_base(self):
         """Test get_home_location with vgrid_public_base path"""
-        self._create_vgrid(TEST_VGRID_NAME, [TEST_OWNER_DN])
+        self._provision_test_vgrid(TEST_VGRID_NAME, owners=[TEST_OWNER_DN])
         pub_path = os.path.join(
             self.configuration.vgrid_public_base, TEST_VGRID_NAME, 'file.txt')
         with open(pub_path, "w") as fd:
@@ -196,27 +201,27 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test_get_trash_location_visible_link_false(self):
         """Test get_trash_location with visible_link=False"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         test_path = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, 'file.txt')
+            self.configuration.user_home, TEST_USER_DIR, 'file.txt')
         result = get_trash_location(self.configuration, test_path)
         expected = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, '.trash')
+            self.configuration.user_home, TEST_USER_DIR, '.trash')
         self.assertEqual(result, expected)
 
     def test_get_trash_location_visible_link_true(self):
         """Test get_trash_location with visible_link=True"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         test_path = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, 'file.txt')
+            self.configuration.user_home, TEST_USER_DIR, 'file.txt')
         result = get_trash_location(self.configuration, test_path, True)
         expected = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, 'Trash')
+            self.configuration.user_home, TEST_USER_DIR, 'Trash')
         self.assertEqual(result, expected)
 
     def test_get_trash_location_vgrid_path(self):
         """Test get_trash_location with vgrid path"""
-        self._create_vgrid(TEST_VGRID_NAME, [TEST_OWNER_DN])
+        self._provision_test_vgrid(TEST_VGRID_NAME, owners=[TEST_OWNER_DN])
         vgrid_path = os.path.join(
             self.configuration.vgrid_files_home, TEST_VGRID_NAME, 'file.txt')
         result = get_trash_location(self.configuration, vgrid_path)
@@ -276,9 +281,9 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test__check_access_valid_path(self):
         """Test _check_access with valid path"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         valid_path = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, 'valid.txt')
+            self.configuration.user_home, TEST_USER_DIR, 'valid.txt')
         try:
             _check_access(self.configuration, MODIFY, [valid_path])
         except ValueError:
@@ -286,19 +291,19 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test__check_access_invisible_path(self):
         """Test _check_access with invisible path"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         invisible_path = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, '.htaccess')
+            self.configuration.user_home, TEST_USER_DIR, '.htaccess')
         with self.assertRaises(ValueError):
             _check_access(self.configuration, MODIFY, [invisible_path])
 
     def test__check_access_symlink_path_modify_rejected(self):
         """Test _check_access with symlink path"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         symlink_src = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR)
+            self.configuration.user_home, TEST_USER_DIR)
         symlink_dst = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, 'link')
+            self.configuration.user_home, TEST_USER_DIR, 'link')
         os.symlink(symlink_src, symlink_dst)
         with self.assertRaises(ValueError):
             _check_access(self.configuration, MODIFY, [symlink_dst])
@@ -307,11 +312,11 @@ class TestMigSharedUserIO_main(MigTestCase):
     @unittest.skip("TODO: fix issue 460 and enable")
     def test__fill_changes_default_compression(self):
         """Test _fill_changes helper"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         changeset = 'test-changeset'
         action = DELETE
         target_list = [os.path.join(self.configuration.user_home,
-                                    DUMMY_CLIENT_DIR, 'file.txt')]
+                                    TEST_USER_DIR, 'file.txt')]
         pending_path = _fill_changes(
             self.configuration, changeset, action, target_list)
         self.assertIsNotNone(pending_path)
@@ -325,11 +330,11 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test__fill_changes_uncompressed(self):
         """Test _fill_changes helper"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         changeset = 'test-changeset'
         action = DELETE
         target_list = [os.path.join(self.configuration.user_home,
-                                    DUMMY_CLIENT_DIR, 'file.txt')]
+                                    TEST_USER_DIR, 'file.txt')]
         pending_path = _fill_changes(
             self.configuration, changeset, action, target_list, compress=None)
         self.assertIsNotNone(pending_path)
@@ -343,10 +348,10 @@ class TestMigSharedUserIO_main(MigTestCase):
     @unittest.skip("TODO: fix issue 460 and enable")
     def test_prepare_changes_default_compression(self):
         """Test prepare_changes function"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         changeset = 'test-changeset'
         action = DELETE
-        path = os.path.join(self.configuration.user_home, DUMMY_CLIENT_DIR,
+        path = os.path.join(self.configuration.user_home, TEST_USER_DIR,
                             'file.txt')
         pending_path = prepare_changes(
             self.configuration, action, changeset, action, path, False,
@@ -357,10 +362,10 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test_prepare_changes_uncompressed(self):
         """Test prepare_changes function"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         changeset = 'test-changeset'
         action = DELETE
-        path = os.path.join(self.configuration.user_home, DUMMY_CLIENT_DIR,
+        path = os.path.join(self.configuration.user_home, TEST_USER_DIR,
                             'file.txt')
         pending_path = prepare_changes(
             self.configuration, action, changeset, action, path, False, None)
@@ -370,7 +375,7 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test_commit_changes(self):
         """Test commit_changes function"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         changeset = 'test-changeset'
         pending_path = _build_changes_path(
             self.configuration, changeset, pending=True)
@@ -384,7 +389,7 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test_abort_changes(self):
         """Test abort_changes function"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         changeset = 'test-changeset'
         pending_path = _build_changes_path(
             self.configuration, changeset, pending=True)
@@ -396,9 +401,9 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test_delete_path(self):
         """Test delete_path function"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         test_file = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, 'test.txt')
+            self.configuration.user_home, TEST_USER_DIR, 'test.txt')
         with open(test_file, 'w') as f:
             f.write("test content\n")
         result, errors = delete_path(self.configuration, test_file)
@@ -408,9 +413,9 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test_remove_path(self):
         """Test remove_path function"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         test_file = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, 'test.txt')
+            self.configuration.user_home, TEST_USER_DIR, 'test.txt')
         with open(test_file, 'w') as f:
             f.write("test content\n")
         result, errors = remove_path(self.configuration, test_file)
@@ -421,16 +426,16 @@ class TestMigSharedUserIO_main(MigTestCase):
 
     def test_touch_path(self):
         """Test touch_path function"""
-        self._provision_test_user(self, DUMMY_USER_DN)
+        self._provision_test_user(self, TEST_USER_DN)
         test_file = os.path.join(
-            self.configuration.user_home, DUMMY_CLIENT_DIR, 'test.txt')
+            self.configuration.user_home, TEST_USER_DIR, 'test.txt')
         result, errors = touch_path(self.configuration, test_file)
         self.assertTrue(result)
         self.assertEqual(errors, [])
         self.assertTrue(os.path.exists(test_file))
 
 
-class TestMigSharedUserIO__legacy(MigTestCase):
+class TestMigSharedUserIO__legacy_main(MigTestCase):
     """Legacy tests for safeinput module self-checks"""
 
     # TODO: migrate all legacy self-check functionality into the above?
@@ -450,7 +455,7 @@ class TestMigSharedUserIO__legacy(MigTestCase):
             """Helper to show last print on error"""
             raise_on_error_exit.last_print = value
 
-        userio_main(_exit=raise_on_error_exit, _print=record_last_print)
+        legacy_main(_exit=raise_on_error_exit, _print=record_last_print)
 
 
 if __name__ == '__main__':
