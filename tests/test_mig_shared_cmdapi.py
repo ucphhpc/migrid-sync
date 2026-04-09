@@ -198,6 +198,13 @@ class TestMigSharedCmdapi(MigTestCase):
             result, {'src': ['a.txt', 'b.txt'], 'dst': ['c.txt']}
         )
 
+    def test_map_args_to_vars_exact_match(self):
+        """Test map_args_to_vars with exact number of arguments"""
+        var_list = ['src', 'dst']
+        arg_list = ['a.txt', 'b.txt']
+        result = map_args_to_vars(var_list, arg_list)
+        self.assertEqual(result, {'src': ['a.txt'], 'dst': ['b.txt']})
+
     def test_parse_command_args_basic(self):
         """Test that parse_command_args parses a simple command correctly"""
         cmd_list = ['cp', 'srcfile', 'dstfile']
@@ -213,6 +220,14 @@ class TestMigSharedCmdapi(MigTestCase):
         self.assertEqual(backend, 'cp')
         self.assertIn('flags', args_dict)
         self.assertEqual(args_dict['flags'], ['r'])
+
+    def test_parse_command_args_with_multiple_flags(self):
+        """Test that parse_command_args handles multiple combined flags"""
+        cmd_list = ['cp', '-rf', 'srcdir', 'dstdir']
+        backend, args_dict = parse_command_args(self.configuration, cmd_list)
+        self.assertEqual(backend, 'cp')
+        self.assertIn('flags', args_dict)
+        self.assertEqual(args_dict['flags'], ['rf'])
 
     def test_parse_command_args_unsupported(self):
         """Test that parse_command_args raises on unsupported command"""
