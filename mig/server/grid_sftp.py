@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -1997,43 +1998,14 @@ unless it is available in mig/server/MiGserver.conf
     print(__doc__)
     address = configuration.user_sftp_address
     port = configuration.user_sftp_port
-    default_host_key = """
------BEGIN RSA PRIVATE KEY-----
-MIIEogIBAAKCAQEA404IBMReHOdvhhJ5YtgquY3DNi0v0QwfPUk+EcH/CxFW8UCC
-SUJe85up6lEQmOE9yKvrh+3yJgIjdV/ASOw9bd/u0NgNoPwl6A6P8GzHp94vz7UP
-nTp+PEUbA8gwqXnzzdeuF3dLDSXuGHdcv8qQEVRBwj/haecO0fgZcfd4fmLDAG53
-e/Vwc4lVIp4xx+OQowm9RW3nsAZge1DUoxlStD1/rEzBq1DvVx1Wu8pWS48f2ABH
-fHt2Z4ozypMB+a4B56jervcZCNkV/fN2bdGZ8z07hNbn/EkaH2tPw/d62zdHddum
-u7Pi0tYwMZz9GN3t18r9qi5ldUJuJNeNvNc7swIBIwKCAQBuZ7rAfKK9lPunhVDm
-3gYfnKClSSXakNv5MjQXQPg4k2S+UohsudZZERgEGL7rK5MJspb44Um6sJThPSLh
-l1EJe2VeH8wa/iEKUDdI5GD5w7DSmcXBZY3FgKa4sbE8X84wx9g3SJIq9SqA6YTS
-LzAIasDasVA6wK9tTJ6lEczPq2VkxkzpKauDMgI6SpaBV+7Un3OM7VJEbWeaJVoZ
-9I/2AHfp1hDpIfmaYBCnn2Ky70PBGA8DqAnHUKiid2dfZr8jKLu287LaUHxzIZXz
-qSzS6Vg1K0kc5FrgTgrjaXAGNtMenXZdw2/7PMuBDaNuNUApFUlAP5LGvPQ9IRCt
-YggDAoGBAP7z3lm74yxrzSa7HRASO2v3vp7jsbaYl4jPCc+6UruBFJlmUUdIQ2fh
-8i2S1M5mAvZiJ/PKLQ3r6RXxWZOeh4Vw479HFCVHr5GstSfLolJ5svY8iWEoEGdN
-D8aQTQrVAJwAPbLbF4eH5lgSokjOZcWMKsekk4vX2WmCMKWCMms/AoGBAOQ9Fffg
-B8TMc1b+jTcj1Py5TiFsxIe3usYjn8Pgg8kpoGfdBoS/TxwoR0MbJdrPgXDKLlLn
-A4GG6/7lFmxagCAfUyR2wAsOwAugcaFwS3K4QHGPiv9cgKxt9xhuhhDqXGI2lgAu
-oJLcRYBvomPQ+3cGGgifclETTWgkzD5dNVaNAoGBAMStf6RPHPZhyiUxQk4581NK
-FrUWDMAPUFOYZqePvCo/AUMjC4AhzZlH5rVxRRRAEOnz8u9EMWKCycB4Wwt6S0mu
-25OOmoMorAKpzZO6WKYGHFeNyRBvXRx9Rq8e3FjQM6uLKEglW0tLlG/T3EbLG09A
-PkI9IV1AHL8bShlHLjV5AoGBAJyBqKn4tN64FJNsuJrWve8f+w+bCmuxL53PSPtY
-H9plr9IxKQqRz9jLKY0Z7hJiZ2NIz07KS4wEvxUvX9VFXyv4OQMPmaEur5LxrQD8
-i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
-8V/rAoGAEUheXHIqv9n+3oXLvHadC3aApiz1TcyttDM0AjZoSHpXoBB3AIpPdU8O
-0drRG9zJTyU/BC02FvsGAMo0ZpGQRVMuN1Jj7sHsPaUdV38P4G0EaSQJDNxwFKVN
-3stfzMDGtKM9lntAsfFQ8n4yvvEbn/quEWad6srf1yxt9B4t5JA=
------END RSA PRIVATE KEY-----
-"""
     # NOTE: read possibly combined key/cert and strip any non-key content
     # NOTE: paramiko.RSAKey expects '-----X RSA PRIVATE KEY-----'
     #       Newer versions of 'openssl rsa -in X.key -text' generate
     #       '-----X PRIVATE KEY-----'
-    header_marks = {'genric': '-----BEGIN PRIVATE KEY-----',
+    header_marks = {'generic': '-----BEGIN PRIVATE KEY-----',
                     'rsa': '-----BEGIN RSA PRIVATE KEY-----',
                     }
-    footer_marks = {'genric': '-----END PRIVATE KEY-----',
+    footer_marks = {'generic': '-----END PRIVATE KEY-----',
                     'rsa': '-----END RSA PRIVATE KEY-----',
                     }
     possible_rsa_key = read_file(configuration.user_sftp_key, logger)
@@ -2045,16 +2017,14 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
             host_key = host_key.split(footer_mark, 1)[0]
     host_rsa_key = None
     if host_key:
-        host_rsa_key = "%s%s%s" \
-            % (header_marks['rsa'],
-               host_key,
-               footer_marks['rsa'])
+        host_rsa_key = "%s%s%s" % (header_marks['rsa'], host_key,
+                                   footer_marks['rsa'])
         logger.debug("Using host key: %s" % configuration.user_sftp_key)
     else:
-        info_msg = "No valid host key provided - using default"
-        logger.info(info_msg)
-        print(info_msg)
-        host_rsa_key = default_host_key
+        bail_msg = "No valid host key configured - bailing out!"
+        logger.error(bail_msg)
+        print(bail_msg)
+        sys.exit(1)
     # Validate host rsa key before starting server
     try:
         host_key_file = NativeStringIO(force_native_str(host_rsa_key))
