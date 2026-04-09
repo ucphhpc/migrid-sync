@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -574,7 +575,7 @@ def __clean_test_files(configuration, test_path):
                                                            exc))
 
 
-def main(_exit=sys.exit, _print=print):
+def legacy_main(_exit=sys.exit, _print=print):
     """Run module self-tests"""
     from mig.shared.base import client_id_dir
     from mig.shared.conf import get_configuration_object
@@ -681,4 +682,4 @@ def main(_exit=sys.exit, _print=print):
 
 
 if __name__ == "__main__":
-    main()
+    legacy_main()
