@@ -36,6 +36,7 @@ from mig.shared.cmdapi import (
     get_flag_map,
     get_command_map,
     get_usage_map,
+    legacy_main,
     map_args_to_vars,
     parse_command_args,
 )
@@ -235,6 +236,86 @@ class TestMigSharedCmdapi(MigTestCase):
         with self.assertRaises(ValueError) as cm:
             parse_command_args(self.configuration, cmd_list)
         self.assertIn('unsupported command', str(cm.exception))
+
+    def test_parse_command_args_delsharelink_no_flags_entry(self):
+        """Regression: ensure commands without flags don't produce flags key"""
+        self.configuration.site_enable_sharelinks = True
+        cmd_list = ['delsharelink', 'share123']
+        backend, args_dict = parse_command_args(self.configuration, cmd_list)
+        self.assertEqual(backend, 'delsharelink')
+        self.assertNotIn('flags', args_dict)
+        self.assertEqual(args_dict.get('share_id'), ['share123'])
+
+    def test_parse_command_args_canceljob_no_flags_entry(self):
+        """Regression: ensure commands without flags don't produce flags key"""
+        self.configuration.site_enable_jobs = True
+        cmd_list = ['canceljob', 'job123']
+        backend, args_dict = parse_command_args(self.configuration, cmd_list)
+        self.assertEqual(backend, 'canceljob')
+        self.assertNotIn('flags', args_dict)
+        self.assertEqual(args_dict.get('job_id'), ['job123'])
+
+    def test_parse_command_args_datatransfer_no_flags_entry(self):
+        """Regression: ensure commands without flags don't produce flags key"""
+        self.configuration.site_enable_transfers = True
+        cmd_list = ['datatransfer', 'transfer123']
+        backend, args_dict = parse_command_args(self.configuration, cmd_list)
+        self.assertEqual(backend, 'datatransfer')
+        self.assertNotIn('flags', args_dict)
+        self.assertEqual(args_dict.get('transfer_id'), ['transfer123'])
+
+    def test_parse_command_args_deletebackup_no_flags_entry(self):
+        """Regression: ensure commands without flags don't produce flags key"""
+        self.configuration.site_enable_freeze = True
+        cmd_list = ['deletebackup', 'backup123']
+        backend, args_dict = parse_command_args(self.configuration, cmd_list)
+        self.assertEqual(backend, 'deletebackup')
+        self.assertNotIn('flags', args_dict)
+        self.assertEqual(args_dict.get('freeze_id'), ['backup123'])
+
+    def test_parse_command_args_crontab_no_flags_entry(self):
+        """Regression: ensure commands without flags don't produce flags key"""
+        self.configuration.site_enable_crontab = True
+        cmd_list = ['crontab', 'transfer123', 'reschedule']
+        backend, args_dict = parse_command_args(self.configuration, cmd_list)
+        self.assertEqual(backend, 'crontab')
+        self.assertNotIn('flags', args_dict)
+        self.assertEqual(args_dict.get('action'), ['reschedule'])
+
+    def test_parse_command_args_mqueue_no_flags_entry(self):
+        """Regression: ensure commands without flags don't produce flags key"""
+        self.configuration.site_enable_jobs = True
+        cmd_list = ['mqueue', 'testqueue', 'msgaction', 'msgid', 'test msg']
+        backend, args_dict = parse_command_args(self.configuration, cmd_list)
+        self.assertEqual(backend, 'mqueue')
+        self.assertNotIn('flags', args_dict)
+        self.assertEqual(args_dict.get('queue'), ['testqueue'])
+        self.assertEqual(args_dict.get('msg'), ['test msg'])
+
+
+class TestMigSharedCmdapi__legacy_main(MigTestCase):
+    """Unit tests for legacy cmdapi self-checks"""
+
+    def test_existing_main(self):
+        """Run the legacy self-tests directly in module"""
+
+        def raise_on_error_exit(exit_code):
+            if exit_code != 0:
+                if raise_on_error_exit.last_print is not None:
+                    identifying_message = raise_on_error_exit.last_print
+                else:
+                    identifying_message = "unknown"
+                raise AssertionError(
+                    "failure in unittest/testcore: %s" % (identifying_message,)
+                )
+
+        raise_on_error_exit.last_print = None
+
+        def record_last_print(value):
+            """Keep track of printed output"""
+            raise_on_error_exit.last_print = value
+
+        legacy_main(_exit=raise_on_error_exit, _print=record_last_print)
 
 
 if __name__ == '__main__':

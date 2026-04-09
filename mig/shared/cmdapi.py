@@ -33,9 +33,10 @@ from __future__ import absolute_import
 
 from builtins import zip
 import getopt
-
+import sys
 
 # TODO: switch to a command+flags+args map suitable for direct argparse use?
+
 
 def get_flag_map(configuration):
     """Generate a dictionary with the supported optional command flags. Only
@@ -181,7 +182,7 @@ def parse_command_args(configuration, command_list):
     return (function, user_arguments_dict)
 
 
-if __name__ == '__main__':
+def legacy_main(_exit=sys.exit, _print=print):
     from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     for cmd_list in [['cp', 'srcfile', 'dstfile'],
@@ -196,3 +197,7 @@ if __name__ == '__main__':
         print("Backend %s received args %s" % (backend, args_dict))
     for (cmd, usage) in get_usage_map(conf).items():
         print("Usage for %s\n\t%s" % (cmd, usage))
+
+
+if __name__ == '__main__':
+    legacy_main()
