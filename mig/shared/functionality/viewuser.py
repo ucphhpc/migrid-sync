@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewuser - Display public details about a user
-# Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project lead by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -240,7 +241,8 @@ def main(client_id, user_arguments_dict):
             visible_user_name = real_user_name
             user_dict = visible_user[real_user_name]
         else:
-            logger.error("viewuser: invalid user %s" % visible_user_name)
+            # NOTE: peers page links here even before sign up so only warn
+            logger.warning("viewuser: invalid user %s" % visible_user_name)
             logger.debug("viewuser: %s not found in %s" %
                          (visible_user_name, list(visible_user)))
             output_objects.append({'object_type': 'error_text',

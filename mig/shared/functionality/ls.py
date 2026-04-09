@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ls - emulate ls command
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -447,8 +448,8 @@ def main(client_id, user_arguments_dict, environ=None):
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
         except ValueError as err:
-            logger.error('%s called with invalid share_id %s: %s' %
-                         (op_name, share_id, err))
+            logger.warning('%s called with invalid share_id %s: %s' %
+                           (op_name, share_id, err))
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  'Invalid sharelink ID: %s' % share_id})
@@ -487,7 +488,8 @@ def main(client_id, user_arguments_dict, environ=None):
             .%(main_class)s .disable_write { display: none; }
             '''
     else:
-        logger.error('%s called without proper auth: %s' % (op_name, accepted))
+        logger.warning('%s called without proper auth: %s' %
+                       (op_name, accepted))
         output_objects.append({'object_type': 'error_text', 'text':
                                'Authentication is missing!'
                                })
@@ -505,7 +507,8 @@ def main(client_id, user_arguments_dict, environ=None):
     base_dir = os.path.abspath(os.path.join(base_dir, target_dir)) + os.sep
 
     if not os.path.isdir(base_dir):
-        logger.error('%s called on missing base_dir: %s' % (op_name, base_dir))
+        logger.warning('%s called on missing base_dir: %s' %
+                       (op_name, base_dir))
         output_objects.append({'object_type': 'error_text', 'text':
                                'No such %s!' % page_title.lower()
                                })

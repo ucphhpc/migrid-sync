@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadchunked - chunked and efficient file upload back end
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -252,7 +253,8 @@ def main(client_id, user_arguments_dict, environ=None):
         userstyle = False
         widgets = False
     else:
-        logger.error('%s called without proper auth: %s' % (op_name, accepted))
+        logger.warning('%s called without proper auth: %s' % (op_name,
+                                                              accepted))
         output_objects.append({'object_type': 'error_text',
                                'text': 'Authentication is missing!'
                                })
@@ -328,7 +330,7 @@ def main(client_id, user_arguments_dict, environ=None):
         upload_files = [(os.path.join(upload_tmp_dir, i), '') for i in
                         os.listdir(cache_dir)]
     elif not upload_files:
-        logger.error('Rejecting upload with: %s' % upload_files)
+        logger.warning('Rejecting upload without files: %s' % upload_files)
         output_objects.append(
             {'object_type': 'error_text',
              'text': 'No files included to upload!'})
