@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # peersaction - handle management of peers
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -160,8 +160,8 @@ Please contact the %s site support (%s) if you think it should be enabled.
             if now + datetime.timedelta(days=peers_expire_max_days) < expire:
                 raise ValueError("specified expire is too far in the future!")
     except Exception as exc:
-        logger.error("expire %r could not be parsed into a valid date" %
-                     raw_expire)
+        logger.warning("expire %r could not be parsed into a valid date" %
+                       raw_expire)
         output_objects.append(
             {'object_type': 'warning', 'text':
              'End date must be %d - %d days from now - using default %d days' %
