@@ -57,7 +57,6 @@ py_code_files = [
     "shared/griddaemons/%s" % PLAIN,
     "simulation/%s" % PLAIN,
     "user/%s" % PLAIN,
-    "vm-proxy/%s" % PLAIN,
     "webserver/%s" % PLAIN,
     "wsgi-bin/%s" % PLAIN,
 ]

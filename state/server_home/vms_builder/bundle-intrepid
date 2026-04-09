@@ -1,4 +1,0 @@
-guest-additions-2008-1/VBoxLinuxAdditions-x86.run /opt/VBoxLinuxAdditions-x86.run
-guest-additions-2008-1/VBoxLinuxAdditions-amd64.run /opt/VBoxLinuxAdditions-amd64.run
-../../../mig/vm-proxy /opt/proxy
-hacks/interfaces /etc/network/interfaces

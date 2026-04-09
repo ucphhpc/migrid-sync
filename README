@@ -340,7 +340,7 @@ each individual one as described below:
 /etc/init.d/migrid
 Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]
 where daemon is left out for all or given along with DAEMON as one of the following
-(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|accounting|all)
+(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|quota|accounting|all)
 
 
 == Adding users ==
