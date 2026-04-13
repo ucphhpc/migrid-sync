@@ -67,9 +67,9 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     if not allow_pre_tlsv13:
         if getattr(ssl, 'HAS_TLSv1_3', False):
             ssl_options |= getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000)
+            ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_3
         else:
             _logger.warning("won't disable TLS 1.2 without TLS 1.3 support")
-        ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_3
     # NOTE: refuse client TLS renegotiation unless allow_renegotiation
     if not allow_renegotiation:
         ssl_options |= getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000)
