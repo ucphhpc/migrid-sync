@@ -207,9 +207,11 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertEqual(context.options & expected_options, expected_options)
+        options = context.options
+        self.assertEqual(options & expected_options, expected_options)
         # Verify that the minimum TLS version is enforced
-        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_2)
+        minimum_version = context.minimum_version
+        self.assertEqual(minimum_version, ssl.TLSVersion.TLSv1_2)
 
     def test_hardened_ssl_context_options_default(self):
         """Test SSL context options are set correctly"""
@@ -242,9 +244,11 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertEqual(context.options & expected_options, expected_options)
+        options = context.options
+        self.assertEqual(options & expected_options, expected_options)
         # Verify that the minimum TLS version is enforced
-        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_2)
+        minimum_version = context.minimum_version
+        self.assertEqual(minimum_version, ssl.TLSVersion.TLSv1_2)
 
     def test_hardened_ssl_context_options_tls1_1(self):
         """Test SSL context options are set correctly with TLS 1.1 enabled"""
@@ -276,9 +280,11 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertEqual(context.options & expected_options, expected_options)
+        options = context.options
+        self.assertEqual(options & expected_options, expected_options)
         # Verify that the minimum TLS version is enforced
-        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_1)
+        minimum_version = context.minimum_version
+        self.assertEqual(minimum_version, ssl.TLSVersion.TLSv1_1)
 
     def test_hardened_ssl_context_options_tls1_3_only(self):
         """Test SSL context options are set correctly with TLS 1.3 only"""
@@ -312,9 +318,11 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertEqual(context.options & expected_options, expected_options)
+        options = context.options
+        self.assertEqual(options & expected_options, expected_options)
         # Verify that the minimum TLS version is enforced
-        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_3)
+        minimum_version = context.minimum_version
+        self.assertEqual(minimum_version, ssl.TLSVersion.TLSv1_3)
 
     def test_hardened_ssl_context_options_fail_reneg(self):
         """Test SSL context options fail when different"""
@@ -437,9 +445,9 @@ class MigSharedTlsServer(MigTestCase):
         # NOTE: this may be too platform specific
         expected_start = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
         expected_end = ":DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
-        result = ':'.join([spec['name'] for spec in context.get_ciphers()])
-        self.assertTrue(result.startswith(expected_start))
-        self.assertTrue(result.endswith(expected_end))
+        ciphers = ':'.join([spec['name'] for spec in context.get_ciphers()])
+        self.assertTrue(ciphers.startswith(expected_start))
+        self.assertTrue(ciphers.endswith(expected_end))
 
     def test_hardened_ssl_context_legacy_ciphers(self):
         """Test SSL context legacy ciphers are set correctly"""
@@ -460,9 +468,9 @@ class MigSharedTlsServer(MigTestCase):
         # NOTE: this may be too platform specific
         expected_start = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
         expected_end = ":CAMELLIA256-SHA256:CAMELLIA128-SHA256"
-        result = ':'.join([spec['name'] for spec in context.get_ciphers()])
-        self.assertTrue(result.startswith(expected_start))
-        self.assertTrue(result.endswith(expected_end))
+        ciphers = ':'.join([spec['name'] for spec in context.get_ciphers()])
+        self.assertTrue(ciphers.startswith(expected_start))
+        self.assertTrue(ciphers.endswith(expected_end))
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_options_default_without_dhparams(self):
@@ -499,9 +507,11 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertEqual(context._options & expected_options, expected_options)
+        options = getattr(context, '_options', None)
+        self.assertEqual(options & expected_options, expected_options)
         # Verify that the minimum TLS version is enforced
-        self.assertEqual(context._minimum_version, SSL.TLS1_2_VERSION)
+        minimum_version = getattr(context, '_minimum_version', None)
+        self.assertEqual(minimum_version, SSL.TLS1_2_VERSION)
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_options_default(self):
@@ -538,9 +548,11 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertEqual(context._options & expected_options, expected_options)
+        options = getattr(context, '_options', None)
+        self.assertEqual(options & expected_options, expected_options)
         # Verify that the minimum TLS version is enforced
-        self.assertEqual(context._minimum_version, SSL.TLS1_2_VERSION)
+        minimum_version = getattr(context, '_minimum_version', None)
+        self.assertEqual(minimum_version, SSL.TLS1_2_VERSION)
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_options_tls1_1(self):
@@ -576,9 +588,11 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertEqual(context._options & expected_options, expected_options)
+        options = getattr(context, '_options', None)
+        self.assertEqual(options & expected_options, expected_options)
         # Verify that the minimum TLS version is enforced
-        self.assertEqual(context._minimum_version, SSL.TLS1_1_VERSION)
+        minimum_version = getattr(context, '_minimum_version', None)
+        self.assertEqual(minimum_version, SSL.TLS1_1_VERSION)
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_options_tls1_3_only(self):
@@ -616,9 +630,11 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertEqual(context._options & expected_options, expected_options)
+        options = getattr(context, '_options', None)
+        self.assertEqual(options & expected_options, expected_options)
         # Verify that the minimum TLS version is enforced
-        self.assertEqual(context._minimum_version, SSL.TLS1_3_VERSION)
+        minimum_version = getattr(context, '_minimum_version', None)
+        self.assertEqual(minimum_version, SSL.TLS1_3_VERSION)
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_options_fail_reneg(self):
@@ -655,8 +671,8 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertNotEqual(
-            context._options & expected_options, expected_options)
+        options = getattr(context, '_options', None)
+        self.assertNotEqual(options & expected_options, expected_options)
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_options_fail_tls1_1(self):
@@ -693,8 +709,8 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertNotEqual(
-            context._options & expected_options, expected_options)
+        options = getattr(context, '_options', None)
+        self.assertNotEqual(options & expected_options, expected_options)
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_options_fail_tls1_2(self):
@@ -731,8 +747,8 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertNotEqual(
-            context._options & expected_options, expected_options)
+        options = getattr(context, '_options', None)
+        self.assertNotEqual(options & expected_options, expected_options)
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_ciphers(self):
@@ -757,9 +773,9 @@ class MigSharedTlsServer(MigTestCase):
         # NOTE: this may be too platform specific
         expected_start = "ECDHE-ECDSA-AES128-GCM-SHA256:"
         expected_end = ":DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
-        result = context._ciphers
-        self.assertTrue(result.startswith(expected_start))
-        self.assertTrue(result.endswith(expected_end))
+        ciphers = getattr(context, '_ciphers', None)
+        self.assertTrue(ciphers.startswith(expected_start))
+        self.assertTrue(ciphers.endswith(expected_end))
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_legacy_ciphers(self):
@@ -784,6 +800,6 @@ class MigSharedTlsServer(MigTestCase):
         # NOTE: this may be too platform specific
         expected_start = "ECDHE-RSA-AES128-GCM-SHA256:"
         expected_end = ":DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES:CAMELLIA"
-        result = context._ciphers
-        self.assertTrue(result.startswith(expected_start))
-        self.assertTrue(result.endswith(expected_end))
+        ciphers = getattr(context, '_ciphers', None)
+        self.assertTrue(ciphers.startswith(expected_start))
+        self.assertTrue(ciphers.endswith(expected_end))
