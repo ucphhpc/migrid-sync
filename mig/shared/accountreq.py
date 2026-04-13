@@ -1035,7 +1035,7 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
 
         _logger.info("added peer request from %s to %s" % (peer_id, user_id))
 
-        (_, _, full_name, addresses, errors) = user_account_notify(
+        (_, _, full_name, _, addresses, errors) = user_account_notify(
             user_id, raw_targets, conf_path, db_path, False, admin_copy,
             extra_copies)
         if errors:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqacceptpeer - Forward account request from peer to existing user(s)
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -261,7 +262,7 @@ if '__main__' == __name__:
 
         print("Added peer request from %s to %s" % (peer_id, user_id))
 
-        (_, _, full_name, addresses, errors) = user_account_notify(
+        (_, _, full_name, _, addresses, errors) = user_account_notify(
             user_id, raw_targets, conf_path, db_path, verbose, admin_copy)
         if errors:
             print("Address lookup errors for %s :" % user_id)
