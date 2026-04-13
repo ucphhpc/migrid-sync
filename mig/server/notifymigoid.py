@@ -143,5 +143,5 @@ if '__main__' == __name__:
             notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
     print("Sending internal OpenID account intro for '%s' to:\n%s" %
           (user_id, '\n'.join(notify_dict['NOTIFY'])))
-    notify_user(notify_dict, [user_id, username, full_name, expire], 'ACCOUNTINTRO',
-                logger, '', configuration)
+    notify_user(notify_dict, [user_id, username, full_name, expire],
+                'ACCOUNTINTRO', logger, '', configuration)
