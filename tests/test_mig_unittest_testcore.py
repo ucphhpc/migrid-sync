@@ -37,6 +37,7 @@ from mig.unittest.testcore import legacy_main
 
 
 class MigUnittestTestcore__legacy_main(MigTestCase):
+    """Legacy tests for corresponding module self-checks"""
 
     def _provide_configuration(self):
         return 'testconfig'
