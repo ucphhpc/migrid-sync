@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # managers - style overrides for multiple pages
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -73,23 +73,6 @@
 .tablesorter-headerAsc, .tablesorter-headerDesc { 
   background-color: #679c5b; 
 }
-
-/* use similar colors in tabs as in navmenu */
-/*
-.vm-tabs li.ui-state-default { 
-  background: lightgrey;
-  color: #679c5b;
-}
-*/
-.vm-tabs li.ui-tabs-selected { 
-  background: #46743c;
-  color: white;
-}
-.vm-tabs li.ui-state-hover a:hover { 
-  background: #679c5b;
-  color: white;
-}
-
 
 /* color highlighted entry to match skin */
 .context-menu-item.hover {

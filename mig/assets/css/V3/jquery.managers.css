@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jquery.managers - style overrides for multiple pages
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -627,25 +627,6 @@ background: url(/images/icons/code.png) left center no-repeat;
 }
 
 /* use similar colors in tabs as in navmenu */
-/*
-.vm-tabs li.ui-state-default { 
-  background: #999;
-  color: white;
-}
-*/
-.vm-tabs li.ui-tabs-selected { 
-    background: #111;
-    color: white;
-    font-weight: bold; 
-}
-.vm-tabs li.ui-state-hover a:hover { 
-    background: #666;
-    color: white;
-}
-.vm-tabs ul.no-bullets {
-    list-style-type: none;
-}
-
 .jupyter-tabs { 
     /* needed to avoid tabs bar growing to entire menu height */
     overflow: auto;
