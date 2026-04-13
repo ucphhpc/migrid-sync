@@ -1,1 +1,0 @@
-../mig/server/grid_vmproxy.py

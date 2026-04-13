@@ -143,9 +143,6 @@ div.container {
 .navmenu ul li.vgrids a {
   background-image: url('/images/icons/chart_organisation.png');
 }
-.navmenu ul li.vmachines a {
-  background-image: url('/images/icons/computer.png');
-}
 .navmenu ul li.resources a {
   background-image: url('/images/icons/server.png');
 }

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -1766,14 +1766,14 @@ def read_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
             '"?$default_args&flags=$server_flags&file_startpos=$first&file_endpos=$last&path=$src_path"'
         # post_data = \
         #    '"$default_args&flags=$server_flags&file_startpos=$first&file_endpos=$last"'
-        #urlenc_data = '("src_path=$src_path")'
+        # urlenc_data = '("src_path=$src_path")'
         curl_target = '("--output \'$dst_path\'")'
     elif lang == 'python':
         query = \
             "'?%s&flags=%s&file_startpos=%s&file_endpos=%s&path=%s' % (default_args, server_flags, first, last, src_path)"
         # post_data = \
         #    "'%s&flags=%s&file_startpos=%s&file_endpos=%s' % (default_args, server_flags, first, last)"
-        #urlenc_data = '["src_path=%s" % src_path]'
+        # urlenc_data = '["src_path=%s" % src_path]'
         curl_target = "['--output', dst_path]"
     else:
         print('Error: %s not supported!' % lang)
@@ -2805,7 +2805,7 @@ def uploadchunked_function(configuration, lang, curl_cmd,
         curl_target_put = target_template % "'--form', 'action=put', '--form', 'files[]=@-;filename=%s' % os.path.basename(path), '--range', '%d-%d' % (start, end)"
         curl_target_move = target_template % "'--form', 'action=move', '--form', 'files[]=@-;filename=%s' % os.path.basename(path)"
         # Don't require external split command with python - just read chunks
-        #curl_stdin_put = '["split", "-n", "%d/%d" % (chunk_no + 1, total_chunks), path]'
+        # curl_stdin_put = '["split", "-n", "%d/%d" % (chunk_no + 1, total_chunks), path]'
         curl_stdin_put = 'path'
         # Don't require external echo, just read first byte from path
         curl_stdin_move = 'path'
@@ -2943,14 +2943,14 @@ def write_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
             '"?$default_args&flags=$server_flags&file_startpos=$first&file_endpos=$last&path=$dst_path"'
         # post_data = \
         #    '"$default_args&flags=$server_flags&file_startpos=$first&file_endpos=$last"'
-        #urlenc_data = '("path=$dst_path")'
+        # urlenc_data = '("path=$dst_path")'
         curl_target = '("--upload-file \'$src_path\'")'
     elif lang == 'python':
         query = \
             "'?%s&flags=%s&file_startpos=%s&file_endpos=%s&path=%s' % (default_args, server_flags, first, last, dst_path)"
         # post_data = \
         #    "'%s&flags=%s&file_startpos=%s&file_endpos=%s' % (default_args, server_flags, first, last)"
-        #urlenc_data = '["path=%s" % dst_path]'
+        # urlenc_data = '["path=%s" % dst_path]'
         curl_target = "['--upload-file', src_path]"
     else:
         print('Error: %s not supported!' % lang)
@@ -6484,8 +6484,7 @@ def generate_zip(configuration, scripts_languages, dest_dir='.'):
 
 # Supported MiG user operations (don't add 'test' as it is optional)
 
-# TODO: add find, *re, jobfeasible, jobschedule, mrslview, people,
-#           settings, vm*,
+# TODO: add find, *re, jobfeasible, jobschedule, mrslview, people, settings, ..
 
 script_ops = [
     'cancel',

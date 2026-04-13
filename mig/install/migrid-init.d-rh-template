@@ -34,7 +34,6 @@
 # processname: grid_ftps.py
 # processname: grid_notify.py
 # processname: grid_imnotify.py
-# processname: grid_vmproxy.py
 # processname: grid_quota.py
 # processname: grid_accounting.py
 # processname: sshd
@@ -101,7 +100,6 @@ MIG_WEBDAVS=${MIG_CODE}/server/grid_webdavs.py
 MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
 MIG_NOTIFY=${MIG_CODE}/server/grid_notify.py
 MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
-MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 MIG_QUOTA=${MIG_CODE}/server/grid_quota.py
 MIG_ACCOUNTING=${MIG_CODE}/server/grid_accounting.py
 MIG_CHKUSERROOT=${MIG_CODE}/server/chkuserroot.py
@@ -110,7 +108,7 @@ MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
     echo "where daemon is left out for all or given along with DAEMON as one of the following"
-    echo "(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|accounting|all)"
+    echo "(script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|quota|accounting|all)"
 }
 
 check_enabled() {
@@ -349,21 +347,6 @@ start_imnotify() {
     [ $RET2 -ne 0 ] && echo "Warning: imnotify not started."
     echo
 }
-start_vmproxy() {
-    check_enabled "vmachines" || return
-    DAEMON_PATH=${MIG_VMPROXY}
-    SHORT_NAME=$(basename ${DAEMON_PATH})
-    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    echo -n "Starting MiG VM proxy daemon: $SHORT_NAME"
-    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
-	   "${DAEMON_PATH} >> ${MIG_LOG}/vmproxy.out 2>&1 &"
-    fallback_save_pid "$DAEMON_PATH" "$PID_FILE" "$!"
-    RET2=$?
-    [ $RET2 -eq 0 ] && success
-    echo
-    [ $RET2 -ne 0 ] && echo "Warning: vmproxy not started."
-    echo
-}
 start_quota() {
     check_enabled "quota" || return
     DAEMON_PATH=${MIG_QUOTA}
@@ -425,7 +408,6 @@ start_all() {
     start_ftps
     start_notify
     start_imnotify
-    start_vmproxy
     start_quota
     start_accounting
     return 0
@@ -579,15 +561,6 @@ stop_imnotify() {
     killproc ${DAEMON_PATH}
     echo
 }
-stop_vmproxy() {
-    check_enabled "vmachines" || return
-    DAEMON_PATH=${MIG_VMPROXY}
-    SHORT_NAME=$(basename ${DAEMON_PATH})
-    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    echo -n "Shutting down MiG VM proxy: $SHORT_NAME "
-    killproc ${DAEMON_PATH}
-    echo
-}
 stop_quota() {
     check_enabled "quota" || return
     DAEMON_PATH=${MIG_QUOTA}
@@ -648,7 +621,6 @@ stop_all() {
     stop_ftps
     stop_notify
     stop_imnotify
-    stop_vmproxy
     stop_quota
     stop_accounting
     return 0
@@ -771,15 +743,6 @@ reload_imnotify() {
     killproc ${DAEMON_PATH} -HUP
     echo
 }
-reload_vmproxy() {
-    check_enabled "vmachines" || return
-    DAEMON_PATH=${MIG_VMPROXY}
-    SHORT_NAME=$(basename ${DAEMON_PATH})
-    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    echo -n "Reloading MiG VM proxy: $SHORT_NAME "
-    killproc ${DAEMON_PATH} -HUP
-    echo
-}
 reload_quota() {
     check_enabled "quota" || return
     DAEMON_PATH=${MIG_QUOTA}
@@ -853,7 +816,6 @@ reload_all() {
     reload_ftps
     reload_notify
     reload_imnotify
-    reload_vmproxy
     reload_quota
     reload_accounting
     # Apache helpers to verify proper chrooting
@@ -953,13 +915,6 @@ status_imnotify() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status ${DAEMON_PATH} 
 }
-status_vmproxy() {
-    check_enabled "vmachines" || return
-    DAEMON_PATH=${MIG_VMPROXY}
-    SHORT_NAME=$(basename ${DAEMON_PATH})
-    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status ${DAEMON_PATH} 
-}
 status_quota() {
     check_enabled "quota" || return
     DAEMON_PATH=${MIG_QUOTA}
@@ -1012,7 +967,6 @@ status_all() {
     status_ftps
     status_notify
     status_imnotify
-    status_vmproxy
     status_quota
     status_accounting
     return 0
@@ -1026,7 +980,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|quota|accounting|all)
+    script|monitor|sshmux|events|cron|janitor|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|quota|accounting|all)
         TARGET="$2"
 	;;
     '')

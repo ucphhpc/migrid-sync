@@ -157,7 +157,6 @@ state/freeze_home/*
 state/events_home/*
 state/re_home/*
 state/resource_home/*
-state/vm_home/*
 state/server_home/*
 state/twofactor_home/*
 state/openid_store/*
