@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cmdapi - shared backend command line access helper functions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -32,9 +33,10 @@ from __future__ import absolute_import
 
 from builtins import zip
 import getopt
-
+import sys
 
 # TODO: switch to a command+flags+args map suitable for direct argparse use?
+
 
 def get_flag_map(configuration):
     """Generate a dictionary with the supported optional command flags. Only
@@ -174,11 +176,13 @@ def parse_command_args(configuration, command_list):
             raise ValueError('Error: %s not supported!' % opt)
 
     user_arguments_dict = map_args_to_vars(args_form, args)
-    user_arguments_dict['flags'] = [flags]
+    # NOTE: most but not all commands accept flags arg
+    if flags:
+        user_arguments_dict['flags'] = [flags]
     return (function, user_arguments_dict)
 
 
-if __name__ == '__main__':
+def legacy_main(_exit=sys.exit, _print=print):
     from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     for cmd_list in [['cp', 'srcfile', 'dstfile'],
@@ -193,3 +197,7 @@ if __name__ == '__main__':
         print("Backend %s received args %s" % (backend, args_dict))
     for (cmd, usage) in get_usage_map(conf).items():
         print("Usage for %s\n\t%s" % (cmd, usage))
+
+
+if __name__ == '__main__':
+    legacy_main()
