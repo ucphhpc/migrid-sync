@@ -709,6 +709,7 @@ class MigSharedPwCrypto(MigTestCase):
 
 
 class MigSharedPwCrypto__legacy_main(MigTestCase):
+    """Legacy tests for corresponding module self-checks"""
 
     def _provide_configuration(self):
         return 'testconfig'
