@@ -32,13 +32,18 @@ import importlib
 import os
 import shutil
 import sys
+from types import SimpleNamespace
 import unittest
 
 from tests.support import MIG_BASE, PY2, TEST_DATA_DIR, MigTestCase, testmain, \
     temppath, ensure_dirs_exist
+from tests.support.wsgisupp import WsgiAssertMixin
 
 from mig.shared.base import client_id_dir
 from mig.shared.functionality.cat import _main as submain, main as realmain
+
+
+EXAMPLE_GIF_FILE = os.path.join(TEST_DATA_DIR, 'loading.gif')
 
 
 def create_http_environ(configuration):
@@ -56,11 +61,28 @@ def create_http_environ(configuration):
     return environ
 
 
+def _place_binary_test_file(test_binary_file, *, into_dir):
+    """
+    Write a binary test file to a particular directory.
+    """
+
+    test_binary_file_name = os.path.basename(test_binary_file)
+    test_binary_file_size = os.stat(test_binary_file).st_size
+    with open(test_binary_file, 'rb') as fh_test_file:
+        test_binary_file_data = fh_test_file.read()
+    shutil.copyfile(test_binary_file, os.path.join(into_dir, test_binary_file_name))
+
+    return SimpleNamespace(
+        data=test_binary_file_data,
+        size=test_binary_file_size,
+    )
+
+
 def _only_output_objects(output_objects, with_object_type=None):
     return [o for o in output_objects if o['object_type'] == with_object_type]
 
 
-class MigSharedFunctionalityCat(MigTestCase):
+class MigSharedFunctionalityCat__submain(MigTestCase):
     """Wrap unit tests for the corresponding module"""
 
     TEST_CLIENT_ID = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
@@ -97,19 +119,13 @@ class MigSharedFunctionalityCat(MigTestCase):
                                       with_object_type='file_output')
 
     def test_file_serving_at_limit(self):
-        test_binary_file = os.path.realpath(
-            os.path.join(TEST_DATA_DIR, 'loading.gif'))
-        test_binary_file_size = os.stat(test_binary_file).st_size
-        with open(test_binary_file, 'rb') as fh_test_file:
-            test_binary_file_data = fh_test_file.read()
-        shutil.copyfile(test_binary_file, os.path.join(
-            self.test_user_dir, 'loading.gif'))
+        test_binary_file = _place_binary_test_file(EXAMPLE_GIF_FILE, into_dir=self.test_user_dir)
         payload = {
             'output_format': ['file'],
             'path': ['loading.gif'],
         }
 
-        self.configuration.wwwserve_max_bytes = test_binary_file_size
+        self.configuration.wwwserve_max_bytes = test_binary_file.size
 
         (output_objects, status) = submain(self.configuration, self.logger,
                                            client_id=self.TEST_CLIENT_ID,
@@ -120,16 +136,10 @@ class MigSharedFunctionalityCat(MigTestCase):
         relevant_obj = self.assertSingleOutputObject(output_objects,
                                                      with_object_type='file_output')
         self.assertEqual(len(relevant_obj['lines']), 1)
-        self.assertEqual(relevant_obj['lines'][0], test_binary_file_data)
+        self.assertEqual(relevant_obj['lines'][0], test_binary_file.data)
 
     def test_file_serving_over_limit_without_storage_protocols(self):
-        test_binary_file = os.path.realpath(os.path.join(TEST_DATA_DIR,
-                                                         'loading.gif'))
-        test_binary_file_size = os.stat(test_binary_file).st_size
-        with open(test_binary_file, 'rb') as fh_test_file:
-            test_binary_file_data = fh_test_file.read()
-        shutil.copyfile(test_binary_file, os.path.join(self.test_user_dir,
-                                                       'loading.gif'))
+        test_binary_file = _place_binary_test_file(EXAMPLE_GIF_FILE, into_dir=self.test_user_dir)
         payload = {
             'output_format': ['file'],
             'path': ['loading.gif'],
@@ -137,7 +147,7 @@ class MigSharedFunctionalityCat(MigTestCase):
 
         # NOTE: override default storage_protocols to empty in this test
         self.configuration.storage_protocols = []
-        self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
+        self.configuration.wwwserve_max_bytes = test_binary_file.size - 1
 
         (output_objects, status) = submain(self.configuration, self.logger,
                                            client_id=self.TEST_CLIENT_ID,
@@ -197,6 +207,59 @@ class MigSharedFunctionalityCat(MigTestCase):
         relevant_obj = error_text_objects[2]
         self.assertEqual(
             relevant_obj['text'], 'Input arguments were rejected - not allowed for this script!')
+
+
+class MigSharedFunctionalityCat__wsgi(MigTestCase, WsgiAssertMixin):
+    """
+    Cover the full WSGI response of the functionality cat file.
+    """
+
+    TEST_CLIENT_ID = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        self.test_user_dir = self._provision_test_user(self, self.TEST_CLIENT_ID)
+
+    def test_should_return_a_binary_file(self):
+        """
+        Test returning a binary file.
+        """
+        test_binary_file = _place_binary_test_file(EXAMPLE_GIF_FILE, into_dir=self.test_user_dir)
+        request_body = {
+            'path': 'loading.gif',
+            'output_format': 'file',
+        }
+        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
+                                 'http://localhost/cat.py',
+                                 form=request_body,
+                                 mig_user_dn=self.TEST_CLIENT_ID)
+
+        content, _ = self.assertWsgiResponse(None, prepared_wsgi,
+                expected_status_code=200,
+                expected_content_type='image/gif')
+
+        self.assertEqual(content, test_binary_file.data)
+
+    def test_should_return_a_textual_error_on_nonexistent_file(self):
+        """
+        Test returning a textual error on nonxistent file.
+        """
+        request_body = {
+            'path': 'nonexist.ent',
+            'output_format': 'file',
+        }
+        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
+                                 'http://localhost/cat.py',
+                                 form=request_body,
+                                 mig_user_dn=self.TEST_CLIENT_ID)
+
+        content, _ = self.assertWsgiResponse(None, prepared_wsgi,
+                expected_status_code=200,
+                expected_content_type='text/plain')
+
+        self.assertEqual(content, 'nonexist.ent: No such file or directory\n')
 
 
 if __name__ == '__main__':

@@ -38,6 +38,7 @@ except Exception as exc:
     exit(1)
 
 from past.builtins import basestring
+import inspect
 import os
 import sys
 import time
@@ -62,6 +63,20 @@ from mig.shared.safeinput import html_escape
 row_name = ('even', 'odd')
 _valid_output_formats = ['txt', 'html', 'soap', 'pickle', 'pickle1', 'pickle2',
                          'yaml', 'xmlrpc', 'resource', 'json', 'file']
+
+
+def kwargs_for_functionality(main, configuration=None, environ=None):
+    """
+    Determine which additional arguments are supported by the
+    selected functionality method and arrange to to pass them.
+    """
+
+    parameters = inspect.signature(main).parameters
+
+    kwargs = dict()
+    if 'environ' in parameters:
+        kwargs['environ'] = environ
+    return kwargs
 
 
 def reject_main(client_id, user_arguments_dict):
@@ -2697,9 +2712,6 @@ def file_format(configuration, ret_val, ret_msg, out_obj):
 
     # TODO: use wsgi file_wrapper helper here if out_obj has wsgi entry?
 
-    # NOTE: we expect binary data here and must use it consistently
-    file_content = b''
-
     # NOTE: carefully handle errors and ONLY render them when proper care has
     #       been taken to deliver them as actual output, to avoid that they end
     #       up hidden inside downloaded files.
@@ -2719,6 +2731,12 @@ def file_format(configuration, ret_val, ret_msg, out_obj):
         render_text, render_errors = True, True
     # _logger.debug("render output in file_format: %s (%s %s)" %
     #              (out_obj, render_text, render_errors))
+
+    if render_text:
+        file_content = ''
+    else:
+        file_content = b''
+
     for entry in out_obj:
         if entry['object_type'] == 'file_output':
             for line in entry['lines']:
