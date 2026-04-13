@@ -66,7 +66,7 @@ TEST_VGRID_NAME = "testvgrid"
 TEST_OWNER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Owner/emailAddress=owner@example.org"
 
 
-class TestMigSharedUserIO_legacy_main(MigTestCase, UserAssertMixin):
+class TestMigSharedUserIO(MigTestCase, UserAssertMixin):
     """Unit tests for userio related helper functions"""
 
     def _provide_configuration(self):
@@ -520,11 +520,16 @@ class TestMigSharedUserIO_legacy_main(MigTestCase, UserAssertMixin):
 
 
 class TestMigSharedUserIO__legacy_main(MigTestCase):
-    """Legacy tests for safeinput module self-checks"""
+    """Legacy tests for corresponding module self-checks"""
+
+    def _provide_configuration(self):
+        return 'testconfig'
 
     # TODO: migrate all legacy self-check functionality into the above?
     def test_existing_main(self):
         """Wrap old inline self-test as an additional unit test"""
+
+        self.logger.forgive_errors()
 
         def raise_on_error_exit(exit_code):
             if exit_code != 0:
@@ -533,16 +538,14 @@ class TestMigSharedUserIO__legacy_main(MigTestCase):
                 else:
                     identifying_message = "unknown"
                 raise AssertionError(
-                    "failure in unittest/testcore: %s" % (identifying_message,)
-                )
-
+                    'legacy test failure: %s' % (identifying_message,))
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
             """Helper to show last print on error"""
             raise_on_error_exit.last_print = value
 
-        legacy_main(_exit=raise_on_error_exit, _print=record_last_print)
+        legacy_main(self.configuration, print=record_last_print, _exit=raise_on_error_exit, _argv=[])
 
 
 if __name__ == "__main__":

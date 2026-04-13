@@ -37,7 +37,6 @@ from tests.support import MigTestCase, FakeConfiguration, \
 
 from mig.shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
     POLICY_HIGH, POLICY_MODERN, POLICY_CUSTOM, PASSWORD_POLICIES
-from mig.shared.pwcrypto import main as pwcrypto_main
 from mig.shared.pwcrypto import *
 
 DUMMY_USER = "dummy-user"
@@ -708,6 +707,13 @@ class MigSharedPwCrypto(MigTestCase):
         self.assertEqual(expected, result,
                          "failed generate password with fixed seed")
 
+
+class MigSharedPwCrypto__legacy_main(MigTestCase):
+    """Legacy tests for corresponding module self-checks"""
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
     # TODO: migrate remaining inline checks from module here instead
     def test_existing_main(self):
         def raise_on_error_exit(exit_code):
@@ -717,13 +723,13 @@ class MigSharedPwCrypto(MigTestCase):
                 else:
                     identifying_message = 'unknown'
                 raise AssertionError(
-                    'failure in unittest/testcore: %s' % (identifying_message,))
+                    'legacy test failure: %s' % (identifying_message,))
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
             raise_on_error_exit.last_print = value
 
-        pwcrypto_main(_exit=raise_on_error_exit, _print=record_last_print)
+        legacy_main(self.configuration, print=record_last_print, _exit=raise_on_error_exit)
 
 
 if __name__ == '__main__':

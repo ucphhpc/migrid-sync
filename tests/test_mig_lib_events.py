@@ -34,10 +34,9 @@ import unittest
 # Imports of the code under test
 from mig.lib.events import _restore_env, _save_env, at_remain, cron_match, \
     get_path_expand_map, get_time_expand_map, load_atjobs, load_crontab
-from mig.lib.events import main as events_main
 from mig.lib.events import parse_and_save_atjobs, parse_and_save_crontab, \
     parse_atjobs, parse_atjobs_contents, parse_crontab, \
-    parse_crontab_contents, run_cron_command, run_events_command
+    parse_crontab_contents, run_cron_command, run_events_command, legacy_main
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist
 
@@ -3395,15 +3394,14 @@ class MigLibEvents__legacy_main(MigTestCase):
                 else:
                     identifying_message = "unknown"
                 raise AssertionError(
-                    "failure in unittest/testcore: %s" % (identifying_message,)
-                )
+                    'legacy test failure: %s' % (identifying_message,))
 
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
             raise_on_error_exit.last_print = value
 
-        events_main(_exit=raise_on_error_exit, _print=record_last_print)
+        legacy_main(self.configuration, print=record_last_print, _exit=raise_on_error_exit)
 
 
 if __name__ == "__main__":

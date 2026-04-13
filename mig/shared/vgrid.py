@@ -2321,9 +2321,7 @@ def vgrid_rm_entry(configuration, vgrid):
     return (success, msg)
 
 
-def legacy_main(_exit=sys.exit, _print=print):
-    from mig.shared.conf import get_configuration_object
-    conf = get_configuration_object(skip_log=True, disable_auth_log=True)
+def legacy_main(conf, print=print, _exit=sys.exit):
     client_id = '/C=DK/CN=John Doe/emailAddress=john@doe.org'
     if sys.argv[1:]:
         client_id = sys.argv[1]
@@ -2445,6 +2443,10 @@ def legacy_main(_exit=sys.exit, _print=print):
         print(vgrid_set_members(conf, dummy_vgrid, orig_members))
     print(vgrid_members(dummy_vgrid, conf))
 
+    _exit(0)
+
 
 if __name__ == "__main__":
-    legacy_main()
+    from mig.shared.conf import get_configuration_object
+    conf = get_configuration_object(skip_log=True, disable_auth_log=True)
+    legacy_main(conf)
