@@ -520,7 +520,7 @@ class TestMigSharedUserIO(MigTestCase, UserAssertMixin):
 
 
 class TestMigSharedUserIO__legacy_main(MigTestCase):
-    """Legacy tests for safeinput module self-checks"""
+    """Legacy tests for corresponding module self-checks"""
 
     def _provide_configuration(self):
         return 'testconfig'
