@@ -182,9 +182,7 @@ def parse_command_args(configuration, command_list):
     return (function, user_arguments_dict)
 
 
-def legacy_main(_exit=sys.exit, _print=print):
-    from mig.shared.conf import get_configuration_object
-    conf = get_configuration_object()
+def legacy_main(conf, print=print, _exit=sys.exit):
     for cmd_list in [['cp', 'srcfile', 'dstfile'],
                      ['cp', 'srcfile', 'srcfile2', 'dstdir'],
                      ['cp', '-r', 'srcdir', 'dstdir'],
@@ -200,4 +198,6 @@ def legacy_main(_exit=sys.exit, _print=print):
 
 
 if __name__ == '__main__':
-    legacy_main()
+    from mig.shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    legacy_main(conf)

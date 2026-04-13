@@ -294,7 +294,10 @@ class TestMigSharedCmdapi(MigTestCase):
 
 
 class TestMigSharedCmdapi__legacy_main(MigTestCase):
-    """Unit tests for legacy cmdapi self-checks"""
+    """Unit tests for corresponding module legacy self-checks"""
+
+    def _provide_configuration(self):
+        return 'testconfig'
 
     def test_existing_main(self):
         """Run the legacy self-tests directly in module"""
@@ -315,7 +318,8 @@ class TestMigSharedCmdapi__legacy_main(MigTestCase):
             """Keep track of printed output"""
             raise_on_error_exit.last_print = value
 
-        legacy_main(_exit=raise_on_error_exit, _print=record_last_print)
+        legacy_main(self.configuration, print=record_last_print,
+                    _exit=raise_on_error_exit)
 
 
 if __name__ == '__main__':
