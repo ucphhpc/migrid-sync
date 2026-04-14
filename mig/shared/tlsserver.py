@@ -57,14 +57,17 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     #       https://wiki.mozilla.org/Security/Server_Side_TLS
     ssl_options |= getattr(ssl, 'OP_NO_SSLv2', 0x1000000)
     ssl_options |= getattr(ssl, 'OP_NO_SSLv3', 0x2000000)
+    ssl_options |= getattr(ssl, 'OP_NO_TLSv1', 0x4000000)
+    ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_1
     # NOTE: refuse weak TLS protocols unless allow_pre_tlsv12
     if not allow_pre_tlsv12:
-        ssl_options |= getattr(ssl, 'OP_NO_TLSv1', 0x4000000)
         ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000)
+        ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     # NOTE: refuse slightly dated TLS 1.2 protocol unless allow_pre_tlsv13
     if not allow_pre_tlsv13:
         if getattr(ssl, 'HAS_TLSv1_3', False):
             ssl_options |= getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000)
+            ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_3
         else:
             _logger.warning("won't disable TLS 1.2 without TLS 1.3 support")
     # NOTE: refuse client TLS renegotiation unless allow_renegotiation
@@ -77,7 +80,7 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     ssl_options |= getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000)
     # Useful for debugging
     # ssl_options |= getattr(ssl, 'OP_NO_TICKET',  0x0004000)
-    # ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x1000000)
+    # ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000)
     # ssl_options |= getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000)
     if sys.version_info[:2] >= (2, 7) and ssl_ctx:
         _logger.info("enforcing strong SSL/TLS options")
@@ -153,14 +156,26 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
     #       https://wiki.mozilla.org/Security/Server_Side_TLS
     ssl_options |= getattr(SSL, 'OP_NO_SSLv2', 0x1000000)
     ssl_options |= getattr(SSL, 'OP_NO_SSLv3', 0x2000000)
+    ssl_options |= getattr(SSL, 'OP_NO_TLSv1', 0x4000000)
+    ssl_ctx.set_min_proto_version(SSL.TLS1_1_VERSION)
+    # Mimic native ssl exposure of options
+    ssl_ctx._minimum_version = SSL.TLS1_1_VERSION
     # NOTE: refuse weak TLS protocols unless allow_pre_tlsv12
     if not allow_pre_tlsv12:
-        ssl_options |= getattr(SSL, 'OP_NO_TLSv1', 0x4000000)
         ssl_options |= getattr(SSL, 'OP_NO_TLSv1_1', 0x10000000)
+        ssl_ctx.set_min_proto_version(SSL.TLS1_2_VERSION)
+        # Mimic native ssl exposure of options
+        ssl_ctx._minimum_version = SSL.TLS1_2_VERSION
     # NOTE: refuse slightly dated TLS 1.2 protocol unless allow_pre_tlsv13
     if not allow_pre_tlsv13:
-        if getattr(SSL, 'HAS_TLSv1_3', False):
+        # IMPORTANT: OpenSSL doesn't have TLSv1.3 support marker at the moment,
+        #            so fall back to checking if native ssl does.
+        if getattr(SSL, 'HAS_TLSv1_3', False) or \
+                getattr(ssl, 'HAS_TLSv1_3', False):
             ssl_options |= getattr(SSL, 'OP_NO_TLSv1_2', 0x8000000)
+            ssl_ctx.set_min_proto_version(SSL.TLS1_3_VERSION)
+            # Mimic native ssl exposure of options
+            ssl_ctx._minimum_version = SSL.TLS1_3_VERSION
         else:
             _logger.warning("won't disable TLS 1.2 without TLS 1.3 support")
     # NOTE: refuse client TLS renegotiation unless allow_renegotiation
@@ -175,9 +190,13 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
         _logger.info("enforcing strong SSL/TLS options")
         _logger.debug("SSL/TLS options: %s" % ssl_options)
         ssl_ctx.set_options(ssl_options)
+        # Mimic native ssl exposure of options
+        ssl_ctx._options = ssl_options
     else:
         _logger.info("can't enforce strong SSL/TLS options")
         _logger.warning("Upgrade to python 2.7.9+ for maximum security")
+        # Mimic native ssl exposure of options
+        ssl_ctx._options = None
 
     pfs_available = False
     if dhparamsfile:
@@ -219,4 +238,9 @@ curves to take advantage of this optional improved security feature""")
 dhparams nor elliptic curves available.""")
 
     ssl_ctx.set_cipher_list(ciphers)
+
+    # Mimic dumbed down version of native ssl get_ciphers method yielding specs
+    ssl_ctx._ciphers = ':'.join([i for i in ciphers.split(':')
+                                 if not i.startswith('!')])
+
     return ssl_ctx

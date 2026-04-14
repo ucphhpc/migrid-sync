@@ -10,3 +10,5 @@ isort
 paramiko;python_version >= "3.7"
 paramiko<3;python_version < "3.7"
 werkzeug
+# We need pyOpenSSL for the FTPS service and related tlsserver unit tests
+pyOpenSSL
