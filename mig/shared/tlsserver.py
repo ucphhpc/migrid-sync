@@ -48,7 +48,7 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     _logger = configuration.logger
     _logger.info("enforcing strong SSL/TLS connections")
     _logger.debug("using SSL/TLS ciphers: %s" % ciphers)
-    ssl_ctx = ssl.create_default_context()
+    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     ssl_ctx.load_cert_chain(certfile, keyfile)
     ssl_options = 0
