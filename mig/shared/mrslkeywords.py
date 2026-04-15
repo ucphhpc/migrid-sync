@@ -316,7 +316,7 @@ Compares JOB_ID.status from the job against the file called EXPECTED.status from
         }))
     specs.append(('RETRIES', {
         'Title': 'Job Retries',
-        'Description': 'Specifies the maximum number of automatic retries if the job does not finish within the requested time. E.g. if the resource dies or just does not provide enough speed to deliver results in time. If not set the server default of %s is used. It may be a good idea to increase the number of retries for e.g. long sandbox jobs where the risk of the resource going offline is higher. Similarly it is recommended to lower it for experimental jobs where a broken specification will otherwise cause repeated job failures and resulting forced empty jobs on the resources.'\
+        'Description': 'Specifies the maximum number of automatic retries if the job does not finish within the requested time. E.g. if the resource dies or just does not provide enough speed to deliver results in time. If not set the server default of %s is used. It is recommended to lower it for experimental jobs where a broken specification will otherwise cause repeated job failures and resulting forced empty jobs on the resources.'\
              % configuration.job_retries,
         'Example': '5',
         'Type': 'int',
@@ -357,15 +357,6 @@ This makes is possible to get a total statistic for all jobs in a project.
         'Type': 'string',
         'Value': '',
         'Editor': 'invisible',
-        'Required': False,
-        }))
-    specs.append(('SANDBOX', {
-        'Title': 'Allow Sandbox Execution',
-        'Description': 'Specifies whether the job may run in a sandbox. If 0 or false it may not, if 1 or true it may.',
-        'Example': 'True',
-        'Type': 'boolean',
-        'Value': False,
-        'Editor': 'select',
         'Required': False,
         }))
     specs.append(('PLATFORM', {

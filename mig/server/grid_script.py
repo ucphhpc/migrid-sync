@@ -523,8 +523,6 @@ while True:
                          % unique_resource_name)
             continue
 
-        sandboxed = resource_config.get('SANDBOX', False)
-
         # Write the PGID of EXE to PGID file
 
         (status, msg) = put_exe_pgid(
@@ -533,7 +531,6 @@ while True:
             exe,
             exe_pgid,
             logger,
-            sandboxed,
         )
         if status:
             logger.info(msg)
@@ -1357,29 +1354,28 @@ while True:
             ):
                 logger.error('could not clean up MiG server')
 
-            if not resource_config.get('SANDBOX', False):
-                logger.info(
-                    'Killing running job with atomic_resource_exe_restart')
-                (status, msg) = \
-                    atomic_resource_exe_restart(unique_resource_name,
-                                                exe, configuration, logger)
+            logger.info(
+                'Killing running job with atomic_resource_exe_restart')
+            (status, msg) = \
+                atomic_resource_exe_restart(unique_resource_name,
+                                            exe, configuration, logger)
 
-                if status:
-                    logger.info('atomic_resource_exe_restart ok: res %s:%s'
-                                % (unique_resource_name, exe))
-                else:
-                    logger.error(
-                        'atomic_resource_exe_restart FAILED: %s res %s:%s'
-                        % (msg, unique_resource_name, exe))
+            if status:
+                logger.info('atomic_resource_exe_restart ok: res %s:%s'
+                            % (unique_resource_name, exe))
+            else:
+                logger.error(
+                    'atomic_resource_exe_restart FAILED: %s res %s:%s'
+                    % (msg, unique_resource_name, exe))
 
-                    # kill_job_by_exe_restart(unique_resource_name, exe,
-                    #                        configuration, logger)
-                    # Make sure we do not loose exes even if restart fails
+                # kill_job_by_exe_restart(unique_resource_name, exe,
+                #                        configuration, logger)
+                # Make sure we do not loose exes even if restart fails
 
-                    retry_message = 'RESTARTEXEFAILED %s %s %s\n'\
-                        % (unique_resource_name, exe, job_id)
-                    send_message_to_grid_script(retry_message, logger,
-                                                configuration)
+                retry_message = 'RESTARTEXEFAILED %s %s %s\n'\
+                    % (unique_resource_name, exe, job_id)
+                send_message_to_grid_script(retry_message, logger,
+                                            configuration)
     elif cap_line.find('JOBTIMEOUT') == 0:
 
         print(cap_line)
@@ -1463,34 +1459,30 @@ while True:
                     logger,
                 )
 
-            # Restart non-sandbox resources for all timed out jobs
+            # TODO: atomic_resource_exe_restart is not always effective
+            # The imada resources have been seen to hang in wait for input
+            # files loop across an atomic_resource_exe_restart run
+            # (server PGID was 'starting').
 
-            if not resource_config.get('SANDBOX', False):
+            (status, msg) = \
+                atomic_resource_exe_restart(unique_resource_name,
+                                            exe, configuration, logger)
+            if status:
+                logger.info('atomic_resource_exe_restart ok: res %s:%s'
+                            % (unique_resource_name, exe))
+            else:
+                logger.error(
+                    'atomic_resource_exe_restart FAILED: %s, res %s:%s'
+                    % (msg, unique_resource_name, exe))
 
-                # TODO: atomic_resource_exe_restart is not always effective
-                # The imada resources have been seen to hang in wait for input
-                # files loop across an atomic_resource_exe_restart run
-                # (server PGID was 'starting').
+                # Make sure we do not loose exes even if restart fails
 
-                (status, msg) = \
-                    atomic_resource_exe_restart(unique_resource_name,
-                                                exe, configuration, logger)
-                if status:
-                    logger.info('atomic_resource_exe_restart ok: res %s:%s'
-                                % (unique_resource_name, exe))
-                else:
-                    logger.error(
-                        'atomic_resource_exe_restart FAILED: %s, res %s:%s'
-                        % (msg, unique_resource_name, exe))
-
-                    # Make sure we do not loose exes even if restart fails
-
-                    retry_message = 'RESTARTEXEFAILED %s %s %s\n'\
-                        % (unique_resource_name, exe_name,
-                           job_dict['JOB_ID'])
-                    send_message_to_grid_script(retry_message, logger,
-                                                configuration)
-                    logger.info('requested restart exe retry attempt')
+                retry_message = 'RESTARTEXEFAILED %s %s %s\n'\
+                    % (unique_resource_name, exe_name,
+                       job_dict['JOB_ID'])
+                send_message_to_grid_script(retry_message, logger,
+                                            configuration)
+                logger.info('requested restart exe retry attempt')
     elif cap_line.find('JOBQUEUEINFO') == 0:
 
         details = linelist[1:]

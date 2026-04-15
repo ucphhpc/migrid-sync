@@ -64,7 +64,6 @@ def put_fe_pgid(
     unique_resource_name,
     pgid,
     logger,
-    sandbox=False,
 ):
     """Write front end PGID in resource home"""
 
@@ -123,7 +122,6 @@ def put_exe_pgid(
     exe_name,
     pgid,
     logger,
-    sandbox=False,
 ):
     """Write exe PGID file in resource home and stop exe if requested"""
 
@@ -166,7 +164,7 @@ def put_exe_pgid(
         msg = "pgid: '%s' put for %s %s" % (pgid, unique_resource_name,
                                             exe_name)
 
-        if not sandbox and 'stopped' == old_pgid:
+        if 'stopped' == old_pgid:
             msg += "Resource: '" + unique_resource_name\
                 + "' EXE node: '" + exe_name\
                 + "' has been stopped, kill EXE script."
@@ -211,11 +209,6 @@ def start_resource_exe_if_continuous(
 
     if not resource_dict:
         return (False, 'Failed to unpack resource configuration!')
-
-    resource_dict['SANDBOX'] = resource_dict.get('SANDBOX', False)
-
-    if resource_dict['SANDBOX']:
-        return (True, '')
 
     for exe in resource_dict['EXECONFIG']:
         if exe['name'] == finished_exe:
@@ -342,16 +335,6 @@ def fill_frontend_script(
                  + resource_config['FRONTENDLOG'] + '\n')
         os.write(filehandle, 'curllog=' + resource_config['CURLLOG']
                  + '\n')
-
-        sandbox = resource_config.get('SANDBOX', False)
-        os.write(filehandle, 'sandbox=%d\n' % int(sandbox))
-        if sandbox:
-            sandbox_key = resource_config.get('SANDBOXKEY', None)
-            if not sandbox_key:
-                return (False,
-                        'Resource error, SANDBOX flag is true but SANDBOXKEY was not found!'
-                        )
-            os.write(filehandle, 'sandboxkey=%s\n' % sandbox_key)
 
         # append frontend_script.sh
 
@@ -1598,51 +1581,6 @@ def restart_resource_store(
                              resource_home, logger)
     return (stop_status and start_status, '%s; %s' % (stop_msg,
                                                       start_msg))
-
-
-def get_sandbox_exe_stop_command(
-    sandbox_home,
-    sandboxkey,
-    exe_name,
-    logger,
-):
-
-    # open the resources configuration
-
-    resource_configuration_file = os.path.join(sandbox_home, sandboxkey,
-                                               'config')
-    resource_dict = unpickle(resource_configuration_file, logger)
-    if not resource_dict:
-        return (False,
-                'Could not unpickle resource configuration file: '
-                + resource_configuration_file)
-
-    (status, exe) = get_resource_exe(resource_dict, exe_name, logger)
-    if not status:
-        msg = "No EXE config for: '"\
-            + resource_dict['UNIQUE_RESOURCE_NAME'] + "' EXE: '"\
-            + exe_name + "'"
-        return (False, msg)
-
-    stop_command = exe['stop_command']
-
-    # Lock pgid file
-
-    rel_pgid_path = os.path.join(sandboxkey, 'EXE_' + exe_name + '.PGID')
-    pgid_path = os.path.join(sandbox_home, rel_pgid_path)
-    if os.path.exists(pgid_path):
-        pgid_file = open(pgid_path, 'r')
-        fcntl.flock(pgid_file, fcntl.LOCK_EX)
-        pgid_file.seek(0, 0)
-        pgid = pgid_file.readline().strip()
-        fcntl.flock(pgid_file, fcntl.LOCK_UN)
-        pgid_file.close()
-        stop_command = stop_command.replace('$mig_exe_pgid', pgid)
-        return (True, stop_command)
-    else:
-        msg = 'No PGID file %r found!' % rel_pgid_path
-        logger.warning(msg)
-        return (False, msg)
 
 
 def status_resource_frontend(unique_resource_name, configuration,

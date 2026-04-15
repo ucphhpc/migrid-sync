@@ -51,14 +51,12 @@
   "hg_path": "",
   "hgweb_scripts": "",
   "im_notify_stdin": "",
-  "javabin_home": "",
   "job_cond_green": [
     "ARCHITECTURE",
     "PLATFORM",
     "RUNTIMEENVIRONMENT",
     "VERIFYFILES",
-    "VGRID",
-    "SANDBOX"
+    "VGRID"
   ],
   "job_cond_orange": [
     "CPUCOUNT",
@@ -143,7 +141,6 @@
   "resource_home": "",
   "resource_pending": "",
   "resource_seen_within_hours": 24,
-  "sandbox_home": "",
   "sched_alg": "FirstFit",
   "scriptlanguages": [],
   "seafile_mount": "",
@@ -228,7 +225,6 @@
   "smtp_send_as_user": false,
   "smtp_sender": "",
   "smtp_server": "",
-  "sss_home": "",
   "state_path": "/some/place/state",
   "storage_protocols": "AUTO",
   "submitui": [

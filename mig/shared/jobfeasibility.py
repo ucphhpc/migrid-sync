@@ -244,9 +244,6 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
             job_cond['RETRIES'] = validate_retries(configuration, job, errors)
             job_cond['RUNTIMEENVIRONMENT'] = validate_runtimeenvironment(
                 configuration, job, resource, errors)
-            job_cond['SANDBOX'] = validate_sandbox(configuration, job,
-                                                   resource, errors)
-
             job_cond['suggested_vgrid'] = vgrid
             job_cond['suggested_resource'] = anon_resource_id(resource_id,
                                                               False)
@@ -564,24 +561,6 @@ def validate_vgrid(configuration, job, errors):
         # validated specifed and allowed
 
         return list(vgrid_access.intersection(specified_vgrids))
-
-
-def validate_sandbox(configuration, job, resource, errors):
-    """Do not schedule non-sandbox jobs on a sandbox resource."""
-
-    if skip_validation(configuration, job, 'SANDBOX', resource):
-        return True
-
-    job_value = bool(job['SANDBOX'])
-    res_value = bool(resource['SANDBOX'])
-
-    # do not allow non-sandbox jobs on a sandbox resource
-    # sandbox jobs on non-sandbox resources are ok, however
-
-    if not job_value and res_value:
-        errors['SANDBOX'] = std_err_desc(job_value, res_value)
-
-    return 'SANDBOX' not in errors
 
 
 def validate_resource_seen(configuration, resource, errors, resource_id):

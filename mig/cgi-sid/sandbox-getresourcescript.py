@@ -1,1 +1,0 @@
-sssgetresscript.py

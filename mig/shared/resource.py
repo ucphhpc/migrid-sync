@@ -940,13 +940,11 @@ above - there should be some error output
         return (status, resource_identifier)
 
 
-# TODO: switch sss sandbox to use create_resource()
-
 def create_resource(configuration, client_id, resource_name, pending_file):
     """Create unique resource home dir and fill with resource config based on
     resource request in pending_file.
     If pending_file is a relative path it will prefixed with the
-    resource_pending dir of the client_id. Thus sandbox confs with no required
+    resource_pending dir of the client_id. Thus confs with no required
     user can use e.g. /tmp for the pending file and still use this function.
     Returns creation status and host identifier for the new resource.
     """
@@ -968,7 +966,7 @@ def update_resource(configuration, client_id, resource_name,
     """Update configuration for existing resource based on config request in
     pending_file.
     If pending_file is a relative path it will prefixed with the
-    resource_pending dir of the client_id. Thus sandbox confs with no required
+    resource_pending dir of the client_id. Thus confs with no required
     user can use e.g. /tmp for the pending file and still use this function.
     Returns update status and a message string.
     """

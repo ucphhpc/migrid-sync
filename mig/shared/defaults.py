@@ -115,8 +115,6 @@ cert_field_order = [
 
 valid_filter_methods = ['', 'skip', 'hexlify']
 
-sandbox_names = ['sandbox']
-
 email_keyword_list = ['mail', 'email']
 
 pending_states = ['PARSE', 'QUEUED', 'EXECUTING', 'RETRY', 'FROZEN']

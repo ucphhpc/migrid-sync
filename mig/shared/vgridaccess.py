@@ -35,7 +35,7 @@ import fcntl
 import os
 import time
 
-from mig.shared.base import sandbox_resource, client_id_dir, client_dir_id
+from mig.shared.base import client_id_dir, client_dir_id
 from mig.shared.conf import get_all_exe_vgrids, get_all_store_vgrids, \
     get_resource_fields, get_resource_configuration
 from mig.shared.defaults import settings_filename, profile_filename, \
@@ -311,9 +311,6 @@ def refresh_resource_map(configuration, clean=False):
                                    only_valid=True)
     real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
-        # Sandboxes do not change their configuration
-        if res in resource_map and sandbox_resource(res):
-            continue
         conf_path = os.path.join(configuration.resource_home, res, "config")
         if not os.path.isfile(conf_path):
             continue
@@ -445,9 +442,6 @@ def refresh_vgrid_map(configuration, clean=False):
         configuration.resource_home, only_valid=True)
     real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
-        # Sandboxes do not change their vgrid participation
-        if res in vgrid_map[RESOURCES] and sandbox_resource(res):
-            continue
         conf_path = os.path.join(configuration.resource_home, res, "config")
         if not os.path.isfile(conf_path):
             continue
@@ -511,9 +505,6 @@ def refresh_vgrid_map(configuration, clean=False):
         # _logger.info("update res vgrid %s" % vgrid)
         for res in [i for i in vgrid_map[RESOURCES]
                     if i not in update_res]:
-            # Sandboxes do not change their vgrid participation
-            if sandbox_resource(res):
-                continue
             # _logger.info("update res vgrid %s for res %s" % (vgrid, res))
             if vgrid_allowed(res, old) != vgrid_allowed(res, new):
                 update_res.append(res)

@@ -378,7 +378,6 @@ def generate_confs(
     enable_sharelinks=True,
     enable_transfers=False,
     enable_freeze=True,
-    enable_sandboxes=False,
     enable_jupyter=False,
     enable_cloud=False,
     enable_hsts=True,
@@ -707,7 +706,6 @@ def _generate_confs_prepare(
     enable_sharelinks,
     enable_transfers,
     enable_freeze,
-    enable_sandboxes,
     enable_jupyter,
     enable_cloud,
     enable_hsts,
@@ -966,7 +964,6 @@ def _generate_confs_prepare(
     user_dict['__ENABLE_SHARELINKS__'] = "%s" % enable_sharelinks
     user_dict['__ENABLE_TRANSFERS__'] = "%s" % enable_transfers
     user_dict['__ENABLE_FREEZE__'] = "%s" % enable_freeze
-    user_dict['__ENABLE_SANDBOXES__'] = "%s" % enable_sandboxes
     user_dict['__ENABLE_JUPYTER__'] = "%s" % enable_jupyter
     user_dict['__ENABLE_CLOUD__'] = "%s" % enable_cloud
     user_dict['__ENABLE_HSTS__'] = "%s" % enable_hsts

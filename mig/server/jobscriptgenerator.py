@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobscriptgenerator - dynamically generate job script right before job handout
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -38,7 +38,6 @@ from copy import deepcopy
 
 from mig.server import genjobscriptpython
 from mig.server import genjobscriptsh
-from mig.server import genjobscriptjava
 from mig.shared.base import client_id_dir, hexlify
 from mig.shared.defaults import session_id_bytes, maxfill_fields, keyword_all
 from mig.shared.fileio import write_file, pickle, make_symlink
@@ -330,31 +329,6 @@ def create_job_script(
 
     inputfiles_path = path_without_extension + '.getinputfiles'
 
-    # hack to ensure that a resource has a sandbox keyword
-
-    if resource_config.get('SANDBOX', False):
-
-        # Move file to webserver_home for download as we can't push it to
-        # sandboxes
-
-        try:
-
-            # RA TODO: change download filename to something that
-            # includes sessionid
-
-            webserver_path = os.path.join(configuration.webserver_home,
-                                          localjobname + '.getinputfiles')
-            os.rename(inputfiles_path, webserver_path)
-
-        except Exception as err:
-            msg = "File '%s' was not copied to the webserver home." % \
-                  inputfiles_path
-            print('\nERROR: ' + "%s" % (err))
-            logger.error(msg)
-            return (None, msg)
-
-        return (job_dict, 'OK')
-
     # Copy file to the resource
 
     if not copy_file_to_resource(inputfiles_path,
@@ -410,11 +384,6 @@ def gen_job_script(
             localjobname,
             path_without_extension,
         )
-    elif script_language == 'java':
-        generator = genjobscriptjava.GenJobScriptJava(
-            job_dictionary, resource_config,
-            configuration.migserver_https_sid_url,
-            localjobname, path_without_extension)
     else:
         print('Unknown script language! (is in configuration but not in ' +
               'jobscriptgenerator) %s ' % script_language)

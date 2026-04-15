@@ -50,7 +50,7 @@ def signature():
 
     defaults = {'unique_resource_name': REJECT_UNSET,
                 'exe': REJECT_UNSET, 'cputime': ['10000'],
-                'nodecount': ['1'], 'localjobname': REJECT_UNSET, 'sandboxkey': [''],
+                'nodecount': ['1'], 'localjobname': REJECT_UNSET,
                 'execution_delay': ['0'], 'exe_pgid': ['0']}
     return ['text', defaults]
 
@@ -79,7 +79,6 @@ def main(client_id, user_arguments_dict):
     cputime = int(accepted['cputime'][-1])
     nodecount = int(accepted['nodecount'][-1])
     localjobname = accepted['localjobname'][-1]
-    sandboxkey = accepted['sandboxkey'][-1]
     execution_delay = int(accepted['execution_delay'][-1])
     exe_pgid = int(accepted['exe_pgid'][-1])
 
@@ -129,22 +128,6 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text':
                                'invalid request new job source'})
         return (output_objects, returnvalues.CLIENT_ERROR)
-
-    if resource_conf.get('SANDBOX', False):
-        if sandboxkey == '':
-            logger.error("Missing sandboxkey for sandbox resource: %s" %
-                         unique_resource_name)
-            output_objects.append(
-                {'object_type': 'error_text', 'text':
-                 'sandbox must set sandboxkey in job requests!'})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-        # resource is a sandbox and a sandboxkey was received
-        if resource_conf['SANDBOXKEY'] != sandboxkey:
-            logger.error("Incorrect sandboxkey for sandbox resource: %s : %s"
-                         % (unique_resource_name, sandboxkey))
-            output_objects.append({'object_type': 'error_text', 'text':
-                                   'sandbox provided an invalid sandboxkey!'})
-            return (output_objects, returnvalues.CLIENT_ERROR)
 
     # TODO: add full session ID check here
 
@@ -256,7 +239,7 @@ receive this message often, please increase the timeout for job requests.'''
 
     output_objects.append(
         {'object_type': 'text', 'text': 'REQUESTNEWJOB OK. The job will '
-         'be sent to the resource: %s.%s %s %s (sandboxkey: %s)'
+         'be sent to the resource: %s.%s %s %s'
          % (unique_resource_name, exe, exe_pgid,
-            os.getenv('REMOTE_ADDR'), sandboxkey)})
+            os.getenv('REMOTE_ADDR'))})
     return (output_objects, status)
