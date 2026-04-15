@@ -2542,15 +2542,6 @@ def _user_general_notify(user_id, targets, conf_path, db_path,
     return (configuration, user_fields, addresses, errors)
 
 
-def user_password_reminder(user_id, targets, conf_path, db_path,
-                           verbose=False):
-    """Find notification addresses and password for user_id and targets"""
-
-    (configuration, fields, addresses, errors) = _user_general_notify(
-        user_id, targets, conf_path, db_path, verbose, ['password'])
-    return (configuration, fields['password'], addresses, errors)
-
-
 def user_account_notify(user_id, targets, conf_path, db_path, verbose=False,
                         admin_copy=False, extra_copies=False):
     """Find notification addresses for user_id and targets"""
