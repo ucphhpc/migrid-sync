@@ -1,1 +1,0 @@
-../mig/server/notifypassword.py
