@@ -2474,10 +2474,12 @@ def search_peers(contact_id, search_filter, conf_path, db_path,
 
 
 def _user_general_notify(user_id, targets, conf_path, db_path,
-                         verbose=False, get_fields=[], do_lock=True):
+                         verbose=False, get_fields=None, do_lock=True):
     """Find notification addresses for user_id and targets"""
 
     password, errors = '', []
+    if get_fields is None:
+        get_fields = []
     if conf_path:
         if isinstance(conf_path, basestring):
             configuration = Configuration(conf_path)
@@ -2504,7 +2506,7 @@ def _user_general_notify(user_id, targets, conf_path, db_path,
             print(err_msg)
         _logger.error(err_msg)
         errors.append("notify %r preparation failed: %s" % (user_id, err_msg))
-        return (configuration, None, addresses, errors)
+        return (configuration, {}, [], errors)
 
     user_fields = {}
     if user_id in user_db:
@@ -2549,7 +2551,7 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
 
     (configuration, fields, addresses, errors) = _user_general_notify(
         user_id, targets, conf_path, db_path, verbose, ['password'])
-    return (configuration, fields['password'], addresses, errors)
+    return (configuration, fields.get('password', None), addresses, errors)
 
 
 def user_account_notify(user_id, targets, conf_path, db_path, verbose=False,
@@ -2572,8 +2574,8 @@ def user_account_notify(user_id, targets, conf_path, db_path, verbose=False,
         addresses['email'] += admin_addresses
     if extra_copies:
         addresses['email'] += extra_copies
-    return (configuration, fields['username'], fields['full_name'],
-            fields['expire'], addresses, errors)
+    return (configuration, fields.get('username', None), fields.get('full_name', None),
+            fields.get('expire', None), addresses, errors)
 
 
 def user_request_reject(user_id, targets, conf_path, db_path, verbose=False,

@@ -480,6 +480,20 @@ class TestMigSharedUseradm__user_account_notify(MigTestCase, UserAssertMixin):
         self.assertEqual(expire, None)
         self.assertTrue(errors and 'No such user' in errors[0])
 
+    def test_missing_user_db_bails_out(self):
+        """Test failure for missing user db"""
+        with self.assertLogs(level='ERROR') as log_capture:
+            (_, username, full_name, expire, addresses, errors) = \
+                user_account_notify(OTHER_USER_DN, {'email': ['AUTO']},
+                                    self.configuration,
+                                    'no_such_user_db', False,
+                                    False)
+        self.assertEqual(addresses, [])
+        self.assertEqual(expire, None)
+        self.assertTrue(errors and 'Failed to load user DB' in errors[0])
+        self.assertTrue(any('Failed to load user DB' in msg for msg in
+                            log_capture.output))
+
 
 if __name__ == "__main__":
     testmain()
