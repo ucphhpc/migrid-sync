@@ -102,6 +102,8 @@ try:
     from mig.shared.base import client_id_dir, cert_field_map, force_utf8, \
         force_native_str
     from mig.shared.conf import get_configuration_object
+    from mig.shared.defaults import STRONG_TLS_CIPHERS, \
+        STRONG_TLS_LEGACY_CIPHERS
     from mig.shared.griddaemons.openid import default_max_user_hits, \
         default_user_abuse_hits, default_proto_abuse_hits, \
         default_username_validator, refresh_user_creds, update_login_map, \
@@ -1654,6 +1656,8 @@ def start_service(configuration):
     data_path = configuration.openid_store
     daemon_conf = configuration.daemon_conf
     nossl = daemon_conf['nossl']
+    # Mimic cipher setup from other daemons
+    ciphers = daemon_conf['ssl_ciphers'] = None
     addr = (host, port)
     # TODO: is this threaded version robust enough (thread safety)?
     # OpenIDServer = OpenIDHTTPServer
@@ -1675,12 +1679,20 @@ def start_service(configuration):
         # Use best possible SSL/TLS args for this python version
         key_path = cert_path = configuration.user_openid_key
         dhparams_path = configuration.user_shared_dhparams
+        legacy_tls = configuration.site_enable_openid_legacy_tls
+        if ciphers is not None:
+            use_ciphers = ciphers
+        elif legacy_tls:
+            use_ciphers = STRONG_TLS_LEGACY_CIPHERS
+        else:
+            use_ciphers = STRONG_TLS_CIPHERS
         if not os.path.isfile(cert_path):
             logger.error('No such server key: %s' % cert_path)
             sys.exit(1)
         logger.info('Wrapping connections in SSL')
         ssl_ctx = hardened_ssl_context(configuration, key_path, cert_path,
-                                       dhparams_path)
+                                       dhparamsfile=dhparams_path,
+                                       ciphers=use_ciphers)
         httpserver.socket = ssl_ctx.wrap_socket(httpserver.socket,
                                                 server_side=True)
         # Override default SSLSocket accept function to inject timeout support

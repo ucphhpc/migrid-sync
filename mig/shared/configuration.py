@@ -1603,6 +1603,11 @@ location.""" % self.config_file)
                 'SITE', 'enable_openid')
         else:
             self.site_enable_openid = False
+        if config.has_option('SITE', 'enable_openid_legacy_tls'):
+            self.site_enable_openid_legacy_tls = config.getboolean(
+                'SITE', 'enable_openid_legacy_tls')
+        else:
+            self.site_enable_openid_legacy_tls = False
         if config.has_option('GLOBAL', 'user_openid_address'):
             self.user_openid_address = config.get('GLOBAL',
                                                   'user_openid_address')
