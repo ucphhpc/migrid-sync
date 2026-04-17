@@ -424,6 +424,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             retry_url = ''
         else:
             retry_url = self.retry_url
+        # NOTE: prevent header injection from cookie or header splitting
+        retry_url = retry_url.replace('\r', '').replace('\n', '')
         logger.debug("encoding retry_url: %s" % retry_url)
         try:
             valid_url(retry_url)
@@ -434,7 +436,11 @@ class ServerHandler(BaseHTTPRequestHandler):
         # NOTE: b64encode takes bytes and returns bytes
         enc = force_native_str(base64.b64encode(force_utf8(retry_url)))
         logger.debug("encoded retry_url: %s" % enc)
-        return 'retry_url_enc=%s;secure;httponly' % enc
+        cookie = http.cookies.SimpleCookie()
+        cookie['retry_url_enc'] = enc
+        cookie['retry_url_enc']['secure'] = True
+        cookie['retry_url_enc']['httponly'] = True
+        return cookie.output(header='').strip()
 
     def clearUser(self):
         """Reset all saved user variables"""
