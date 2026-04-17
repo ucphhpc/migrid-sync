@@ -408,7 +408,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             if retry_url and retry_url.startswith("http"):
                 raise InputException("invalid retry_url: %s" % retry_url)
             elif retry_url:
-                valid_url(retry_url)
+                # NOTE: we get here with /openid/id/EMAIL as retry_url
+                valid_url(retry_url, extra_chars='@')
         except http.cookies.CookieError as err:
             retry_url = None
             logger.error("found invalid cookie: %s" % err)
@@ -428,7 +429,8 @@ class ServerHandler(BaseHTTPRequestHandler):
         retry_url = retry_url.replace('\r', '').replace('\n', '')
         logger.debug("encoding retry_url: %s" % retry_url)
         try:
-            valid_url(retry_url)
+            # NOTE: we get here with /openid/id/EMAIL as retry_url
+            valid_url(reitry_url, extra_chars='@')
         except InputException as exc:
             retry_url = ''
             logger.error("found invalid retry_url: %s" % exc)
