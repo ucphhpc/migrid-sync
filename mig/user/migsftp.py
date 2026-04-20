@@ -131,6 +131,7 @@ Please verify it on your MiG ssh Settings page in case of failure.""")
             sys.exit(1)
         else:
             raise exc
+
     # Sample actions on your MiG home directory ###
 
     # List and stat files in the remote .ssh dir which should always be there
