@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migsftpaccess - paramiko-based sftp client for checking access limits
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -31,14 +32,16 @@ Requires paramiko (http://pypi.python.org/pypi/paramiko) and thus PyCrypto
 (http://pypi.python.org/pypi/pycrypto).
 
 Run with:
-python migsftpaccess.py [SERVER_ADDRESS] [SERVER_PORT] [USER] [AUTH]
+python migsftpaccess.py [ADDRESS] [PORT] [USERNAME] [KNOWN_HOST_KEY] [AUTH_METHOD]
 
-where the optional SERVER_ADDRESS, SERVER_PORT can be used to point the checks
-at a specific server. USER and AUTH are used to specificy your user credentials
-in the form of a user or sharelink ID and the authentication method.
-The latter can be 'password', 'agent' or the path to your ssh key. Use 'agent'
-to try any keys available from a running ssh-agent.
-You will be prompted for a password if not provided on the command line.
+where the optional
+ADDRESS is the FQDN of the SFTP server (default is dk-io.migrid.org)
+PORT is the port of the SFTP server (default is 22)
+USERNAME is the username e.g. displayed on your personal SFTP Setup page.
+KNOWN_HOST_KEY is the host public key (default is to look in ~/.ssh/known_host)
+AUTH_METHOD is password, agent or key (default is password)
+You will be interactively prompted for username if it is not provided on the
+command line.
 
 Please check the global configuration section below if it fails. The comments
 should help you tweak the configuration to solve most common problems.
@@ -50,26 +53,22 @@ import base64
 import getpass
 import os
 import sys
+
 import paramiko
 
 
 # Global configuration ###
 
-server_fqdn = 'dk-sid.migrid.org'
+server_fqdn = 'dk-io.migrid.org'
 server_port = 22
-# This is the current migrid.org key - but we default to auto for flexibility
-# server_host_key = "ssh-rsa
-# AAAAB3NzaC1yc2EAAAADAQABAAABAQDSmsGNpTnmOhIhLk+RtOxE+YL+rP77mbJ7os0JZpiId1U2jHkNqNEBr8DpmtkAyWn8DvJf4GtLkykVxysnBqj0fnI4nTOJpYtNT/0cw2IKKf0j5zjRzTzB/Jh1rb5OQKad4U31P8Z4sEHFS3kk4r7Ls2C/Sm8adUMt1SDW4G7TqlSgsq97uWOlCYLb0x0BQNuvjurLZpQCCkz0GIFlGXOKkwEZrhcD8vmAzjRUEbv7YyEwNr442HOJ7DtG/3Q+Zwe0UPojOYackvCKX2itrBA5Ko5eENiOCYXxIXHoVRAbDgGwL8hHHGjpKvIA/yivSB0UP7uMKf4QWz3Ax9HQdQUR"
+user_name = 'UNSET'
 server_host_key = 'AUTO'
 known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
 user_auth = 'password'
 user_key = None
 user_pw = ''
 host_key_policy = paramiko.RejectPolicy()
-data_compression = True
-# Uncomment the next line if don't want compressed transfers. This is a trade
-# off between CPU usage and throughput
-# data_compression = False
+data_compression = False
 
 
 def test_file_access(sftp, test_path, dummy_file):
@@ -102,8 +101,10 @@ def test_file_access(sftp, test_path, dummy_file):
         path_md5_digest = path_fd.check("md5", block_size=block_size)
         path_sha1_digest = path_fd.check("sha1", block_size=block_size)
         path_fd.close()
-        print("remote md5 sum %s:\n%s" % (test_path, path_md5_digest.encode('hex')))
-        print("remote sha1 sum %s:\n%s" % (test_path, path_sha1_digest.encode('hex')))
+        print("remote md5 sum %s:\n%s" %
+              (test_path, base64.b16encode(path_md5_digest)))
+        print("remote sha1 sum %s:\n%s" %
+              (test_path, base64.b16encode(path_sha1_digest)))
     except Exception as exc:
         print("checksum %s failed: %s" % (test_path, exc))
     try:
@@ -143,7 +144,8 @@ def test_dir_access(sftp, test_path, dummy_file):
     show_limit = 4
     try:
         files = sftp.listdir(test_path)
-        print("first %d entries in %s dir:\n%s" % (show_limit, test_path, files))
+        print("first %d entries in %s dir:\n%s" %
+              (show_limit, test_path, files))
         for name in files[:show_limit]:
             rel_path = os.path.join(test_path, name)
             path_stat = sftp.stat(rel_path)
@@ -185,22 +187,23 @@ if __name__ == "__main__":
     if sys.argv[3:]:
         user_name = sys.argv[3]
     if sys.argv[4:]:
-        user_auth = sys.argv[4]
+        server_host_key = sys.argv[4]
     if sys.argv[5:]:
-        server_host_key = sys.argv[5]
-    if len(user_name) != 10 and user_name.find('@') == -1:
+        user_auth = sys.argv[5]
+    if user_name == 'UNSET':
+        user_name = input("username: ")
+    if len(user_name) < 10 and user_name.find('@') == -1:
         print("""Warning: the supplied username is not on expected form!
 Please verify it on your MiG ssh Settings page in case of failure.""")
+        sys.exit(1)
 
     # Connect with provided settings
 
     ssh = paramiko.SSHClient()
     known_host_keys = ssh.get_host_keys()
     if server_host_key == 'AUTO':
-        # For silent operation we can just accept all host keys
-        # host_key_policy = paramiko.AutoAddPolicy()
-        # Warn about missing host key
-        host_key_policy = paramiko.WarningPolicy()
+        # For safe and silent operation we try already known host keys
+        ssh.load_system_host_keys()
     else:
         key_type, key_data = server_host_key.split(' ')[:2]
         pub_key = paramiko.RSAKey(data=base64.b64decode(key_data))
@@ -209,7 +212,6 @@ Please verify it on your MiG ssh Settings page in case of failure.""")
         known_host_keys.add(server_fqdn, key_type, pub_key)
         known_host_keys.add(server_fqdn_port, key_type, pub_key)
     known_host_keys.load(known_hosts_path)
-    ssh.set_missing_host_key_policy(host_key_policy)
     if user_auth.lower() == 'password':
         user_pw = getpass.getpass()
     elif user_auth.lower() == 'agent':
@@ -217,10 +219,18 @@ Please verify it on your MiG ssh Settings page in case of failure.""")
     else:
         user_key = user_auth
         user_pw = getpass.getpass()
-    ssh.connect(server_fqdn, username=user_name, port=server_port,
-                password=user_pw, key_filename=user_key,
-                compress=data_compression)
-    sftp = ssh.open_sftp()
+    try:
+        ssh.connect(server_fqdn, username=user_name, port=server_port,
+                    password=user_pw, key_filename=user_key,
+                    compress=data_compression)
+        sftp = ssh.open_sftp()
+    except paramiko.ssh_exception.SSHException as exc:
+        if 'known_hosts' in str(exc):
+            print("Missing host pub key for requested server %s" % server_fqdn)
+            print("You need to provide it or have it in ~/.ssh/known_hosts")
+            sys.exit(1)
+        else:
+            raise exc
 
     # Run a series of possibly restricted operations in MiG home ###
 

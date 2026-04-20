@@ -92,7 +92,7 @@ if __name__ == "__main__":
         user_auth = sys.argv[5]
     if user_name == 'UNSET':
         user_name = input("username: ")
-    if len(user_name) < 64 and user_name.find('@') == -1:
+    if len(user_name) < 10 and user_name.find('@') == -1:
         print("""Warning: the supplied username is not on expected form!
 Please verify it on your MiG ssh Settings page in case of failure.""")
         sys.exit(1)
