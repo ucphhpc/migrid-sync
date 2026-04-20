@@ -174,8 +174,8 @@ def run_bench(conf, bench_specs):
         times['get'][name] = {}
         times['put'][name] = {}
         if target['key_path']:
-            if target['key_path'].find('dsa') != -1:
-                target['user_key'] = paramiko.DSSKey.from_private_key_file(
+            if target['key_path'].find('ed25519') != -1:
+                target['user_key'] = paramiko.Ed25519Key.from_private_key_file(
                     target['key_path'])
             else:
                 target['user_key'] = paramiko.RSAKey.from_private_key_file(

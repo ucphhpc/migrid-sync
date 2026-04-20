@@ -106,7 +106,13 @@ Please verify it on your MiG ssh Settings page in case of failure.""")
         ssh.load_system_host_keys()
     else:
         key_type, key_data = server_host_key.split(' ')[:2]
-        pub_key = paramiko.RSAKey(data=base64.b64decode(key_data))
+        if key_type == 'ssh-rsa':
+            pub_key = paramiko.RSAKey(data=base64.b64decode(key_data))
+        elif key_type == 'ssh-ed25519':
+            pub_key = paramiko.Ed25519Key(data=base64.b64decode(key_data))
+        else:
+            print("Unsupported public key format: %s" % key_type)
+            sys.exit(1)
         # Add host key both on implicit and explicit port format
         server_fqdn_port = "[%s]:%d" % (server_fqdn, server_port)
         known_host_keys.add(server_fqdn, key_type, pub_key)
