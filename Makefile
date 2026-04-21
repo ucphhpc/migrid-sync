@@ -61,6 +61,7 @@ style-check-python:
 	@$(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS) --check
 	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS) --check-only
 
+# NOTE: pylint and ruff use pyproject.toml to temporarily exclude a few paths
 .PHONY: lint-python
 lint-python:
 	@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only

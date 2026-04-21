@@ -1,7 +1,8 @@
 # Project wide settings including tooling.
 
 # Linting tools
-# TODO: fix CodeQL errors in symlinked files and disable extend-exclude+skip
+
+# TODO: fix CodeQL errors and disable temporary named files with NOTEs below
 
 [tool.black]
 line-length = 80
@@ -9,7 +10,7 @@ exclude = '''
       tests/data/
     | tests/fixture/
 '''
-# NOTE: the following regex matches must be kept in sync with isort skip
+# NOTE: the following temporay excludes must be kept in sync between tools
 extend-exclude = '''
       bin/checkconf.py
     | bin/createresource.py
@@ -24,7 +25,7 @@ extend-exclude = '''
 profile = "black"
 line_length = 80
 skip_glob = [".git/*", "tests/data/*", "tests/fixture/*"]
-# NOTE: the following paths must be kept in sync with black extend-exclude
+# NOTE: the following temporay excludes must be kept in sync between tools
 skip = [
     "bin/checkconf.py",
     "bin/createresource.py",
@@ -41,7 +42,7 @@ ignore-pattern = '''
       tests/data/
     | tests/fixture/
 '''
-# NOTE: the following paths must be kept in sync with black extend-exclude
+# NOTE: the following temporay excludes must be kept in sync between tools
 ignore-paths = [
     "bin/checkconf.py",
     "bin/createresource.py",
@@ -55,7 +56,7 @@ ignore-paths = [
 [tool.ruff]
 line-length = 80
 exclude = [".git/", "tests/data/", "tests/fixture/"]
-# NOTE: the following regex matches must be kept in sync with isort skip
+# NOTE: the following temporay excludes must be kept in sync between tools
 extend-exclude = [
     "bin/checkconf.py",
     "bin/createresource.py",
