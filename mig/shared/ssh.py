@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssh - remote command wrappers using ssh/scp
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -98,15 +99,13 @@ def parse_pub_key(public_key):
     return parse_key(msg)
 
 
-def default_ssh_options(close_stdin=False, x_forward=False):
+def default_ssh_options(close_stdin=False):
     """Default list of options for ssh connections"""
 
     options = []
     if close_stdin:
         # No stdin, to let ssh exit cleanly
         options.append('-n')
-    if x_forward:
-        options.append('-X')
 
     # No interaction
     options += ['-o', 'BatchMode=yes']
@@ -367,14 +366,7 @@ def execute_on_resource(
         logger.error('could not write tmp host key file (%s)' % err)
         return (-1, '')
 
-    # Only enable X forwarding for interactive resources (i.e. job_type
-    # 'interactive' or 'all')
-
-    x_fwd = False
-    if 'batch' != job_type.lower():
-        x_fwd = True
-
-    options = default_ssh_options(close_stdin=True, x_forward=x_fwd)
+    options = default_ssh_options(close_stdin=True)
     options += ['-o', 'Port=%s' % port, '-o', 'CheckHostIP=yes',
                 '-o', 'StrictHostKeyChecking=yes']
 
@@ -451,17 +443,17 @@ def execute_on_exe(
 
     node = exe_config['execution_node']
     user = exe_config['execution_user']
-    options = default_ssh_options(close_stdin=True, x_forward=True)
+    options = default_ssh_options(close_stdin=True)
 
     # This command should already be properly escaped by the apostrophes
     # in the execute_on_resource call
 
     # TODO: it would make sense to move bash call into nested command
     # when called through execute_on_resource, but the following fails.
-    #redirect, batch = [], []
-    ##redirect.append('< /dev/null')
-    #redirect.append('1> /dev/null')
-    #redirect.append('2> /dev/null')
+    # redirect, batch = [], []
+    # redirect.append('< /dev/null')
+    # redirect.append('1> /dev/null')
+    # redirect.append('2> /dev/null')
     # if background:
     #    batch.append('&')
     # ssh_command = "ssh %s %s@%s bash -c '%s %s' %s" % (' '.join(options), user,
@@ -487,7 +479,7 @@ def execute_on_store(
 
     node = store_config['storage_node']
     user = store_config['storage_user']
-    options = default_ssh_options(close_stdin=True, x_forward=True)
+    options = default_ssh_options(close_stdin=True)
 
     # This command should already be properly escaped by the apostrophes
     # in the execute_on_resource call

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # genjobscriptpython - helpers for python jobs
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -106,27 +107,6 @@ Please use Sh as SCRIPTLANGUAGE on your resources if this fails!""")
                '/sid_redirect/' + self.job_dict['SESSIONID'] + \
                file_extension + "'"
         return cmd
-
-    def __curl_cmd_request_interactive(self):
-        """CGI request for interactive job"""
-
-        int_command = "curl --location --fail --silent --insecure '" + \
-                      self.https_sid_url_arg + \
-                      '/cgi-sid/requestinteractivejob.py?sessionid=' + \
-                      self.job_dict['SESSIONID'] + '&jobid=' + \
-                      self.job_dict['JOB_ID'] + '&exe=' + self.exe + \
-                      '&unique_resource_name=' + \
-                      self.resource_conf['RESOURCE_ID'] + \
-                      '&self.localjobname=' + self.localjobname + "'\n"
-        int_command += '# wait until interactive command is done\n'
-        int_command += 'while [ 1 ]; do\n'
-        int_command += '   if [ -f .interactivejobfinished ]; then\n'
-        int_command += '        break\n'
-        int_command += '   else\n'
-        int_command += '        sleep 3\n'
-        int_command += '   fi\n'
-        int_command += 'done\n'
-        return int_command
 
     def comment(self, string):
         """Insert comment"""
@@ -706,11 +686,6 @@ if not os.environ.get("MIG_JOBDIR", ""):
             cmd += 'subprocess.call("%s")\n' % \
                    self.__curl_cmd_send(name, name_on_mig_server)
         return cmd
-
-    def request_interactive(self):
-        """Request interactive job"""
-
-        return self.__curl_cmd_request_interactive()
 
     def save_status(self, result='ret'):
         """Save exit code"""

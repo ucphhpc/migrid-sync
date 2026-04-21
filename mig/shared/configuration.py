@@ -378,7 +378,7 @@ def fix_missing(config_file, verbose=True):
         'min_seconds_between_live_update_requests': '120',
         'architectures': 'X86 AMD64 IA64 SPARC SPARC64 ITANIUM SUN4U SPARC-T1',
         'scriptlanguages': 'sh python java',
-        'jobtypes': 'batch interactive bulk all',
+        'jobtypes': 'batch bulk all',
         'lrmstypes': 'Native Native-execution-leader Batch Batch-execution-leader',
     }
     scheduler_section = {'algorithm': 'FairFit',
@@ -691,8 +691,6 @@ _CONFIGURATION_PROPERTIES = {
     'public_key_file': '',
     'wwwpublic': '',
     'wwwserve_max_bytes': -1,
-    # Interactive job VNC port
-    'job_vnc_ports': list(range(8080, 8099)),
     'enable_server_dist': False,
     'sleep_secs': 0,
     'sleep_update_totals': 0,
@@ -1234,15 +1232,6 @@ location.""" % self.config_file)
                                                            'enable_resources')
         else:
             self.site_enable_resources = True
-        # NOTE: disable legacy interactive jobs unless specifically enabled
-        if config.has_option('SITE', 'enable_live_jobs'):
-            self.site_enable_live_jobs = config.getboolean('SITE',
-                                                           'enable_live_jobs')
-        else:
-            self.site_enable_live_jobs = False
-        # NOTE: disable legacy interactive jobs unless fully supported
-        if not self.site_enable_jobs or not self.site_enable_resources:
-            self.site_enable_live_jobs = False
 
         if config.has_option('GLOBAL', 'user_monitor_log'):
             self.user_monitor_log = config.get('GLOBAL', 'user_monitor_log')
@@ -1724,10 +1713,6 @@ location.""" % self.config_file)
             self.site_enable_sshmux = True
         if config.has_option('GLOBAL', 'user_sshmux_log'):
             self.user_sshmux_log = config.get('GLOBAL', 'user_sshmux_log')
-        if config.has_option('GLOBAL', 'job_vnc_ports'):
-            text_range = config.get('GLOBAL', 'job_vnc_ports')
-            first, last = text_range.split(':')[:2]
-            self.job_vnc_ports = list(range(int(first), int(last)))
         if config.has_option('GLOBAL', 'user_shared_dhparams'):
             self.user_shared_dhparams = config.get('GLOBAL',
                                                    'user_shared_dhparams')
