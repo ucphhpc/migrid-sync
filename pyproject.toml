@@ -34,3 +34,34 @@ skip = [
     "sbin/grid_sftp.py",
     "sbin/grid_webdavs.py"
 ]
+
+[tool.pylint]
+max-line-length = 80
+ignore-pattern = '''
+      tests/data/
+    | tests/fixture/
+'''
+# NOTE: the following paths must be kept in sync with black extend-exclude
+ignore-paths = [
+    "bin/checkconf.py",
+    "bin/createresource.py",
+    "bin/notifypassword.py",
+    "sbin/grid_ftps.py",
+    "sbin/grid_openid.py",
+    "sbin/grid_sftp.py",
+    "sbin/grid_webdavs.py"
+]
+
+[tool.ruff]
+line-length = 80
+exclude = [".git/", "tests/data/", "tests/fixture/"]
+# NOTE: the following regex matches must be kept in sync with isort skip
+extend-exclude = [
+    "bin/checkconf.py",
+    "bin/createresource.py",
+    "bin/notifypassword.py",
+    "sbin/grid_ftps.py",
+    "sbin/grid_openid.py",
+    "sbin/grid_sftp.py",
+    "sbin/grid_webdavs.py"
+]

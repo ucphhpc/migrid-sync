@@ -52,13 +52,19 @@ ifneq ($(MIG_ENV),'local')
 	@echo "unavailable outside local development environment"
 	@exit 1
 endif
+	@make style-check-python
 	@make lint-python
 
 # NOTE: black and isort use pyproject.toml to temporarily exclude a few paths
-.PHONY: lint-python
-lint-python:
+.PHONY: style-check-python
+style-check-python:
 	@$(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS) --check
 	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS) --check-only
+
+.PHONY: lint-python
+lint-python:
+	@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only
+	@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS)
 
 .PHONY: clean
 clean:
