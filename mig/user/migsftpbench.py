@@ -119,6 +119,26 @@ def show_results(times, bench_sizes):
         print()
 
 
+def _wrap_sftp_connect(ssh_client, fqdn, port, user, key, compress):
+    """Shared helper to handle the paramiko SSHClient connect phase and in
+    particular missing known host keys.
+    """
+    try:
+        ssh_client.load_system_host_keys()
+        ssh_client.connect(fqdn, port=port, username=user, pkey=key,
+                           compress=compress)
+        sftp = ssh_client.open_sftp()
+    except paramiko.ssh_exception.SSHException as exc:
+        if 'known_hosts' in str(exc):
+            print("Missing host pub key for requested server %s:%d" %
+                  (fqdn, port))
+            print("You need to provide it or have it in ~/.ssh/known_hosts")
+            sys.exit(1)
+        else:
+            raise exc
+    return sftp
+
+
 def create_missing_dirs(target):
     """Make sure all local and remote target dirs exist"""
     if not os.path.isdir(bench_dir):
@@ -130,23 +150,9 @@ def create_missing_dirs(target):
     if target['client'] == 'paramiko':
         ssh_transport = paramiko.SSHClient()
         # For safe and silent operation we try already known host keys
-        ssh_transport.load_system_host_keys()
-        try:
-            ssh_transport.connect(target['hostname'],
-                                  port=target['port'],
-                                  username=target['username'],
-                                  pkey=target['user_key'],
-                                  compress=enable_compression)
-            sftp = ssh_transport.open_sftp()
-        except paramiko.ssh_exception.SSHException as exc:
-            if 'known_hosts' in str(exc):
-                print("Missing host pub key for requested server %s" %
-                      target['hostname'])
-                print("You need to provide it or have it in ~/.ssh/known_hosts")
-                print(exc)
-                sys.exit(1)
-            else:
-                raise exc
+        sftp = _wrap_sftp_connect(ssh_transport, target['hostname'],
+                                  target['port'], target['username'],
+                                  target['user_key'], enable_compression)
         if not bench_dir in sftp.listdir():
             sftp.mkdir(bench_dir)
         sftp.close()
@@ -192,12 +198,9 @@ def run_bench(conf, bench_specs):
             if target['client'] == 'paramiko':
                 ssh_transport = paramiko.SSHClient()
                 # For safe and silent operation we try already known host keys
-                ssh_transport.load_system_host_keys()
-                ssh_transport.connect(target['hostname'], target['port'],
-                                      username=target['username'],
-                                      pkey=target['user_key'],
-                                      compress=enable_compression)
-                sftp = ssh_transport.open_sftp()
+                sftp = _wrap_sftp_connect(ssh_transport, target['hostname'],
+                                          target['port'], target['username'],
+                                          target['user_key'], enable_compression)
                 if not bench_dir in sftp.listdir():
                     sftp.mkdir(bench_dir)
                 sftp.put(remotepath=bench_path, localpath=bench_path)
@@ -228,12 +231,9 @@ def run_bench(conf, bench_specs):
             if target['client'] == 'paramiko':
                 ssh_transport = paramiko.SSHClient()
                 # For safe and silent operation we try already known host keys
-                ssh_transport.load_system_host_keys()
-                ssh_transport.connect(target['hostname'], target['port'],
-                                      username=target['username'],
-                                      pkey=target['user_key'],
-                                      compress=enable_compression)
-                sftp = ssh_transport.open_sftp()
+                sftp = _wrap_sftp_connect(ssh_transport, target['hostname'],
+                                          target['port'], target['username'],
+                                          target['user_key'], enable_compression)
                 sftp.get(remotepath=bench_path, localpath=bench_path)
                 sftp.close()
                 ssh_transport.close()
