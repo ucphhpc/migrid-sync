@@ -131,7 +131,6 @@ state/mig_system_files/*.sendupdatefiles
 state/mig_system_files/*.getoutputfiles
 state/mig_system_files/*.sendoutputfiles
 state/mig_system_files/*.job
-state/mig_system_files/*.interactivejob
 state/mig_system_run/*
 
 mig/install/generated-confs*
@@ -151,7 +150,6 @@ state/vgrid_files_readonly/*
 state/vgrid_public_base/*
 state/vgrid_private_base/*
 state/wwwpublic/vgrid/*
-state/wwwpublic/vnc/*
 state/sharelink_home/*
 state/freeze_home/*
 state/events_home/*
