@@ -23,6 +23,7 @@ extend-exclude = '''
 [tool.isort]
 profile = "black"
 line_length = 80
+skip_glob = [".git/*", "tests/data/*", "tests/fixture/*"]
 # NOTE: the following paths must be kept in sync with black extend-exclude
 skip = [
     "bin/checkconf.py",
@@ -33,4 +34,3 @@ skip = [
     "sbin/grid_sftp.py",
     "sbin/grid_webdavs.py"
 ]
-skip_glob = [".git/*", "tests/data/*", "tests/fixture/*"]
