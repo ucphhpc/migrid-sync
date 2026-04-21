@@ -2541,7 +2541,6 @@ location.""" % self.config_file)
             # NOTE: compute jobs will require vast modifications to support GDP
             self.site_enable_resources = False
             self.site_enable_jobs = False
-            self.site_enable_live_jobs = False
             self.site_enable_sshmux = False
             # NOTE: every operation must be clearly logged with explicit actor
             #       so at least analyse thoroughly before GDP-enabling these.
