@@ -397,11 +397,19 @@ class ServerHandler(BaseHTTPRequestHandler):
             cookies = self.headers.get('Cookie')
             cookie = http.cookies.SimpleCookie(cookies)
             cookie_dict = dict((k, v.value) for k, v in cookie.items())
-            retry_url = cookie_dict.get('retry_url', '')
+            retry_url_enc = cookie_dict.get('retry_url_enc', '')
+            logger.debug("found retry_url_enc: %s" % retry_url_enc)
+            if retry_url_enc:
+                # NOTE: b64decode takes str and returns bytes
+                retry_url = force_native_str(base64.b64decode(retry_url_enc))
+            else:
+                retry_url = ''
+            logger.debug("decoded retry_url: %s" % retry_url)
             if retry_url and retry_url.startswith("http"):
                 raise InputException("invalid retry_url: %s" % retry_url)
             elif retry_url:
-                valid_url(retry_url)
+                # NOTE: we get here with /openid/id/EMAIL as retry_url
+                valid_url(retry_url, extra_chars='@')
         except http.cookies.CookieError as err:
             retry_url = None
             logger.error("found invalid cookie: %s" % err)
@@ -410,6 +418,31 @@ class ServerHandler(BaseHTTPRequestHandler):
             logger.error("found invalid cookie content: %s" % exc)
 
         return retry_url
+
+    def __format_retry_url_for_cookie(self):
+        """Format retry_url to fit in cookie"""
+        if self.retry_url is None:
+            retry_url = ''
+        else:
+            retry_url = self.retry_url
+        # NOTE: prevent header injection from cookie or header splitting
+        retry_url = retry_url.replace('\r', '').replace('\n', '')
+        logger.debug("encoding retry_url: %s" % retry_url)
+        try:
+            # NOTE: we get here with /openid/id/EMAIL as retry_url
+            valid_url(retry_url, extra_chars='@')
+        except InputException as exc:
+            retry_url = ''
+            logger.error("found invalid retry_url: %s" % exc)
+
+        # NOTE: b64encode takes bytes and returns bytes
+        enc = force_native_str(base64.b64encode(force_utf8(retry_url)))
+        logger.debug("encoded retry_url: %s" % enc)
+        cookie = http.cookies.SimpleCookie()
+        cookie['retry_url_enc'] = enc
+        cookie['retry_url_enc']['secure'] = True
+        cookie['retry_url_enc']['httponly'] = True
+        return cookie.output(header='').strip()
 
     def clearUser(self):
         """Reset all saved user variables"""
@@ -1578,8 +1611,7 @@ inconsistent session state.
 
         self.send_response(response_code)
         self.writeUserHeader()
-        self.send_header('Set-Cookie', 'retry_url=%s;secure;httponly'
-                         % self.retry_url)
+        self.send_header('Set-Cookie', self.__format_retry_url_for_cookie())
         self.send_header('Content-type', 'text/html')
         self.end_headers()
         page_template = openid_page_template(configuration, head_extras)
