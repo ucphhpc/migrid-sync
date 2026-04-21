@@ -430,7 +430,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         logger.debug("encoding retry_url: %s" % retry_url)
         try:
             # NOTE: we get here with /openid/id/EMAIL as retry_url
-            valid_url(reitry_url, extra_chars='@')
+            valid_url(retry_url, extra_chars='@')
         except InputException as exc:
             retry_url = ''
             logger.error("found invalid retry_url: %s" % exc)
