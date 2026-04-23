@@ -35,8 +35,7 @@ import unittest
 from tests.support import MigTestCase, PY2, testmain, temppath, \
     AssertOver, FakeConfiguration
 
-from mig.shared.conf import get_configuration_object
-from mig.shared.configuration import Configuration
+from mig.shared.conf import get_configuration_object, RuntimeConfiguration
 
 
 class InstrumentedAssertOver(AssertOver):
@@ -143,8 +142,9 @@ class SupportTestCase_using_fakeconfig(MigTestCase):
 
     def test_provides_a_fake_configuration(self):
         configuration = self.configuration
-
-        self.assertIsInstance(configuration, FakeConfiguration)
+        self.assertIsInstance(configuration, RuntimeConfiguration)
+        static_configuration = configuration._configuration
+        self.assertIsInstance(static_configuration, FakeConfiguration)
 
     def test_provides_a_fake_configuration_for_the_duration_of_the_test(self):
         c1 = self.configuration
@@ -165,7 +165,7 @@ class SupportTestCase_using_testconfig(MigTestCase):
         configuration = self.configuration
 
         # check we have a real config object
-        self.assertIsInstance(configuration, Configuration)
+        self.assertIsInstance(configuration, RuntimeConfiguration)
         # check for having loaded a config file from a test config dir
         config_file_path_parts = configuration.config_file.split(os.path.sep)
         config_file_path_parts.pop()  # discard file part
