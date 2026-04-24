@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migsftpbench - sample paramiko-based sftp client benchmark
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -31,16 +32,23 @@ Requires paramiko (http://pypi.python.org/pypi/paramiko) and thus PyCrypto
 (http://pypi.python.org/pypi/pycrypto).
 
 Run with:
-python migsftpbench.py SERVER [MIG_USERNAME] [OPENSSH_USERNAME]
+python migsftpbench.py [MIG_ADDRESS] [MIG_PORT] [MIG_USERNAME] \
+           [OPENSSH_ADDRESS] [OPENSSH_PORT] [OPENSSH_USERNAME]
 
-where the optional MIG_USERNAME is the username displayed on your personal MiG
-ssh/sftp settings page. You will be interactively prompted for it if it is not
-provided on the command line.
-The optional OPENSSH_USERNAME is for testing against an openssh server on the
-same host if available.
+where the optional
+MIG_ADDRESS is the FQDN of the MiG native SFTP server (default is dk-io.migrid.org)
+MIG_PORT is the port of the MiG native SFTP server (default is 2222)
+MIG_USERNAME is the username for the MiG native SFTP server (default is -)
+OPENSSH_ADDRESS is the FQDN of the OpenSSH SFTP server (default is dk-io.migrid.org)
+OPENSSH_PORT is the port of the OpenSSH SFTP server (default is 22)
+OPENSSH_USERNAME is the username for the OpenSSH SFTP server (default is -)
+
+X_USERNAME can e.g be the username displayed on your personal MiG SFTP Setup
+page. You will be interactively prompted for it if it is left to default or -
+on the command line.
 
 Benchmark sftp upload/download against paramiko and openssh sftp servers.
-SSH agent is used for the auth if no explicit keys are given.
+SSH agent is used for the auth.
 """
 
 from __future__ import print_function
@@ -53,13 +61,17 @@ import time
 
 import paramiko
 
-migsftp_host = 'dk-sid.migrid.org'
+migsftp_host = 'dk-io.migrid.org'
 migsftp_port = 2222
-openssh_host = 'migrid.org'
+migsftp_user = '-'
+openssh_host = 'dk-io.migrid.org'
 openssh_port = 22
+openssh_user = '-'
 enable_compression = False
-bench_sizes = [1, 1024, 16 * 1024, 256 * 1024,
-               1024 * 1024, 16 * 1024 * 1024, 256 * 1024 * 1024]
+known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
+bench_sizes = [1, 1024, 16 * 1024, 256 * 1024, 1024 * 1024, 16 * 1024 * 1024,
+               256 * 1024 * 1024
+               ]
 bench_dir = '.upload-cache'
 bench_pattern = 'bench-sftp-%s-%d.bin'
 
@@ -75,7 +87,7 @@ def write_tmp(path, size):
     bench_fd = open(path, 'wb')
     while written < size:
         cur_size = min(chunk_size, size - written)
-        bench_fd.write('0' * cur_size)
+        bench_fd.write(b'0' * cur_size)
         written += cur_size
     bench_fd.close()
     print("Wrote %db file for benchmark" % written)
@@ -108,6 +120,27 @@ def show_results(times, bench_sizes):
         print()
 
 
+def _wrap_sftp_connect(ssh_client, fqdn, port, user, key, compress):
+    """Shared helper to handle the paramiko SSHClient connect phase and in
+    particular missing known host keys.
+    """
+    try:
+        ssh_client.load_system_host_keys()
+        ssh_client.load_host_keys(known_hosts_path)
+        ssh_client.connect(fqdn, port=port, username=user, pkey=key,
+                           compress=compress)
+        sftp = ssh_client.open_sftp()
+    except paramiko.ssh_exception.SSHException as exc:
+        if 'known_hosts' in str(exc):
+            print("Missing host pub key for requested server %s:%d" %
+                  (fqdn, port))
+            print("You need to provide it or have it in ~/.ssh/known_hosts")
+            sys.exit(1)
+        else:
+            raise exc
+    return sftp
+
+
 def create_missing_dirs(target):
     """Make sure all local and remote target dirs exist"""
     if not os.path.isdir(bench_dir):
@@ -118,13 +151,10 @@ def create_missing_dirs(target):
             sys.exit(1)
     if target['client'] == 'paramiko':
         ssh_transport = paramiko.SSHClient()
-        ssh_transport.set_missing_host_key_policy(
-            paramiko.AutoAddPolicy())
-        ssh_transport.connect(target['hostname'], target['port'],
-                              username=target['username'],
-                              pkey=target['user_key'],
-                              compress=enable_compression)
-        sftp = ssh_transport.open_sftp()
+        # For safe and silent operation we try already known host keys
+        sftp = _wrap_sftp_connect(ssh_transport, target['hostname'],
+                                  target['port'], target['username'],
+                                  target['user_key'], enable_compression)
         if not bench_dir in sftp.listdir():
             sftp.mkdir(bench_dir)
         sftp.close()
@@ -152,8 +182,8 @@ def run_bench(conf, bench_specs):
         times['get'][name] = {}
         times['put'][name] = {}
         if target['key_path']:
-            if target['key_path'].find('dsa') != -1:
-                target['user_key'] = paramiko.DSSKey.from_private_key_file(
+            if target['key_path'].find('ed25519') != -1:
+                target['user_key'] = paramiko.Ed25519Key.from_private_key_file(
                     target['key_path'])
             else:
                 target['user_key'] = paramiko.RSAKey.from_private_key_file(
@@ -169,13 +199,10 @@ def run_bench(conf, bench_specs):
             before = time.time()
             if target['client'] == 'paramiko':
                 ssh_transport = paramiko.SSHClient()
-                ssh_transport.set_missing_host_key_policy(
-                    paramiko.AutoAddPolicy())
-                ssh_transport.connect(target['hostname'], target['port'],
-                                      username=target['username'],
-                                      pkey=target['user_key'],
-                                      compress=enable_compression)
-                sftp = ssh_transport.open_sftp()
+                # For safe and silent operation we try already known host keys
+                sftp = _wrap_sftp_connect(ssh_transport, target['hostname'],
+                                          target['port'], target['username'],
+                                          target['user_key'], enable_compression)
                 if not bench_dir in sftp.listdir():
                     sftp.mkdir(bench_dir)
                 sftp.put(remotepath=bench_path, localpath=bench_path)
@@ -205,13 +232,10 @@ def run_bench(conf, bench_specs):
             before = time.time()
             if target['client'] == 'paramiko':
                 ssh_transport = paramiko.SSHClient()
-                ssh_transport.set_missing_host_key_policy(
-                    paramiko.AutoAddPolicy())
-                ssh_transport.connect(target['hostname'], target['port'],
-                                      username=target['username'],
-                                      pkey=target['user_key'],
-                                      compress=enable_compression)
-                sftp = ssh_transport.open_sftp()
+                # For safe and silent operation we try already known host keys
+                sftp = _wrap_sftp_connect(ssh_transport, target['hostname'],
+                                          target['port'], target['username'],
+                                          target['user_key'], enable_compression)
                 sftp.get(remotepath=bench_path, localpath=bench_path)
                 sftp.close()
                 ssh_transport.close()
@@ -245,9 +269,19 @@ if __name__ == '__main__':
     if sys.argv[1:]:
         migsftp_host = sys.argv[1]
     if sys.argv[2:]:
-        migsftp_user = sys.argv[2]
+        migsftp_port = int(sys.argv[2])
+    if sys.argv[3:] and sys.argv[3] != '-':
+        migsftp_user = sys.argv[3]
     else:
         migsftp_user = input('MiG SFTP Username: ')
+    if sys.argv[4:]:
+        openssh_host = sys.argv[4]
+    if sys.argv[5:]:
+        openssh_port = int(sys.argv[5])
+    if sys.argv[6:] and sys.argv[6] != '-':
+        openssh_user = sys.argv[6]
+    else:
+        openssh_user = input('OpenSSH Username: ')
 
     bench_hosts['paramiko=paramiko'] = {
         'client': 'paramiko',
@@ -269,9 +303,7 @@ if __name__ == '__main__':
         'key_path': None,
         'user_key': None,
     }
-    if sys.argv[4:]:
-        openssh_host = sys.argv[3]
-        openssh_user = sys.argv[4]
+    if openssh_host:
         bench_hosts['paramiko=openssh'] = {
             'client': 'paramiko',
             'hostname': openssh_host,
