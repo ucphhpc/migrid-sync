@@ -636,7 +636,7 @@ def gen_job_script(
         # Always minimize key access with all restrictions and source address
         # NOTE: 'restrict' keyword is only available in new ssh installations
         #       we manually build the corresponding string for now.
-        #restrict_opts = 'restrict'
+        # restrict_opts = 'restrict'
         restrict_opts = 'no-agent-forwarding,no-port-forwarding,no-pty,'
         restrict_opts += 'no-user-rc,no-X11-forwarding'
         restrictions = 'from="%s",%s' % (allow_from, restrict_opts)
@@ -647,38 +647,10 @@ def gen_job_script(
     # has been uploaded): Job script can't safely/reliably clean up
     # after itself because of possible user interference.
 
-    if 'JOBTYPE' in job_dictionary and \
-            job_dictionary['JOBTYPE'].lower() == 'interactive':
+    # write files
 
-        # interactive jobs have a .job file just containing a curl
-        # call to the MiG servers cgi-sid/requestinteractivejob
-        # and the usual .job is instead called .interactivejob and
-        # is SCP'ed and started by SSH in the requestinteractive.py
-        # script
-
-        logger.error('jobtype: interactive')
-        interactivejobfile = generator.script_init() + '\n' + \
-            generator.request_interactive() + '\n' + \
-            generator.exit_script('0', 'interactive job')
-
-        # write the small file containing the requestinteractivejob.py
-        # call as .job
-
-        write_file(interactivejobfile, configuration.mig_system_files +
-                   job_dictionary['JOB_ID'] + '.job', logger)
-
-        # write the usual .job file as .interactivejob
-
-        write_file('\n'.join(job_array), configuration.mig_system_files +
-                   job_dictionary['JOB_ID'] + '.interactivejob',
-                   logger)
-        print(interactivejobfile)
-    else:
-
-        # write files
-
-        write_file('\n'.join(job_array), configuration.mig_system_files
-                   + job_dictionary['JOB_ID'] + '.job', logger)
+    write_file('\n'.join(job_array), configuration.mig_system_files +
+               job_dictionary['JOB_ID'] + '.job', logger)
 
     write_file('\n'.join(getinputfiles_array), path_without_extension +
                '.getinputfiles', logger)

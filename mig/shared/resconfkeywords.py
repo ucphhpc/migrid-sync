@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resconfkeywords - Resource configuration keywords and specs
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,12 +20,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
 
 """Keywords in the resource configuration files"""
+
 from __future__ import absolute_import
 
 from mig.shared.defaults import default_vgrid
@@ -136,7 +138,7 @@ def get_resource_specs(configuration):
     }))
     specs.append(('JOBTYPE', {
         'Title': 'Job Type',
-        'Description': "Specifies which types of jobs the resource accepts. A job can be of type 'interactive', 'batch' or 'bulk' and the keyword 'all' is provided to allow all types. Interactive jobs are executed on a resource but with the graphical display forwarded to the MiG display of the user. Batch jobs are executed in a headless mode and can not use graphical output. Bulk jobs are like batch jobs, but additionally allow concurrent execution of other bulk jobs belonging to the same user. I.e. a bulk of multiple jobs running on the same resource at the same time, as long as the resource can provide the requested job resources (cpucount, nodecount, memory, disk). This particular server supports the following jobtypes: %s"
+        'Description': "Specifies which types of jobs the resource accepts. A job can be of type 'batch' or 'bulk' and the keyword 'all' is provided to allow all types. Batch jobs are executed in a headless mode and can not use graphical output. Bulk jobs are like batch jobs, but additionally allow concurrent execution of other bulk jobs belonging to the same user. I.e. a bulk of multiple jobs running on the same resource at the same time, as long as the resource can provide the requested job resources (cpucount, nodecount, memory, disk). This particular server supports the following jobtypes: %s"
         % ', '.join(configuration.jobtypes),
         'Example': 'all',
         'Type': 'string',

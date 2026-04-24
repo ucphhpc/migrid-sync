@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mrslparser - Parse mRSL job descriptions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -199,15 +199,6 @@ environment '%s', therefore the job can not be run on any resources.""" %
 
         global_dict['RUNTIMEENVIRONMENT'] = re_entries_uppercase
 
-    if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':
-
-        # if jobtype is interactive append command to create the notification
-        # file .interactivejobfinished that breaks the infinite loop waiting
-        # for the interactive job to finish and send output files to the MiG
-        # server
-
-        global_dict['EXECUTE'].append('touch .interactivejobfinished')
-
     # put job id and name of user in the dictionary
 
     global_dict['JOB_ID'] = job_id
@@ -353,10 +344,6 @@ to %s''' % configuration.grid_stdin)
             return (False,
                     'Fatal error pickling resource config: Could not write %s'
                     % filename)
-
-    if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':
-        from mig.shared.functionality.vncsession import main
-        return main(client_id, {})
 
     # print global_dict
 
