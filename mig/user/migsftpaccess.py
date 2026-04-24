@@ -204,6 +204,7 @@ Please verify it on your MiG ssh Settings page in case of failure.""")
     if server_host_key == 'AUTO':
         # For safe and silent operation we try already known host keys
         ssh.load_system_host_keys()
+        ssh.load_host_keys(known_hosts_path)
     else:
         key_type, key_data = server_host_key.split(' ')[:2]
         if key_type == 'ssh-rsa':
@@ -217,7 +218,6 @@ Please verify it on your MiG ssh Settings page in case of failure.""")
         server_fqdn_port = "[%s]:%d" % (server_fqdn, server_port)
         known_host_keys.add(server_fqdn, key_type, pub_key)
         known_host_keys.add(server_fqdn_port, key_type, pub_key)
-    known_host_keys.load(known_hosts_path)
     if user_auth.lower() == 'password':
         user_pw = getpass.getpass()
     elif user_auth.lower() == 'agent':

@@ -68,6 +68,7 @@ openssh_host = 'dk-io.migrid.org'
 openssh_port = 22
 openssh_user = '-'
 enable_compression = False
+known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
 bench_sizes = [1, 1024, 16 * 1024, 256 * 1024, 1024 * 1024, 16 * 1024 * 1024,
                256 * 1024 * 1024
                ]
@@ -125,6 +126,7 @@ def _wrap_sftp_connect(ssh_client, fqdn, port, user, key, compress):
     """
     try:
         ssh_client.load_system_host_keys()
+        ssh_client.load_host_keys(known_hosts_path)
         ssh_client.connect(fqdn, port=port, username=user, pkey=key,
                            compress=compress)
         sftp = ssh_client.open_sftp()
