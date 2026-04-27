@@ -775,6 +775,8 @@ class Configuration:
         self.default_page = None
         self.auth_logger_obj = None
         self.gdp_logger_obj = None
+        self.logger_obj = None
+        self.logger = None
 
         configuration_properties = copy.deepcopy(_CONFIGURATION_PROPERTIES)
 
