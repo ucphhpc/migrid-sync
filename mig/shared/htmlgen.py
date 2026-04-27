@@ -103,17 +103,6 @@ menu_items['cloud'] = {'class': 'cloud fas fa-cloud', 'url': 'cloud.py',
 menu_items['peers'] = {'class': 'peers fas fa-address-card', 'url': 'peers.py',
                        'title': 'Peers',
                        'hover': 'Vouch for collaboration partner or course participant accounts'}
-menu_items['shell'] = {'class': 'shell fas fa-keyboard', 'url': 'shell.py', 'title': 'Shell',
-                       'legacy_only': True, 'hover':
-                       'A command line interface, based on javascript and xmlrpc'}
-menu_items['wshell'] = {'class': 'shell  fas fa-keyboard-alt',
-                        'url': 'javascript:\
-             window.open(\'shell.py?menu=no\',\'shellwindow\',\
-             \'dependent=yes,menubar=no,status=no,toolbar=no,\
-               height=650px,width=800px\');\
-             window.reload();',
-                        'legacy_only': True, 'title': 'Shell',
-                        'hover': 'A command line interface, based on javascript and xmlrpc. Opens in a new window'}
 menu_items['statistics'] = {'class': 'statistics fas fa-poll', 'url': 'showstats.py',
                             'legacy_only': True, 'title': 'Statistics',
                             'hover': 'Usage overview for resources and users on this server'}
