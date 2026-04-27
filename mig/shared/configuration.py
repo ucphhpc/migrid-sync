@@ -2008,7 +2008,7 @@ location.""" % self.config_file)
             self.site_advanced_menu = ['home', 'submitjob', 'files',
                                        'jobs', 'vgrids', 'resources',
                                        'downloads', 'runtimeenvs', 'people',
-                                       'settings', 'crontab', 'shell', 'docs',
+                                       'settings', 'crontab', 'docs',
                                        'logout']
         if config.has_option('SITE', 'user_menu'):
             req = config.get('SITE', 'user_menu').split()
