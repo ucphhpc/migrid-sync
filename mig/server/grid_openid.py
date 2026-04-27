@@ -1836,3 +1836,4 @@ unless it is available in mig/server/MiGserver.conf
     info_msg = "Leaving with no more workers active"
     logger.info(info_msg)
     print(info_msg)
+
