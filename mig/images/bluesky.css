@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # bluesky - alternative style for all pages
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -98,7 +98,7 @@ div.container {
   /* No footer overlap with menu here */
   min-height: 0px;
 }
-/* override block layout for maximized areas like wshell */
+/* override block layout for maximized areas without menu */
 #nomenu {
   margin: 4px;
 }
@@ -157,9 +157,6 @@ div.container {
 }
 .navmenu ul li.settings a {
   background-image: url('/images/icons/wrench.png');
-}
-.navmenu ul li.shell a {
-  background-image: url('/images/icons/application_osx_terminal.png');
 }
 .navmenu ul li.people a {
   background-image: url('/images/icons/personal.png');
