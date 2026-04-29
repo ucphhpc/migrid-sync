@@ -33,7 +33,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import getopt
-import pickle
 import sys
 
 from mig.shared.defaults import keyword_all
@@ -105,7 +104,7 @@ if '__main__' == __name__:
     action_map = {'start': start_cloud_instance, 'stop': stop_cloud_instance,
                   'restart': restart_cloud_instance,
                   'status': status_of_cloud_instance}
-    if not action in action_map:
+    if action not in action_map:
         print('Error: action must be one of %s' % action_map.keys())
         usage()
         sys.exit(1)
@@ -142,7 +141,7 @@ if '__main__' == __name__:
                 list(saved_instances), instance_fields)
             action_helper = action_map[action]
             for (instance_id, instance_dict) in saved_instances.items():
-                if not instance_id in instance_list:
+                if instance_id not in instance_list:
                     continue
                 instance_label = instance_dict.get('INSTANCE_LABEL',
                                                    instance_id)

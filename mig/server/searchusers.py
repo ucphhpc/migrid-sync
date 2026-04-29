@@ -33,7 +33,6 @@ from __future__ import absolute_import
 from past.builtins import basestring
 import getopt
 import sys
-import time
 
 from mig.shared.useradm import init_user_adm, search_users, default_search
 

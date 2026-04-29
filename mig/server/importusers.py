@@ -35,7 +35,6 @@ import os
 import re
 import ssl
 import sys
-import time
 
 from mig.shared import returnvalues
 from mig.shared.accountstate import default_account_expire
@@ -46,9 +45,7 @@ from mig.shared.defaults import csrf_field, keyword_auto, valid_auth_types
 from mig.shared.functionality.sendrequestaction import main
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.output import format_output
-from mig.shared.pwcrypto import generate_random_password, unscramble_password, \
-    scramble_password
-from mig.shared.safeinput import valid_password_chars
+from mig.shared.pwcrypto import generate_random_password, scramble_password
 from mig.shared.url import urlopen
 from mig.shared.useradm import init_user_adm, default_search, create_user, \
     search_users

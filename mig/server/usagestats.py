@@ -35,10 +35,8 @@ import os
 import sys
 import time
 
-from mig.shared.base import extract_field
 from mig.shared.defaults import freeze_meta_filename, keyword_auto
-from mig.shared.fileio import unpickle, walk
-from mig.shared.notification import send_email
+from mig.shared.fileio import walk
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe
 from mig.shared.serial import dump
 from mig.shared.useradm import init_user_adm, search_users, default_search
@@ -454,7 +452,7 @@ if '__main__' == __name__:
                 dirs.remove(i)
             continue
         if sub_parts[-1].find('archive-') == -1 or \
-                not freeze_meta_filename in files:
+                freeze_meta_filename not in files:
             continue
         meta_path = os.path.join(root, freeze_meta_filename)
         meta_mtime = os.path.getmtime(meta_path)

@@ -33,7 +33,6 @@ import os
 import sys
 
 
-from mig.shared.base import client_id_dir
 from mig.shared.conf import get_configuration_object
 from mig.shared.fileio import delete_file
 from mig.shared.vgridaccess import refresh_vgrid_map, refresh_user_map, \

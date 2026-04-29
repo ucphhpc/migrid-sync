@@ -36,7 +36,6 @@ import datetime
 import getopt
 import os
 import sys
-import time
 
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import fill_distinguished_name, fill_user, canonical_user, \

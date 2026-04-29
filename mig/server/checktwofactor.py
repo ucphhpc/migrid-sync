@@ -31,7 +31,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import getopt
-import pickle
 import sys
 
 from mig.shared.defaults import keyword_auto
