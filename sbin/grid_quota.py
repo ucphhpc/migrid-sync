@@ -128,7 +128,7 @@ unless it is available in mig/server/MiGserver.conf
                 % os.getpid()
             logger.info(msg)
             print("%s %s" % (datetime.datetime.now(), msg))
-        except Exception as exc:
+        except Exception:
             throttle = True
             msg = "(%s) Caught unexpected exception:\n%s" \
                   % (os.getpid(), traceback.format_exc())
