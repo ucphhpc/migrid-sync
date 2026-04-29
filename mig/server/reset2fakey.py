@@ -85,7 +85,7 @@ def enable2fa(configuration, user_id, verbose, force=False):
 
     try:
         os.remove(tmptopicfile)
-    except Exception as exc:
+    except Exception:
         pass  # probably deleted by parser!
 
     return parse_status
@@ -251,7 +251,7 @@ if '__main__' == __name__:
             print("Detected HEX seed, re-encoding to base32")
         try:
             seed = base64.b32encode(base64.b16decode(seed))
-        except Exception as exc:
+        except Exception:
             print("Failed to base32 encode seed")
             if not force:
                 sys.exit(1)
@@ -263,7 +263,7 @@ if '__main__' == __name__:
     if interval:
         try:
             interval = int(interval)
-        except:
+        except Exception:
             print("Skipping non-int interval: %s" % interval)
             interval = None
 

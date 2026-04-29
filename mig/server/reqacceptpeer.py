@@ -41,12 +41,11 @@ import os
 import sys
 
 from mig.shared.accountreq import peers_permit_allowed, manage_pending_peers
-from mig.shared.base import fill_distinguished_name, client_id_dir
+from mig.shared.base import fill_distinguished_name
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import keyword_auto, gdp_distinguished_field, \
-    pending_peers_filename
+from mig.shared.defaults import keyword_auto, gdp_distinguished_field
 from mig.shared.notification import notify_user
-from mig.shared.serial import load, dump
+from mig.shared.serial import load
 from mig.shared.useradm import init_user_adm, search_users, default_search, \
     user_account_notify
 from mig.shared.validstring import valid_email_addresses

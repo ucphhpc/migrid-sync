@@ -75,7 +75,7 @@ def check_archive_integrity(configuration, user_id, freeze_path,
     # NOTE: if archive has no actual files it has no cache file either
     if not os.path.exists(cache_path):
         archive_list = os.listdir(freeze_path)
-        if [i for i in archive_list if not i in ignore_files]:
+        if [i for i in archive_list if i not in ignore_files]:
             print("Archive %s has data content but no file cache in %s" %
                   (freeze_path, cache_path))
             return False

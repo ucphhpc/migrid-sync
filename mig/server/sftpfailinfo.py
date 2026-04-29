@@ -127,9 +127,9 @@ if '__main__' == __name__:
         match = extract_regex.match(line)
         if match:
             stamp, source_ip, source_port, err_cond = match.group(1, 2, 3, 4)
-            if not source_ip in ip_fail_map:
+            if source_ip not in ip_fail_map:
                 ip_fail_map[source_ip] = {'source_ip': source_ip}
-            if not err_cond in ip_fail_map[source_ip]:
+            if err_cond not in ip_fail_map[source_ip]:
                 ip_fail_map[source_ip][err_cond] = 0
             ip_fail_map[source_ip][err_cond] += 1
             ip_fail_map[source_ip]['last'] = stamp
