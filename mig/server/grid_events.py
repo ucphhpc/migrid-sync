@@ -361,7 +361,7 @@ def recently_modified(path, time_stamp, slack=2.0):
         stat_res = os.stat(path)
         result = stat_res.st_mtime == stat_res.st_atime \
             or stat_res.st_mtime > time_stamp - slack
-    except OSError as exc:
+    except OSError:
 
         # If we get an OSError, *path* is most likely deleted
 
@@ -1039,8 +1039,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         if ent.is_dir(follow_symlinks=True):
                             vgrid_sub_path = strip_base_dirs(ent.path)
 
-                            if not vgrid_sub_path in \
-                                    vgrid_dir_cache or \
+                            if vgrid_sub_path not in vgrid_dir_cache or \
                                     vgrid_dir_cache[vgrid_sub_path]['mtime'] \
                                     < rel_path_ctime:
 
@@ -1056,7 +1055,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                             shared_state['file_handler'].dispatch(
                                 FileCreatedEvent(ent.path))
-                except OSError as exc:
+                except OSError:
 
                     # If we get an OSError, src_path was most likely deleted
                     # after os.path.exists check
@@ -1223,7 +1222,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         #              % (pid, rule['rule_id'], src_path))
 
                         continue
-                    if not state in rule['changes']:
+                    if state not in rule['changes']:
 
                         # logger.debug('(%s) skip %s %s event handling for: %s'
                         #         % (pid, rule['rule_id'], state,
@@ -1265,7 +1264,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                             worker.daemon = True
                             worker.start()
                             waiting_for_worker_resources = False
-                        except multiprocessing.ProcessError as exc:
+                        except multiprocessing.ProcessError:
 
                             # logger.debug('(%s) Waiting for worker resources to handle trigger: %s'
                             #              % (pid, event))
@@ -1394,7 +1393,7 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
                         vgrid_sub_path = strip_base_dirs(ent.path)
                         # Force utf8 everywhere to avoid encoding issues
                         vgrid_sub_path = force_utf8(vgrid_sub_path)
-                        if not vgrid_sub_path in vgrid_dir_cache:
+                        if vgrid_sub_path not in vgrid_dir_cache:
                             retval &= add_vgrid_file_monitor(configuration,
                                                              vgrid_name,
                                                              vgrid_sub_path)

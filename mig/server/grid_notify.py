@@ -307,7 +307,7 @@ if __name__ == "__main__":
     if sys.argv[argpos:]:
         try:
             delay = int(sys.argv[argpos])
-        except Exception as err:
+        except Exception:
             print("Invalid delay arg: %s" % (sys.argv[argpos]))
             sys.exit(1)
 

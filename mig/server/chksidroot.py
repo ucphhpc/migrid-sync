@@ -53,7 +53,7 @@ try:
     from mig.shared.logger import daemon_logger, register_hangup_handler
     from mig.shared.sharelinks import extract_mode_id
     from mig.shared.validstring import valid_user_path
-except Exception as exc:
+except Exception:
     print("Could not load migrid code from chksidroot helper!")
     sys.exit(1)
 
@@ -180,7 +180,7 @@ unless it is available in mig/server/MiGserver.conf
             try:
                 link_target = os.readlink(link_path).rstrip(os.sep)
                 real_target = os.path.realpath(link_path)
-            except Exception as exc:
+            except Exception:
                 link_target = None
                 real_target = None
             if not link_target or not os.path.exists(link_path):

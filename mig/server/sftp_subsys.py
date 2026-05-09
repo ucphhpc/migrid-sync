@@ -73,7 +73,6 @@ import io
 import os
 import sys
 import threading
-import time
 
 try:
     from paramiko.server import ServerInterface

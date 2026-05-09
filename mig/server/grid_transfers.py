@@ -50,7 +50,7 @@ from mig.shared.base import client_dir_id, client_id_dir
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import datatransfers_filename, transfers_log_size, \
     transfers_log_cnt, user_keys_dir, _user_invisible_paths
-from mig.shared.fileio import makedirs_rec, pickle
+from mig.shared.fileio import makedirs_rec
 from mig.shared.logger import daemon_logger, register_hangup_handler
 from mig.shared.notification import notify_user_thread
 from mig.shared.pwcrypto import unscramble_digest, fernet_decrypt_password
@@ -470,7 +470,7 @@ def run_transfer(configuration, client_id, transfer_dict):
     protocol = transfer_dict['protocol']
     status_dir = get_status_dir(configuration, client_id, transfer_id)
     cmd_map = get_cmd_map()
-    if not protocol in cmd_map[action]:
+    if protocol not in cmd_map[action]:
         raise ValueError('unsupported protocol: %s' % protocol)
 
     client_dir = client_id_dir(client_id)

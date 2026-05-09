@@ -54,7 +54,7 @@ try:
     from mig.shared.conf import get_configuration_object
     from mig.shared.logger import daemon_logger, register_hangup_handler
     from mig.shared.validstring import valid_user_path
-except Exception as exc:
+except Exception:
     print("Could not load migrid code from chkuserroot helper!")
     sys.exit(1)
 

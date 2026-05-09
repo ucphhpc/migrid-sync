@@ -336,7 +336,7 @@ def run_handler(configuration, client_id, timestamp, crontab_entry):
             worker.daemon = True
             worker.start()
             waiting_for_worker_resources = False
-        except multiprocessing.ProcessError as exc:
+        except multiprocessing.ProcessError:
 
             # logger.debug('(%s) Waiting for worker resources to handle crontab: %s'
             #              % (pid, crontab_entry))
