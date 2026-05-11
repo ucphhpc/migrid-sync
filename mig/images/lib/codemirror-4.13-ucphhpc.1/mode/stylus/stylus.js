@@ -19,8 +19,8 @@
         commonKeywordsRegexp = wordRegexp(commonKeywords),
         commonAtomsRegexp = wordRegexp(commonAtoms),
         commonDefRegexp = wordRegexp(commonDef),
-        vendorPrefixesRegexp = new RegExp(/^\-(moz|ms|o|webkit)-/),
-        cssValuesWithBracketsRegexp = new RegExp("^(" + cssValuesWithBrackets_.join("|") + ")\\([\\w\-\\#\\,\\.\\%\\s\\(\\)]*\\)");
+        vendorPrefixesRegexp = new RegExp(/^\\-(moz|ms|o|webkit)-/),
+        cssValuesWithBracketsRegexp = new RegExp("^(" + cssValuesWithBrackets_.join("|") + ")\\([\\w\\-\\#\\,\\.\\%\\s\\(\\)]*\\)");
 
     var tokenBase = function(stream, state) {
 
