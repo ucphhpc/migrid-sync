@@ -67,7 +67,7 @@
              }
              var out = ""
              if (!sanelinkurl) {
-                 // IMPORTANT: do NOT print sanelinkurl verbatim to avoid CSS issues
+                 // IMPORTANT: do NOT print sanelinkurl verbatim to avoid XSS issues
                  if (lang == "danish") {
                      out = "Fejl: kunne ikke udtrække url fra angivet SafeLink";
                  } else {
