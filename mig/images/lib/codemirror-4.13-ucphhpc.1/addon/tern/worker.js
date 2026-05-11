@@ -15,10 +15,12 @@ this.onmessage = function(e) {
     postMessage({id: data.id, body: reqData, err: err && String(err)});
   });
   case "getFile":
-      // IMPORTANT: make sure user-controlled data is carefully used
-    if (Object.prototype.hasOwnProperty.call(pending, data.id)) {
-      var c = pending[data.id];
-      delete pending[data.id];
+    // IMPORTANT: make sure user-controlled data is used very carefully
+    var id = data.id;
+    if (typeof id == "number" && isFinite(id) && Math.floor(id) === id && id > 0 &&
+        Object.prototype.hasOwnProperty.call(pending, id)) {
+      var c = pending[id];
+      delete pending[id];
       if (typeof c == "function") {
         return c(data.err, data.text);
       }
