@@ -7,7 +7,9 @@ isort
 pylint
 ruff
 # We need paramiko for the ssh unit tests
-paramiko
+# IMPORTANT: there's a known security issue (CVE-2023-48795) in paramiko<3.4.0
+#            as explained on https://www.paramiko.org/changelog.html#3.4.0
+paramiko>=3.4.0
 werkzeug
 # We need pyOpenSSL for the FTPS service and related tlsserver unit tests
 pyOpenSSL
