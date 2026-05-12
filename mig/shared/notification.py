@@ -990,10 +990,27 @@ def send_system_notification(user_id, category, message, configuration):
 
 
 class Notifier:
+    """
+    Instances of this class provide bound notification primitives to other
+    logic which can be persisted for the duration of a request.
+    """
+
     def __init__(self, configuration):
         self.configuration = configuration
 
-    def send_email(self, recipients, subject, message, files=[], custom_sender=None):
-        return direct_send_email(self.configuration, recipients, subject, message,
-                                                        files=[],
-                                                        custom_sender=None)
+    def send_email(
+        self, recipients, subject, message, files=[], custom_sender=None
+    ):
+        """
+        Email sending notification primitive whose output is done via
+        a direct connection to an SMTP service.
+        """
+
+        return direct_send_email(
+            self.configuration,
+            recipients,
+            subject,
+            message,
+            files=files,
+            custom_sender=custom_sender,
+        )
