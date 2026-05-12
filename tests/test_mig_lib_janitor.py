@@ -329,6 +329,10 @@ class MigLibJanitor(MigTestCase):
         # self.assertEqual(handled, 1)
         self.assertEqual(handled, 2)  # counted stale and expired (see above)
 
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+
     def test_handle_pending_requests(self):
         """Test combined request handling"""
         # Create requests (valid, expired)
@@ -379,8 +383,13 @@ class MigLibJanitor(MigTestCase):
         # self.assertEqual(handled, 2)  # 1 manage + 1 expire
         self.assertEqual(handled, 3)  # 1 manage + 1 expire + 1 stale
 
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+
     def test_handle_janitor_tasks_full(self):
         """Test full janitor task scheduler"""
+        self.configuration.context_get('notifier').send_email.forgive_email()
         # Prepare environment with pending tasks of each kind
         mig_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
         mig_path = os.path.join(self.configuration.mig_system_files,
@@ -497,9 +506,13 @@ class MigLibJanitor(MigTestCase):
 
         self.assertTrue(any('invalid account request' in msg
                             for msg in log_capture.output))
-        # TODO: enable check for removed req once skip email allows it
-        # self.assertFalse(os.path.exists(req_path),
-        #                 "Failed to clean invalid req for %s" % req_path)
+        self.assertFalse(os.path.exists(req_path),
+                        "Failed to clean invalid req for %s" % req_path)
+
+        # FIXME: should this really be sending email?
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
 
     def test_manage_single_req_expired_token(self):
         """Test request handling with expired reset token"""
@@ -540,12 +553,15 @@ class MigLibJanitor(MigTestCase):
 
         self.assertTrue(any('reject expired reset token' in msg
                             for msg in log_capture.output))
-        # TODO: enable check for removed req once skip email allows it
-        # self.assertFalse(os.path.exists(req_path),
-        #                 "Failed to clean token req for %s" % req_path)
+        self.assertFalse(os.path.exists(req_path),
+                        "Failed to clean token req for %s" % req_path)
+
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
 
     @unittest.skip("TODO: enable once fernet decrypt err handling is improved")
-    def test_manage_single_req_invalid_token(self):
+    def test_manage_single_req_invalid_token_decrypt(self):
         """Test request handling with invalid reset token"""
         req_dict = {
             'client_id': TEST_USER_DN,
@@ -578,6 +594,11 @@ class MigLibJanitor(MigTestCase):
                             for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path),
                          "Failed to clean token req for %s" % req_path)
+
+        # FIXME: should this really be sending an email?
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
 
     def test_manage_single_req_collision(self):
         """Test request handling with existing user collision"""
@@ -612,9 +633,14 @@ class MigLibJanitor(MigTestCase):
             )
             self.assertTrue(any('ID collision' in msg
                                 for msg in log_capture.output))
-        # TODO: enable check for removed req once skip email allows it
-        # self.assertFalse(os.path.exists(req_path),
-        #                 "Failed cleanup collision for %s" % req_path)
+
+        self.assertFalse(os.path.exists(req_path),
+                         "Failed cleanup collision for %s" % req_path)
+
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+
 
     def test_manage_single_req_auth_change(self):
         """Test request handling with auth password change"""
@@ -636,10 +662,6 @@ class MigLibJanitor(MigTestCase):
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
-        # NOTE: when using real user mail we currently hit send email errors.
-        #       We forgive those errors here and only check any known warnings.
-        # TODO: integrate generic skip email support and adjust here to fit
-        self.logger.forgive_errors()
         with self.assertLogs(level='INFO') as log_capture:
             manage_single_req(
                 self.configuration,
@@ -653,6 +675,10 @@ class MigLibJanitor(MigTestCase):
             any('accepted' in msg for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path),
                          "Failed to clean token req for %s" % req_path)
+
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
 
     def test_handle_cache_updates_stub(self):
         """Test handle_cache_updates placeholder returns zero"""
@@ -801,9 +827,13 @@ class MigLibJanitor(MigTestCase):
 
         self.assertTrue(any('wrong hash' in msg.lower()
                             for msg in log_capture.output))
-        # TODO: enable check for removed req once skip email allows it
-        # self.assertFalse(os.path.exists(req_path),
-        #                 "Failed cleanup invalid token for %s" % req_path)
+        self.assertFalse(os.path.exists(req_path),
+                        "Failed cleanup invalid token for %s" % req_path)
+
+        # FIXME: should this really be sending email?
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
 
     def test_verify_reset_token_success(self):
         """Test token verification success with valid token"""
@@ -843,12 +873,16 @@ class MigLibJanitor(MigTestCase):
 
         self.assertTrue(any('accepted' in msg.lower()
                             for msg in log_capture.output))
-        # TODO: enable check for removed req once skip email allows it
-        # self.assertFalse(os.path.exists(req_path),
-        #                 "Failed cleanup invalid token for %s" % req_path)
+        self.assertFalse(os.path.exists(req_path),
+                        "Failed cleanup invalid token for %s" % req_path)
+
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
 
     def test_remind_and_expire_edge_cases(self):
         """Test request expiration with exact boundary timestamps"""
+        self.configuration.context_get('notifier').send_email.forgive_email()
         now = time.time()
         test_cases = [
             ('exact_remind', now - REMIND_REQ_DAYS * SECS_PER_DAY),
@@ -991,10 +1025,7 @@ class MigLibJanitor(MigTestCase):
         # Verify initial existence
         self.assertTrue(os.path.exists(req_path))
 
-        # NOTE: when using real user mail we currently hit send email errors.
-        #       We forgive those errors here and only check any known warnings.
-        # TODO: integrate generic skip email support and adjust here to fit
-        self.logger.forgive_errors()
+
         manage_single_req(
             self.configuration,
             req_id,
@@ -1003,9 +1034,12 @@ class MigLibJanitor(MigTestCase):
             time.time()
         )
 
-        # TODO: enable check for removed req once skip email allows it
-        # self.assertFalse(os.path.exists(req_path),
-        #                 "Failed cleanup after reject for %s" % req_path)
+        self.assertFalse(os.path.exists(req_path),
+                        "Failed cleanup after reject for %s" % req_path)
+
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email.email_was_sent_to('test@example.com')
+
 
     def test_cleaner_with_multiple_patterns(self):
         """Test state cleaner with multiple filename patterns"""

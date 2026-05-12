@@ -271,8 +271,7 @@ mind about it you can safely just ignore this message.
 
         logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
                     % (email_to, email_header, email_msg, smtp_server))
-        if not send_email(email_to, email_header, email_msg, logger,
-                          configuration):
+        if not send_email(configuration, email_to, email_header, email_msg):
             output_objects.append({'object_type': 'error_text', 'text':
                                    """An error occurred trying to send the email
 for an account %s password reset request. Please contact %s site support at %s

@@ -130,12 +130,10 @@ def send_notifications(configuration):
         notify_message = "Found %s new events since: %s\n\n" \
             % (total_events, timestr) \
             + notify_message
-        status = send_email(
+        status = send_email(configuration,
             recipient,
             subject,
-            notify_message,
-            logger,
-            configuration)
+            notify_message)
         if status:
             logger.info("Send email with %s events to: %s"
                         % (total_events, recipient))

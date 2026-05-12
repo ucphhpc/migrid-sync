@@ -309,8 +309,7 @@ site administrators (%s).
                     logger.info('Sending invitation: to: %s, header: %s, msg: %s, smtp_server: %s'
                                 % (peer_email, email_header, email_msg,
                                    smtp_server))
-                    if send_email(peer_email, email_header, email_msg, logger,
-                                  configuration):
+                    if send_email(configuration, peer_email, email_header, email_msg):
                         succeeded.append(peer_email)
                     else:
                         failed.append(peer_email)
@@ -369,8 +368,7 @@ Kind: %(kind)s , Expire: %(expire)s, Label: %(label)s , Peers:
 
     logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
                 % (admin_email, email_header, email_msg, smtp_server))
-    if not send_email(admin_email, email_header, email_msg, logger,
-                      configuration):
+    if not send_email(configuration, admin_email, email_header, email_msg):
         output_objects.append({'object_type': 'error_text', 'text': '''
 An error occurred trying to send the email about your %s peers to the site
 administrators. Please contact %s site support at %s or manually inform the

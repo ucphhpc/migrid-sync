@@ -48,6 +48,7 @@ from tests.support.fixturesupp import _PreparedFixture
 from tests.support.suppconst import MIG_BASE, TEST_BASE, \
     TEST_DATA_DIR, TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR
 from tests.support.usersupp import UserAssertMixin
+import tests.support.fakes as fakes
 
 from tests.support._env import MIG_ENV, PY2
 
@@ -251,6 +252,8 @@ class MigTestCase(TestCase):
             os.mkdir(log_path)
 
         self._configuration = configuration_instance
+
+        fakes.instrument_test_case(self, self._configuration)
 
         return configuration_instance
 
