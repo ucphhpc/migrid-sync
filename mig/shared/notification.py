@@ -570,8 +570,6 @@ def send_email(
         custom_sender=None):
     """Send email to recipients via the actively configured method."""
 
-    assert RuntimeConfiguration.is_runtime_configuration(configuration)
-
     notifier = configuration.context_get('notifier')
     if not notifier:
         notifier = Notifier(configuration)

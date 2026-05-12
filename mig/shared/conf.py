@@ -75,11 +75,6 @@ class RuntimeConfiguration:
         """
         self._context[context_key] = context_value
 
-    @classmethod
-    def is_runtime_configuration(cls, obj):
-        """Is the given object a runtime configuration."""
-        return isinstance(obj, cls)
-
 
 def get_configuration_object(config_file=None,
                              skip_log=False,
