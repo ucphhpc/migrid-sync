@@ -24,11 +24,11 @@
 # -- END_HEADER ---
 #
 
+"""Fake implementations of various assistant functionality used by MiG logic."""
+
 import inspect
 from types import SimpleNamespace
 
-
-"""Fake implementations of various assistant functionality used by MiG logic."""
 
 class FakeSendEmail:
     """
@@ -59,12 +59,14 @@ class FakeSendEmail:
 
         has_calls = len(self.calls) > 0
         if has_calls:
-            suprise_recipients = []
+            surprise_recipients = []
             for args, kwargs in self.calls:
                 email_address = args[0]
-                suprise_recipients.append(email_address)
-            raise AssertionError('detected email sending without expectation: \n  %s'
-                                    % ('\n  '.join(suprise_recipients),))
+                surprise_recipients.append(email_address)
+            raise AssertionError(
+                "detected email sending without expectation: \n  %s"
+                % ("\n  ".join(surprise_recipients),)
+            )
 
     def forgive_email(self):
         self._checked = True
@@ -76,8 +78,9 @@ class FakeSendEmail:
 
     def email_was_sent_to(self, email_address):
         recipients = self._recipients()
-        assert email_address in recipients, \
-                f"no email was not set to recipient: {email_address}"
+        assert (
+            email_address in recipients
+        ), "no email was not set to recipient: %s" % (email_address,)
         self._checked = True
         return email_address in recipients
 
@@ -92,11 +95,12 @@ def make_fake_notifier(mig_test_case=None):
 
 
 def instrument_test_case(mig_test_case=None, mig_configuration=None):
-    assert inspect.ismethod(getattr(mig_configuration, 'context_set', None)), \
-            "supplied configuration must be usable at runtime"
+    assert inspect.ismethod(
+        getattr(mig_configuration, "context_set", None)
+    ), "supplied configuration must be usable at runtime"
 
     fakes_by_context_key = {
-        'notifier': make_fake_notifier(mig_test_case=mig_test_case),
+        "notifier": make_fake_notifier(mig_test_case=mig_test_case),
     }
     for content_key, context_value in fakes_by_context_key.items():
         mig_configuration.context_set(content_key, context_value)
