@@ -185,11 +185,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            None,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False
+            dhparamsfile=None,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -221,11 +221,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -257,11 +257,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            False
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=False,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -294,11 +294,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            True
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=True
         )
 
         # Verify options are set
@@ -327,11 +327,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -364,11 +364,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
         # NOTE: this may be too platform specific
         expected_start = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
@@ -386,11 +386,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_LEGACY_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_LEGACY_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
         # NOTE: this may be too platform specific
         expected_start = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
@@ -411,12 +411,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            None,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=None,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -451,12 +451,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -491,12 +491,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=False,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -532,12 +532,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            True
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=True
         )
 
         # Verify options are set
@@ -569,12 +569,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -610,12 +610,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
         # NOTE: this may be too platform specific
         expected_start = "ECDHE-ECDSA-AES128-GCM-SHA256:"
@@ -636,12 +636,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_LEGACY_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_LEGACY_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
         # NOTE: this may be too platform specific
         expected_start = "ECDHE-RSA-AES128-GCM-SHA256:"
