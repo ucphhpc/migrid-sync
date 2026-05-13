@@ -1,1 +1,0 @@
-../widget-deps/zrssfeed-111/jquery.zrssfeed.min.js
