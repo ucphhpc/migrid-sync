@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -40,7 +41,6 @@ from mig.shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_CURVES
 def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
                          ciphers=STRONG_TLS_CIPHERS,
                          curve_priority=STRONG_TLS_CURVES,
-                         allow_pre_tlsv12=False,
                          allow_pre_tlsv13=True,
                          allow_renegotiation=False,
                          ):
@@ -48,8 +48,8 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     _logger = configuration.logger
     _logger.info("enforcing strong SSL/TLS connections")
     _logger.debug("using SSL/TLS ciphers: %s" % ciphers)
-    ssl_protocol = ssl.PROTOCOL_SSLv23
-    ssl_ctx = ssl.SSLContext(ssl_protocol)
+    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     ssl_ctx.load_cert_chain(certfile, keyfile)
     ssl_options = 0
     # NOTE: Override a number of weak and insecure legacy configurations
@@ -58,11 +58,7 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     ssl_options |= getattr(ssl, 'OP_NO_SSLv2', 0x1000000)
     ssl_options |= getattr(ssl, 'OP_NO_SSLv3', 0x2000000)
     ssl_options |= getattr(ssl, 'OP_NO_TLSv1', 0x4000000)
-    ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_1
-    # NOTE: refuse weak TLS protocols unless allow_pre_tlsv12
-    if not allow_pre_tlsv12:
-        ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000)
-        ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+    ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000)
     # NOTE: refuse slightly dated TLS 1.2 protocol unless allow_pre_tlsv13
     if not allow_pre_tlsv13:
         if getattr(ssl, 'HAS_TLSv1_3', False):
@@ -78,17 +74,13 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     ssl_options |= getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
     ssl_options |= getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000)
     ssl_options |= getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000)
-    # Useful for debugging
-    # ssl_options |= getattr(ssl, 'OP_NO_TICKET',  0x0004000)
-    # ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000)
-    # ssl_options |= getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000)
-    if sys.version_info[:2] >= (2, 7) and ssl_ctx:
+    if sys.version_info[:2] >= (3, 7) and ssl_ctx:
         _logger.info("enforcing strong SSL/TLS options")
         _logger.debug("SSL/TLS options: %s" % ssl_options)
         ssl_ctx.options |= ssl_options
     else:
         _logger.info("can't enforce strong SSL/TLS options")
-        _logger.warning("Upgrade to python 2.7.9+ for maximum security")
+        _logger.warning("Upgrade to python 3.7+ for maximum security")
 
     pfs_available = False
     if dhparamsfile:
@@ -134,7 +126,6 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
                              cacertfile=None, dhparamsfile=None,
                              ciphers=STRONG_TLS_CIPHERS,
                              curve_priority=STRONG_TLS_CURVES,
-                             allow_pre_tlsv12=False,
                              allow_pre_tlsv13=True,
                              allow_renegotiation=False,
                              ):
@@ -143,8 +134,10 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
     SSL, crypto = OpenSSL.SSL, OpenSSL.crypto
     _logger.info("enforcing strong SSL/TLS connections")
     _logger.debug("using SSL/TLS ciphers: %s" % ciphers)
-    ssl_protocol = SSL.SSLv23_METHOD
-    ssl_ctx = SSL.Context(ssl_protocol)
+    ssl_ctx = SSL.Context(SSL.TLS_SERVER_METHOD)
+    ssl_ctx.set_min_proto_version(SSL.TLS1_2_VERSION)
+    # Mimic native ssl exposure of options
+    ssl_ctx._minimum_version = SSL.TLS1_2_VERSION
     ssl_ctx.use_certificate_chain_file(certfile)
     ssl_ctx.use_privatekey_file(keyfile)
     if cacertfile:
@@ -157,15 +150,7 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
     ssl_options |= getattr(SSL, 'OP_NO_SSLv2', 0x1000000)
     ssl_options |= getattr(SSL, 'OP_NO_SSLv3', 0x2000000)
     ssl_options |= getattr(SSL, 'OP_NO_TLSv1', 0x4000000)
-    ssl_ctx.set_min_proto_version(SSL.TLS1_1_VERSION)
-    # Mimic native ssl exposure of options
-    ssl_ctx._minimum_version = SSL.TLS1_1_VERSION
-    # NOTE: refuse weak TLS protocols unless allow_pre_tlsv12
-    if not allow_pre_tlsv12:
-        ssl_options |= getattr(SSL, 'OP_NO_TLSv1_1', 0x10000000)
-        ssl_ctx.set_min_proto_version(SSL.TLS1_2_VERSION)
-        # Mimic native ssl exposure of options
-        ssl_ctx._minimum_version = SSL.TLS1_2_VERSION
+    ssl_options |= getattr(SSL, 'OP_NO_TLSv1_1', 0x10000000)
     # NOTE: refuse slightly dated TLS 1.2 protocol unless allow_pre_tlsv13
     if not allow_pre_tlsv13:
         # IMPORTANT: OpenSSL doesn't have TLSv1.3 support marker at the moment,
@@ -186,7 +171,7 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
     ssl_options |= getattr(SSL, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
     ssl_options |= getattr(SSL, 'OP_SINGLE_ECDH_USE', 0x80000)
     ssl_options |= getattr(SSL, 'OP_SINGLE_DH_USE', 0x100000)
-    if sys.version_info[:2] >= (2, 7) and ssl_ctx:
+    if sys.version_info[:2] >= (3, 7) and ssl_ctx:
         _logger.info("enforcing strong SSL/TLS options")
         _logger.debug("SSL/TLS options: %s" % ssl_options)
         ssl_ctx.set_options(ssl_options)
@@ -194,7 +179,7 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
         ssl_ctx._options = ssl_options
     else:
         _logger.info("can't enforce strong SSL/TLS options")
-        _logger.warning("Upgrade to python 2.7.9+ for maximum security")
+        _logger.warning("Upgrade to python 3.7+ for maximum security")
         # Mimic native ssl exposure of options
         ssl_ctx._options = None
 

@@ -335,8 +335,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         context to use in all future connections in the wrap method.
 
         If the optional legacy_tls arg is set the STRONG_TLS_LEGACY_CIPHERS
-        are used instead of the STRONG_TLS_CIPHERS, and the limitation to
-        TLSv1.2+ is left out to allow legacy TLSv1.0 and TLSv1.1 connections.
+        are used instead of the STRONG_TLS_CIPHERS.
         This is required to support e.g. native Windows 7 WebDAVS access with
         the weak ECDHE-RSA-AES128-SHA cipher.
         """
@@ -345,7 +344,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                                                  certificate_chain, ciphers)
         # logger.debug("proceed with hardening of ssl contetx")
         # Set up hardened SSL context once and for all
-        dhparams = configuration.user_shared_dhparams
+        dhparams_path = configuration.user_shared_dhparams
         if ciphers is not None:
             use_ciphers = ciphers
         elif legacy_tls:
@@ -353,9 +352,9 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         else:
             use_ciphers = STRONG_TLS_CIPHERS
         self.context = hardened_ssl_context(configuration, self.private_key,
-                                            self.certificate, dhparams,
-                                            ciphers=use_ciphers,
-                                            allow_pre_tlsv12=legacy_tls)
+                                            self.certificate,
+                                            dhparamsfile=dhparams_path,
+                                            ciphers=use_ciphers)
         # logger.debug("established hardened ssl contetx")
 
     def __force_close(self, socket_list):
@@ -1951,7 +1950,7 @@ def run(configuration):
         cert = config['ssl_certificate'] = configuration.user_davs_key
         key = config['ssl_private_key'] = configuration.user_davs_key
         chain = config['ssl_certificate_chain'] = ''
-        ciphers = config['ssl_ciphers'] = None
+        ciphers = None
 
     # NOTE: Briefly insert dummy user to avoid bogus warning about anon access
     #       We dynamically add users as they connect so it isn't empty.

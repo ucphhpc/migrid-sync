@@ -96,6 +96,7 @@ except ImportError:
 from mig.shared.accountstate import check_account_accessible
 from mig.shared.base import invisible_path, force_utf8, force_native_str
 from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_LEGACY_CIPHERS
 from mig.shared.fileio import user_chroot_exceptions
 from mig.shared.griddaemons.ftps import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, \
@@ -493,14 +494,21 @@ def start_service(conf):
         handler.tls_data_required = True
         keyfile = certfile = conf.user_ftps_key
         handler.certfile = certfile
+        ciphers = None
         # Harden TLS/SSL if possible, requires recent pyftpdlib
         if hasattr(handler, 'ssl_context'):
-            dhparamsfile = configuration.user_shared_dhparams
+            dhparams_path = configuration.user_shared_dhparams
             legacy_tls = configuration.site_enable_ftps_legacy_tls
+            if ciphers is not None:
+                use_ciphers = ciphers
+            elif legacy_tls:
+                use_ciphers = STRONG_TLS_LEGACY_CIPHERS
+            else:
+                use_ciphers = STRONG_TLS_CIPHERS
             ssl_ctx = hardened_openssl_context(conf, OpenSSL, keyfile,
                                                certfile,
-                                               dhparamsfile=dhparamsfile,
-                                               allow_pre_tlsv12=legacy_tls)
+                                               dhparamsfile=dhparams_path,
+                                               ciphers=use_ciphers)
             handler.ssl_context = ssl_ctx
         else:
             logger.warning("Unable to enforce explicit strong TLS connections")
