@@ -1656,8 +1656,7 @@ def start_service(configuration):
     data_path = configuration.openid_store
     daemon_conf = configuration.daemon_conf
     nossl = daemon_conf['nossl']
-    # Mimic cipher setup from other daemons
-    ciphers = daemon_conf['ssl_ciphers'] = None
+    ciphers = None
     addr = (host, port)
     # TODO: is this threaded version robust enough (thread safety)?
     # OpenIDServer = OpenIDHTTPServer

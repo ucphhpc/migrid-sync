@@ -1950,7 +1950,7 @@ def run(configuration):
         cert = config['ssl_certificate'] = configuration.user_davs_key
         key = config['ssl_private_key'] = configuration.user_davs_key
         chain = config['ssl_certificate_chain'] = ''
-        ciphers = config['ssl_ciphers'] = None
+        ciphers = None
 
     # NOTE: Briefly insert dummy user to avoid bogus warning about anon access
     #       We dynamically add users as they connect so it isn't empty.

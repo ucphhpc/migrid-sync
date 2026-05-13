@@ -494,8 +494,7 @@ def start_service(conf):
         handler.tls_data_required = True
         keyfile = certfile = conf.user_ftps_key
         handler.certfile = certfile
-        # Mimic cipher setup from other daemons
-        ciphers = daemon_conf['ssl_ciphers'] = None
+        ciphers = None
         # Harden TLS/SSL if possible, requires recent pyftpdlib
         if hasattr(handler, 'ssl_context'):
             dhparams_path = configuration.user_shared_dhparams
