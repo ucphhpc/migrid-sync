@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_safeeval - unit test of the corresponding mig shared module
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -49,9 +49,9 @@ class MigSharedSafeeval(MigTestCase):
 
     def test_subprocess_call_invalid(self):
         """Check that pwd call with invalid arg fails"""
-        retval = subprocess_call(['pwd', '-h'], stderr=subprocess_pipe)
+        retval = subprocess_call(['pwd', '--invalid'], stderr=subprocess_pipe)
         self.assertNotEqual(retval, 0,
-                            "unexpected subprocess call nosuchcommand retval")
+                            "unexpected subprocess call pwd invalid arg retval")
 
     def test_subprocess_check_output(self):
         """Check that pwd command output matches getcwd as bytes"""
