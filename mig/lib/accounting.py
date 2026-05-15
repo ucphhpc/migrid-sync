@@ -576,6 +576,7 @@ def human_readable_filesize(
         return "NaN"
     if filesize == 0:
         return "0 B"
+    org_locale = None
     try:
         if locale_format:
             org_locale = locale.getlocale(locale.LC_ALL)
@@ -601,8 +602,11 @@ def human_readable_filesize(
         if locale_format:
             locale.setlocale(locale.LC_ALL, org_locale)
         return result
-    except (ValueError, TypeError, IndexError) as err:
+    except (ValueError, TypeError, IndexError):
         return "NaN"
+    finally:
+        if org_locale is not None:
+            locale.setlocale(locale.LC_ALL, org_locale)
 
 
 def get_usage(
