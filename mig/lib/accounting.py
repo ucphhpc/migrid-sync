@@ -569,7 +569,9 @@ def update_accounting(configuration, verbose=False):
 def human_readable_filesize(
     filesize, decimals=3, locale_format=None, si_byte_format=False
 ):
-    """Return human readable filesize for non-negative int value below 2**90"""
+    """Return human readable filesize for non-negative int value below 2**90
+    NOTE: *p* is intentionally derived from log2 even in SI mode,
+    so the two representations are comparable."""
     result = 0
     # NOTE: False matches 'filesize == 0' unless we are careful here
     if isinstance(filesize, bool) or isinstance(filesize, float):
