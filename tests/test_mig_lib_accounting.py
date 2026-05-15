@@ -337,18 +337,21 @@ class MigLibAccounting(MigTestCase):
         usage = get_usage(self.configuration)
         self.assertIsNone(usage)
 
-    def test_get_usage_userlist_excludes_ext_user(self):
-        """Test that a targeted userlist suppresses unrequested ext users"""
+    def test_get_usage_empty_userlist_returns_all_users(self):
+        """Test that an empty userlist returns all accounts including ext users"""
         retval = update_accounting(self.configuration)
         self.assertTrue(retval)
 
-        # With an empty userlist every account is returned, including ext users.
         usage_all = get_usage(self.configuration)
         accounting_all = usage_all.get('accounting', {})
         self.assertIn(TEST_CLIENT_DN, accounting_all)
         self.assertIn(TEST_EXT_DN, accounting_all)
 
-        # When a specific user is requested, ext users not in the list are dropped.
+    def test_get_usage_targeted_userlist_excludes_ext_user(self):
+        """Test that a targeted userlist suppresses unrequested ext users"""
+        retval = update_accounting(self.configuration)
+        self.assertTrue(retval)
+
         usage_targeted = get_usage(self.configuration,
                                    userlist=[TEST_CLIENT_DN])
         accounting_targeted = usage_targeted.get('accounting', {})
