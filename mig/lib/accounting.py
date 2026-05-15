@@ -572,7 +572,7 @@ def human_readable_filesize(
     """Return human readable filesize for non-negative int value below 2**90
     NOTE: *p* is intentionally derived from log2 even in SI mode,
     so the two representations are comparable."""
-    result = 0
+    result = "NaN"
     # NOTE: False matches 'filesize == 0' unless we are careful here
     if isinstance(filesize, bool) or isinstance(filesize, float):
         return "NaN"
@@ -601,14 +601,13 @@ def human_readable_filesize(
                 "YiB",
             ][p]
         result = locale.format_string("%.*f %s", (decimals, value, desc))
-        if locale_format:
-            locale.setlocale(locale.LC_ALL, org_locale)
-        return result
-    except (ValueError, TypeError, IndexError):
-        return "NaN"
+    except (ValueError, TypeError, IndexError, locale.Error):
+        result = "NaN"
     finally:
         if org_locale is not None:
             locale.setlocale(locale.LC_ALL, org_locale)
+
+    return result
 
 
 def get_usage(
