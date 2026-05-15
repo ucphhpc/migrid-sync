@@ -36,14 +36,12 @@ import math
 import os
 import time
 
-from mig.shared.base import (
-    client_dir_id,
-    distinguished_name_to_user,
-    force_native_str,
-)
+from mig.shared.base import client_dir_id, distinguished_name_to_user, \
+    force_native_str
+from mig.shared.defaults import vgrid_nest_sep
 from mig.shared.fileio import load_json, make_symlink, pickle, unpickle
 from mig.shared.useradm import get_accepted_peers
-from mig.shared.vgrid import vgrid_owners, vgrid_list_vgrids
+from mig.shared.vgrid import vgrid_list_vgrids, vgrid_owners
 
 
 def __init_accounting_entry(
@@ -306,7 +304,7 @@ def update_accounting(configuration, verbose=False):
                         continue
                     # NOTE: sub-vgrids uses ':'
                     # as delimiter in 'vgrid_files_writable'
-                    vgrid_name = vgrid_name.replace(":", "/")
+                    vgrid_name = vgrid_name.replace(vgrid_nest_sep, os.sep)
                     # print("%s: %s" % (vgrid_name, vgrid_entry.path))
                     vgrid_quota_files[vgrid_name] = vgrid_entry.path
             t2 = time.time()
