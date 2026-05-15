@@ -216,7 +216,7 @@ def update_accounting(configuration, verbose=False):
             quota_mtime = quota_info.get("mtime", 0)
             quota_datestr = datetime.datetime.fromtimestamp(
                 quota_mtime
-            ).strftime("%d/%m/%Y-%H:%M:%S")
+            ).strftime("%x %X")
             result["quota"][quota_fs] = {"mtime": quota_mtime}
 
             # User quota

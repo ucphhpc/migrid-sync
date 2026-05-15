@@ -121,7 +121,7 @@ def show_accounting(
     accounting_timestamp = account_usage.get("timestamp", 0)
     accounting_datestr = datetime.datetime.fromtimestamp(
         accounting_timestamp
-    ).strftime("%d/%m/%Y-%H:%M:%S")
+    ).strftime("%x %X")
 
     # Sorted by total bytes and print usage for users
 
@@ -161,7 +161,7 @@ def show_accounting(
             quota_mtime = values.get("mtime", 0)
             quota_datestr = datetime.datetime.fromtimestamp(
                 quota_mtime
-            ).strftime("%d/%m/%Y-%H:%M:%S")
+            ).strftime("%x %X")
             print(" - %s (%d) %s" % (quota_fs, quota_mtime, quota_datestr))
 
         print(
@@ -208,7 +208,7 @@ def show_accounting(
                     "Expire: %s"
                     % datetime.datetime.fromtimestamp(
                         user_db_ent.get("expire", 0)
-                    ).strftime("%d/%m/%Y-%H:%M:%S")
+                    ).strftime("%x %X")
                 )
                 if total_report:
                     print(total_report)
