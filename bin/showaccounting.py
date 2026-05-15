@@ -29,6 +29,7 @@
 
 from __future__ import absolute_import, print_function
 
+import csv
 import datetime
 import getopt
 import locale
@@ -43,6 +44,8 @@ from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import gdp_distinguished_field, user_db_filename
 from mig.shared.useradm import load_user_db
 
+valid_output_formats = ["default", "csv"]
+
 
 def usage(name="showaccounting.py"):
     """Usage help"""
@@ -54,17 +57,18 @@ Usage:
 Where ACCOUNTING_OPTIONS may be one or more of:
    -h                  Show this help
    -v                  Verbose output
-   -d                  Number of decimals (default 3)
    -i                  Show bytes in SI units (power of 10)
-   -s                  Summary in CVS format
    -c CONF_FILE        Use CONF_FILE as server configuration
-   -f User filter      Regex user (CERT_DN) filter
-   -l locale_format    Use specific locale format (locale -a)
-   -u usage filter     Only show accounts using more than
+   -d DECIMALS         Number of decimals (default 3)
+   -f USER_FILTER      Regex user (CERT_DN) filter
+   -l LOCALE_FORMAT    Use specific locale format (locale -a)
+   -m MINIMUM_USAGE    Only show accounts using more than
                        minimum usage (TiB)
+   -o FORMAT           Output format 
+                       Supported formats: %(valid_output_formats)s
    -t TIMESTAMP        Use specific timestamp, latest if unset
 """
-        % {"name": name}
+        % {"name": name, "valid_output_formats": valid_output_formats}
     )
 
 
@@ -75,7 +79,7 @@ def show_accounting(
     minimum_usage,
     si_byte_format,
     decimals,
-    csv_summary,
+    output_format,
     verbose,
 ):
     """Print user accounting report"""
@@ -138,10 +142,8 @@ def show_accounting(
         report_total_users += 1
         total_bytes = values.get("total_bytes", 0)
         report_total_bytes += total_bytes
-        if (
-            total_bytes < minimum_usage
-            or (user_filter_re
-            and not user_filter_re.fullmatch(userid))
+        if total_bytes < minimum_usage or (
+            user_filter_re and not user_filter_re.fullmatch(userid)
         ):
             continue
         report_shown_users += 1
@@ -151,37 +153,7 @@ def show_accounting(
         total_bytes_map[total_bytes] = total_bytes_map_userlist
     sorted_total_bytes = sorted(list(total_bytes_map), reverse=True)
 
-    if csv_summary:
-        for total_bytes in sorted_total_bytes:
-            for userid in total_bytes_map[total_bytes]:
-                user_db_ent = user_db.get(userid, {})
-                report = accounting[userid]
-                user_total = report.get("total_bytes", 0)
-                faculty = user_db_ent.get("faculty", "")
-                institute = user_db_ent.get("institute", "")
-                username = user_db_ent.get("full_name", "")
-                email = user_db_ent.get("email", "")
-                if si_byte_format:
-                    user_total_tb = locale.format_string(
-                        "%.*f", (decimals, user_total * 1.0 / 1000**4)
-                    )
-                else:
-                    user_total_tb = locale.format_string(
-                        "%.*f", (decimals, user_total * 1.0 / 1024**4)
-                    )
-                print(
-                    "%(faculty)s;%(institute)s;%(username)s;%(email)s;%(user_total)s;%(user_total_tb)s"
-                    % {
-                        "faculty": faculty,
-                        "institute": institute,
-                        "username": username,
-                        "email": email,
-                        "user_total": user_total,
-                        "user_total_tb": user_total_tb,
-                    }
-                )
-
-    else:
+    if output_format == "default":
         print(
             "\nAccounting (%d) %s for storage quota(s):"
             % (accounting_timestamp, accounting_datestr)
@@ -251,19 +223,60 @@ def show_accounting(
                     print(ext_users_report)
                 if peers_report:
                     print(peers_report)
+    else:
+        output_list = []
+        for total_bytes in sorted_total_bytes:
+            for userid in total_bytes_map[total_bytes]:
+                user_db_ent = user_db.get(userid, {})
+                report = accounting[userid]
+                output_ent = {}
+                output_ent["faculty"] = user_db_ent.get("faculty", "")
+                output_ent["institute"] = user_db_ent.get("institute", "")
+                output_ent["username"] = user_db_ent.get("full_name", "")
+                output_ent["email"] = user_db_ent.get("email", "")
+                user_total_bytes = report.get("total_bytes", 0)
+                output_ent["bytes"] = user_total_bytes
+                if si_byte_format:
+                    output_ent["bytes_tb"] = locale.format_string(
+                        "%.*f", (decimals, user_total_bytes * 1.0 / 1000**4)
+                    )
+                else:
+                    output_ent["bytes_tib"] = locale.format_string(
+                        "%.*f", (decimals, user_total_bytes * 1.0 / 1024**4)
+                    )
+                output_list.append(output_ent)
+        if output_list:
+            if output_format == "csv":
+                fieldnames = [
+                    "faculty",
+                    "institute",
+                    "username",
+                    "email",
+                    "bytes",
+                ]
+                if si_byte_format:
+                    fieldnames.append("bytes_tb")
+                else:
+                    fieldnames.append("bytes_tib")
+                writer = csv.DictWriter(
+                    sys.stdout, fieldnames=fieldnames, delimiter=";"
+                )
+                _ = writer.writeheader()
+                _ = writer.writerows(output_list)
 
 
 if "__main__" == __name__:
     conf_path = None
     user_filter = None
     si_byte_format = False
-    csv_summary = False
+    output_format = "default"
     decimals = 3
     timestamp = 0
     locale_format = None
     minimum_usage = 0
     verbose = False
-    opt_args = "hvsic:d:f:l:u:t:"
+    valid_output_formats = ["default", "csv"]
+    opt_args = "hvic:d:f:l:m:o:t:"
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
         for opt, val in opts:
@@ -272,8 +285,6 @@ if "__main__" == __name__:
                 sys.exit(0)
             elif opt == "-v":
                 verbose = True
-            elif opt == "-s":
-                csv_summary = True
             elif opt == "-i":
                 si_byte_format = True
             elif opt == "-c":
@@ -284,8 +295,10 @@ if "__main__" == __name__:
                 user_filter = val
             elif opt == "-l":
                 locale_format = val
-            elif opt == "-u":
+            elif opt == "-m":
                 minimum_usage = math.ceil(float(val) * (1024**4))
+            elif opt == "-o":
+                output_format = val
             elif opt == "-t":
                 timestamp = int(val)
             else:
@@ -306,6 +319,13 @@ if "__main__" == __name__:
         )
         sys.exit(1)
 
+    if output_format not in valid_output_formats:
+        print(
+            "Invalid summary format: %r, valid formats: %s"
+            % (output_format, valid_output_formats)
+        )
+        sys.exit(1)
+
     configuration = get_configuration_object(
         config_file=conf_path, skip_log=True, disable_auth_log=True
     )
@@ -317,7 +337,7 @@ if "__main__" == __name__:
         minimum_usage,
         si_byte_format,
         decimals,
-        csv_summary,
+        output_format,
         verbose,
     )
 
