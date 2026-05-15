@@ -41,8 +41,9 @@ import sys
 from mig.lib.accounting import get_usage, human_readable_filesize
 from mig.shared.base import distinguished_name_to_user
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import gdp_distinguished_field, user_db_filename
+from mig.shared.defaults import gdp_distinguished_field
 from mig.shared.useradm import load_user_db
+from mig.shared.userdb import default_db_path
 
 valid_output_formats = ["default", "csv"]
 
@@ -106,9 +107,7 @@ def show_accounting(
         return
 
     # Load userdb
-    user_db_filepath = os.path.join(
-        configuration.user_db_home, user_db_filename
-    )
+    user_db_filepath = default_db_path(configuration)
     try:
         user_db = load_user_db(user_db_filepath)
     except Exception as err:
