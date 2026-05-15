@@ -302,7 +302,7 @@ def update_accounting(configuration, verbose=False):
                         # logger.debug("Skipping non-vgrid entry: %s"
                         #              % vgrid_entry.name)
                         continue
-                    # NOTE: sub-vgrids uses ':'
+                    # NOTE: sub-vgrids use ':'
                     # as delimiter in 'vgrid_files_writable'
                     vgrid_name = vgrid_name.replace(vgrid_nest_sep, os.sep)
                     # print("%s: %s" % (vgrid_name, vgrid_entry.path))
