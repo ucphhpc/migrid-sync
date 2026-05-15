@@ -43,7 +43,7 @@ from mig.shared.base import (
 )
 from mig.shared.fileio import load_json, make_symlink, pickle, unpickle
 from mig.shared.useradm import get_accepted_peers
-from mig.shared.vgrid import vgrid_list, vgrid_list_vgrids
+from mig.shared.vgrid import vgrid_owners, vgrid_list_vgrids
 
 
 def __init_accounting_entry(
@@ -76,8 +76,8 @@ def __get_owned_vgrid(configuration, verbose=False):
     if status:
         for vgrid_name in vgrids:
             # print("checking vgrid: %s" % check_vgrid_name)
-            (owners_status, owners_list) = vgrid_list(
-                vgrid_name, "owners", configuration, recursive=True
+            (owners_status, owners_list) = vgrid_owners(
+                vgrid_name, configuration, recursive=True
             )
             # Find first non-zero owner
             # NOTE: Some owner files contain empty owners)
