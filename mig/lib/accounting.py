@@ -38,7 +38,7 @@ import time
 
 from mig.shared.base import client_dir_id, distinguished_name_to_user, \
     force_native_str
-from mig.shared.defaults import vgrid_nest_sep
+from mig.shared.defaults import vgrid_nest_sep, freeze_meta_filename
 from mig.shared.fileio import load_json, make_symlink, pickle, unpickle
 from mig.shared.useradm import get_accepted_peers
 from mig.shared.vgrid import vgrid_list_vgrids, vgrid_owners
@@ -482,7 +482,7 @@ def update_accounting(configuration, verbose=False):
         # Extract client_id from legacy freeze archive format
         if freeze_name.startswith("archive-"):
             legacy_freeze_meta_filepath = os.path.join(
-                configuration.freeze_home, freeze_name, "meta.pck"
+                configuration.freeze_home, freeze_name, freeze_meta_filename
             )
             legacy_freeze_meta = unpickle(
                 legacy_freeze_meta_filepath, configuration.logger
