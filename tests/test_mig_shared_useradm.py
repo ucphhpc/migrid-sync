@@ -28,11 +28,13 @@
 """Unit tests for the migrid module pointed to in the filename"""
 
 import binascii
+import datetime
 import difflib
 import io
 import os
 import pwd
 import sys
+import time
 import unittest
 
 from past.builtins import basestring
@@ -48,7 +50,7 @@ from mig.shared.defaults import (
 from mig.shared.useradm import (
     _ensure_dirs_needed_for_userdb,
     assure_current_htaccess,
-    create_user,
+    create_user, user_account_notify,
 )
 
 # Imports required for the unit tests themselves
@@ -64,6 +66,12 @@ from tests.support import (
 )
 from tests.support.fixturesupp import FixtureAssertMixin
 from tests.support.picklesupp import PickleAssertMixin
+from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
+
+TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[-1]
+TEST_USER_EXPIRE = 1776031200
+OTHER_USER_DN = '/C=DK/ST=NA/L=NA/O=Other Org/OU=NA/CN=Other User/emailAddress=other@example.com'
+OTHER_USER_EMAIL = 'other@email.org'
 
 DUMMY_USER = "dummy-user"
 DUMMY_STALE_USER = "dummy-stale-user"
@@ -110,12 +118,11 @@ DUMMY_CONF = FakeConfiguration(
 )
 
 
-class TestMigSharedUsedadm_create_user(
+class TestMigSharedUseradm__create_user(
     MigTestCase, FixtureAssertMixin, PickleAssertMixin
 ):
     """Coverage of useradm create_user function."""
 
-    TEST_USER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
     TEST_USER_DN_GDP = "%s/GDP" % (TEST_USER_DN,)
     TEST_USER_PASSWORD_HASH = (
         "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM2134uix"
@@ -166,7 +173,7 @@ class TestMigSharedUsedadm_create_user(
             obj["unique_id"] = "__UNIQUE_ID__"
             return obj
 
-        expected_user_id = self.TEST_USER_DN
+        expected_user_id = TEST_USER_DN
         expected_user_password_hash = self.TEST_USER_PASSWORD_HASH
 
         user_dict = {}
@@ -302,7 +309,7 @@ class TestMigSharedUsedadm_create_user(
         user_dict["email"] = "user@example.com"
         user_dict["comment"] = "This is the create comment"
         user_dict["password"] = "password"
-        user_dict["distinguished_name"] = self.TEST_USER_DN
+        user_dict["distinguished_name"] = TEST_USER_DN
 
         try:
             create_user(
@@ -354,7 +361,8 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
         user_dict = {}
         user_dict.update(DUMMY_USER_DICT)
         del user_dict["short_id"]
-        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False, False)
+        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False,
+                                False)
 
         try:
             path_kind = self.assertPathExists(DUMMY_REL_HTACCESS_PATH)
@@ -366,7 +374,8 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
     def test_creates_missing_htaccess_file(self):
         user_dict = {}
         user_dict.update(DUMMY_USER_DICT)
-        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False, False)
+        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False,
+                                False)
 
         path_kind = self.assertPathExists(DUMMY_REL_HTACCESS_PATH)
         # File should exist here and be valid
@@ -384,7 +393,8 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
         user_dict.update(DUMMY_USER_DICT)
         # Fake stale user ID directly through DN
         user_dict["distinguished_name"] = DUMMY_STALE_USER
-        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False, False)
+        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False,
+                                False)
 
         # Verify stale
         self.assertHtaccessRequireUserClause(
@@ -394,7 +404,8 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
         # Reset stale user ID and retry
         user_dict = {}
         user_dict.update(DUMMY_USER_DICT)
-        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False, False)
+        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False,
+                                False)
 
         path_kind = self.assertPathExists(DUMMY_REL_HTACCESS_PATH)
         # File should exist here and be valid
@@ -406,6 +417,82 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
         self.assertHtaccessRequireUserClause(
             DUMMY_HTACCESS_PATH, DUMMY_REQUIRE_USER
         )
+
+
+class TestMigSharedUseradm__user_account_notify(MigTestCase, UserAssertMixin):
+    """Coverage of useradm user_account_notify function."""
+
+    expected_expire = -1
+
+    def _provide_configuration(self):
+        """Return configuration to use"""
+        return "testconfig"
+
+    def before_each(self):
+        """Create test environment for useradm tests"""
+        configuration = self.configuration
+
+        _ensure_dirs_needed_for_userdb(self.configuration)
+
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        ensure_dirs_exist(self.configuration.mig_system_files)
+        self._provision_test_user(self, TEST_USER_DN)
+        adjusted_datetime = datetime.date.today() + datetime.timedelta(days=5)
+        self.expected_expire = int(time.mktime(adjusted_datetime.timetuple()))
+
+    def test_default_address_and_expire(self):
+        """Test addresses and expire for test account"""
+        (_, username, full_name, expire, addresses, errors) = \
+            user_account_notify(TEST_USER_DN, {'email': ['AUTO']},
+                                self.configuration,
+                                self.expected_user_db_file, False,
+                                False)
+        self.assertEqual(addresses, {'email': [TEST_USER_EMAIL]})
+        self.assertEqual(expire, self.expected_expire)
+        self.assertEqual(errors, [])
+
+    def test_extra_address_and_expire(self):
+        """Test addresses and expire for test with extra account"""
+        (_, username, full_name, expire, addresses, errors) = \
+            user_account_notify(TEST_USER_DN, {'email':
+                                               ['AUTO', OTHER_USER_EMAIL]},
+                                self.configuration,
+                                self.expected_user_db_file, False,
+                                False)
+        self.assertEqual(addresses, {'email':
+                                     [TEST_USER_EMAIL, OTHER_USER_EMAIL]})
+        self.assertEqual(expire, self.expected_expire)
+        self.assertEqual(errors, [])
+
+    def test_missing_user_fails(self):
+        """Test failure for missing user account"""
+        (_, username, full_name, expire, addresses, errors) = \
+            user_account_notify(OTHER_USER_DN, {'email': ['AUTO']},
+                                self.configuration,
+                                self.expected_user_db_file, False,
+                                False)
+        self.assertEqual(addresses, {'email': []})
+        self.assertEqual(expire, None)
+        self.assertTrue(errors and 'No such user' in errors[0])
+
+    def test_missing_user_db_bails_out(self):
+        """Test failure for missing user db"""
+        with self.assertLogs(level='ERROR') as log_capture:
+            (_, username, full_name, expire, addresses, errors) = \
+                user_account_notify(OTHER_USER_DN, {'email': ['AUTO']},
+                                    self.configuration,
+                                    'no_such_user_db', False,
+                                    False)
+        self.assertEqual(addresses, [])
+        self.assertEqual(expire, None)
+        self.assertTrue(errors and 'Failed to load user DB' in errors[0])
+        self.assertTrue(any('Failed to load user DB' in msg for msg in
+                            log_capture.output))
 
 
 if __name__ == "__main__":

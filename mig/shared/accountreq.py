@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -890,7 +891,8 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
         if user_copy:
             raw_targets['email'].append(keyword_auto)
 
-        (_, username, full_name, addresses, errors) = user_account_notify(
+        (_, username, full_name, expire, addresses, errors) = \
+            user_account_notify(
             user_id, raw_targets, conf_path, db_path, False, admin_copy,
             extra_copies)
         if errors:
@@ -910,8 +912,8 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
             _logger.info("send account intro for '%s' to:\n%s" %
                          (user_id, '\n'.join(notify_dict['NOTIFY'])))
             (send_status, send_errors) = notify_user(
-                notify_dict, [user_id, username, full_name], 'ACCOUNTINTRO',
-                _logger, '', configuration)
+                notify_dict, [user_id, username, full_name, expire],
+                'ACCOUNTINTRO', _logger, '', configuration)
             if send_status:
                 _logger.debug("sent account intro for '%s' to:\n%s" %
                               (user_id, '\n'.join(notify_dict['NOTIFY'])))
@@ -1033,7 +1035,7 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
 
         _logger.info("added peer request from %s to %s" % (peer_id, user_id))
 
-        (_, _, full_name, addresses, errors) = user_account_notify(
+        (_, _, full_name, _, addresses, errors) = user_account_notify(
             user_id, raw_targets, conf_path, db_path, False, admin_copy,
             extra_copies)
         if errors:

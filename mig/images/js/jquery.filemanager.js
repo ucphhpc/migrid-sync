@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.filemanager - jquery based file manager
-  # Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+  # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
   #
   # This file is part of MiG.
   #
@@ -20,10 +20,24 @@
   #
   # You should have received a copy of the GNU General Public License
   # along with this program; if not, write to the Free Software
-  # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+  # USA.
   #
   # -- END_HEADER ---
   #
+
+*/
+
+/*
+
+  The file tree code here originally derived from the jqueryFileTree code by
+  Cory S.N. LaViska and was released under both GNU General Public License and
+  the MIT License. The original code may still be found where released at
+  http://abeautifulsite.net/
+  and a more recent derivative is now archived at
+  https://github.com/jqueryfiletree/jqueryfiletree
+
+  Our version has evolved so much since then that it may be hard to recognize.
 
 */
 
