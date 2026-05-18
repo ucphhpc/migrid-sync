@@ -60,7 +60,19 @@
              const urlParams = new URLSearchParams(queryString);
              var sanelinkurl = "";
              try {
-                 var sanelinkurl = urlParams.get('url');
+                 /*
+                 IMPORTANT: extract and validate URL before outputting
+                            https://stackoverflow.com/a/43467144
+                 */
+                 var _parsedurl = new URL(urlParams.get('url'));
+                 var validprotos = ['http:', 'https:', 'ftp:', 'ftps:'];
+                 if (!validprotos.includes(_parsedurl.protocol)) {
+                     throw(new Error("invalid URL protocol"));
+                 }
+                 if (!_parsedurl.hostname) {
+                     throw(new Error("invalid URL without FQDN"));
+                 }
+                 sanelinkurl = _parsedurl.href;
                  console.log("url part is: "+sanelinkurl);
              } catch(err) {
                  console.log("error: "+err);
