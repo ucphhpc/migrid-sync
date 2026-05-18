@@ -1,1 +1,1 @@
-../widget-deps/jquery.calculator-2.0.0/jquery.calculator.min.js
+../widget-deps/jquery.calculator-2.0.1/jquery.calculator.min.js

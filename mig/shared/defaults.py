@@ -343,11 +343,6 @@ transfers_log_cnt = 2
 
 dav_domain = "/"
 
-# Interactive jobs use a password which should at least be hard to brute-force
-# Yet the VNC server ignores all but the first 8 chars so it is no use with
-# longer password unfortunately.
-vnc_pw_len = 8
-
 # TODO: change to something that doesn't interfere if filename contains spaces
 # Seperator used in job src/dst file lines
 src_dst_sep = " "

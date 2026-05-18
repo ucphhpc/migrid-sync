@@ -156,6 +156,10 @@ class MigSharedAccountreq__peers(MigTestCase, FixtureAssertMixin):
 
         self.assertTrue(success)
 
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('peer@example.com'))
+
 
 class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
     """Unit tests for filter related functions within the accountreq module"""

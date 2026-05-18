@@ -316,8 +316,7 @@ Command to delete user again on %(site)s server:
 
     logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
                 % (admin_email, email_header, email_msg, smtp_server))
-    if not send_email(admin_email, email_header, email_msg, logger,
-                      configuration):
+    if not send_email(configuration, admin_email, email_header, email_msg):
         output_objects.append({'object_type': 'error_text', 'text':
                                """An error occurred trying to inform the site
 admins about your request for existing certificate sign up. Please contact %s site

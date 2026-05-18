@@ -67,10 +67,11 @@
              }
              var out = ""
              if (!sanelinkurl) {
+                 // IMPORTANT: do NOT print sanelinkurl verbatim to avoid XSS issues
                  if (lang == "danish") {
-                     out = "Fejl: kunne ikke udtrække url fra angivet SafeLink: "+safelinkurl;
+                     out = "Fejl: kunne ikke udtrække url fra angivet SafeLink";
                  } else {
-                     out = "Error: could not extract url from provided SafeLink: "+safelinkurl;
+                     out = "Error: could not extract url from provided SafeLink";
                  }
              } else {
                  if (lang == "danish") {
@@ -78,13 +79,13 @@
                      out += "<a class='urllink' href='"+sanelinkurl+"'>"+sanelinkurl+"</a></p>";
                      out += "<p><span class='warningtext'>";
                      out += "Benyt venligst KUN det rå link ovenfor, hvis du er SIKKER på det er uskadeligt</span>. ";
-                     out += "Ellers brug hellere <a href='"+safelinkurl+"'>originalen</a>.</p>";
+                     out += "Ellers brug hellere originalen.</p>";
                  } else {
                      out = "<h4>SaneLink</h4><p>";
                      out += "<a class='urllink' href='"+sanelinkurl+"'>"+sanelinkurl+"</a></p>";
                      out += "<p><span class='warningtext'>";
                      out += "Please ONLY follow the raw link above if you are SURE it's safe</span>. ";
-                     out += "Otherwise better use <a href='"+safelinkurl+"'>the original</a>.</p>";
+                     out += "Otherwise better use the original.</p>";
                  }
              }
              $("#sanelinkurl-"+lang).html(out);

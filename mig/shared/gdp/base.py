@@ -683,12 +683,10 @@ in reaction to the %(action)s for %(project_name)s .
 
 Attached you'll find the details registered in relation to the operation.
         """ % mail_fill
-        status = send_email(
+        status = send_email(configuration,
             recipients,
             subject,
             message,
-            _logger,
-            configuration,
             files=[pdf_filepath],
         )
         if status:

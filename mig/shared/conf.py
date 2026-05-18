@@ -32,17 +32,57 @@ from __future__ import absolute_import
 import os
 import sys
 
+from mig.shared.configuration import Configuration
 from mig.shared.defaults import MIG_ENV
 from mig.shared.fileio import unpickle
 
 
-def get_configuration_object(config_file=None, skip_log=False,
+class RuntimeConfiguration:
+    """A proxy object to be passed in-place of a Configuration which can be
+    extended with information relevant only at runtime.
+
+    Given Configuration objects are threaded into and through almost all
+    the necessary codepaths to make this information available, they are an
+    attractive place to put this - but a Configuration is currently loaded
+    from static per-site data.
+
+    Resolve this dichotomy with this class - a Configuration instance will
+    continue to represent the static data while an object that proxies its
+    attributes and thus is entirely drop-in compatible with it can be handed
+    to callers without being mixed in with the static data.
+    """
+
+    def __init__(self, configuration):
+        object.__setattr__(self, '_configuration', configuration)
+        object.__setattr__(self, '_context', {})
+
+    def __delattr__(self, attr):
+        return delattr(self._configuration, attr)
+
+    def __getattr__(self, attr):
+        return getattr(self._configuration, attr)
+
+    def __setattr__(self, attr, value):
+        return setattr(self._configuration, attr, value)
+
+    def context_get(self, context_key):
+        """Retrieve the context or a previously registered namespace.
+        """
+        return self._context.get(context_key, None)
+
+    def context_set(self, context_key, context_value):
+        """Attach a value as named namespace within the active configuration.
+        """
+        self._context[context_key] = context_value
+
+
+def get_configuration_object(config_file=None,
+                             skip_log=False,
                              disable_auth_log=False):
     """Simple helper to call the general configuration init. Optional skip_log
     and disable_auth_log arguments are passed on to allow skipping the default
     log initialization and disabling auth log for unit tests.
     """
-    from mig.shared.configuration import Configuration
     if config_file:
         _config_file = config_file
     elif os.environ.get('MIG_CONF', None):
@@ -65,7 +105,7 @@ def get_configuration_object(config_file=None, skip_log=False,
 
     configuration = Configuration(_config_file, False, skip_log,
                                   disable_auth_log)
-    return configuration
+    return RuntimeConfiguration(configuration)
 
 
 def get_resource_configuration(resource_home, unique_resource_name,

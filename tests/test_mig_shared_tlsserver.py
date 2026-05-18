@@ -185,12 +185,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            None,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            True,
-            False
+            dhparamsfile=None,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -222,12 +221,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            True,
-            False
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -250,42 +248,6 @@ class MigSharedTlsServer(MigTestCase):
         minimum_version = context.minimum_version
         self.assertEqual(minimum_version, ssl.TLSVersion.TLSv1_2)
 
-    def test_hardened_ssl_context_options_tls1_1(self):
-        """Test SSL context options are set correctly with TLS 1.1 enabled"""
-        config = self.configuration
-        config.logger = self.logger
-
-        context = hardened_ssl_context(
-            config,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            True,
-            False
-        )
-
-        # Verify options are set
-        expected_options = (
-            getattr(ssl, 'OP_NO_SSLv2', 0x1000000) |
-            getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(ssl, 'OP_NO_TLSv1', 0x4000000) |
-            getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
-            getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-            getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
-            getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000) |
-            getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000)
-        )
-
-        # Verify the options were OR'd into the context
-        options = context.options
-        self.assertEqual(options & expected_options, expected_options)
-        # Verify that the minimum TLS version is enforced
-        minimum_version = context.minimum_version
-        self.assertEqual(minimum_version, ssl.TLSVersion.TLSv1_1)
-
     def test_hardened_ssl_context_options_tls1_3_only(self):
         """Test SSL context options are set correctly with TLS 1.3 only"""
         config = self.configuration
@@ -295,12 +257,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            False,
-            False
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=False,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -333,12 +294,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            True,
-            True
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=True
         )
 
         # Verify options are set
@@ -355,45 +315,11 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertNotEqual(
-            context.options & expected_options, expected_options)
-
-    def test_hardened_ssl_context_options_fail_tls1_1(self):
-        """Test SSL context options fail when different"""
-        config = self.configuration
-        config.logger = self.logger
-
-        context = hardened_ssl_context(
-            config,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            True,
-            False
-        )
-
-        # Verify options are set
-        expected_options = (
-            getattr(ssl, 'OP_NO_SSLv2', 0x1000000) |
-            getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(ssl, 'OP_NO_TLSv1', 0x4000000) |
-            getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000) |
-            getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
-            getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-            getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
-            getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000) |
-            getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000)
-        )
-
-        # Verify the options were OR'd into the context
-        self.assertNotEqual(
-            context.options & expected_options, expected_options)
+        options = context.options
+        self.assertNotEqual(options & expected_options, expected_options)
 
     def test_hardened_ssl_context_options_fail_tls1_2(self):
-        """Test SSL context options fail when different"""
+        """Test SSL context options fail when conflicting"""
         config = self.configuration
         config.logger = self.logger
 
@@ -401,12 +327,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False,
-            False
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -415,6 +340,7 @@ class MigSharedTlsServer(MigTestCase):
             getattr(ssl, 'OP_NO_SSLv3', 0x2000000) |
             getattr(ssl, 'OP_NO_TLSv1', 0x4000000) |
             getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000) |
+            getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000) |
             getattr(ssl, 'OP_NO_COMPRESSION', 0x20000) |
             getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
             getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000) |
@@ -423,8 +349,11 @@ class MigSharedTlsServer(MigTestCase):
         )
 
         # Verify the options were OR'd into the context
-        self.assertNotEqual(
-            context.options & expected_options, expected_options)
+        options = context.options
+        self.assertNotEqual(options & expected_options, expected_options)
+        # Verify that the minimum TLS version is still enforced
+        minimum_version = context.minimum_version
+        self.assertEqual(minimum_version, ssl.TLSVersion.TLSv1_2)
 
     def test_hardened_ssl_context_ciphers(self):
         """Test SSL context ciphers are set correctly"""
@@ -435,12 +364,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            True,
-            False
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
         # NOTE: this may be too platform specific
         expected_start = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
@@ -458,12 +386,11 @@ class MigSharedTlsServer(MigTestCase):
             config,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_LEGACY_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            True,
-            False
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_LEGACY_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
         # NOTE: this may be too platform specific
         expected_start = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
@@ -484,13 +411,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            None,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            True,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=None,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -525,13 +451,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            True,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -555,46 +480,6 @@ class MigSharedTlsServer(MigTestCase):
         self.assertEqual(minimum_version, SSL.TLS1_2_VERSION)
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
-    def test_hardened_openssl_context_options_tls1_1(self):
-        """Test OpenSSL context options are set correctly with TLS 1.1 enabled"""
-        config = self.configuration
-        config.logger = self.logger
-        SSL = OpenSSL.SSL
-
-        context = hardened_openssl_context(
-            config,
-            OpenSSL,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            True,
-            False
-        )
-
-        # Verify options are set
-        expected_options = (
-            getattr(SSL, 'OP_NO_SSLv2', 0x1000000) |
-            getattr(SSL, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(SSL, 'OP_NO_TLSv1', 0x4000000) |
-            getattr(SSL, 'OP_NO_COMPRESSION', 0x20000) |
-            getattr(SSL, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-            getattr(SSL, 'OP_SINGLE_ECDH_USE', 0x80000) |
-            getattr(SSL, 'OP_SINGLE_DH_USE', 0x100000) |
-            getattr(SSL, 'OP_NO_RENEGOTIATION', 0x40000000)
-        )
-
-        # Verify the options were OR'd into the context
-        options = getattr(context, '_options', None)
-        self.assertEqual(options & expected_options, expected_options)
-        # Verify that the minimum TLS version is enforced
-        minimum_version = getattr(context, '_minimum_version', None)
-        self.assertEqual(minimum_version, SSL.TLS1_1_VERSION)
-
-    @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_options_tls1_3_only(self):
         """Test OpenSSL context options are set correctly with TLS 1.3 only"""
         config = self.configuration
@@ -606,13 +491,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            False,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=False,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -648,51 +532,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            True,
-            True
-        )
-
-        # Verify options are set
-        expected_options = (
-            getattr(SSL, 'OP_NO_SSLv2', 0x1000000) |
-            getattr(SSL, 'OP_NO_SSLv3', 0x2000000) |
-            getattr(SSL, 'OP_NO_TLSv1', 0x4000000) |
-            getattr(SSL, 'OP_NO_TLSv1_1', 0x10000000) |
-            getattr(SSL, 'OP_NO_COMPRESSION', 0x20000) |
-            getattr(SSL, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
-            getattr(SSL, 'OP_SINGLE_ECDH_USE', 0x80000) |
-            getattr(SSL, 'OP_SINGLE_DH_USE', 0x100000) |
-            getattr(SSL, 'OP_NO_RENEGOTIATION', 0x40000000)
-        )
-
-        # Verify the options were OR'd into the context
-        options = getattr(context, '_options', None)
-        self.assertNotEqual(options & expected_options, expected_options)
-
-    @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
-    def test_hardened_openssl_context_options_fail_tls1_1(self):
-        """Test OpenSSL context options fail when different"""
-        config = self.configuration
-        config.logger = self.logger
-        SSL = OpenSSL.SSL
-
-        context = hardened_openssl_context(
-            config,
-            OpenSSL,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            True,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=True
         )
 
         # Verify options are set
@@ -714,7 +559,7 @@ class MigSharedTlsServer(MigTestCase):
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_options_fail_tls1_2(self):
-        """Test OpenSSL context options fail when different"""
+        """Test OpenSSL context options fail when conflicting"""
         config = self.configuration
         config.logger = self.logger
         SSL = OpenSSL.SSL
@@ -724,13 +569,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            True,
-            False,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
 
         # Verify options are set
@@ -739,6 +583,7 @@ class MigSharedTlsServer(MigTestCase):
             getattr(SSL, 'OP_NO_SSLv3', 0x2000000) |
             getattr(SSL, 'OP_NO_TLSv1', 0x4000000) |
             getattr(SSL, 'OP_NO_TLSv1_1', 0x10000000) |
+            getattr(SSL, 'OP_NO_TLSv1_2', 0x8000000) |
             getattr(SSL, 'OP_NO_COMPRESSION', 0x20000) |
             getattr(SSL, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000) |
             getattr(SSL, 'OP_SINGLE_ECDH_USE', 0x80000) |
@@ -749,6 +594,9 @@ class MigSharedTlsServer(MigTestCase):
         # Verify the options were OR'd into the context
         options = getattr(context, '_options', None)
         self.assertNotEqual(options & expected_options, expected_options)
+        # Verify that the minimum TLS version is still enforced
+        minimum_version = getattr(context, '_minimum_version', None)
+        self.assertEqual(minimum_version, SSL.TLS1_2_VERSION)
 
     @unittest.skipIf(OpenSSL is None, "pyOpenSSL is required for openssl test")
     def test_hardened_openssl_context_ciphers(self):
@@ -762,13 +610,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            True,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
         # NOTE: this may be too platform specific
         expected_start = "ECDHE-ECDSA-AES128-GCM-SHA256:"
@@ -789,13 +636,12 @@ class MigSharedTlsServer(MigTestCase):
             OpenSSL,
             TEST_KEY_FILE,
             TEST_CERT_FILE,
-            TEST_CACERT_FILE,
-            TEST_DHPARAMS_FILE,
-            STRONG_TLS_LEGACY_CIPHERS,
-            STRONG_TLS_CURVES,
-            False,
-            True,
-            False
+            cacertfile=TEST_CACERT_FILE,
+            dhparamsfile=TEST_DHPARAMS_FILE,
+            ciphers=STRONG_TLS_LEGACY_CIPHERS,
+            curve_priority=STRONG_TLS_CURVES,
+            allow_pre_tlsv13=True,
+            allow_renegotiation=False
         )
         # NOTE: this may be too platform specific
         expected_start = "ECDHE-RSA-AES128-GCM-SHA256:"

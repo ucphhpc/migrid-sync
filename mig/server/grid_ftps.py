@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2014-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -95,6 +96,7 @@ except ImportError:
 from mig.shared.accountstate import check_account_accessible
 from mig.shared.base import invisible_path, force_utf8, force_native_str
 from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_LEGACY_CIPHERS
 from mig.shared.fileio import user_chroot_exceptions
 from mig.shared.griddaemons.ftps import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, \
@@ -121,15 +123,15 @@ class MiGTLSFTPHandler(TLS_FTPHandler):
     Makes sure buffer gets reset after AUTH to avoid command injection.
     """
 
+    # TODO: is this workaround still needed? (the upstream issue remains open)
     def ftp_AUTH(self, line):
-        res = super(MiGTLSFTPHandler, self).ftp_AUTH(line)
+        super(MiGTLSFTPHandler, self).ftp_AUTH(line)
         # NOTE: fix for https://github.com/giampaolo/pyftpdlib/issues/315
         print("DEBUG: reset in buffer on switch to secure channel")
-        print("I.e. truncate '%s'" % self.ac_in_buffer)
+        print("I.e. truncate ac_in_buffer as suggested in pyftpdlib issue 315")
         # IMPORTANT: buffer must be bytes on all python versions
         self.ac_in_buffer = b''
         self.incoming = []
-        return res
 
 
 class MiGUserAuthorizer(DummyAuthorizer):
@@ -177,7 +179,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
                 try:
                     home_path = os.readlink(home_path)
                 except Exception as err:
-                    logger.error("could not expand link %s" % home_path)
+                    logger.error("could not expand %r link: %s" % (home_path,
+                                                                   err))
                     continue
             logger.debug("add user to user_table: %s" % user_obj)
             # The add_user format and perm string meaning is explained at:
@@ -333,7 +336,7 @@ class MiGRestrictedFilesystem(AbstractedFS):
 
     def _acceptable_chmod(self, ftps_path, mode):
         """Wrap helper"""
-        #logger.debug("acceptable_chmod: %s" % ftps_path)
+        # logger.debug("acceptable_chmod: %s" % ftps_path)
         reply = acceptable_chmod(ftps_path, mode, self.chmod_exceptions)
         if not reply:
             logger.warning("acceptable_chmod failed: %s %s %s" %
@@ -352,7 +355,7 @@ class MiGRestrictedFilesystem(AbstractedFS):
         try:
             get_fs_path(configuration, path, self.root,
                         daemon_conf['chroot_exceptions'])
-            #logger.debug("accepted access to %s" % path)
+            # logger.debug("accepted access to %s" % path)
             return True
         except ValueError as err:
             logger.warning("rejected illegal access to %s :: %s" % (path, err))
@@ -403,7 +406,7 @@ class MiGRestrictedFilesystem(AbstractedFS):
         try:
             self.stat(path)
             return True
-        except:
+        except Exception:
             return False
 
     def rmdir(self, path):
@@ -439,7 +442,7 @@ class MiGRestrictedFilesystem(AbstractedFS):
     def rename(self, old_path, new_path):
         """Handle operations of same name"""
         ftp_old_path = self.fs2ftp(old_path)
-        ftp_new_path = self.fs2ftp(new_path)
+        _ = self.fs2ftp(new_path)
         # Prevent rename of special files
         if in_vgrid_share(configuration, old_path) == ftp_old_path.lstrip(os.sep):
             logger.error("rename on vgrid share root %s :: %s" %
@@ -458,6 +461,7 @@ def update_users(configuration, login_map, username):
     """Update login_map with username/password pairs for username and any
     aliases.
     """
+    daemon_conf = configuration.daemon_conf
     # Only need to update users and shares here, since jobs only use sftp
     changed_users, changed_shares = [], []
     if possible_user_id(configuration, username):
@@ -490,14 +494,21 @@ def start_service(conf):
         handler.tls_data_required = True
         keyfile = certfile = conf.user_ftps_key
         handler.certfile = certfile
+        ciphers = None
         # Harden TLS/SSL if possible, requires recent pyftpdlib
         if hasattr(handler, 'ssl_context'):
-            dhparamsfile = configuration.user_shared_dhparams
+            dhparams_path = configuration.user_shared_dhparams
             legacy_tls = configuration.site_enable_ftps_legacy_tls
+            if ciphers is not None:
+                use_ciphers = ciphers
+            elif legacy_tls:
+                use_ciphers = STRONG_TLS_LEGACY_CIPHERS
+            else:
+                use_ciphers = STRONG_TLS_CIPHERS
             ssl_ctx = hardened_openssl_context(conf, OpenSSL, keyfile,
                                                certfile,
-                                               dhparamsfile=dhparamsfile,
-                                               allow_pre_tlsv12=legacy_tls)
+                                               dhparamsfile=dhparams_path,
+                                               ciphers=use_ciphers)
             handler.ssl_context = ssl_ctx
         else:
             logger.warning("Unable to enforce explicit strong TLS connections")

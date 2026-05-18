@@ -202,7 +202,7 @@ if '__main__' == __name__:
 
         # Don't warn about already disabled or suspended accounts
         account_state = user_dict.get('status', 'active')
-        if not account_state in ('active', 'temporal'):
+        if account_state not in ('active', 'temporal'):
             if verbose:
                 print('Skip handling of already %s user %s' % (account_state,
                                                                user_id))
@@ -323,7 +323,7 @@ if '__main__' == __name__:
                                   (cloud_title, instance_id, user_id))
                         continue
                     else:
-                        if not 'cloud' in affected:
+                        if 'cloud' not in affected:
                             affected.append('cloud')
 
         (_, username, full_name, _, addresses, errors) = \

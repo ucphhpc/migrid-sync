@@ -6,11 +6,9 @@ ifndef PY
 	PY = 3
 endif
 
-FORMAT_ENFORCE_DIRS = state/
-FORMAT_EXCLUDE_REGEX = '.*'
-FORMAT_EXCLUDE_GLOB = '*'
-FORMAT_LINE_LENGTH = 80
-
+# TODO: enable on these dirs when ready, but just leave to dummy init for now
+#LINT_ENFORCE_DIRS = ./bin ./mig/lib ./sbin ./tests
+LINT_ENFORCE_DIRS = ./mig/__init__.py
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
 ifdef PYTHON_BIN
@@ -42,15 +40,11 @@ ifneq ($(MIG_ENV),'local')
 endif
 	@make format-python
 
-.PHONY:format-python
+# NOTE: black and isort use pyproject.toml to temporarily exclude a few paths
+.PHONY: format-python
 format-python:
-	@$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
-			--line-length=$(FORMAT_LINE_LENGTH) \
-			--exclude=$(FORMAT_EXCLUDE_REGEX)
-	@$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
-			--profile=black \
-			--line-length=$(FORMAT_LINE_LENGTH) \
-			--skip-glob=$(FORMAT_EXCLUDE_GLOB)
+	@$(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS)
+	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS)
 
 .PHONY: lint
 lint:
@@ -58,19 +52,20 @@ ifneq ($(MIG_ENV),'local')
 	@echo "unavailable outside local development environment"
 	@exit 1
 endif
+	@make style-check-python
 	@make lint-python
 
+# NOTE: black and isort use pyproject.toml to temporarily exclude a few paths
+.PHONY: style-check-python
+style-check-python:
+	@$(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS) --check
+	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS) --check-only
+
+# NOTE: pylint and ruff use pyproject.toml to temporarily exclude a few paths
 .PHONY: lint-python
 lint-python:
-	@$(LOCAL_PYTHON_BIN) -m black $(FORMAT_ENFORCE_DIRS) \
-			--check \
-			--line-length=$(FORMAT_LINE_LENGTH) \
-			--exclude $(FORMAT_EXCLUDE_REGEX)
-	@$(LOCAL_PYTHON_BIN) -m isort $(FORMAT_ENFORCE_DIRS) \
-			--check-only \
-			--profile=black \
-			--line-length=$(FORMAT_LINE_LENGTH) \
-			--skip-glob=$(FORMAT_EXCLUDE_GLOB)
+	@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only
+	@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS)
 
 .PHONY: clean
 clean:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mrslkeywords - Mapping of available mRSL keywords and specs
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -28,6 +29,7 @@
 """Keywords in the mRSL language:
 Works as a combined specification of and source of information about keywords.
 """
+
 from __future__ import absolute_import
 
 from mig.shared.defaults import default_vgrid, any_vgrid, src_dst_sep
@@ -70,7 +72,7 @@ script instead of putting them directly in the EXECUTE field.
         'Value': [],
         'Editor': 'input',
         'Required': True,
-        }))
+    }))
     specs.append(('INPUTFILES', {
         'Title': 'Input Files',
         'Description': '''Files to be copied to the resource before job execution.
@@ -94,7 +96,7 @@ Downloads the contents from some_url (e.g. https://myhost.org/inputfile.txt) to 
         'Value': [],
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('OUTPUTFILES', {
         'Title': 'Output Files',
         'Description': '''Files to be copied from the resource after job execution.
@@ -117,7 +119,7 @@ Uploads some_file on the resource to some_url (e.g. ftp://myuser:mypw@myhost.org
         'Value': [],
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('EXECUTABLES', {
         'Title': 'Executable Files',
         'Description': '''Executables to be copied to the resource before the job execution.
@@ -134,7 +136,7 @@ Copies myscript and myfile_or_url from your %(short)s home to the resource, but 
         'Value': [],
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('MOUNT', {
         'Title': 'Mount',
         'Description': '''Mounts your %s home on resource before job execution.''' % configuration.short_title,
@@ -147,7 +149,7 @@ Mounts your %(short)s home_path on resource_mount_point, the mount is disabled w
         'Value': [],
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('RESOURCE', {
         'Title': 'Target Resources',
         'Description': '''A list of resources allowed to execute the job (default is unset which means any resource).
@@ -164,7 +166,7 @@ Leave unset or empty to submit with execution on the first suitable resource.
         'Value': [],
         'Editor': 'select',
         'Required': False,
-        }))
+    }))
     specs.append(('VGRID', {
         'Title': 'VGrid Order',
         'Description': '''A prioritized list of the VGRIDs allowed to execute the job (default value is %s).
@@ -184,7 +186,7 @@ To submit with execution on the first suitable and allowed VGrid.
         'Value': [],
         'Editor': 'select',
         'Required': False,
-        }))
+    }))
     specs.append(('NODECOUNT', {
         'Title': 'Number of Nodes',
         'Description': 'Number of nodes.',
@@ -193,7 +195,7 @@ To submit with execution on the first suitable and allowed VGrid.
         'Value': 1,
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('CPUCOUNT', {
         'Title': 'Number of CPU Cores',
         'Description': "Number of CPU's the job requires on each node.",
@@ -202,7 +204,7 @@ To submit with execution on the first suitable and allowed VGrid.
         'Value': 1,
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('CPUTIME', {
         'Title': 'CPU/Wall Time (s)',
         'Description': 'The time required to execute the job. The time is specified in seconds',
@@ -211,7 +213,7 @@ To submit with execution on the first suitable and allowed VGrid.
         'Value': 600,
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('MEMORY', {
         'Title': 'Memory (MB)',
         'Description': 'Amount of memory required to execute the job. The amount is specified in megabytes ',
@@ -220,7 +222,7 @@ To submit with execution on the first suitable and allowed VGrid.
         'Value': 64,
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('DISK', {
         'Title': 'Disk (GB)',
         'Description': 'Amount of disk space required to execute the job. The amount is specified in gigabytes and the default is zero.',
@@ -229,7 +231,7 @@ To submit with execution on the first suitable and allowed VGrid.
         'Value': 0,
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('ARCHITECTURE', {
         'Title': 'CPU Architecture',
         'Description': 'CPU architecture required for execution',
@@ -243,7 +245,7 @@ This particular server supports the following values:
         'Value': '',
         'Editor': 'select',
         'Required': False,
-        }))
+    }))
     specs.append(('MAXFILL', {
         'Title': 'Fill available resources',
         'Description': 'Optional list of resource specification field names for which the job should automatically fill the maximum available value on the first suitable resource. That is, if a job requests CPUCOUNT 8 and includes CPUCOUNT in MAXFILL, then the job will be scheduled as usual to a resource with at least a CPUCOUNT of 8, but it will get acces to the actual CPUCOUNT that the resource advertizes. Thus, in combination with MAXFILL any of the CPUTIME, CPUCOUNT, NODECOUNT, MEMORY and DISK variables can effectively be used to specify MINIMUM resource requirements without restricting to exactly the minimum when running on more capable resources. The keyword ALL may also be used to request MAXFILL of all possible fields.',
@@ -257,7 +259,7 @@ To bump the CPUTIME and MEMORY to whatever the executing resource can provide.
         'Value': [],
         'Editor': 'select',
         'Required': False,
-        }))
+    }))
     specs.append(('ENVIRONMENT', {
         'Title': 'Environment Variables',
         'Description': 'Sets the environments specified before job execution',
@@ -266,7 +268,7 @@ To bump the CPUTIME and MEMORY to whatever the executing resource can provide.
         'Value': [],
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('RUNTIMEENVIRONMENT', {
         'Title': 'Runtime Environments',
         'Description': 'Runtime environments like e.g. software packages that the job requires',
@@ -280,12 +282,12 @@ list of runtime environment(s). In this case the availability of BASH-ANY-1.
         'Value': [],
         'Editor': 'select',
         'Required': False,
-        }))
+    }))
     specs.append(('NOTIFY', {
         'Title': 'Job Status Notification',
         'Description': '''Email and/or Instant Messenger account to notify when the job is done or if it fails.
 If you have configured your %s settings you may leave the address part empty or set it to "SETTINGS" to use the saved setting.
-''' % configuration.short_title ,
+''' % configuration.short_title,
         'Example': '''::NOTIFY::
 myemail@mailserver.org
 jabber: myaccount@jabberserver.org
@@ -298,7 +300,7 @@ Sends email to myemail@mailserver.org, jabber message to myaccount@jabberserver.
         'Value': [],
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('VERIFYFILES', {
         'Title': 'Result Verification Files',
         'Description': 'Files to verify job execution results and output against',
@@ -308,37 +310,37 @@ EXPECTED.stdout
 EXPECTED.stderr
 
 Compares JOB_ID.status from the job against the file called EXPECTED.status from the %s home directory and similarly for JOB_ID.stdout and JOB_ID.stderr. For each supplied verify file, EXPECTED.X, the corresponding JOB_ID.X file will be verified line by line using regular expression matching. If any verification fails, the VERIFIED field of the job will be set to FAILURE with the reason appended. If all verification succeeds the VERIFIED field will be set to SUCCESS with a list of the checks appended. If VERIFYFILES is left unset the VERIFIED field will simply be set to NO. In all cases the VERIFIED field is shown as a part of the job status.
-''' % configuration.short_title ,
+''' % configuration.short_title,
         'Type': 'multiplestrings',
         'Value': [],
         'Editor': 'invisible',
         'Required': False,
-        }))
+    }))
     specs.append(('RETRIES', {
         'Title': 'Job Retries',
-        'Description': 'Specifies the maximum number of automatic retries if the job does not finish within the requested time. E.g. if the resource dies or just does not provide enough speed to deliver results in time. If not set the server default of %s is used. It is recommended to lower it for experimental jobs where a broken specification will otherwise cause repeated job failures and resulting forced empty jobs on the resources.'\
-             % configuration.job_retries,
+        'Description': 'Specifies the maximum number of automatic retries if the job does not finish within the requested time. E.g. if the resource dies or just does not provide enough speed to deliver results in time. If not set the server default of %s is used. It is recommended to lower it for experimental jobs where a broken specification will otherwise cause repeated job failures and resulting forced empty jobs on the resources.'
+        % configuration.job_retries,
         'Example': '5',
         'Type': 'int',
         'Value': configuration.job_retries,
         'Editor': 'input',
         'Required': False,
-        }))
+    }))
     specs.append(('JOBTYPE', {
         'Title': 'Job Type',
         'Description': '''Specifies the type of a job:
-A job can be of type "interactive", "batch" or "bulk". Interactive jobs are executed on a resource but with the graphical display forwarded to the MiG display of the user. Batch jobs are executed in a headless mode and can not use graphical output. Bulk jobs are like batch jobs, but additionally allows concurrent execution of your other jobs on the same resource as long as the resource can provide the requested job resources (cpucpunt, nodecount, memory, disk). Set to "interactive" for jobs that use a display, set to bulk for high throughput jobs and leave unset or set to batch for the rest.
+A job can be of type "batch" or "bulk". Batch jobs are executed in a headless mode and can not use graphical output. Bulk jobs are like batch jobs, but additionally allows concurrent execution of your other jobs on the same resource as long as the resource can provide the requested job resources (cpucpunt, nodecount, memory, disk). Set to bulk for high throughput jobs and leave unset or set to batch for the rest.
 
 This particular server supports the following values:
 %s
-'''\
-             % ', '.join(configuration.jobtypes),
-        'Example': 'interactive',
+'''
+        % ', '.join(configuration.jobtypes),
+        'Example': 'bulk',
         'Type': 'string',
         'Value': 'batch',
         'Editor': 'select',
         'Required': False,
-        }))
+    }))
     specs.append(('JOBNAME', {
         'Title': 'Job Name',
         'Description': 'Name identifying the job (white space is not allowed)',
@@ -347,7 +349,7 @@ This particular server supports the following values:
         'Value': '',
         'Editor': 'invisible',
         'Required': False,
-        }))
+    }))
     specs.append(('PROJECT', {
         'Title': 'Project',
         'Description': '''Mark this job as part of a project.
@@ -358,7 +360,7 @@ This makes is possible to get a total statistic for all jobs in a project.
         'Value': '',
         'Editor': 'invisible',
         'Required': False,
-        }))
+    }))
     specs.append(('PLATFORM', {
         'Title': 'Platform',
         'Description': 'Specifies the platform architecture used for the execution of the job.',
@@ -367,7 +369,7 @@ This makes is possible to get a total statistic for all jobs in a project.
         'Value': '',
         'Editor': 'invisible',
         'Required': False,
-        }))
+    }))
     specs.append(('MAXPRICE', {
         'Title': 'Maximum Allowed Price',
         'Description': '''Maximum price to pay for the execution of the job.
@@ -378,8 +380,9 @@ The economy is not yet enforced, so this is a proof of concept option only.
         'Value': '0',
         'Editor': 'invisible',
         'Required': False,
-        }))
+    }))
     return specs
+
 
 def get_keywords_dict(configuration):
     """Return mapping between job keywords and their specs"""
@@ -387,5 +390,3 @@ def get_keywords_dict(configuration):
     # create the keywords in a single dictionary
 
     return dict(get_job_specs(configuration))
-
-
