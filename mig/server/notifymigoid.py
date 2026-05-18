@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notifymigoid - Send internal openid account create/renew email to user
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -121,7 +122,7 @@ if '__main__' == __name__:
         print("No user_id provided!")
         sys.exit(1)
 
-    (configuration, username, full_name, addresses, errors) = \
+    (configuration, username, full_name, expire, addresses, errors) = \
         user_account_notify(user_id, raw_targets, conf_path, db_path, verbose,
                             admin_copy)
 
@@ -142,5 +143,5 @@ if '__main__' == __name__:
             notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
     print("Sending internal OpenID account intro for '%s' to:\n%s" %
           (user_id, '\n'.join(notify_dict['NOTIFY'])))
-    notify_user(notify_dict, [user_id, username, full_name], 'ACCOUNTINTRO',
-                logger, '', configuration)
+    notify_user(notify_dict, [user_id, username, full_name, expire],
+                'ACCOUNTINTRO', logger, '', configuration)
