@@ -64,10 +64,10 @@
                  IMPORTANT: extract and validate URL before outputting
                             https://stackoverflow.com/a/43467144
                  */
-                 var sanelinkurl = urlParams.get('url');
-                 var _parsedurl = new URL(sanelinkurl);
-                 console.assert(_parsedurl.protocol != 'javascript:', "invalid js URL");
+                 var _parsedurl = new URL(urlParams.get('url'));
+                 console.assert(_parsedurl.protocol != 'javascript:', "invalid JS URL");
                  console.assert(_parsedurl.hostname, "invalid URL without FQDN");
+                 sanelinkurl = _parsedurl.href;
                  console.log("url part is: "+sanelinkurl);
              } catch(err) {
                  console.log("error: "+err);
