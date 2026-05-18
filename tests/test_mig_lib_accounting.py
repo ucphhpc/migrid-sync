@@ -232,9 +232,10 @@ class MigLibAccounting(MigTestCase):
 
     def test_human_readable_filesize_valid(self):
         """Test human-friendly format helper success on valid byte sizes"""
-        valid = [(0, "0 B"), (42, "42.000 B"), (2**10, "1.000 KiB"),
-                 (2**30, "1.000 GiB"), (2**50, "1.000 PiB"),
-                 (2**89, "512.000 YiB"), (2**90 - 2**70, "1023.999 YiB")]
+        valid = [(0, "0 B"), (1, "1.000 B"), (42, "42.000 B"),
+                 (2**10, "1.000 KiB"), (2**30, "1.000 GiB"),
+                 (2**50, "1.000 PiB"), (2**89, "512.000 YiB"),
+                 (2**90 - 2**70, "1023.999 YiB")]
         for (size, expect) in valid:
             self.assertEqual(human_readable_filesize(size), expect)
 
@@ -244,3 +245,151 @@ class MigLibAccounting(MigTestCase):
                                         2**128]]
         for (size, expect) in invalid:
             self.assertEqual(human_readable_filesize(size), expect)
+
+    def test_human_readable_filesize_decimals(self):
+        """Test human-friendly format helper with custom decimal count"""
+        cases = [(2**10, 0, "1 KiB"),
+                 (2**10, 1, "1.0 KiB"),
+                 (2**10, 2, "1.00 KiB"),
+                 (2**10, 5, "1.00000 KiB")]
+        for (size, decimals, expect) in cases:
+            self.assertEqual(human_readable_filesize(size, decimals=decimals),
+                             expect)
+
+    def test_human_readable_filesize_si_format(self):
+        """Test human-friendly format helper with SI byte units (powers of 1000)"""
+        # SI exponent is still determined by log2, so values are based on 2**N
+        valid = [(0, "0 B"), (42, "42.000 B"), (2**10, "1.024 KB"),
+                 (2**20, "1.049 MB"), (2**30, "1.074 GB"), (2**50, "1.126 PB")]
+        for (size, expect) in valid:
+            self.assertEqual(
+                human_readable_filesize(size, si_byte_format=True), expect)
+        # decimals and si_byte_format compose correctly
+        self.assertEqual(
+            human_readable_filesize(2**10, decimals=1, si_byte_format=True),
+            "1.0 KB")
+
+    def test_get_usage_decimals(self):
+        """Test get_usage passes decimals parameter through to report strings"""
+        retval = update_accounting(self.configuration)
+        self.assertTrue(retval)
+
+        usage = get_usage(self.configuration, decimals=0)
+        self.assertIsNotNone(usage)
+        accounting = usage.get('accounting', {})
+        test_user_accounting = accounting.get(TEST_CLIENT_DN, {})
+        self.assertNotEqual(test_user_accounting, {})
+
+        # Raw byte counts are unaffected by decimals
+        self.assertEqual(test_user_accounting.get('total_bytes', 0),
+                         TEST_TOTAL_BYTES)
+
+        # total_report should use 0 decimal places
+        total_report = test_user_accounting.get('total_report', '')
+        expected_size = human_readable_filesize(TEST_TOTAL_BYTES, decimals=0)
+        self.assertEqual(total_report, "Total usage: %s" % expected_size)
+
+    def test_get_usage_si_format(self):
+        """Test get_usage appends SI units alongside binary units in reports"""
+        retval = update_accounting(self.configuration)
+        self.assertTrue(retval)
+
+        usage = get_usage(self.configuration, si_byte_format=True)
+        self.assertIsNotNone(usage)
+        accounting = usage.get('accounting', {})
+        test_user_accounting = accounting.get(TEST_CLIENT_DN, {})
+        self.assertNotEqual(test_user_accounting, {})
+
+        # Raw byte counts are unaffected by si_byte_format
+        self.assertEqual(test_user_accounting.get('total_bytes', 0),
+                         TEST_TOTAL_BYTES)
+
+        # All reports should include both binary and SI units separated by " / "
+        for key in ('total_report', 'home_report', 'vgrid_report',
+                    'freeze_report'):
+            self.assertIn(' / ', test_user_accounting.get(key, ''),
+                          msg="%r missing SI separator" % key)
+
+    def test_get_usage_ext_users_report_format(self):
+        """Test get_usage ext_users_report shows parsed name/email/org/country"""
+        retval = update_accounting(self.configuration)
+        self.assertTrue(retval)
+
+        usage = get_usage(self.configuration)
+        self.assertIsNotNone(usage)
+        accounting = usage.get('accounting', {})
+        test_user_accounting = accounting.get(TEST_CLIENT_DN, {})
+        self.assertNotEqual(test_user_accounting, {})
+
+        ext_users_report = test_user_accounting.get('ext_users_report', '')
+        self.assertNotEqual(ext_users_report, '')
+        # Report should show parsed user fields, not just the raw DN
+        self.assertIn('Test Peer', ext_users_report)
+        self.assertIn('peer@example.com', ext_users_report)
+        self.assertIn('PEER Org', ext_users_report)
+        self.assertIn('DK', ext_users_report)
+
+    def test_get_usage_without_accounting_data(self):
+        """Test get_usage returns None when no accounting data exists"""
+        # Do not call update_accounting — no 'latest' file should exist.
+        # The expected file-not-found errors are intentional here.
+        self._logger.forgive_errors()
+        usage = get_usage(self.configuration)
+        self.assertIsNone(usage)
+
+    def test_get_usage_empty_userlist_returns_all_users(self):
+        """Test that an empty userlist returns all accounts including ext users"""
+        retval = update_accounting(self.configuration)
+        self.assertTrue(retval)
+
+        usage_all = get_usage(self.configuration)
+        accounting_all = usage_all.get('accounting', {})
+        self.assertIn(TEST_CLIENT_DN, accounting_all)
+        self.assertIn(TEST_EXT_DN, accounting_all)
+
+    def test_get_usage_targeted_userlist_excludes_ext_user(self):
+        """Test that a targeted userlist suppresses unrequested ext users"""
+        retval = update_accounting(self.configuration)
+        self.assertTrue(retval)
+
+        usage_targeted = get_usage(self.configuration,
+                                   userlist=[TEST_CLIENT_DN])
+        accounting_targeted = usage_targeted.get('accounting', {})
+        self.assertIn(TEST_CLIENT_DN, accounting_targeted)
+        self.assertNotIn(TEST_EXT_DN, accounting_targeted)
+
+    def test_get_usage_userlist_exposes_ext_user(self):
+        """Test that explicitly listing an ext user in userlist includes them"""
+        retval = update_accounting(self.configuration)
+        self.assertTrue(retval)
+
+        # Requesting TEST_CLIENT_DN alone suppresses the ext user.
+        usage_targeted = get_usage(self.configuration,
+                                   userlist=[TEST_CLIENT_DN])
+        self.assertNotIn(TEST_EXT_DN,
+                         usage_targeted.get('accounting', {}))
+
+        # Explicitly requesting TEST_EXT_DN must include them.
+        usage_explicit = get_usage(self.configuration,
+                                   userlist=[TEST_EXT_DN])
+        self.assertIsNotNone(usage_explicit)
+        self.assertIn(TEST_EXT_DN, usage_explicit.get('accounting', {}))
+
+    def test_accounting_freeze_disabled(self):
+        """Test that freeze quota is ignored when site_enable_freeze is False"""
+        self.configuration.site_enable_freeze = False
+        retval = update_accounting(self.configuration)
+        self.assertTrue(retval)
+
+        usage = get_usage(self.configuration)
+        self.assertIsNotNone(usage)
+        test_user_accounting = usage.get('accounting', {}).get(
+            TEST_CLIENT_DN, {})
+        self.assertNotEqual(test_user_accounting, {})
+
+        # Freeze files exist on disk but must not contribute to the total
+        self.assertEqual(test_user_accounting.get('freeze_total', 0), 0)
+        expected_total = (TEST_CLIENT_BYTES + TEST_EXT_BYTES
+                          + TEST_VGRID_TOTAL_BYTES)
+        self.assertEqual(test_user_accounting.get('total_bytes', 0),
+                         expected_total)
