@@ -65,8 +65,9 @@
                             https://stackoverflow.com/a/43467144
                  */
                  var _parsedurl = new URL(urlParams.get('url'));
-                 if (_parsedurl.protocol == 'javascript:') {
-                     throw("invalid JS argument in URL");
+                 var validprotos = ['http:', 'https:', 'ftp:', 'ftps:'];
+                 if (!validprotos.includes(_parsedurl.protocol)) {
+                     throw("invalid URL protocol");
                  }
                  if (!_parsedurl.hostname) {
                      throw("invalid URL without FQDN");
