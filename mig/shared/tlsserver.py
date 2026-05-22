@@ -36,7 +36,7 @@ import ssl
 import sys
 
 from mig.shared.defaults import keyword_auto, STRONG_TLS_CIPHERS, \
-    STRONG_TLS_LEGACY_CURVES
+    STRONG_TLS_CURVES, STRONG_TLS_LEGACY_CURVES
 
 
 def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
@@ -50,9 +50,12 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
         _logger.debug("Auto select strong ciphers")
         ciphers = STRONG_TLS_CIPHERS
     if curve_priority is keyword_auto:
-        # TODO: switch to STRONG_TLS_CURVES once Python gains support (3.15+)
-        _logger.debug("Auto select strong legacy TLS curves without PQC")
-        curve_priority = STRONG_TLS_LEGACY_CURVES
+        if sys.version_info[:2] >= (3, 15):
+            _logger.debug("Auto select strong TLS curves with PQC")
+            curve_priority = STRONG_TLS_CURVES
+        else:
+            _logger.debug("Auto select strong legacy TLS curves without PQC")
+            curve_priority = STRONG_TLS_LEGACY_CURVES
     _logger.info("enforcing strong SSL/TLS connections")
     _logger.debug("using SSL/TLS ciphers: %s" % ciphers)
     _logger.debug("using SSL/TLS curves: %s" % curve_priority)
@@ -104,7 +107,7 @@ openssl dhparam 2048 -out %s""" % dhparamsfile)
     # We must explicitly set curve here to actually enable ciphers
     # using them. They can provide Perfect Forward Secrecy.
     # http://stackoverflow.com/questions/32094145/python-paste-ssl-server-with-tlsv1-2-and-forward-secrecy#32101078
-    # NOTE: PQC curves / KEMs like x25519mlkem768 are NOT supported here
+    # NOTE: PQC curves / KEMs like x25519mlkem768 are NOT yet supported here
     # TODO: use ssl_ctx.set_groups(curves) for PQC once Python 3.15+ lands
     activated_curve = None
     if curve_priority:
@@ -143,9 +146,12 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
         _logger.debug("Auto select strong ciphers")
         ciphers = STRONG_TLS_CIPHERS
     if curve_priority is keyword_auto:
-        # TODO: switch to STRONG_TLS_CURVES once PyOpenSSL gains support
-        _logger.debug("Auto select strong legacy TLS curves without PQC")
-        curve_priority = STRONG_TLS_LEGACY_CURVES
+        if sys.version_info[:2] >= (3, 15):
+            _logger.debug("Auto select strong TLS curves with PQC")
+            curve_priority = STRONG_TLS_CURVES
+        else:
+            _logger.debug("Auto select strong legacy TLS curves without PQC")
+            curve_priority = STRONG_TLS_LEGACY_CURVES
     SSL, crypto = OpenSSL.SSL, OpenSSL.crypto
     _logger.info("enforcing strong SSL/TLS connections")
     _logger.debug("using SSL/TLS ciphers: %s" % ciphers)
@@ -215,7 +221,7 @@ openssl dhparam 2048 -out %s""" % dhparamsfile)
     # http://stackoverflow.com/questions/32094145/python-paste-ssl-server-with-tlsv1-2-and-forward-secrecy#32101078
     # Some help for installing pyopenssl with EC support at
     # http://stackoverflow.com/questions/7340784/easy-install-pyopenssl-error/34048924#34048924
-    # NOTE: PQC curves / KEMs like x25519mlkem768 are NOT supported here
+    # NOTE: PQC curves / KEMs like x25519mlkem768 are NOT yet supported here
     # TODO: mimic ssl_ctx.set_groups(curves) for PQC once Python 3.15+ lands
     activated_curve = None
     if curve_priority:
