@@ -45,7 +45,7 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
                          ):
     """Build and return a hardened native SSL context to apply to a socket"""
     _logger = configuration.logger
-    # NOTE: auto select best ciphers and curves unless specificly requested
+    # NOTE: auto select best ciphers and curves unless specifically requested
     if ciphers is keyword_auto:
         _logger.debug("Auto select strong ciphers")
         ciphers = STRONG_TLS_CIPHERS
@@ -138,7 +138,7 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
                              ):
     """Build and return a hardened OpenSSL context to apply to a socket"""
     _logger = configuration.logger
-    # NOTE: auto select best ciphers and curves unless specificly requested
+    # NOTE: auto select best ciphers and curves unless specifically requested
     if ciphers is keyword_auto:
         _logger.debug("Auto select strong ciphers")
         ciphers = STRONG_TLS_CIPHERS
