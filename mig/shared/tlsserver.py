@@ -101,16 +101,38 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
         except Exception:
             _logger.warning("Could not load optional dhparams from %s" %
                             dhparamsfile)
-            _logger.info("""You can create a suitable dhparams file with:
-openssl dhparam 2048 -out %s""" % dhparamsfile)
+            _logger.info("""You can download a suitable dhparams file from
+https://ssl-config.mozilla.org/ffdhe4096.txt
+or create a custom one with:
+openssl dhparam 4096 -out %s""" % dhparamsfile)
 
     # We must explicitly set curve here to actually enable ciphers
     # using them. They can provide Perfect Forward Secrecy.
     # http://stackoverflow.com/questions/32094145/python-paste-ssl-server-with-tlsv1-2-and-forward-secrecy#32101078
-    # NOTE: PQC curves / KEMs like x25519mlkem768 are NOT yet supported here
-    # TODO: use ssl_ctx.set_groups(curves) for PQC once Python 3.15+ lands
+    # NOTE: PQC curves / KEMs like x25519mlkem768 are lacking in older python
+    # NOTE: use ssl_ctx.set_groups(curves) on Python 3.15+ for PQC
     activated_curve = None
-    if curve_priority:
+    if curve_priority and sys.version_info[:3] >= (3, 15):
+        filtered_curves = []
+        available_curves = ssl_ctx.get_groups()
+        for curve_name in curve_priority.split(':'):
+            if curve_name in available_curves:
+                if not activated_curve:
+                    activated_curve = curve_name
+                    pfs_available = True
+                filtered_curves.append(curve_name)
+            else:
+                _logger.debug("Skip unsupported elliptic curve: %s" %
+                              curve_name)
+        if filtered_curves:
+            enable_curves = ':'.join(filtered_curves)
+            _logger.debug("Using available elliptic curves: %s" %
+                    enable_curves)
+            ssl_ctx.set_groups(enable_curves)
+        else:
+            _logger.warning("Couldn't init any of the elliptic curves: %s" %
+                            curve_priority)
+    elif curve_priority:
         for curve_name in curve_priority.split(':'):
             try:
                 _logger.debug("Blindly trying elliptic curve %s" % curve_name)
@@ -213,8 +235,10 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
         except Exception:
             _logger.warning("Could not load optional dhparams from %s" %
                             dhparamsfile)
-            _logger.info("""You can create a suitable dhparams file with:
-openssl dhparam 2048 -out %s""" % dhparamsfile)
+            _logger.info("""You can download a suitable dhparams file from
+https://ssl-config.mozilla.org/ffdhe4096.txt
+or create a custom one with:
+openssl dhparam 4096 -out %s""" % dhparamsfile)
 
     # We must explicitly set curve here to actually enable ciphers
     # using them. They can provide Perfect Forward Secrecy.
