@@ -87,6 +87,15 @@ fi
 
 echo "using image id $IMAGEID"
 
+# Run as CONTAINER_USER_UID in container by default
+USER_ARGS="--user $CONTAINER_USER_UID"
+# It is necessary to preserve user namespaces in container on podman to avoid
+# root-owned repo contents in bind mount.
+if ${DOCKER_BIN} version | grep -q -i "podman"; then
+    USER_ARGS="$USER_ARGS --userns=keep-id"
+fi
+echo "using user args $USER_ARGS"
+
 # execute python within the image passing the supplied arguments
 
 ${DOCKER_BIN} run -it --rm \
@@ -94,5 +103,5 @@ ${DOCKER_BIN} run -it --rm \
     --env "PYTHONPATH=$PYTHONPATH" \
     --env "PYTHONPYCACHEPREFIX=$PYTHONPYCACHEPREFIX" \
     --env "MIG_ENV=$MIG_ENV" \
-    --user "$CONTAINER_USER_UID" \
+    ${USER_ARGS} \
     "$IMAGEID" "$DOCKER_PYTHON_BIN" $@
