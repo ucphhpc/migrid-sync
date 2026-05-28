@@ -369,120 +369,6 @@ class TestMigSharedUseradm__create_user(
         except Exception:
             self.assertFalse(True, "should not be reached")
 
-    def test_user_creation_and_delete_records_a_user(self):
-        user_dict = {}
-        user_dict["full_name"] = "Test User"
-        user_dict["organization"] = "Test Org"
-        user_dict["state"] = "NA"
-        user_dict["country"] = "DK"
-        user_dict["email"] = "test@example.com"
-        user_dict["comment"] = "This is the create comment"
-        user_dict["locality"] = ""
-        user_dict["organizational_unit"] = ""
-        user_dict["password"] = ""
-        user_dict["password_hash"] = self.TEST_USER_PASSWORD_HASH
-
-        try:
-            create_user(
-                user_dict,
-                self.configuration,
-                keyword_auto,
-                default_renew=True,
-                ask_renew=False,
-            )
-        except:
-            self.assertFalse(True, "should not be reached")
-
-        try:
-            delete_user(
-                user_dict,
-                self.configuration,
-                keyword_auto,
-                force=True,
-            )
-        except:
-            self.assertFalse(True, "should not be reached")
-
-    def test_user_deletion_removes_fs_entries(self):
-        user_dict = {}
-        user_dict["unique_id"] = TEST_USER_UUID
-        user_dict["short_id"] = TEST_USER_SHORT_ID
-        user_dict["full_name"] = "Test User"
-        user_dict["organization"] = "Test Org"
-        user_dict["state"] = "NA"
-        user_dict["country"] = "DK"
-        user_dict["email"] = "test@example.com"
-        user_dict["comment"] = "This is the create comment"
-        user_dict["locality"] = ""
-        user_dict["organizational_unit"] = ""
-        user_dict["password"] = ""
-        user_dict["password_hash"] = self.TEST_USER_PASSWORD_HASH
-
-        try:
-            create_user(
-                user_dict,
-                self.configuration,
-                keyword_auto,
-                default_renew=True,
-                ask_renew=False,
-            )
-        except:
-            self.assertFalse(True, "should not be reached")
-        try:
-            delete_user(
-                user_dict,
-                self.configuration,
-                keyword_auto,
-                force=True,
-            )
-        except:
-            self.assertFalse(True, "should not be reached")
-
-        home_dir = os.path.join(self.configuration.user_home, TEST_USER_DN)
-        self.assertFalse(os.path.isdir(home_dir))
-        self.assertFalse(os.path.exists(home_dir))
-        short_link = os.path.join(self.configuration.user_home,
-                                  TEST_USER_SHORT_ID)
-        self.assertFalse(os.path.islink(short_link))
-        self.assertFalse(os.path.exists(short_link))
-
-        settings_dir = os.path.join(self.configuration.user_settings,
-                                    TEST_USER_UUID)
-        self.assertFalse(os.path.isdir(settings_dir))
-        self.assertFalse(os.path.exists(settings_dir))
-        settings_link = os.path.join(self.configuration.user_settings,
-                                     TEST_USER_DIR)
-        self.assertFalse(os.path.islink(settings_link))
-        self.assertFalse(os.path.exists(settings_link))
-
-        ssh_dir = os.path.join(home_dir, ssh_conf_dir)
-        self.assertFalse(os.path.isdir(ssh_dir))
-        self.assertFalse(os.path.exists(ssh_dir))
-        davs_dir = os.path.join(home_dir, davs_conf_dir)
-        self.assertFalse(os.path.isdir(davs_dir))
-        self.assertFalse(os.path.exists(davs_dir))
-        ftps_dir = os.path.join(home_dir, ftps_conf_dir)
-        self.assertFalse(os.path.isdir(ftps_dir))
-        self.assertFalse(os.path.exists(ftps_dir))
-        htaccess_path = os.path.join(home_dir, htaccess_filename)
-        self.assertFalse(os.path.isfile(htaccess_path))
-        self.assertFalse(os.path.exists(htaccess_path))
-        welcome_path = os.path.join(home_dir, welcome_filename)
-        self.assertFalse(os.path.isfile(welcome_path))
-        self.assertFalse(os.path.exists(welcome_path))
-        settings_path = os.path.join(settings_dir, settings_filename)
-        self.assertFalse(os.path.isfile(settings_path))
-        self.assertFalse(os.path.exists(settings_path))
-        profile_path = os.path.join(settings_dir, profile_filename)
-        self.assertFalse(os.path.isfile(profile_path))
-        self.assertFalse(os.path.exists(profile_path))
-        widgets_path = os.path.join(settings_dir, widgets_filename)
-        self.assertFalse(os.path.isfile(widgets_path))
-        self.assertFalse(os.path.exists(widgets_path))
-        css_path = os.path.join(home_dir, default_css_filename)
-        self.assertFalse(os.path.isfile(css_path))
-        self.assertFalse(os.path.exists(css_path))
-
     def test_user_creation_fails_in_renew_when_locked(self):
         user_dict = {}
         user_dict["full_name"] = "Test User"
@@ -784,7 +670,402 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
         except:
             self.assertFalse(True, "should not be reached")
 
-    def test_user_creation_and_delete_records_a_user(self):
+    def test_user_creation_fails_in_renew_when_locked(self):
+        user_dict = {}
+        user_dict["unique_id"] = TEST_USER_UUID
+        user_dict["full_name"] = "Test User"
+        user_dict["organization"] = "Test Org"
+        user_dict["state"] = "NA"
+        user_dict["country"] = "DK"
+        user_dict["email"] = "test@example.com"
+        user_dict["comment"] = "This is the create comment"
+        user_dict["locality"] = ""
+        user_dict["organizational_unit"] = ""
+        user_dict["password"] = ""
+        user_dict["password_hash"] = self.TEST_USER_PASSWORD_HASH
+        # explicitly setting set a DN suffixed user DN to force GDP
+        user_dict["distinguished_name"] = self.TEST_USER_DN_GDP
+        user_dict["status"] = "locked"
+
+        try:
+            create_user(
+                user_dict,
+                self.configuration,
+                keyword_auto,
+                default_renew=True,
+                ask_renew=False,
+            )
+        except:
+            self.assertFalse(True, "should not be reached")
+
+    def test_user_creation_with_id_collission_fails(self):
+        user_dict = {}
+        user_dict["unique_id"] = TEST_USER_UUID
+        user_dict["full_name"] = "Test User"
+        user_dict["organization"] = "Test Org"
+        user_dict["state"] = "NA"
+        user_dict["country"] = "DK"
+        user_dict["email"] = "user@example.com"
+        user_dict["comment"] = "This is the create comment"
+        user_dict["password"] = "password"
+        user_dict["distinguished_name"] = TEST_USER_DN
+
+        try:
+            create_user(
+                user_dict, self.configuration, keyword_auto, default_renew=True
+            )
+        except:
+            self.assertFalse(True, "should not be reached")
+
+        # NOTE: reset distinguished_name and introduce an ID conflict to test
+        del user_dict["distinguished_name"]
+        user_dict["organization"] = "Another Org"
+        with self.assertRaises(Exception):
+            create_user(
+                user_dict,
+                self.configuration,
+                keyword_auto,
+                default_renew=True,
+                ask_renew=False,
+            )
+
+
+class MigSharedUseradm__assure_current_htaccess(MigTestCase):
+    """Coverage of useradm behaviours around htaccess."""
+
+    def before_each(self):
+        """The create_user call requires quite a few helper dirs"""
+        os.makedirs(os.path.join(DUMMY_HOME_PATH, DUMMY_USER))
+        os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
+        os.makedirs(os.path.join(DUMMY_MRSL_FILES_PATH, DUMMY_USER))
+        os.makedirs(os.path.join(DUMMY_RESOURCE_PENDING_PATH, DUMMY_USER))
+        os.makedirs(os.path.join(DUMMY_CACHE_PATH, DUMMY_USER))
+        cleanpath(DUMMY_HOME_PATH, self)
+        cleanpath(DUMMY_SETTINGS_PATH, self)
+        cleanpath(DUMMY_MRSL_FILES_PATH, self)
+        cleanpath(DUMMY_RESOURCE_PENDING_PATH, self)
+        cleanpath(DUMMY_CACHE_PATH, self)
+
+    def assertHtaccessRequireUserClause(self, generated, expected):
+        """Makes sure generated htaccess file contains the expected string"""
+        if isinstance(generated, basestring):
+            with io.open(generated) as htaccess_file:
+                generated = htaccess_file.read()
+
+        generated_lines = generated.split("\n")
+        if not expected in generated_lines:
+            raise AssertionError("no such require user line: %s" % expected)
+
+    def test_skips_accounts_without_short_id(self):
+        user_dict = {}
+        user_dict.update(DUMMY_USER_DICT)
+        del user_dict["short_id"]
+        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False,
+                                False)
+
+        try:
+            path_kind = self.assertPathExists(DUMMY_REL_HTACCESS_PATH)
+            # File should not exist here at all
+            self.assertNotEqual(path_kind, "file")
+        except OSError as ignore_oserr:
+            pass
+
+    def test_creates_missing_htaccess_file(self):
+        user_dict = {}
+        user_dict.update(DUMMY_USER_DICT)
+        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False,
+                                False)
+
+        path_kind = self.assertPathExists(DUMMY_REL_HTACCESS_PATH)
+        # File should exist here and be valid
+        self.assertEqual(path_kind, "file")
+        path_kind = self.assertPathExists(DUMMY_REL_HTACCESS_BACKUP_PATH)
+        # Backup file should exist here and be empty
+        self.assertEqual(path_kind, "file")
+
+        self.assertHtaccessRequireUserClause(
+            DUMMY_HTACCESS_PATH, DUMMY_REQUIRE_USER
+        )
+
+    def test_repairs_existing_stale_htaccess_file(self):
+        user_dict = {}
+        user_dict.update(DUMMY_USER_DICT)
+        # Fake stale user ID directly through DN
+        user_dict["distinguished_name"] = DUMMY_STALE_USER
+        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False,
+                                False)
+
+        # Verify stale
+        self.assertHtaccessRequireUserClause(
+            DUMMY_HTACCESS_PATH, DUMMY_REQUIRE_STALE_USER
+        )
+
+        # Reset stale user ID and retry
+        user_dict = {}
+        user_dict.update(DUMMY_USER_DICT)
+        assure_current_htaccess(DUMMY_CONF, DUMMY_USER, user_dict, False,
+                                False)
+
+        path_kind = self.assertPathExists(DUMMY_REL_HTACCESS_PATH)
+        # File should exist here and be valid
+        self.assertEqual(path_kind, "file")
+        path_kind = self.assertPathExists(DUMMY_REL_HTACCESS_BACKUP_PATH)
+        # Backup file should exist here and be empty
+        self.assertEqual(path_kind, "file")
+
+        self.assertHtaccessRequireUserClause(
+            DUMMY_HTACCESS_PATH, DUMMY_REQUIRE_USER
+        )
+
+
+class TestMigSharedUseradm__user_account_notify(MigTestCase, UserAssertMixin):
+    """Coverage of useradm user_account_notify function."""
+
+    expected_expire = -1
+
+    def _provide_configuration(self):
+        """Return configuration to use"""
+        return "testconfig"
+
+    def before_each(self):
+        """Create test environment for useradm tests"""
+        configuration = self.configuration
+
+        _ensure_dirs_needed_for_userdb(self.configuration)
+
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        ensure_dirs_exist(self.configuration.mig_system_files)
+        self._provision_test_user(self, TEST_USER_DN)
+        adjusted_datetime = datetime.date.today() + datetime.timedelta(days=5)
+        self.expected_expire = int(time.mktime(adjusted_datetime.timetuple()))
+
+    def test_default_address_and_expire(self):
+        """Test addresses and expire for test account"""
+        (_, username, full_name, expire, addresses, errors) = \
+            user_account_notify(TEST_USER_DN, {'email': ['AUTO']},
+                                self.configuration,
+                                self.expected_user_db_file, False,
+                                False)
+        self.assertEqual(addresses, {'email': [TEST_USER_EMAIL]})
+        self.assertEqual(expire, self.expected_expire)
+        self.assertEqual(errors, [])
+
+    def test_extra_address_and_expire(self):
+        """Test addresses and expire for test with extra account"""
+        (_, username, full_name, expire, addresses, errors) = \
+            user_account_notify(TEST_USER_DN, {'email':
+                                               ['AUTO', OTHER_USER_EMAIL]},
+                                self.configuration,
+                                self.expected_user_db_file, False,
+                                False)
+        self.assertEqual(addresses, {'email':
+                                     [TEST_USER_EMAIL, OTHER_USER_EMAIL]})
+        self.assertEqual(expire, self.expected_expire)
+        self.assertEqual(errors, [])
+
+    def test_missing_user_fails(self):
+        """Test failure for missing user account"""
+        (_, username, full_name, expire, addresses, errors) = \
+            user_account_notify(OTHER_USER_DN, {'email': ['AUTO']},
+                                self.configuration,
+                                self.expected_user_db_file, False,
+                                False)
+        self.assertEqual(addresses, {'email': []})
+        self.assertEqual(expire, None)
+        self.assertTrue(errors and 'No such user' in errors[0])
+
+    def test_missing_user_db_bails_out(self):
+        """Test failure for missing user db"""
+        with self.assertLogs(level='ERROR') as log_capture:
+            (_, username, full_name, expire, addresses, errors) = \
+                user_account_notify(OTHER_USER_DN, {'email': ['AUTO']},
+                                    self.configuration, NO_SUCH_USER_DB,
+                                    False, False)
+        self.assertEqual(addresses, [])
+        self.assertEqual(expire, None)
+        self.assertTrue(errors and 'Failed to load user DB' in errors[0])
+        self.assertTrue(any('Failed to load user DB' in msg for msg in
+                            log_capture.output))
+        try:
+            os.remove("%s.lock" % NO_SUCH_USER_DB)
+        except Exception:
+            pass
+
+
+# TODO: consider merging the tests for UUID and X509 format
+class TestMigSharedUseradm__delete_user(
+    MigTestCase, FixtureAssertMixin, PickleAssertMixin
+):
+    """Coverage of useradm delete_user function."""
+
+    TEST_USER_DN_GDP = "%s/GDP" % (TEST_USER_DN,)
+    TEST_USER_PASSWORD_HASH = (
+        "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM2134uix"
+    )
+
+    def before_each(self):
+        configuration = self.configuration
+        configuration.site_user_id_format = DEFAULT_USER_ID_FORMAT
+
+        _ensure_dirs_needed_for_userdb(self.configuration)
+
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        ensure_dirs_exist(self.configuration.mig_system_files)
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def test_user_delete_completes(self):
+        user_dict = {}
+        user_dict["full_name"] = "Test User"
+        user_dict["organization"] = "Test Org"
+        user_dict["state"] = "NA"
+        user_dict["country"] = "DK"
+        user_dict["email"] = "test@example.com"
+        user_dict["comment"] = "This is the create comment"
+        user_dict["locality"] = ""
+        user_dict["organizational_unit"] = ""
+        user_dict["password"] = ""
+        user_dict["password_hash"] = self.TEST_USER_PASSWORD_HASH
+
+        try:
+            create_user(
+                user_dict,
+                self.configuration,
+                keyword_auto,
+                default_renew=True,
+                ask_renew=False,
+            )
+        except:
+            self.assertFalse(True, "should not be reached")
+
+        try:
+            delete_user(
+                user_dict,
+                self.configuration,
+                keyword_auto,
+                force=True,
+            )
+        except:
+            self.assertFalse(True, "should not be reached")
+
+    def test_user_deletion_removes_fs_entries(self):
+        user_dict = {}
+        user_dict["unique_id"] = TEST_USER_UUID
+        user_dict["short_id"] = TEST_USER_SHORT_ID
+        user_dict["full_name"] = "Test User"
+        user_dict["organization"] = "Test Org"
+        user_dict["state"] = "NA"
+        user_dict["country"] = "DK"
+        user_dict["email"] = "test@example.com"
+        user_dict["comment"] = "This is the create comment"
+        user_dict["locality"] = ""
+        user_dict["organizational_unit"] = ""
+        user_dict["password"] = ""
+        user_dict["password_hash"] = self.TEST_USER_PASSWORD_HASH
+
+        try:
+            create_user(
+                user_dict,
+                self.configuration,
+                keyword_auto,
+                default_renew=True,
+                ask_renew=False,
+            )
+        except:
+            self.assertFalse(True, "should not be reached")
+        try:
+            delete_user(
+                user_dict,
+                self.configuration,
+                keyword_auto,
+                force=True,
+            )
+        except:
+            self.assertFalse(True, "should not be reached")
+
+        home_dir = os.path.join(self.configuration.user_home, TEST_USER_DN)
+        self.assertFalse(os.path.isdir(home_dir))
+        self.assertFalse(os.path.exists(home_dir))
+        short_link = os.path.join(self.configuration.user_home,
+                                  TEST_USER_SHORT_ID)
+        self.assertFalse(os.path.islink(short_link))
+        self.assertFalse(os.path.exists(short_link))
+
+        settings_dir = os.path.join(self.configuration.user_settings,
+                                    TEST_USER_UUID)
+        self.assertFalse(os.path.isdir(settings_dir))
+        self.assertFalse(os.path.exists(settings_dir))
+        settings_link = os.path.join(self.configuration.user_settings,
+                                     TEST_USER_DIR)
+        self.assertFalse(os.path.islink(settings_link))
+        self.assertFalse(os.path.exists(settings_link))
+
+        ssh_dir = os.path.join(home_dir, ssh_conf_dir)
+        self.assertFalse(os.path.isdir(ssh_dir))
+        self.assertFalse(os.path.exists(ssh_dir))
+        davs_dir = os.path.join(home_dir, davs_conf_dir)
+        self.assertFalse(os.path.isdir(davs_dir))
+        self.assertFalse(os.path.exists(davs_dir))
+        ftps_dir = os.path.join(home_dir, ftps_conf_dir)
+        self.assertFalse(os.path.isdir(ftps_dir))
+        self.assertFalse(os.path.exists(ftps_dir))
+        htaccess_path = os.path.join(home_dir, htaccess_filename)
+        self.assertFalse(os.path.isfile(htaccess_path))
+        self.assertFalse(os.path.exists(htaccess_path))
+        welcome_path = os.path.join(home_dir, welcome_filename)
+        self.assertFalse(os.path.isfile(welcome_path))
+        self.assertFalse(os.path.exists(welcome_path))
+        settings_path = os.path.join(settings_dir, settings_filename)
+        self.assertFalse(os.path.isfile(settings_path))
+        self.assertFalse(os.path.exists(settings_path))
+        profile_path = os.path.join(settings_dir, profile_filename)
+        self.assertFalse(os.path.isfile(profile_path))
+        self.assertFalse(os.path.exists(profile_path))
+        widgets_path = os.path.join(settings_dir, widgets_filename)
+        self.assertFalse(os.path.isfile(widgets_path))
+        self.assertFalse(os.path.exists(widgets_path))
+        css_path = os.path.join(home_dir, default_css_filename)
+        self.assertFalse(os.path.isfile(css_path))
+        self.assertFalse(os.path.exists(css_path))
+
+
+class TestMigSharedUseradm__delete_user_uuid_user_id(
+    MigTestCase, FixtureAssertMixin, PickleAssertMixin
+):
+    """Coverage of useradm delete_user function with UUID format."""
+
+    TEST_USER_DN_GDP = "%s/GDP" % (TEST_USER_DN,)
+    TEST_USER_PASSWORD_HASH = "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM2134uix"
+
+    def before_each(self):
+        configuration = self.configuration
+        configuration.site_user_id_format = UUID_USER_ID_FORMAT
+
+        _ensure_dirs_needed_for_userdb(self.configuration)
+
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        ensure_dirs_exist(self.configuration.mig_system_files)
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def test_user_delete_completes(self):
         user_dict = {}
         user_dict["unique_id"] = TEST_USER_UUID
         user_dict["full_name"] = "Test User"
@@ -902,65 +1183,6 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
         css_path = os.path.join(home_dir, default_css_filename)
         self.assertFalse(os.path.isfile(css_path))
         self.assertFalse(os.path.exists(css_path))
-
-    def test_user_creation_fails_in_renew_when_locked(self):
-        user_dict = {}
-        user_dict["unique_id"] = TEST_USER_UUID
-        user_dict["full_name"] = "Test User"
-        user_dict["organization"] = "Test Org"
-        user_dict["state"] = "NA"
-        user_dict["country"] = "DK"
-        user_dict["email"] = "test@example.com"
-        user_dict["comment"] = "This is the create comment"
-        user_dict["locality"] = ""
-        user_dict["organizational_unit"] = ""
-        user_dict["password"] = ""
-        user_dict["password_hash"] = self.TEST_USER_PASSWORD_HASH
-        # explicitly setting set a DN suffixed user DN to force GDP
-        user_dict["distinguished_name"] = self.TEST_USER_DN_GDP
-        user_dict["status"] = "locked"
-
-        try:
-            create_user(
-                user_dict,
-                self.configuration,
-                keyword_auto,
-                default_renew=True,
-                ask_renew=False,
-            )
-        except:
-            self.assertFalse(True, "should not be reached")
-
-    def test_user_creation_with_id_collission_fails(self):
-        user_dict = {}
-        user_dict["unique_id"] = TEST_USER_UUID
-        user_dict["full_name"] = "Test User"
-        user_dict["organization"] = "Test Org"
-        user_dict["state"] = "NA"
-        user_dict["country"] = "DK"
-        user_dict["email"] = "user@example.com"
-        user_dict["comment"] = "This is the create comment"
-        user_dict["password"] = "password"
-        user_dict["distinguished_name"] = TEST_USER_DN
-
-        try:
-            create_user(
-                user_dict, self.configuration, keyword_auto, default_renew=True
-            )
-        except:
-            self.assertFalse(True, "should not be reached")
-
-        # NOTE: reset distinguished_name and introduce an ID conflict to test
-        del user_dict["distinguished_name"]
-        user_dict["organization"] = "Another Org"
-        with self.assertRaises(Exception):
-            create_user(
-                user_dict,
-                self.configuration,
-                keyword_auto,
-                default_renew=True,
-                ask_renew=False,
-            )
 
 
 class MigSharedUseradm__assure_current_htaccess(MigTestCase):
