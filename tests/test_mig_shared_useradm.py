@@ -83,6 +83,7 @@ from tests.support.usersupp import NO_SUCH_USER_DN, OTHER_USER_DN, \
 TEST_USER_DIR = TEST_USER_DN.replace('/', '+').replace(' ', '_')
 
 TEST_USER_SHORT_ID = "abc123@some.org"
+TEST_USER_UUID = "UniqueUserIdForTestUser"
 TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[-1]
 TEST_USER_EXPIRE = 1776031200
 OTHER_USER_EMAIL = OTHER_USER_DN.split("/emailAddress=", 1)[-1]
@@ -453,7 +454,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
 
     def test_user_db_is_created(self):
         user_dict = {}
-        user_dict["unique_id"] = "UniqueUserIdForTestUser"
+        user_dict["unique_id"] = TEST_USER_UUID
         user_dict["full_name"] = "Test User"
         user_dict["organization"] = "Test Org"
         user_dict["state"] = "NA"
@@ -485,7 +486,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
         expected_user_password_hash = self.TEST_USER_PASSWORD_HASH
 
         user_dict = {}
-        user_dict["unique_id"] = "UniqueUserIdForTestUser"
+        user_dict["unique_id"] = TEST_USER_UUID
         user_dict["full_name"] = "Test User"
         user_dict["organization"] = "Test Org"
         user_dict["state"] = "NA"
@@ -525,7 +526,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
 
     def test_user_creation_creates_fs_entries(self):
         user_dict = {}
-        user_dict["unique_id"] = "UniqueUserIdForTestUser"
+        user_dict["unique_id"] = TEST_USER_UUID
         user_dict["full_name"] = "Test User"
         user_dict["organization"] = "Test Org"
         user_dict["state"] = "NA"
@@ -540,8 +541,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
         create_user(
             user_dict, self.configuration, keyword_auto, default_renew=True
         )
-        home_dir = os.path.join(self.configuration.user_home,
-                                "UniqueUserIdForTestUser")
+        home_dir = os.path.join(self.configuration.user_home, TEST_USER_UUID)
         self.assertTrue(os.path.isdir(home_dir))
         home_link = os.path.join(self.configuration.user_home,
                                  TEST_USER_DIR)
@@ -550,7 +550,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
                          os.path.realpath(home_link))
 
         settings_dir = os.path.join(self.configuration.user_settings,
-                                    "UniqueUserIdForTestUser")
+                                    TEST_USER_UUID)
         self.assertTrue(os.path.isdir(settings_dir))
         settings_link = os.path.join(self.configuration.user_settings,
                                      TEST_USER_DIR)
@@ -566,28 +566,48 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
         self.assertTrue(os.path.isdir(ftps_dir))
         htaccess_path = os.path.join(home_dir, htaccess_filename)
         self.assertTrue(os.path.isfile(htaccess_path))
-        # TODO: test contents matches access for UUID and X509 ID
+        # NOTE: test htaccess contents matches access for UUID and X509 ID
+        req_pattern = 'require user "%s"'
+        with open(htaccess_path) as test_fd:
+            test_contents = test_fd.read()
+            self.assertIn(req_pattern % TEST_USER_DN, test_contents)
+            # TODO: add UUID to htaccess and enable next?
+            # self.assertIn(req_pattern % TEST_USER_UUID, htaccess_contents)
 
         welcome_path = os.path.join(home_dir, welcome_filename)
         self.assertTrue(os.path.isfile(welcome_path))
         settings_path = os.path.join(settings_dir, settings_filename)
         self.assertTrue(os.path.isfile(settings_path))
+        pickled = self.assertPickledFile(settings_path)
+        self.assertIn(TEST_USER_DN.encode('utf8'),
+                      pickled['CREATOR'.encode('utf8')])
         profile_path = os.path.join(settings_dir, profile_filename)
         self.assertTrue(os.path.isfile(profile_path))
+        pickled = self.assertPickledFile(profile_path)
+        self.assertIn(TEST_USER_DN.encode('utf8'),
+                      pickled['CREATOR'.encode('utf8')])
         widgets_path = os.path.join(settings_dir, widgets_filename)
         self.assertTrue(os.path.isfile(widgets_path))
+        pickled = self.assertPickledFile(widgets_path)
+        self.assertIn(TEST_USER_DN.encode('utf8'),
+                      pickled['CREATOR'.encode('utf8')])
         css_path = os.path.join(home_dir, default_css_filename)
         self.assertTrue(os.path.isfile(css_path))
+        with open(css_path) as test_fd:
+            test_contents = test_fd.read()
+            self.assertIn('No changes - use default', test_contents)
 
-        # TODO: check permissions on htaccess, .ssh
-
-        # TODO: check oid symlinks
+        # NOTE: check permissions on htaccess, .ssh
+        htaccess_stat = os.stat(htaccess_path)
+        self.assertEqual(htaccess_stat.st_mode, 0o100444)
+        ssh_stat = os.stat(ssh_dir)
+        self.assertEqual(ssh_stat.st_mode, 0o40755)
 
     def test_user_creation_records_a_user_with_gdp(self):
         self.configuration.site_enable_gdp = True
 
         user_dict = {}
-        user_dict["unique_id"] = "UniqueUserIdForTestUser"
+        user_dict["unique_id"] = TEST_USER_UUID
         user_dict["full_name"] = "Test User"
         user_dict["organization"] = "Test Org"
         user_dict["state"] = "NA"
@@ -610,7 +630,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
 
     def test_user_creation_and_renew_records_a_user(self):
         user_dict = {}
-        user_dict["unique_id"] = "UniqueUserIdForTestUser"
+        user_dict["unique_id"] = TEST_USER_UUID
         user_dict["full_name"] = "Test User"
         user_dict["organization"] = "Test Org"
         user_dict["state"] = "NA"
@@ -646,7 +666,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
 
     def test_user_creation_fails_in_renew_when_locked(self):
         user_dict = {}
-        user_dict["unique_id"] = "UniqueUserIdForTestUser"
+        user_dict["unique_id"] = TEST_USER_UUID
         user_dict["full_name"] = "Test User"
         user_dict["organization"] = "Test Org"
         user_dict["state"] = "NA"
@@ -674,7 +694,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
 
     def test_user_creation_with_id_collission_fails(self):
         user_dict = {}
-        user_dict["unique_id"] = "UniqueUserIdForTestUser"
+        user_dict["unique_id"] = TEST_USER_UUID
         user_dict["full_name"] = "Test User"
         user_dict["organization"] = "Test Org"
         user_dict["state"] = "NA"
