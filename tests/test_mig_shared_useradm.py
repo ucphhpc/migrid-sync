@@ -523,6 +523,66 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
         self.maxDiff = None
         self.assertEqual(actual_user_object, expected_user_object)
 
+    def test_user_creation_creates_fs_entries(self):
+        user_dict = {}
+        user_dict["unique_id"] = "UniqueUserIdForTestUser"
+        user_dict["full_name"] = "Test User"
+        user_dict["organization"] = "Test Org"
+        user_dict["state"] = "NA"
+        user_dict["country"] = "DK"
+        user_dict["email"] = "test@example.com"
+        user_dict["comment"] = "This is the create comment"
+        user_dict["locality"] = ""
+        user_dict["organizational_unit"] = ""
+        user_dict["password"] = ""
+        user_dict["password_hash"] = self.TEST_USER_PASSWORD_HASH
+
+        create_user(
+            user_dict, self.configuration, keyword_auto, default_renew=True
+        )
+        home_dir = os.path.join(self.configuration.user_home,
+                                "UniqueUserIdForTestUser")
+        self.assertTrue(os.path.isdir(home_dir))
+        home_link = os.path.join(self.configuration.user_home,
+                                 TEST_USER_DIR)
+        self.assertTrue(os.path.islink(home_link))
+        self.assertEqual(os.path.realpath(home_dir),
+                         os.path.realpath(home_link))
+
+        settings_dir = os.path.join(self.configuration.user_settings,
+                                    "UniqueUserIdForTestUser")
+        self.assertTrue(os.path.isdir(settings_dir))
+        settings_link = os.path.join(self.configuration.user_settings,
+                                     TEST_USER_DIR)
+        self.assertTrue(os.path.islink(settings_link))
+        self.assertEqual(os.path.realpath(settings_dir),
+                         os.path.realpath(settings_link))
+
+        ssh_dir = os.path.join(home_dir, ssh_conf_dir)
+        self.assertTrue(os.path.isdir(ssh_dir))
+        davs_dir = os.path.join(home_dir, davs_conf_dir)
+        self.assertTrue(os.path.isdir(davs_dir))
+        ftps_dir = os.path.join(home_dir, ftps_conf_dir)
+        self.assertTrue(os.path.isdir(ftps_dir))
+        htaccess_path = os.path.join(home_dir, htaccess_filename)
+        self.assertTrue(os.path.isfile(htaccess_path))
+        # TODO: test contents matches access for UUID and X509 ID
+
+        welcome_path = os.path.join(home_dir, welcome_filename)
+        self.assertTrue(os.path.isfile(welcome_path))
+        settings_path = os.path.join(settings_dir, settings_filename)
+        self.assertTrue(os.path.isfile(settings_path))
+        profile_path = os.path.join(settings_dir, profile_filename)
+        self.assertTrue(os.path.isfile(profile_path))
+        widgets_path = os.path.join(settings_dir, widgets_filename)
+        self.assertTrue(os.path.isfile(widgets_path))
+        css_path = os.path.join(home_dir, default_css_filename)
+        self.assertTrue(os.path.isfile(css_path))
+
+        # TODO: check permissions on htaccess, .ssh
+
+        # TODO: check oid symlinks
+
     def test_user_creation_records_a_user_with_gdp(self):
         self.configuration.site_enable_gdp = True
 
