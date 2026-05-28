@@ -84,6 +84,7 @@ TEST_USER_DIR = TEST_USER_DN.replace('/', '+').replace(' ', '_')
 
 TEST_USER_SHORT_ID = "abc123@some.org"
 TEST_USER_UUID = "UniqueUserIdForTestUser"
+TEST_USER_SHORT_ID = "abc123@some.org"
 TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[-1]
 TEST_USER_EXPIRE = 1776031200
 OTHER_USER_EMAIL = OTHER_USER_DN.split("/emailAddress=", 1)[-1]
@@ -527,6 +528,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
     def test_user_creation_creates_fs_entries(self):
         user_dict = {}
         user_dict["unique_id"] = TEST_USER_UUID
+        user_dict["short_id"] = TEST_USER_SHORT_ID
         user_dict["full_name"] = "Test User"
         user_dict["organization"] = "Test Org"
         user_dict["state"] = "NA"
@@ -548,6 +550,11 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
         self.assertTrue(os.path.islink(home_link))
         self.assertEqual(os.path.realpath(home_dir),
                          os.path.realpath(home_link))
+        short_link = os.path.join(self.configuration.user_home,
+                                  TEST_USER_SHORT_ID)
+        self.assertTrue(os.path.islink(short_link))
+        self.assertEqual(os.path.realpath(home_dir),
+                         os.path.realpath(short_link))
 
         settings_dir = os.path.join(self.configuration.user_settings,
                                     TEST_USER_UUID)
