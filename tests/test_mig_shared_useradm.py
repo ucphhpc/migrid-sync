@@ -438,40 +438,50 @@ class TestMigSharedUseradm__create_user(
         except:
             self.assertFalse(True, "should not be reached")
 
-        home_dir = os.path.join(self.configuration.user_home, TEST_USER_UUID)
+        home_dir = os.path.join(self.configuration.user_home, TEST_USER_DN)
         self.assertFalse(os.path.isdir(home_dir))
-        home_link = os.path.join(self.configuration.user_home,
-                                 TEST_USER_DIR)
-        self.assertFalse(os.path.islink(home_link))
+        self.assertFalse(os.path.exists(home_dir))
         short_link = os.path.join(self.configuration.user_home,
                                   TEST_USER_SHORT_ID)
         self.assertFalse(os.path.islink(short_link))
+        self.assertFalse(os.path.exists(short_link))
 
         settings_dir = os.path.join(self.configuration.user_settings,
                                     TEST_USER_UUID)
         self.assertFalse(os.path.isdir(settings_dir))
+        self.assertFalse(os.path.exists(settings_dir))
         settings_link = os.path.join(self.configuration.user_settings,
                                      TEST_USER_DIR)
         self.assertFalse(os.path.islink(settings_link))
+        self.assertFalse(os.path.exists(settings_link))
 
         ssh_dir = os.path.join(home_dir, ssh_conf_dir)
         self.assertFalse(os.path.isdir(ssh_dir))
+        self.assertFalse(os.path.exists(ssh_dir))
         davs_dir = os.path.join(home_dir, davs_conf_dir)
         self.assertFalse(os.path.isdir(davs_dir))
+        self.assertFalse(os.path.exists(davs_dir))
         ftps_dir = os.path.join(home_dir, ftps_conf_dir)
         self.assertFalse(os.path.isdir(ftps_dir))
+        self.assertFalse(os.path.exists(ftps_dir))
         htaccess_path = os.path.join(home_dir, htaccess_filename)
         self.assertFalse(os.path.isfile(htaccess_path))
+        self.assertFalse(os.path.exists(htaccess_path))
         welcome_path = os.path.join(home_dir, welcome_filename)
         self.assertFalse(os.path.isfile(welcome_path))
+        self.assertFalse(os.path.exists(welcome_path))
         settings_path = os.path.join(settings_dir, settings_filename)
         self.assertFalse(os.path.isfile(settings_path))
+        self.assertFalse(os.path.exists(settings_path))
         profile_path = os.path.join(settings_dir, profile_filename)
         self.assertFalse(os.path.isfile(profile_path))
+        self.assertFalse(os.path.exists(profile_path))
         widgets_path = os.path.join(settings_dir, widgets_filename)
         self.assertFalse(os.path.isfile(widgets_path))
+        self.assertFalse(os.path.exists(widgets_path))
         css_path = os.path.join(home_dir, default_css_filename)
         self.assertFalse(os.path.isfile(css_path))
+        self.assertFalse(os.path.exists(css_path))
 
     def test_user_creation_fails_in_renew_when_locked(self):
         user_dict = {}
@@ -846,38 +856,52 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
 
         home_dir = os.path.join(self.configuration.user_home, TEST_USER_UUID)
         self.assertFalse(os.path.isdir(home_dir))
+        self.assertFalse(os.path.exists(home_dir))
         home_link = os.path.join(self.configuration.user_home,
                                  TEST_USER_DIR)
         self.assertFalse(os.path.islink(home_link))
+        self.assertFalse(os.path.exists(home_link))
         short_link = os.path.join(self.configuration.user_home,
                                   TEST_USER_SHORT_ID)
         self.assertFalse(os.path.islink(short_link))
+        self.assertFalse(os.path.exists(short_link))
 
         settings_dir = os.path.join(self.configuration.user_settings,
                                     TEST_USER_UUID)
         self.assertFalse(os.path.isdir(settings_dir))
+        self.assertFalse(os.path.exists(settings_dir))
         settings_link = os.path.join(self.configuration.user_settings,
                                      TEST_USER_DIR)
         self.assertFalse(os.path.islink(settings_link))
+        self.assertFalse(os.path.exists(settings_link))
 
         ssh_dir = os.path.join(home_dir, ssh_conf_dir)
         self.assertFalse(os.path.isdir(ssh_dir))
+        self.assertFalse(os.path.exists(ssh_dir))
         davs_dir = os.path.join(home_dir, davs_conf_dir)
         self.assertFalse(os.path.isdir(davs_dir))
+        self.assertFalse(os.path.exists(davs_dir))
         ftps_dir = os.path.join(home_dir, ftps_conf_dir)
         self.assertFalse(os.path.isdir(ftps_dir))
+        self.assertFalse(os.path.exists(ftps_dir))
         htaccess_path = os.path.join(home_dir, htaccess_filename)
         self.assertFalse(os.path.isfile(htaccess_path))
+        self.assertFalse(os.path.exists(htaccess_path))
         welcome_path = os.path.join(home_dir, welcome_filename)
         self.assertFalse(os.path.isfile(welcome_path))
+        self.assertFalse(os.path.exists(welcome_path))
         settings_path = os.path.join(settings_dir, settings_filename)
         self.assertFalse(os.path.isfile(settings_path))
+        self.assertFalse(os.path.exists(settings_path))
         profile_path = os.path.join(settings_dir, profile_filename)
         self.assertFalse(os.path.isfile(profile_path))
+        self.assertFalse(os.path.exists(profile_path))
         widgets_path = os.path.join(settings_dir, widgets_filename)
         self.assertFalse(os.path.isfile(widgets_path))
+        self.assertFalse(os.path.exists(widgets_path))
         css_path = os.path.join(home_dir, default_css_filename)
         self.assertFalse(os.path.isfile(css_path))
+        self.assertFalse(os.path.exists(css_path))
 
     def test_user_creation_fails_in_renew_when_locked(self):
         user_dict = {}
