@@ -784,6 +784,8 @@ def create_user_in_fs(configuration, client_id, user, now, renew, force, verbose
         if uuid_dir is None:
             _logger.warning("UUID requested but user lacks unique_id: %s" %
                             mask_creds(user))
+            raise ValueError("Can't create %r without required unique_id" %
+                             user['distinguished_name'])
         real_dir = uuid_dir
         link_dir = x509_dir
     else:
@@ -1304,6 +1306,11 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
                     unlock_user_db(flock)
                 raise Exception("User DB entry '%s' doesn't exist!"
                                 % client_id)
+    else:
+        if not force:
+            if do_lock:
+                unlock_user_db(flock)
+            raise Exception('Cannot edit users without user DB')
 
     user_dict = {}
     new_id = ''
