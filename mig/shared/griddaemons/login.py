@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - grid daemon login helper functions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -47,8 +47,7 @@ from mig.shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     https_authkeys, get_authkeys, ssh_authpasswords, davs_authpasswords, \
     ftps_authpasswords, https_authpasswords, get_authpasswords, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
-    generate_password_hash, generate_password_digest, load_user_dict, \
-    lookup_client_id
+    generate_password_hash, generate_password_digest, load_user_dict
 from mig.shared.validstring import possible_sharelink_id, possible_job_id, \
     possible_jupyter_mount_id
 
