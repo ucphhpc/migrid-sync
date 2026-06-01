@@ -1992,5 +1992,100 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
                                      )
         self.assertEqual(result, raw_login)
 
+class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
+    MigTestCase, FixtureAssertMixin, PickleAssertMixin, UserAssertMixin
+):
+    """Unit tests for get_any_oid_user_dn with UUID user ID format."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        """Prepare a minimal configuration for the tests."""
+        configuration = self.configuration
+        # Use UUID format for the tests – the function works with both UUID and X509.
+        configuration.site_user_id_format = UUID_USER_ID_FORMAT
+        _ensure_dirs_needed_for_userdb(self.configuration)
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        ensure_dirs_exist(self.configuration.mig_system_files)
+
+    def test_get_any_oid_user_dn_via_alias_link(self):
+        """Return the distinguished name when a valid alias link exists."""
+        client_id = TEST_USER_DN
+        user_dict = _provision_uuid_test_user(self.configuration, client_id)
+        user_id = user_dict['unique_id']
+        short_id = user_dict['short_id']
+
+        # Make sure direct lookup link is in place
+        lookup_link = os.path.join(self.configuration. mig_system_run,
+                                   user_id_alias_dir, user_id)
+        self.assertTrue(os.path.islink(lookup_link))
+
+        # Call the function – it should resolve the alias to the client_id.
+        result = get_any_oid_user_dn(self.configuration, raw_login=short_id,
+                                     user_check=True, do_lock=True
+                                     )
+        self.assertEqual(result, client_id)
+
+    def test_get_any_oid_user_dn_via_reverse_lookup(self):
+        """Return the distinguished name when a reverse‑lookup symlink exists."""
+        client_id = TEST_USER_DN
+        user_dict = _provision_uuid_test_user(self.configuration, client_id)
+        user_id = user_dict['unique_id']
+        short_id = user_dict['short_id']
+
+        # Blow away direct lookup link to force reverse lookup
+        lookup_link = os.path.join(self.configuration. mig_system_run,
+                                   user_id_alias_dir, user_id)
+        if os.path.islink(lookup_link):
+            os.remove(lookup_link)
+        self.assertFalse(os.path.islink(lookup_link))
+
+        # The function should find the client_id via the reverse lookup.
+        result = get_any_oid_user_dn(self.configuration, raw_login=short_id,
+                                     user_check=True, do_lock=True
+                                     )
+        self.assertEqual(result, client_id)
+
+    def test_get_any_oid_user_dn_not_found(self):
+        """When no alias or reverse link exists, return an empty string."""
+        # Missing user will cause log error
+        self.logger.forgive_errors()
+        result = get_any_oid_user_dn(self.configuration,
+                                     raw_login="NoSuchUser",
+                                     user_check=True, do_lock=True
+                                     )
+        self.assertEqual(result, "")
+
+    def test_get_any_oid_user_dn_direct_dn(self):
+        """Return the distinguished name when a matching cert directory exists."""
+        user_id = TEST_USER_UUID  # any valid client_id works for this test
+
+        # Create a cert directory user_home/<user_id> that the function
+        # can see.
+        home_dir = os.path.join(self.configuration.user_home, user_id)
+        ensure_dirs_exist(home_dir)
+
+        # The function should recognise the directory and return the client_id.
+        result = get_any_oid_user_dn(self.configuration,
+                                     raw_login=TEST_USER_UUID,
+                                     user_check=True, do_lock=True
+                                     )
+        self.assertEqual(result, user_id)
+
+    def test_get_any_oid_user_dn_user_check_false(self):
+        """When user_check=False the function bypasses the user‑dir lookup."""
+        raw_login = TEST_USER_SHORT_ID
+        result = get_any_oid_user_dn(self.configuration, raw_login=raw_login,
+                                     user_check=False, do_lock=True
+                                     )
+        self.assertEqual(result, raw_login)
+
+
 if __name__ == "__main__":
     testmain()
