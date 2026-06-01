@@ -62,6 +62,7 @@ from mig.shared.useradm import (
     delete_user,
     edit_user,
     get_any_oid_user_dn,
+    lookup_client_id_from_uuid,
     user_account_notify,
 )
 
@@ -1990,7 +1991,6 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
                                      user_check=False, do_lock=True
                                      )
         self.assertEqual(result, raw_login)
-
 
 if __name__ == "__main__":
     testmain()
