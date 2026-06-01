@@ -1997,9 +1997,6 @@ class TestMigSharedUseradm__get_any_oid_user_dn(
 ):
     """Unit tests for get_any_oid_user_dn with default user ID format."""
 
-    def _provide_configuration(self):
-        return "testconfig"
-
     def before_each(self):
         """Prepare a minimal configuration for the tests."""
         configuration = self.configuration
@@ -2013,6 +2010,21 @@ class TestMigSharedUseradm__get_any_oid_user_dn(
             self.expected_user_db_home, "MiG-users.db"
         )
         ensure_dirs_exist(self.configuration.mig_system_files)
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def _flush_test_user(self, client_id):
+        """Helper to force clean up after provisioned test users"""
+        try:
+            delete_user(
+                {'distinguished_name': client_id},
+                self.configuration,
+                keyword_auto,
+                force=True,
+            )
+        except Exception:
+            pass
 
     def test_get_any_oid_user_dn_via_alias_link(self):
         """Return the distinguished name when a valid alias link exists."""
@@ -2030,6 +2042,7 @@ class TestMigSharedUseradm__get_any_oid_user_dn(
                                      user_check=True, do_lock=True
                                      )
         self.assertEqual(result, client_id)
+        self._flush_test_user(TEST_USER_DN)
 
     def test_get_any_oid_user_dn_not_found(self):
         """When no alias or reverse link exists, return an empty string."""
@@ -2052,6 +2065,7 @@ class TestMigSharedUseradm__get_any_oid_user_dn(
                                      user_check=True, do_lock=True
                                      )
         self.assertEqual(result, client_id)
+        self._flush_test_user(TEST_USER_DN)
 
     def test_get_any_oid_user_dn_user_check_false(self):
         """When user_check=False the function bypasses the user‑dir lookup."""
@@ -2069,9 +2083,6 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
 ):
     """Unit tests for get_any_oid_user_dn with UUID user ID format."""
 
-    def _provide_configuration(self):
-        return "testconfig"
-
     def before_each(self):
         """Prepare a minimal configuration for the tests."""
         configuration = self.configuration
@@ -2085,6 +2096,21 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
             self.expected_user_db_home, "MiG-users.db"
         )
         ensure_dirs_exist(self.configuration.mig_system_files)
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def _flush_test_user(self, client_id):
+        """Helper to force clean up after provisioned test users"""
+        try:
+            delete_user(
+                {'distinguished_name': client_id},
+                self.configuration,
+                keyword_auto,
+                force=True,
+            )
+        except Exception:
+            pass
 
     def test_get_any_oid_user_dn_via_alias_link(self):
         """Return the distinguished name when a valid alias link exists."""
@@ -2103,6 +2129,7 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
                                      user_check=True, do_lock=True
                                      )
         self.assertEqual(result, client_id)
+        self._flush_test_user(TEST_USER_DN)
 
     def test_get_any_oid_user_dn_via_reverse_lookup(self):
         """Return the distinguished name when a reverse‑lookup symlink exists."""
@@ -2123,6 +2150,7 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
                                      user_check=True, do_lock=True
                                      )
         self.assertEqual(result, client_id)
+        self._flush_test_user(TEST_USER_DN)
 
     def test_get_any_oid_user_dn_not_found(self):
         """When no alias or reverse link exists, return an empty string."""
