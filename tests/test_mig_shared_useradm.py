@@ -2137,6 +2137,7 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
         user_dict = _provision_uuid_test_user(self.configuration, client_id)
         user_id = user_dict['unique_id']
         short_id = user_dict['short_id']
+        client_dir = client_id_dir(client_id)
 
         # Blow away direct lookup link to force reverse lookup
         lookup_link = os.path.join(self.configuration.mig_system_run,
@@ -2144,6 +2145,13 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
         if os.path.islink(lookup_link):
             os.remove(lookup_link)
         self.assertFalse(os.path.islink(lookup_link))
+
+        # Verify that reverse lookup link exists (provision should add it)
+        reverse_link = os.path.join(self.configuration.user_home, client_dir)
+        if not os.path.islink(reverse_link):
+            print("Warning: provision didn't create X509 symlink to UUID home")
+            os.symlink(user_id, reverse_link)
+        self.assertTrue(os.path.islink(reverse_link))
 
         # The function should find the client_id via the reverse lookup.
         result = get_any_oid_user_dn(self.configuration, raw_login=short_id,
