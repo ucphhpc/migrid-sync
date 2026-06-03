@@ -27,6 +27,7 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
+import locale
 import os
 import pickle
 
@@ -230,12 +231,26 @@ class MigLibAccounting(MigTestCase):
         total_bytes = test_user_accounting.get('total_bytes', 0)
         self.assertEqual(total_bytes, TEST_TOTAL_BYTES)
 
+    def _fmt(self, value, decimals=3):
+        """Return a locale-aware fixed-point string matching human_readable_filesize output.
+
+        human_readable_filesize uses locale.format_string("%.*f", ...) internally,
+        so we use the same call here to guarantee the expected decimal separator
+        matches regardless of the active locale (e.g. ',' on da_DK/de_DE).
+        """
+        return locale.format_string("%.*f", (decimals, value))
+
     def test_human_readable_filesize_valid(self):
         """Test human-friendly format helper success on valid byte sizes"""
-        valid = [(0, "0 B"), (1, "1.000 B"), (42, "42.000 B"),
-                 (2**10, "1.000 KiB"), (2**30, "1.000 GiB"),
-                 (2**50, "1.000 PiB"), (2**89, "512.000 YiB"),
-                 (2**90 - 2**70, "1023.999 YiB")]
+        d = self._fmt
+        valid = [(0, "0 B"),
+                 (1, "%s B" % d(1.0)),
+                 (42, "%s B" % d(42.0)),
+                 (2**10, "%s KiB" % d(1.0)),
+                 (2**30, "%s GiB" % d(1.0)),
+                 (2**50, "%s PiB" % d(1.0)),
+                 (2**89, "%s YiB" % d(512.0)),
+                 (2**90 - 2**70, "%s YiB" % d(1023.999))]
         for (size, expect) in valid:
             self.assertEqual(human_readable_filesize(size), expect)
 
@@ -248,10 +263,11 @@ class MigLibAccounting(MigTestCase):
 
     def test_human_readable_filesize_decimals(self):
         """Test human-friendly format helper with custom decimal count"""
-        cases = [(2**10, 0, "1 KiB"),
-                 (2**10, 1, "1.0 KiB"),
-                 (2**10, 2, "1.00 KiB"),
-                 (2**10, 5, "1.00000 KiB")]
+        d = self._fmt
+        cases = [(2**10, 0, "%s KiB" % d(1, decimals=0)),
+                 (2**10, 1, "%s KiB" % d(1.0, decimals=1)),
+                 (2**10, 2, "%s KiB" % d(1.0, decimals=2)),
+                 (2**10, 5, "%s KiB" % d(1.0, decimals=5))]
         for (size, decimals, expect) in cases:
             self.assertEqual(human_readable_filesize(size, decimals=decimals),
                              expect)
@@ -259,15 +275,20 @@ class MigLibAccounting(MigTestCase):
     def test_human_readable_filesize_si_format(self):
         """Test human-friendly format helper with SI byte units (powers of 1000)"""
         # SI exponent is still determined by log2, so values are based on 2**N
-        valid = [(0, "0 B"), (42, "42.000 B"), (2**10, "1.024 KB"),
-                 (2**20, "1.049 MB"), (2**30, "1.074 GB"), (2**50, "1.126 PB")]
+        d = self._fmt
+        valid = [(0, "0 B"),
+                 (42, "%s B" % d(42.0)),
+                 (2**10, "%s KB" % d(1.024)),
+                 (2**20, "%s MB" % d(1.049)),
+                 (2**30, "%s GB" % d(1.074)),
+                 (2**50, "%s PB" % d(1.126))]
         for (size, expect) in valid:
             self.assertEqual(
                 human_readable_filesize(size, si_byte_format=True), expect)
         # decimals and si_byte_format compose correctly
         self.assertEqual(
             human_readable_filesize(2**10, decimals=1, si_byte_format=True),
-            "1.0 KB")
+            "%s KB" % d(1.0, decimals=1))
 
     def test_get_usage_decimals(self):
         """Test get_usage passes decimals parameter through to report strings"""
