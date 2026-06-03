@@ -242,15 +242,14 @@ class MigLibAccounting(MigTestCase):
 
     def test_human_readable_filesize_valid(self):
         """Test human-friendly format helper success on valid byte sizes"""
-        d = self._fmt
         valid = [(0, "0 B"),
-                 (1, "%s B" % d(1.0)),
-                 (42, "%s B" % d(42.0)),
-                 (2**10, "%s KiB" % d(1.0)),
-                 (2**30, "%s GiB" % d(1.0)),
-                 (2**50, "%s PiB" % d(1.0)),
-                 (2**89, "%s YiB" % d(512.0)),
-                 (2**90 - 2**70, "%s YiB" % d(1023.999))]
+                 (1, "%s B" % self._fmt(1.0)),
+                 (42, "%s B" % self._fmt(42.0)),
+                 (2**10, "%s KiB" % self._fmt(1.0)),
+                 (2**30, "%s GiB" % self._fmt(1.0)),
+                 (2**50, "%s PiB" % self._fmt(1.0)),
+                 (2**89, "%s YiB" % self._fmt(512.0)),
+                 (2**90 - 2**70, "%s YiB" % self._fmt(1023.999))]
         for (size, expect) in valid:
             self.assertEqual(human_readable_filesize(size), expect)
 
@@ -263,11 +262,10 @@ class MigLibAccounting(MigTestCase):
 
     def test_human_readable_filesize_decimals(self):
         """Test human-friendly format helper with custom decimal count"""
-        d = self._fmt
-        cases = [(2**10, 0, "%s KiB" % d(1, decimals=0)),
-                 (2**10, 1, "%s KiB" % d(1.0, decimals=1)),
-                 (2**10, 2, "%s KiB" % d(1.0, decimals=2)),
-                 (2**10, 5, "%s KiB" % d(1.0, decimals=5))]
+        cases = [(2**10, 0, "%s KiB" % self._fmt(1, decimals=0)),
+                 (2**10, 1, "%s KiB" % self._fmt(1.0, decimals=1)),
+                 (2**10, 2, "%s KiB" % self._fmt(1.0, decimals=2)),
+                 (2**10, 5, "%s KiB" % self._fmt(1.0, decimals=5))]
         for (size, decimals, expect) in cases:
             self.assertEqual(human_readable_filesize(size, decimals=decimals),
                              expect)
@@ -275,20 +273,19 @@ class MigLibAccounting(MigTestCase):
     def test_human_readable_filesize_si_format(self):
         """Test human-friendly format helper with SI byte units (powers of 1000)"""
         # SI exponent is still determined by log2, so values are based on 2**N
-        d = self._fmt
         valid = [(0, "0 B"),
-                 (42, "%s B" % d(42.0)),
-                 (2**10, "%s KB" % d(1.024)),
-                 (2**20, "%s MB" % d(1.049)),
-                 (2**30, "%s GB" % d(1.074)),
-                 (2**50, "%s PB" % d(1.126))]
+                 (42, "%s B" % self._fmt(42.0)),
+                 (2**10, "%s KB" % self._fmt(1.024)),
+                 (2**20, "%s MB" % self._fmt(1.049)),
+                 (2**30, "%s GB" % self._fmt(1.074)),
+                 (2**50, "%s PB" % self._fmt(1.126))]
         for (size, expect) in valid:
             self.assertEqual(
                 human_readable_filesize(size, si_byte_format=True), expect)
         # decimals and si_byte_format compose correctly
         self.assertEqual(
             human_readable_filesize(2**10, decimals=1, si_byte_format=True),
-            "%s KB" % d(1.0, decimals=1))
+            "%s KB" % self._fmt(1.0, decimals=1))
 
     def test_get_usage_decimals(self):
         """Test get_usage passes decimals parameter through to report strings"""
