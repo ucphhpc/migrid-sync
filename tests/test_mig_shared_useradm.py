@@ -2112,8 +2112,8 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
         except Exception:
             pass
 
-    def test_get_any_oid_user_dn_via_alias_link(self):
-        """Return the distinguished name when a valid alias link exists."""
+    def test_get_any_oid_user_dn_via_lookup_link(self):
+        """Return the distinguished name when a valid lookup link exists."""
         client_id = TEST_USER_DN
         user_dict = _provision_uuid_test_user(self.configuration, client_id)
         user_id = user_dict['unique_id']
@@ -2124,44 +2124,41 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
                                    user_id_alias_dir, user_id)
         self.assertTrue(os.path.islink(lookup_link))
 
-        # Call the function – it should resolve the alias to the client_id.
+        # Call the function – it should resolve the lookup to the client_id.
         result = get_any_oid_user_dn(self.configuration, raw_login=short_id,
                                      user_check=True, do_lock=True
                                      )
-        self.assertEqual(result, client_id)
         self._flush_test_user(TEST_USER_DN)
+        self.assertEqual(result, client_id)
 
-    def test_get_any_oid_user_dn_via_reverse_lookup(self):
-        """Return the distinguished name when a reverse‑lookup symlink exists."""
+    def test_get_any_oid_user_dn_via_alias_link(self):
+        """Return the distinguished name when a valid alias link exists."""
         client_id = TEST_USER_DN
         user_dict = _provision_uuid_test_user(self.configuration, client_id)
         user_id = user_dict['unique_id']
         short_id = user_dict['short_id']
-        client_dir = client_id_dir(client_id)
 
-        # Blow away direct lookup link to force reverse lookup
+        # Blow away direct lookup link to force alias lookup
         lookup_link = os.path.join(self.configuration.mig_system_run,
                                    user_id_alias_dir, user_id)
         if os.path.islink(lookup_link):
             os.remove(lookup_link)
         self.assertFalse(os.path.islink(lookup_link))
 
-        # Verify that reverse lookup link exists (provision should add it)
-        reverse_link = os.path.join(self.configuration.user_home, client_dir)
-        if not os.path.islink(reverse_link):
-            print("Warning: provision didn't create X509 symlink to UUID home")
-            os.symlink(user_id, reverse_link)
-        self.assertTrue(os.path.islink(reverse_link))
+        # Make sure alias link is in place
+        alias_link = os.path.join(self.configuration.user_home, short_id)
+        self.assertTrue(os.path.islink(alias_link))
 
-        # The function should find the client_id via the reverse lookup.
+        # Call the function – it should resolve the alias to the client_id.
         result = get_any_oid_user_dn(self.configuration, raw_login=short_id,
                                      user_check=True, do_lock=True
                                      )
-        self.assertEqual(result, client_id)
         self._flush_test_user(TEST_USER_DN)
+        self.assertEqual(result, client_id)
 
     def test_get_any_oid_user_dn_not_found(self):
         """When no alias or reverse link exists, return an empty string."""
+        # TODO: can we fix or avoid this log ignore?
         # Missing user will cause log error
         self.logger.forgive_errors()
         result = get_any_oid_user_dn(self.configuration,
@@ -2172,18 +2169,30 @@ class TestMigSharedUseradm__get_any_oid_user_dn_uuid_user_id(
 
     def test_get_any_oid_user_dn_direct_dn(self):
         """Return the distinguished name when a matching cert directory exists."""
-        user_id = TEST_USER_UUID
+        client_id = TEST_USER_DN
+        user_dict = _provision_uuid_test_user(self.configuration, client_id)
+        user_id = user_dict['unique_id']
+        short_id = user_dict['short_id']
+        client_dir = client_id_dir(client_id)
 
-        # Create a cert directory user_home/<user_id> that the function
-        # can see.
-        home_dir = os.path.join(self.configuration.user_home, user_id)
-        ensure_dirs_exist(home_dir)
+        # Make sure no lookups links get in the way
+        lookup_link = os.path.join(self.configuration.mig_system_run,
+                                   user_id_alias_dir, user_id)
+        os.remove(lookup_link)
+        self.assertFalse(os.path.islink(lookup_link))
+        alias_link = os.path.join(self.configuration.user_home, short_id)
+        os.remove(alias_link)
+        self.assertFalse(os.path.islink(alias_link))
+        reverse_link = os.path.join(self.configuration.user_home, client_dir)
+        os.remove(reverse_link)
+        self.assertFalse(os.path.islink(reverse_link))
 
         # The function should recognise the directory and return the client_id.
         result = get_any_oid_user_dn(self.configuration,
-                                     raw_login=TEST_USER_UUID,
+                                     raw_login=user_id,
                                      user_check=True, do_lock=True
                                      )
+        self._flush_test_user(TEST_USER_DN)
         self.assertEqual(result, user_id)
 
     def test_get_any_oid_user_dn_user_check_false(self):
