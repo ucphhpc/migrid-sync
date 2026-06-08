@@ -209,6 +209,55 @@ class MigLibJanitor(MigTestCase):
         self.assertFalse(os.path.exists(stale_path))
         self.assertTrue(os.path.exists(valid_path))
 
+    def test_clean_twofactor_sessions_with_working_symlink(self):
+        """Test clean twofactor sessions with an active session symlink"""
+        test_dir = self.configuration.twofactor_home
+        # arrange pre-existing symlink pointing to session file
+        symlink_filename = 'sessionlink'
+        session_filename = 'session'
+        symlink_path = os.path.join(test_dir, symlink_filename)
+        session_path = os.path.join(test_dir, session_filename)
+        self._prepare_test_file(session_path)
+        os.symlink(session_path, symlink_path)
+        self.assertTrue(os.path.lexists(symlink_path))
+        self.assertTrue(os.path.exists(session_path))
+        # TODO: fix handling of active symlinks and adjust to succeed here
+        err = None
+        try:
+            handled = clean_twofactor_sessions(self.configuration)
+            self.assertEqual(handled, 2)
+            self.assertFalse(os.path.exists(session_path))
+            self.assertFalse(os.path.lexists(symlink_path))
+        except AssertionError as ase:
+            err = ase
+        finally:
+            os.remove(symlink_path)
+        self.assertEqual(err, None)
+
+    def test_clean_twofactor_sessions_with_dead_symlink(self):
+        """Test clean twofactor sessions with a stale session symlink"""
+        test_dir = self.configuration.twofactor_home
+        # arrange pre-existing symlink pointing nowhere
+        symlink_filename = 'stalelink'
+        nowhere_filename = 'nowhere'
+        symlink_path = os.path.join(test_dir, symlink_filename)
+        nowhere_path = os.path.join(test_dir, nowhere_filename)
+        os.symlink(nowhere_path, symlink_path)
+        self.assertTrue(os.path.lexists(symlink_path))
+        self.assertFalse(os.path.exists(nowhere_path))
+        # TODO: fix handling of stale symlinks and adjust to succeed here
+        err = None
+        try:
+            handled = clean_twofactor_sessions(self.configuration)
+            self.assertEqual(handled, 1)
+            self.assertFalse(os.path.exists(nowhere_path))
+            self.assertFalse(os.path.exists(symlink_path))
+        except FileNotFoundError as fnf:
+            err = fnf
+        finally:
+            os.remove(symlink_path)
+        self.assertEqual(err, None)
+
     def test_clean_sessid_to_mrls_link_home(self):
         """Test clean session MRSL link files"""
         stale_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
@@ -507,7 +556,7 @@ class MigLibJanitor(MigTestCase):
         self.assertTrue(any('invalid account request' in msg
                             for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path),
-                        "Failed to clean invalid req for %s" % req_path)
+                         "Failed to clean invalid req for %s" % req_path)
 
         # FIXME: should this really be sending email?
         fake_send_email = self.configuration.context_get('notifier').send_email
@@ -554,7 +603,7 @@ class MigLibJanitor(MigTestCase):
         self.assertTrue(any('reject expired reset token' in msg
                             for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path),
-                        "Failed to clean token req for %s" % req_path)
+                         "Failed to clean token req for %s" % req_path)
 
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
@@ -640,7 +689,6 @@ class MigLibJanitor(MigTestCase):
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
         self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
-
 
     def test_manage_single_req_auth_change(self):
         """Test request handling with auth password change"""
@@ -828,7 +876,7 @@ class MigLibJanitor(MigTestCase):
         self.assertTrue(any('wrong hash' in msg.lower()
                             for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path),
-                        "Failed cleanup invalid token for %s" % req_path)
+                         "Failed cleanup invalid token for %s" % req_path)
 
         # FIXME: should this really be sending email?
         fake_send_email = self.configuration.context_get('notifier').send_email
@@ -874,7 +922,7 @@ class MigLibJanitor(MigTestCase):
         self.assertTrue(any('accepted' in msg.lower()
                             for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path),
-                        "Failed cleanup invalid token for %s" % req_path)
+                         "Failed cleanup invalid token for %s" % req_path)
 
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
@@ -1025,7 +1073,6 @@ class MigLibJanitor(MigTestCase):
         # Verify initial existence
         self.assertTrue(os.path.exists(req_path))
 
-
         manage_single_req(
             self.configuration,
             req_id,
@@ -1035,11 +1082,10 @@ class MigLibJanitor(MigTestCase):
         )
 
         self.assertFalse(os.path.exists(req_path),
-                        "Failed cleanup after reject for %s" % req_path)
+                         "Failed cleanup after reject for %s" % req_path)
 
         fake_send_email = self.configuration.context_get('notifier').send_email
         fake_send_email.email_was_sent_to('test@example.com')
-
 
     def test_cleaner_with_multiple_patterns(self):
         """Test state cleaner with multiple filename patterns"""
