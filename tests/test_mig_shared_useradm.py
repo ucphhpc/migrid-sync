@@ -1052,11 +1052,11 @@ class TestMigSharedUseradm__delete_user_uuid_user_id(
         return "testconfig"
 
     def test_user_delete_completes(self):
-        _provision_uuid_test_user(self.configuration, TEST_USER_DN)
+        user_dict = _provision_uuid_test_user(self.configuration, TEST_USER_DN)
 
         try:
             delete_user(
-                distinguished_name_to_user(TEST_USER_DN),
+                user_dict,
                 self.configuration,
                 keyword_auto,
                 force=True,
@@ -1065,11 +1065,11 @@ class TestMigSharedUseradm__delete_user_uuid_user_id(
             self.assertFalse(True, "should not be reached")
 
     def test_user_deletion_removes_fs_entries(self):
-        _provision_uuid_test_user(self.configuration, TEST_USER_DN)
+        user_dict = _provision_uuid_test_user(self.configuration, TEST_USER_DN)
 
         try:
             delete_user(
-                distinguished_name_to_user(TEST_USER_DN),
+                user_dict,
                 self.configuration,
                 keyword_auto,
                 force=True,
