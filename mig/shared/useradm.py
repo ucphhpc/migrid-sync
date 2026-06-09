@@ -316,7 +316,7 @@ def lookup_client_id_from_uuid(configuration, user_id):
                     break
 
         if not client_dir:
-            _logger.warning("found no alias %r" % user_id)
+            _logger.error("found no alias %r" % user_id)
             return user_id
     client_id = client_dir_id(client_dir)
     return client_id
