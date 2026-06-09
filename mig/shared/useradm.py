@@ -304,6 +304,9 @@ def lookup_client_id_from_uuid(configuration, user_id):
         # mig_system_run, which is only scratch space.
         client_dir = False
         for name in listdir(configuration.user_home):
+            # Skip if not a DN-dir name to avoid hit e.g. on short alias links
+            if '=' not in name or '+' not in name:
+                continue
             link_path = os.path.join(configuration.user_home, name)
             if os.path.islink(link_path):
                 target = os.path.basename(os.path.realpath(link_path))
