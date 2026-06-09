@@ -42,13 +42,17 @@ from mig.shared.tlsserver import hardened_openssl_context, \
 from mig.shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_LEGACY_CIPHERS, \
     STRONG_TLS_CURVES
 # Imports required for the unit tests themselves
-from tests.support import MigTestCase
+from tests.support import MigTestCase, TEST_DATA_DIR
 
 TEST_KEY_FILE = "testkey.pem"
+TEST_KEY_PATH = os.path.join(TEST_DATA_DIR, TEST_KEY_FILE)
 TEST_CERT_FILE = "testcert.pem"
+TEST_CERT_PATH = os.path.join(TEST_DATA_DIR, TEST_CERT_FILE)
 # TEST_CACERT_FILE = "testcacert.pem"
-TEST_CACERT_FILE = None
+# TEST_CACERT_PATH = os.path.join(TEST_DATA_DIR, TEST_CACERT_FILE)
+TEST_CACERT_PATH = TEST_CACERT_FILE = None
 TEST_DHPARAMS_FILE = "testdhparams.pem"
+TEST_DHPARAMS_PATH = os.path.join(TEST_DATA_DIR, TEST_DHPARAMS_FILE)
 # IMPORTANT: this is a BOGUS key + self-signed cert, ONLY ever use for testing!
 TEST_HOST_KEY = """-----BEGIN PRIVATE KEY-----
 MIIJQgIBADANBgkqhkiG9w0BAQEFAASCCSwwggkoAgEAAoICAQCWcP0X6VRv06tO
@@ -173,8 +177,8 @@ class MigSharedTlsServer(MigTestCase):
 
     def before_each(self):
         """Set up test configuration and reset state before each test"""
-        self._prepare_key_cert(TEST_KEY_FILE, TEST_CERT_FILE,
-                               TEST_DHPARAMS_FILE)
+        self._prepare_key_cert(TEST_KEY_PATH, TEST_CERT_PATH,
+                               TEST_DHPARAMS_PATH)
 
     def test_hardened_ssl_context_options_default_without_dhparams(self):
         """Test SSL context options are set correctly without DH params"""
@@ -183,8 +187,8 @@ class MigSharedTlsServer(MigTestCase):
 
         context = hardened_ssl_context(
             config,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
             dhparamsfile=None,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
@@ -219,9 +223,9 @@ class MigSharedTlsServer(MigTestCase):
 
         context = hardened_ssl_context(
             config,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=True,
@@ -255,9 +259,9 @@ class MigSharedTlsServer(MigTestCase):
 
         context = hardened_ssl_context(
             config,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=False,
@@ -292,9 +296,9 @@ class MigSharedTlsServer(MigTestCase):
 
         context = hardened_ssl_context(
             config,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=True,
@@ -325,9 +329,9 @@ class MigSharedTlsServer(MigTestCase):
 
         context = hardened_ssl_context(
             config,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=True,
@@ -362,9 +366,9 @@ class MigSharedTlsServer(MigTestCase):
 
         context = hardened_ssl_context(
             config,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=True,
@@ -384,9 +388,9 @@ class MigSharedTlsServer(MigTestCase):
 
         context = hardened_ssl_context(
             config,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_LEGACY_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=True,
@@ -409,9 +413,9 @@ class MigSharedTlsServer(MigTestCase):
         context = hardened_openssl_context(
             config,
             OpenSSL,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            cacertfile=TEST_CACERT_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            cacertfile=TEST_CACERT_PATH,
             dhparamsfile=None,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
@@ -449,10 +453,10 @@ class MigSharedTlsServer(MigTestCase):
         context = hardened_openssl_context(
             config,
             OpenSSL,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            cacertfile=TEST_CACERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            cacertfile=TEST_CACERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=True,
@@ -489,10 +493,10 @@ class MigSharedTlsServer(MigTestCase):
         context = hardened_openssl_context(
             config,
             OpenSSL,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            cacertfile=TEST_CACERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            cacertfile=TEST_CACERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=False,
@@ -530,10 +534,10 @@ class MigSharedTlsServer(MigTestCase):
         context = hardened_openssl_context(
             config,
             OpenSSL,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            cacertfile=TEST_CACERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            cacertfile=TEST_CACERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=True,
@@ -567,10 +571,10 @@ class MigSharedTlsServer(MigTestCase):
         context = hardened_openssl_context(
             config,
             OpenSSL,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            cacertfile=TEST_CACERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            cacertfile=TEST_CACERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=True,
@@ -608,10 +612,10 @@ class MigSharedTlsServer(MigTestCase):
         context = hardened_openssl_context(
             config,
             OpenSSL,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            cacertfile=TEST_CACERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            cacertfile=TEST_CACERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=True,
@@ -634,10 +638,10 @@ class MigSharedTlsServer(MigTestCase):
         context = hardened_openssl_context(
             config,
             OpenSSL,
-            TEST_KEY_FILE,
-            TEST_CERT_FILE,
-            cacertfile=TEST_CACERT_FILE,
-            dhparamsfile=TEST_DHPARAMS_FILE,
+            TEST_KEY_PATH,
+            TEST_CERT_PATH,
+            cacertfile=TEST_CACERT_PATH,
+            dhparamsfile=TEST_DHPARAMS_PATH,
             ciphers=STRONG_TLS_LEGACY_CIPHERS,
             curve_priority=STRONG_TLS_CURVES,
             allow_pre_tlsv13=True,
