@@ -73,6 +73,9 @@ TEST_USER_EXPIRE = 1776031200
 OTHER_USER_DN = '/C=DK/ST=NA/L=NA/O=Other Org/OU=NA/CN=Other User/emailAddress=other@example.com'
 OTHER_USER_EMAIL = 'other@email.org'
 
+# NOTE: use a bogus path in output to make sure lock artifacts end up there
+NO_SUCH_USER_DB = os.path.join(TEST_OUTPUT_DIR, 'no_such_user.db')
+
 DUMMY_USER = "dummy-user"
 DUMMY_STALE_USER = "dummy-stale-user"
 DUMMY_HOME_DIR = "dummy_user_home"
@@ -485,14 +488,17 @@ class TestMigSharedUseradm__user_account_notify(MigTestCase, UserAssertMixin):
         with self.assertLogs(level='ERROR') as log_capture:
             (_, username, full_name, expire, addresses, errors) = \
                 user_account_notify(OTHER_USER_DN, {'email': ['AUTO']},
-                                    self.configuration,
-                                    'no_such_user_db', False,
-                                    False)
+                                    self.configuration, NO_SUCH_USER_DB,
+                                    False, False)
         self.assertEqual(addresses, [])
         self.assertEqual(expire, None)
         self.assertTrue(errors and 'Failed to load user DB' in errors[0])
         self.assertTrue(any('Failed to load user DB' in msg for msg in
                             log_capture.output))
+        try:
+            os.remove("%s.lock" % NO_SUCH_USER_DB)
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
