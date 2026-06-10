@@ -1915,9 +1915,10 @@ def get_any_oid_user_dn(configuration, raw_login,
         return ''
 
 
-def get_full_user_map(configuration, do_lock=True):
+def get_full_user_map(configuration, db_path=keyword_auto, do_lock=True):
     """Load complete user map including any OpenID aliases"""
-    db_path = default_db_path(configuration)
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
     user_map = load_user_db(db_path, do_lock=do_lock)
     oid_aliases = get_openid_user_map(configuration)
     for (alias, cert_id) in oid_aliases.items():
