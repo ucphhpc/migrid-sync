@@ -247,7 +247,7 @@ def show_accounting(
                 output_ent["institute"] = user_db_ent.get("institute", "")
                 output_ent["username"] = user_db_ent.get("full_name", "")
                 output_ent["email"] = user_db_ent.get("email", "")
-                output_ent["id"] = user_db_ent.get("id", "")
+                output_ent["id"] = user_db_ent.get("main_id", "")
                 output_ent["expire"] = user_db_ent.get("expire", 0)
                 output_ent["expire_date"] = datetime.datetime.fromtimestamp(
                     user_db_ent.get("expire", 0)
