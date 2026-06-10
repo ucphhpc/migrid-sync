@@ -32,8 +32,10 @@ import time
 import unittest
 
 # Imports required for the unit test wrapping
-from mig.shared.defaults import X509_USER_ID_FORMAT, UUID_USER_ID_FORMAT, \
+from mig.shared.defaults import (
+    # X509_USER_ID_FORMAT, UUID_USER_ID_FORMAT,
     READ_WRITE_ACCESS, READ_ONLY_ACCESS, WRITE_ONLY_ACCESS
+)
 from mig.shared.useradm import (
     _ensure_dirs_needed_for_userdb  # , generate_password_hash
 )
@@ -41,15 +43,20 @@ from mig.shared.useradm import (
 # Imports of the code under test
 from mig.shared.griddaemons.login import (
     Login, get_creds_changes, get_share_changes, get_job_changes,
-    refresh_share_creds
+    refresh_share_creds, refresh_user_creds
 )
 
 # Imports required for the unit tests themselves
 from tests.support import (
-    ensure_dirs_exist,
-    MigTestCase, temppath)
+    ensure_dirs_exist, MigTestCase, temppath, UserAssertMixin
+)
+from tests.support.usersupp import (
+    TEST_USER_DN
+)
 
+TEST_USER_UUID = "UniqueUserIdForTestUser"
 TEST_USER_SHORT_ID = "abc123@some.org"
+TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[-1]
 TEST_RO_SHARE_ID = 'abcdef1234'
 TEST_RW_SHARE_ID = 'klmnop4567'
 TEST_WO_SHARE_ID = 'uvwxyz7890'
@@ -58,6 +65,33 @@ TEST_WO_SHARE_ID = 'uvwxyz7890'
 TEST_USER_PUB_KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCuJrICshi7S2KhV03qvgNVOx5ejmHsswdGbvR34wf+eN23Ghq6OZhwGye2S+J6LPVFI3p4SCqxX4URnUM8BRAsiuvbf/+GQfE2pAO0C+/g4V3hhYbYzIyrtPsP1Hl8GioxvZD5nDoLEA4TWokDC4D7SRfv+NEkFLplyVBwHtpUunXBS/zXYdQ4lgk7u8HBBCMqUGbZHfCc+6ibFVn/5WS6vVokL+fSWtxg9tUVWqsS/xtDGPH1wbJUf1Dm3D58KmdX8ca73tBoScwH8qUQwEcyM1JtWtbv1BAZFb+Qk6SEe4GPRsn3I4AAgC7xtU3HKQsiqe8Fzpick/uI5PU+vguitcV/9+AASnGVZJ9M+a63UvlFFloEYcI1LwdZ03JYPQXfXCzJSYiA+pTX4/cf10G4rlxsque4m4OcuCwLKvpTWA/Lla+UJqYhdQW+m7mSizPRoDPgh8mOta1PQob2sGSw8rhqLfApptAPZ0mkN0QY3Dv3i3ItgpYGcPNVXVdjmhU='
 # NOTE: this is a sample valid but unused ssh password hash as it must be parsable
 TEST_USER_PW_HASH = "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM1234uxi"
+
+
+def _prepare_auth_files(home_path, auth_protos=None):
+    """Helper to create helper auth files for on eor more auth_protos.
+    If None is passed ssh, ftps and davs auth files will be made.
+    """
+    auth_files = []
+    if auth_protos is None:
+        auth_protos = ['davs', 'ftps', 'ssh']
+
+    # Create requested auth dirs with files
+    for auth in auth_protos:
+        # Create a .PROTO directory with authorized_X file(s)
+        dot_proto_dir = os.path.join(home_path, '.%s' % auth)
+        ensure_dirs_exist(dot_proto_dir)
+        if auth == 'ssh':
+            authkeys_path = os.path.join(dot_proto_dir, 'authorized_keys')
+            with open(authkeys_path, 'w') as creds_fd:
+                creds_fd.write(TEST_USER_PUB_KEY)
+            auth_files.append(authkeys_path)
+
+        authpasswords_path = os.path.join(dot_proto_dir,
+                                          'authorized_passwords')
+        with open(authpasswords_path, 'w') as creds_fd:
+            creds_fd.write(TEST_USER_PW_HASH)
+        auth_files.append(authpasswords_path)
+    return auth_files
 
 
 class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
@@ -75,36 +109,27 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
         self.configuration.daemon_conf = {}
         self.configuration.daemon_conf['time_stamp'] = 0
         self.configuration.daemon_conf['users'] = []
-
+        self.configuration.daemon_conf['allow_publickey'] = True
+        self.configuration.daemon_conf['allow_password'] = True
         # TODO: enable and test unsafe digest auth, too?
         # self.configuration.daemon_conf['allow_digest'] = True
         self.configuration.daemon_conf['allow_digest'] = False
 
-        self.auth_keys_path = temppath('authorized_keys', self)
-        self.auth_passwords_path = temppath('authorized_passwords', self)
-        # self.auth_digests_path = temppath('authhorized_digests', self)
+        self.test_user_home = self._provision_test_user(self, TEST_USER_DN)
+        auth_files = _prepare_auth_files(self.test_user_home, ['ssh'])
+        self.auth_keys_path, self.auth_passwords_path = auth_files
         self.auth_digests_path = None
-
-        # Create sample credential files
-        with open(self.auth_keys_path, 'w') as creds_fd:
-            creds_fd.write(TEST_USER_PUB_KEY)
-        with open(self.auth_passwords_path, 'w') as creds_fd:
-            creds_fd.write(TEST_USER_PW_HASH)
-        # with open(self.auth_digests_path, 'w') as creds_fd:
-        #    creds_fd.write(TEST_USER_DIGEST)
 
     def test_get_creds_changes_detects_new_files(self):
         """Verify that new credential files are detected as changes"""
         daemon_conf = self.configuration.daemon_conf
-        daemon_conf['allow_publickey'] = True
-        daemon_conf['allow_password'] = True
 
         # Create a dummy user with a last_update in the past
         past_timestamp = time.time() - 3600
         dummy_user = Login(
             configuration=self.configuration,
             username=TEST_USER_SHORT_ID,
-            home='dummy_home',
+            home=self.test_user_home,
             password=TEST_USER_PW_HASH,
             digest=None,
             public_key=TEST_USER_PUB_KEY,
@@ -131,18 +156,15 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
     def test_get_creds_changes_no_changes(self):
         """Verify that unchanged credential files return an empty list"""
         daemon_conf = self.configuration.daemon_conf
-        daemon_conf['allow_publickey'] = True
-        daemon_conf['allow_password'] = True
 
-        # Set the file modification times to a time in the past
+        # Set the file modification times to now
         current_time = time.time()
-        past_timestamp = time.time() - 3600
 
         # Create a dummy user with last_update matching the file mtime
         dummy_user = Login(
             configuration=self.configuration,
             username=TEST_USER_SHORT_ID,
-            home='dummy_home',
+            home=self.test_user_home,
             password=TEST_USER_PW_HASH,
             digest=None,
             public_key=TEST_USER_PUB_KEY,
@@ -461,8 +483,6 @@ class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
 
     def test_refresh_share_creds_adds_new_share(self):
         """A new share link should be added to daemon_conf['shares']."""
-        daemon_conf = self.configuration.daemon_conf
-
         # Build a share link that points to a temporary user directory
         rel_share_home = os.path.join('TestUser', 'shared', 'data')
         user_shared_dir = os.path.join(self.configuration.user_home,
@@ -498,6 +518,52 @@ class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
         # share_pw_hash = generate_password_hash(self.configuration,
         #                                       TEST_RW_SHARE_ID)
         # self.assertEqual(share_login[0].password, share_pw_hash)
+
+    def test_refresh_share_creds_adds_new_share_with_key(self):
+        """A new share link with key should be added twice to daemon_conf['shares']."""
+        # Build a share link that points to a temporary user directory
+        rel_share_home = os.path.join('TestUser', 'shared', 'data')
+        user_shared_dir = os.path.join(self.configuration.user_home,
+                                       rel_share_home)
+        ensure_dirs_exist(user_shared_dir)
+
+        share_link_path = os.path.join(self.rw_share_home, TEST_RW_SHARE_ID)
+        os.symlink(user_shared_dir, share_link_path)
+
+        _prepare_auth_files(user_shared_dir, ['ssh'])
+
+        # Call the function under test
+        # NOTE: only sftp access is supported for now
+        (updated_conf, changed_shares) = refresh_share_creds(
+            configuration=self.configuration,
+            protocol='sftp',
+            username=TEST_RW_SHARE_ID,
+            share_modes=(READ_WRITE_ACCESS, )
+        )
+
+        # The share should now be present twice in the changed list
+        self.assertIn(TEST_RW_SHARE_ID, changed_shares)
+
+        # Verify that a Login object was added to shares
+        share_login = [
+            obj for obj in updated_conf['shares']
+            if obj.username == TEST_RW_SHARE_ID
+        ]
+        self.assertEqual(len(share_login), 2)
+
+        # The added objects should contain the expected home directory
+        self.assertEqual(share_login[0].username, TEST_RW_SHARE_ID)
+        self.assertEqual(share_login[0].home, rel_share_home)
+        self.assertEqual(share_login[1].username, TEST_RW_SHARE_ID)
+        self.assertEqual(share_login[1].home, rel_share_home)
+        # TODO: check password hash, too?
+        # share_pw_hash = generate_password_hash(self.configuration,
+        #                                       TEST_RW_SHARE_ID)
+        # self.assertEqual(share_login[0].password, share_pw_hash)
+        # Convert saved paramiko.PKey back to openssh pub key format and check
+        login_key = share_login[1].public_key
+        result = "%s %s" % (login_key.get_name(), login_key.get_base64())
+        self.assertEqual(result, TEST_USER_PUB_KEY)
 
     def test_refresh_share_creds_no_changes(self):
         """When the share link and its key file have not changed, the function
@@ -683,6 +749,208 @@ class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
         self.assertEqual(len(changed_shares), 1)
         self.assertEqual(changed_shares[0], TEST_RW_SHARE_ID)
         self.assertEqual(len(updated_conf['shares']), 0)
+
+
+class MigSharedGriddaemonsLogin__refresh_user_creds(MigTestCase, UserAssertMixin):
+    """Unit tests for the griddaemons login refresh_user_creds helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test."""
+        # Ensure required directories exist
+        _ensure_dirs_needed_for_userdb(self.configuration)
+        self.expected_user_db_home = os.path.normpath(
+            self.configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        self.test_user_home = self._provision_test_user(self, TEST_USER_DN)
+        self.test_user_dir = os.path.basename(self.test_user_home)
+        # Make sure alias link is provisioned as well
+        alias_link_path = os.path.join(self.configuration.user_home,
+                                       TEST_USER_EMAIL)
+        if not os.path.islink(alias_link_path):
+            os.symlink(self.test_user_home, alias_link_path)
+
+        ALIAS_FIELD = 'email'
+        self.configuration.user_sftp_alias = ALIAS_FIELD
+        self.configuration.user_ftps_alias = ALIAS_FIELD
+        self.configuration.user_davs_alias = ALIAS_FIELD
+
+        # Common daemon configuration
+        self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf['time_stamp'] = 0
+        self.configuration.daemon_conf['users'] = []
+        self.configuration.daemon_conf['root_dir'] = self.configuration.user_home
+        self.configuration.daemon_conf['db_path'] = self.expected_user_db_file
+        self.configuration.daemon_conf['allow_publickey'] = True
+        self.configuration.daemon_conf['allow_password'] = True
+        self.configuration.daemon_conf['allow_digest'] = False
+        self.configuration.daemon_conf['user_alias'] = ALIAS_FIELD
+
+    def test_refresh_user_creds_ssh_protocol(self):
+        """Test refreshing user credentials for SSH protocol."""
+        username = TEST_USER_EMAIL
+        _prepare_auth_files(self.test_user_home, ['ssh'])
+
+        # Call the function under test
+        (updated_conf, changed_users) = refresh_user_creds(
+            configuration=self.configuration,
+            protocol='ssh',
+            username=username
+        )
+
+        # The user should be in the changed list
+        self.assertIn(username, changed_users)
+
+        # Verify that Login objects were added to users
+        user_logins = [obj for obj in updated_conf['users']
+                       if obj.username == TEST_USER_DN or
+                       obj.username == username]
+        # We expect at least one login (the main username) and possibly aliases
+        self.assertGreaterEqual(len(user_logins), 1)
+
+        # Check that at least one login has the correct home directory
+        home_found = any(login.home == self.test_user_dir for login in
+                         user_logins)
+        self.assertTrue(home_found)
+
+    def test_refresh_user_creds_davs_protocol(self):
+        """Test refreshing user credentials for DAVS protocol."""
+        username = TEST_USER_EMAIL
+        _prepare_auth_files(self.test_user_home, ['davs'])
+
+        # Call the function under test
+        (updated_conf, changed_users) = refresh_user_creds(
+            configuration=self.configuration,
+            protocol='davs',
+            username=username
+        )
+
+        # The user should be in the changed list
+        self.assertIn(username, changed_users)
+
+        # Verify that Login objects were added to users
+        user_logins = [obj for obj in updated_conf['users']
+                       if obj.username == username]
+        self.assertEqual(len(user_logins), 1)
+        self.assertEqual(user_logins[0].home, self.test_user_dir)
+
+    def test_refresh_user_creds_ftps_protocol(self):
+        """Test refreshing user credentials for FTPS protocol."""
+        username = TEST_USER_EMAIL
+        _prepare_auth_files(self.test_user_home, ['ftps'])
+
+        # Call the function under test
+        (updated_conf, changed_users) = refresh_user_creds(
+            configuration=self.configuration,
+            protocol='ftps',
+            username=username
+        )
+
+        # The user should be in the changed list
+        self.assertIn(username, changed_users)
+
+        # Verify that Login objects were added to users
+        user_logins = [obj for obj in updated_conf['users']
+                       if obj.username == username]
+        self.assertEqual(len(user_logins), 1)
+        self.assertEqual(user_logins[0].home, self.test_user_dir)
+
+    def test_refresh_user_creds_https_protocol(self):
+        """Test refreshing user credentials for HTTPS protocol (uses user DB)."""
+        username = TEST_USER_EMAIL
+
+        # Call the function under test
+        (updated_conf, changed_users) = refresh_user_creds(
+            configuration=self.configuration,
+            protocol='https',
+            username=username
+        )
+
+        # The user alias should be in the changed list
+        self.assertIn(TEST_USER_EMAIL, changed_users)
+
+        # Verify that Login objects were added to users for the username and its aliases
+        user_logins = [obj for obj in updated_conf['users']
+                       if obj.username == TEST_USER_DN or
+                       obj.username == username]
+        # We expect at least the main username and possibly aliases
+        self.assertGreaterEqual(len(user_logins), 1)
+
+        # Check that at least one login has the correct home directory
+        home_found = any(login.home == self.test_user_dir for login in
+                         user_logins)
+        self.assertTrue(home_found)
+
+    def test_refresh_user_creds_no_changes(self):
+        """Test that no changes are reported when credentials are unchanged."""
+        username = TEST_USER_EMAIL
+        _prepare_auth_files(self.test_user_home, ['ssh'])
+
+        # Pre-populate the users list with a Login object that has
+        # last_update set to the current time (simulating no changes)
+        current_time = time.time()
+        dummy_user = Login(
+            configuration=self.configuration,
+            username=username,
+            home=self.test_user_home,
+            password=TEST_USER_PW_HASH,
+            digest=None,
+            public_key=TEST_USER_PUB_KEY,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None)
+        dummy_user.last_update = current_time
+        self.configuration.daemon_conf['users'].append(dummy_user)
+
+        # Call the function under test
+        (updated_conf, changed_users) = refresh_user_creds(
+            configuration=self.configuration,
+            protocol='ssh',
+            username=username
+        )
+
+        # No changes should be reported
+        self.assertEqual(len(changed_users), 0)
+        # The user list should still contain only our dummy user
+        self.assertEqual(len(updated_conf['users']), 1)
+        self.assertEqual(updated_conf['users'][0].username, username)
+
+    def test_refresh_user_creds_missing_user(self):
+        """Test that a missing user is skipped."""
+        username = 'nosuchuser'
+
+        # Call the function under test
+        (updated_conf, changed_users) = refresh_user_creds(
+            configuration=self.configuration,
+            protocol='ssh',
+            username=username
+        )
+
+        # No changes should be reported because the home directory is missing
+        self.assertEqual(len(changed_users), 0)
+        self.assertEqual(len(updated_conf['users']), 0)
+
+    def test_refresh_user_creds_invalid_protocol(self):
+        """Test that an invalid protocol returns early without changes."""
+        username = TEST_USER_EMAIL
+
+        # Call the function under test with an invalid protocol
+        (updated_conf, changed_users) = refresh_user_creds(
+            configuration=self.configuration,
+            protocol='invalid',
+            username=username
+        )
+
+        # No changes should be reported
+        self.assertEqual(len(changed_users), 0)
+        self.assertEqual(len(updated_conf['users']), 0)
 
 
 if __name__ == '__main__':
