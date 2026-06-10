@@ -125,7 +125,7 @@ def show_accounting(
 
     # Filter accounts:
     # 1) GDP project users are accounted for by the main user
-    # 2) Only show users that expired before provided expire timestamp
+    # 2) Only show users that expired at or before provided expire timestamp
 
     for userid in list(accounting):
         if configuration.site_enable_gdp and is_gdp_user(configuration, userid):
