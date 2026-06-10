@@ -20,7 +20,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # --- END_HEADER ---
 #
@@ -32,13 +32,16 @@ import time
 import unittest
 
 # Imports required for the unit test wrapping
+from mig.shared.defaults import X509_USER_ID_FORMAT, UUID_USER_ID_FORMAT, \
+    READ_WRITE_ACCESS, READ_ONLY_ACCESS, WRITE_ONLY_ACCESS
 from mig.shared.useradm import (
-    _ensure_dirs_needed_for_userdb,
+    _ensure_dirs_needed_for_userdb  # , generate_password_hash
 )
 
 # Imports of the code under test
 from mig.shared.griddaemons.login import (
-    Login, get_creds_changes, get_share_changes, get_job_changes
+    Login, get_creds_changes, get_share_changes, get_job_changes,
+    refresh_share_creds
 )
 
 # Imports required for the unit tests themselves
@@ -47,7 +50,9 @@ from tests.support import (
     MigTestCase, temppath)
 
 TEST_USER_SHORT_ID = "abc123@some.org"
-TEST_SHARE_ID = 'abcdef1234'
+TEST_RO_SHARE_ID = 'abcdef1234'
+TEST_RW_SHARE_ID = 'klmnop4567'
+TEST_WO_SHARE_ID = 'uvwxyz7890'
 
 # NOTE: this is a sample valid but unused ssh public key as it must be parsable
 TEST_USER_PUB_KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCuJrICshi7S2KhV03qvgNVOx5ejmHsswdGbvR34wf+eN23Ghq6OZhwGye2S+J6LPVFI3p4SCqxX4URnUM8BRAsiuvbf/+GQfE2pAO0C+/g4V3hhYbYzIyrtPsP1Hl8GioxvZD5nDoLEA4TWokDC4D7SRfv+NEkFLplyVBwHtpUunXBS/zXYdQ4lgk7u8HBBCMqUGbZHfCc+6ibFVn/5WS6vVokL+fSWtxg9tUVWqsS/xtDGPH1wbJUf1Dm3D58KmdX8ca73tBoScwH8qUQwEcyM1JtWtbv1BAZFb+Qk6SEe4GPRsn3I4AAgC7xtU3HKQsiqe8Fzpick/uI5PU+vguitcV/9+AASnGVZJ9M+a63UvlFFloEYcI1LwdZ03JYPQXfXCzJSYiA+pTX4/cf10G4rlxsque4m4OcuCwLKvpTWA/Lla+UJqYhdQW+m7mSizPRoDPgh8mOta1PQob2sGSw8rhqLfApptAPZ0mkN0QY3Dv3i3ItgpYGcPNVXVdjmhU='
@@ -68,6 +73,7 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
         ensure_dirs_exist(self.configuration.sharelink_home)
 
         self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf['time_stamp'] = 0
         self.configuration.daemon_conf['users'] = []
 
         # TODO: enable and test unsafe digest auth, too?
@@ -172,6 +178,7 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
         ensure_dirs_exist(self.configuration.sharelink_home)
 
         self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf['time_stamp'] = 0
         self.configuration.daemon_conf['shares'] = []
 
         # TODO: enable and test unsafe digest auth, too?
@@ -202,14 +209,14 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
         user_shared_keys = os.path.join(user_shared_dir, '.ssh',
                                         'authorized_keys')
         share_link_path = os.path.join(self.configuration.sharelink_home,
-                                       TEST_SHARE_ID)
+                                       TEST_RO_SHARE_ID)
         os.symlink(user_shared_dir, share_link_path)
 
         # Create a dummy share with a last_update in the past
         past_timestamp = time.time() - 3600
         dummy_share = Login(
             configuration=self.configuration,
-            username=TEST_SHARE_ID,
+            username=TEST_RO_SHARE_ID,
             home='share_home',
             password=TEST_USER_PW_HASH,
             digest=None,
@@ -224,7 +231,7 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
 
         changed_paths = get_share_changes(
             daemon_conf,
-            TEST_SHARE_ID,
+            TEST_RO_SHARE_ID,
             share_link_path,
             user_shared_keys
         )
@@ -241,12 +248,12 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
                                        'TestUser', 'shared', 'data')
         ensure_dirs_exist(user_shared_dir)
         share_link_path = os.path.join(self.configuration.sharelink_home,
-                                       TEST_SHARE_ID)
+                                       TEST_RO_SHARE_ID)
         os.symlink(user_shared_dir, share_link_path)
 
         changed_paths = get_share_changes(
             daemon_conf,
-            TEST_SHARE_ID,
+            TEST_RO_SHARE_ID,
             share_link_path,
             self.auth_keys_path
         )
@@ -266,14 +273,14 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
                                         'authorized_keys')
         ensure_dirs_exist(user_shared_keys)
         share_link_path = os.path.join(self.configuration.sharelink_home,
-                                       TEST_SHARE_ID)
+                                       TEST_RO_SHARE_ID)
         os.symlink(user_shared_dir, share_link_path)
 
         # Create a dummy share with last_update matching file mtime
         current_time = time.time()
         dummy_share = Login(
             configuration=self.configuration,
-            username=TEST_SHARE_ID,
+            username=TEST_RO_SHARE_ID,
             home='share_home',
             password=TEST_USER_PW_HASH,
             digest=None,
@@ -288,7 +295,7 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
 
         changed_paths = get_share_changes(
             daemon_conf,
-            TEST_SHARE_ID,
+            TEST_RO_SHARE_ID,
             share_link_path,
             user_shared_keys
         )
@@ -309,6 +316,7 @@ class MigSharedGriddaemonsLogin__get_job_changes(MigTestCase):
         ensure_dirs_exist(self.configuration.sharelink_home)
 
         self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf['time_stamp'] = 0
         self.configuration.daemon_conf['jobs'] = []
 
         # TODO: enable and test unsafe digest auth, too?
@@ -405,6 +413,131 @@ class MigSharedGriddaemonsLogin__get_job_changes(MigTestCase):
         )
 
         self.assertIn(mrsl_path, changed_paths)
+
+
+class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
+    """Unit tests for the griddaemons login refresh_share_creds helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test."""
+        # The base class already creates the required directory layout.
+        # Ensure the share‑link home exists – it is used by refresh_share_creds.
+        self.ro_share_home = os.path.join(self.configuration.sharelink_home,
+                                          'read-only')
+        self.rw_share_home = os.path.join(self.configuration.sharelink_home,
+                                          'read-write')
+        self.wo_share_home = os.path.join(self.configuration.sharelink_home,
+                                          'write-only')
+        ensure_dirs_exist(self.ro_share_home)
+        ensure_dirs_exist(self.rw_share_home)
+        ensure_dirs_exist(self.rw_share_home)
+
+        self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf['time_stamp'] = 0
+        self.configuration.daemon_conf['shares'] = []
+        self.configuration.daemon_conf['allow_publickey'] = True
+        self.configuration.daemon_conf['allow_password'] = True
+        self.configuration.daemon_conf['allow_digest'] = False
+
+        # Paths that the function will look at
+        self.auth_keys_path = temppath('authorized_keys', self)
+        self.auth_passwords_path = temppath('authorized_passwords', self)
+        self.auth_digests_path = None
+
+        # Create dummy credential files
+        with open(self.auth_keys_path, 'w') as creds_fd:
+            creds_fd.write(TEST_USER_PUB_KEY)
+        with open(self.auth_passwords_path, 'w') as creds_fd:
+            creds_fd.write(TEST_USER_PW_HASH)
+
+    def test_refresh_share_creds_adds_new_share(self):
+        """A new share link should be added to daemon_conf['shares']."""
+        daemon_conf = self.configuration.daemon_conf
+
+        # Build a share link that points to a temporary user directory
+        rel_share_home = os.path.join('TestUser', 'shared', 'data')
+        user_shared_dir = os.path.join(self.configuration.user_home,
+                                       rel_share_home)
+        ensure_dirs_exist(user_shared_dir)
+
+        share_link_path = os.path.join(self.rw_share_home, TEST_RW_SHARE_ID)
+        os.symlink(user_shared_dir, share_link_path)
+
+        # Call the function under test
+        # NOTE: only sftp access is supported for now
+        (updated_conf, changed_shares) = refresh_share_creds(
+            configuration=self.configuration,
+            protocol='sftp',
+            username=TEST_RW_SHARE_ID,
+            share_modes=(READ_WRITE_ACCESS, )
+        )
+
+        # The share should now be present in the changed list
+        self.assertIn(TEST_RW_SHARE_ID, changed_shares)
+
+        # Verify that a Login object was added to shares
+        share_login = [
+            obj for obj in updated_conf['shares']
+            if obj.username == TEST_RW_SHARE_ID
+        ]
+        self.assertEqual(len(share_login), 1)
+
+        # The added object should contain the expected home directory
+        self.assertEqual(share_login[0].username, TEST_RW_SHARE_ID)
+        self.assertEqual(share_login[0].home, rel_share_home)
+        # TODO: check password hash, too?
+        # share_pw_hash = generate_password_hash(self.configuration,
+        #                                       TEST_RW_SHARE_ID)
+        # self.assertEqual(share_login[0].password, share_pw_hash)
+
+    def test_refresh_share_creds_no_changes(self):
+        """When the share link and its key file have not changed, the function
+        should return an empty changed_shares list."""
+        daemon_conf = self.configuration.daemon_conf
+
+        # Create a share link that already exists
+        rel_share_home = os.path.join('TestUser', 'shared', 'data')
+        user_shared_dir = os.path.join(self.configuration.user_home,
+                                       rel_share_home)
+        ensure_dirs_exist(user_shared_dir)
+
+        share_link_path = os.path.join(self.rw_share_home, TEST_RW_SHARE_ID)
+        os.symlink(user_shared_dir, share_link_path)
+
+        # Populate shares with a dummy entry whose last_update matches
+        # the current file mtime – this simulates “no changes”.
+        current_time = time.time()
+        dummy_share = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=rel_share_home,
+            password=TEST_RW_SHARE_ID,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None)
+        dummy_share.last_update = current_time
+        daemon_conf['shares'].append(dummy_share)
+
+        # Run the function
+        (updated_conf, changed_shares) = refresh_share_creds(
+            configuration=self.configuration,
+            protocol='sftp',
+            username=TEST_RW_SHARE_ID,
+            share_modes=(READ_WRITE_ACCESS, )
+        )
+
+        # No changes should be reported
+        self.assertEqual(len(changed_shares), 0)
+
+        # The dummy entry should still be the only one present
+        self.assertEqual(len(updated_conf['shares']), 1)
 
 
 if __name__ == '__main__':
