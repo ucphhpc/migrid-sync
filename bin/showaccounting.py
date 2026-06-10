@@ -59,7 +59,7 @@ Where ACCOUNTING_OPTIONS may be one or more of:
    -i                  Show bytes in SI units (power of 10)
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DECIMALS         Number of decimals (default 3)
-   -e TIMESTAMP        Only show accounts that expired before timestamp
+   -e TIMESTAMP        Only show accounts expired at or before timestamp
    -f USER_FILTER      Regex user (CERT_DN) filter
    -l LOCALE_FORMAT    Use specific locale format (locale -a)
    -m MINIMUM_USAGE    Only show accounts using more than
