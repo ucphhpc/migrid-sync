@@ -121,6 +121,11 @@ def _clean_stale_state_files(
                 if os.path.exists(tmp_path):
                     tmp_age = now - os.path.getmtime(tmp_path)
                 else:
+                    # File may be a broken symlink or was removed concurrently
+                    _logger.debug(
+                        "state file %r missing or broken symlink"
+                        ", treating as stale" % tmp_path
+                    )
                     tmp_age = sys.maxsize
             else:
                 continue
