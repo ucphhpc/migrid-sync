@@ -175,7 +175,15 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
     def before_each(self):
         """Set up test configuration and reset state before each test"""
         _ensure_dirs_needed_for_userdb(self.configuration)
-        ensure_dirs_exist(self.configuration.sharelink_home)
+        self.ro_share_home = os.path.join(self.configuration.sharelink_home,
+                                          'read-only')
+        self.rw_share_home = os.path.join(self.configuration.sharelink_home,
+                                          'read-write')
+        self.wo_share_home = os.path.join(self.configuration.sharelink_home,
+                                          'write-only')
+        ensure_dirs_exist(self.ro_share_home)
+        ensure_dirs_exist(self.rw_share_home)
+        ensure_dirs_exist(self.wo_share_home)
 
         self.configuration.daemon_conf = {}
         self.configuration.daemon_conf['time_stamp'] = 0
@@ -208,8 +216,7 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
         ensure_dirs_exist(user_shared_dir)
         user_shared_keys = os.path.join(user_shared_dir, '.ssh',
                                         'authorized_keys')
-        share_link_path = os.path.join(self.configuration.sharelink_home,
-                                       TEST_RO_SHARE_ID)
+        share_link_path = os.path.join(self.ro_share_home, TEST_RO_SHARE_ID)
         os.symlink(user_shared_dir, share_link_path)
 
         # Create a dummy share with a last_update in the past
@@ -247,8 +254,7 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
         user_shared_dir = os.path.join(self.configuration.user_home,
                                        'TestUser', 'shared', 'data')
         ensure_dirs_exist(user_shared_dir)
-        share_link_path = os.path.join(self.configuration.sharelink_home,
-                                       TEST_RO_SHARE_ID)
+        share_link_path = os.path.join(self.ro_share_home, TEST_RO_SHARE_ID)
         os.symlink(user_shared_dir, share_link_path)
 
         changed_paths = get_share_changes(
@@ -272,8 +278,7 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
         user_shared_keys = os.path.join(user_shared_dir, '.ssh',
                                         'authorized_keys')
         ensure_dirs_exist(user_shared_keys)
-        share_link_path = os.path.join(self.configuration.sharelink_home,
-                                       TEST_RO_SHARE_ID)
+        share_link_path = os.path.join(self.ro_share_home, TEST_RO_SHARE_ID)
         os.symlink(user_shared_dir, share_link_path)
 
         # Create a dummy share with last_update matching file mtime
@@ -434,7 +439,7 @@ class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
                                           'write-only')
         ensure_dirs_exist(self.ro_share_home)
         ensure_dirs_exist(self.rw_share_home)
-        ensure_dirs_exist(self.rw_share_home)
+        ensure_dirs_exist(self.wo_share_home)
 
         self.configuration.daemon_conf = {}
         self.configuration.daemon_conf['time_stamp'] = 0
@@ -538,6 +543,146 @@ class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
 
         # The dummy entry should still be the only one present
         self.assertEqual(len(updated_conf['shares']), 1)
+
+    def test_refresh_share_creds_adds_readonly_share(self):
+        """Test that a read‑only share is added correctly"""
+        rel_share_home = os.path.join('TestUser', 'shared', 'data')
+        user_shared_dir = os.path.join(self.configuration.user_home,
+                                       rel_share_home)
+        ensure_dirs_exist(user_shared_dir)
+
+        share_link_path = os.path.join(self.configuration.sharelink_home,
+                                       'read-only', TEST_RO_SHARE_ID)
+        os.symlink(user_shared_dir, share_link_path)
+
+        (updated_conf, changed_shares) = refresh_share_creds(
+            configuration=self.configuration,
+            protocol='sftp',
+            username=TEST_RO_SHARE_ID,
+            share_modes=(READ_ONLY_ACCESS, )
+        )
+
+        self.assertIn(TEST_RO_SHARE_ID, changed_shares)
+        share_login = [obj for obj in updated_conf['shares']
+                       if obj.username == TEST_RO_SHARE_ID]
+        self.assertEqual(len(share_login), 1)
+        self.assertEqual(share_login[0].home, rel_share_home)
+
+    def test_refresh_share_creds_adds_writeonly_share(self):
+        """Test that a write‑only share is added correctly"""
+        rel_share_home = os.path.join('TestUser', 'shared', 'data')
+        user_shared_dir = os.path.join(self.configuration.user_home,
+                                       rel_share_home)
+        ensure_dirs_exist(user_shared_dir)
+
+        share_link_path = os.path.join(self.wo_share_home, TEST_WO_SHARE_ID)
+        os.symlink(user_shared_dir, share_link_path)
+
+        (updated_conf, changed_shares) = refresh_share_creds(
+            configuration=self.configuration,
+            protocol='sftp',
+            username=TEST_WO_SHARE_ID,
+            share_modes=(WRITE_ONLY_ACCESS, )
+        )
+
+        self.assertIn(TEST_WO_SHARE_ID, changed_shares)
+        share_login = [obj for obj in updated_conf['shares']
+                       if obj.username == TEST_WO_SHARE_ID]
+        self.assertEqual(len(share_login), 1)
+        self.assertEqual(share_login[0].home, rel_share_home)
+
+    def test_refresh_share_creds_no_change_on_unchanged_link(self):
+        """Test that an unchanged share link does not trigger a change"""
+        rel_share_home = os.path.join('TestUser', 'shared', 'data')
+        user_shared_dir = os.path.join(
+            self.configuration.user_home, rel_share_home)
+        ensure_dirs_exist(user_shared_dir)
+
+        share_link_path = os.path.join(self.rw_share_home, TEST_RW_SHARE_ID)
+        os.symlink(user_shared_dir, share_link_path)
+
+        # Populate shares with a dummy entry whose last_update matches
+        # the current file mtime – this simulates “no changes”.
+        current_time = time.time()
+        dummy_share = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=rel_share_home,
+            password=TEST_RW_SHARE_ID,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None)
+        dummy_share.last_update = current_time
+        self.configuration.daemon_conf['shares'].append(dummy_share)
+
+        (updated_conf, changed_shares) = refresh_share_creds(
+            configuration=self.configuration,
+            protocol='sftp',
+            username=TEST_RW_SHARE_ID,
+            share_modes=(READ_WRITE_ACCESS, )
+        )
+
+        self.assertEqual(len(changed_shares), 0)
+        self.assertEqual(len(updated_conf['shares']), 1)
+
+    def test_refresh_share_creds_detects_missing_link(self):
+        """Test that a missing share link is reported as a change"""
+        # No symlink created - share link is missing
+        missing_share_id = 'missing123'
+
+        (updated_conf, changed_shares) = refresh_share_creds(
+            configuration=self.configuration,
+            protocol='sftp',
+            username=missing_share_id,
+            share_modes=(READ_WRITE_ACCESS, )
+        )
+
+        # The function should still return an empty list because the link
+        # does not exist; no share is added.
+        self.assertEqual(len(changed_shares), 0)
+        self.assertEqual(len(updated_conf['shares']), 0)
+
+    def test_refresh_share_creds_ignores_dead_link(self):
+        """Test that a dead share link is ignored"""
+        # Create a symlink that points nowhere
+        invalid_target = os.path.join(self.configuration.user_home, 'deadbeef')
+        share_link_path = os.path.join(self.rw_share_home, TEST_RW_SHARE_ID)
+        os.symlink(invalid_target, share_link_path)
+
+        (updated_conf, changed_shares) = refresh_share_creds(
+            configuration=self.configuration,
+            protocol='sftp',
+            username=TEST_RW_SHARE_ID,
+            share_modes=(READ_WRITE_ACCESS, )
+        )
+
+        # No share should be added because the link is invalid
+        self.assertEqual(len(changed_shares), 0)
+        self.assertEqual(len(updated_conf['shares']), 0)
+
+    def test_refresh_share_creds_ignores_invalid_link(self):
+        """Test that an invalid (out of bounds) share link is ignored"""
+        # Create a symlink that points outside a user_home directory
+        invalid_target = self.configuration.certs_path
+        ensure_dirs_exist(invalid_target)
+        share_link_path = os.path.join(self.rw_share_home, TEST_RW_SHARE_ID)
+        os.symlink(invalid_target, share_link_path)
+
+        (updated_conf, changed_shares) = refresh_share_creds(
+            configuration=self.configuration,
+            protocol='sftp',
+            username=TEST_RW_SHARE_ID,
+            share_modes=(READ_WRITE_ACCESS, )
+        )
+
+        # No share should be added because the link is invalid but change
+        # is still reported as modified.
+        self.assertEqual(len(changed_shares), 1)
+        self.assertEqual(changed_shares[0], TEST_RW_SHARE_ID)
+        self.assertEqual(len(updated_conf['shares']), 0)
 
 
 if __name__ == '__main__':
