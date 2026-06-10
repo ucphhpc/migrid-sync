@@ -34,14 +34,12 @@ import datetime
 import getopt
 import locale
 import math
-import os
 import re
 import sys
 
 from mig.lib.accounting import get_usage, human_readable_filesize
 from mig.shared.base import distinguished_name_to_user, is_gdp_user
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import gdp_distinguished_field
 from mig.shared.useradm import load_user_db
 from mig.shared.userdb import default_db_path
 
@@ -61,11 +59,12 @@ Where ACCOUNTING_OPTIONS may be one or more of:
    -i                  Show bytes in SI units (power of 10)
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DECIMALS         Number of decimals (default 3)
+   -e TIMESTAMP        Only show accounts expired at or before timestamp
    -f USER_FILTER      Regex user (CERT_DN) filter
    -l LOCALE_FORMAT    Use specific locale format (locale -a)
    -m MINIMUM_USAGE    Only show accounts using more than
                        minimum usage (TiB)
-   -o FORMAT           Output format 
+   -o FORMAT           Output format
                        Supported formats: %(valid_output_formats)s
    -t TIMESTAMP        Use specific timestamp, latest if unset
 """
@@ -80,6 +79,7 @@ def show_accounting(
     minimum_usage,
     si_byte_format,
     decimals,
+    expire,
     output_format,
     verbose,
 ):
@@ -123,6 +123,18 @@ def show_accounting(
         accounting_timestamp
     ).strftime("%x %X")
 
+    # Filter accounts:
+    # 1) GDP project users are accounted for by the main user
+    # 2) Only show users that expired at or before provided expire timestamp
+
+    for userid in list(accounting):
+        if configuration.site_enable_gdp and is_gdp_user(configuration, userid):
+            del accounting[userid]
+            continue
+        user_db_ent = user_db.get(userid, {})
+        if expire > 0 and user_db_ent.get("expire", 0) > expire:
+            del accounting[userid]
+
     # Sorted by total bytes and print usage for users
 
     report_total_users = 0
@@ -131,10 +143,6 @@ def show_accounting(
     report_shown_bytes = 0
     total_bytes_map = {}
     for userid, values in accounting.items():
-        # Do not show GDP project users
-        # projects are accounted for by the main user
-        if configuration.site_enable_gdp and is_gdp_user(configuration, userid):
-            continue
         report_total_users += 1
         total_bytes = values.get("total_bytes", 0)
         report_total_bytes += total_bytes
@@ -180,6 +188,14 @@ def show_accounting(
             "Minimum usage: %s"
             % human_readable_filesize(minimum_usage, decimals=decimals)
         )
+        print(
+            "Expire: %d (%s)"
+            % (
+                expire,
+                datetime.datetime.fromtimestamp(expire).strftime("%x %X"),
+            )
+        )
+
         for total_bytes in sorted_total_bytes:
             for userid in total_bytes_map[total_bytes]:
                 user_dict = distinguished_name_to_user(userid)
@@ -201,6 +217,7 @@ def show_accounting(
                 print("Organization: %s" % user_db_ent.get("organization", ""))
                 print("Faculty: %s" % user_db_ent.get("faculty", ""))
                 print("Institute: %s" % user_db_ent.get("institute", ""))
+                print("ID: %s" % user_db_ent.get("main_id", ""))
                 print(
                     "Expire: %s"
                     % datetime.datetime.fromtimestamp(
@@ -230,14 +247,19 @@ def show_accounting(
                 output_ent["institute"] = user_db_ent.get("institute", "")
                 output_ent["username"] = user_db_ent.get("full_name", "")
                 output_ent["email"] = user_db_ent.get("email", "")
+                output_ent["id"] = user_db_ent.get("main_id", "")
+                output_ent["expire"] = user_db_ent.get("expire", 0)
+                output_ent["expire_date"] = datetime.datetime.fromtimestamp(
+                    user_db_ent.get("expire", 0)
+                ).strftime("%x %X")
                 user_total_bytes = report.get("total_bytes", 0)
-                output_ent["bytes"] = user_total_bytes
+                output_ent["usage_bytes"] = user_total_bytes
                 if si_byte_format:
-                    output_ent["bytes_tb"] = locale.format_string(
+                    output_ent["usage_tb"] = locale.format_string(
                         "%.*f", (decimals, user_total_bytes * 1.0 / 1000**4)
                     )
                 else:
-                    output_ent["bytes_tib"] = locale.format_string(
+                    output_ent["usage_tib"] = locale.format_string(
                         "%.*f", (decimals, user_total_bytes * 1.0 / 1024**4)
                     )
                 output_list.append(output_ent)
@@ -248,12 +270,15 @@ def show_accounting(
                     "institute",
                     "username",
                     "email",
-                    "bytes",
+                    "id",
+                    "expire",
+                    "expire_date",
+                    "usage_bytes",
                 ]
                 if si_byte_format:
-                    fieldnames.append("bytes_tb")
+                    fieldnames.append("usage_tb")
                 else:
-                    fieldnames.append("bytes_tib")
+                    fieldnames.append("usage_tib")
                 writer = csv.DictWriter(
                     sys.stdout, fieldnames=fieldnames, delimiter=";"
                 )
@@ -268,11 +293,12 @@ if "__main__" == __name__:
     output_format = "default"
     decimals = 3
     timestamp = 0
+    expire = 0
     locale_format = None
     minimum_usage = 0
     verbose = False
     valid_output_formats = ["default", "csv"]
-    opt_args = "hvic:d:f:l:m:o:t:"
+    opt_args = "hvic:d:e:f:l:m:o:t:"
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
         for opt, val in opts:
@@ -287,6 +313,8 @@ if "__main__" == __name__:
                 conf_path = val
             elif opt == "-d":
                 decimals = int(val)
+            elif opt == "-e":
+                expire = int(val)
             elif opt == "-f":
                 user_filter = val
             elif opt == "-l":
@@ -333,6 +361,7 @@ if "__main__" == __name__:
         minimum_usage,
         si_byte_format,
         decimals,
+        expire,
         output_format,
         verbose,
     )
