@@ -29,7 +29,6 @@
 
 from string import ascii_letters, digits
 import os
-import pickle
 import random
 import time
 import unittest
@@ -45,7 +44,7 @@ from mig.lib.janitor import EXPIRE_DUMMY_JOBS_DAYS, EXPIRE_REQ_DAYS, \
     manage_single_req, manage_trivial_user_requests, \
     remind_and_expire_user_pending, task_triggers
 from mig.shared.accountreq import save_account_request
-from mig.shared.base import distinguished_name_to_user, client_id_dir
+from mig.shared.base import client_id_dir
 from mig.shared.pwcrypto import generate_reset_token
 from tests.support import MigTestCase, ensure_dirs_exist
 
@@ -341,7 +340,6 @@ class MigLibJanitor(MigTestCase):
 
     def test_manage_pending_user_request(self):
         """Test pending user request management"""
-        req_id = 'req_id'
         req_dict = {
             'client_id': TEST_USER_DN,
             'distinguished_name': TEST_USER_DN,
@@ -371,7 +369,6 @@ class MigLibJanitor(MigTestCase):
 
     def test_expire_user_pending(self):
         """Test pending user request expiration reminders"""
-        req_id = 'expired_req'
         req_dict = {
             'client_id': TEST_USER_DN,
             'distinguished_name': TEST_USER_DN,
@@ -422,7 +419,6 @@ class MigLibJanitor(MigTestCase):
                                                      valid_dict)
         self.assertTrue(saved, "failed to save valid req")
         self.assertDirNotEmpty(self.configuration.user_pending)
-        valid_id = os.path.basename(valid_req_path)
 
         expired_id = 'expired_req'
         expired_dict = {
@@ -471,7 +467,6 @@ class MigLibJanitor(MigTestCase):
             self._prepare_test_file(stale_path, (stale_stamp, stale_stamp))
             self.assertTrue(os.path.exists(stale_path))
 
-        req_id = 'expired_request'
         req_dict = {
             'client_id': TEST_USER_DN,
             'distinguished_name': TEST_USER_DN,
