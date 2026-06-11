@@ -32,9 +32,9 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import account_css_helpers, account_js_helpers, \
-    account_request_template, password_max_len, password_min_len, \
-    valid_name_chars, valid_password_chars
+from mig.shared.accountreq import account_css_helpers, \
+    account_js_helpers, \
+    account_request_template
 from mig.shared.base import canonical_user, cert_field_map, client_id_dir, \
     distinguished_name_to_user, requested_page
 from mig.shared.defaults import csrf_field, keyword_auto
@@ -42,7 +42,11 @@ from mig.shared.functional import validate_input
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import find_entry, initialize_main_variables
 from mig.shared.pwcrypto import parse_password_policy
-from mig.shared.safeinput import html_escape
+from mig.shared.safeinput import html_escape, \
+    password_max_len, \
+    password_min_len,
+    valid_name_chars,\
+    valid_password_chars
 from mig.shared.useradm import get_full_user_map
 
 
