@@ -2171,7 +2171,7 @@ def edit_gdp_user(
     ok_msg = ""
     log_prefix = "GDP: edit user: %r, " % user_id
     rollback = False
-    mig_user_map = get_full_user_map(configuration)
+    mig_user_map = get_full_user_map(configuration, db_path=mig_db_path)
     gdp_user_rollback = None
     mig_edit_transactions = []
     new_user_id = None
@@ -2207,6 +2207,27 @@ def edit_gdp_user(
             % (user_id, changes)
         _logger.debug(msg)
         print(msg)
+
+    # Return early if 'new' main user exists
+    # NOTE: We don't want to force in this case 
+    #       as both edit and rollback will fail
+
+    new_user = copy.deepcopy(changes)
+    fill_distinguished_name(new_user)
+    new_distinguished_name = new_user.get('distinguished_name', '')
+    if not new_distinguished_name:
+        msg = "failed to generate 'distinguished_name' from changes: %s" % changes
+        if verbose:
+            print(msg)
+        _logger.error(log_prefix + msg)
+        return (False, msg)
+
+    if new_distinguished_name in mig_user_map:
+        msg = "new user already exists: %r" % new_distinguished_name
+        if verbose:
+            print(msg)
+        _logger.error(log_prefix + msg)
+        return (False, msg)
 
     # Check if user is logged in on any of the valid protocols
 
