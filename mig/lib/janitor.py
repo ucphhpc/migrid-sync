@@ -34,10 +34,14 @@ from __future__ import absolute_import, print_function
 
 import fnmatch
 import os
+import sys
 import time
 
-from mig.shared.accountreq import accept_account_req, existing_user_collision, \
-    reject_account_req
+from mig.shared.accountreq import (
+    accept_account_req,
+    existing_user_collision,
+    reject_account_req,
+)
 from mig.shared.base import get_user_id
 from mig.shared.fileio import delete_file, listdir
 from mig.shared.pwcrypto import verify_reset_token
@@ -114,7 +118,18 @@ def _clean_stale_state_files(
         for pattern in filename_patterns:
             if fnmatch.fnmatch(filename, pattern):
                 _logger.debug("checking if state file %r is stale" % tmp_path)
-                tmp_age = now - os.path.getmtime(tmp_path)
+                if os.path.exists(tmp_path):
+                    tmp_age = now - os.path.getmtime(tmp_path)
+                else:
+                    # File may be a broken symlink or was removed concurrently
+                    _logger.debug(
+                        (
+                            "state file %r missing or broken symlink,"
+                            " treating as stale"
+                        )
+                        % tmp_path
+                    )
+                    tmp_age = sys.maxsize
             else:
                 continue
             tmp_age_days = tmp_age / SECS_PER_DAY
@@ -127,7 +142,12 @@ def _clean_stale_state_files(
                     "remove stale tmp file in %r : %dd"
                     % (tmp_path, tmp_age_days)
                 )
-                if not delete_file(tmp_path, _logger):
+                if not delete_file(
+                    tmp_path,
+                    _logger,
+                    allow_broken_symlink=True,
+                    allow_missing=True,
+                ):
                     _logger.error("failed to remove stale file %r" % tmp_path)
                 handled += 1
     _logger.debug("handled %d stale state file cleanups" % handled)
@@ -284,21 +304,27 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         )
         if not rej_status:
             _logger.warning(
-                "failed to reject invalid %r account request: %s" % (client_id,
-                                                                     rej_err)
+                "failed to reject invalid %r account request: %s"
+                % (client_id, rej_err)
             )
         else:
             _logger.info("rejected invalid %r account request" % client_id)
     elif authorized:
-        _logger.info("%r requested renew and authorized password change" %
-                     client_id)
+        _logger.info(
+            "%r requested renew and authorized password change" % client_id
+        )
         peer_id = user_dict.get("peers", [None])[0]
         # NOTE: let authorized reqs (with valid peer) renew even with pw change
         default_renew = True
-        if accept_account_req(req_id, configuration, peer_id,
-                              user_copy=user_copy, admin_copy=admin_copy,
-                              auth_type=auth_type,
-                              default_renew=default_renew):
+        if accept_account_req(
+            req_id,
+            configuration,
+            peer_id,
+            user_copy=user_copy,
+            admin_copy=admin_copy,
+            auth_type=auth_type,
+            default_renew=default_renew,
+        ):
             _logger.info("accepted authorized %r access renew" % client_id)
         else:
             _logger.warning("failed authorized %r access renew" % client_id)
@@ -324,15 +350,15 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             )
             if not acc_status:
                 _logger.warning(
-                    "failed to accept %r password reset: %s" % (client_id,
-                                                                acc_err)
+                    "failed to accept %r password reset: %s"
+                    % (client_id, acc_err)
                 )
             else:
                 _logger.info("accepted %r password reset" % client_id)
         else:
             _logger.warning(
-                "%r requested password reset with bad token: %s" % (
-                    client_id, reset_token)
+                "%r requested password reset with bad token: %s"
+                % (client_id, reset_token)
             )
             reason = "invalid password reset token"
             (rej_status, rej_err) = reject_account_req(
@@ -345,8 +371,8 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             )
             if not rej_status:
                 _logger.warning(
-                    "failed to reject %r password reset: %s" % (client_id,
-                                                                rej_err)
+                    "failed to reject %r password reset: %s"
+                    % (client_id, rej_err)
                 )
             else:
                 _logger.info("rejected %r password reset" % client_id)
@@ -363,9 +389,9 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             auth_type=auth_type,
         )
         if not rej_status:
-            _logger.warning("failed to reject expired %r request: %s" %
-                            (client_id, rej_err)
-                            )
+            _logger.warning(
+                "failed to reject expired %r request: %s" % (client_id, rej_err)
+            )
         else:
             _logger.info("rejected %r request now past expire" % client_id)
     elif existing_user_collision(configuration, req_dict, client_id):
@@ -381,8 +407,8 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         )
         if not rej_status:
             _logger.warning(
-                "failed to reject %r request with ID collision: %s" %
-                (client_id, rej_err)
+                "failed to reject %r request with ID collision: %s"
+                % (client_id, rej_err)
             )
         else:
             _logger.info("rejected %r request with ID collision" % client_id)
@@ -417,8 +443,7 @@ def manage_trivial_user_requests(configuration, now=None):
             continue
         req_id = filename
         req_path = os.path.join(configuration.user_pending, req_id)
-        _logger.debug("checking if account request in %r is trivial" %
-                      req_path)
+        _logger.debug("checking if account request in %r is trivial" % req_path)
         req_age = now - os.path.getmtime(req_path)
         req_age_minutes = req_age / SECS_PER_MINUTE
         if req_age_minutes > MANAGE_TRIVIAL_REQ_MINUTES:
@@ -428,8 +453,7 @@ def manage_trivial_user_requests(configuration, now=None):
             )
             manage_single_req(configuration, req_id, req_path, db_path, now)
             handled += 1
-    _logger.debug("handled %d trivial user account request action(s)" %
-                  handled)
+    _logger.debug("handled %d trivial user account request action(s)" % handled)
     return handled
 
 
@@ -483,11 +507,12 @@ def remind_and_expire_user_pending(configuration, now=None):
                 auth_type=auth_type,
             )
             if not rej_status:
-                _logger.warning("failed to expire %s request from %r: %s" %
-                                (req_id, client_id, rej_err))
+                _logger.warning(
+                    "failed to expire %s request from %r: %s"
+                    % (req_id, client_id, rej_err)
+                )
             else:
-                _logger.info("expired %s request from %r" % (req_id,
-                                                             client_id))
+                _logger.info("expired %s request from %r" % (req_id, client_id))
             handled += 1
     _logger.debug("handled %d user account request action(s)" % handled)
     return handled
