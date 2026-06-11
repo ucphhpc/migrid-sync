@@ -209,6 +209,63 @@ class MigLibJanitor(MigTestCase):
         self.assertFalse(os.path.exists(stale_path))
         self.assertTrue(os.path.exists(valid_path))
 
+    def test_clean_twofactor_sessions_with_working_symlink(self):
+        """Test clean twofactor sessions with an active session symlink"""
+        test_dir = self.configuration.twofactor_home
+        # arrange pre-existing symlink pointing to session file
+        symlink_filename = 'sessionlink'
+        session_filename = 'session'
+        symlink_path = os.path.join(test_dir, symlink_filename)
+        session_path = os.path.join(test_dir, session_filename)
+        self._prepare_test_file(session_path)
+        os.symlink(session_path, symlink_path)
+        self.assertTrue(os.path.lexists(symlink_path))
+        self.assertTrue(os.path.exists(session_path))
+        err = None
+        try:
+            # Put 'now' into the future to force cleanup
+            future = time.time() + (2  * EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY)
+            handled = clean_twofactor_sessions(self.configuration, now=future)
+            self.assertEqual(handled, 2)
+            self.assertFalse(os.path.exists(session_path))
+            self.assertFalse(os.path.lexists(symlink_path))
+        except AssertionError as ase:
+            err = ase
+        finally:
+            # NOTE: File only exist 
+            #       if clean_twofactor_sessions fail to remove it
+            if os.path.exists(session_path):
+                os.remove(session_path)
+            if os.path.lexists(symlink_path):
+                os.remove(symlink_path)
+        self.assertEqual(err, None)
+
+    def test_clean_twofactor_sessions_with_dead_symlink(self):
+        """Test clean twofactor sessions with a stale session symlink"""
+        test_dir = self.configuration.twofactor_home
+        # arrange pre-existing symlink pointing nowhere
+        symlink_filename = 'stalelink'
+        nowhere_filename = 'nowhere'
+        symlink_path = os.path.join(test_dir, symlink_filename)
+        nowhere_path = os.path.join(test_dir, nowhere_filename)
+        os.symlink(nowhere_path, symlink_path)
+        self.assertTrue(os.path.lexists(symlink_path))
+        self.assertFalse(os.path.exists(nowhere_path))
+        err = None
+        try:
+            handled = clean_twofactor_sessions(self.configuration)
+            self.assertEqual(handled, 1)
+            self.assertFalse(os.path.exists(nowhere_path))
+            self.assertFalse(os.path.lexists(symlink_path))
+        except FileNotFoundError as fnf:
+            err = fnf
+        finally:
+            # NOTE: Files only exist
+            #       if clean_twofactor_sessions fail to remove it
+            if os.path.lexists(symlink_path):
+                os.remove(symlink_path)
+        self.assertEqual(err, None)
+
     def test_clean_sessid_to_mrls_link_home(self):
         """Test clean session MRSL link files"""
         stale_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
