@@ -27,8 +27,10 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
+from string import ascii_letters, digits
 import os
 import pickle
+import random
 import time
 import unittest
 
@@ -212,32 +214,43 @@ class MigLibJanitor(MigTestCase):
     def test_clean_twofactor_sessions_with_working_symlink(self):
         """Test clean twofactor sessions with an active session symlink"""
         test_dir = self.configuration.twofactor_home
-        # arrange pre-existing symlink pointing to session file
-        symlink_filename = 'sessionlink'
-        session_filename = 'session'
-        symlink_path = os.path.join(test_dir, symlink_filename)
-        session_path = os.path.join(test_dir, session_filename)
-        self._prepare_test_file(session_path)
-        os.symlink(session_path, symlink_path)
-        self.assertTrue(os.path.lexists(symlink_path))
-        self.assertTrue(os.path.exists(session_path))
+        # arrange pre-existing symlinks pointing to session files
+        test_pairs = []
+        # NOTE: use cnt random files to limit risk that listdir sorting matters
+        cnt = 16
+        for _ in range(cnt):
+            # Mimic IP_SESSION link to SESSION from gdp-mode
+            prefix = '.'.join(random.choices(digits[1:], k=4))
+            # Make suffix long enough to rule out collisions in practice
+            suffix = ''.join(random.choices(ascii_letters + digits, k=8))
+            session_filename = 'session-%s' % suffix
+            symlink_filename = '%s_session-%s' % (prefix, suffix)
+            symlink_path = os.path.join(test_dir, symlink_filename)
+            session_path = os.path.join(test_dir, session_filename)
+            self._prepare_test_file(session_path)
+            os.symlink(session_path, symlink_path)
+            self.assertTrue(os.path.lexists(symlink_path))
+            self.assertTrue(os.path.exists(session_path))
+            test_pairs.append((symlink_path, session_path))
         err = None
         try:
             # Put 'now' into the future to force cleanup
-            future = time.time() + (2  * EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY)
+            future = time.time() + (2 * EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY)
             handled = clean_twofactor_sessions(self.configuration, now=future)
-            self.assertEqual(handled, 2)
-            self.assertFalse(os.path.exists(session_path))
-            self.assertFalse(os.path.lexists(symlink_path))
+            self.assertEqual(handled, 2 * cnt)
+            for (symlink_path, session_path) in test_pairs:
+                self.assertFalse(os.path.exists(session_path))
+                self.assertFalse(os.path.lexists(symlink_path))
         except AssertionError as ase:
             err = ase
         finally:
-            # NOTE: File only exist 
-            #       if clean_twofactor_sessions fail to remove it
-            if os.path.exists(session_path):
-                os.remove(session_path)
-            if os.path.lexists(symlink_path):
-                os.remove(symlink_path)
+            # NOTE: File only exists if clean_twofactor_sessions fails to
+            #       remove it
+            for (symlink_path, session_path) in test_pairs:
+                if os.path.exists(session_path):
+                    os.remove(session_path)
+                if os.path.lexists(symlink_path):
+                    os.remove(symlink_path)
         self.assertEqual(err, None)
 
     def test_clean_twofactor_sessions_with_dead_symlink(self):
@@ -260,8 +273,8 @@ class MigLibJanitor(MigTestCase):
         except FileNotFoundError as fnf:
             err = fnf
         finally:
-            # NOTE: Files only exist
-            #       if clean_twofactor_sessions fail to remove it
+            # NOTE: Files only exist if clean_twofactor_sessions fails to
+            #       remove them
             if os.path.lexists(symlink_path):
                 os.remove(symlink_path)
         self.assertEqual(err, None)
@@ -564,7 +577,7 @@ class MigLibJanitor(MigTestCase):
         self.assertTrue(any('invalid account request' in msg
                             for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path),
-                        "Failed to clean invalid req for %s" % req_path)
+                         "Failed to clean invalid req for %s" % req_path)
 
         # FIXME: should this really be sending email?
         fake_send_email = self.configuration.context_get('notifier').send_email
@@ -611,7 +624,7 @@ class MigLibJanitor(MigTestCase):
         self.assertTrue(any('reject expired reset token' in msg
                             for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path),
-                        "Failed to clean token req for %s" % req_path)
+                         "Failed to clean token req for %s" % req_path)
 
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
@@ -697,7 +710,6 @@ class MigLibJanitor(MigTestCase):
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
         self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
-
 
     def test_manage_single_req_auth_change(self):
         """Test request handling with auth password change"""
@@ -885,7 +897,7 @@ class MigLibJanitor(MigTestCase):
         self.assertTrue(any('wrong hash' in msg.lower()
                             for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path),
-                        "Failed cleanup invalid token for %s" % req_path)
+                         "Failed cleanup invalid token for %s" % req_path)
 
         # FIXME: should this really be sending email?
         fake_send_email = self.configuration.context_get('notifier').send_email
@@ -931,7 +943,7 @@ class MigLibJanitor(MigTestCase):
         self.assertTrue(any('accepted' in msg.lower()
                             for msg in log_capture.output))
         self.assertFalse(os.path.exists(req_path),
-                        "Failed cleanup invalid token for %s" % req_path)
+                         "Failed cleanup invalid token for %s" % req_path)
 
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
@@ -1082,7 +1094,6 @@ class MigLibJanitor(MigTestCase):
         # Verify initial existence
         self.assertTrue(os.path.exists(req_path))
 
-
         manage_single_req(
             self.configuration,
             req_id,
@@ -1092,11 +1103,10 @@ class MigLibJanitor(MigTestCase):
         )
 
         self.assertFalse(os.path.exists(req_path),
-                        "Failed cleanup after reject for %s" % req_path)
+                         "Failed cleanup after reject for %s" % req_path)
 
         fake_send_email = self.configuration.context_get('notifier').send_email
         fake_send_email.email_was_sent_to('test@example.com')
-
 
     def test_cleaner_with_multiple_patterns(self):
         """Test state cleaner with multiple filename patterns"""
