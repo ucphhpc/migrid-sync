@@ -47,7 +47,7 @@ from mig.shared.useradm import (
 # Imports of the code under test
 from mig.shared.griddaemons.login import (
     Login, get_creds_changes, get_share_changes, get_job_changes,
-    login_map_lookup, refresh_share_creds, refresh_user_creds
+    login_map_lookup, refresh_share_creds, refresh_user_creds, update_login_map
 )
 
 # Imports required for the unit tests themselves
@@ -1422,6 +1422,287 @@ class MigSharedGriddaemonsLogin__login_map_lookup(MigTestCase):
         # Call the function (lock should be acquired/released internally)
         result = login_map_lookup(daemon_conf, 'user3')
         self.assertEqual(result, [daemon_conf['login_map']['user3'][0]])
+
+
+class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
+    """Unit tests for the update_login_map function from griddaemons/login.py"""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration with login_map and creds_lock."""
+        # Common daemon configuration
+        self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf['time_stamp'] = 0
+        self.configuration.daemon_conf['login_map'] = {}
+        self.configuration.daemon_conf['users'] = []
+        self.configuration.daemon_conf['jobs'] = []
+        self.configuration.daemon_conf['shares'] = []
+        self.configuration.daemon_conf['jupyter_mounts'] = []
+        self.configuration.daemon_conf['creds_lock'] = threading.Lock()
+
+    def test_update_login_map_users(self):
+        """Verify login_map is updated correctly for changed users."""
+        # Create Login objects
+        user1 = Login(
+            configuration=self.configuration,
+            username='user1',
+            home='home1',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        user2 = Login(
+            configuration=self.configuration,
+            username='user2',
+            home='home2',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        # Populate users list
+        self.configuration.daemon_conf['users'] = [user1, user2]
+
+        # Call the function under test
+        update_login_map(
+            daemon_conf=self.configuration.daemon_conf,
+            changed_users=['user1', 'user2']
+        )
+
+        # Verify login_map
+        login_map = self.configuration.daemon_conf['login_map']
+        self.assertIn('user1', login_map)
+        self.assertIn('user2', login_map)
+        self.assertEqual(login_map['user1'], [user1])
+        self.assertEqual(login_map['user2'], [user2])
+
+    def test_update_login_map_jobs(self):
+        """Verify login_map is updated correctly for changed jobs."""
+        # Create Login objects
+        job1 = Login(
+            configuration=self.configuration,
+            username='job1',
+            home='home1',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr='1.2.3.4',
+            user_dict=None
+        )
+        job2 = Login(
+            configuration=self.configuration,
+            username='job2',
+            home='home2',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr='5.6.7.8',
+            user_dict=None
+        )
+        # Populate jobs list
+        self.configuration.daemon_conf['jobs'] = [job1, job2]
+
+        # Call the function under test
+        update_login_map(
+            daemon_conf=self.configuration.daemon_conf,
+            changed_users=[],
+            changed_jobs=['job1', 'job2']
+        )
+
+        # Verify login_map
+        login_map = self.configuration.daemon_conf['login_map']
+        self.assertIn('job1', login_map)
+        self.assertIn('job2', login_map)
+        self.assertEqual(login_map['job1'], [job1])
+        self.assertEqual(login_map['job2'], [job2])
+
+    def test_update_login_map_shares(self):
+        """Verify login_map is updated correctly for changed shares."""
+        # Create Login objects
+        share1 = Login(
+            configuration=self.configuration,
+            username='share1',
+            home='home1',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        share2 = Login(
+            configuration=self.configuration,
+            username='share2',
+            home='home2',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        # Populate shares list
+        self.configuration.daemon_conf['shares'] = [share1, share2]
+
+        # Call the function under test
+        update_login_map(
+            daemon_conf=self.configuration.daemon_conf,
+            changed_users=[],
+            changed_shares=['share1', 'share2']
+        )
+
+        # Verify login_map
+        login_map = self.configuration.daemon_conf['login_map']
+        self.assertIn('share1', login_map)
+        self.assertIn('share2', login_map)
+        self.assertEqual(login_map['share1'], [share1])
+        self.assertEqual(login_map['share2'], [share2])
+
+    def test_update_login_map_jupyter(self):
+        """Verify login_map is updated correctly for changed jupyter mounts."""
+        # Create Login objects
+        jupyter1 = Login(
+            configuration=self.configuration,
+            username='jupyter1',
+            home='home1',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        jupyter2 = Login(
+            configuration=self.configuration,
+            username='jupyter2',
+            home='home2',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        # Populate jupyter_mounts list
+        self.configuration.daemon_conf['jupyter_mounts'] = [jupyter1, jupyter2]
+
+        # Call the function under test
+        update_login_map(
+            daemon_conf=self.configuration.daemon_conf,
+            changed_users=[],
+            changed_jupyter=['jupyter1', 'jupyter2']
+        )
+
+        # Verify login_map
+        login_map = self.configuration.daemon_conf['login_map']
+        self.assertIn('jupyter1', login_map)
+        self.assertIn('jupyter2', login_map)
+        self.assertEqual(login_map['jupyter1'], [jupyter1])
+        self.assertEqual(login_map['jupyter2'], [jupyter2])
+
+    def test_update_login_map_nonexistent(self):
+        """Verify login_map is set to empty list for non-existent usernames."""
+        # Populate users list with one user
+        user1 = Login(
+            configuration=self.configuration,
+            username='user1',
+            home='home1',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        self.configuration.daemon_conf['users'] = [user1]
+
+        # Call the function under test for a non-existent user
+        update_login_map(
+            daemon_conf=self.configuration.daemon_conf,
+            changed_users=['nonexistent']
+        )
+
+        # Verify login_map
+        login_map = self.configuration.daemon_conf['login_map']
+        self.assertIn('nonexistent', login_map)
+        self.assertEqual(login_map['nonexistent'], [])
+
+    def test_update_login_map_empty_lists(self):
+        """Verify login_map is not changed when changed lists are empty."""
+        # Populate users list
+        user1 = Login(
+            configuration=self.configuration,
+            username='user1',
+            home='home1',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        self.configuration.daemon_conf['users'] = [user1]
+
+        # Call the function under test with empty lists
+        update_login_map(
+            daemon_conf=self.configuration.daemon_conf,
+            changed_users=[],
+            changed_jobs=[],
+            changed_shares=[],
+            changed_jupyter=[]
+        )
+
+        # Verify login_map is unchanged (should be empty because we didn't update for 'user1')
+        login_map = self.configuration.daemon_conf['login_map']
+        self.assertEqual(len(login_map), 0)
+
+    def test_update_login_map_lock_handling(self):
+        """Basic check that creds_lock is acquired and released."""
+        # Create a Login object
+        user1 = Login(
+            configuration=self.configuration,
+            username='user1',
+            home='home1',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        self.configuration.daemon_conf['users'] = [user1]
+
+        # Call the function under test
+        update_login_map(
+            daemon_conf=self.configuration.daemon_conf,
+            changed_users=['user1']
+        )
+
+        # Verify login_map was updated (lock must have been acquired/released)
+        login_map = self.configuration.daemon_conf['login_map']
+        self.assertIn('user1', login_map)
+        self.assertEqual(login_map['user1'], [user1])
 
 
 if __name__ == '__main__':
