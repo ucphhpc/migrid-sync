@@ -46,8 +46,9 @@ from mig.shared.useradm import (
 
 # Imports of the code under test
 from mig.shared.griddaemons.login import (
-    Login, get_creds_changes, get_share_changes, get_job_changes,
-    login_map_lookup, refresh_share_creds, refresh_user_creds, update_login_map
+    Login, add_user_object, get_creds_changes, get_job_changes,
+    get_share_changes, login_map_lookup, refresh_share_creds,
+    refresh_user_creds, update_login_map
 )
 
 # Imports required for the unit tests themselves
@@ -1703,6 +1704,130 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
         login_map = self.configuration.daemon_conf['login_map']
         self.assertIn('user1', login_map)
         self.assertEqual(login_map['user1'], [user1])
+
+
+class MigSharedGriddaemonsLogin__add_user_object(MigTestCase):
+    """Unit tests for the add_user_object helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up daemon_conf for add_user_object tests."""
+        self.configuration.daemon_conf = {
+            'users': [],
+            'creds_lock': threading.Lock()
+        }
+
+    def test_add_user_object_appends_login(self):
+        """Verify add_user_object appends a Login to users."""
+        user_dict = {'user_id': TEST_USER_DN}
+
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home='home1',
+            password=TEST_USER_PW_HASH,
+            access=READ_WRITE_ACCESS,
+            user_dict=user_dict
+        )
+
+        self.assertEqual(len(self.configuration.daemon_conf['users']), 1)
+        login = self.configuration.daemon_conf['users'][0]
+        self.assertIsInstance(login, Login)
+        self.assertEqual(login.username, TEST_USER_EMAIL)
+        self.assertEqual(login.home, 'home1')
+        self.assertEqual(login.password, TEST_USER_PW_HASH)
+        self.assertIsNone(login.digest)
+        self.assertIsNone(login.public_key)
+        self.assertTrue(login.chroot)
+        self.assertEqual(login.access, READ_WRITE_ACCESS)
+        self.assertEqual(login.user_dict, user_dict)
+
+    def test_add_user_object_adds_public_key_login(self):
+        """Verify add_user_object stores parsed public key logins."""
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home='home1',
+            pubkey=TEST_USER_PUB_KEY,
+            access=READ_WRITE_ACCESS
+        )
+
+        login = self.configuration.daemon_conf['users'][0]
+        self.assertIsNotNone(login.public_key)
+        key_line = "%s %s" % (login.public_key.get_name(),
+                              login.public_key.get_base64())
+        self.assertEqual(key_line, TEST_USER_PUB_KEY)
+
+    def test_add_user_object_adds_digest_login(self):
+        """Verify add_user_object stores digest logins."""
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home='home1',
+            digest='digest-value',
+            access=READ_ONLY_ACCESS
+        )
+
+        login = self.configuration.daemon_conf['users'][0]
+        self.assertEqual(login.digest, 'digest-value')
+        self.assertIsNone(login.password)
+        self.assertIsNone(login.public_key)
+        self.assertEqual(login.access, READ_ONLY_ACCESS)
+
+    def test_add_user_object_without_lock(self):
+        """Verify add_user_object works when creds_lock is not configured."""
+        daemon_conf = self.configuration.daemon_conf
+        daemon_conf.pop('creds_lock')
+
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home='home1'
+        )
+
+        self.assertEqual(len(daemon_conf['users']), 1)
+        self.assertEqual(daemon_conf['users'][0].username, TEST_USER_EMAIL)
+
+    def test_add_user_object_uses_creds_lock(self):
+        """Verify add_user_object acquires and releases creds_lock."""
+        class FakeLock(object):
+            """Small lock double for add_user_object tests."""
+
+            def __init__(self):
+                self.acquired = False
+                self.released = False
+
+            def acquire(self):
+                self.acquired = True
+
+            def release(self):
+                self.released = True
+
+        fake_lock = FakeLock()
+        self.configuration.daemon_conf['creds_lock'] = fake_lock
+
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home='home1'
+        )
+
+        self.assertTrue(fake_lock.acquired)
+        self.assertTrue(fake_lock.released)
+
+    def test_add_user_object_uses_login_as_home_when_home_none(self):
+        """Verify add_user_object normalizes missing home to login name."""
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home=None
+        )
+
+        login = self.configuration.daemon_conf['users'][0]
+        self.assertEqual(login.home, TEST_USER_EMAIL)
 
 
 if __name__ == '__main__':
