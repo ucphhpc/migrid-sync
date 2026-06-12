@@ -134,6 +134,9 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
 
     def before_each(self):
         """Set up test configuration and reset state before each test"""
+        # Force X509 user id format
+        self.configuration.site_user_id_format = X509_USER_ID_FORMAT
+
         _ensure_dirs_needed_for_userdb(self.configuration)
         ensure_dirs_exist(self.configuration.sharelink_home)
 
@@ -196,6 +199,117 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
             configuration=self.configuration,
             username=TEST_USER_SHORT_ID,
             home=self.test_user_home,
+            password=TEST_USER_PW_HASH,
+            digest=None,
+            public_key=TEST_USER_PUB_KEY,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        dummy_user.last_update = current_time
+        daemon_conf['users'].append(dummy_user)
+
+        changed_paths = get_creds_changes(
+            daemon_conf,
+            TEST_USER_SHORT_ID,
+            self.auth_keys_path,
+            self.auth_passwords_path,
+            self.auth_digests_path
+        )
+
+        self.assertEqual(len(changed_paths), 0)
+
+
+class MigSharedGriddaemonsLogin__get_creds_changes_uuid_user_id(MigTestCase):
+    """Unit tests for griddaemons login get_creds_changes function with UUID users"""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance"""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test"""
+        # Force UUID user id format
+        self.configuration.site_user_id_format = UUID_USER_ID_FORMAT
+        # Ensure required directories exist
+        ensure_dirs_exist(self.configuration.mig_system_files)
+        _ensure_dirs_needed_for_userdb(self.configuration)
+        ensure_dirs_exist(self.configuration.sharelink_home)
+
+        self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf['time_stamp'] = 0
+        self.configuration.daemon_conf['users'] = []
+        self.configuration.daemon_conf['allow_publickey'] = True
+        self.configuration.daemon_conf['allow_password'] = True
+        # TODO: enable and test unsafe digest auth, too?
+        # self.configuration.daemon_conf['allow_digest'] = True
+        self.configuration.daemon_conf['allow_digest'] = False
+
+        user_dict = _provision_uuid_test_user(self.configuration, TEST_USER_DN)
+        self.test_user_id = user_id = user_dict['unique_id']
+        client_dir = client_id_dir(TEST_USER_DN)
+        self.test_user_home = os.path.join(self.configuration.user_home,
+                                           user_id)
+        self.test_user_dir = os.path.basename(self.test_user_home)
+        self.test_user_home_x509 = os.path.join(self.configuration.user_home,
+                                                client_dir)
+        self.test_user_dir_x509 = os.path.basename(self.test_user_home_x509)
+        # Make sure X509 link are provisioned as well
+        if not os.path.islink(self.test_user_home_x509):
+            os.symlink(self.test_user_home, self.test_user_home_x509)
+
+        auth_files = _prepare_auth_files(self.test_user_home, ['ssh'])
+        self.auth_keys_path, self.auth_passwords_path = auth_files
+        self.auth_digests_path = None
+
+    def test_get_creds_changes_detects_new_files(self):
+        """Verify that new credential files are detected as changes"""
+        daemon_conf = self.configuration.daemon_conf
+
+        # Create a dummy user with a last_update in the past
+        past_timestamp = time.time() - 3600
+        # NOTE: we use x509 alias over uuid home as in real runs
+        dummy_user = Login(
+            configuration=self.configuration,
+            username=TEST_USER_SHORT_ID,
+            home=self.test_user_home_x509,
+            password=TEST_USER_PW_HASH,
+            digest=None,
+            public_key=TEST_USER_PUB_KEY,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        dummy_user.last_update = past_timestamp
+        daemon_conf['users'].append(dummy_user)
+
+        changed_paths = get_creds_changes(
+            daemon_conf,
+            'user',
+            self.auth_keys_path,
+            self.auth_passwords_path,
+            self.auth_digests_path
+        )
+
+        self.assertIn(self.auth_keys_path, changed_paths)
+        self.assertIn(self.auth_passwords_path, changed_paths)
+        # self.assertIn(self.auth_digests_path, changed_paths)
+
+    def test_get_creds_changes_no_changes(self):
+        """Verify that unchanged credential files return an empty list"""
+        daemon_conf = self.configuration.daemon_conf
+
+        # Set the file modification times to now
+        current_time = time.time()
+
+        # Create a dummy user with last_update matching the file mtime
+        # NOTE: we use x509 alias over uuid home as in real runs
+        dummy_user = Login(
+            configuration=self.configuration,
+            username=TEST_USER_SHORT_ID,
+            home=self.test_user_home_x509,
             password=TEST_USER_PW_HASH,
             digest=None,
             public_key=TEST_USER_PUB_KEY,
