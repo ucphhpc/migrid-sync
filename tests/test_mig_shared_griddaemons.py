@@ -46,8 +46,8 @@ from mig.shared.useradm import (
 
 # Imports of the code under test
 from mig.shared.griddaemons.login import (
-    Login, add_user_object, get_creds_changes, get_job_changes,
-    get_share_changes, login_map_lookup, refresh_share_creds,
+    Login, add_share_object, add_user_object, get_creds_changes,
+    get_job_changes, get_share_changes, login_map_lookup, refresh_share_creds,
     refresh_user_creds, update_login_map
 )
 
@@ -1828,6 +1828,158 @@ class MigSharedGriddaemonsLogin__add_user_object(MigTestCase):
 
         login = self.configuration.daemon_conf['users'][0]
         self.assertEqual(login.home, TEST_USER_EMAIL)
+
+
+class MigSharedGriddaemonsLogin__add_share_object(MigTestCase):
+    """Unit tests for the add_share_object helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up daemon_conf for add_share_object tests."""
+        self.configuration.daemon_conf = {
+            'shares': [],
+            'creds_lock': threading.Lock()
+        }
+
+    def test_add_share_object_appends_login(self):
+        """Verify add_share_object appends a Login to shares."""
+        user_dict = {}
+        home_path = temppath('share_home', self)
+        ensure_dirs_exist(home_path)
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=home_path,
+            password=TEST_RW_SHARE_ID,
+            access=READ_WRITE_ACCESS,
+            user_dict=user_dict
+        )
+        add_share_object(configuration=self.configuration,
+                         login=login.username,
+                         home=home_path,
+                         password=login.password,
+                         access=login.access
+                         )
+        self.assertEqual(len(self.configuration.daemon_conf['shares']), 1)
+        share_login = self.configuration.daemon_conf['shares'][0]
+        self.assertEqual(share_login.username, TEST_RW_SHARE_ID)
+        self.assertEqual(share_login.home, home_path)
+        self.assertEqual(share_login.password, TEST_RW_SHARE_ID)
+        self.assertTrue(share_login.chroot)
+        self.assertEqual(share_login.access, READ_WRITE_ACCESS)
+
+    def test_add_share_object_adds_public_key_login(self):
+        """Verify add_share_object stores parsed public key logins."""
+        home_path = temppath('share_home_pubkey', self)
+        ensure_dirs_exist(home_path)
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=home_path,
+            password=TEST_RW_SHARE_ID,
+            access=READ_WRITE_ACCESS
+        )
+        add_share_object(
+            configuration=self.configuration,
+            login=login,
+            home=home_path,
+            pubkey=TEST_USER_PUB_KEY
+        )
+        share_login = self.configuration.daemon_conf['shares'][0]
+        self.assertIsNotNone(share_login.public_key)
+        key_line = "%s %s" % (share_login.public_key.get_name(),
+                              share_login.public_key.get_base64())
+        self.assertEqual(key_line, TEST_USER_PUB_KEY)
+
+    def test_add_share_object_adds_digest_login(self):
+        """Verify add_share_object stores digest logins."""
+        home_path = temppath('share_home_digest', self)
+        ensure_dirs_exist(home_path)
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RO_SHARE_ID,
+            home=home_path,
+            password=TEST_RO_SHARE_ID,
+            access=READ_ONLY_ACCESS
+        )
+        add_share_object(
+            configuration=self.configuration,
+            login=login,
+            home=home_path,
+            digest='digest-value',
+            access=READ_ONLY_ACCESS
+        )
+        share_login = self.configuration.daemon_conf['shares'][0]
+        self.assertEqual(share_login.digest, 'digest-value')
+        self.assertIsNone(share_login.password)
+        self.assertIsNone(share_login.public_key)
+        self.assertEqual(share_login.access, READ_ONLY_ACCESS)
+
+    def test_add_share_object_without_lock(self):
+        """Verify add_share_object works when creds_lock is not configured."""
+        daemon_conf = self.configuration.daemon_conf
+        daemon_conf.pop('creds_lock')
+        home_path = temppath('share_home_nolock', self)
+        ensure_dirs_exist(home_path)
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=home_path,
+            password=TEST_RW_SHARE_ID,
+            access=READ_WRITE_ACCESS
+        )
+        add_share_object(configuration=self.configuration,
+                         login=login.username,
+                         home=home_path)
+        self.assertEqual(len(daemon_conf['shares']), 1)
+        self.assertEqual(daemon_conf['shares'][0].username, TEST_RW_SHARE_ID)
+
+    def test_add_share_object_uses_creds_lock(self):
+        """Verify add_share_object acquires and releases creds_lock."""
+        class FakeLock(object):
+            def __init__(self):
+                self.acquired = False
+                self.released = False
+
+            def acquire(self):
+                self.acquired = True
+
+            def release(self):
+                self.released = True
+        fake_lock = FakeLock()
+        self.configuration.daemon_conf['creds_lock'] = fake_lock
+        home_path = temppath('share_home_lock', self)
+        ensure_dirs_exist(home_path)
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=home_path,
+            password=TEST_RW_SHARE_ID,
+            access=READ_WRITE_ACCESS
+        )
+        add_share_object(configuration=self.configuration,
+                         login=login.username,
+                         home=home_path)
+        self.assertTrue(fake_lock.acquired)
+        self.assertTrue(fake_lock.released)
+
+    def test_add_share_object_uses_login_as_home_when_home_none(self):
+        """Verify add_share_object normalizes missing home to login name."""
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=None,
+            password=TEST_RW_SHARE_ID,
+            access=READ_WRITE_ACCESS
+        )
+        add_share_object(configuration=self.configuration,
+                         login=login.username,
+                         home=None)
+        share_login = self.configuration.daemon_conf['shares'][0]
+        self.assertEqual(share_login.home, TEST_RW_SHARE_ID)
 
 
 if __name__ == '__main__':
