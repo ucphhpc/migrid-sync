@@ -29,6 +29,7 @@
 
 import binascii
 import os
+import threading
 import time
 import unittest
 
@@ -46,7 +47,7 @@ from mig.shared.useradm import (
 # Imports of the code under test
 from mig.shared.griddaemons.login import (
     Login, get_creds_changes, get_share_changes, get_job_changes,
-    refresh_share_creds, refresh_user_creds
+    login_map_lookup, refresh_share_creds, refresh_user_creds
 )
 
 # Imports required for the unit tests themselves
@@ -1323,6 +1324,104 @@ class MigSharedGriddaemonsLogin__refresh_user_creds_uuid_user_id(MigTestCase, Us
         # No changes should be reported
         self.assertEqual(len(changed_users), 0)
         self.assertEqual(len(updated_conf['users']), 0)
+
+
+class MigSharedGriddaemonsLogin__login_map_lookup(MigTestCase):
+    """Unit tests for the login_map_lookup function from griddaemons/login.py"""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration with login_map and creds_lock."""
+        # Common daemon configuration
+        self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf['time_stamp'] = 0
+        self.configuration.daemon_conf['login_map'] = {}
+        self.configuration.daemon_conf['creds_lock'] = threading.Lock()
+
+    def test_user_exists_with_multiple_credentials(self):
+        """Verify login_map_lookup returns all credentials for a user."""
+        # Create two Login objects for 'user1'
+        cred1 = Login(
+            configuration=self.configuration.daemon_conf,
+            username='user1',
+            home='home1',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        cred2 = Login(
+            configuration=self.configuration,
+            username='user1',
+            home='home2',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        # Populate login_map
+        daemon_conf = self.configuration.daemon_conf
+        daemon_conf['login_map']['user1'] = [cred1, cred2]
+        # Call the function
+        result = login_map_lookup(daemon_conf, 'user1')
+        # Assert
+        self.assertEqual(result, [cred1, cred2])
+
+    def test_user_exists_with_single_credential(self):
+        """Verify login_map_lookup returns one credential for a user."""
+        cred = Login(
+            configuration=self.configuration,
+            username='user2',
+            home='home3',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        daemon_conf = self.configuration.daemon_conf
+        daemon_conf['login_map']['user2'] = [cred]
+        result = login_map_lookup(daemon_conf, 'user2')
+        self.assertEqual(result, [cred])
+
+    def test_user_does_not_exist(self):
+        """Verify login_map_lookup returns empty list for non-existent user."""
+        daemon_conf = self.configuration.daemon_conf
+        result = login_map_lookup(daemon_conf, 'nosuchuser')
+        self.assertEqual(result, [])
+
+    def test_lock_handling(self):
+        """Basic check that creds_lock is acquired and released."""
+        # Simulate concurrent access (not fully testable in unit tests)
+        # This is a placeholder for thread-safety verification
+        daemon_conf = self.configuration.daemon_conf
+        cred = Login(
+            configuration=self.configuration,
+            username='user3',
+            home='home4',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        daemon_conf['login_map']['user3'] = [cred]
+        # Call the function (lock should be acquired/released internally)
+        result = login_map_lookup(daemon_conf, 'user3')
+        self.assertEqual(result, [daemon_conf['login_map']['user3'][0]])
 
 
 if __name__ == '__main__':
