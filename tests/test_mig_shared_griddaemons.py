@@ -48,7 +48,7 @@ from mig.shared.useradm import (
 from mig.shared.griddaemons.login import (
     Login, add_share_object, add_user_object, get_creds_changes,
     get_job_changes, get_share_changes, login_map_lookup, refresh_share_creds,
-    refresh_user_creds, update_login_map
+    refresh_user_creds, update_login_map, update_user_objects
 )
 
 # Imports required for the unit tests themselves
@@ -125,6 +125,11 @@ def _prepare_auth_files(home_path, auth_protos=None):
             creds_fd.write(TEST_USER_PW_HASH)
         auth_files.append(authpasswords_path)
     return auth_files
+
+
+def _parse_pkey_to_openssh_format(paramiko_pkey):
+    """Convert a parsed pub key on paramiko PKey format to openssh format"""
+    return "%s %s" % (paramiko_pkey.get_name(), paramiko_pkey.get_base64())
 
 
 class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
@@ -709,7 +714,7 @@ class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
         # self.assertEqual(share_login[0].password, share_pw_hash)
         # Convert saved paramiko.PKey back to openssh pub key format and check
         login_key = share_login[1].public_key
-        result = "%s %s" % (login_key.get_name(), login_key.get_base64())
+        result = _parse_pkey_to_openssh_format(login_key)
         self.assertEqual(result, TEST_USER_PUB_KEY)
 
     def test_refresh_share_creds_no_changes(self):
@@ -1980,6 +1985,187 @@ class MigSharedGriddaemonsLogin__add_share_object(MigTestCase):
                          home=None)
         share_login = self.configuration.daemon_conf['shares'][0]
         self.assertEqual(share_login.home, TEST_RW_SHARE_ID)
+
+
+class MigSharedGriddaemonsLogin__update_user_objects(MigTestCase):
+    """Unit tests for the update_user_objects helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test."""
+        # Ensure required directories exist
+        _ensure_dirs_needed_for_userdb(self.configuration)
+        self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf['users'] = []
+        self.configuration.daemon_conf['root_dir'] = self.configuration.user_home
+        self.configuration.daemon_conf['db_path'] = os.path.join(
+            self.configuration.user_db_home, "MiG-users.db")
+        self.configuration.daemon_conf['allow_publickey'] = True
+        self.configuration.daemon_conf['allow_password'] = True
+        self.configuration.daemon_conf['allow_digest'] = False
+
+        # Create a test user home
+        self.test_user_home = self._provision_test_user(self, TEST_USER_DN)
+        self.test_user_dir = os.path.basename(self.test_user_home)
+
+        # Create auth files for the user
+        self.ssh_auth_paths = _prepare_auth_files(self.test_user_home, ['ssh'])
+        self.ssh_auth_keys_path, self.ssh_auth_pw_path = self.ssh_auth_paths
+
+    def test_update_user_objects_adds_passwords(self):
+        """Verify that update_user_objects adds Login objects for passwords."""
+        daemon_conf = self.configuration.daemon_conf
+        # Extract the .PROTO/authorized_keys part from auth_keys_path
+        authkeys = self.ssh_auth_keys_path.replace(self.test_user_home, '')
+        authkeys = authkeys.lstrip(os.sep)
+        authpw = self.ssh_auth_pw_path.replace(self.test_user_home, '')
+        authpw = authpw.lstrip(os.sep)
+        authprotos = (authkeys, authpw, None)
+        user_tuple = (TEST_USER_DN, TEST_USER_EMAIL, self.test_user_dir,
+                      TEST_USER_SHORT_ID, TEST_USER_EMAIL)
+        # Call the helper
+        update_user_objects(
+            configuration=self.configuration,
+            auth_file=authpw,
+            path=self.ssh_auth_pw_path,
+            user_vars=user_tuple,
+            auth_protos=authprotos,
+            private_auth_file=True
+        )
+
+        # Verify that three aliased pw logins were added
+        pw_logins = [u for u in daemon_conf['users'] if u.password is not None]
+        self.assertEqual(len(pw_logins), 3)
+        for entry in pw_logins:
+            self.assertIn(entry.username, (TEST_USER_DN, TEST_USER_EMAIL,
+                                           TEST_USER_SHORT_ID))
+            self.assertEqual(entry.home, self.test_user_dir)
+            self.assertEqual(entry.access, READ_WRITE_ACCESS)
+            self.assertEqual(entry.password, TEST_USER_PW_HASH)
+
+        # Verify that no key logins were added
+        key_logins = [u for u in daemon_conf['users']
+                      if u.public_key is not None]
+        self.assertEqual(len(key_logins), 0)
+        # Verify that no digest logins were added
+        digest_logins = [u for u in daemon_conf['users']
+                         if u.digest is not None]
+        self.assertEqual(len(digest_logins), 0)
+
+    def test_update_user_objects_adds_keys(self):
+        """Verify that update_user_objects adds Login objects for keys."""
+        daemon_conf = self.configuration.daemon_conf
+        # Extract the .PROTO/authorized_keys part from auth_keys_path
+        authkeys = self.ssh_auth_keys_path.replace(self.test_user_home, '')
+        authkeys = authkeys.lstrip(os.sep)
+        authpw = self.ssh_auth_pw_path.replace(self.test_user_home, '')
+        authpw = authpw.lstrip(os.sep)
+        authprotos = (authkeys, authpw, None)
+        user_tuple = (TEST_USER_DN, TEST_USER_EMAIL, self.test_user_dir,
+                      TEST_USER_SHORT_ID, TEST_USER_EMAIL)
+        # Call the helper
+        update_user_objects(
+            configuration=self.configuration,
+            auth_file=authkeys,
+            path=self.ssh_auth_keys_path,
+            user_vars=user_tuple,
+            auth_protos=authprotos,
+            private_auth_file=True
+        )
+
+        # Verify that three aliased key logins were added (dupe keys ignored)
+        key_logins = [u for u in daemon_conf['users'] if u.public_key is not
+                      None]
+        self.assertEqual(len(key_logins), 3)
+
+        for entry in key_logins:
+            self.assertIn(entry.username, (TEST_USER_DN, TEST_USER_EMAIL,
+                                           TEST_USER_SHORT_ID))
+            self.assertEqual(entry.home, self.test_user_dir)
+            self.assertEqual(entry.access, READ_WRITE_ACCESS)
+            login_key = entry.public_key
+            result = _parse_pkey_to_openssh_format(login_key)
+            self.assertEqual(result, TEST_USER_PUB_KEY)
+
+        # Verify that no password logins were added
+        pw_logins = [u for u in daemon_conf['users'] if u.password is not None]
+        self.assertEqual(len(pw_logins), 0)
+        # Verify that no digest logins were added
+        digest_logins = [u for u in daemon_conf['users']
+                         if u.digest is not None]
+        self.assertEqual(len(digest_logins), 0)
+
+    def test_update_user_objects_removes_old_entries(self):
+        """Verify that update_user_objects cleans old entries for the same user."""
+        daemon_conf = self.configuration.daemon_conf
+        # Extract the .PROTO/authorized_passwords part from auth_pw_path
+        authpw = self.ssh_auth_pw_path.replace(self.test_user_home, '')
+        authpw = authpw.lstrip(os.sep)
+        authprotos = (None, authpw, None)
+        user_tuple = (TEST_USER_DN, TEST_USER_EMAIL, self.test_user_dir,
+                      None, None)
+        # Create a dummy user with a last_update in the past to remove in test
+        past_timestamp = time.time() - 3600
+        dummy_user = Login(
+            configuration=self.configuration,
+            username=TEST_USER_EMAIL,
+            home=self.test_user_dir,
+            password=TEST_USER_PW_HASH,
+            access=READ_WRITE_ACCESS
+        )
+        dummy_user.last_update = past_timestamp
+        daemon_conf['users'].append(dummy_user)
+        # Remove saved password
+        os.remove(self.ssh_auth_pw_path)
+
+        # Call the helper
+        update_user_objects(
+            configuration=self.configuration,
+            auth_file=authpw,
+            path=self.ssh_auth_pw_path,
+            user_vars=user_tuple,
+            auth_protos=authprotos,
+            private_auth_file=True
+        )
+
+        # Old entry should be removed
+        usernames = [u.username for u in daemon_conf['users']]
+        self.assertNotIn(TEST_USER_DN, usernames, "Old entry was not removed")
+
+    def test_update_user_objects_no_changes(self):
+        """Verify that calling update_user_objects with unchanged files does not duplicate entries."""
+        daemon_conf = self.configuration.daemon_conf
+        # Extract the .PROTO/authorized_passwords part from auth_pw_path
+        authpw = self.ssh_auth_pw_path.replace(self.test_user_home, '')
+        authpw = authpw.lstrip(os.sep)
+        authprotos = (None, authpw, None)
+        user_tuple = (TEST_USER_DN, None, self.test_user_dir,
+                      None, None)
+        # First call to populate
+        update_user_objects(
+            configuration=self.configuration,
+            auth_file=authpw,
+            path=self.ssh_auth_pw_path,
+            user_vars=user_tuple,
+            auth_protos=authprotos,
+            private_auth_file=True
+        )
+        initial_count = len(daemon_conf['users'])
+
+        # Second call with same files
+        update_user_objects(
+            configuration=self.configuration,
+            auth_file=authpw,
+            path=self.ssh_auth_pw_path,
+            user_vars=user_tuple,
+            auth_protos=authprotos,
+            private_auth_file=True
+        )
+        self.assertEqual(len(daemon_conf['users']), initial_count,
+                         "Duplicate entries were added on second call")
 
 
 if __name__ == '__main__':
