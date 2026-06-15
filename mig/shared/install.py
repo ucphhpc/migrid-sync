@@ -544,6 +544,8 @@ def generate_confs(
     datasafety_link='',
     datasafety_text='',
     wwwserve_max_bytes=-1,
+    templates_cache_dir=keyword_auto,
+    templates_base_packages='',
     _getpwnam=pwd.getpwnam,
     _prepare=None,
     _writefiles=None,
@@ -618,6 +620,9 @@ def generate_confs(
 
     if timezone == keyword_auto:
         timezone = determine_timezone()
+
+    if templates_cache_dir == keyword_auto:
+        expanded['templates_cache_dir'] = '%(state_path)s/templates'
 
     options = {
         'command_line': generateconfs_command,
@@ -872,6 +877,8 @@ def _generate_confs_prepare(
     datasafety_link,
     datasafety_text,
     wwwserve_max_bytes,
+    templates_cache_dir,
+    templates_base_packages,
 ):
     """Prepate conf generator run"""
     user_dict = {}
@@ -1132,6 +1139,8 @@ def _generate_confs_prepare(
     user_dict['__DATASAFETY_LINK__'] = datasafety_link
     user_dict['__DATASAFETY_TEXT__'] = datasafety_text
     user_dict['__WWWSERVE_MAX_BYTES__'] = "%d" % (wwwserve_max_bytes)
+    user_dict['__TEMPLATES_CACHE_DIR__'] = "%s" % (templates_cache_dir)
+    user_dict['__TEMPLATES_BASE_PACKAGES__'] = "%s" % (templates_base_packages)
 
     user_dict['__MIG_USER__'] = "%s" % (options['user_uname'])
     user_dict['__MIG_GROUP__'] = "%s" % (options['user_group'])

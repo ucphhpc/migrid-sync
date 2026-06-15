@@ -28,22 +28,23 @@
 """Unit tests for the MiG WSGI glue"""
 
 import codecs
+from configparser import ConfigParser
+from html.parser import HTMLParser
 import importlib
 import os
+import shutil
 import stat
 import sys
 import unittest
-from configparser import ConfigParser
-from html.parser import HTMLParser
 
 # Imports required for the unit test wrapping
-import mig.shared.returnvalues as returnvalues
 from mig.shared.base import allow_script, brief_list, client_dir_id, \
     client_id_dir, get_short_id, invisible_path
+import mig.shared.returnvalues as returnvalues
 from mig.shared.compat import SimpleNamespace
 # Imports required for the unit tests themselves
-from tests.support import MIG_BASE, MigTestCase, ensure_dirs_exist, \
-    is_path_within, testmain
+from tests.support import MIG_BASE, TEST_DATA_DIR, TEST_OUTPUT_DIR, \
+    MigTestCase, testmain
 from tests.support.snapshotsupp import SnapshotAssertMixin
 from tests.support.wsgisupp import WsgiAssertMixin, prepare_wsgi
 
@@ -243,12 +244,18 @@ class MigWsgibin(MigTestCase, SnapshotAssertMixin, WsgiAssertMixin):
         self.assertSnapshot(output, extension='html')
 
 
+TEST_TEMPLATE_CACHE_DIR = os.path.join(TEST_OUTPUT_DIR, '__template_cache__')
+
+
 class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
                                 SnapshotAssertMixin):
     """Unit tests for output_object related part of wsgi functions."""
 
     def _provide_configuration(self):
         return 'testconfig'
+
+    def after_each(self):
+        shutil.rmtree(TEST_TEMPLATE_CACHE_DIR, ignore_errors=True)
 
     def before_each(self):
         self.fake_backend = FakeBackend()
@@ -263,6 +270,28 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
             _import_module=self.fake_backend.to_import_module(),
             _set_os_environ=False,
         )
+
+    def _arrange_use_of_testplugin(self):
+        templates_division = self.configuration.division('TEMPLATES')
+        # overwrite the template source and cache directory to known locations for
+        # the duration of the tests. this allows us to control which templates are
+        # available as well as ensures the template cache directory is cleaned out
+        # on test completion as part of the standard output directory cleanup
+        templates_division.__dict__.update({
+            'base_packages': ['testplugin'],
+            'cache_dir': TEST_TEMPLATE_CACHE_DIR,
+        })
+
+        # provision template directories
+        os.makedirs(TEST_TEMPLATE_CACHE_DIR)
+
+        # allow the dummy plugin to be loaded
+        sys.path.append(TEST_DATA_DIR)
+        self._register_check(lambda: sys.path.pop())
+
+        import testplugin
+        for package_name in testplugin.TEMPLATE_PACKAGES:
+            os.makedirs(os.path.join(TEST_TEMPLATE_CACHE_DIR, package_name))
 
     def assertIsValidHtmlDocument(self, value):
         parser = DocumentBasicsHtmlParser()
@@ -289,7 +318,6 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
 
     def test_objects_with_type_text(self):
         output_objects = [
-            # workaround invalid HTML being generated with no title object
             {
                 'object_type': 'title',
                 'text': 'TEST'
@@ -308,6 +336,48 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
 
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
         self.assertSnapshotOfHtmlContent(output)
+
+    def test_objects_with_type_template(self):
+        output_objects = [
+            {
+                'object_type': 'template',
+                'template_name': 'test_something',
+                'template_group': 'testplugin',
+                'template_args': {
+                    'greeting': 'here!!'
+                }
+            }
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+        self._arrange_use_of_testplugin()
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        self.assertSnapshotOfHtmlContent(output, is_fragment=True)
+
+    def test_objects_with_type_template_without_args(self):
+        output_objects = [
+            {
+                'object_type': 'template',
+                'template_name': 'test_empty',
+                'template_group': 'testplugin',
+                'template_args': {}
+            }
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+        self._arrange_use_of_testplugin()
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        self.assertSnapshotOfHtmlContent(output, is_fragment=True)
 
 
 class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin,

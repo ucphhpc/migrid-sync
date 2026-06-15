@@ -284,9 +284,9 @@ class MigTestCase(TestCase):
         entries = os.listdir(absolute_path)
         assert not entries, "directory is not empty"
 
-    def assertDirNotEmpty(self, relative_path):
+    def assertDirNotEmpty(self, relative_path, allow_anypath=False):
         """Make sure the supplied path is a non-empty directory"""
-        path_kind = self.assertPathExists(relative_path)
+        path_kind = self.assertPathExists(relative_path, allow_anypath=allow_anypath)
         assert path_kind == "dir", "expected a directory but found %s" % (
             path_kind, )
         absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
@@ -320,13 +320,15 @@ included:
             path_kind, )
         return os.path.join(TEST_OUTPUT_DIR, relative_path)
 
-    def assertPathExists(self, relative_path):
+    def assertPathExists(self, relative_path, allow_anypath=False):
         """Make sure file in relative_path exists"""
-        if os.path.isabs(relative_path):
-            self.assertPathWithin(relative_path, start=TEST_OUTPUT_DIR)
+        if not os.path.isabs(relative_path):
+            absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+        elif allow_anypath:
             absolute_path = relative_path
         else:
-            absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+            self.assertPathWithin(relative_path, start=TEST_OUTPUT_DIR)
+            absolute_path = relative_path
         return MigTestCase._absolute_path_kind(absolute_path)
 
     def assertLogs(self, name=None, level=None):

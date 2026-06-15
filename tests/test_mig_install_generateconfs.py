@@ -33,7 +33,8 @@ import importlib
 import os
 import sys
 
-from tests.support import MIG_BASE, MigTestCase, testmain, cleanpath
+from tests.support import MIG_BASE, TEST_OUTPUT_DIR, \
+                          MigTestCase, testmain, cleanpath
 
 
 def _import_generateconfs():
@@ -98,6 +99,38 @@ class MigInstallGenerateconfs__main(MigTestCase):
         settings = fake_generate_confs.settings
         self.assertIn('storage_protocols', settings)
         self.assertEqual(settings['storage_protocols'], 'proto1 proto2 proto3')
+
+    def test_option_templates_base_package(self):
+        expected_generated_dir = cleanpath('confs-stdlocal', self,
+                                           ensure_dir=True)
+        with open(os.path.join(expected_generated_dir, "instructions.txt"),
+                  "w"):
+            pass
+        fake_generate_confs = create_fake_generate_confs(
+            dict(destination_dir=expected_generated_dir))
+        test_arguments = ['--templates_base_packages', 'pkg1,pkg2,pkg3']
+
+        exit_code = main(
+            test_arguments, _generate_confs=fake_generate_confs, _print=noop)
+        settings = fake_generate_confs.settings
+        self.assertIn('templates_base_packages', settings)
+        self.assertEqual(settings['templates_base_packages'], 'pkg1,pkg2,pkg3')
+
+    def test_option_templates_cache_dir(self):
+        expected_generated_dir = cleanpath('confs-stdlocal', self,
+                                           ensure_dir=True)
+        with open(os.path.join(expected_generated_dir, "instructions.txt"),
+                  "w"):
+            pass
+        fake_generate_confs = create_fake_generate_confs(
+            dict(destination_dir=expected_generated_dir))
+        test_arguments = ['--templates_cache_dir', "/path/to/__template_cache"]
+
+        exit_code = main(
+            test_arguments, _generate_confs=fake_generate_confs, _print=noop)
+        settings = fake_generate_confs.settings
+        self.assertIn('templates_cache_dir', settings)
+        self.assertEqual(settings['templates_cache_dir'], "/path/to/__template_cache")
 
     def test_option_wwwserve_max_bytes(self):
         expected_generated_dir = cleanpath('confs-stdlocal', self,

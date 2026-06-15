@@ -218,6 +218,8 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'ca_smtp',
         'datasafety_link',
         'datasafety_text',
+        'templates_cache_dir',
+        'templates_base_packages',
     ]
     int_names = [
         'cert_valid_days',

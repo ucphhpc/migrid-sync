@@ -38,11 +38,13 @@ except Exception as exc:
     exit(1)
 
 from past.builtins import basestring
+import inspect
 import os
 import sys
 import time
 import traceback
 
+from mig.lib.templates import render_html_template
 from mig.shared import returnvalues
 from mig.shared.bailout import bailout_title, crash_helper, \
     filter_output_objects
@@ -52,7 +54,7 @@ from mig.shared.base import hexlify
 from mig.shared.defaults import file_dest_sep, keyword_any, keyword_updating
 from mig.shared.htmlgen import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
-from mig.shared.init import find_entry
+from mig.shared.init import find_entry, find_entry_index
 from mig.shared.objecttypes import validate
 from mig.shared.prettyprinttable import pprint_table
 from mig.shared.pwcrypto import sorted_hash_algos
@@ -62,6 +64,17 @@ from mig.shared.safeinput import html_escape
 row_name = ('even', 'odd')
 _valid_output_formats = ['txt', 'html', 'soap', 'pickle', 'pickle1', 'pickle2',
                          'yaml', 'xmlrpc', 'resource', 'json', 'file']
+
+
+def kwargs_for_functionality(main, configuration=None, environ=None):
+    parameters = inspect.signature(main).parameters
+
+    kwargs = dict()
+    if 'configuration' in parameters:
+        kwargs['configuration'] = configuration
+    if 'environ' in parameters:
+        kwargs['environ'] = environ
+    return kwargs
 
 
 def reject_main(client_id, user_arguments_dict):
@@ -735,9 +748,28 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     <span class='spacer'></span>
     </div>
 """ % (ret_val, ret_msg)
+
+    # The title entry controls what should be included in the start of a page.
+    # Meanwhile, the logic has writing a page _footer_ being conditional on
+    # status_line - which is always set (something that appears very likely a
+    # regression that crept in over time). Thus, in order to omit the usual
+    # page wrapping as is needed when returning a page fragment rendered from
+    # a template, when we omit the title also clear the status line which makes
+    # the preexisting conditional omit the footer and "hey presto" - raw html!
+    should_send_document = bool(find_entry(out_obj, 'title'))
+    if not should_send_document:
+        status_line = None
+
     for i in out_obj:
         if i['object_type'] == 'start':
             pass
+        elif i['object_type'] == 'template':
+            lines.append(render_html_template(
+                configuration,
+                i['template_name'],
+                i['template_group'],
+                i['template_args'],
+            ))
         elif i['object_type'] == 'error_text':
             msg = "%(text)s" % i
             if i.get('exc', False):
@@ -2678,9 +2710,17 @@ def xmlrpc_format(configuration, ret_val, ret_msg, out_obj):
 def json_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in json format"""
 
+    start_entry_index = find_entry_index(out_obj, 'start')
+    if start_entry_index > -1:
+        # do not send the start entry in the output JSON
+        objects_to_dump = list(out_obj)
+        objects_to_dump.pop(start_entry_index)
+    else:
+        objects_to_dump = out_obj
+
     # python >=2.6 includes native json module with loads/dumps methods
     import json
-    return json.dumps(out_obj)
+    return json.dumps(objects_to_dump)
 
 
 def resource_format(configuration, ret_val, ret_msg, out_obj):
@@ -2785,7 +2825,7 @@ def format_output(
     logger = configuration.logger
     # logger.debug("format output to %s" % outputformat)
     valid_formats = get_valid_outputformats()
-    (val_ret, val_msg) = validate(out_obj)
+    (val_ret, val_msg) = validate(out_obj, configuration)
     if not val_ret:
         logger.error("%s formatting failed: %s (%s)" %
                      (outputformat, val_msg, val_ret))

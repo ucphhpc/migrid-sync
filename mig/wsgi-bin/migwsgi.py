@@ -44,7 +44,8 @@ from mig.shared.base import requested_backend, allow_script, \
 from mig.shared.defaults import download_block_size, default_fs_coding
 from mig.shared.conf import get_configuration_object
 from mig.shared.objecttypes import get_object_type_info
-from mig.shared.output import validate, format_output, dummy_main, reject_main
+from mig.shared.output import validate, format_output, \
+    kwargs_for_functionality, dummy_main, reject_main
 from mig.shared.safeinput import valid_backend_name, html_escape, InputException
 from mig.shared.scriptinput import fieldstorage_to_dict, FixedFieldStorage
 
@@ -124,8 +125,12 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         return (output_objects, returnvalues.INVALID_ARGUMENT)
 
     try:
+        main_kwargs = kwargs_for_functionality(main,
+                                               configuration=configuration,
+                                               environ=environ)
         (output_objects, (ret_code, ret_msg)) = main(client_id,
-                                                     user_arguments_dict)
+                                                     user_arguments_dict,
+                                                     **main_kwargs)
     except Exception as err:
         import traceback
         _logger.error("%s script crashed:\n%s" % (_addr,
@@ -133,7 +138,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         crash_helper(configuration, backend, output_objects)
         return (output_objects, returnvalues.ERROR)
 
-    (val_ret, val_msg) = validate(output_objects)
+    (val_ret, val_msg) = validate(output_objects, configuration=configuration)
     if not val_ret:
         (ret_code, ret_msg) = returnvalues.OUTPUT_VALIDATION_ERROR
         bailout_helper(configuration, backend, output_objects,

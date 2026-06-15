@@ -37,6 +37,7 @@ from builtins import object
 import base64
 import copy
 import datetime
+from enum import Enum
 import functools
 import inspect
 import os
@@ -45,6 +46,7 @@ import re
 import socket
 import sys
 import time
+from types import SimpleNamespace
 
 # Init future py2/3 compatibility helpers
 
@@ -61,7 +63,8 @@ else:
 # NOTE: protect migrid import from autopep8 reordering
 try:
     from mig.shared.base import force_native_str
-    from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
+    from mig.shared.defaults import MIG_BASE, \
+        CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
         CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
         POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, cert_field_order, \
         default_css_filename, keyword_any, keyword_auto, keyword_all, \
@@ -84,6 +87,7 @@ _CONFIGURATION_NOFORWARD_KEYS = set([
     'skip_log',
     'verbose',
     'logger',
+    '_divisions',
 ])
 
 
@@ -192,14 +196,14 @@ def expand_external_sources(logger, val):
     return expanded
 
 
-def fix_missing(config_file, verbose=True):
-    """Add missing configuration options - used by checkconf script"""
+class _SubstitutePlaceholders(Enum):
+    ADMIN_EMAIL = object()
+    FQDN = object()
+    MIGSERVER_HTTPURL = object()
+    MIGSERVER_ID = object()
 
-    config = ConfigParser()
-    config.read([config_file])
 
-    fqdn = socket.getfqdn()
-    user = os.environ['USER']
+def _generate_fix_missing_definitions():
     global_section = {
         'enable_server_dist': False,
         'auto_add_cert_user': False,
@@ -210,9 +214,9 @@ def fix_missing(config_file, verbose=True):
         'auto_add_user_with_peer': 'distinguished_name:.*',
         'auto_add_filter_method': '',
         'auto_add_filter_fields': '',
-        'server_fqdn': fqdn,
+        'server_fqdn': _SubstitutePlaceholders.FQDN,
         'support_email': '',
-        'admin_email': '%s@%s' % (user, fqdn),
+        'admin_email': _SubstitutePlaceholders.ADMIN_EMAIL,
         'admin_list': '',
         'ca_fqdn': '',
         'ca_smtp': '',
@@ -286,36 +290,36 @@ def fix_missing(config_file, verbose=True):
         'trac_admin_path': '/usr/bin/trac-admin',
         'trac_ini_path': '~/mig/server/trac.ini',
         'trac_id_field': 'email',
-        'migserver_http_url': 'http://%%(server_fqdn)s',
+        'migserver_http_url': _SubstitutePlaceholders.MIGSERVER_HTTPURL,
         'migserver_https_url': '',
         'myfiles_py_location': '',
-        'mig_server_id': '%s.0' % fqdn,
+        'mig_server_id': _SubstitutePlaceholders.MIGSERVER_ID,
         'empty_job_name': 'no_suitable_job-',
-        'smtp_server': fqdn,
+        'smtp_server': _SubstitutePlaceholders.FQDN,
         'smtp_sender': '',
         'smtp_send_as_user': False,
         'smtp_reply_to': '',
-        'user_sftp_address': fqdn,
+        'user_sftp_address': _SubstitutePlaceholders.FQDN,
         'user_sftp_port': 2222,
         'user_sftp_key': '~/certs/combined.pem',
         'user_sftp_key_pub': '~/certs/server.pub',
         'user_sftp_key_md5': '',
         'user_sftp_key_sha256': '',
-        'user_sftp_key_from_dns': '',
+        'user_sftp_key_from_dns': False,
         'user_sftp_auth': ['publickey', 'password'],
         'user_sftp_alias': '',
         'user_sftp_log': 'sftp.log',
-        'user_sftp_subsys_address': fqdn,
+        'user_sftp_subsys_address': _SubstitutePlaceholders.FQDN,
         'user_sftp_subsys_port': 22,
         'user_sftp_subsys_log': 'sftp-subsys.log',
-        'user_davs_address': fqdn,
+        'user_davs_address': _SubstitutePlaceholders.FQDN,
         'user_davs_port': 4443,
         'user_davs_key': '~/certs/combined.pem',
         'user_davs_key_sha256': '',
         'user_davs_auth': ['password'],
         'user_davs_alias': '',
         'user_davs_log': 'davs.log',
-        'user_ftps_address': fqdn,
+        'user_ftps_address': _SubstitutePlaceholders.FQDN,
         'user_ftps_ctrl_port': 8021,
         'user_ftps_pasv_ports': list(range(8100, 8400)),
         'user_ftps_key': '~/certs/combined.pem',
@@ -339,7 +343,7 @@ def fix_missing(config_file, verbose=True):
         'user_imnotify_log': 'imnotify.log',
         'user_chkuserroot_log': 'chkchroot.log',
         'user_chksidroot_log': 'chkchroot.log',
-        'user_openid_address': fqdn,
+        'user_openid_address': _SubstitutePlaceholders.FQDN,
         'user_openid_port': 8443,
         'user_openid_key': '~/certs/combined.pem',
         'user_openid_auth': ['password'],
@@ -410,8 +414,10 @@ def fix_missing(config_file, verbose=True):
                      'user_limit': 1024**4,
                      'vgrid_limit': 1024**4}
     accounting_section = {'update_interval': 3600}
+    templates_section = {'base_packages': keyword_auto,
+                         'cache_dir': keyword_auto}
 
-    defaults = {
+    return {
         'GLOBAL': global_section,
         'SCHEDULER': scheduler_section,
         'MONITOR': monitor_section,
@@ -420,19 +426,57 @@ def fix_missing(config_file, verbose=True):
         'WORKFLOWS': workflows_section,
         'QUOTA': quota_section,
         'ACCOUNTING': accounting_section,
+        'TEMPLATES': templates_section,
     }
-    for section in defaults:
+
+
+def _split_non_empty_list(value):
+    maybe_list = value.split(' ')
+    if len(maybe_list) == 1 and maybe_list[0] == '':
+        return []
+    return maybe_list
+
+
+_FIX_MISSING_DEFINITIONS = _generate_fix_missing_definitions()
+
+
+def fix_missing(config_file, verbose=False, fqdn=None, user=None, print=print):
+    """Add missing configuration options  used by checkconf script"""
+
+    if fqdn is None:
+        fqdn = socket.getfqdn()
+    if user is None:
+        user = os.getenv('USER', 'mig')
+
+    _marker_substitutions = {
+        _SubstitutePlaceholders.ADMIN_EMAIL: "%s@%s" % (user, fqdn),
+        _SubstitutePlaceholders.FQDN: fqdn,
+        _SubstitutePlaceholders.MIGSERVER_HTTPURL: "http://%s" % (fqdn,),
+        _SubstitutePlaceholders.MIGSERVER_ID: '%s.0' % (fqdn,),
+    }
+    assert set(_marker_substitutions.keys()) == set(_SubstitutePlaceholders)
+
+    config = ConfigParser()
+    config.read([config_file])
+
+    modified = False
+    for (section, settings) in _FIX_MISSING_DEFINITIONS.items():
         if not section in config.sections():
             config.add_section(section)
 
-    modified = False
-    for (section, settings) in defaults.items():
         for (option, value) in settings.items():
             if not config.has_option(section, option):
+                if isinstance(value, _SubstitutePlaceholders):
+                    value = _marker_substitutions[value]
+
+                # only string values can be set - coerce the value as is
+                # required so set the same thing as output when verbose
+                value_to_set = str(value)
+
                 if verbose:
                     print('setting %s->%s to %s' % (section, option,
-                                                    value))
-                config.set(section, option, value)
+                                                    value_to_set))
+                config.set(section, option, value_to_set)
                 modified = True
     if modified:
         backup_path = '%s.%d' % (config_file, time.time())
@@ -778,6 +822,9 @@ class Configuration:
         self.logger_obj = None
         self.logger = None
 
+        # structured
+        self._divisions = {}
+
         configuration_properties = copy.deepcopy(_CONFIGURATION_PROPERTIES)
 
         for k, v in configuration_properties.items():
@@ -804,11 +851,9 @@ class Configuration:
         _config_file = _config_file or self.config_file
         assert _config_file is not None
 
-        try:
-            if self.logger:
-                self.logger.info('reloading configuration and reopening log')
-        except:
-            pass
+        _logger = getattr(self, 'logger', None)
+        if _logger:
+            _logger.info('reloading configuration and reopening log')
 
         try:
             config_file_is_path = os.path.isfile(_config_file)
@@ -859,10 +904,12 @@ location.""" % self.config_file)
 
         # reopen or initialize logger
 
-        if self.logger_obj:
-            self.logger_obj.reopen()
+        _logger_obj = getattr(self, 'logger_obj', None)
+        if _logger_obj:
+            _logger_obj.reopen()
         else:
-            self.logger_obj = Logger(self.loglevel, logfile=self.log_path)
+            _logger_obj = Logger(self.loglevel, logfile=self.log_path)
+        self.logger_obj = _logger_obj
 
         logger = self.logger_obj.logger
         self.logger = logger
@@ -1023,6 +1070,9 @@ location.""" % self.config_file)
             except:
                 pass
             raise Exception('Failed to parse configuration: %s' % err)
+
+        # handle structured sections
+        self.apply_loaded_config_to_division('TEMPLATES', config)
 
         # Remaining options in order of importance - i.e. options needed for
         # later parsing must be parsed and set first.
@@ -1670,7 +1720,7 @@ location.""" % self.config_file)
             self.user_openid_providers = providers
         if config.has_option('GLOBAL', 'user_mig_oidc_title'):
             self.user_mig_oidc_title = config.get('GLOBAL',
-                                                  'user_migc_oid_title')
+                                                  'user_mig_oid_title')
         elif self.user_mig_oid_title:
             # Fall back to oid title
             self.user_mig_oidc_title = self.user_mig_oid_title
@@ -2754,6 +2804,43 @@ location.""" % self.config_file)
             logger.debug("default %s twofactor_mandatory_protos in GDP mode."
                          % keyword_all)
             self.site_twofactor_mandatory_protos = [keyword_all]
+
+    def apply_loaded_config_to_division(self, division, config):
+        defaults = _FIX_MISSING_DEFINITIONS[division]
+        relevant = {k: config.get(division, k, fallback=defaults[k])
+                        for k in defaults}
+        normalise_division = getattr(self, "division_normalise_%s" % (division,))
+        normalise_division(relevant)
+
+    def division_normalise_TEMPLATES(self, candidates):
+        division = {}
+        if 'base_packages' not in candidates or \
+                candidates['base_packages'] == keyword_auto:
+            base_packages = []
+        else:
+            base_packages = _split_non_empty_list(candidates['base_packages'])
+        division['base_packages'] = base_packages
+
+        if 'cache_dir' not in candidates or \
+                candidates['cache_dir'] == keyword_auto:
+            cache_dir = os.path.join(MIG_BASE, 'state', 'templates')
+        else:
+            cache_dir = os.path.abspath(candidates['cache_dir'])
+        division['cache_dir'] = cache_dir
+
+        self._divisions['TEMPLATES'] = SimpleNamespace(**division)
+        return self._divisions['TEMPLATES']
+
+    def division(self, section_name, loaded_section=None):
+        if section_name not in _FIX_MISSING_DEFINITIONS:
+            raise NotImplementedError()
+
+        try:
+            return self._divisions[section_name]
+        except KeyError:
+            pass
+
+        return self.division_normalise_TEMPLATES(_FIX_MISSING_DEFINITIONS['TEMPLATES'])
 
     def parse_peers(self, peerfile):
 

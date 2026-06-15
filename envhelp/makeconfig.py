@@ -76,12 +76,14 @@ def write_testconfig(env_name, is_docker=False):
         env_mig_base = '/usr/src/app'
     else:
         env_mig_base = _LOCAL_MIG_BASE
-    conf_dir_path = os.path.join(env_mig_base, "tests/output")
+    envhelp_output_dir = os.path.join(env_mig_base, "envhelp/output")
+    test_output_dir = os.path.join(env_mig_base, "tests/output")
 
     overrides.update(**{
-        'mig_code': os.path.join(conf_dir_path, 'mig'),
-        'mig_certs': os.path.join(conf_dir_path, 'certs'),
-        'mig_state': os.path.join(conf_dir_path, 'state'),
+        'mig_code': os.path.join(test_output_dir, 'mig'),
+        'mig_certs': os.path.join(test_output_dir, 'certs'),
+        'mig_state': os.path.join(test_output_dir, 'state'),
+        'templates_cache_dir': os.path.join(envhelp_output_dir, '__jinja__'),
     })
 
     if is_docker:

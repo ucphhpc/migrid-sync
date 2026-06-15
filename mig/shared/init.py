@@ -80,6 +80,14 @@ def find_entry(output_objects, kind):
     return None
 
 
+def find_entry_index(output_objects, kind):
+    """Find entry in output_objects"""
+    for index, entry in enumerate(output_objects):
+        if kind == entry['object_type']:
+            return index
+    return -1
+
+
 def start_download(configuration, path, output):
     """Helper to set the headers required to force a file download instead of
     plain output delivery. Automatically detects mimetype of path and sets
@@ -117,12 +125,14 @@ def start_error(configuration, output_format, status_pair):
 
 
 def initialize_main_variables(client_id, op_title=True, op_header=True,
-                              op_menu=True):
-    """Script initialization is identical for most scripts in 
+                              op_menu=True, configuration=None):
+    """Script initialization is identical for most scripts in
     shared/functionality. This function should be called in most cases.
     """
 
-    configuration = get_configuration_object()
+    if configuration is None:
+        configuration = get_configuration_object()
+
     logger = configuration.logger
     output_objects = []
     start_entry = make_start_entry()

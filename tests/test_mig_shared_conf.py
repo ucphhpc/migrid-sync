@@ -2,7 +2,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# test_mig_shared_configuration - unit test of configuration
+# test_mig_shared_conf - unit test of conf
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -27,28 +27,25 @@
 
 """Unit tests for shared conf"""
 
-import inspect
-import os
-import unittest
-
-from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain
-from tests.support.fixturesupp import FixtureAssertMixin
-
-from mig.shared.conf import Configuration, \
-                            RuntimeConfiguration, \
-                            get_configuration_object
+from mig.shared.conf import (
+    Configuration,
+    RuntimeConfiguration,
+    get_configuration_object,
+)
+from tests.support import MigTestCase, testmain
 
 
 class MigSharedConf(MigTestCase):
     """Coverage of module methods."""
 
     def test_get_configuration_object_returns_runtime_configuration(self):
-        configuration = get_configuration_object(skip_log=True,
-                                                 disable_auth_log=True)
+        configuration = get_configuration_object(
+            skip_log=True, disable_auth_log=True
+        )
         self.assertIsInstance(configuration, RuntimeConfiguration)
         static_configuration = configuration._configuration
         self.assertIsInstance(static_configuration, Configuration)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()
