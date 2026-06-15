@@ -29,6 +29,8 @@
 
 import binascii
 import os
+import pickle
+import socket
 import threading
 import time
 import unittest
@@ -48,7 +50,8 @@ from mig.shared.useradm import (
 from mig.shared.griddaemons.login import (
     Login, add_job_object, add_jupyter_object, add_share_object,
     add_user_object, get_creds_changes, get_job_changes, get_share_changes,
-    login_map_lookup, refresh_share_creds, refresh_user_creds,
+    login_map_lookup, refresh_job_creds, refresh_jupyter_creds,
+    refresh_share_creds, refresh_user_creds,
     update_login_map, update_user_objects
 )
 
@@ -66,6 +69,18 @@ TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[-1]
 TEST_RO_SHARE_ID = 'abcdef1234'
 TEST_RW_SHARE_ID = 'klmnop4567'
 TEST_WO_SHARE_ID = 'uvwxyz7890'
+
+# NOTE: job IDs and jupyter sessions are 64 chars with jobs limited to hex
+TEST_JOB_ID = \
+    "0419b45ebc1dedbdcb91fa6251035a2096758f5d700e15478b27a90734454107"
+TEST_JOB_USER_DN = TEST_USER_DN
+TEST_JOB_USER_DIR = client_id_dir(TEST_USER_DN)
+OTHER_JOB_ID = \
+    "162b1575f7f62baf5c830cc7956a438f7d003b11cddbf6d21cfdc4f598fbf7c1"
+TEST_JUPYTER_SESSION_ID = \
+    "ohNo4ii9geeyei3Jai8aif6gae6Eebiechai3chegh0moo9NieveKu3AC8ooshuo"
+OTHER_JUPYTER_SESSION_ID = \
+    "sah3quoh3zedaemoovoowahlumeitumohv4iekooPhek3Ieng6Apho4aw0aiPhef"
 
 # NOTE: this is a sample valid but unused ssh public key as it must be parsable
 TEST_USER_PUB_KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCuJrICshi7S2KhV03qvgNVOx5ejmHsswdGbvR34wf+eN23Ghq6OZhwGye2S+J6LPVFI3p4SCqxX4URnUM8BRAsiuvbf/+GQfE2pAO0C+/g4V3hhYbYzIyrtPsP1Hl8GioxvZD5nDoLEA4TWokDC4D7SRfv+NEkFLplyVBwHtpUunXBS/zXYdQ4lgk7u8HBBCMqUGbZHfCc+6ibFVn/5WS6vVokL+fSWtxg9tUVWqsS/xtDGPH1wbJUf1Dm3D58KmdX8ca73tBoScwH8qUQwEcyM1JtWtbv1BAZFb+Qk6SEe4GPRsn3I4AAgC7xtU3HKQsiqe8Fzpick/uI5PU+vguitcV/9+AASnGVZJ9M+a63UvlFFloEYcI1LwdZ03JYPQXfXCzJSYiA+pTX4/cf10G4rlxsque4m4OcuCwLKvpTWA/Lla+UJqYhdQW+m7mSizPRoDPgh8mOta1PQob2sGSw8rhqLfApptAPZ0mkN0QY3Dv3i3ItgpYGcPNVXVdjmhU='
@@ -133,6 +148,40 @@ def _parse_pkey_to_openssh_format(paramiko_pkey):
     return "%s %s" % (paramiko_pkey.get_name(), paramiko_pkey.get_base64())
 
 
+def _create_job_mrsl_file(test_case, session_id, job_dict):
+    """Helper to create a .mRSL pickle file and symlink."""
+    mrsl_dir = test_case.configuration.sessid_to_mrsl_link_home
+    ensure_dirs_exist(mrsl_dir)
+
+    # Create actual pickle file in a temp location
+    pickle_path = temppath('job_%s.pkl' % session_id, test_case)
+    with open(pickle_path, 'wb') as pkl_fd:
+        pickle.dump(job_dict, pkl_fd)
+
+    # Create symlink
+    link_path = os.path.join(mrsl_dir, '%s.mRSL' % session_id)
+    if os.path.lexists(link_path):
+        os.remove(link_path)
+    os.symlink(pickle_path, link_path)
+    return link_path
+
+
+def _create_jupyter_mount_file(test_case, session_id, jupyter_dict):
+    """Helper to create a .jupyter_mount pickle file and symlink."""
+    mount_dir = test_case.configuration.sessid_to_jupyter_mount_link_home
+    ensure_dirs_exist(mount_dir)
+
+    pickle_path = temppath('jupyter_%s.pkl' % session_id, test_case)
+    with open(pickle_path, 'wb') as pkl_fd:
+        pickle.dump(jupyter_dict, pkl_fd)
+
+    link_path = os.path.join(mount_dir, '%s.jupyter_mount' % session_id)
+    if os.path.lexists(link_path):
+        os.remove(link_path)
+    os.symlink(pickle_path, link_path)
+    return link_path
+
+
 class _FakeLock(object):
     """Small lock double for various tests with optional locking."""
 
@@ -167,7 +216,7 @@ class MigSharedGriddaemonsLogin__add_job_object(MigTestCase):
         # Call the helper
         add_job_object(
             configuration=self.configuration,
-            login='job1',
+            login=TEST_JOB_ID,
             home='home1',
             password=None,
             pubkey=TEST_USER_PUB_KEY
@@ -177,7 +226,7 @@ class MigSharedGriddaemonsLogin__add_job_object(MigTestCase):
         jobs = self.configuration.daemon_conf['jobs']
         self.assertEqual(len(jobs), 1)
         job = jobs[0]
-        self.assertEqual(job.username, 'job1')
+        self.assertEqual(job.username, TEST_JOB_ID)
         self.assertEqual(job.home, 'home1')
         self.assertEqual(job.password, None)
         # Convert saved paramiko.PKey back to openssh pub key format and check
@@ -190,7 +239,7 @@ class MigSharedGriddaemonsLogin__add_job_object(MigTestCase):
         fake_lock = _FakeLock()
         self.configuration.daemon_conf['creds_lock'] = fake_lock
         add_job_object(configuration=self.configuration,
-                       login='job2',
+                       login=OTHER_JOB_ID,
                        home='job_home2')
         self.assertTrue(fake_lock.acquired)
         self.assertTrue(fake_lock.released)
@@ -226,7 +275,7 @@ class MigSharedGriddaemonsLogin__add_jupyter_object(MigTestCase):
         # Call the helper
         add_jupyter_object(
             configuration=self.configuration,
-            login='jupyter1',
+            login=TEST_JUPYTER_SESSION_ID,
             home='jupyter_home1',
             pubkey=TEST_USER_PUB_KEY
         )
@@ -235,7 +284,7 @@ class MigSharedGriddaemonsLogin__add_jupyter_object(MigTestCase):
         mounts = self.configuration.daemon_conf['jupyter_mounts']
         self.assertEqual(len(mounts), 1)
         mount = mounts[0]
-        self.assertEqual(mount.username, 'jupyter1')
+        self.assertEqual(mount.username, TEST_JUPYTER_SESSION_ID)
         self.assertEqual(mount.home, 'jupyter_home1')
         # Convert saved paramiko.PKey back to openssh pub key format and check
         login_key = mount.public_key
@@ -247,7 +296,7 @@ class MigSharedGriddaemonsLogin__add_jupyter_object(MigTestCase):
         fake_lock = _FakeLock()
         self.configuration.daemon_conf['creds_lock'] = fake_lock
         add_jupyter_object(configuration=self.configuration,
-                           login='jupyter2',
+                           login=OTHER_JUPYTER_SESSION_ID,
                            home='jupyter_home2')
         self.assertTrue(fake_lock.acquired)
         self.assertTrue(fake_lock.released)
@@ -1064,6 +1113,355 @@ class MigSharedGriddaemonsLogin__login_map_lookup(MigTestCase):
         self.assertEqual(result, [daemon_conf['login_map']['user3'][0]])
 
 
+class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
+    """Unit tests for the refresh_job_creds helper."""
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up configuration and directories."""
+        self.configuration.site_enable_jobs = True
+        self.configuration.site_enable_gdp = False
+        ensure_dirs_exist(self.configuration.user_home)
+        ensure_dirs_exist(self.configuration.mrsl_files_dir)
+        ensure_dirs_exist(self.configuration.sessid_to_mrsl_link_home)
+        self.configuration.daemon_conf = {
+            'jobs': [],
+            'time_stamp': 0,
+            'creds_lock': threading.Lock(),
+            'allow_publickey': True,
+        }
+
+        # Ensure the user dir for the job user exists (for chroot validation)
+        self.job_user_home = os.path.join(self.configuration.user_home,
+                                          TEST_JOB_USER_DIR)
+        ensure_dirs_exist(self.job_user_home)
+
+    def test_refresh_job_creds_invalid_protocol(self):
+        """Invalid protocol should return early with no changes."""
+        conf, changed = refresh_job_creds(self.configuration, 'invalid',
+                                          TEST_JOB_ID)
+        self.assertEqual(changed, [])
+        self.assertEqual(conf['jobs'], [])
+
+    def test_refresh_job_creds_invalid_job_id(self):
+        """Invalid job ID format should return early."""
+        # possible_job_id usually checks for alphanumeric + dash/underscore
+        conf, changed = refresh_job_creds(self.configuration, 'sftp',
+                                          'invalid@id')
+        self.assertEqual(changed, [])
+
+    def test_refresh_job_creds_no_link(self):
+        """Missing symlink should report change (removal) if job existed, else nothing."""
+        # Case 1: Job does not exist in conf, link missing -> no change
+        conf, changed = refresh_job_creds(
+            self.configuration, 'sftp', OTHER_JOB_ID)
+        self.assertEqual(changed, [])
+
+        # Case 2: Job exists in conf, link missing -> removal
+        add_job_object(self.configuration, OTHER_JOB_ID, 'home',
+                       pubkey=TEST_USER_PUB_KEY)
+        conf, changed = refresh_job_creds(self.configuration, 'sftp',
+                                          OTHER_JOB_ID)
+        self.assertIn(OTHER_JOB_ID, changed)
+        self.assertEqual(conf['jobs'], [])
+
+    def test_refresh_job_creds_link_unchanged(self):
+        """Unchanged link (mtime <= time_stamp) should return no changes."""
+        job_dict = {
+            'STATUS': 'EXECUTING',
+            'SESSIONID': 'staticjob',
+            'USER_CERT': TEST_JOB_USER_DN,
+            'MOUNT': 'mount',
+            'MOUNTSSHPUBLICKEY': TEST_USER_PUB_KEY,
+            'RESOURCE_CONFIG': {'HOSTURL': 'localhost'},
+        }
+        _create_job_mrsl_file(self, 'staticjob', job_dict)
+
+        # Pre-populate conf with job having current timestamp
+        current_time = time.time()
+        self.configuration.daemon_conf['time_stamp'] = current_time
+        add_job_object(self.configuration, 'staticjob', TEST_JOB_USER_DIR,
+                       pubkey=TEST_USER_PUB_KEY)
+        # Manually set last_update to now to simulate "fresh"
+        self.configuration.daemon_conf['jobs'][0].last_update = current_time
+
+        conf, changed = refresh_job_creds(
+            self.configuration, 'sftp', 'staticjob')
+        self.assertEqual(changed, [])
+        self.assertEqual(len(conf['jobs']), 1)
+
+    def test_refresh_job_creds_valid_job_added(self):
+        """Valid executing job with key should be added to jobs."""
+        job_dict = {
+            'STATUS': 'EXECUTING',
+            'SESSIONID': TEST_JOB_ID,
+            'USER_CERT': TEST_JOB_USER_DN,
+            'MOUNT': 'mount',
+            'MOUNTSSHPUBLICKEY': TEST_USER_PUB_KEY,
+            'RESOURCE_CONFIG': {'HOSTURL': 'localhost'},
+        }
+        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+
+        conf, changed = refresh_job_creds(self.configuration, 'sftp',
+                                          TEST_JOB_ID)
+
+        self.assertIn(TEST_JOB_ID, changed)
+        self.assertEqual(len(conf['jobs']), 1)
+        job = conf['jobs'][0]
+        self.assertEqual(job.username, TEST_JOB_ID)
+        self.assertEqual(job.home, TEST_JOB_USER_DIR)
+        self.assertEqual(job.ip_addr, '127.0.0.1')
+        self.assertIsNotNone(job.public_key)
+        # Convert saved paramiko.PKey back to openssh pub key format and check
+        login_key = job.public_key
+        result = _parse_pkey_to_openssh_format(login_key)
+        self.assertEqual(result, TEST_USER_PUB_KEY)
+
+    def test_refresh_job_creds_non_executing_status(self):
+        """Job with non-EXECUTING status should be removed as inactive."""
+        daemon_conf = self.configuration.daemon_conf
+        # Directly register test job as executing before test
+        job_dict = {
+            'STATUS': 'EXECUTING',
+            'SESSIONID': TEST_JOB_ID,
+            'USER_CERT': TEST_JOB_USER_DN,
+            'MOUNT': 'mount',
+            'MOUNTSSHPUBLICKEY': TEST_USER_PUB_KEY,
+            'RESOURCE_CONFIG': {'HOSTURL': 'localhost'},
+        }
+        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        # Pre-add job to active jobs in conf jobs list
+        add_job_object(self.configuration, TEST_JOB_ID, TEST_JOB_USER_DIR,
+                       pubkey=TEST_USER_PUB_KEY)
+        # NOTE: double check that job is in place for test
+        self.assertEqual(len(daemon_conf['jobs']), 1)
+        self.assertIn(TEST_JOB_ID, [i.username for i in daemon_conf['jobs']])
+
+        # Now mark finished and test that refresh removes it
+        job_dict['STATUS'] = 'FINISHED'
+        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        conf, changed = refresh_job_creds(self.configuration, 'sftp',
+                                          TEST_JOB_ID)
+        # NOTE: job is detected changed and should be removed
+        self.assertIn(TEST_JOB_ID, changed)
+        self.assertEqual(conf['jobs'], [])
+
+    def test_refresh_job_creds_full_execution_cycle(self):
+        """Job going through states should be added and removed when done."""
+        job_dict = {
+            'STATUS': 'QUEUED',
+            'SESSIONID': TEST_JOB_ID,
+            'USER_CERT': TEST_JOB_USER_DN,
+            'MOUNT': 'mount',
+            'MOUNTSSHPUBLICKEY': TEST_USER_PUB_KEY,
+            'RESOURCE_CONFIG': {'HOSTURL': 'localhost'},
+        }
+        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+
+        # Verify that still only queued jobs don't get added
+        conf, changed = refresh_job_creds(self.configuration, 'sftp',
+                                          TEST_JOB_ID)
+        # NOTE: job is detected changed but should remain inactive
+        self.assertIn(TEST_JOB_ID, changed)
+        self.assertEqual(conf['jobs'], [])
+
+        # Verify that job gets added when changing to executing
+        job_dict['STATUS'] = 'EXECUTING'
+        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        conf, changed = refresh_job_creds(self.configuration, 'sftp',
+                                          TEST_JOB_ID)
+        # NOTE: job is detected changed and should be inserted
+        self.assertIn(TEST_JOB_ID, changed)
+        self.assertEqual(len(conf['jobs']), 1)
+        self.assertEqual(conf['jobs'][0].username, TEST_JOB_ID)
+
+        # Verify that jobs get removed again when finished
+        job_dict['STATUS'] = 'FINISHED'
+        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        conf, changed = refresh_job_creds(self.configuration, 'sftp',
+                                          TEST_JOB_ID)
+        # NOTE: job is detected changed and should be removed
+        self.assertIn(TEST_JOB_ID, changed)
+        self.assertEqual(conf['jobs'], [])
+
+    def test_refresh_job_creds_broken_key(self):
+        """Job with unparsable public key should be treated as inactive."""
+        job_dict = {
+            'STATUS': 'EXECUTING',
+            'SESSIONID': OTHER_JOB_ID,
+            'USER_CERT': TEST_JOB_USER_DN,
+            'MOUNT': 'mount',
+            'MOUNTSSHPUBLICKEY': 'invalid-key-data',
+            'RESOURCE_CONFIG': {'HOSTURL': 'localhost'},
+        }
+        _create_job_mrsl_file(self, OTHER_JOB_ID, job_dict)
+
+        conf, changed = refresh_job_creds(self.configuration, 'sftp',
+                                          OTHER_JOB_ID)
+        self.assertIn(OTHER_JOB_ID, changed)
+        self.assertEqual(conf['jobs'], [])
+
+    def test_refresh_job_creds_unresolvable_host(self):
+        """Job with unresolvable HOSTURL should be treated as inactive."""
+        job_dict = {
+            'STATUS': 'EXECUTING',
+            'SESSIONID': OTHER_JOB_ID,
+            'USER_CERT': TEST_JOB_USER_DN,
+            'MOUNT': 'mount',
+            'MOUNTSSHPUBLICKEY': TEST_USER_PUB_KEY,
+            'RESOURCE_CONFIG': {'HOSTURL': 'nonexistent.invalid.tld'},
+        }
+        _create_job_mrsl_file(self, OTHER_JOB_ID, job_dict)
+
+        # Mock socket to raise gaierror
+        original_gethostbyname_ex = socket.gethostbyname_ex
+        socket.gethostbyname_ex = lambda h: (
+            _ for _ in ()).throw(socket.gaierror)
+        try:
+            conf, changed = refresh_job_creds(self.configuration, 'sftp',
+                                              OTHER_JOB_ID)
+        finally:
+            socket.gethostbyname_ex = original_gethostbyname_ex
+
+        self.assertIn(OTHER_JOB_ID, changed)
+        self.assertEqual(conf['jobs'], [])
+
+
+class MigSharedGriddaemonsLogin__refresh_jupyter_creds(MigTestCase):
+    """Unit tests for the refresh_jupyter_creds helper."""
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up configuration and directories."""
+        self.configuration.site_enable_jupyter = True
+        self.configuration.site_enable_gdp = False
+        ensure_dirs_exist(self.configuration.user_home)
+        ensure_dirs_exist(self.configuration.jupyter_mount_files_dir)
+        ensure_dirs_exist(self.configuration.sessid_to_jupyter_mount_link_home)
+        self.configuration.daemon_conf = {
+            'jupyter_mounts': [],
+            'time_stamp': 0,
+            'creds_lock': threading.Lock(),
+            'allow_publickey': True,
+        }
+
+        self.jupyter_user_home = os.path.join(self.configuration.user_home,
+                                              TEST_JOB_USER_DIR)
+        ensure_dirs_exist(self.jupyter_user_home)
+
+    def test_refresh_jupyter_creds_invalid_protocol(self):
+        """Invalid protocol should return early."""
+        conf, changed = refresh_jupyter_creds(self.configuration, 'invalid',
+                                              TEST_JUPYTER_SESSION_ID)
+        self.assertEqual(changed, [])
+
+    def test_refresh_jupyter_creds_invalid_id(self):
+        """Invalid jupyter mount ID format should return early."""
+        conf, changed = refresh_jupyter_creds(self.configuration, 'sftp',
+                                              'invalid@id')
+        self.assertEqual(changed, [])
+
+    @unittest.skip("TODO: implement the mentioned clean up and enable next")
+    def test_refresh_jupyter_creds_no_link(self):
+        """Missing symlink should clean up existing mounts for that user_dir."""
+        daemon_conf = self.configuration.daemon_conf
+        # Directly add a stale mount
+        add_jupyter_object(self.configuration, TEST_JUPYTER_SESSION_ID,
+                           TEST_JOB_USER_DIR, pubkey=TEST_USER_PUB_KEY)
+
+        # NOTE: double check that jupyter session is in place for test
+        self.assertEqual(len(daemon_conf['jupyter_mounts']), 1)
+        self.assertIn(TEST_JUPYTER_SESSION_ID,
+                      [i.username for i in daemon_conf['jupyter_mounts']])
+
+        # Now test that refresh removes it
+        conf, changed = refresh_jupyter_creds(self.configuration, 'sftp',
+                                              TEST_JUPYTER_SESSION_ID)
+
+        # NOTE: mount is detected unchanged and mount should be removed
+        self.assertEqual(len(changed), 0)
+        self.assertEqual(conf['jupyter_mounts'], [])
+
+    def test_refresh_jupyter_creds_valid_mount_added(self):
+        """Valid jupyter mount should be added."""
+        jupyter_dict = {
+            'SESSIONID': TEST_JUPYTER_SESSION_ID,
+            'USER_CERT': TEST_JOB_USER_DN,
+            'MOUNTSSHPUBLICKEY': TEST_USER_PUB_KEY,
+        }
+        _create_jupyter_mount_file(self, TEST_JUPYTER_SESSION_ID, jupyter_dict)
+
+        conf, changed = refresh_jupyter_creds(self.configuration, 'sftp',
+                                              TEST_JUPYTER_SESSION_ID)
+
+        self.assertIn(TEST_JUPYTER_SESSION_ID, changed)
+        self.assertEqual(len(conf['jupyter_mounts']), 1)
+        mount = conf['jupyter_mounts'][0]
+        self.assertEqual(mount.username, TEST_JUPYTER_SESSION_ID)
+        self.assertEqual(mount.home, TEST_JOB_USER_DIR)
+        self.assertIsNotNone(mount.public_key)
+        # Convert saved paramiko.PKey back to openssh pub key format and check
+        login_key = mount.public_key
+        result = _parse_pkey_to_openssh_format(login_key)
+        self.assertEqual(result, TEST_USER_PUB_KEY)
+
+    def test_refresh_jupyter_creds_purges_old_keys_same_home(self):
+        """Adding a new mount for same home should purge old mounts."""
+        # Add stale mount with different session ID but same home
+        add_jupyter_object(self.configuration, OTHER_JUPYTER_SESSION_ID,
+                           TEST_JOB_USER_DIR, pubkey=TEST_USER_PUB_KEY)
+
+        jupyter_dict = {
+            'SESSIONID': OTHER_JUPYTER_SESSION_ID,
+            'USER_CERT': TEST_JOB_USER_DN,
+            'MOUNTSSHPUBLICKEY': TEST_USER_PUB_KEY,
+        }
+        _create_jupyter_mount_file(self, OTHER_JUPYTER_SESSION_ID,
+                                   jupyter_dict)
+
+        conf, changed = refresh_jupyter_creds(
+            self.configuration, 'sftp', OTHER_JUPYTER_SESSION_ID)
+
+        self.assertIn(OTHER_JUPYTER_SESSION_ID, changed)
+        # Only the new one should remain
+        self.assertEqual(len(conf['jupyter_mounts']), 1)
+        self.assertEqual(conf['jupyter_mounts'][0].username,
+                         OTHER_JUPYTER_SESSION_ID)
+
+    def test_refresh_jupyter_creds_broken_key(self):
+        """Unparsable key should result in no mount added."""
+        jupyter_dict = {
+            'SESSIONID': OTHER_JUPYTER_SESSION_ID,
+            'USER_CERT': TEST_JOB_USER_DN,
+            'MOUNTSSHPUBLICKEY': 'invalid-key',
+        }
+        _create_jupyter_mount_file(self, OTHER_JUPYTER_SESSION_ID,
+                                   jupyter_dict)
+
+        conf, changed = refresh_jupyter_creds(
+            self.configuration, 'sftp', OTHER_JUPYTER_SESSION_ID)
+        self.assertEqual(changed, [])
+        self.assertEqual(conf['jupyter_mounts'], [])
+
+    def test_refresh_jupyter_creds_missing_fields(self):
+        """Missing required fields in dict should result in no mount."""
+        jupyter_dict = {
+            'SESSIONID': OTHER_JUPYTER_SESSION_ID,
+            # Missing USER_CERT and MOUNTSSHPUBLICKEY
+        }
+        _create_jupyter_mount_file(
+            self, OTHER_JUPYTER_SESSION_ID, jupyter_dict)
+
+        conf, changed = refresh_jupyter_creds(
+            self.configuration, 'sftp', OTHER_JUPYTER_SESSION_ID)
+        self.assertEqual(changed, [])
+        self.assertEqual(conf['jupyter_mounts'], [])
+
+
 class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
     """Unit tests for the griddaemons login refresh_share_creds helper."""
 
@@ -1867,9 +2265,9 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
     def test_update_login_map_jobs(self):
         """Verify login_map is updated correctly for changed jobs."""
         # Create Login objects
-        job1 = Login(
+        test_job = Login(
             configuration=self.configuration,
-            username='job1',
+            username=TEST_JOB_ID,
             home='home1',
             password=None,
             digest=None,
@@ -1879,9 +2277,9 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
             ip_addr='1.2.3.4',
             user_dict=None
         )
-        job2 = Login(
+        other_job = Login(
             configuration=self.configuration,
-            username='job2',
+            username=OTHER_JOB_ID,
             home='home2',
             password=None,
             digest=None,
@@ -1892,21 +2290,21 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
             user_dict=None
         )
         # Populate jobs list
-        self.configuration.daemon_conf['jobs'] = [job1, job2]
+        self.configuration.daemon_conf['jobs'] = [test_job, other_job]
 
         # Call the function under test
         update_login_map(
             daemon_conf=self.configuration.daemon_conf,
             changed_users=[],
-            changed_jobs=['job1', 'job2']
+            changed_jobs=[TEST_JOB_ID, OTHER_JOB_ID]
         )
 
         # Verify login_map
         login_map = self.configuration.daemon_conf['login_map']
-        self.assertIn('job1', login_map)
-        self.assertIn('job2', login_map)
-        self.assertEqual(login_map['job1'], [job1])
-        self.assertEqual(login_map['job2'], [job2])
+        self.assertIn(TEST_JOB_ID, login_map)
+        self.assertIn(OTHER_JOB_ID, login_map)
+        self.assertEqual(login_map[TEST_JOB_ID], [test_job])
+        self.assertEqual(login_map[OTHER_JOB_ID], [other_job])
 
     def test_update_login_map_shares(self):
         """Verify login_map is updated correctly for changed shares."""
@@ -1955,9 +2353,9 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
     def test_update_login_map_jupyter(self):
         """Verify login_map is updated correctly for changed jupyter mounts."""
         # Create Login objects
-        jupyter1 = Login(
+        test_session = Login(
             configuration=self.configuration,
-            username='jupyter1',
+            username=TEST_JUPYTER_SESSION_ID,
             home='home1',
             password=None,
             digest=None,
@@ -1967,9 +2365,9 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
             ip_addr=None,
             user_dict=None
         )
-        jupyter2 = Login(
+        other_session = Login(
             configuration=self.configuration,
-            username='jupyter2',
+            username=OTHER_JUPYTER_SESSION_ID,
             home='home2',
             password=None,
             digest=None,
@@ -1980,21 +2378,22 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
             user_dict=None
         )
         # Populate jupyter_mounts list
-        self.configuration.daemon_conf['jupyter_mounts'] = [jupyter1, jupyter2]
+        self.configuration.daemon_conf['jupyter_mounts'] = [
+            test_session, other_session]
 
         # Call the function under test
         update_login_map(
             daemon_conf=self.configuration.daemon_conf,
             changed_users=[],
-            changed_jupyter=['jupyter1', 'jupyter2']
+            changed_jupyter=[TEST_JUPYTER_SESSION_ID, OTHER_JUPYTER_SESSION_ID]
         )
 
         # Verify login_map
         login_map = self.configuration.daemon_conf['login_map']
-        self.assertIn('jupyter1', login_map)
-        self.assertIn('jupyter2', login_map)
-        self.assertEqual(login_map['jupyter1'], [jupyter1])
-        self.assertEqual(login_map['jupyter2'], [jupyter2])
+        self.assertIn(TEST_JUPYTER_SESSION_ID, login_map)
+        self.assertIn(OTHER_JUPYTER_SESSION_ID, login_map)
+        self.assertEqual(login_map[TEST_JUPYTER_SESSION_ID], [test_session])
+        self.assertEqual(login_map[OTHER_JUPYTER_SESSION_ID], [other_session])
 
     def test_update_login_map_nonexistent(self):
         """Verify login_map is set to empty list for non-existent usernames."""
