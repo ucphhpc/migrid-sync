@@ -133,6 +133,377 @@ def _parse_pkey_to_openssh_format(paramiko_pkey):
     return "%s %s" % (paramiko_pkey.get_name(), paramiko_pkey.get_base64())
 
 
+class _FakeLock(object):
+    """Small lock double for various tests with optional locking."""
+
+    def __init__(self):
+        self.acquired = False
+        self.released = False
+
+    def acquire(self):
+        self.acquired = True
+
+    def release(self):
+        self.released = True
+
+
+class MigSharedGriddaemonsLogin__add_job_object(MigTestCase):
+    """Unit tests for the griddaemons add_job_object helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test."""
+        # Initialize daemon_conf with empty jobs list
+        self.configuration.daemon_conf = {
+            'jobs': [],
+            'creds_lock': threading.Lock()  # Ensure lock is present for testing
+        }
+
+    def test_add_job_object_basic(self):
+        """Verify that add_job_object adds a Login object to the jobs list."""
+        # Call the helper
+        add_job_object(
+            configuration=self.configuration,
+            login='job1',
+            home='home1',
+            password=None,
+            pubkey=TEST_USER_PUB_KEY
+        )
+
+        # Verify the job was added
+        jobs = self.configuration.daemon_conf['jobs']
+        self.assertEqual(len(jobs), 1)
+        job = jobs[0]
+        self.assertEqual(job.username, 'job1')
+        self.assertEqual(job.home, 'home1')
+        self.assertEqual(job.password, None)
+        # Convert saved paramiko.PKey back to openssh pub key format and check
+        login_key = job.public_key
+        result = _parse_pkey_to_openssh_format(login_key)
+        self.assertEqual(result, TEST_USER_PUB_KEY)
+
+    def test_add_job_object_uses_creds_lock(self):
+        """Verify add_job_object acquires and releases creds_lock."""
+        fake_lock = _FakeLock()
+        self.configuration.daemon_conf['creds_lock'] = fake_lock
+        add_job_object(configuration=self.configuration,
+                       login='job2',
+                       home='job_home2')
+        self.assertTrue(fake_lock.acquired)
+        self.assertTrue(fake_lock.released)
+
+    def test_add_job_object_missing_home(self):
+        """Verify that add_job_object uses login as home if home is None."""
+        add_job_object(
+            configuration=self.configuration,
+            login='job3',
+            home=None
+        )
+        job = self.configuration.daemon_conf['jobs'][0]
+        self.assertEqual(job.home, 'job3')
+
+
+class MigSharedGriddaemonsLogin__add_jupyter_object(MigTestCase):
+    """Unit tests for the griddaemons add_jupyter_object helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test."""
+        # Initialize daemon_conf with empty jupyter_mounts list
+        self.configuration.daemon_conf = {
+            'jupyter_mounts': [],
+            'creds_lock': threading.Lock()
+        }
+
+    def test_add_jupyter_object_basic(self):
+        """Verify that add_jupyter_object adds a Login object to jupyter_mounts."""
+        # Call the helper
+        add_jupyter_object(
+            configuration=self.configuration,
+            login='jupyter1',
+            home='jupyter_home1',
+            pubkey=TEST_USER_PUB_KEY
+        )
+
+        # Verify the jupyter mount was added
+        mounts = self.configuration.daemon_conf['jupyter_mounts']
+        self.assertEqual(len(mounts), 1)
+        mount = mounts[0]
+        self.assertEqual(mount.username, 'jupyter1')
+        self.assertEqual(mount.home, 'jupyter_home1')
+        # Convert saved paramiko.PKey back to openssh pub key format and check
+        login_key = mount.public_key
+        result = _parse_pkey_to_openssh_format(login_key)
+        self.assertEqual(result, TEST_USER_PUB_KEY)
+
+    def test_add_jupyter_object_uses_creds_lock(self):
+        """Verify add_jupyter_object acquires and releases creds_lock."""
+        fake_lock = _FakeLock()
+        self.configuration.daemon_conf['creds_lock'] = fake_lock
+        add_jupyter_object(configuration=self.configuration,
+                           login='jupyter2',
+                           home='jupyter_home2')
+        self.assertTrue(fake_lock.acquired)
+        self.assertTrue(fake_lock.released)
+
+    def test_add_jupyter_object_missing_home(self):
+        """Verify that add_jupyter_object uses login as home if home is None."""
+        add_jupyter_object(
+            configuration=self.configuration,
+            login='jupyter3',
+            home=None
+        )
+        mount = self.configuration.daemon_conf['jupyter_mounts'][0]
+        self.assertEqual(mount.home, 'jupyter3')
+
+
+class MigSharedGriddaemonsLogin__add_user_object(MigTestCase):
+    """Unit tests for the add_user_object helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up daemon_conf for add_user_object tests."""
+        self.configuration.daemon_conf = {
+            'users': [],
+            'creds_lock': threading.Lock()
+        }
+
+    def test_add_user_object_appends_login(self):
+        """Verify add_user_object appends a Login to users."""
+        user_dict = {'user_id': TEST_USER_DN}
+
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home='home1',
+            password=TEST_USER_PW_HASH,
+            access=READ_WRITE_ACCESS,
+            user_dict=user_dict
+        )
+
+        self.assertEqual(len(self.configuration.daemon_conf['users']), 1)
+        login = self.configuration.daemon_conf['users'][0]
+        self.assertIsInstance(login, Login)
+        self.assertEqual(login.username, TEST_USER_EMAIL)
+        self.assertEqual(login.home, 'home1')
+        self.assertEqual(login.password, TEST_USER_PW_HASH)
+        self.assertIsNone(login.digest)
+        self.assertIsNone(login.public_key)
+        self.assertTrue(login.chroot)
+        self.assertEqual(login.access, READ_WRITE_ACCESS)
+        self.assertEqual(login.user_dict, user_dict)
+
+    def test_add_user_object_adds_public_key_login(self):
+        """Verify add_user_object stores parsed public key logins."""
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home='home1',
+            pubkey=TEST_USER_PUB_KEY,
+            access=READ_WRITE_ACCESS
+        )
+
+        login = self.configuration.daemon_conf['users'][0]
+        self.assertIsNotNone(login.public_key)
+        key_line = "%s %s" % (login.public_key.get_name(),
+                              login.public_key.get_base64())
+        self.assertEqual(key_line, TEST_USER_PUB_KEY)
+
+    def test_add_user_object_adds_digest_login(self):
+        """Verify add_user_object stores digest logins."""
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home='home1',
+            digest='digest-value',
+            access=READ_ONLY_ACCESS
+        )
+
+        login = self.configuration.daemon_conf['users'][0]
+        self.assertEqual(login.digest, 'digest-value')
+        self.assertIsNone(login.password)
+        self.assertIsNone(login.public_key)
+        self.assertEqual(login.access, READ_ONLY_ACCESS)
+
+    def test_add_user_object_without_lock(self):
+        """Verify add_user_object works when creds_lock is not configured."""
+        daemon_conf = self.configuration.daemon_conf
+        daemon_conf.pop('creds_lock')
+
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home='home1'
+        )
+
+        self.assertEqual(len(daemon_conf['users']), 1)
+        self.assertEqual(daemon_conf['users'][0].username, TEST_USER_EMAIL)
+
+    def test_add_user_object_uses_creds_lock(self):
+        """Verify add_user_object acquires and releases creds_lock."""
+        fake_lock = _FakeLock()
+        self.configuration.daemon_conf['creds_lock'] = fake_lock
+        add_user_object(configuration=self.configuration,
+                        login=TEST_USER_EMAIL,
+                        home='user_home2'
+                        )
+        self.assertTrue(fake_lock.acquired)
+        self.assertTrue(fake_lock.released)
+
+    def test_add_user_object_uses_login_as_home_when_home_none(self):
+        """Verify add_user_object normalizes missing home to login name."""
+        add_user_object(
+            configuration=self.configuration,
+            login=TEST_USER_EMAIL,
+            home=None
+        )
+
+        login = self.configuration.daemon_conf['users'][0]
+        self.assertEqual(login.home, TEST_USER_EMAIL)
+
+
+class MigSharedGriddaemonsLogin__add_share_object(MigTestCase):
+    """Unit tests for the add_share_object helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up daemon_conf for add_share_object tests."""
+        self.configuration.daemon_conf = {
+            'shares': [],
+            'creds_lock': threading.Lock()
+        }
+
+    def test_add_share_object_appends_login(self):
+        """Verify add_share_object appends a Login to shares."""
+        user_dict = {}
+        home_path = temppath('share_home', self)
+        ensure_dirs_exist(home_path)
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=home_path,
+            password=TEST_RW_SHARE_ID,
+            access=READ_WRITE_ACCESS,
+            user_dict=user_dict
+        )
+        add_share_object(configuration=self.configuration,
+                         login=login.username,
+                         home=home_path,
+                         password=login.password,
+                         access=login.access
+                         )
+        self.assertEqual(len(self.configuration.daemon_conf['shares']), 1)
+        share_login = self.configuration.daemon_conf['shares'][0]
+        self.assertEqual(share_login.username, TEST_RW_SHARE_ID)
+        self.assertEqual(share_login.home, home_path)
+        self.assertEqual(share_login.password, TEST_RW_SHARE_ID)
+        self.assertTrue(share_login.chroot)
+        self.assertEqual(share_login.access, READ_WRITE_ACCESS)
+
+    def test_add_share_object_adds_public_key_login(self):
+        """Verify add_share_object stores parsed public key logins."""
+        home_path = temppath('share_home_pubkey', self)
+        ensure_dirs_exist(home_path)
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=home_path,
+            password=TEST_RW_SHARE_ID,
+            access=READ_WRITE_ACCESS
+        )
+        add_share_object(
+            configuration=self.configuration,
+            login=login,
+            home=home_path,
+            pubkey=TEST_USER_PUB_KEY
+        )
+        share_login = self.configuration.daemon_conf['shares'][0]
+        self.assertIsNotNone(share_login.public_key)
+        key_line = "%s %s" % (share_login.public_key.get_name(),
+                              share_login.public_key.get_base64())
+        self.assertEqual(key_line, TEST_USER_PUB_KEY)
+
+    def test_add_share_object_adds_digest_login(self):
+        """Verify add_share_object stores digest logins."""
+        home_path = temppath('share_home_digest', self)
+        ensure_dirs_exist(home_path)
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RO_SHARE_ID,
+            home=home_path,
+            password=TEST_RO_SHARE_ID,
+            access=READ_ONLY_ACCESS
+        )
+        add_share_object(
+            configuration=self.configuration,
+            login=login,
+            home=home_path,
+            digest='digest-value',
+            access=READ_ONLY_ACCESS
+        )
+        share_login = self.configuration.daemon_conf['shares'][0]
+        self.assertEqual(share_login.digest, 'digest-value')
+        self.assertIsNone(share_login.password)
+        self.assertIsNone(share_login.public_key)
+        self.assertEqual(share_login.access, READ_ONLY_ACCESS)
+
+    def test_add_share_object_without_lock(self):
+        """Verify add_share_object works when creds_lock is not configured."""
+        daemon_conf = self.configuration.daemon_conf
+        daemon_conf.pop('creds_lock')
+        home_path = temppath('share_home_nolock', self)
+        ensure_dirs_exist(home_path)
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=home_path,
+            password=TEST_RW_SHARE_ID,
+            access=READ_WRITE_ACCESS
+        )
+        add_share_object(configuration=self.configuration,
+                         login=login.username,
+                         home=home_path)
+        self.assertEqual(len(daemon_conf['shares']), 1)
+        self.assertEqual(daemon_conf['shares'][0].username, TEST_RW_SHARE_ID)
+
+    def test_add_share_object_uses_creds_lock(self):
+        """Verify add_share_object acquires and releases creds_lock."""
+        fake_lock = _FakeLock()
+        self.configuration.daemon_conf['creds_lock'] = fake_lock
+        add_share_object(configuration=self.configuration,
+                         login=TEST_RW_SHARE_ID,
+                         home='share_home2')
+        self.assertTrue(fake_lock.acquired)
+        self.assertTrue(fake_lock.released)
+
+    def test_add_share_object_uses_login_as_home_when_home_none(self):
+        """Verify add_share_object normalizes missing home to login name."""
+        login = Login(
+            configuration=self.configuration,
+            username=TEST_RW_SHARE_ID,
+            home=None,
+            password=TEST_RW_SHARE_ID,
+            access=READ_WRITE_ACCESS
+        )
+        add_share_object(configuration=self.configuration,
+                         login=login.username,
+                         home=None)
+        share_login = self.configuration.daemon_conf['shares'][0]
+        self.assertEqual(share_login.home, TEST_RW_SHARE_ID)
+
+
 class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
     """Unit tests for griddaemons login get_creds_changes function"""
 
@@ -340,6 +711,118 @@ class MigSharedGriddaemonsLogin__get_creds_changes_uuid_user_id(MigTestCase):
         self.assertEqual(len(changed_paths), 0)
 
 
+class MigSharedGriddaemonsLogin__get_job_changes(MigTestCase):
+    """Unit tests for griddaemons login get_job_changes function"""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance"""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test"""
+        _ensure_dirs_needed_for_userdb(self.configuration)
+        ensure_dirs_exist(self.configuration.sharelink_home)
+
+        self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf['time_stamp'] = 0
+        self.configuration.daemon_conf['jobs'] = []
+
+        # TODO: enable and test unsafe digest auth, too?
+        # self.configuration.daemon_conf['allow_digest'] = True
+        self.configuration.daemon_conf['allow_digest'] = False
+
+        self.auth_keys_path = temppath('authorized_keys', self)
+        self.auth_passwords_path = temppath('authorized_passwords', self)
+        # self.auth_digests_path = temppath('authhorized_digests', self)
+        self.auth_digests_path = None
+
+        # Create sample credential files
+        with open(self.auth_keys_path, 'w') as creds_fd:
+            creds_fd.write(TEST_USER_PUB_KEY)
+        with open(self.auth_passwords_path, 'w') as creds_fd:
+            creds_fd.write(TEST_USER_PW_HASH)
+        # with open(self.auth_digests_path, 'w') as creds_fd:
+        #    creds_fd.write(TEST_USER_DIGEST)
+
+    def test_get_job_changes_new_job(self):
+        """Verify that a new job mrsl file is detected as a change"""
+        daemon_conf = self.configuration.daemon_conf
+
+        mrsl_path = temppath('test_job.mRSL', self)
+        with open(mrsl_path, 'w') as mrsl_fd:
+            mrsl_fd.write('test content')
+
+        changed_paths = get_job_changes(
+            daemon_conf,
+            'test_session_id',
+            mrsl_path
+        )
+
+        self.assertIn(mrsl_path, changed_paths)
+
+    def test_get_job_changes_no_changes(self):
+        """Verify that unchanged job mrsl file returns an empty list"""
+        daemon_conf = self.configuration.daemon_conf
+
+        mrsl_path = temppath('test_job.mRSL', self)
+        with open(mrsl_path, 'w') as mrsl_fd:
+            mrsl_fd.write('test content')
+
+        # Create a dummy job with last_update matching file mtime
+        current_time = time.time()
+        dummy_job = Login(
+            configuration=self.configuration,
+            username='test_session_id',
+            home='job_home',
+            password=None,
+            digest=None,
+            public_key=TEST_USER_PUB_KEY,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        dummy_job.last_update = current_time
+        daemon_conf['jobs'].append(dummy_job)
+
+        changed_paths = get_job_changes(
+            daemon_conf,
+            'test_session_id',
+            mrsl_path
+        )
+
+        self.assertEqual(len(changed_paths), 0)
+
+    def test_get_job_changes_missing_file(self):
+        """Verify that missing mrsl file is detected for existing job"""
+        daemon_conf = self.configuration.daemon_conf
+
+        # Create a dummy job
+        dummy_job = Login(
+            configuration=self.configuration,
+            username='test_session_id',
+            home='job_home',
+            password=None,
+            digest=None,
+            public_key=TEST_USER_PUB_KEY,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        daemon_conf['jobs'].append(dummy_job)
+
+        mrsl_path = temppath('missing_job.mRSL', self)
+
+        changed_paths = get_job_changes(
+            daemon_conf,
+            'test_session_id',
+            mrsl_path
+        )
+
+        self.assertIn(mrsl_path, changed_paths)
+
+
 class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
     """Unit tests for griddaemons login get_share_changes helper function"""
 
@@ -483,116 +966,102 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
         self.assertEqual(len(changed_paths), 0)
 
 
-class MigSharedGriddaemonsLogin__get_job_changes(MigTestCase):
-    """Unit tests for griddaemons login get_job_changes function"""
+class MigSharedGriddaemonsLogin__login_map_lookup(MigTestCase):
+    """Unit tests for the login_map_lookup function from griddaemons/login.py"""
 
     def _provide_configuration(self):
-        """Return a test configuration instance"""
+        """Return a test configuration instance."""
         return 'testconfig'
 
     def before_each(self):
-        """Set up test configuration and reset state before each test"""
-        _ensure_dirs_needed_for_userdb(self.configuration)
-        ensure_dirs_exist(self.configuration.sharelink_home)
-
+        """Set up test configuration with login_map and creds_lock."""
+        # Common daemon configuration
         self.configuration.daemon_conf = {}
         self.configuration.daemon_conf['time_stamp'] = 0
-        self.configuration.daemon_conf['jobs'] = []
+        self.configuration.daemon_conf['login_map'] = {}
+        self.configuration.daemon_conf['creds_lock'] = threading.Lock()
 
-        # TODO: enable and test unsafe digest auth, too?
-        # self.configuration.daemon_conf['allow_digest'] = True
-        self.configuration.daemon_conf['allow_digest'] = False
-
-        self.auth_keys_path = temppath('authorized_keys', self)
-        self.auth_passwords_path = temppath('authorized_passwords', self)
-        # self.auth_digests_path = temppath('authhorized_digests', self)
-        self.auth_digests_path = None
-
-        # Create sample credential files
-        with open(self.auth_keys_path, 'w') as creds_fd:
-            creds_fd.write(TEST_USER_PUB_KEY)
-        with open(self.auth_passwords_path, 'w') as creds_fd:
-            creds_fd.write(TEST_USER_PW_HASH)
-        # with open(self.auth_digests_path, 'w') as creds_fd:
-        #    creds_fd.write(TEST_USER_DIGEST)
-
-    def test_get_job_changes_new_job(self):
-        """Verify that a new job mrsl file is detected as a change"""
-        daemon_conf = self.configuration.daemon_conf
-
-        mrsl_path = temppath('test_job.mRSL', self)
-        with open(mrsl_path, 'w') as mrsl_fd:
-            mrsl_fd.write('test content')
-
-        changed_paths = get_job_changes(
-            daemon_conf,
-            'test_session_id',
-            mrsl_path
-        )
-
-        self.assertIn(mrsl_path, changed_paths)
-
-    def test_get_job_changes_no_changes(self):
-        """Verify that unchanged job mrsl file returns an empty list"""
-        daemon_conf = self.configuration.daemon_conf
-
-        mrsl_path = temppath('test_job.mRSL', self)
-        with open(mrsl_path, 'w') as mrsl_fd:
-            mrsl_fd.write('test content')
-
-        # Create a dummy job with last_update matching file mtime
-        current_time = time.time()
-        dummy_job = Login(
-            configuration=self.configuration,
-            username='test_session_id',
-            home='job_home',
+    def test_user_exists_with_multiple_credentials(self):
+        """Verify login_map_lookup returns all credentials for a user."""
+        # Create two Login objects for 'user1'
+        cred1 = Login(
+            configuration=self.configuration.daemon_conf,
+            username='user1',
+            home='home1',
             password=None,
             digest=None,
-            public_key=TEST_USER_PUB_KEY,
+            public_key=None,
             chroot=True,
             access=None,
             ip_addr=None,
             user_dict=None
         )
-        dummy_job.last_update = current_time
-        daemon_conf['jobs'].append(dummy_job)
-
-        changed_paths = get_job_changes(
-            daemon_conf,
-            'test_session_id',
-            mrsl_path
-        )
-
-        self.assertEqual(len(changed_paths), 0)
-
-    def test_get_job_changes_missing_file(self):
-        """Verify that missing mrsl file is detected for existing job"""
-        daemon_conf = self.configuration.daemon_conf
-
-        # Create a dummy job
-        dummy_job = Login(
+        cred2 = Login(
             configuration=self.configuration,
-            username='test_session_id',
-            home='job_home',
+            username='user1',
+            home='home2',
             password=None,
             digest=None,
-            public_key=TEST_USER_PUB_KEY,
+            public_key=None,
             chroot=True,
             access=None,
             ip_addr=None,
             user_dict=None
         )
-        daemon_conf['jobs'].append(dummy_job)
+        # Populate login_map
+        daemon_conf = self.configuration.daemon_conf
+        daemon_conf['login_map']['user1'] = [cred1, cred2]
+        # Call the function
+        result = login_map_lookup(daemon_conf, 'user1')
+        # Assert
+        self.assertEqual(result, [cred1, cred2])
 
-        mrsl_path = temppath('missing_job.mRSL', self)
-
-        changed_paths = get_job_changes(
-            daemon_conf,
-            'test_session_id',
-            mrsl_path
+    def test_user_exists_with_single_credential(self):
+        """Verify login_map_lookup returns one credential for a user."""
+        cred = Login(
+            configuration=self.configuration,
+            username='user2',
+            home='home3',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
         )
+        daemon_conf = self.configuration.daemon_conf
+        daemon_conf['login_map']['user2'] = [cred]
+        result = login_map_lookup(daemon_conf, 'user2')
+        self.assertEqual(result, [cred])
 
-        self.assertIn(mrsl_path, changed_paths)
+    def test_user_does_not_exist(self):
+        """Verify login_map_lookup returns empty list for non-existent user."""
+        daemon_conf = self.configuration.daemon_conf
+        result = login_map_lookup(daemon_conf, 'nosuchuser')
+        self.assertEqual(result, [])
+
+    def test_lock_handling(self):
+        """Basic check that creds_lock is acquired and released."""
+        # Simulate concurrent access (not fully testable in unit tests)
+        # This is a placeholder for thread-safety verification
+        daemon_conf = self.configuration.daemon_conf
+        cred = Login(
+            configuration=self.configuration,
+            username='user3',
+            home='home4',
+            password=None,
+            digest=None,
+            public_key=None,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None
+        )
+        daemon_conf['login_map']['user3'] = [cred]
+        # Call the function (lock should be acquired/released internally)
+        result = login_map_lookup(daemon_conf, 'user3')
+        self.assertEqual(result, [daemon_conf['login_map']['user3'][0]])
 
 
 class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
@@ -1333,104 +1802,6 @@ class MigSharedGriddaemonsLogin__refresh_user_creds_uuid_user_id(MigTestCase, Us
         self.assertEqual(len(updated_conf['users']), 0)
 
 
-class MigSharedGriddaemonsLogin__login_map_lookup(MigTestCase):
-    """Unit tests for the login_map_lookup function from griddaemons/login.py"""
-
-    def _provide_configuration(self):
-        """Return a test configuration instance."""
-        return 'testconfig'
-
-    def before_each(self):
-        """Set up test configuration with login_map and creds_lock."""
-        # Common daemon configuration
-        self.configuration.daemon_conf = {}
-        self.configuration.daemon_conf['time_stamp'] = 0
-        self.configuration.daemon_conf['login_map'] = {}
-        self.configuration.daemon_conf['creds_lock'] = threading.Lock()
-
-    def test_user_exists_with_multiple_credentials(self):
-        """Verify login_map_lookup returns all credentials for a user."""
-        # Create two Login objects for 'user1'
-        cred1 = Login(
-            configuration=self.configuration.daemon_conf,
-            username='user1',
-            home='home1',
-            password=None,
-            digest=None,
-            public_key=None,
-            chroot=True,
-            access=None,
-            ip_addr=None,
-            user_dict=None
-        )
-        cred2 = Login(
-            configuration=self.configuration,
-            username='user1',
-            home='home2',
-            password=None,
-            digest=None,
-            public_key=None,
-            chroot=True,
-            access=None,
-            ip_addr=None,
-            user_dict=None
-        )
-        # Populate login_map
-        daemon_conf = self.configuration.daemon_conf
-        daemon_conf['login_map']['user1'] = [cred1, cred2]
-        # Call the function
-        result = login_map_lookup(daemon_conf, 'user1')
-        # Assert
-        self.assertEqual(result, [cred1, cred2])
-
-    def test_user_exists_with_single_credential(self):
-        """Verify login_map_lookup returns one credential for a user."""
-        cred = Login(
-            configuration=self.configuration,
-            username='user2',
-            home='home3',
-            password=None,
-            digest=None,
-            public_key=None,
-            chroot=True,
-            access=None,
-            ip_addr=None,
-            user_dict=None
-        )
-        daemon_conf = self.configuration.daemon_conf
-        daemon_conf['login_map']['user2'] = [cred]
-        result = login_map_lookup(daemon_conf, 'user2')
-        self.assertEqual(result, [cred])
-
-    def test_user_does_not_exist(self):
-        """Verify login_map_lookup returns empty list for non-existent user."""
-        daemon_conf = self.configuration.daemon_conf
-        result = login_map_lookup(daemon_conf, 'nosuchuser')
-        self.assertEqual(result, [])
-
-    def test_lock_handling(self):
-        """Basic check that creds_lock is acquired and released."""
-        # Simulate concurrent access (not fully testable in unit tests)
-        # This is a placeholder for thread-safety verification
-        daemon_conf = self.configuration.daemon_conf
-        cred = Login(
-            configuration=self.configuration,
-            username='user3',
-            home='home4',
-            password=None,
-            digest=None,
-            public_key=None,
-            chroot=True,
-            access=None,
-            ip_addr=None,
-            user_dict=None
-        )
-        daemon_conf['login_map']['user3'] = [cred]
-        # Call the function (lock should be acquired/released internally)
-        result = login_map_lookup(daemon_conf, 'user3')
-        self.assertEqual(result, [daemon_conf['login_map']['user3'][0]])
-
-
 class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
     """Unit tests for the update_login_map function from griddaemons/login.py"""
 
@@ -1710,395 +2081,6 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
         login_map = self.configuration.daemon_conf['login_map']
         self.assertIn('user1', login_map)
         self.assertEqual(login_map['user1'], [user1])
-
-
-class MigSharedGriddaemonsLogin__add_job_object(MigTestCase):
-    """Unit tests for the griddaemons add_job_object helper."""
-
-    def _provide_configuration(self):
-        """Return a test configuration instance."""
-        return 'testconfig'
-
-    def before_each(self):
-        """Set up test configuration and reset state before each test."""
-        # Initialize daemon_conf with empty jobs list
-        self.configuration.daemon_conf = {
-            'jobs': [],
-            'creds_lock': threading.Lock()  # Ensure lock is present for testing
-        }
-
-    def test_add_job_object_basic(self):
-        """Verify that add_job_object adds a Login object to the jobs list."""
-        # Call the helper
-        add_job_object(
-            configuration=self.configuration,
-            login='job1',
-            home='home1',
-            password=None,
-            pubkey=TEST_USER_PUB_KEY
-        )
-
-        # Verify the job was added
-        jobs = self.configuration.daemon_conf['jobs']
-        self.assertEqual(len(jobs), 1)
-        job = jobs[0]
-        self.assertEqual(job.username, 'job1')
-        self.assertEqual(job.home, 'home1')
-        self.assertEqual(job.password, None)
-        # Convert saved paramiko.PKey back to openssh pub key format and check
-        login_key = job.public_key
-        result = _parse_pkey_to_openssh_format(login_key)
-        self.assertEqual(result, TEST_USER_PUB_KEY)
-
-    def test_add_job_object_with_lock(self):
-        """Verify that add_job_object acquires and releases the creds_lock."""
-        # Call the helper
-        add_job_object(
-            configuration=self.configuration,
-            login='job2',
-            home='home2'
-        )
-
-        # Check lock state (simplified verification)
-        lock = self.configuration.daemon_conf['creds_lock']
-        # Note: Direct lock state inspection is not ideal in unit tests
-        # This test assumes the lock is properly handled by the function
-
-    def test_add_job_object_missing_home(self):
-        """Verify that add_job_object uses login as home if home is None."""
-        add_job_object(
-            configuration=self.configuration,
-            login='job3',
-            home=None
-        )
-        job = self.configuration.daemon_conf['jobs'][0]
-        self.assertEqual(job.home, 'job3')
-
-
-class MigSharedGriddaemonsLogin__add_jupyter_object(MigTestCase):
-    """Unit tests for the griddaemons add_jupyter_object helper."""
-
-    def _provide_configuration(self):
-        """Return a test configuration instance."""
-        return 'testconfig'
-
-    def before_each(self):
-        """Set up test configuration and reset state before each test."""
-        # Initialize daemon_conf with empty jupyter_mounts list
-        self.configuration.daemon_conf = {
-            'jupyter_mounts': [],
-            'creds_lock': threading.Lock()
-        }
-
-    def test_add_jupyter_object_basic(self):
-        """Verify that add_jupyter_object adds a Login object to jupyter_mounts."""
-        # Call the helper
-        add_jupyter_object(
-            configuration=self.configuration,
-            login='jupyter1',
-            home='jupyter_home1',
-            pubkey=TEST_USER_PUB_KEY
-        )
-
-        # Verify the jupyter mount was added
-        mounts = self.configuration.daemon_conf['jupyter_mounts']
-        self.assertEqual(len(mounts), 1)
-        mount = mounts[0]
-        self.assertEqual(mount.username, 'jupyter1')
-        self.assertEqual(mount.home, 'jupyter_home1')
-        # Convert saved paramiko.PKey back to openssh pub key format and check
-        login_key = mount.public_key
-        result = _parse_pkey_to_openssh_format(login_key)
-        self.assertEqual(result, TEST_USER_PUB_KEY)
-
-    def test_add_jupyter_object_with_lock(self):
-        """Verify that add_jupyter_object handles the creds_lock."""
-        # Call the helper
-        add_jupyter_object(
-            configuration=self.configuration,
-            login='jupyter2',
-            home='jupyter_home2'
-        )
-
-        # Check lock state (simplified verification)
-        lock = self.configuration.daemon_conf['creds_lock']
-        # Assumes the function properly acquires/releases the lock
-
-
-class MigSharedGriddaemonsLogin__add_user_object(MigTestCase):
-    """Unit tests for the add_user_object helper."""
-
-    def _provide_configuration(self):
-        """Return a test configuration instance."""
-        return 'testconfig'
-
-    def before_each(self):
-        """Set up daemon_conf for add_user_object tests."""
-        self.configuration.daemon_conf = {
-            'users': [],
-            'creds_lock': threading.Lock()
-        }
-
-    def test_add_user_object_appends_login(self):
-        """Verify add_user_object appends a Login to users."""
-        user_dict = {'user_id': TEST_USER_DN}
-
-        add_user_object(
-            configuration=self.configuration,
-            login=TEST_USER_EMAIL,
-            home='home1',
-            password=TEST_USER_PW_HASH,
-            access=READ_WRITE_ACCESS,
-            user_dict=user_dict
-        )
-
-        self.assertEqual(len(self.configuration.daemon_conf['users']), 1)
-        login = self.configuration.daemon_conf['users'][0]
-        self.assertIsInstance(login, Login)
-        self.assertEqual(login.username, TEST_USER_EMAIL)
-        self.assertEqual(login.home, 'home1')
-        self.assertEqual(login.password, TEST_USER_PW_HASH)
-        self.assertIsNone(login.digest)
-        self.assertIsNone(login.public_key)
-        self.assertTrue(login.chroot)
-        self.assertEqual(login.access, READ_WRITE_ACCESS)
-        self.assertEqual(login.user_dict, user_dict)
-
-    def test_add_user_object_adds_public_key_login(self):
-        """Verify add_user_object stores parsed public key logins."""
-        add_user_object(
-            configuration=self.configuration,
-            login=TEST_USER_EMAIL,
-            home='home1',
-            pubkey=TEST_USER_PUB_KEY,
-            access=READ_WRITE_ACCESS
-        )
-
-        login = self.configuration.daemon_conf['users'][0]
-        self.assertIsNotNone(login.public_key)
-        key_line = "%s %s" % (login.public_key.get_name(),
-                              login.public_key.get_base64())
-        self.assertEqual(key_line, TEST_USER_PUB_KEY)
-
-    def test_add_user_object_adds_digest_login(self):
-        """Verify add_user_object stores digest logins."""
-        add_user_object(
-            configuration=self.configuration,
-            login=TEST_USER_EMAIL,
-            home='home1',
-            digest='digest-value',
-            access=READ_ONLY_ACCESS
-        )
-
-        login = self.configuration.daemon_conf['users'][0]
-        self.assertEqual(login.digest, 'digest-value')
-        self.assertIsNone(login.password)
-        self.assertIsNone(login.public_key)
-        self.assertEqual(login.access, READ_ONLY_ACCESS)
-
-    def test_add_user_object_without_lock(self):
-        """Verify add_user_object works when creds_lock is not configured."""
-        daemon_conf = self.configuration.daemon_conf
-        daemon_conf.pop('creds_lock')
-
-        add_user_object(
-            configuration=self.configuration,
-            login=TEST_USER_EMAIL,
-            home='home1'
-        )
-
-        self.assertEqual(len(daemon_conf['users']), 1)
-        self.assertEqual(daemon_conf['users'][0].username, TEST_USER_EMAIL)
-
-    def test_add_user_object_uses_creds_lock(self):
-        """Verify add_user_object acquires and releases creds_lock."""
-        class FakeLock(object):
-            """Small lock double for add_user_object tests."""
-
-            def __init__(self):
-                self.acquired = False
-                self.released = False
-
-            def acquire(self):
-                self.acquired = True
-
-            def release(self):
-                self.released = True
-
-        fake_lock = FakeLock()
-        self.configuration.daemon_conf['creds_lock'] = fake_lock
-
-        add_user_object(
-            configuration=self.configuration,
-            login=TEST_USER_EMAIL,
-            home='home1'
-        )
-
-        self.assertTrue(fake_lock.acquired)
-        self.assertTrue(fake_lock.released)
-
-    def test_add_user_object_uses_login_as_home_when_home_none(self):
-        """Verify add_user_object normalizes missing home to login name."""
-        add_user_object(
-            configuration=self.configuration,
-            login=TEST_USER_EMAIL,
-            home=None
-        )
-
-        login = self.configuration.daemon_conf['users'][0]
-        self.assertEqual(login.home, TEST_USER_EMAIL)
-
-
-class MigSharedGriddaemonsLogin__add_share_object(MigTestCase):
-    """Unit tests for the add_share_object helper."""
-
-    def _provide_configuration(self):
-        """Return a test configuration instance."""
-        return 'testconfig'
-
-    def before_each(self):
-        """Set up daemon_conf for add_share_object tests."""
-        self.configuration.daemon_conf = {
-            'shares': [],
-            'creds_lock': threading.Lock()
-        }
-
-    def test_add_share_object_appends_login(self):
-        """Verify add_share_object appends a Login to shares."""
-        user_dict = {}
-        home_path = temppath('share_home', self)
-        ensure_dirs_exist(home_path)
-        login = Login(
-            configuration=self.configuration,
-            username=TEST_RW_SHARE_ID,
-            home=home_path,
-            password=TEST_RW_SHARE_ID,
-            access=READ_WRITE_ACCESS,
-            user_dict=user_dict
-        )
-        add_share_object(configuration=self.configuration,
-                         login=login.username,
-                         home=home_path,
-                         password=login.password,
-                         access=login.access
-                         )
-        self.assertEqual(len(self.configuration.daemon_conf['shares']), 1)
-        share_login = self.configuration.daemon_conf['shares'][0]
-        self.assertEqual(share_login.username, TEST_RW_SHARE_ID)
-        self.assertEqual(share_login.home, home_path)
-        self.assertEqual(share_login.password, TEST_RW_SHARE_ID)
-        self.assertTrue(share_login.chroot)
-        self.assertEqual(share_login.access, READ_WRITE_ACCESS)
-
-    def test_add_share_object_adds_public_key_login(self):
-        """Verify add_share_object stores parsed public key logins."""
-        home_path = temppath('share_home_pubkey', self)
-        ensure_dirs_exist(home_path)
-        login = Login(
-            configuration=self.configuration,
-            username=TEST_RW_SHARE_ID,
-            home=home_path,
-            password=TEST_RW_SHARE_ID,
-            access=READ_WRITE_ACCESS
-        )
-        add_share_object(
-            configuration=self.configuration,
-            login=login,
-            home=home_path,
-            pubkey=TEST_USER_PUB_KEY
-        )
-        share_login = self.configuration.daemon_conf['shares'][0]
-        self.assertIsNotNone(share_login.public_key)
-        key_line = "%s %s" % (share_login.public_key.get_name(),
-                              share_login.public_key.get_base64())
-        self.assertEqual(key_line, TEST_USER_PUB_KEY)
-
-    def test_add_share_object_adds_digest_login(self):
-        """Verify add_share_object stores digest logins."""
-        home_path = temppath('share_home_digest', self)
-        ensure_dirs_exist(home_path)
-        login = Login(
-            configuration=self.configuration,
-            username=TEST_RO_SHARE_ID,
-            home=home_path,
-            password=TEST_RO_SHARE_ID,
-            access=READ_ONLY_ACCESS
-        )
-        add_share_object(
-            configuration=self.configuration,
-            login=login,
-            home=home_path,
-            digest='digest-value',
-            access=READ_ONLY_ACCESS
-        )
-        share_login = self.configuration.daemon_conf['shares'][0]
-        self.assertEqual(share_login.digest, 'digest-value')
-        self.assertIsNone(share_login.password)
-        self.assertIsNone(share_login.public_key)
-        self.assertEqual(share_login.access, READ_ONLY_ACCESS)
-
-    def test_add_share_object_without_lock(self):
-        """Verify add_share_object works when creds_lock is not configured."""
-        daemon_conf = self.configuration.daemon_conf
-        daemon_conf.pop('creds_lock')
-        home_path = temppath('share_home_nolock', self)
-        ensure_dirs_exist(home_path)
-        login = Login(
-            configuration=self.configuration,
-            username=TEST_RW_SHARE_ID,
-            home=home_path,
-            password=TEST_RW_SHARE_ID,
-            access=READ_WRITE_ACCESS
-        )
-        add_share_object(configuration=self.configuration,
-                         login=login.username,
-                         home=home_path)
-        self.assertEqual(len(daemon_conf['shares']), 1)
-        self.assertEqual(daemon_conf['shares'][0].username, TEST_RW_SHARE_ID)
-
-    def test_add_share_object_uses_creds_lock(self):
-        """Verify add_share_object acquires and releases creds_lock."""
-        class FakeLock(object):
-            def __init__(self):
-                self.acquired = False
-                self.released = False
-
-            def acquire(self):
-                self.acquired = True
-
-            def release(self):
-                self.released = True
-        fake_lock = FakeLock()
-        self.configuration.daemon_conf['creds_lock'] = fake_lock
-        home_path = temppath('share_home_lock', self)
-        ensure_dirs_exist(home_path)
-        login = Login(
-            configuration=self.configuration,
-            username=TEST_RW_SHARE_ID,
-            home=home_path,
-            password=TEST_RW_SHARE_ID,
-            access=READ_WRITE_ACCESS
-        )
-        add_share_object(configuration=self.configuration,
-                         login=login.username,
-                         home=home_path)
-        self.assertTrue(fake_lock.acquired)
-        self.assertTrue(fake_lock.released)
-
-    def test_add_share_object_uses_login_as_home_when_home_none(self):
-        """Verify add_share_object normalizes missing home to login name."""
-        login = Login(
-            configuration=self.configuration,
-            username=TEST_RW_SHARE_ID,
-            home=None,
-            password=TEST_RW_SHARE_ID,
-            access=READ_WRITE_ACCESS
-        )
-        add_share_object(configuration=self.configuration,
-                         login=login.username,
-                         home=None)
-        share_login = self.configuration.daemon_conf['shares'][0]
-        self.assertEqual(share_login.home, TEST_RW_SHARE_ID)
 
 
 class MigSharedGriddaemonsLogin__update_user_objects(MigTestCase):
