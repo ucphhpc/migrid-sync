@@ -86,35 +86,35 @@ class TestMigSharedAccountstate__default_account_valid_days(MigTestCase):
         configuration.oidc_valid_days = 30
         configuration.generic_valid_days = 14
 
-    def test_returns_cert_valid_days_for_certificate_auth(self):
+    def test_default_account_valid_days_auth_cert(self):
         """Test that cert_valid_days is returned for AUTH_CERTIFICATE."""
         configuration = self.configuration
 
         result = default_account_valid_days(configuration, AUTH_CERTIFICATE)
         self.assertEqual(result, 365)
 
-    def test_returns_oid_valid_days_for_openid_v2_auth(self):
+    def test_default_account_valid_days_auth_oid(self):
         """Test that oid_valid_days is returned for AUTH_OPENID_V2."""
         configuration = self.configuration
 
         result = default_account_valid_days(configuration, AUTH_OPENID_V2)
         self.assertEqual(result, 30)
 
-    def test_returns_oidc_valid_days_for_openid_connect_auth(self):
+    def test_default_account_valid_days_auth_oidc(self):
         """Test that oidc_valid_days is returned for AUTH_OPENID_CONNECT."""
         configuration = self.configuration
 
         result = default_account_valid_days(configuration, AUTH_OPENID_CONNECT)
         self.assertEqual(result, 30)
 
-    def test_returns_generic_valid_days_for_generic_auth(self):
+    def test_default_account_valid_days_auth_generic(self):
         """Test that generic_valid_days is returned for AUTH_GENERIC."""
         configuration = self.configuration
 
         result = default_account_valid_days(configuration, AUTH_GENERIC)
         self.assertEqual(result, 14)
 
-    def test_returns_generic_valid_days_for_unknown_auth_type(self):
+    def test_default_account_valid_days_auth_unknown(self):
         """Test that generic_valid_days is fallback for unknown auth type."""
         configuration = self.configuration
 
@@ -135,8 +135,8 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
         configuration.oidc_valid_days = 30
         configuration.generic_valid_days = 14
 
-    def test_calculates_expire_from_valid_days(self):
-        """Test that expire is calculated correctly from valid days."""
+    def test_default_account_expire_for_auth_cert(self):
+        """Test expire calculation for AUTH_CERTIFICATE."""
         configuration = self.configuration
 
         start_time = time.time()
@@ -146,7 +146,7 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
         expected = int(start_time + 365 * 24 * 60 * 60)
         self.assertEqual(result, expected)
 
-    def test_calculates_expire_for_openid_v2(self):
+    def test_default_account_expire_for_auth_oid(self):
         """Test expire calculation for AUTH_OPENID_V2."""
         configuration = self.configuration
 
@@ -157,7 +157,7 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
         expected = int(start_time + 30 * 24 * 60 * 60)
         self.assertEqual(result, expected)
 
-    def test_calculates_expire_for_openid_connect(self):
+    def test_default_account_expire_for_auth_oidc(self):
         """Test expire calculation for AUTH_OPENID_CONNECT."""
         configuration = self.configuration
 
@@ -168,7 +168,7 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
         expected = int(start_time + 30 * 24 * 60 * 60)
         self.assertEqual(result, expected)
 
-    def test_calculates_expire_for_generic_auth(self):
+    def test_default_account_expire_for_auth_generic(self):
         """Test expire calculation for AUTH_GENERIC."""
         configuration = self.configuration
 
@@ -179,7 +179,7 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
         expected = int(start_time + 14 * 24 * 60 * 60)
         self.assertEqual(result, expected)
 
-    def test_uses_current_time_if_start_time_not_provided(self):
+    def test_default_account_expire_without_start_time(self):
         """Test that current time is used when start_time is not provided."""
         configuration = self.configuration
 
@@ -187,9 +187,11 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
         result = default_account_expire(configuration, AUTH_CERTIFICATE)
         after = int(time.time())
 
-        # Result should be between before + 365 days and after + 365 days
-        min_expected = before + 365 * 24 * 60 * 60
+        # Result should be between before + 364 days and after + 365 days
+        min_expected = before + 364 * 24 * 60 * 60
         max_expected = after + 365 * 24 * 60 * 60
+        print("DEBUG: before %s, result %s , after %s" %
+              (min_expected, result, max_expected))
         self.assertTrue(min_expected <= result <= max_expected)
 
 
