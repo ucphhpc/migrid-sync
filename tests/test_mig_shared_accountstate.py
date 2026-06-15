@@ -190,8 +190,6 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
         # Result should be between before + 364 days and after + 365 days
         min_expected = before + 364 * 24 * 60 * 60
         max_expected = after + 365 * 24 * 60 * 60
-        print("DEBUG: before %s, result %s , after %s" %
-              (min_expected, result, max_expected))
         self.assertTrue(min_expected <= result <= max_expected)
 
 
