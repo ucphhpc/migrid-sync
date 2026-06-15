@@ -29,6 +29,7 @@
 
 import time
 import os
+import unittest
 
 # Imports of the code under test
 from mig.shared.accountstate import (
@@ -38,7 +39,8 @@ from mig.shared.accountstate import (
     get_account_expire_cache,
     reset_account_expire_cache,
     get_account_status_cache,
-    update_account_status_cache
+    update_account_status_cache,
+    check_account_expire
 )
 
 # Imports required for the unit test wrapping
@@ -51,6 +53,8 @@ from mig.shared.defaults import (
     expire_marks_dir,
     status_marks_dir
 )
+from mig.shared.useradm import _ensure_dirs_needed_for_userdb
+from mig.shared.userdb import update_user_dict
 
 # Imports required for the unit tests themselves
 from tests.support import (
@@ -564,6 +568,160 @@ class TestMigSharedAccountstate__get_account_status_cache(MigTestCase):
 
         result = get_account_status_cache(configuration, TEST_USER_DN)
         self.assertIsNone(result)
+
+
+class TestMigSharedAccountstate__check_account_expire(MigTestCase):
+    """Coverage of accountstate check_account_expire function."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test environment for check_account_expire."""
+        configuration = self.configuration
+        # Ensure the mig_system_run directory exists for expire marks
+        marks_path = os.path.join(configuration.mig_system_run,
+                                  expire_marks_dir)
+        ensure_dirs_exist(marks_path)
+
+        _ensure_dirs_needed_for_userdb(configuration)
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        self._provision_test_user(self, TEST_USER_DN)
+
+    def test_check_account_expire_expired(self):
+        """Test that check_account_expire returns False for an expired account."""
+        configuration = self.configuration
+        logger = self.logger
+        # Expired account
+        account_expire = time.time() - 400 * 24 * 3600
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": account_expire
+        }
+        # Update expire and delete cache for user
+        update_user_dict(logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        update_account_expire_cache(configuration, user_dict, delete=True)
+        (pending, expire, _) = check_account_expire(
+            configuration, TEST_USER_DN)
+        self.assertFalse(pending)
+        self.assertEqual(expire, account_expire)
+
+    def test_check_account_expire_active(self):
+        """Test that check_account_expire returns expire pending for an active account."""
+        configuration = self.configuration
+        logger = self.logger
+        # Active account
+        account_expire = time.time() + 42 * 24 * 3600
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": account_expire
+        }
+        # Update expire and cache for user
+        update_user_dict(logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        update_account_expire_cache(configuration, user_dict)
+        (pending, expire, _) = check_account_expire(configuration, TEST_USER_DN)
+        self.assertTrue(pending)
+        self.assertEqual(expire, account_expire)
+
+    @unittest.skip("TODO: init account without expire value and enable test?")
+    def test_check_account_expire_no_expire_field(self):
+        """Test that check_account_expire returns expire pending if expire is missing."""
+        configuration = self.configuration
+        logger = self.logger
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+        }
+        update_user_dict(logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        update_account_expire_cache(configuration, user_dict, delete=True)
+        (pending, expire, _) = check_account_expire(configuration, TEST_USER_DN)
+        self.assertTrue(pending)
+        self.assertEqual(expire, -1)
+
+    def test_check_account_expire_invalid_expire_type(self):
+        """Test that check_account_expire returns expired if expire is not a number."""
+        configuration = self.configuration
+        logger = self.logger
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": "invalid",
+        }
+        update_user_dict(logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        with self.assertRaises(TypeError):
+            (pending, expire, _) = check_account_expire(configuration,
+                                                        TEST_USER_DN)
+            self.assertFalse(pending)
+            self.assertEqual(expire, -42)
+
+    def test_check_account_expire_no_user_db_entry(self):
+        """Test that check_account_expire returns expired if user is not in the DB."""
+        configuration = self.configuration
+        with self.assertLogs(level='ERROR') as log_capture:
+            (pending, expire, _) = check_account_expire(configuration,
+                                                        "nosuchuser")
+            self.assertFalse(pending)
+            self.assertEqual(expire, -42)
+        self.assertTrue(any('no such account:' in msg
+                            for msg in log_capture.output))
+
+    def test_check_account_expire_with_cache_miss(self):
+        """Test that check_account_expire updates the cache if not cached."""
+        configuration = self.configuration
+        logger = self.logger
+        # Active account
+        account_expire = time.time() + 42 * 24 * 3600
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": account_expire
+        }
+        # Update user and delete cache
+        update_user_dict(logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        update_account_expire_cache(configuration, user_dict, delete=True)
+        (pending, expire, _) = check_account_expire(configuration, TEST_USER_DN)
+        self.assertTrue(pending)
+        self.assertEqual(expire, account_expire)
+        cached_expire = get_account_expire_cache(configuration, TEST_USER_DN)
+        self.assertEqual(cached_expire, account_expire)
+
+    @unittest.skip("TODO: init account without expire value and enable test?")
+    def test_check_account_expire_with_current_time(self):
+        """Test that check_account_expire uses current time if expire is not set."""
+        configuration = self.configuration
+        logger = self.logger
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+        }
+        update_user_dict(logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        (pending, expire, _) = check_account_expire(configuration, TEST_USER_DN)
+        now = time.time()
+        self.assertTrue(pending)
+        self.assertTrue(expire <= now - 3)
+
+    def test_check_account_expire_with_expired_account_and_cache(self):
+        """Test that check_account_expire works if the account is expired and cached."""
+        configuration = self.configuration
+        logger = self.logger
+        account_expire = time.time() - 400 * 24 * 3600
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": account_expire,
+        }
+        update_user_dict(logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        update_account_expire_cache(configuration, user_dict)
+        (pending, expire, _) = check_account_expire(configuration, TEST_USER_DN)
+        self.assertFalse(pending)
+        self.assertEqual(expire, account_expire)
 
 
 if __name__ == "__main__":
