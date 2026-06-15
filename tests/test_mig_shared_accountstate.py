@@ -37,6 +37,8 @@ from mig.shared.accountstate import (
     update_account_expire_cache,
     get_account_expire_cache,
     reset_account_expire_cache,
+    get_account_status_cache,
+    update_account_status_cache
 )
 
 # Imports required for the unit test wrapping
@@ -47,6 +49,7 @@ from mig.shared.defaults import (
     AUTH_OPENID_CONNECT,
     AUTH_GENERIC,
     expire_marks_dir,
+    status_marks_dir
 )
 
 # Imports required for the unit tests themselves
@@ -55,10 +58,12 @@ from tests.support import (
     testmain,
     ensure_dirs_exist,
 )
-from tests.support.usersupp import TEST_USER_DN, OTHER_USER_DN, UserAssertMixin
+from tests.support.usersupp import TEST_USER_DN, OTHER_USER_DN
 
 # Test constants
 TEST_EXPIRE_TIMESTAMP = 1776031200
+TEST_STATUS_ACTIVE = 'active'
+TEST_STATUS_LOCKED = 'locked'
 
 TEST_USER_DIR = client_id_dir(TEST_USER_DN)
 OTHER_USER_DIR = client_id_dir(OTHER_USER_DN)
@@ -395,6 +400,170 @@ class TestMigSharedAccountstate__reset_account_expire_cache(MigTestCase):
         self.assertTrue(os.path.exists(marks_path))
         cached_expire = get_account_expire_cache(configuration, TEST_USER_DN)
         self.assertEqual(cached_expire, 0.0)
+
+
+class TestMigSharedAccountstate__update_account_status_cache(MigTestCase):
+    """Coverage of accountstate update_account_status_cache function."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test environment for status cache tests."""
+        configuration = self.configuration
+        # Ensure the mig_system_run sub directory exists for status marks
+        marks_path = os.path.join(configuration.mig_system_run,
+                                  status_marks_dir)
+        ensure_dirs_exist(marks_path)
+
+    def test_update_account_status_cache_creates_mark(self):
+        """Test that update_account_status_cache creates a status mark."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": TEST_STATUS_ACTIVE,
+        }
+
+        result = update_account_status_cache(configuration, user_dict)
+        self.assertTrue(result)
+
+        # Verify the mark was created
+        cached_status = get_account_status_cache(configuration, TEST_USER_DN)
+        self.assertEqual(cached_status, TEST_STATUS_ACTIVE)
+
+    def test_update_account_status_cache_with_different_status(self):
+        """Test that update_account_status_cache handles different status values."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": TEST_STATUS_LOCKED,
+        }
+
+        result = update_account_status_cache(configuration, user_dict)
+        self.assertTrue(result)
+
+        # Verify the mark was created with correct status
+        cached_status = get_account_status_cache(configuration, TEST_USER_DN)
+        self.assertEqual(cached_status, TEST_STATUS_LOCKED)
+
+    def test_update_account_status_cache_with_missing_client_id(self):
+        """Test that update fails gracefully when client_id is missing."""
+        configuration = self.configuration
+        user_dict = {
+            "status": TEST_STATUS_ACTIVE,
+        }
+
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = update_account_status_cache(configuration, user_dict)
+            self.assertFalse(result)
+        self.assertTrue(any('no client ID' in msg
+                            for msg in log_capture.output))
+
+    def test_update_account_status_cache_with_missing_status(self):
+        """Test that update returns True when status is missing."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+        }
+
+        with self.assertLogs(level='INFO') as log_capture:
+            result = update_account_status_cache(configuration, user_dict)
+            self.assertTrue(result)
+        self.assertTrue(any('no status set' in msg
+                            for msg in log_capture.output))
+
+    def test_update_account_status_cache_with_invalid_status(self):
+        """Test that update fails when status is invalid."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "invalid_status",
+        }
+
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = update_account_status_cache(configuration, user_dict)
+            self.assertFalse(result)
+        self.assertTrue(any('invalid account status' in msg
+                            for msg in log_capture.output))
+
+    def test_update_account_status_cache_with_delete(self):
+        """Test that delete=True removes the status mark."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": TEST_STATUS_ACTIVE,
+        }
+
+        # First create the mark
+        update_account_status_cache(configuration, user_dict)
+        cached_status = get_account_status_cache(configuration, TEST_USER_DN)
+        self.assertEqual(cached_status, TEST_STATUS_ACTIVE)
+
+        # Then delete it
+        result = update_account_status_cache(
+            configuration, user_dict, delete=True)
+        self.assertTrue(result)
+
+        # Verify the mark was removed
+        cached_status = get_account_status_cache(configuration, TEST_USER_DN)
+        self.assertIsNone(cached_status)
+
+    def test_update_account_status_cache_with_invalid_user_dict(self):
+        """Test that update fails when user_dict is not a dictionary."""
+        configuration = self.configuration
+
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = update_account_status_cache(configuration, "not_a_dict")
+            self.assertFalse(result)
+        self.assertTrue(any('invalid user_dict' in msg
+                            for msg in log_capture.output))
+
+
+class TestMigSharedAccountstate__get_account_status_cache(MigTestCase):
+    """Coverage of accountstate get_account_status_cache function."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test environment for status cache tests."""
+        configuration = self.configuration
+        # Ensure the mig_system_run sub directory exists for status marks
+        marks_path = os.path.join(configuration.mig_system_run,
+                                  status_marks_dir)
+        ensure_dirs_exist(marks_path)
+
+    def test_get_account_status_cache_returns_cached_value(self):
+        """Test that get_account_status_cache returns cached status value."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": TEST_STATUS_ACTIVE,
+        }
+
+        # Create the mark first
+        update_account_status_cache(configuration, user_dict)
+
+        # Then retrieve it
+        result = get_account_status_cache(configuration, TEST_USER_DN)
+        self.assertEqual(result, TEST_STATUS_ACTIVE)
+
+    def test_get_account_status_cache_with_missing_client_id(self):
+        """Test that get fails gracefully when client_id is missing."""
+        configuration = self.configuration
+
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = get_account_status_cache(configuration, "")
+            self.assertFalse(result)
+        self.assertTrue(any('invalid client ID' in msg
+                            for msg in log_capture.output))
+
+    def test_get_account_status_cache_returns_none_when_not_set(self):
+        """Test that get_account_status_cache returns None when status not set."""
+        configuration = self.configuration
+
+        result = get_account_status_cache(configuration, TEST_USER_DN)
+        self.assertIsNone(result)
 
 
 if __name__ == "__main__":
