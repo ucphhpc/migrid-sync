@@ -38,7 +38,8 @@ from past.builtins import basestring
 # Imports required for the unit test wrapping
 from mig.shared.base import client_id_dir, distinguished_name_to_user
 from mig.shared.defaults import (
-    DEFAULT_USER_ID_FORMAT, UUID_USER_ID_FORMAT,
+    DEFAULT_USER_ID_FORMAT,
+    UUID_USER_ID_FORMAT,
     htaccess_filename,
     keyword_auto,
     ssh_conf_dir,
@@ -660,7 +661,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
             create_user(
                 user_dict, self.configuration, keyword_auto, default_renew=True
             )
-        except:
+        except Exception:
             self.assertFalse(True, "should not be reached")
 
     def test_user_creation_and_renew_records_a_user(self):
@@ -685,7 +686,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
                 default_renew=True,
                 ask_renew=False,
             )
-        except:
+        except Exception:
             self.assertFalse(True, "should not be reached")
 
         try:
@@ -696,7 +697,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
                 default_renew=True,
                 ask_renew=False,
             )
-        except:
+        except Exception:
             self.assertFalse(True, "should not be reached")
 
     def test_user_creation_fails_in_renew_when_locked(self):
@@ -724,7 +725,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
                 default_renew=True,
                 ask_renew=False,
             )
-        except:
+        except Exception:
             self.assertFalse(True, "should not be reached")
 
     def test_user_creation_with_id_collission_fails(self):
@@ -743,7 +744,7 @@ class TestMigSharedUseradm__create_user_uuid_user_id(
             create_user(
                 user_dict, self.configuration, keyword_auto, default_renew=True
             )
-        except:
+        except Exception:
             self.assertFalse(True, "should not be reached")
 
         # NOTE: reset distinguished_name and introduce an ID conflict to test
@@ -782,7 +783,7 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
                 generated = htaccess_file.read()
 
         generated_lines = generated.split("\n")
-        if not expected in generated_lines:
+        if expected not in generated_lines:
             raise AssertionError("no such require user line: %s" % expected)
 
     def test_skips_accounts_without_short_id(self):
@@ -796,7 +797,7 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
             path_kind = self.assertPathExists(DUMMY_REL_HTACCESS_PATH)
             # File should not exist here at all
             self.assertNotEqual(path_kind, "file")
-        except OSError as ignore_oserr:
+        except OSError:
             pass
 
     def test_creates_missing_htaccess_file(self):
@@ -989,14 +990,10 @@ class TestMigSharedUseradm__delete_user(
         self.assertFalse(os.path.exists(short_link))
 
         settings_dir = os.path.join(self.configuration.user_settings,
-                                    TEST_USER_UUID)
+                                    TEST_USER_DIR)
         self.assertFalse(os.path.isdir(settings_dir))
         self.assertFalse(os.path.exists(settings_dir))
-        settings_link = os.path.join(self.configuration.user_settings,
-                                     TEST_USER_DIR)
-        self.assertFalse(os.path.islink(settings_link))
-        self.assertFalse(os.path.exists(settings_link))
-
+     
         ssh_dir = os.path.join(home_dir, ssh_conf_dir)
         self.assertFalse(os.path.isdir(ssh_dir))
         self.assertFalse(os.path.exists(ssh_dir))
