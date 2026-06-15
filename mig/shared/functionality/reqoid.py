@@ -44,7 +44,7 @@ from mig.shared.init import find_entry, initialize_main_variables
 from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape, \
     password_max_len, \
-    password_min_len,
+    password_min_len, \
     valid_name_chars,\
     valid_password_chars
 from mig.shared.useradm import get_full_user_map
