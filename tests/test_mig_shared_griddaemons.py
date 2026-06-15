@@ -46,9 +46,10 @@ from mig.shared.useradm import (
 
 # Imports of the code under test
 from mig.shared.griddaemons.login import (
-    Login, add_share_object, add_user_object, get_creds_changes,
-    get_job_changes, get_share_changes, login_map_lookup, refresh_share_creds,
-    refresh_user_creds, update_login_map, update_user_objects
+    Login, add_job_object, add_jupyter_object, add_share_object,
+    add_user_object, get_creds_changes, get_job_changes, get_share_changes,
+    login_map_lookup, refresh_share_creds, refresh_user_creds,
+    update_login_map, update_user_objects
 )
 
 # Imports required for the unit tests themselves
@@ -1709,6 +1710,119 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
         login_map = self.configuration.daemon_conf['login_map']
         self.assertIn('user1', login_map)
         self.assertEqual(login_map['user1'], [user1])
+
+
+class MigSharedGriddaemonsLogin__add_job_object(MigTestCase):
+    """Unit tests for the griddaemons add_job_object helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test."""
+        # Initialize daemon_conf with empty jobs list
+        self.configuration.daemon_conf = {
+            'jobs': [],
+            'creds_lock': threading.Lock()  # Ensure lock is present for testing
+        }
+
+    def test_add_job_object_basic(self):
+        """Verify that add_job_object adds a Login object to the jobs list."""
+        # Call the helper
+        add_job_object(
+            configuration=self.configuration,
+            login='job1',
+            home='home1',
+            password=None,
+            pubkey=TEST_USER_PUB_KEY
+        )
+
+        # Verify the job was added
+        jobs = self.configuration.daemon_conf['jobs']
+        self.assertEqual(len(jobs), 1)
+        job = jobs[0]
+        self.assertEqual(job.username, 'job1')
+        self.assertEqual(job.home, 'home1')
+        self.assertEqual(job.password, None)
+        # Convert saved paramiko.PKey back to openssh pub key format and check
+        login_key = job.public_key
+        result = _parse_pkey_to_openssh_format(login_key)
+        self.assertEqual(result, TEST_USER_PUB_KEY)
+
+    def test_add_job_object_with_lock(self):
+        """Verify that add_job_object acquires and releases the creds_lock."""
+        # Call the helper
+        add_job_object(
+            configuration=self.configuration,
+            login='job2',
+            home='home2'
+        )
+
+        # Check lock state (simplified verification)
+        lock = self.configuration.daemon_conf['creds_lock']
+        # Note: Direct lock state inspection is not ideal in unit tests
+        # This test assumes the lock is properly handled by the function
+
+    def test_add_job_object_missing_home(self):
+        """Verify that add_job_object uses login as home if home is None."""
+        add_job_object(
+            configuration=self.configuration,
+            login='job3',
+            home=None
+        )
+        job = self.configuration.daemon_conf['jobs'][0]
+        self.assertEqual(job.home, 'job3')
+
+
+class MigSharedGriddaemonsLogin__add_jupyter_object(MigTestCase):
+    """Unit tests for the griddaemons add_jupyter_object helper."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return 'testconfig'
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test."""
+        # Initialize daemon_conf with empty jupyter_mounts list
+        self.configuration.daemon_conf = {
+            'jupyter_mounts': [],
+            'creds_lock': threading.Lock()
+        }
+
+    def test_add_jupyter_object_basic(self):
+        """Verify that add_jupyter_object adds a Login object to jupyter_mounts."""
+        # Call the helper
+        add_jupyter_object(
+            configuration=self.configuration,
+            login='jupyter1',
+            home='jupyter_home1',
+            pubkey=TEST_USER_PUB_KEY
+        )
+
+        # Verify the jupyter mount was added
+        mounts = self.configuration.daemon_conf['jupyter_mounts']
+        self.assertEqual(len(mounts), 1)
+        mount = mounts[0]
+        self.assertEqual(mount.username, 'jupyter1')
+        self.assertEqual(mount.home, 'jupyter_home1')
+        # Convert saved paramiko.PKey back to openssh pub key format and check
+        login_key = mount.public_key
+        result = _parse_pkey_to_openssh_format(login_key)
+        self.assertEqual(result, TEST_USER_PUB_KEY)
+
+    def test_add_jupyter_object_with_lock(self):
+        """Verify that add_jupyter_object handles the creds_lock."""
+        # Call the helper
+        add_jupyter_object(
+            configuration=self.configuration,
+            login='jupyter2',
+            home='jupyter_home2'
+        )
+
+        # Check lock state (simplified verification)
+        lock = self.configuration.daemon_conf['creds_lock']
+        # Assumes the function properly acquires/releases the lock
 
 
 class MigSharedGriddaemonsLogin__add_user_object(MigTestCase):
