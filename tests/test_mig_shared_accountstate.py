@@ -28,19 +28,40 @@
 """Unit tests for the mig shared accountstate module"""
 
 import time
+import os
 
+# Imports of the code under test
 from mig.shared.accountstate import (
     default_account_valid_days,
     default_account_expire,
+    update_account_expire_cache,
+    get_account_expire_cache,
+    reset_account_expire_cache,
 )
+
+# Imports required for the unit test wrapping
+from mig.shared.base import client_id_dir
 from mig.shared.defaults import (
     AUTH_CERTIFICATE,
     AUTH_OPENID_V2,
     AUTH_OPENID_CONNECT,
     AUTH_GENERIC,
+    expire_marks_dir,
 )
 
-from tests.support import MigTestCase
+# Imports required for the unit tests themselves
+from tests.support import (
+    MigTestCase,
+    testmain,
+    ensure_dirs_exist,
+)
+from tests.support.usersupp import TEST_USER_DN, OTHER_USER_DN, UserAssertMixin
+
+# Test constants
+TEST_EXPIRE_TIMESTAMP = 1776031200
+
+TEST_USER_DIR = client_id_dir(TEST_USER_DN)
+OTHER_USER_DIR = client_id_dir(OTHER_USER_DN)
 
 
 class TestMigSharedAccountstate__default_account_valid_days(MigTestCase):
@@ -49,13 +70,16 @@ class TestMigSharedAccountstate__default_account_valid_days(MigTestCase):
     def _provide_configuration(self):
         return "testconfig"
 
-    def test_returns_cert_valid_days_for_certificate_auth(self):
-        """Test that cert_valid_days is returned for AUTH_CERTIFICATE."""
+    def before_each(self):
         configuration = self.configuration
         configuration.cert_valid_days = 365
         configuration.oid_valid_days = 30
         configuration.oidc_valid_days = 30
         configuration.generic_valid_days = 14
+
+    def test_returns_cert_valid_days_for_certificate_auth(self):
+        """Test that cert_valid_days is returned for AUTH_CERTIFICATE."""
+        configuration = self.configuration
 
         result = default_account_valid_days(configuration, AUTH_CERTIFICATE)
         self.assertEqual(result, 365)
@@ -63,10 +87,6 @@ class TestMigSharedAccountstate__default_account_valid_days(MigTestCase):
     def test_returns_oid_valid_days_for_openid_v2_auth(self):
         """Test that oid_valid_days is returned for AUTH_OPENID_V2."""
         configuration = self.configuration
-        configuration.cert_valid_days = 365
-        configuration.oid_valid_days = 30
-        configuration.oidc_valid_days = 30
-        configuration.generic_valid_days = 14
 
         result = default_account_valid_days(configuration, AUTH_OPENID_V2)
         self.assertEqual(result, 30)
@@ -74,10 +94,6 @@ class TestMigSharedAccountstate__default_account_valid_days(MigTestCase):
     def test_returns_oidc_valid_days_for_openid_connect_auth(self):
         """Test that oidc_valid_days is returned for AUTH_OPENID_CONNECT."""
         configuration = self.configuration
-        configuration.cert_valid_days = 365
-        configuration.oid_valid_days = 30
-        configuration.oidc_valid_days = 30
-        configuration.generic_valid_days = 14
 
         result = default_account_valid_days(configuration, AUTH_OPENID_CONNECT)
         self.assertEqual(result, 30)
@@ -85,10 +101,6 @@ class TestMigSharedAccountstate__default_account_valid_days(MigTestCase):
     def test_returns_generic_valid_days_for_generic_auth(self):
         """Test that generic_valid_days is returned for AUTH_GENERIC."""
         configuration = self.configuration
-        configuration.cert_valid_days = 365
-        configuration.oid_valid_days = 30
-        configuration.oidc_valid_days = 30
-        configuration.generic_valid_days = 14
 
         result = default_account_valid_days(configuration, AUTH_GENERIC)
         self.assertEqual(result, 14)
@@ -96,10 +108,6 @@ class TestMigSharedAccountstate__default_account_valid_days(MigTestCase):
     def test_returns_generic_valid_days_for_unknown_auth_type(self):
         """Test that generic_valid_days is fallback for unknown auth type."""
         configuration = self.configuration
-        configuration.cert_valid_days = 365
-        configuration.oid_valid_days = 30
-        configuration.oidc_valid_days = 30
-        configuration.generic_valid_days = 14
 
         result = default_account_valid_days(configuration, "UNKNOWN_AUTH_TYPE")
         self.assertEqual(result, 14)
@@ -111,13 +119,16 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
     def _provide_configuration(self):
         return "testconfig"
 
-    def test_calculates_expire_from_valid_days(self):
-        """Test that expire is calculated correctly from valid days."""
+    def before_each(self):
         configuration = self.configuration
         configuration.cert_valid_days = 365
         configuration.oid_valid_days = 30
         configuration.oidc_valid_days = 30
         configuration.generic_valid_days = 14
+
+    def test_calculates_expire_from_valid_days(self):
+        """Test that expire is calculated correctly from valid days."""
+        configuration = self.configuration
 
         start_time = time.time()
         result = default_account_expire(configuration, AUTH_CERTIFICATE,
@@ -128,10 +139,6 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
     def test_calculates_expire_for_openid_v2(self):
         """Test expire calculation for AUTH_OPENID_V2."""
         configuration = self.configuration
-        configuration.cert_valid_days = 365
-        configuration.oid_valid_days = 30
-        configuration.oidc_valid_days = 30
-        configuration.generic_valid_days = 14
 
         start_time = time.time()
         result = default_account_expire(configuration, AUTH_OPENID_V2,
@@ -142,10 +149,6 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
     def test_calculates_expire_for_openid_connect(self):
         """Test expire calculation for AUTH_OPENID_CONNECT."""
         configuration = self.configuration
-        configuration.cert_valid_days = 365
-        configuration.oid_valid_days = 30
-        configuration.oidc_valid_days = 30
-        configuration.generic_valid_days = 14
 
         start_time = time.time()
         result = default_account_expire(configuration, AUTH_OPENID_CONNECT,
@@ -156,10 +159,6 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
     def test_calculates_expire_for_generic_auth(self):
         """Test expire calculation for AUTH_GENERIC."""
         configuration = self.configuration
-        configuration.cert_valid_days = 365
-        configuration.oid_valid_days = 30
-        configuration.oidc_valid_days = 30
-        configuration.generic_valid_days = 14
 
         start_time = time.time()
         result = default_account_expire(configuration, AUTH_GENERIC,
@@ -170,10 +169,6 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
     def test_uses_current_time_if_start_time_not_provided(self):
         """Test that current time is used when start_time is not provided."""
         configuration = self.configuration
-        configuration.cert_valid_days = 365
-        configuration.oid_valid_days = 30
-        configuration.oidc_valid_days = 30
-        configuration.generic_valid_days = 14
 
         before = int(time.time())
         result = default_account_expire(configuration, AUTH_CERTIFICATE)
@@ -185,6 +180,222 @@ class TestMigSharedAccountstate__default_account_expire(MigTestCase):
         self.assertTrue(min_expected <= result <= max_expected)
 
 
+class TestMigSharedAccountstate__update_account_expire_cache(MigTestCase):
+    """Coverage of accountstate update_account_expire_cache function."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test environment for expire cache tests."""
+        configuration = self.configuration
+        # Ensure the mig_system_run sub directory exists for expire marks
+        marks_path = os.path.join(configuration.mig_system_run,
+                                  expire_marks_dir)
+        ensure_dirs_exist(marks_path)
+
+    def test_update_account_expire_cache_creates_mark(self):
+        """Test that update_account_expire_cache creates an expire mark."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": TEST_EXPIRE_TIMESTAMP,
+        }
+
+        result = update_account_expire_cache(configuration, user_dict)
+        self.assertTrue(result)
+
+        # Verify the mark was created
+        cached_expire = get_account_expire_cache(configuration, TEST_USER_DN)
+        self.assertEqual(cached_expire, TEST_EXPIRE_TIMESTAMP)
+
+    def test_update_account_expire_cache_with_missing_client_id(self):
+        """Test that update fails gracefully when client_id is missing."""
+        configuration = self.configuration
+        user_dict = {
+            "expire": TEST_EXPIRE_TIMESTAMP,
+        }
+
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = update_account_expire_cache(configuration, user_dict)
+            self.assertFalse(result)
+        self.assertTrue(any('no client ID' in msg
+                            for msg in log_capture.output))
+
+    def test_update_account_expire_cache_with_missing_expire(self):
+        """Test that update returns True when expire is missing."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+        }
+
+        with self.assertLogs(level='INFO') as log_capture:
+            result = update_account_expire_cache(configuration, user_dict)
+            self.assertTrue(result)
+        self.assertTrue(any('no expire set' in msg
+                            for msg in log_capture.output))
+
+    def test_update_account_expire_cache_with_string_expire(self):
+        """Test that update fails when expire is a string."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": "not_a_number",
+        }
+
+        with self.assertLogs(level='WARNING') as log_capture:
+            result = update_account_expire_cache(configuration, user_dict)
+            self.assertFalse(result)
+        self.assertTrue(any('string expire value' in msg
+                            for msg in log_capture.output))
+
+    def test_update_account_expire_cache_with_delete(self):
+        """Test that delete=True removes the expire mark."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": TEST_EXPIRE_TIMESTAMP,
+        }
+
+        # First create the mark
+        update_account_expire_cache(configuration, user_dict)
+        cached_expire = get_account_expire_cache(configuration, TEST_USER_DN)
+        self.assertEqual(cached_expire, TEST_EXPIRE_TIMESTAMP)
+
+        # Then delete it
+        result = update_account_expire_cache(
+            configuration, user_dict, delete=True)
+        self.assertTrue(result)
+
+        # Verify the mark was removed
+        cached_expire = get_account_expire_cache(configuration, TEST_USER_DN)
+        self.assertIsNone(cached_expire)
+
+    def test_update_account_expire_cache_with_invalid_user_dict(self):
+        """Test that update fails when user_dict is not a dictionary."""
+        configuration = self.configuration
+
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = update_account_expire_cache(configuration, "not_a_dict")
+            self.assertFalse(result)
+        self.assertTrue(any('invalid user_dict' in msg
+                            for msg in log_capture.output))
+
+
+class TestMigSharedAccountstate__get_account_expire_cache(MigTestCase):
+    """Coverage of accountstate get_account_expire_cache function."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test environment for expire cache tests."""
+        configuration = self.configuration
+        # Ensure the mig_system_run sub directory exists for expire marks
+        marks_path = os.path.join(configuration.mig_system_run,
+                                  expire_marks_dir)
+        ensure_dirs_exist(marks_path)
+
+    def test_get_account_expire_cache_returns_cached_value(self):
+        """Test that get_account_expire_cache returns cached expire value."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": TEST_EXPIRE_TIMESTAMP,
+        }
+
+        # Create the mark first
+        update_account_expire_cache(configuration, user_dict)
+
+        # Then retrieve it
+        result = get_account_expire_cache(configuration, TEST_USER_DN)
+        self.assertEqual(result, TEST_EXPIRE_TIMESTAMP)
+
+    def test_get_account_expire_cache_with_missing_client_id(self):
+        """Test that get fails gracefully when client_id is missing."""
+        configuration = self.configuration
+
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = get_account_expire_cache(configuration, "")
+            self.assertFalse(result)
+        self.assertTrue(any('invalid client ID' in msg
+                            for msg in log_capture.output))
+
+
+class TestMigSharedAccountstate__reset_account_expire_cache(MigTestCase):
+    """Coverage of accountstate reset_account_expire_cache function."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test environment for expire cache tests."""
+        configuration = self.configuration
+        # Ensure the mig_system_run sub directory exists for expire marks
+        marks_path = os.path.join(configuration.mig_system_run,
+                                  expire_marks_dir)
+        ensure_dirs_exist(marks_path)
+
+        self.expire_base = os.path.join(configuration.mig_system_run,
+                                        expire_marks_dir)
+
+    def test_reset_account_expire_cache_resets_all_marks(self):
+        """Test that reset_account_expire_cache resets all expire marks."""
+        configuration = self.configuration
+        # Create a couple of marks first
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": TEST_EXPIRE_TIMESTAMP,
+        }
+        update_account_expire_cache(configuration, user_dict)
+        cached_expire = get_account_expire_cache(configuration, TEST_USER_DN)
+        self.assertEqual(cached_expire, TEST_EXPIRE_TIMESTAMP)
+        user_dict = {
+            "distinguished_name": OTHER_USER_DN,
+            "expire": TEST_EXPIRE_TIMESTAMP + 42,
+        }
+        update_account_expire_cache(configuration, user_dict)
+        cached_expire = get_account_expire_cache(configuration, OTHER_USER_DN)
+        self.assertEqual(cached_expire, TEST_EXPIRE_TIMESTAMP + 42)
+
+        # Then reset all
+        result = reset_account_expire_cache(configuration)
+        self.assertTrue(result)
+
+        # Verify all marks were reset but not removed
+        marks_path = os.path.join(self.expire_base, TEST_USER_DIR)
+        self.assertTrue(os.path.exists(marks_path))
+        cached_expire = get_account_expire_cache(configuration, TEST_USER_DN)
+        self.assertEqual(cached_expire, 0.0)
+        marks_path = os.path.join(self.expire_base, OTHER_USER_DIR)
+        self.assertTrue(os.path.exists(marks_path))
+        cached_expire = get_account_expire_cache(configuration, OTHER_USER_DN)
+        self.assertEqual(cached_expire, 0.0)
+
+    def test_reset_account_expire_cache_resets_specific_mark(self):
+        """Test that reset_account_expire_cache resets given expire mark."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": TEST_EXPIRE_TIMESTAMP,
+        }
+
+        marks_path = os.path.join(self.expire_base, TEST_USER_DIR)
+        # Create the mark first
+        update_account_expire_cache(configuration, user_dict)
+        self.assertTrue(os.path.exists(marks_path))
+        cached_expire = get_account_expire_cache(configuration, TEST_USER_DN)
+        self.assertEqual(cached_expire, TEST_EXPIRE_TIMESTAMP)
+
+        # Then reset it
+        result = reset_account_expire_cache(configuration, TEST_USER_DN)
+        self.assertTrue(result)
+
+        # Verify the mark was reset but not removed
+        self.assertTrue(os.path.exists(marks_path))
+        cached_expire = get_account_expire_cache(configuration, TEST_USER_DN)
+        self.assertEqual(cached_expire, 0.0)
+
+
 if __name__ == "__main__":
-    from tests.support import testmain
     testmain()
