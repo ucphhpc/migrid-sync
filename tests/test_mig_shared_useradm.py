@@ -27,57 +27,72 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
-import binascii
 import datetime
-import difflib
 import io
 import os
-import pwd
-import sys
 import time
 import unittest
 
 from past.builtins import basestring
 
 # Imports required for the unit test wrapping
+from mig.shared.base import client_id_dir, distinguished_name_to_user
 from mig.shared.defaults import (
     DEFAULT_USER_ID_FORMAT,
     htaccess_filename,
     keyword_auto,
+    ssh_conf_dir,
+    davs_conf_dir,
+    ftps_conf_dir,
+    welcome_filename,
+    settings_filename,
+    profile_filename,
+    widgets_filename,
+    default_css_filename,
+    user_id_alias_dir,
 )
 
 # Imports of the code under test
 from mig.shared.useradm import (
     _ensure_dirs_needed_for_userdb,
+    _get_required_user_alias_links,
+    _get_required_user_dir_links,
     assure_current_htaccess,
-    create_user, user_account_notify,
+    create_user,
+    delete_user,
+    edit_user,
+    get_any_oid_user_dn,
+    user_account_notify,
 )
 
 # Imports required for the unit tests themselves
 from tests.support import (
-    MIG_BASE,
     TEST_OUTPUT_DIR,
     FakeConfiguration,
     MigTestCase,
     cleanpath,
     ensure_dirs_exist,
-    is_path_within,
     testmain,
 )
 from tests.support.fixturesupp import FixtureAssertMixin
 from tests.support.picklesupp import PickleAssertMixin
-from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
+from tests.support.usersupp import NO_SUCH_USER_DN, OTHER_USER_DN, \
+    TEST_USER_DN, UserAssertMixin
 
+# TODO: add this client dir in usersupp and import from there instead
+TEST_USER_DIR = TEST_USER_DN.replace('/', '+').replace(' ', '_')
+
+TEST_USER_SHORT_ID = "abc123@some.org"
 TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[-1]
 TEST_USER_EXPIRE = 1776031200
-OTHER_USER_DN = '/C=DK/ST=NA/L=NA/O=Other Org/OU=NA/CN=Other User/emailAddress=other@example.com'
-OTHER_USER_EMAIL = 'other@email.org'
+OTHER_USER_EMAIL = OTHER_USER_DN.split("/emailAddress=", 1)[-1]
 
 # NOTE: use a bogus path in output to make sure lock artifacts end up there
 NO_SUCH_USER_DB = os.path.join(TEST_OUTPUT_DIR, 'no_such_user.db')
 
 DUMMY_USER = "dummy-user"
 DUMMY_STALE_USER = "dummy-stale-user"
+DUMMY_PASSWORD_HASH = "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM1234uxi"
 DUMMY_HOME_DIR = "dummy_user_home"
 DUMMY_SETTINGS_DIR = "dummy_user_settings"
 DUMMY_MRSL_FILES_DIR = "dummy_mrsl_files"
@@ -217,6 +232,81 @@ class TestMigSharedUseradm__create_user(
         self.maxDiff = None
         self.assertEqual(actual_user_object, expected_user_object)
 
+    def test_user_creation_creates_fs_entries(self):
+        user_dict = {}
+        user_dict["short_id"] = TEST_USER_SHORT_ID
+        user_dict["full_name"] = "Test User"
+        user_dict["organization"] = "Test Org"
+        user_dict["state"] = "NA"
+        user_dict["country"] = "DK"
+        user_dict["email"] = "test@example.com"
+        user_dict["comment"] = "This is the create comment"
+        user_dict["locality"] = ""
+        user_dict["organizational_unit"] = ""
+        user_dict["password"] = ""
+        user_dict["password_hash"] = self.TEST_USER_PASSWORD_HASH
+
+        create_user(
+            user_dict, self.configuration, keyword_auto, default_renew=True
+        )
+        home_dir = os.path.join(self.configuration.user_home,
+                                TEST_USER_DIR)
+        self.assertTrue(os.path.isdir(home_dir))
+
+        short_link = os.path.join(self.configuration.user_home,
+                                  TEST_USER_SHORT_ID)
+        self.assertTrue(os.path.islink(short_link))
+        self.assertEqual(os.path.realpath(home_dir),
+                         os.path.realpath(short_link))
+
+        settings_dir = os.path.join(self.configuration.user_settings,
+                                    TEST_USER_DIR)
+        self.assertTrue(os.path.isdir(settings_dir))
+
+        ssh_dir = os.path.join(home_dir, ssh_conf_dir)
+        self.assertTrue(os.path.isdir(ssh_dir))
+        davs_dir = os.path.join(home_dir, davs_conf_dir)
+        self.assertTrue(os.path.isdir(davs_dir))
+        ftps_dir = os.path.join(home_dir, ftps_conf_dir)
+        self.assertTrue(os.path.isdir(ftps_dir))
+        htaccess_path = os.path.join(home_dir, htaccess_filename)
+        self.assertTrue(os.path.isfile(htaccess_path))
+        # NOTE: test htaccess contents matches access for X509 ID
+        req_pattern = 'require user "%s"'
+        with open(htaccess_path) as test_fd:
+            test_contents = test_fd.read()
+            self.assertIn(req_pattern % TEST_USER_DN, test_contents)
+
+        enc_user_dn = TEST_USER_DN.encode('utf8')
+        enc_creator = 'CREATOR'.encode('utf8')
+        welcome_path = os.path.join(home_dir, welcome_filename)
+        self.assertTrue(os.path.isfile(welcome_path))
+        settings_path = os.path.join(settings_dir, settings_filename)
+        self.assertTrue(os.path.isfile(settings_path))
+        pickled = self.assertPickledFile(settings_path)
+        self.assertIn(enc_user_dn, pickled[enc_creator])
+        profile_path = os.path.join(settings_dir, profile_filename)
+        self.assertTrue(os.path.isfile(profile_path))
+        pickled = self.assertPickledFile(profile_path)
+        self.assertIn(enc_user_dn,
+                      pickled[enc_creator])
+        widgets_path = os.path.join(settings_dir, widgets_filename)
+        self.assertTrue(os.path.isfile(widgets_path))
+        pickled = self.assertPickledFile(widgets_path)
+        self.assertIn(enc_user_dn,
+                      pickled[enc_creator])
+        css_path = os.path.join(home_dir, default_css_filename)
+        self.assertTrue(os.path.isfile(css_path))
+        with open(css_path) as test_fd:
+            test_contents = test_fd.read()
+            self.assertIn('No changes - use default', test_contents)
+
+        # NOTE: check permissions on htaccess, .ssh
+        htaccess_stat = os.stat(htaccess_path)
+        self.assertEqual(htaccess_stat.st_mode, 0o100444)
+        ssh_stat = os.stat(ssh_dir)
+        self.assertEqual(ssh_stat.st_mode, 0o40755)
+
     def test_user_creation_records_a_user_with_gdp(self):
         self.configuration.site_enable_gdp = True
 
@@ -238,7 +328,7 @@ class TestMigSharedUseradm__create_user(
             create_user(
                 user_dict, self.configuration, keyword_auto, default_renew=True
             )
-        except:
+        except Exception:
             self.assertFalse(True, "should not be reached")
 
     def test_user_creation_and_renew_records_a_user(self):
@@ -262,7 +352,7 @@ class TestMigSharedUseradm__create_user(
                 default_renew=True,
                 ask_renew=False,
             )
-        except:
+        except Exception:
             self.assertFalse(True, "should not be reached")
 
         try:
@@ -273,7 +363,7 @@ class TestMigSharedUseradm__create_user(
                 default_renew=True,
                 ask_renew=False,
             )
-        except:
+        except Exception:
             self.assertFalse(True, "should not be reached")
 
     def test_user_creation_fails_in_renew_when_locked(self):
@@ -300,7 +390,7 @@ class TestMigSharedUseradm__create_user(
                 default_renew=True,
                 ask_renew=False,
             )
-        except:
+        except Exception:
             self.assertFalse(True, "should not be reached")
 
     def test_user_creation_with_id_collission_fails(self):
@@ -318,7 +408,7 @@ class TestMigSharedUseradm__create_user(
             create_user(
                 user_dict, self.configuration, keyword_auto, default_renew=True
             )
-        except:
+        except Exception:
             self.assertFalse(True, "should not be reached")
 
         # NOTE: reset distinguished_name and introduce an ID conflict to test
@@ -357,7 +447,7 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
                 generated = htaccess_file.read()
 
         generated_lines = generated.split("\n")
-        if not expected in generated_lines:
+        if expected not in generated_lines:
             raise AssertionError("no such require user line: %s" % expected)
 
     def test_skips_accounts_without_short_id(self):
@@ -371,7 +461,7 @@ class MigSharedUseradm__assure_current_htaccess(MigTestCase):
             path_kind = self.assertPathExists(DUMMY_REL_HTACCESS_PATH)
             # File should not exist here at all
             self.assertNotEqual(path_kind, "file")
-        except OSError as ignore_oserr:
+        except OSError:
             pass
 
     def test_creates_missing_htaccess_file(self):
@@ -499,6 +589,508 @@ class TestMigSharedUseradm__user_account_notify(MigTestCase, UserAssertMixin):
             os.remove("%s.lock" % NO_SUCH_USER_DB)
         except Exception:
             pass
+
+
+class TestMigSharedUseradm__delete_user(
+    MigTestCase, FixtureAssertMixin, PickleAssertMixin
+):
+    """Coverage of useradm delete_user function."""
+
+    TEST_USER_DN_GDP = "%s/GDP" % (TEST_USER_DN,)
+    TEST_USER_PASSWORD_HASH = (
+        "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM2134uix"
+    )
+
+    def before_each(self):
+        configuration = self.configuration
+        configuration.site_user_id_format = DEFAULT_USER_ID_FORMAT
+
+        _ensure_dirs_needed_for_userdb(self.configuration)
+
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        ensure_dirs_exist(self.configuration.mig_system_files)
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def test_user_delete_completes(self):
+        self._provision_test_user(self, TEST_USER_DN)
+
+        try:
+            delete_user(
+                distinguished_name_to_user(TEST_USER_DN),
+                self.configuration,
+                keyword_auto,
+                force=True,
+            )
+        except Exception:
+            self.assertFalse(True, "should not be reached")
+
+    def test_user_deletion_removes_fs_entries(self):
+        self._provision_test_user(self, TEST_USER_DN)
+
+        try:
+            delete_user(
+                distinguished_name_to_user(TEST_USER_DN),
+                self.configuration,
+                keyword_auto,
+                force=True,
+            )
+        except Exception:
+            self.assertFalse(True, "should not be reached")
+
+        home_dir = os.path.join(self.configuration.user_home, TEST_USER_DN)
+        self.assertFalse(os.path.isdir(home_dir))
+        self.assertFalse(os.path.exists(home_dir))
+        short_link = os.path.join(self.configuration.user_home,
+                                  TEST_USER_SHORT_ID)
+        self.assertFalse(os.path.islink(short_link))
+        self.assertFalse(os.path.exists(short_link))
+
+        settings_dir = os.path.join(self.configuration.user_settings,
+                                    TEST_USER_DIR)
+        self.assertFalse(os.path.isdir(settings_dir))
+        self.assertFalse(os.path.exists(settings_dir))
+
+        ssh_dir = os.path.join(home_dir, ssh_conf_dir)
+        self.assertFalse(os.path.isdir(ssh_dir))
+        self.assertFalse(os.path.exists(ssh_dir))
+        davs_dir = os.path.join(home_dir, davs_conf_dir)
+        self.assertFalse(os.path.isdir(davs_dir))
+        self.assertFalse(os.path.exists(davs_dir))
+        ftps_dir = os.path.join(home_dir, ftps_conf_dir)
+        self.assertFalse(os.path.isdir(ftps_dir))
+        self.assertFalse(os.path.exists(ftps_dir))
+        htaccess_path = os.path.join(home_dir, htaccess_filename)
+        self.assertFalse(os.path.isfile(htaccess_path))
+        self.assertFalse(os.path.exists(htaccess_path))
+        welcome_path = os.path.join(home_dir, welcome_filename)
+        self.assertFalse(os.path.isfile(welcome_path))
+        self.assertFalse(os.path.exists(welcome_path))
+        settings_path = os.path.join(settings_dir, settings_filename)
+        self.assertFalse(os.path.isfile(settings_path))
+        self.assertFalse(os.path.exists(settings_path))
+        profile_path = os.path.join(settings_dir, profile_filename)
+        self.assertFalse(os.path.isfile(profile_path))
+        self.assertFalse(os.path.exists(profile_path))
+        widgets_path = os.path.join(settings_dir, widgets_filename)
+        self.assertFalse(os.path.isfile(widgets_path))
+        self.assertFalse(os.path.exists(widgets_path))
+        css_path = os.path.join(home_dir, default_css_filename)
+        self.assertFalse(os.path.isfile(css_path))
+        self.assertFalse(os.path.exists(css_path))
+
+
+class TestMigSharedUseradm__edit_user(
+    MigTestCase, FixtureAssertMixin, PickleAssertMixin, UserAssertMixin
+):
+    """Coverage of useradm edit_user function."""
+
+    TEST_USER_PASSWORD_HASH = (
+        "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM2134uix"
+    )
+
+    def before_each(self):
+        configuration = self.configuration
+        configuration.site_user_id_format = DEFAULT_USER_ID_FORMAT
+
+        _ensure_dirs_needed_for_userdb(self.configuration)
+
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        ensure_dirs_exist(self.configuration.mig_system_files)
+        ensure_dirs_exist(self.configuration.resource_home)
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def _flush_test_user(self, client_id):
+        """Helper to force clean up after provisioned test users"""
+        try:
+            delete_user(
+                {'distinguished_name': client_id},
+                self.configuration,
+                keyword_auto,
+                force=True,
+            )
+        except Exception:
+            pass
+
+    def test_edit_user_email(self):
+        """Test basic user email editing"""
+        self._provision_test_user(self, TEST_USER_DN)
+        # Extract original for later verification
+        pickled = self.assertPickledFile(
+            self.expected_user_db_file,
+            apply_hints=["convert_dict_bytes_to_strings_kv"],
+        )
+        user_dict = pickled[TEST_USER_DN]
+
+        # Edit user attribute and verify changed in DB
+        changes = {
+            "email": OTHER_USER_EMAIL,
+        }
+        removes = []
+        edit_user(
+            TEST_USER_DN, changes, removes, self.configuration, keyword_auto
+        )
+        edited_dn = TEST_USER_DN.replace(TEST_USER_EMAIL, OTHER_USER_EMAIL)
+        # Verify changes
+        pickled = self.assertPickledFile(
+            self.expected_user_db_file,
+            apply_hints=["convert_dict_bytes_to_strings_kv"],
+        )
+        self.assertIn(edited_dn, pickled)
+        edited_user = pickled[edited_dn]
+        for field in user_dict:
+            if field == "email":
+                self.assertEqual(edited_user[field], OTHER_USER_EMAIL)
+            elif field == "distinguished_name":
+                self.assertEqual(edited_user[field], edited_dn)
+            else:
+                self.assertEqual(edited_user[field], user_dict[field])
+
+        self._flush_test_user(edited_user['distinguished_name'])
+
+    def test_edit_user_remove_attributes(self):
+        """Test removing user attributes"""
+        self._provision_test_user(self, TEST_USER_DN)
+        # Extract original for later verification
+        pickled = self.assertPickledFile(
+            self.expected_user_db_file,
+            apply_hints=["convert_dict_bytes_to_strings_kv"],
+        )
+        user_dict = pickled[TEST_USER_DN]
+
+        changes = {}
+        removes = ["comment"]
+        edit_user(
+            TEST_USER_DN, changes, removes, self.configuration, keyword_auto,
+            meta_only=True
+        )
+
+        pickled = self.assertPickledFile(
+            self.expected_user_db_file,
+            apply_hints=["convert_dict_bytes_to_strings_kv"],
+        )
+        edited_user = pickled[TEST_USER_DN]
+        for field in user_dict:
+            if field == "comment":
+                self.assertNotIn(field, edited_user)
+            else:
+                self.assertEqual(edited_user[field], user_dict[field])
+
+        self._flush_test_user(TEST_USER_DN)
+
+    def test_edit_user_meta_only(self):
+        """Test metadata-only update (no FS changes)"""
+        self._provision_test_user(self, TEST_USER_DN)
+        # Extract original for later verification
+        pickled = self.assertPickledFile(
+            self.expected_user_db_file,
+            apply_hints=["convert_dict_bytes_to_strings_kv"],
+        )
+        user_dict = pickled[TEST_USER_DN]
+
+        changes = {"comment": "meta comment"}
+        removes = []
+        edit_user(
+            TEST_USER_DN, changes, removes, self.configuration, keyword_auto,
+            meta_only=True
+        )
+
+        pickled = self.assertPickledFile(
+            self.expected_user_db_file,
+            apply_hints=["convert_dict_bytes_to_strings_kv"],
+        )
+        edited_user = pickled[TEST_USER_DN]
+        for field in user_dict:
+            if field == "comment":
+                self.assertEqual(pickled[TEST_USER_DN][field], "meta comment")
+            else:
+                self.assertEqual(edited_user[field], user_dict[field])
+
+        self._flush_test_user(TEST_USER_DN)
+
+    @unittest.skip("make backend function less noisy (traceback) and enable?")
+    def test_edit_user_nonexistent(self):
+        """Test editing nonexistent user"""
+        changes = {"email": "dummy@example.com"}
+        removes = []
+        with self.assertRaises(Exception):
+            edit_user(
+                NO_SUCH_USER_DN, changes, removes, self.configuration,
+                keyword_auto
+            )
+
+    @unittest.skip("make backend function less noisy (traceback) and enable?")
+    def test_edit_user_nonexistent_force(self):
+        """Test editing nonexistent user with force=True"""
+        changes = {"email": "dummy@example.com"}
+        removes = []
+        # NOTE: forced edit logs errors in update_account_X functions
+        self.logger.forgive_errors()
+        with self.assertRaises(Exception):
+            edit_user(
+                NO_SUCH_USER_DN, changes, removes, self.configuration,
+                keyword_auto, force=True
+            )
+
+    @unittest.skip("make backend function less noisy (traceback) and enable?")
+    def test_edit_user_dn_collision_fails(self):
+        """Test that editing a user to a DN that already exists fails"""
+        # NOTE: we can't use _provision_test_users here as it lacks passwords
+        test_user_dict = distinguished_name_to_user(TEST_USER_DN)
+        test_user_dict["comment"] = "This is the create comment"
+        test_user_dict["password"] = ""
+        test_user_dict["password_hash"] = self.TEST_USER_PASSWORD_HASH
+        try:
+            create_user(
+                test_user_dict, self.configuration, keyword_auto, default_renew=True
+            )
+        except Exception:
+            self.assertFalse(True, "should not be reached")
+        other_user_dict = distinguished_name_to_user(OTHER_USER_DN)
+        other_user_dict["comment"] = "This is the create comment"
+        other_user_dict["password"] = ""
+        other_user_dict["password_hash"] = DUMMY_PASSWORD_HASH
+        try:
+            create_user(
+                other_user_dict, self.configuration, keyword_auto, default_renew=True
+            )
+        except Exception:
+            self.assertFalse(True, "should not be reached")
+
+        changes = distinguished_name_to_user(OTHER_USER_DN)
+        removes = []
+        with self.assertRaises(Exception):
+            edit_user(
+                TEST_USER_DN, changes, removes, self.configuration,
+                keyword_auto
+            )
+
+        self._flush_test_user(TEST_USER_DN)
+        self._flush_test_user(OTHER_USER_DN)
+
+    def test_edit_user_renames_user(self):
+        """Test editing fields that change the distinguished name"""
+        self._provision_test_user(self, TEST_USER_DN)
+        # Extract original for later verification
+        pickled = self.assertPickledFile(
+            self.expected_user_db_file,
+            apply_hints=["convert_dict_bytes_to_strings_kv"],
+        )
+        user_dict = pickled[TEST_USER_DN]
+
+        changes = {"full_name": "Renamed User"}
+        removes = []
+        result = edit_user(
+            TEST_USER_DN, changes, removes, self.configuration,
+            keyword_auto
+        )
+
+        new_dn = result["distinguished_name"]
+        new_dir = new_dn.replace("/", "+").replace(" ", "_")
+
+        pickled = self.assertPickledFile(
+            self.expected_user_db_file,
+            apply_hints=["convert_dict_bytes_to_strings_kv"],
+        )
+        edited_user = pickled[new_dn]
+        self.assertNotIn(TEST_USER_DN, pickled)
+        self.assertIn(new_dn, pickled)
+        for field in user_dict:
+            if field == "full_name":
+                self.assertEqual(edited_user[field], "Renamed User")
+            elif field == "distinguished_name":
+                self.assertEqual(edited_user[field], new_dn)
+            else:
+                self.assertEqual(edited_user[field], user_dict[field])
+
+        old_home = os.path.join(self.configuration.user_home, TEST_USER_DIR)
+        new_home = os.path.join(self.configuration.user_home, new_dir)
+        self.assertFalse(os.path.exists(old_home))
+        self.assertTrue(os.path.isdir(new_home))
+
+        old_settings = os.path.join(
+            self.configuration.user_settings, TEST_USER_DIR)
+        new_settings = os.path.join(self.configuration.user_settings, new_dir)
+        self.assertFalse(os.path.exists(old_settings))
+        self.assertTrue(os.path.isdir(new_settings))
+
+        self._flush_test_user(new_dn)
+
+
+class TestMigSharedUseradm___get_required_user_dir_links(MigTestCase):
+    """Coverage of useradm _get_required_user_dir_links function."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def test_get_required_user_dir_links_with_links(self):
+        """Test _get_required_user_dir_links with link_dir provided"""
+        configuration = self.configuration
+        real_dir = "real_dir"
+        link_dir = "link_dir"
+
+        dir_links = _get_required_user_dir_links(
+            configuration, real_dir, link_dir)
+
+        expected = [
+            (os.path.join(configuration.user_home, real_dir),
+             os.path.join(configuration.user_home, link_dir)),
+            (os.path.join(configuration.user_settings, real_dir),
+             os.path.join(configuration.user_settings, link_dir)),
+            (os.path.join(configuration.user_cache, real_dir),
+             os.path.join(configuration.user_cache, link_dir)),
+            (os.path.join(configuration.mrsl_files_dir, real_dir),
+             os.path.join(configuration.mrsl_files_dir, link_dir)),
+            (os.path.join(configuration.resource_pending, real_dir),
+             os.path.join(configuration.resource_pending, link_dir))
+        ]
+        self.assertEqual(dir_links, expected)
+
+    def test_get_required_user_dir_links_without_links(self):
+        """Test _get_required_user_dir_links without link_dir provided"""
+        configuration = self.configuration
+        real_dir = "real_dir"
+
+        dir_links = _get_required_user_dir_links(
+            configuration, real_dir, False)
+
+        expected = [
+            (os.path.join(configuration.user_home, real_dir), False),
+            (os.path.join(configuration.user_settings, real_dir), False),
+            (os.path.join(configuration.user_cache, real_dir), False),
+            (os.path.join(configuration.mrsl_files_dir, real_dir), False),
+            (os.path.join(configuration.resource_pending, real_dir), False)
+        ]
+        self.assertEqual(dir_links, expected)
+
+
+class TestMigSharedUseradm___get_required_user_alias_links(MigTestCase):
+    """Coverage of useradm _get_required_user_alias_links function."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def test_get_required_user_alias_links_with_links(self):
+        """Test _get_required_user_alias_links with link_dir provided"""
+        configuration = self.configuration
+        real_dir = "real_dir"
+        link_dir = "link_dir"
+
+        alias_links = _get_required_user_alias_links(configuration, real_dir,
+                                                     link_dir)
+
+        expected = [(link_dir, os.path.join(configuration.mig_system_run,
+                                            user_id_alias_dir, real_dir))]
+        self.assertEqual(alias_links, expected)
+
+    def test_get_required_user_alias_links_without_links(self):
+        """Test _get_required_user_alias_links without link_dir provided"""
+        configuration = self.configuration
+        real_dir = "real_dir"
+
+        alias_links = _get_required_user_alias_links(configuration, real_dir,
+                                                     False)
+
+        self.assertEqual(alias_links, [(False, False)])
+
+
+class TestMigSharedUseradm__get_any_oid_user_dn(
+    MigTestCase, FixtureAssertMixin, PickleAssertMixin, UserAssertMixin
+):
+    """Unit tests for get_any_oid_user_dn with default user ID format."""
+
+    def before_each(self):
+        """Prepare a minimal configuration for the tests."""
+        configuration = self.configuration
+        # Use Default format for these tests
+        configuration.site_user_id_format = DEFAULT_USER_ID_FORMAT
+        _ensure_dirs_needed_for_userdb(self.configuration)
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        ensure_dirs_exist(self.configuration.mig_system_files)
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def _flush_test_user(self, client_id):
+        """Helper to force clean up after provisioned test users"""
+        try:
+            delete_user(
+                {'distinguished_name': client_id},
+                self.configuration,
+                keyword_auto,
+                force=True,
+            )
+        except Exception:
+            pass
+
+    def test_get_any_oid_user_dn_via_alias_link(self):
+        """Return the distinguished name when a valid alias link exists."""
+        client_id = TEST_USER_DN
+        short_id = TEST_USER_EMAIL
+        self._provision_test_user(self, client_id)
+
+        # Make sure alias link is in place
+        alias_link = os.path.join(self.configuration.user_home, short_id)
+        client_dir = client_id_dir(client_id)
+        os.symlink(client_dir, alias_link)
+
+        # Call the function – it should resolve the alias to the client_id.
+        result = get_any_oid_user_dn(self.configuration, raw_login=short_id,
+                                     user_check=True, do_lock=True
+                                     )
+        self.assertEqual(result, client_id)
+        self._flush_test_user(TEST_USER_DN)
+
+    def test_get_any_oid_user_dn_not_found(self):
+        """When no alias or reverse link exists, return an empty string."""
+        # Missing user will cause log error
+        with self.assertLogs(level='ERROR') as log_capture:
+            result = get_any_oid_user_dn(self.configuration,
+                                         raw_login="NoSuchUser",
+                                         user_check=True, do_lock=True
+                                         )
+            self.assertEqual(result, "")
+        self.assertTrue(any('no such openid user' in msg
+                        for msg in log_capture.output))
+
+    def test_get_any_oid_user_dn_direct_dn(self):
+        """Return the distinguished name when a matching cert directory exists."""
+        client_id = TEST_USER_DN
+        self._provision_test_user(self, client_id)
+
+        # The function should recognise the directory and return the client_id.
+        result = get_any_oid_user_dn(self.configuration,
+                                     raw_login=TEST_USER_DN,
+                                     user_check=True, do_lock=True
+                                     )
+        self.assertEqual(result, client_id)
+        self._flush_test_user(TEST_USER_DN)
+
+    def test_get_any_oid_user_dn_user_check_false(self):
+        """When user_check=False the function bypasses the user‑dir lookup."""
+        raw_login = TEST_USER_SHORT_ID
+        result = get_any_oid_user_dn(self.configuration, raw_login=raw_login,
+                                     user_check=False, do_lock=True
+                                     )
+        self.assertEqual(result, raw_login)
 
 
 if __name__ == "__main__":
