@@ -635,8 +635,7 @@ def refresh_job_creds(configuration, protocol, username):
         sessionid = username
         job_dict = unpickle(link_path, logger)
 
-    # We only allow connections from executing jobs that
-    # has a public key
+    # We only allow connections from executing jobs with a public key
     if job_dict is not None and isinstance(job_dict, dict) and \
             'STATUS' in job_dict and \
             job_dict['STATUS'] == 'EXECUTING' and \
@@ -851,15 +850,15 @@ def refresh_jupyter_creds(configuration, protocol, username):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, active_jupyter_creds)
     if not possible_jupyter_mount_id(configuration, username):
-        # logger.debug("ruled out %s as a possible jupyter_mount ID" \
-        #   % username)
+        # logger.debug("ruled out %s as a possible jupyter_mount ID" %
+        #              username)
         return (conf, active_jupyter_creds)
 
     logger.info("Getting active jupyter mount creds")
     link_path = os.path.join(configuration.sessid_to_jupyter_mount_link_home,
                              "%s" % username + ".jupyter_mount")
-    # logger.debug("jupyter linkpath: %s jupyter path exists: %s" % \
-    #                 (os.path.islink(link_path), os.path.exists(link_path)))
+    # logger.debug("jupyter linkpath: %s jupyter path exists: %s" %
+    #              (os.path.islink(link_path), os.path.exists(link_path)))
 
     jupyter_dict, sessionid = None, None
     if os.path.islink(link_path) and os.path.exists(link_path):
