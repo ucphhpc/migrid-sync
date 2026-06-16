@@ -906,7 +906,7 @@ class MigSharedGriddaemonsLogin__login_map_lookup(MigTestCase):
         """Verify login_map_lookup returns all credentials for a user."""
         # Create two Login objects for 'user1'
         cred1 = Login(
-            configuration=self.configuration.daemon_conf,
+            configuration=self.configuration,
             username="user1",
             home="home1",
             password=None,
