@@ -34,35 +34,37 @@
 The reqinfo library file contains common types and routines for handling
 of structured requests which are identified by a type/operation pair.
 
-These pair of values are usde to identify the request and the resulting
+These pair of values are used to identify the request and the resulting
 type can be used as the basis for dispatching such requests to handlers.
 """
 
 from types import SimpleNamespace
 
 from mig.shared.base import distinguished_name_to_user
-from mig.shared.safeinput import REJECT_UNSET, \
-                                 valid_job_operation, \
-                                 valid_request_type, \
-                                 valid_request_operation, \
-                                 validated_input
+from mig.shared.defaults import keyword_none
+from mig.shared.safeinput import (
+    REJECT_UNSET,
+    valid_request_type,
+    valid_request_operation,
+    validated_input,
+)
 
 REQUEST_INFO_FIELDS = {
-    'type': REJECT_UNSET,
-    'operation': REJECT_UNSET,
+    "type": REJECT_UNSET,
+    "operation": REJECT_UNSET,
 }
 REQUEST_INFO_FIELDS_TYPE = {
-    'type': valid_request_type,
-    'operation': valid_request_operation,
+    "type": valid_request_type,
+    "operation": valid_request_operation,
 }
 REQUEST_INFO_FIELDS_VALUE = {
-    'operation': valid_job_operation,
+    "operation": valid_request_operation,
 }
 REQUEST_INFO_METHOD_BY_OPERATION = {
-    'create': 'POST',
-    'read': 'GET',
-    'update': 'PUT',
-    'delete': 'POST',  # opt to process deletions via a POST to a suffixed route
+    "create": "POST",
+    "read": "GET",
+    "update": "PUT",
+    "delete": "POST",  # opt to process deletions via a POST to a suffixed route
 }
 
 
@@ -78,12 +80,12 @@ class _RequestInfo(SimpleNamespace):
     def args(self):
         """
         Lazily return the request arguments. If a data conversion function
-        as specified pass the request data through it store the resulting
+        is specified pass the request data through it storing the resulting
         structure so that multiple calls are sped up, but we only pay the
         conversion price for valid requests.
         """
 
-        _args = getattr(self, '_args', None)
+        _args = getattr(self, "_args", None)
         if _args:
             return _args
         self._args = self._convert_data(self._request_data)
@@ -96,10 +98,10 @@ class _RequestInfo(SimpleNamespace):
         request is being processed.
         """
 
-        _unpacked_client = getattr(self, '_unpacked_client', None)
+        _unpacked_client = getattr(self, "_unpacked_client", None)
         if not _unpacked_client:
             self._unpacked_client = distinguished_name_to_user(self.client_id)
-        return self._unpacked_client.get('email')
+        return self._unpacked_client.get("email")
 
     @property
     def route(self):
@@ -129,7 +131,7 @@ class _RequestInfo(SimpleNamespace):
         Return the value for a particular argument forced to a particular type.
         """
 
-        if not arg in self.args:
+        if arg not in self.args:
             return type_of_value()
         value = self._args[arg]
         assert isinstance(value, type_of_value)
@@ -140,38 +142,39 @@ class _RequestInfo(SimpleNamespace):
         Apply knowledge based upon the definition of the route to the request.
         """
 
-        convert_data = route_info.get('convert', None)
+        convert_data = route_info.get("convert", None)
         if convert_data:
             self._convert_data = convert_data
         return
 
-
     @classmethod
-    def create(cls, client_id, operation, sent_type, request_data, handlers=None):
+    def create(
+        cls, client_id, operation, sent_type, request_data, handlers=None
+    ):
         # convert payload supplied type and operation values that are used as
         # a compromise for allowing multiple routes to be handled by a single
         # endpoint into a more modern style route
-        method = REQUEST_INFO_METHOD_BY_OPERATION.get(operation, 'NONE')
+        method = REQUEST_INFO_METHOD_BY_OPERATION.get(operation, keyword_none)
         try:
-            request_package_unconverted, *request_types = sent_type.split('__')
+            request_package_unconverted, *request_types = sent_type.split("__")
         except ValueError as exc:
             return None
 
-        request_package = request_package_unconverted.replace('_', '.')
-        if request_package == '':
+        request_package = request_package_unconverted.replace("_", ".")
+        if request_package == "":
             local_package_name = request_types.pop(0)
             request_package = ".%s" % (local_package_name,)
         request_type = "/".join(request_types)
 
         kwargs = {}
-        kwargs['method'] = method
-        kwargs['client_id'] = client_id
-        kwargs['request_type'] = request_type
-        kwargs['request_package'] = request_package
-        kwargs['_request_data'] = request_data
-        kwargs['_convert_data'] = _passthrough
-        kwargs['_unpacked_client'] = None
-        kwargs['_args'] = None
+        kwargs["method"] = method
+        kwargs["client_id"] = client_id
+        kwargs["request_type"] = request_type
+        kwargs["request_package"] = request_package
+        kwargs["_request_data"] = request_data
+        kwargs["_convert_data"] = _passthrough
+        kwargs["_unpacked_client"] = None
+        kwargs["_args"] = None
 
         return cls(**kwargs)
 
@@ -187,30 +190,30 @@ def coalesce_request(request_data, client_id=None):
     # the output format to the output path) unchanged.
     request_data = dict(request_data)
     try:
-        del request_data['output_format']
+        del request_data["output_format"]
     except KeyError:
         pass
 
     data = {
-        'type': unlistify(request_data.pop('type', '')),
-        'operation': unlistify(request_data.pop('operation', '')),
+        "type": unlistify(request_data.pop("type", "")),
+        "operation": unlistify(request_data.pop("operation", "")),
     }
     accepted, rejected = validated_input(
         data,
         REQUEST_INFO_FIELDS,
         type_override=REQUEST_INFO_FIELDS_TYPE,
         value_override=REQUEST_INFO_FIELDS_VALUE,
-        list_wrap=True)
+        list_wrap=True,
+    )
     if rejected:
         return rejected, None
 
     # Use the "operation" and "type" keys from accepted given
     # values may have been altered by the validation logic.
-    operation = accepted['operation'][0]
-    sent_type = accepted['type'][0]
+    operation = accepted["operation"][0]
+    sent_type = accepted["type"][0]
 
-
-    # What remains now in request_data are key/vaue pairs that make up the
+    # What remains now in request_data are key/value pairs that make up the
     # rest of the structured payload. It is up to individual handlers to
     # validate this payload, so move to bundle the request information
     # and optionally post-process-the request data (note due to the way
@@ -218,13 +221,10 @@ def coalesce_request(request_data, client_id=None):
     # any type information about the values themselves must be remade.
 
     request_info = _RequestInfo.create(
-        client_id,
-        operation,
-        sent_type,
-        request_data
+        client_id, operation, sent_type, request_data
     )
     if not request_info:
-        return { 'type': 'the request type is invalid' }, None
+        return {"type": "the request type is invalid"}, None
     return None, request_info
 
 
@@ -240,7 +240,7 @@ def uncommaify(value):
     """
     Convert a comma separated string to individual items.
     """
-    return unconcatify(value, ',')
+    return unconcatify(value, ",")
 
 
 def unconcatify(value, sep):
@@ -250,7 +250,7 @@ def unconcatify(value, sep):
 
     assert isinstance(value, str)
     result = value.split(sep)
-    if len(result) == 1 and result[0] == '':
+    if len(result) == 1 and result[0] == "":
         return []
     return result
 
