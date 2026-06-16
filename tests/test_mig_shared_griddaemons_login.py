@@ -38,10 +38,6 @@ import unittest
 # Imports required for the unit test wrapping
 from mig.shared.base import client_id_dir, distinguished_name_to_user
 from mig.shared.defaults import (
-    READ_WRITE_ACCESS,
-    READ_ONLY_ACCESS,
-    WRITE_ONLY_ACCESS,
-    keyword_auto
     READ_ONLY_ACCESS,
     READ_WRITE_ACCESS,
     UUID_USER_ID_FORMAT,
@@ -598,6 +594,7 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
         # Force X509 user id format
         self.configuration.site_user_id_format = X509_USER_ID_FORMAT
 
+        # Ensure required directories exist
         _ensure_dirs_needed_for_userdb(self.configuration)
         ensure_dirs_exist(self.configuration.sharelink_home)
 
