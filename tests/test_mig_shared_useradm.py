@@ -981,7 +981,7 @@ class TestMigSharedUseradm__delete_user(
         except Exception:
             self.assertFalse(True, "should not be reached")
 
-        home_dir = os.path.join(self.configuration.user_home, TEST_USER_DN)
+        home_dir = os.path.join(self.configuration.user_home, TEST_USER_DIR)
         self.assertFalse(os.path.isdir(home_dir))
         self.assertFalse(os.path.exists(home_dir))
         short_link = os.path.join(self.configuration.user_home,
@@ -993,7 +993,7 @@ class TestMigSharedUseradm__delete_user(
                                     TEST_USER_DIR)
         self.assertFalse(os.path.isdir(settings_dir))
         self.assertFalse(os.path.exists(settings_dir))
-     
+
         ssh_dir = os.path.join(home_dir, ssh_conf_dir)
         self.assertFalse(os.path.isdir(ssh_dir))
         self.assertFalse(os.path.exists(ssh_dir))
