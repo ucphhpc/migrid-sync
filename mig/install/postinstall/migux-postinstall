@@ -6,19 +6,19 @@ import shutil
 import sys
 
 SCRIPT_DIR = os.path.dirname(__file__)
-ROOT_DIR = os.path.normpath(os.path.join(SCRIPT_DIR, '../../..'))
+ROOT_DIR = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
 
 
 def main(argv):
-    migux_package = importlib.util.find_spec('migux')
+    migux_package = importlib.util.find_spec("migux")
     if not migux_package:
         return 1
 
     package_dir = os.path.dirname(migux_package.origin)
-    source_dir = os.path.join(package_dir, 'public')
+    source_dir = os.path.join(package_dir, "public")
 
-    mig_assets_dir = os.path.join(ROOT_DIR, 'mig/assets')
-    target_dir = os.path.join(mig_assets_dir, 'migux')
+    mig_assets_dir = os.path.join(ROOT_DIR, "mig", "assets")
+    target_dir = os.path.join(mig_assets_dir, "migux")
 
     os.makedirs(target_dir, exist_ok=True)
     shutil.copytree(source_dir, target_dir, dirs_exist_ok=True)
@@ -26,5 +26,5 @@ def main(argv):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
