@@ -2,8 +2,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# python3 - wrapper to invoke a local python3 virtual environment
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# which - wrapper to locate a binary respecting python interpreter information
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -31,8 +31,8 @@ import os
 import shutil
 import sys
 
-ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
-VENV_BIN_DIR = os.path.join(ROOT_DIR, 'envhelp/venv/bin')
+ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+VENV_BIN_DIR = os.path.join(ROOT_DIR, "envhelp", "venv", "bin")
 
 
 def main(args):
@@ -55,5 +55,5 @@ def main(args):
     return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

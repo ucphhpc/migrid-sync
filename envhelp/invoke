@@ -2,8 +2,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# python3 - wrapper to invoke a local python3 virtual environment
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# invoke - wrapper to execute a binary located using which.py
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
