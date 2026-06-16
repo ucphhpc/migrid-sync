@@ -66,10 +66,7 @@ from mig.shared.griddaemons.login import (
 )
 
 # More imports required for the unit test wrapping
-from mig.shared.useradm import (
-    _ensure_dirs_needed_for_userdb,
-    create_user
-)
+from mig.shared.useradm import _ensure_dirs_needed_for_userdb, create_user
 
 # Imports required for the unit tests themselves
 from tests.support import (
@@ -2474,8 +2471,10 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
             user_dict=None,
         )
         # Populate jupyter_mounts list
-        self.configuration.daemon_conf['jupyter_mounts'] = [
-            test_session, other_session]
+        self.configuration.daemon_conf["jupyter_mounts"] = [
+            test_session,
+            other_session,
+        ]
         # Call the function under test
         update_login_map(
             daemon_conf=self.configuration.daemon_conf,
