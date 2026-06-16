@@ -1062,7 +1062,7 @@ class MigSharedGriddaemonsLogin__login_map_lookup(MigTestCase):
         """Verify login_map_lookup returns all credentials for a user."""
         # Create two Login objects for 'user1'
         cred1 = Login(
-            configuration=self.configuration.daemon_conf,
+            configuration=self.configuration,
             username="user1",
             home="home1",
             password=None,
@@ -1801,8 +1801,8 @@ class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
         self.assertEqual(len(changed_shares), 0)
         self.assertEqual(len(updated_conf["shares"]), 1)
 
-    def test_refresh_share_creds_detects_missing_link(self):
-        """Test that a missing share link is reported as a change"""
+    def test_refresh_share_creds_detects_and_ignores_missing_link(self):
+        """Test that a completely missing share link is just ignored"""
         # No symlink created - share link is missing
         missing_share_id = "missing123"
 
