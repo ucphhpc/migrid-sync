@@ -102,7 +102,7 @@ def __get_gocryptfs_socket(configuration, gocryptfs_sock=None):
 def __shellexec(
     configuration,
     command,
-    args=[],
+    args=None,
     stdin_str=None,
     stdout_filepath=None,
     stderr_filepath=None,
@@ -111,6 +111,10 @@ def __shellexec(
     Returns (exit_code, stdout, stderr) of subprocess"""
     result = 0
     logger = configuration.logger
+    __args = shlex.split(command)
+    if args is not None:
+        __args.extend(args)
+    logger.debug("__args: %s" % __args)
     stdin_handle = subprocess.PIPE
     stdout_handle = subprocess.PIPE
     stderr_handle = subprocess.PIPE
@@ -118,9 +122,6 @@ def __shellexec(
         stdout_handle = open(stdout_filepath, "w+")
     if stderr_filepath is not None:
         stderr_handle = open(stderr_filepath, "w+")
-    __args = shlex.split(command)
-    __args.extend(args)
-    logger.debug("__args: %s" % __args)
     process = subprocess.Popen(
         __args, stdin=stdin_handle, stdout=stdout_handle, stderr=stderr_handle
     )
@@ -151,7 +152,7 @@ def __shellexec(
     if result == 0:
         logger.debug(
             "%s %s: rc: %s, stdout: %s, error: %s"
-            % (command, " ".join(args), rc, stdout, stderr)
+            % (command, " ".join(__args), rc, stdout, stderr)
         )
     else:
         logger.error(
