@@ -169,70 +169,72 @@ def __set_project_id(
     lustre_basepath,
     quota_datapath,
     quota_name,
-    quota_lustre_pid,
+    quota_lustre_projid,
 ):
-    """Set lustre project *quota_lustre_pid*
-    Find the next *free* project id (PID) if *quota_lustre_pid* is occupied
-    NOTE: lustre uses a global counter for project id's (PID)
+    """Set lustre project *quota_lustre_projid*
+    Find the next *free* project id if *quota_lustre_projid* is occupied
+    NOTE: lustre uses a global counter for project id's
           That means that different datasets and sub-mounts
           share the same project id counter
-    # TODO: Add 'lustre_pid' offset support to configuration ?
+    # TODO: Add 'lustre_projid' offset support to configuration ?
     """
 
-    # Check if quota_lustre_pid is unused
+    # Check if quota_lustre_projid is unused
     # and if not find the next unused lustre project id
 
-    max_lustre_pid = 4294967294
+    max_lustre_projid = 4294967294
     logger = configuration.logger
-    next_lustre_pid = quota_lustre_pid
-    while next_lustre_pid < max_lustre_pid:
+    next_lustre_projid = quota_lustre_projid
+    while next_lustre_projid < max_lustre_projid:
         (rc, currfiles, _, _, _) = lfs_get_project_quota(
-            lustre_basepath, next_lustre_pid
+            lustre_basepath, next_lustre_projid
         )
         if rc != 0:
             logger.error(
                 "Failed to fetch quota for lustre project id: %d, %r"
-                % (next_lustre_pid, lustre_basepath)
+                % (next_lustre_projid, lustre_basepath)
                 + ", rc: %d" % rc
             )
             return -1
         if currfiles == 0:
             break
         logger.info(
-            "Skipping project id: %d" % next_lustre_pid
+            "Skipping project id: %d" % next_lustre_projid
             + " already registered with %d files" % currfiles
         )
-        next_lustre_pid += 1
+        next_lustre_projid += 1
 
-    if next_lustre_pid == max_lustre_pid:
-        logger.error("Reached max lustre project id: %d" % max_lustre_pid)
+    if next_lustre_projid == max_lustre_projid:
+        logger.error("Reached max lustre project id: %d" % max_lustre_projid)
         return -1
 
     # Set new project id
 
     logger.info(
         "Setting lustre project id: %d for %r: %r"
-        % (next_lustre_pid, quota_name, quota_datapath)
+        % (next_lustre_projid, quota_name, quota_datapath)
     )
-    rc = lfs_set_project_id(quota_datapath, next_lustre_pid, 1)
+    rc = lfs_set_project_id(quota_datapath, next_lustre_projid, 1)
     if rc != 0:
         logger.error(
             "lfs_set_project_id failed for lustre project id: %d for %r: %r"
-            % (next_lustre_pid, quota_name, quota_datapath)
+            % (next_lustre_projid, quota_name, quota_datapath)
             + ", rc: %d" % rc
         )
         return -1
 
-    # Dump lustre pid in quota_datapath and wait for it to appear in the quota
+    # Dump lustre projid in quota_datapath and wait for it to appear in the quota
     # NOTE: Written to the original data_basepath to ensure that it goes through
     #       encryption in the 'lustre-gocryptfs' scenario
-    # NOTE: Left for lustrepid tracing, may be deleted in the future
-    lustre_pid_filepath = os.path.join(data_basepath, quota_name, ".lustrepid")
-    status = write_file(next_lustre_pid, lustre_pid_filepath, logger)
+    # NOTE: Left for lustre projid tracing, may be deleted in the future
+    lustre_projid_filepath = os.path.join(
+        data_basepath, quota_name, ".lustre_projid"
+    )
+    status = write_file(next_lustre_projid, lustre_projid_filepath, logger)
     if not status:
         logger.error(
             "Failed write lustre project id: %d for %r to %r"
-            % (next_lustre_pid, quota_name, lustre_pid_filepath)
+            % (next_lustre_projid, quota_name, lustre_projid_filepath)
         )
         return -1
 
@@ -245,19 +247,19 @@ def __set_project_id(
     max_waiting = 60
     while files == 0 and waiting < max_waiting:
         (rc, files, _, _, _) = lfs_get_project_quota(
-            lustre_basepath, next_lustre_pid
+            lustre_basepath, next_lustre_projid
         )
         if rc != 0:
             files = 0
             logger.error(
                 "lfs_get_project_quota failed for:"
                 + " %d, %r, %r, rc: %d"
-                % (next_lustre_pid, quota_name, quota_datapath, rc)
+                % (next_lustre_projid, quota_name, quota_datapath, rc)
             )
         if files == 0:
             logger.info(
                 "Waiting for lustre quota: %d: %r: %r"
-                % (next_lustre_pid, quota_name, quota_datapath)
+                % (next_lustre_projid, quota_name, quota_datapath)
             )
             time.sleep(1)
         max_waiting += 1
@@ -265,11 +267,11 @@ def __set_project_id(
     if waiting == max_waiting:
         logger.error(
             "Failed to fetch quota for:"
-            + " %d, %r, %r" % (next_lustre_pid, quota_name, quota_datapath)
+            + " %d, %r, %r" % (next_lustre_projid, quota_name, quota_datapath)
         )
         return -1
 
-    return next_lustre_pid
+    return next_lustre_projid
 
 
 def __update_quota(
@@ -289,13 +291,8 @@ def __update_quota(
     """
     logger = configuration.logger
     quota_limits_changed = False
-    next_lustre_pid = lustre_setting.get("next_pid", -1)
-    if next_lustre_pid == -1:
-        logger.error(
-            "Invalid lustre quota next_pid: %d for: %r"
-            % (next_lustre_pid, quota_name)
-        )
-        return False
+    # NOTE: Start from 1 if no next_projid exists
+    next_lustre_projid = lustre_setting.get("next_projid", 1)
 
     # Resolve quota limit and data basepath
 
@@ -382,45 +379,51 @@ def __update_quota(
             return False
     else:
         quota = {
-            "lustre_pid": next_lustre_pid,
+            "lustre_projid": next_lustre_projid,
             "files": -1,
             "bytes": -1,
             "softlimit_bytes": -1,
             "hardlimit_bytes": -1,
         }
 
-    # Fetch quota lustre pid
+    # Rename legacy 'lustre_pid' to 'lustre_projid'
 
-    quota_lustre_pid = quota.get("lustre_pid", -1)
-    if quota_lustre_pid == -1:
+    if "lustre_pid" in quota:
+        quota["lustre_projid"] = quota["lustre_pid"]
+        del quota["lustre_pid"]
+
+    # Fetch quota lustre projid
+
+    quota_lustre_projid = quota.get("lustre_projid", -1)
+    if quota_lustre_projid == -1:
         logger.error(
-            "Invalid quota lustre pid: %d for %r"
-            % (quota_lustre_pid, quota_name)
+            "Invalid quota lustre projid: %d for %r"
+            % (quota_lustre_projid, quota_name)
         )
         return False
 
     # If new entry then set lustre project id
 
-    new_lustre_pid = -1
-    if quota_lustre_pid == next_lustre_pid:
-        new_lustre_pid = __set_project_id(
+    new_lustre_projid = -1
+    if quota_lustre_projid == next_lustre_projid:
+        new_lustre_projid = __set_project_id(
             configuration,
             data_basepath,
             lustre_basepath,
             quota_datapath,
             quota_name,
-            quota_lustre_pid,
+            quota_lustre_projid,
         )
-        if new_lustre_pid == -1:
+        if new_lustre_projid == -1:
             logger.error(
                 "Failed to set project id: %d, %r, %r"
-                % (new_lustre_pid, quota_name, quota_datapath)
+                % (new_lustre_projid, quota_name, quota_datapath)
             )
             return False
-        lustre_setting["next_pid"] = new_lustre_pid + 1
-        quota["lustre_pid"] = quota_lustre_pid = new_lustre_pid
+        lustre_setting["next_projid"] = new_lustre_projid + 1
+        quota["lustre_projid"] = quota_lustre_projid = new_lustre_projid
 
-    # Get current quota values for lustre_pid
+    # Get current quota values for lustre_projid
 
     (
         rc,
@@ -428,11 +431,11 @@ def __update_quota(
         currbytes,
         softlimit_bytes,
         hardlimit_bytes,
-    ) = lfs_get_project_quota(lustre_basepath, quota_lustre_pid)
+    ) = lfs_get_project_quota(lustre_basepath, quota_lustre_projid)
     if rc != 0:
         logger.error(
             "lfs_get_project_quota failed for: %d, %r, %r"
-            % (quota_lustre_pid, quota_name, quota_datapath)
+            % (quota_lustre_projid, quota_name, quota_datapath)
             + ", rc: %d" % rc
         )
         return False
@@ -441,8 +444,8 @@ def __update_quota(
 
     if currfiles == 0 or currbytes == 0:
         logger.warning(
-            "lustre_basepath: %r: pid: %d: quota_type: %s"
-            % (lustre_basepath, quota_lustre_pid, quota_type)
+            "lustre_basepath: %r: projid: %d: quota_type: %s"
+            % (lustre_basepath, quota_lustre_projid, quota_type)
             + "quota_name: %s, files: %d, bytes: %d"
             % (quota_name, currfiles, currbytes)
         )
@@ -454,7 +457,7 @@ def __update_quota(
     # If new entry use default quota
     # and update quota if changed
 
-    if new_lustre_pid > -1:
+    if new_lustre_projid > -1:
         quota_limits_changed = True
         quota["softlimit_bytes"] = default_quota_limit
         quota["hardlimit_bytes"] = default_quota_limit
@@ -468,7 +471,7 @@ def __update_quota(
     if quota_limits_changed:
         rc = lfs_set_project_quota(
             quota_datapath,
-            quota_lustre_pid,
+            quota_lustre_projid,
             quota["softlimit_bytes"],
             quota["hardlimit_bytes"],
         )
@@ -477,7 +480,7 @@ def __update_quota(
                 "Failed to set quota limit: %d/%d"
                 % (softlimit_bytes, hardlimit_bytes)
                 + " for lustre project id: %d, %r, %r, rc: %d"
-                % (quota_lustre_pid, quota_name, quota_datapath, rc)
+                % (quota_lustre_projid, quota_name, quota_datapath, rc)
             )
             return False
 
@@ -592,7 +595,13 @@ def update_lustre_quota(configuration):
             )
             return False
     else:
-        lustre_setting = {"next_pid": 1, "mtime": 0}
+        lustre_setting = {"next_projid": 1, "mtime": 0}
+
+    # Rename legacy 'lustre_pid' to 'lustre_projid'
+
+    if "next_pid" in lustre_setting:
+        lustre_setting["next_projid"] = lustre_setting["next_pid"]
+        del lustre_setting["next_pid"]
 
     # Update quota
 
