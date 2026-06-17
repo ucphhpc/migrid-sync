@@ -163,7 +163,12 @@ def __shellexec(
 
 
 def __set_project_id(
-    configuration, lustre_basepath, quota_datapath, quota_name, quota_lustre_pid
+    configuration,
+    data_basepath,
+    lustre_basepath,
+    quota_datapath,
+    quota_name,
+    quota_lustre_pid,
 ):
     """Set lustre project *quota_lustre_pid*
     Find the next *free* project id (PID) if *quota_lustre_pid* is occupied
@@ -173,7 +178,8 @@ def __set_project_id(
     # TODO: Add 'lustre_pid' offset support to configuration ?
     """
 
-    # Find next unused lustre project id
+    # Check if quota_lustre_pid is unused
+    # and if not find the next unused lustre project id
 
     max_lustre_pid = 4294967294
     logger = configuration.logger
@@ -217,17 +223,21 @@ def __set_project_id(
         return -1
 
     # Dump lustre pid in quota_datapath and wait for it to appear in the quota
-
-    lustre_pid_filepath = os.path.join(quota_datapath, ".lustrepid")
+    # NOTE: Written to the original data_basepath to ensure that it goes through
+    #       encryption in the 'lustre-gocryptfs' scenario
+    # NOTE: Left for lustrepid tracing, may be deleted in the future
+    lustre_pid_filepath = os.path.join(data_basepath, quota_name, ".lustrepid")
     status = write_file(next_lustre_pid, lustre_pid_filepath, logger)
     if not status:
         logger.error(
             "Failed write lustre project id: %d for %r to %r"
-            % (next_lustre_pid, quota_name, quota_datapath)
+            % (next_lustre_pid, quota_name, lustre_pid_filepath)
         )
         return -1
 
     # Wait for files to appear in quota before returning
+    # NOTE: To ensure that the lustre backend updated quota info
+    #       for the newly set project id
 
     files = 0
     waiting = 0
@@ -394,6 +404,7 @@ def __update_quota(
     if quota_lustre_pid == next_lustre_pid:
         new_lustre_pid = __set_project_id(
             configuration,
+            data_basepath,
             lustre_basepath,
             quota_datapath,
             quota_name,
