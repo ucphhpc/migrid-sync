@@ -52,8 +52,7 @@ from mig.shared.vgrid import vgrid_access_match, validated_vgrid_list
 
 
 class Scheduler(object):
-
-    """Base scheduler class to inherit from"""
+    """Base scheduler class to inherit from - not for direct use"""
 
     name = 'Scheduler'
 
@@ -1854,8 +1853,16 @@ class Scheduler(object):
                                             resource_conf)
             self.logger.info('backfill remaining: %(CPUCOUNT)s %(NODECOUNT)s'
                              % remaining)
-            next_job = self.schedule(remaining, must_match={
-                                     'USER_CERT': best_job['USER_CERT'], 'JOBTYPE': 'bulk'})
+            try:
+                next_job = self.schedule(remaining, must_match={
+                    'USER_CERT': best_job['USER_CERT'],
+                    'JOBTYPE': 'bulk'})
+            except NotImplementedError as err:
+                err_str = "schedule: %s" % err
+                self.logger.error(err_str)
+                print(err_str)
+                next_job = None
+
             if not next_job:
                 break
             self.logger.info('backfill next: %(JOB_ID)s (%(JOBTYPE)s)'
@@ -1864,10 +1871,6 @@ class Scheduler(object):
         return backfill_list
 
     def schedule(self, resource_conf, must_match={}):
-        """This is a dummy scheduler to be subclassed"""
+        """This is a dummy scheduler to always be subclassed"""
 
-        err_str = \
-            "schedule: You're not supposed to use this base class schedule() method directly! Please use one of the subclasses or create your own function to overload schedule()."
-        self.logger.error(err_str)
-        print(err_str)
-        return None
+        raise NotImplementedError("you need to override this dummy method!")
