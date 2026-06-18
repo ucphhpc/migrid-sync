@@ -60,7 +60,7 @@ class BestFitScheduler(Scheduler):
             try:
                 job_val = float(job[attr])
                 res_val = float(resource_conf[attr])
-            except:
+            except Exception:
                 self.logger.error(
                     'fitness: float conversion for %s failed!', attr)
                 continue
