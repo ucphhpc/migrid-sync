@@ -118,7 +118,11 @@ def reset_account_expire_cache(configuration, client_id=None):
     _logger = configuration.logger
     res = True
     base_dir = os.path.join(configuration.mig_system_run, expire_marks_dir)
-    reset_filemark(configuration, base_dir, client_id)
+    if client_id is None:
+        target = client_id
+    else:
+        target = client_id_dir(client_id)
+    reset_filemark(configuration, base_dir, target)
     return res
 
 
