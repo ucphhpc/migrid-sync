@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scheduler - base scheduler class used by all schedulers
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -51,8 +52,7 @@ from mig.shared.vgrid import vgrid_access_match, validated_vgrid_list
 
 
 class Scheduler(object):
-
-    """Base scheduler class to inherit from"""
+    """Base scheduler class to inherit from - not for direct use"""
 
     name = 'Scheduler'
 
@@ -268,7 +268,7 @@ class Scheduler(object):
         try:
             cur_timestamp = float(cur_entity['LAST_SEEN'])
             new_timestamp = float(new_entity['LAST_SEEN'])
-        except:
+        except Exception:
             self.logger.warning('updated_data: failed to get timestamp! %s %s'
                                 % (cur_entity, new_entity))
             return False
@@ -286,7 +286,7 @@ class Scheduler(object):
 
         try:
             timestamp = float(entity['LAST_SEEN'])
-        except:
+        except Exception:
             self.logger.warning('outdated_data: failed to get timestamp! %s'
                                 % entity)
             return True
@@ -673,7 +673,7 @@ class Scheduler(object):
             cur_res = self.resources[cur_id]
             if cur_res['SERVER'] != server_id:
                 continue
-            if not cur_id in resources:
+            if cur_id not in resources:
 
                 # Remove resource from local list
 
@@ -689,7 +689,7 @@ class Scheduler(object):
             cur_user = self.users[cur_id]
             if cur_user['SERVER'] != server_id:
                 continue
-            if not cur_id in users:
+            if cur_id not in users:
 
                 # Remove user from local list
 
@@ -830,7 +830,7 @@ class Scheduler(object):
         if not res_dict:
             print('Error: resource not found! %s' % resource_conf)
             return False
-        res_id = res_dict['RESOURCE_ID']
+        # res_id = res_dict['RESOURCE_ID']
 
         # min_price = res_dict["MINPRICE"]
 
@@ -1125,14 +1125,14 @@ class Scheduler(object):
         if keyword_all in job_maxfill:
             job_maxfill = maxfill_fields
         maxed = job.copy()
-        #self.logger.debug('current_prices: job_maxfill is %s' % job_maxfill)
+        # self.logger.debug('current_prices: job_maxfill is %s' % job_maxfill)
         try:
             for name in maxfill_fields:
                 if name in job_maxfill:
                     maxed[name] = int(res[name])
                 else:
                     maxed[name] = int(job[name])
-        except:
+        except Exception:
             self.logger.error(
                 'current_prices: integer conversion in cpu_secs for %s failed!'
                 % job)
@@ -1141,7 +1141,7 @@ class Scheduler(object):
 
             return (self.illegal_price, 0.0)
 
-        #self.logger.debug('current_prices: maxed is %s' % maxed)
+        # self.logger.debug('current_prices: maxed is %s' % maxed)
 
         cpu_secs = (maxed['CPUCOUNT'] * maxed['NODECOUNT']) * maxed['CPUTIME']
         units = cpu_secs // self.unit_length
@@ -1294,13 +1294,15 @@ class Scheduler(object):
             self.conf, job['USER_CERT'], job, res_id.split('_')[0], res)
         self.logger.info('scheduler: res and job vgrid match: %s %s' %
                          (res_vgrid, job_vgrid))
-        res_name = job_name = 'Unknown'
+        res_name = 'Unknown'
+        # job_name = 'Unknown'
         try:
             res_name = res['RESOURCE_ID']
-            job_name = job['JOB_ID']
+            # job_name = job['JOB_ID']
         except Exception as err:
             self.logger.error('scheduler: res or job name error: %s (%s) (%s)'
                               % (err, res, job))
+
         if match:
             job['RESOURCE_VGRID'] = res_vgrid
         else:
@@ -1436,13 +1438,13 @@ class Scheduler(object):
         selection and probability approximation easier.
         """
 
-        if request_res:
-            request_id = request_res['RESOURCE_ID']
-        else:
-            request_id = ''
+        # if request_res:
+        #     request_id = request_res['RESOURCE_ID']
+        # else:
+        #     request_id = ''
         local_resources = []
         remote_resources = []
-        job_id = job['JOB_ID']
+        # job_id = job['JOB_ID']
 
         # self.logger.debug("best_resource: inspecting job %s" % job_id)
 
@@ -1677,14 +1679,14 @@ class Scheduler(object):
 
         if resource_conf:
             request_res = self.find_resource(resource_conf)
-            request_id = request_res['RESOURCE_ID']
+            # request_id = request_res['RESOURCE_ID']
             request_res['EXPECTED_DELAY'] = 0.0
         else:
 
             # Use dummy if no requesting resource
 
             request_res = {}
-            request_id = ''
+            # request_id = ''
 
         # Use previously collected resource statuses for price directed
         # migration
@@ -1695,7 +1697,7 @@ class Scheduler(object):
         for i in range(local_jobs):
             best = None
             job = self.job_queue.get_job(i)
-            job_id = job['JOB_ID']
+            # job_id = job['JOB_ID']
 
             # Fill any missing fields for e.g. new jobs
 
@@ -1853,8 +1855,16 @@ class Scheduler(object):
                                             resource_conf)
             self.logger.info('backfill remaining: %(CPUCOUNT)s %(NODECOUNT)s'
                              % remaining)
-            next_job = self.schedule(remaining, must_match={
-                                     'USER_CERT': best_job['USER_CERT'], 'JOBTYPE': 'bulk'})
+            try:
+                next_job = self.schedule(remaining, must_match={
+                    'USER_CERT': best_job['USER_CERT'],
+                    'JOBTYPE': 'bulk'})
+            except NotImplementedError as err:
+                err_str = "schedule: %s" % err
+                self.logger.error(err_str)
+                print(err_str)
+                next_job = None
+
             if not next_job:
                 break
             self.logger.info('backfill next: %(JOB_ID)s (%(JOBTYPE)s)'
@@ -1863,10 +1873,6 @@ class Scheduler(object):
         return backfill_list
 
     def schedule(self, resource_conf, must_match={}):
-        """This is a dummy scheduler to be subclassed"""
+        """This is a dummy scheduler to always be subclassed"""
 
-        err_str = \
-            "schedule: You're not supposed to use this base class schedule() method directly! Please use one of the subclasses or create your own function to overload schedule()."
-        self.logger.error(err_str)
-        print(err_str)
-        return None
+        raise NotImplementedError("you need to override this dummy method!")
