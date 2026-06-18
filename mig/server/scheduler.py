@@ -830,7 +830,7 @@ class Scheduler(object):
         if not res_dict:
             print('Error: resource not found! %s' % resource_conf)
             return False
-        res_id = res_dict['RESOURCE_ID']
+        # res_id = res_dict['RESOURCE_ID']
 
         # min_price = res_dict["MINPRICE"]
 
@@ -1294,13 +1294,15 @@ class Scheduler(object):
             self.conf, job['USER_CERT'], job, res_id.split('_')[0], res)
         self.logger.info('scheduler: res and job vgrid match: %s %s' %
                          (res_vgrid, job_vgrid))
-        res_name = job_name = 'Unknown'
+        res_name = 'Unknown'
+        # job_name = 'Unknown'
         try:
             res_name = res['RESOURCE_ID']
-            job_name = job['JOB_ID']
+            # job_name = job['JOB_ID']
         except Exception as err:
             self.logger.error('scheduler: res or job name error: %s (%s) (%s)'
                               % (err, res, job))
+
         if match:
             job['RESOURCE_VGRID'] = res_vgrid
         else:
@@ -1436,13 +1438,13 @@ class Scheduler(object):
         selection and probability approximation easier.
         """
 
-        if request_res:
-            request_id = request_res['RESOURCE_ID']
-        else:
-            request_id = ''
+        # if request_res:
+        #     request_id = request_res['RESOURCE_ID']
+        # else:
+        #     request_id = ''
         local_resources = []
         remote_resources = []
-        job_id = job['JOB_ID']
+        # job_id = job['JOB_ID']
 
         # self.logger.debug("best_resource: inspecting job %s" % job_id)
 
@@ -1677,14 +1679,14 @@ class Scheduler(object):
 
         if resource_conf:
             request_res = self.find_resource(resource_conf)
-            request_id = request_res['RESOURCE_ID']
+            # request_id = request_res['RESOURCE_ID']
             request_res['EXPECTED_DELAY'] = 0.0
         else:
 
             # Use dummy if no requesting resource
 
             request_res = {}
-            request_id = ''
+            # request_id = ''
 
         # Use previously collected resource statuses for price directed
         # migration
@@ -1695,7 +1697,7 @@ class Scheduler(object):
         for i in range(local_jobs):
             best = None
             job = self.job_queue.get_job(i)
-            job_id = job['JOB_ID']
+            # job_id = job['JOB_ID']
 
             # Fill any missing fields for e.g. new jobs
 
