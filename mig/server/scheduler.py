@@ -268,7 +268,7 @@ class Scheduler(object):
         try:
             cur_timestamp = float(cur_entity['LAST_SEEN'])
             new_timestamp = float(new_entity['LAST_SEEN'])
-        except:
+        except Exception:
             self.logger.warning('updated_data: failed to get timestamp! %s %s'
                                 % (cur_entity, new_entity))
             return False
@@ -286,7 +286,7 @@ class Scheduler(object):
 
         try:
             timestamp = float(entity['LAST_SEEN'])
-        except:
+        except Exception:
             self.logger.warning('outdated_data: failed to get timestamp! %s'
                                 % entity)
             return True
@@ -673,7 +673,7 @@ class Scheduler(object):
             cur_res = self.resources[cur_id]
             if cur_res['SERVER'] != server_id:
                 continue
-            if not cur_id in resources:
+            if cur_id not in resources:
 
                 # Remove resource from local list
 
@@ -689,7 +689,7 @@ class Scheduler(object):
             cur_user = self.users[cur_id]
             if cur_user['SERVER'] != server_id:
                 continue
-            if not cur_id in users:
+            if cur_id not in users:
 
                 # Remove user from local list
 
@@ -1125,14 +1125,14 @@ class Scheduler(object):
         if keyword_all in job_maxfill:
             job_maxfill = maxfill_fields
         maxed = job.copy()
-        #self.logger.debug('current_prices: job_maxfill is %s' % job_maxfill)
+        # self.logger.debug('current_prices: job_maxfill is %s' % job_maxfill)
         try:
             for name in maxfill_fields:
                 if name in job_maxfill:
                     maxed[name] = int(res[name])
                 else:
                     maxed[name] = int(job[name])
-        except:
+        except Exception:
             self.logger.error(
                 'current_prices: integer conversion in cpu_secs for %s failed!'
                 % job)
@@ -1141,7 +1141,7 @@ class Scheduler(object):
 
             return (self.illegal_price, 0.0)
 
-        #self.logger.debug('current_prices: maxed is %s' % maxed)
+        # self.logger.debug('current_prices: maxed is %s' % maxed)
 
         cpu_secs = (maxed['CPUCOUNT'] * maxed['NODECOUNT']) * maxed['CPUTIME']
         units = cpu_secs // self.unit_length
