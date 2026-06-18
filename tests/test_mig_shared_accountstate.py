@@ -35,6 +35,7 @@ import unittest
 from mig.shared.accountstate import (
     account_expire_info,
     check_account_expire,
+    check_account_status,
     default_account_expire,
     default_account_valid_days,
     detect_special_login,
@@ -64,6 +65,7 @@ from mig.shared.userdb import update_user_dict
 # Imports required for the unit tests themselves
 from tests.support import (
     MigTestCase,
+    UserAssertMixin,
     ensure_dirs_exist,
     testmain,
 )
@@ -1100,6 +1102,130 @@ class TestMigSharedAccountstate__detect_special_login(MigTestCase):
         configuration = self.configuration
         result = detect_special_login(configuration, "", "sftp")
         self.assertFalse(result)
+
+
+class TestMigSharedAccountstate__check_account_status(
+    MigTestCase, UserAssertMixin
+):
+    """Coverage of accountstate check_account_status function."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test environment for check_account_status tests."""
+        configuration = self.configuration
+        # Ensure the status‑marks directory exists
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, status_marks_dir)
+        )
+        # Set up user DB and keep paths for later use
+        _ensure_dirs_needed_for_userdb(configuration)
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home)
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        ensure_dirs_exist(self.configuration.mig_system_files)
+        # Provision a known test user
+        self._provision_test_user(self, TEST_USER_DN)
+
+    def test_check_account_status_active(self):
+        """Test that an active account is reported as accessible."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+        }
+        # Create a DB entry for the user
+        update_user_dict(self.logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        # Populate the status cache
+        update_account_status_cache(configuration, user_dict)
+
+        accessible, status, _ = check_account_status(configuration,
+                                                     TEST_USER_DN)
+        self.assertTrue(accessible)
+        self.assertEqual(status, "active")
+
+    def test_check_account_status_locked(self):
+        """Test that a locked account is reported as not accessible."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "locked",
+        }
+        update_user_dict(self.logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        update_account_status_cache(configuration, user_dict)
+
+        accessible, status, _ = check_account_status(configuration,
+                                                     TEST_USER_DN)
+        self.assertFalse(accessible)
+        self.assertEqual(status, "locked")
+
+    def test_check_account_status_suspended(self):
+        """Test that a suspended account is reported as not accessible."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "suspended",
+        }
+        update_user_dict(self.logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        update_account_status_cache(configuration, user_dict)
+
+        accessible, status, _ = check_account_status(configuration,
+                                                     TEST_USER_DN)
+        self.assertFalse(accessible)
+        self.assertEqual(status, "suspended")
+
+    def test_check_account_status_unset_means_active(self):
+        """Test that an account without status is active and accessible."""
+        configuration = self.configuration
+        expire_ts = time.time() + 42 * 24 * 3600  # expired in 42 days
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": expire_ts,
+        }
+        update_user_dict(self.logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        update_account_status_cache(configuration, user_dict)
+
+        accessible, status, _ = check_account_status(configuration,
+                                                     TEST_USER_DN)
+        self.assertTrue(accessible)
+        self.assertEqual(status, 'active')
+
+    def test_check_account_status_unchanged_by_expire(self):
+        """Test that account status itself remains unchanged after expire."""
+        configuration = self.configuration
+        expire_ts = time.time() - 42 * 24 * 3600  # expired 42 days ago
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(self.logger, TEST_USER_DN, user_dict,
+                         self.expected_user_db_file)
+        update_account_status_cache(configuration, user_dict)
+
+        accessible, status, _ = check_account_status(configuration,
+                                                     TEST_USER_DN)
+        self.assertTrue(accessible)
+        self.assertEqual(status, 'active')
+
+    def test_check_account_status_missing_user(self):
+        """Test that check_account_status fails gracefully for a missing user."""
+        configuration = self.configuration
+        with self.assertLogs(level="WARNING") as log_capture:
+            accessible, _, _ = check_account_status(
+                configuration, OTHER_USER_DN
+            )
+        self.assertFalse(accessible)
+        self.assertTrue(
+            any("no such account" in msg for msg in log_capture.output)
+        )
 
 
 if __name__ == "__main__":
