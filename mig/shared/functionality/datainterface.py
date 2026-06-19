@@ -186,16 +186,24 @@ def handle_DELETE_peers_accepted(configuration, request_info):
 
     peers = request_info.arg_value('peers', list)
 
-    for peer_dn in peers:
-        peer_user = distinguished_name_to_user(peer_dn)
-        if len(peer_user) == 1 and 'distinguished_name' in peer_user:
-            # it failed
-            pass
+    success_map = {}
 
-    objects, return_value = process_peer_action(
-        configuration, [], request_info.client_id, peers, 'remove', 'userid',
-        updates={})
-    return 200, {}
+    for index, peer_dn in enumerate(peers):
+        peer_user = distinguished_name_to_user(peer_dn)
+
+        name_to_user_failure = len(peer_user) == 1 and 'distinguished_name' in peer_user
+
+        success_map[index] = not name_to_user_failure
+
+    if any((not success for success in success_map.values())):
+        status = 400
+    else:
+        status = 200
+        process_peer_action(
+            configuration, [], request_info.client_id, peers, 'remove', 'userid',
+            updates={})
+
+    return 200, { 'success_map': success_map }
 
 
 def convert_POST_peers_accepted_import(request_data):

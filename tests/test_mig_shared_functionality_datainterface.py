@@ -283,6 +283,13 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         status = json_response['status']
         self.assertEqual(status, 200)
 
+        data = json_response['data']
+        self.assertEqual(data, {
+            'success_map': {
+                '0': True,
+            }
+        })
+
         # now check that the peer was removed
         content = self.assertUserPeers(self.TEST_CLIENT_ID)
         self.assertEqual(len(content), 0)
@@ -291,6 +298,33 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
         self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
+
+    def test_peers_accepted_delete_invalid_dn(self):
+        test_pending_peer = {
+            "peers": ["foo/bar/baz"],
+        }
+
+        request_body = {
+            'type': 'migux_apps_peers__accepted__delete',
+            'operation': 'delete',
+            **test_pending_peer,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
+                                 'http://localhost/datainterface.py',
+                                 form=request_body,
+                                 mig_user_dn=self.TEST_CLIENT_ID)
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response['status']
+        self.assertEqual(status, 200)
+
+        data = json_response['data']
+        self.assertEqual(data, {
+            'success_map': {
+                '0': False,
+            }
+        })
 
     def test_peers_accepted_import(self):
         date_expire_in_8_days = date.today() + timedelta(days=8)
