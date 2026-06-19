@@ -49,16 +49,17 @@ from mig.shared.base import auth_type_description, canonical_user, \
     client_id_dir, distinguished_name_to_user, fill_distinguished_name, \
     fill_user, force_utf8, force_native_str_rec, get_user_id, mask_creds, \
     requested_backend
-from mig.shared.defaults import peers_fields, peers_filename, peer_kinds, \
+from mig.shared.defaults import peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
-    gdp_distinguished_field
+    gdp_distinguished_field, peer_kinds
 from mig.shared.fileio import delete_file, make_temp_file, unpickle
 from mig.shared.notification import notify_user
 from mig.shared.pwcrypto import check_hash, check_scramble
 # Expose some helper variables for functionality backends
 from mig.shared.safeinput import name_extras, password_extras, \
-    password_min_len, password_max_len, valid_password_chars, valid_date, \
-    valid_commonname, dn_max_len, html_escape, validated_input, REJECT_UNSET
+    password_min_len, password_max_len, valid_password_chars, \
+    valid_name_chars, dn_max_len, html_escape, validated_input, REJECT_UNSET, \
+    valid_commonname, valid_date
 from mig.shared.serial import load, dump, dumps
 from mig.shared.useradm import user_request_reject, user_account_notify, \
     default_search, search_users, create_user
