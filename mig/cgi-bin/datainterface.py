@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# workflowsjsoninterface - JSON interface for managing workflows
+# datainterface - requests returning structured data
 # Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -26,7 +26,7 @@
 # -- END_HEADER ---
 #
 
-"""Interface for template related requests"""
+"""Interface for requests returning structured data"""
 from __future__ import absolute_import
 
 import cgitb

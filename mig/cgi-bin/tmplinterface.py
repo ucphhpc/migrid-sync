@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# workflowsjsoninterface - JSON interface for managing workflows
+# tmplinterface - requests returning rendered templates
 # Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -26,7 +26,7 @@
 # -- END_HEADER ---
 #
 
-"""Interface for template related requests"""
+"""Interface for requests returning rendered templates"""
 from __future__ import absolute_import
 
 import cgitb

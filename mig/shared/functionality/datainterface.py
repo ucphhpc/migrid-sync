@@ -35,20 +35,19 @@ datainterface is a functionality module intended to expose routes consuming
 and returning data structures within constraints of the usually page-centric
 MiGrid request/response model.
 
-Dynamic web applications are usually structured such that they inidividual
+Dynamic web applications are usually structured around making inidividual
 requests to a series of routes to request data or operations. This module
 carefully provides a bridge allowing a series of routes to be exposed by MiG.
 
 The primary constraints are an inability to make direct use of URL paths and
 the only usable submission medium for structured data being a POST. We define
-a json payload which encodes the route information. This is decoded upon an
-incomng request and the corresponding route handler triggered. In this way
-the result resembles express in the node world or flask in the Pythoen world.
+a json payload which encodes the route information. This is normalized upon an
+incoming request and the corresponding route handler triggered with a simple
+dictionary of args. This resembles flask or FastAPI in the Python world.
 
-Note that the above design does take some cues have been takn from the
-jsoninterface module but unlike it, which is very specfied to workflows and
-was not desgined to be extensible, the ability to easily extend the available
-series of routes is a key feature here.
+Note the above design takes some cues from the jsoninterface module but unlike
+it, which is very specfic to workflows and was not desgined for extensibility,
+the ability to easily extend the routes made avalable is a key feature here.
 """
 
 from __future__ import absolute_import
