@@ -176,7 +176,7 @@ def handle_POST_peers_new(configuration, request_info):
     }
 
 
-def handle_DELETE_peers_accepted(configuration, request_info):
+def handle_POST_peers_accepted_delete(configuration, request_info):
     """
     Request handler: DELETE /peers/accepted
     """
@@ -231,7 +231,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     return status, {}
 
 
-def handle_DELETE_peers_requested(configuration, request_info):
+def handle_POST_peers_requested_delete(configuration, request_info):
     """
     Request handler: DELETE /peers/requested
     """
@@ -300,10 +300,10 @@ HANDLERS_BY_PACKAGE = {
     "migux.apps.peers": {
         "POST /new": handle_POST_peers_new,
         "GET /summary": handle_GET_peers_summary,
-        "POST /accepted/delete": handle_DELETE_peers_accepted,
+        "POST /accepted/delete": handle_POST_peers_accepted_delete,
         "POST /accepted/import": handle_POST_peers_accepted_import,
         "POST /requested/accept": handle_POST_peers_requested_accept,
-        "POST /requested/delete": handle_DELETE_peers_requested,
+        "POST /requested/delete": handle_POST_peers_requested_delete,
     }
 }
 
