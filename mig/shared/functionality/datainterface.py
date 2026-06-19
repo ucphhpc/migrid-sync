@@ -199,6 +199,15 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
         process_peer_action(
             configuration, [], request_info.client_id, peers, 'remove', 'userid')
 
+        # process_peer_action does not remove pending user files, do so
+
+        user_pending_reqid_by_dn = dict(accountreq.list_account_reqs_pairs(configuration))
+        reqids_for_deleted_peers = [reqid for peer_dn, reqid in user_pending_reqid_by_dn.items()]
+
+        for peer_reqid in reqids_for_deleted_peers:
+            pending_user_file_path = os.path.join(configuration.user_pending, peer_reqid)
+            fileio.delete_file(pending_user_file_path, configuration.logger)
+
     return status, { 'success_map': success_map }
 
 
@@ -255,7 +264,7 @@ def handle_POST_peers_requested_delete(configuration, request_info):
         if not success:
             continue
 
-        # peersaction "reject" does not the pending user file, do so
+        # process_peer_action does not remove pending user files, do so
         pending_user_file_path = os.path.join(configuration.user_pending, peer_reqid)
         fileio.delete_file(pending_user_file_path, configuration.logger)
 
