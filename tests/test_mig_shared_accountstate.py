@@ -37,6 +37,7 @@ from mig.shared.accountstate import (
     check_account_accessible,
     check_account_expire,
     check_account_status,
+    check_update_account_expire,
     default_account_expire,
     default_account_valid_days,
     detect_special_login,
@@ -61,7 +62,7 @@ from mig.shared.defaults import (
     status_marks_dir,
 )
 from mig.shared.useradm import _ensure_dirs_needed_for_userdb
-from mig.shared.userdb import update_user_dict
+from mig.shared.userdb import load_user_dict, update_user_dict
 
 # Imports required for the unit tests themselves
 from tests.support import (
@@ -76,6 +77,8 @@ from tests.support.usersupp import OTHER_USER_DN, TEST_USER_DN
 TEST_EXPIRE_TIMESTAMP = 1776031200
 TEST_STATUS_ACTIVE = "active"
 TEST_STATUS_LOCKED = "locked"
+TEST_STATUS_SUSPENDED = "suspended"
+TEST_STATUS_TEMPORAL = "temporal"
 TEST_RW_SHARE_ID = "klmnop4567"
 TEST_JOB_ID = "0419b45ebc1dedbdcb91fa6251035a2096758f5d700e15478b27a90734454107"
 TEST_JUPYTER_SESSION_ID = (
@@ -215,11 +218,11 @@ class TestMigSharedAccountstate__update_account_expire_cache(MigTestCase):
     def before_each(self):
         """Set up test environment for expire cache tests."""
         configuration = self.configuration
-        # Ensure the mig_system_run sub directory exists for expire marks
-        marks_path = os.path.join(
-            configuration.mig_system_run, expire_marks_dir
+        # Ensure necessary directories exist
+        ensure_dirs_exist(configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, expire_marks_dir)
         )
-        ensure_dirs_exist(marks_path)
 
     def test_update_account_expire_cache_creates_mark(self):
         """Test that update_account_expire_cache creates an expire mark."""
@@ -323,11 +326,11 @@ class TestMigSharedAccountstate__get_account_expire_cache(MigTestCase):
     def before_each(self):
         """Set up test environment for expire cache tests."""
         configuration = self.configuration
-        # Ensure the mig_system_run sub directory exists for expire marks
-        marks_path = os.path.join(
-            configuration.mig_system_run, expire_marks_dir
+        # Ensure necessary directories exist
+        ensure_dirs_exist(configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, expire_marks_dir)
         )
-        ensure_dirs_exist(marks_path)
 
     def test_get_account_expire_cache_returns_cached_value(self):
         """Test that get_account_expire_cache returns cached expire value."""
@@ -365,12 +368,11 @@ class TestMigSharedAccountstate__reset_account_expire_cache(MigTestCase):
     def before_each(self):
         """Set up test environment for expire cache tests."""
         configuration = self.configuration
-        # Ensure the mig_system_run sub directory exists for expire marks
-        marks_path = os.path.join(
-            configuration.mig_system_run, expire_marks_dir
+        # Ensure necessary directories exist
+        ensure_dirs_exist(configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, expire_marks_dir)
         )
-        ensure_dirs_exist(marks_path)
-
         self.expire_base = os.path.join(
             configuration.mig_system_run, expire_marks_dir
         )
@@ -442,11 +444,11 @@ class TestMigSharedAccountstate__update_account_status_cache(MigTestCase):
     def before_each(self):
         """Set up test environment for status cache tests."""
         configuration = self.configuration
-        # Ensure the mig_system_run sub directory exists for status marks
-        marks_path = os.path.join(
-            configuration.mig_system_run, status_marks_dir
+        # Ensure necessary directories exist
+        ensure_dirs_exist(configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, status_marks_dir)
         )
-        ensure_dirs_exist(marks_path)
 
     def test_update_account_status_cache_creates_mark(self):
         """Test that update_account_status_cache creates a status mark."""
@@ -565,11 +567,11 @@ class TestMigSharedAccountstate__get_account_status_cache(MigTestCase):
     def before_each(self):
         """Set up test environment for status cache tests."""
         configuration = self.configuration
-        # Ensure the mig_system_run sub directory exists for status marks
-        marks_path = os.path.join(
-            configuration.mig_system_run, status_marks_dir
+        # Ensure necessary directories exist
+        ensure_dirs_exist(configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, status_marks_dir)
         )
-        ensure_dirs_exist(marks_path)
 
     def test_get_account_status_cache_returns_cached_value(self):
         """Test that get_account_status_cache returns cached status value."""
@@ -614,12 +616,12 @@ class TestMigSharedAccountstate__check_account_expire(MigTestCase):
     def before_each(self):
         """Set up test environment for check_account_expire."""
         configuration = self.configuration
-        # Ensure the mig_system_run directory exists for expire marks
-        marks_path = os.path.join(
-            configuration.mig_system_run, expire_marks_dir
+        # Ensure necessary directories exist
+        ensure_dirs_exist(configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, expire_marks_dir)
         )
-        ensure_dirs_exist(marks_path)
-
+        # Set up user DB and keep paths for later use
         _ensure_dirs_needed_for_userdb(configuration)
         self.expected_user_db_home = os.path.normpath(
             configuration.user_db_home
@@ -778,16 +780,15 @@ class TestMigSharedAccountstate__account_expire_info(MigTestCase):
     def before_each(self):
         """Set up test environment for account_expire_info."""
         configuration = self.configuration
-        # Ensure the mig_system_run directory exists for expire and status marks
-        marks_path = os.path.join(
-            configuration.mig_system_run, expire_marks_dir
+        # Ensure necessary directories exist
+        ensure_dirs_exist(configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, expire_marks_dir)
         )
-        ensure_dirs_exist(marks_path)
-        marks_path = os.path.join(
-            configuration.mig_system_run, status_marks_dir
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, status_marks_dir)
         )
-        ensure_dirs_exist(marks_path)
-
+        # Set up user DB and keep paths for later use
         _ensure_dirs_needed_for_userdb(configuration)
         self.expected_user_db_home = os.path.normpath(
             configuration.user_db_home
@@ -802,6 +803,41 @@ class TestMigSharedAccountstate__account_expire_info(MigTestCase):
         configuration.auto_add_oidc_user = True
         configuration.auto_add_cert_user = True
         configuration.site_user_id_format = "X509"  # Default format
+
+    def test_account_expire_info_about_to_expire_cert(self):
+        """Test account_expire_info for certificate user about to expire."""
+        configuration = self.configuration
+        logger = self.logger
+        # Set expire to be within min_days_left (14 days)
+        expect_expire = time.time() + (10 * 24 * 3600)  # 10 days from now
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": expect_expire,
+            "status": "active",
+        }
+        update_user_dict(
+            logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        environ = {
+            "REMOTE_ADDR": "127.0.0.1",
+            "HTTP_USER_AGENT": "some agent",
+        }
+        base_url = "https://cert.example.com"
+        configuration.migserver_https_ext_cert_url = base_url
+        environ["SCRIPT_URI"] = "%s/wsgi-bin/something.py" % base_url
+
+        expire_warn, account_expire, renew_days, extend_days = (
+            account_expire_info(
+                configuration, TEST_USER_DN, environ, min_days_left=14
+            )
+        )
+        self.assertTrue(expire_warn)
+        self.assertEqual(account_expire, expect_expire)
+        self.assertEqual(renew_days, configuration.cert_valid_days)
+        self.assertEqual(extend_days, cert_auto_extend_days)
 
     def test_account_expire_info_about_to_expire_oid(self):
         """Test account_expire_info for OID user about to expire."""
@@ -839,6 +875,42 @@ class TestMigSharedAccountstate__account_expire_info(MigTestCase):
         self.assertEqual(renew_days, configuration.oid_valid_days)
         self.assertEqual(extend_days, oid_auto_extend_days)
 
+    def test_account_expire_info_about_to_expire_oidc(self):
+        """Test account_expire_info for OIDC user about to expire."""
+        configuration = self.configuration
+        logger = self.logger
+        # Set expire to be within min_days_left (14 days)
+        expect_expire = time.time() + (10 * 24 * 3600)  # 10 days from now
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "expire": expect_expire,
+            "status": "active",
+        }
+        update_user_dict(
+            logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        # Simulate OIDC login environment
+        environ = {
+            "REMOTE_ADDR": "127.0.0.1",
+            "HTTP_USER_AGENT": "some agent",
+        }
+        base_url = "https://oidc.example.com"
+        configuration.migserver_https_ext_oidc_url = base_url
+        environ["SCRIPT_URI"] = "%s/wsgi-bin/something.py" % base_url
+
+        expire_warn, account_expire, renew_days, extend_days = (
+            account_expire_info(
+                configuration, TEST_USER_DN, environ, min_days_left=14
+            )
+        )
+        self.assertTrue(expire_warn)
+        self.assertEqual(account_expire, expect_expire)
+        self.assertEqual(renew_days, configuration.oidc_valid_days)
+        self.assertEqual(extend_days, oidc_auto_extend_days)
+
     def test_account_expire_info_not_about_to_expire(self):
         """Test account_expire_info for user not about to expire."""
         configuration = self.configuration
@@ -860,8 +932,8 @@ class TestMigSharedAccountstate__account_expire_info(MigTestCase):
             "REMOTE_ADDR": "127.0.0.1",
             "HTTP_USER_AGENT": "some agent",
         }
-        base_url = "https://oid.example.com"
-        configuration.migserver_https_ext_oid_url = base_url
+        base_url = "https://oidc.example.com"
+        configuration.migserver_https_ext_oidc_url = base_url
         environ["SCRIPT_URI"] = "%s/wsgi-bin/something.py" % base_url
 
         expire_warn, account_expire, renew_days, extend_days = (
@@ -912,76 +984,6 @@ class TestMigSharedAccountstate__account_expire_info(MigTestCase):
         self.assertEqual(renew_days, configuration.oid_valid_days)
         self.assertEqual(extend_days, 0)  # Because auto-renew is disabled
 
-    def test_account_expire_info_about_to_expire_cert(self):
-        """Test account_expire_info for certificate user about to expire."""
-        configuration = self.configuration
-        logger = self.logger
-        # Set expire to be within min_days_left (14 days)
-        expect_expire = time.time() + (10 * 24 * 3600)  # 10 days from now
-        user_dict = {
-            "distinguished_name": TEST_USER_DN,
-            "expire": expect_expire,
-            "status": "active",
-        }
-        update_user_dict(
-            logger, TEST_USER_DN, user_dict, self.expected_user_db_file
-        )
-        update_account_expire_cache(configuration, user_dict)
-        update_account_status_cache(configuration, user_dict)
-
-        environ = {
-            "REMOTE_ADDR": "127.0.0.1",
-            "HTTP_USER_AGENT": "some agent",
-        }
-        base_url = "https://cert.example.com"
-        configuration.migserver_https_ext_cert_url = base_url
-        environ["SCRIPT_URI"] = "%s/wsgi-bin/something.py" % base_url
-
-        expire_warn, account_expire, renew_days, extend_days = (
-            account_expire_info(
-                configuration, TEST_USER_DN, environ, min_days_left=14
-            )
-        )
-        self.assertTrue(expire_warn)
-        self.assertEqual(account_expire, expect_expire)
-        self.assertEqual(renew_days, configuration.cert_valid_days)
-        self.assertEqual(extend_days, cert_auto_extend_days)
-
-    def test_account_expire_info_about_to_expire_oidc(self):
-        """Test account_expire_info for OIDC user about to expire."""
-        configuration = self.configuration
-        logger = self.logger
-        # Set expire to be within min_days_left (14 days)
-        expect_expire = time.time() + (10 * 24 * 3600)  # 10 days from now
-        user_dict = {
-            "distinguished_name": TEST_USER_DN,
-            "expire": expect_expire,
-            "status": "active",
-        }
-        update_user_dict(
-            logger, TEST_USER_DN, user_dict, self.expected_user_db_file
-        )
-        update_account_expire_cache(configuration, user_dict)
-        update_account_status_cache(configuration, user_dict)
-
-        environ = {
-            "REMOTE_ADDR": "127.0.0.1",
-            "HTTP_USER_AGENT": "some agent",
-        }
-        base_url = "https://oidc.example.com"
-        configuration.migserver_https_ext_oidc_url = base_url
-        environ["SCRIPT_URI"] = "%s/wsgi-bin/something.py" % base_url
-
-        expire_warn, account_expire, renew_days, extend_days = (
-            account_expire_info(
-                configuration, TEST_USER_DN, environ, min_days_left=14
-            )
-        )
-        self.assertTrue(expire_warn)
-        self.assertEqual(account_expire, expect_expire)
-        self.assertEqual(renew_days, configuration.oidc_valid_days)
-        self.assertEqual(extend_days, oidc_auto_extend_days)
-
     def test_account_expire_info_with_different_min_days_left(self):
         """Test account_expire_info with a custom min_days_left."""
         configuration = self.configuration
@@ -1003,8 +1005,8 @@ class TestMigSharedAccountstate__account_expire_info(MigTestCase):
             "REMOTE_ADDR": "127.0.0.1",
             "HTTP_USER_AGENT": "some agent",
         }
-        base_url = "https://oid.example.com"
-        configuration.migserver_https_ext_oid_url = base_url
+        base_url = "https://oidc.example.com"
+        configuration.migserver_https_ext_oidc_url = base_url
         environ["SCRIPT_URI"] = "%s/wsgi-bin/something.py" % base_url
 
         # Test with min_days_left=7 (so 10 days is beyond 7 -> not about to expire)
@@ -1026,8 +1028,8 @@ class TestMigSharedAccountstate__account_expire_info(MigTestCase):
         )
         self.assertTrue(expire_warn)
         self.assertEqual(account_expire, expect_expire)
-        self.assertEqual(renew_days, configuration.oid_valid_days)
-        self.assertEqual(extend_days, oid_auto_extend_days)
+        self.assertEqual(renew_days, configuration.oidc_valid_days)
+        self.assertEqual(extend_days, oidc_auto_extend_days)
 
 
 class TestMigSharedAccountstate__detect_special_login(MigTestCase):
@@ -1140,7 +1142,11 @@ class TestMigSharedAccountstate__check_account_status(
     def before_each(self):
         """Set up test environment for check_account_status tests."""
         configuration = self.configuration
-        # Ensure the status‑marks directory exists
+        # Ensure necessary directories exist
+        ensure_dirs_exist(self.configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, expire_marks_dir)
+        )
         ensure_dirs_exist(
             os.path.join(configuration.mig_system_run, status_marks_dir)
         )
@@ -1152,7 +1158,6 @@ class TestMigSharedAccountstate__check_account_status(
         self.expected_user_db_file = os.path.join(
             self.expected_user_db_home, "MiG-users.db"
         )
-        ensure_dirs_exist(self.configuration.mig_system_files)
         # Provision a known test user
         self._provision_test_user(self, TEST_USER_DN)
 
@@ -1181,7 +1186,7 @@ class TestMigSharedAccountstate__check_account_status(
         configuration = self.configuration
         user_dict = {
             "distinguished_name": TEST_USER_DN,
-            "status": "locked",
+            "status": TEST_STATUS_LOCKED,
         }
         update_user_dict(
             self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
@@ -1192,14 +1197,14 @@ class TestMigSharedAccountstate__check_account_status(
             configuration, TEST_USER_DN
         )
         self.assertFalse(accessible)
-        self.assertEqual(status, "locked")
+        self.assertEqual(status, TEST_STATUS_LOCKED)
 
     def test_check_account_status_suspended(self):
         """Test that a suspended account is reported as not accessible."""
         configuration = self.configuration
         user_dict = {
             "distinguished_name": TEST_USER_DN,
-            "status": "suspended",
+            "status": TEST_STATUS_SUSPENDED,
         }
         update_user_dict(
             self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
@@ -1210,7 +1215,7 @@ class TestMigSharedAccountstate__check_account_status(
             configuration, TEST_USER_DN
         )
         self.assertFalse(accessible)
-        self.assertEqual(status, "suspended")
+        self.assertEqual(status, TEST_STATUS_SUSPENDED)
 
     def test_check_account_status_unset_means_active(self):
         """Test that an account without status is active and accessible."""
@@ -1280,8 +1285,14 @@ class TestMigSharedAccountstate__check_account_accessible(
         self.configuration.site_enable_jupyter = True
         # Ensure necessary directories exist
         ensure_dirs_exist(configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, expire_marks_dir)
+        )
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, status_marks_dir)
+        )
+        # Set up user DB and keep paths for later use
         _ensure_dirs_needed_for_userdb(configuration)
-        # Keep paths for possible later use
         self.expected_user_db_home = os.path.normpath(
             configuration.user_db_home
         )
@@ -1385,7 +1396,7 @@ class TestMigSharedAccountstate__check_account_accessible(
         configuration = self.configuration
         user_dict = {
             "distinguished_name": TEST_USER_DN,
-            "status": "locked",
+            "status": TEST_STATUS_LOCKED,
         }
         update_user_dict(
             self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
@@ -1402,7 +1413,7 @@ class TestMigSharedAccountstate__check_account_accessible(
         configuration = self.configuration
         user_dict = {
             "distinguished_name": TEST_USER_DN,
-            "status": "locked",
+            "status": TEST_STATUS_LOCKED,
         }
         update_user_dict(
             self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
@@ -1572,6 +1583,297 @@ class TestMigSharedAccountstate__check_account_accessible(
             configuration, TEST_USER_DN, "oid", io_login=False
         )
         self.assertTrue(accessible)  # Because OpenID expire is disabled
+
+
+class TestMigSharedAccountstate__check_update_account_expire(
+    MigTestCase, UserAssertMixin
+):
+    """Coverage of accountstate check_update_account_expire function."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test environment for check_update_account_expire tests."""
+        configuration = self.configuration
+        # Ensure necessary directories exist
+        ensure_dirs_exist(configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, expire_marks_dir)
+        )
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, status_marks_dir)
+        )
+        # Set up user DB and keep paths for later use
+        _ensure_dirs_needed_for_userdb(configuration)
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        self._provision_test_user(self, TEST_USER_DN)
+
+    def _update_account_in_db_and_cache(
+        self, expire, status=TEST_STATUS_ACTIVE
+    ):
+        """Write account status and expire data to the DB and cache."""
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": status,
+            "expire": expire,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(self.configuration, user_dict)
+        update_account_status_cache(self.configuration, user_dict)
+        return user_dict
+
+    def test_check_update_account_expire_auto_extends_oid(self):
+        """Test auto extension for an OID user about to expire."""
+        configuration = self.configuration
+        expire = time.time() + 5 * 24 * 3600
+        self._update_account_in_db_and_cache(expire)
+        base_url = "https://oidc.example.com"
+        configuration.migserver_https_ext_oid_url = base_url
+        configuration.auto_add_oid_user = True
+        environ = {
+            "REMOTE_ADDR": "192.0.2.10",
+            "HTTP_USER_AGENT": "test agent",
+            "SCRIPT_URI": "%s/wsgi-bin/something.py" % base_url,
+        }
+
+        pending, cached_expire, user_dict = check_update_account_expire(
+            configuration, TEST_USER_DN, environ, min_days_left=14
+        )
+
+        self.assertTrue(pending)
+        self.assertEqual(cached_expire, expire)
+        self.assertTrue(user_dict)
+        self.assertTrue(user_dict["expire"] > expire)
+        self.assertEqual(
+            get_account_expire_cache(configuration, TEST_USER_DN),
+            user_dict["expire"],
+        )
+        self.assertEqual(
+            load_user_dict(
+                self.logger, TEST_USER_DN, self.expected_user_db_file
+            )["expire"],
+            user_dict["expire"],
+        )
+
+    def test_check_update_account_expire_auto_extends_oidc(self):
+        """Test auto extension for an OIDC user about to expire."""
+        configuration = self.configuration
+        expire = time.time() + 5 * 24 * 3600
+        self._update_account_in_db_and_cache(expire)
+        base_url = "https://oidc.example.com"
+        configuration.migserver_https_ext_oidc_url = base_url
+        configuration.auto_add_oidc_user = True
+        environ = {
+            "REMOTE_ADDR": "192.0.2.10",
+            "HTTP_USER_AGENT": "test agent",
+            "SCRIPT_URI": "%s/wsgi-bin/something.py" % base_url,
+        }
+
+        pending, cached_expire, user_dict = check_update_account_expire(
+            configuration, TEST_USER_DN, environ, min_days_left=14
+        )
+
+        self.assertTrue(pending)
+        self.assertEqual(cached_expire, expire)
+        self.assertTrue(user_dict)
+        self.assertTrue(user_dict["expire"] > expire)
+        self.assertEqual(
+            get_account_expire_cache(configuration, TEST_USER_DN),
+            user_dict["expire"],
+        )
+
+    def test_check_update_account_expire_auto_extends_cert(self):
+        """Test auto extension for a certificate user about to expire."""
+        configuration = self.configuration
+        expire = time.time() + 5 * 24 * 3600
+        self._update_account_in_db_and_cache(expire)
+        base_url = "https://cert.example.com"
+        configuration.migserver_https_ext_cert_url = base_url
+        configuration.auto_add_cert_user = True
+        environ = {
+            "REMOTE_ADDR": "192.0.2.10",
+            "HTTP_USER_AGENT": "test agent",
+            "SCRIPT_URI": "%s/wsgi-bin/something.py" % base_url,
+        }
+
+        pending, cached_expire, user_dict = check_update_account_expire(
+            configuration, TEST_USER_DN, environ, min_days_left=14
+        )
+
+        self.assertTrue(pending)
+        self.assertEqual(cached_expire, expire)
+        self.assertTrue(user_dict)
+        self.assertTrue(user_dict["expire"] > expire)
+        self.assertEqual(
+            get_account_expire_cache(configuration, TEST_USER_DN),
+            user_dict["expire"],
+        )
+
+    def test_check_update_account_expire_not_near_expiry(self):
+        """Test that users not near expiry are not auto-extended."""
+        configuration = self.configuration
+        expire = time.time() + 30 * 24 * 3600
+        self._update_account_in_db_and_cache(expire)
+        base_url = "https://oidc.example.com"
+        configuration.migserver_https_ext_oidc_url = base_url
+        configuration.auto_add_oidc_user = True
+        environ = {
+            "REMOTE_ADDR": "192.0.2.10",
+            "HTTP_USER_AGENT": "test agent",
+            "SCRIPT_URI": "%s/wsgi-bin/something.py" % base_url,
+        }
+
+        pending, cached_expire, user_dict = check_update_account_expire(
+            configuration, TEST_USER_DN, environ, min_days_left=14
+        )
+
+        self.assertTrue(pending)
+        self.assertEqual(cached_expire, expire)
+        # NOTE: for expired users with cache mark no user_dict is loaded
+        self.assertEqual(user_dict, None)
+        self.assertEqual(
+            get_account_expire_cache(configuration, TEST_USER_DN),
+            expire,
+        )
+
+    def test_check_update_account_expire_no_matching_auto_update(self):
+        """Test that near-expiry users keep expire without matching vhost."""
+        configuration = self.configuration
+        expire = time.time() + 5 * 24 * 3600
+        self._update_account_in_db_and_cache(expire)
+        configuration.migserver_https_ext_oidc_url = "https://oidc.example.com"
+        configuration.auto_add_oidc_user = True
+        environ = {
+            "REMOTE_ADDR": "192.0.2.10",
+            "HTTP_USER_AGENT": "test agent",
+            "SCRIPT_URI": "https://unknown.example.com/wsgi-bin/page.py",
+        }
+
+        pending, cached_expire, user_dict = check_update_account_expire(
+            configuration, TEST_USER_DN, environ, min_days_left=14
+        )
+
+        self.assertTrue(pending)
+        self.assertEqual(cached_expire, expire)
+        # NOTE: for expired users with cache mark no user_dict is loaded
+        self.assertEqual(user_dict, None)
+        self.assertEqual(
+            get_account_expire_cache(configuration, TEST_USER_DN),
+            expire,
+        )
+
+    def test_check_update_account_expire_skips_temporal_user_without_peer(self):
+        """Test that local (typically external) temporal users are not auto-extended without peer."""
+        configuration = self.configuration
+        expire = 42
+        self._update_account_in_db_and_cache(expire, TEST_STATUS_TEMPORAL)
+        base_url = "https://ext.example.com"
+        configuration.migserver_https_mig_oid_url = base_url
+        # Enable renew with peers but test without any active
+        configuration.auto_add_oid_user = True
+        self.site_enable_peers = True
+        self.site_peers_mandatory = True
+        self.site_peers_explicit_fields = ["email"]
+        environ = {
+            "REMOTE_ADDR": "127.0.0.1",
+            "HTTP_USER_AGENT": "test agent",
+            "SCRIPT_URI": "%s/wsgi-bin/something.py" % base_url,
+        }
+
+        pending, cached_expire, user_dict = check_update_account_expire(
+            configuration, TEST_USER_DN, environ, min_days_left=14
+        )
+
+        self.assertFalse(pending)
+        self.assertEqual(cached_expire, expire)
+        # NOTE: for expired users with cache mark no user_dict is loaded
+        self.assertEqual(user_dict, None)
+        self.assertEqual(
+            get_account_expire_cache(configuration, TEST_USER_DN),
+            expire,
+        )
+
+    def test_check_update_account_expire_does_not_extend_locked_user(self):
+        """Test that locked users are not auto-extended."""
+        configuration = self.configuration
+        expire = time.time() + 5 * 24 * 3600
+        self._update_account_in_db_and_cache(expire, status=TEST_STATUS_LOCKED)
+        base_url = "https://oid.example.com"
+        configuration.migserver_https_ext_oidc_url = base_url
+        configuration.auto_add_oidc_user = True
+        environ = {
+            "REMOTE_ADDR": "192.0.2.10",
+            "HTTP_USER_AGENT": "test agent",
+            "SCRIPT_URI": "%s/wsgi-bin/something.py" % base_url,
+        }
+
+        pending, cached_expire, user_dict = check_update_account_expire(
+            configuration, TEST_USER_DN, environ, min_days_left=14
+        )
+
+        self.assertTrue(pending)
+        self.assertEqual(cached_expire, expire)
+        self.assertTrue(user_dict)
+        self.assertEqual(user_dict["expire"], expire)
+        self.assertEqual(
+            get_account_expire_cache(configuration, TEST_USER_DN),
+            expire,
+        )
+
+    def test_check_update_account_expire_expired_without_auto_update(self):
+        """Test that expired users stay expired without matching auto update."""
+        configuration = self.configuration
+        expire = 42
+        self._update_account_in_db_and_cache(expire)
+        base_url = "https://ext.example.com"
+        configuration.migserver_https_mig_oid_url = base_url
+        configuration.auto_add_oid_user = False
+        environ = {
+            "REMOTE_ADDR": "192.0.2.10",
+            "HTTP_USER_AGENT": "test agent",
+            "SCRIPT_URI": "%s/wsgi-bin/page.py" % base_url,
+        }
+
+        pending, cached_expire, user_dict = check_update_account_expire(
+            configuration, TEST_USER_DN, environ, min_days_left=14
+        )
+
+        self.assertFalse(pending)
+        self.assertEqual(cached_expire, expire)
+        # NOTE: for expired users with cache mark no user_dict is loaded
+        self.assertEqual(user_dict, None)
+        self.assertEqual(
+            get_account_expire_cache(configuration, TEST_USER_DN),
+            expire,
+        )
+
+    def test_check_update_account_expire_missing_user(self):
+        """Test that missing users are reported as expired."""
+        configuration = self.configuration
+        base_url = "https://oid.example.com"
+        environ = {
+            "REMOTE_ADDR": "192.0.2.10",
+            "HTTP_USER_AGENT": "test agent",
+            "SCRIPT_URI": "%s/wsgi-bin/something.py" % base_url,
+        }
+        with self.assertLogs(level="ERROR") as log_capture:
+            pending, expire, user_dict = check_update_account_expire(
+                configuration, OTHER_USER_DN, environ, min_days_left=14
+            )
+        self.assertFalse(pending)
+        self.assertEqual(expire, -42)
+        self.assertIsNone(user_dict)
+        self.assertTrue(
+            any("no such account" in msg for msg in log_capture.output)
+        )
 
 
 if __name__ == "__main__":
