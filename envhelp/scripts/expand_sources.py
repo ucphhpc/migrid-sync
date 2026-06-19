@@ -43,7 +43,7 @@ SOURCE_URL_BASE = "https://github.com/ucphhpc"
 PACKAGE_REPOS_TO_BRANCH = {
     "migux": {
         "repository": "migrid-ux",
-        "branch": "next",
+        "repository_rev": "c5cd60d68ef30f7c4d468de4391265c24c9f48de",
     }
 }
 
@@ -74,9 +74,9 @@ def main(argv):
 
     for package_name, package_dict in PACKAGE_REPOS_TO_BRANCH.items():
         package_repo = package_dict["repository"]
-        branch_name = package_dict["branch"]
+        commit_id = package_dict["repository_rev"]
+        package_repo_with_branch = "%s-%s" % (package_repo, commit_id)
 
-        package_repo_with_branch = "%s-%s" % (package_repo, branch_name)
         package_dir_staging = os.path.join(
             staging_dir, package_repo_with_branch
         )
@@ -88,8 +88,8 @@ def main(argv):
         package_url = os.path.join(
             SOURCE_URL_BASE,
             package_repo,
-            "archive/refs/heads",
-            "%s.zip" % (branch_name,),
+            "archive",
+            "%s.zip" % (commit_id,),
         )
         download_url(package_url, downloaded_archive_file, use_wget=use_wget)
 
