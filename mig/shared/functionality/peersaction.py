@@ -177,7 +177,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
 
 
 def process_peer_action(configuration, output_objects, client_id,
-                        peers_content, action, peers_format, updates,
+                        peers_content, action, peers_format, updates=None,
                         auto_expire=False, do_invite=False, logger=None):
     if logger is None:
         logger = configuration.logger
@@ -187,6 +187,9 @@ def process_peer_action(configuration, output_objects, client_id,
     short_title = configuration.short_title
     smtp_server = configuration.smtp_server
     user_pending = os.path.abspath(configuration.user_pending)
+
+    if updates is None:
+        updates = {}
 
     kind = updates.get('kind', '')
     label = updates.get('label', '')

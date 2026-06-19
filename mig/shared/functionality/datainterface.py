@@ -197,8 +197,7 @@ def handle_DELETE_peers_accepted(configuration, request_info):
     else:
         status = 200
         process_peer_action(
-            configuration, [], request_info.client_id, peers, 'remove', 'userid',
-            updates={})
+            configuration, [], request_info.client_id, peers, 'remove', 'userid')
 
     return status, { 'success_map': success_map }
 
