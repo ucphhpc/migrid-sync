@@ -686,22 +686,40 @@ class TestMigSharedAccountstate__check_account_expire(MigTestCase):
         self.assertEqual(expire, -1)
 
     def test_check_account_expire_invalid_expire_type(self):
-        """Test that check_account_expire returns expired if expire is not a number."""
+        """Test that check_account_expire returns expired if expire is not a valid number."""
         configuration = self.configuration
         logger = self.logger
         user_dict = {
             "distinguished_name": TEST_USER_DN,
+            # Example invalid values that will pass assertions
             "expire": "invalid",
+            # "expire": "-41"
+            # "expire": "-41.2"
+            # "expire": "11111111111111141.2"
+            #
+            # Example valid values that will fail assertions
+            # "expire": "4242"
+            # "expire": 4242
+            # "expire": -41.2
+            # "expire": 11111111111111141.2
         }
         update_user_dict(
             logger, TEST_USER_DN, user_dict, self.expected_user_db_file
         )
+        # Make sure cache doesn't interfere with type parsing
+        reset_account_expire_cache(configuration)
+        # Use expected error values to trigger asserts if assertRaises doesn't
+        pending, expire = False, -42
+        # Make sure function under test either fails with TypeError or returns
+        # values indicating failure to prevent further login use.
         with self.assertRaises(TypeError):
             pending, expire, _ = check_account_expire(
                 configuration, TEST_USER_DN
             )
-            self.assertFalse(pending)
-            self.assertEqual(expire, -42)
+        self.assertFalse(pending, "got expected TypeError but not expired")
+        self.assertEqual(
+            expire, -42, "got expected TypeError but unexpected expire time"
+        )
 
     def test_check_account_expire_no_user_db_entry(self):
         """Test that check_account_expire returns expired if user is not in the DB."""
@@ -1042,9 +1060,9 @@ class TestMigSharedAccountstate__detect_special_login(MigTestCase):
     def before_each(self):
         """Create the directories that the function may touch."""
         configuration = self.configuration
-        self.configuration.site_enable_sharelinks = True
-        self.configuration.site_enable_jobs = True
-        self.configuration.site_enable_jupyter = True
+        configuration.site_enable_sharelinks = True
+        configuration.site_enable_jobs = True
+        configuration.site_enable_jupyter = True
         # Ensure the home directories that the function may reference exist
         ensure_dirs_exist(configuration.user_home)
         ensure_dirs_exist(configuration.mrsl_files_dir)
@@ -1263,7 +1281,7 @@ class TestMigSharedAccountstate__check_account_status(
             accessible, _, _ = check_account_status(
                 configuration, OTHER_USER_DN
             )
-        self.assertFalse(accessible)
+            self.assertFalse(accessible)
         self.assertTrue(
             any("no such account" in msg for msg in log_capture.output)
         )
@@ -1280,9 +1298,9 @@ class TestMigSharedAccountstate__check_account_accessible(
     def before_each(self):
         """Set up test environment for check_account_accessible tests."""
         configuration = self.configuration
-        self.configuration.site_enable_sharelinks = True
-        self.configuration.site_enable_jobs = True
-        self.configuration.site_enable_jupyter = True
+        configuration.site_enable_sharelinks = True
+        configuration.site_enable_jobs = True
+        configuration.site_enable_jupyter = True
         # Ensure necessary directories exist
         ensure_dirs_exist(configuration.mig_system_files)
         ensure_dirs_exist(
@@ -1868,9 +1886,9 @@ class TestMigSharedAccountstate__check_update_account_expire(
             pending, expire, user_dict = check_update_account_expire(
                 configuration, OTHER_USER_DN, environ, min_days_left=14
             )
-        self.assertFalse(pending)
-        self.assertEqual(expire, -42)
-        self.assertIsNone(user_dict)
+            self.assertFalse(pending)
+            self.assertEqual(expire, -42)
+            self.assertIsNone(user_dict)
         self.assertTrue(
             any("no such account" in msg for msg in log_capture.output)
         )
