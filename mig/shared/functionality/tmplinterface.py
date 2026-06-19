@@ -139,11 +139,6 @@ def _search_dicts_matching(objects, conditions):
 
 # main logic
 
-_ROUTE_INFO_SUCEED_AND_EMPTY = {
-    'prepare': lambda _, __: (True, None)
-}
-
-
 def main(client_id, user_arguments_dict, environ=None):
     """
     Main function used by front end.
@@ -186,7 +181,7 @@ def prepare_GET_migux_apps_peers_requested(configuration, request_info):
     return True, _peers_listing_filter(listing, request_info.args)
 
 
-def _peers_listing_convert_request_data(request_data):
+def convert_peers_listing_request_data(request_data):
     """
     Convert MiG style wrapped request data to a standard data structure.
     """
@@ -228,16 +223,21 @@ def _peers_listing_filter(objects, request_args):
     return _search_dicts_matching(objects, conditions)
 
 
-ROUTES_BY_PACKAGE = {
+_PREPARE_TMPLDATA_SUCEED_AND_EMPTY = lambda _, __: (True, None)
+
+
+PREPARE_TMPLDATA_BY_PACKAGE = {
     "migux.apps.peers": {
-        "GET /accepted": {
-            'convert': _peers_listing_convert_request_data,
-            'prepare': prepare_GET_migux_apps_peers_accepted,
-        },
-        "GET /requested": {
-            'convert': _peers_listing_convert_request_data,
-            'prepare': prepare_GET_migux_apps_peers_requested,
-        },
+        "GET /accepted": prepare_GET_migux_apps_peers_accepted,
+        "GET /requested": prepare_GET_migux_apps_peers_requested,
+    }
+}
+
+
+NORMALIZE_INPUTS_BY_PACKAGE = {
+    "migux.apps.peers": {
+        "GET /accepted": convert_peers_listing_request_data,
+        "GET /requested": convert_peers_listing_request_data,
     }
 }
 
@@ -309,16 +309,22 @@ def _main(configuration, logger, environ, op_name='', output_objects=None, clien
                                'text': 'no such route'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    prepare_tmpldata_fn = _PREPARE_TMPLDATA_SUCEED_AND_EMPTY
     try:
-        acceptable_routes = ROUTES_BY_PACKAGE[request_info.request_package]
-        route_info = acceptable_routes[request_info.route]
+        acceptable_routes = PREPARE_TMPLDATA_BY_PACKAGE[request_info.request_package]
+        prepare_tmpldata_fn = acceptable_routes[request_info.route]
     except KeyError:
-        route_info = _ROUTE_INFO_SUCEED_AND_EMPTY
-
-    request_info.embellish_with(route_info=route_info)
+        pass
 
     try:
-        success, data = route_info['prepare'](configuration, request_info)
+        acceptable_normalizers = NORMALIZE_INPUTS_BY_PACKAGE[request_info.request_package]
+        normalize_inputs_fn = acceptable_normalizers[request_info.route]
+        request_info.set_args(normalize_inputs_fn(request_info._request_data))
+    except KeyError:
+        pass
+
+    try:
+        success, data = prepare_tmpldata_fn(configuration, request_info)
         if not success:
             raise RuntimeError('error during data preparation')
     except RuntimeError as exc:

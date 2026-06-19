@@ -74,16 +74,14 @@ class _RequestInfo(SimpleNamespace):
     @property
     def args(self):
         """
-        Lazily return the request arguments. If a data conversion function
-        is specified pass the request data through it storing the resulting
-        structure so that multiple calls are sped up, but we only pay the
-        conversion price for valid requests.
+        Return the request arguments. If previously overridden (by virtue of
+        being converted) return the value that was set, otherwise return the
+        request data unchanged.
         """
 
         _args = getattr(self, "_args", None)
-        if _args:
-            return _args
-        self._args = self._convert_data(self._request_data)
+        if _args is None:
+            self._args = self._request_data
         return self._args
 
     @property
@@ -132,15 +130,11 @@ class _RequestInfo(SimpleNamespace):
         assert isinstance(value, type_of_value)
         return value
 
-    def embellish_with(self, route_info):
+    def set_args(self, args):
         """
-        Apply knowledge based upon the definition of the route to the request.
+        Explicitly set the values that will be made available as request args.
         """
-
-        convert_data = route_info.get("convert", None)
-        if convert_data:
-            self._convert_data = convert_data
-        return
+        setattr(self, "_args", args)
 
     @classmethod
     def create(

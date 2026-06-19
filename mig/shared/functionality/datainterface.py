@@ -292,28 +292,21 @@ def handle_POST_peers_requested_accept(configuration, request_info):
     return 200, { 'success_map': success_map }
 
 
-ROUTES_BY_PACKAGE = {
+HANDLERS_BY_PACKAGE = {
     "migux.apps.peers": {
-        "POST /new": {
-            'convert': convert_POST_peers_new,
-            'handle': handle_POST_peers_new,
-        },
-        "GET /summary": {
-            'handle': handle_GET_peers_summary,
-        },
-        "POST /accepted/delete": {
-            'handle': handle_DELETE_peers_accepted,
-        },
-        "POST /accepted/import": {
-            'convert': convert_POST_peers_accepted_import,
-            'handle': handle_POST_peers_accepted_import,
-        },
-        "POST /requested/accept": {
-            'handle': handle_POST_peers_requested_accept,
-        },
-        "POST /requested/delete": {
-            'handle': handle_DELETE_peers_requested,
-        },
+        "POST /new": handle_POST_peers_new,
+        "GET /summary": handle_GET_peers_summary,
+        "POST /accepted/delete": handle_DELETE_peers_accepted,
+        "POST /accepted/import": handle_POST_peers_accepted_import,
+        "POST /requested/accept": handle_POST_peers_requested_accept,
+        "POST /requested/delete": handle_DELETE_peers_requested,
+    }
+}
+
+NORMALIZE_INPUTS_BY_PACKAGE = {
+    "migux.apps.peers": {
+        "POST /new": convert_POST_peers_new,
+        "POST /accepted/import": convert_POST_peers_accepted_import,
     }
 }
 
@@ -381,22 +374,25 @@ def _main(configuration, logger, environ, op_name='', output_objects=None, clien
 
     try:
         # 2a. reference all routes that are implemented for the given package
-        acceptable_routes = ROUTES_BY_PACKAGE[request_info.request_package]
+        acceptable_routes = HANDLERS_BY_PACKAGE[request_info.request_package]
         # 2b. grab the definition for the route being requested
-        route_info = acceptable_routes[request_info.route]
-        # 2c. apply these details to the curent request
-        request_info.embellish_with(route_info=route_info)
+        request_handler = acceptable_routes[request_info.route]
     except KeyError:
         status = 404
         result = {
             'error': 'no such route',
         }
 
+    try:
+        acceptable_normalizers = NORMALIZE_INPUTS_BY_PACKAGE[request_info.request_package]
+        normalize_inputs_fn = acceptable_normalizers[request_info.route]
+        request_info.set_args(normalize_inputs_fn(request_info._request_data))
+    except KeyError:
+        pass
+
     # 3. attempt to handle the request
 
     if status is _STATUS_UNSET:
-        request_handler = route_info['handle']
-
         try:
             status, data = request_handler(configuration, request_info)
 
