@@ -163,11 +163,8 @@ def handle_POST_peers_new(configuration, request_info):
         success, _ = accountreq.peer_account_req(req_id, configuration, request_info.client_id,
                                                     admin_copy=False,
                                                     include_auto_email=False)
-        if not success:
-            success_map[index] = False
-            continue
 
-        success_map[index] = True
+        success_map[index] = success
 
     if errors_map:
         status = 400
