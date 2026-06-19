@@ -203,7 +203,7 @@ def handle_DELETE_peers_accepted(configuration, request_info):
             configuration, [], request_info.client_id, peers, 'remove', 'userid',
             updates={})
 
-    return 200, { 'success_map': success_map }
+    return status, { 'success_map': success_map }
 
 
 def convert_POST_peers_accepted_import(request_data):

@@ -317,7 +317,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
         status = json_response['status']
-        self.assertEqual(status, 200)
+        self.assertEqual(status, 400)
 
         data = json_response['data']
         self.assertEqual(data, {
