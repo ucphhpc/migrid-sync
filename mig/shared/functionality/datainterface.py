@@ -63,7 +63,7 @@ import sys
 from mig.shared import returnvalues
 
 from mig.lib.reqinfo import coalesce_request, booleanify, \
-    unconcatify, unlistify_dict
+    unconcatify, unlistify, unlistify_dict
 import mig.shared.accountreq as accountreq
 from mig.shared.base import distinguished_name_to_user
 import mig.shared.fileio as fileio
@@ -210,6 +210,18 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
     return status, { 'success_map': success_map }
 
 
+def handle_POST_peers_accepted_fetch(configuration, request_info):
+    peer_dn = unlistify(request_info.args["peer_dn"])
+
+    accepted_peers = accountreq.list_peers_accepted(configuration, request_info.client_id)
+    accepted_by_dn = {peer['distinguished_name']: peer for peer in accepted_peers}
+
+    if peer_dn in accepted_by_dn:
+        return 200, accepted_by_dn[peer_dn]
+
+    return 404, {}
+
+
 def convert_POST_peers_accepted_import(request_data):
     """
     Data conversion: POST /peers/accepted/import
@@ -237,6 +249,10 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     else:
         status = 400
     return status, {}
+
+
+def handle_POST_peers_accepted_update(configuration, request_info):
+    return 404, {}
 
 
 def handle_POST_peers_requested_delete(configuration, request_info):
@@ -309,7 +325,9 @@ HANDLERS_BY_PACKAGE = {
         "POST /new": handle_POST_peers_new,
         "GET /summary": handle_GET_peers_summary,
         "POST /accepted/delete": handle_POST_peers_accepted_delete,
+        "POST /accepted/fetch": handle_POST_peers_accepted_fetch,
         "POST /accepted/import": handle_POST_peers_accepted_import,
+        "POST /accepted/update": handle_POST_peers_accepted_update,
         "POST /requested/accept": handle_POST_peers_requested_accept,
         "POST /requested/delete": handle_POST_peers_requested_delete,
     }

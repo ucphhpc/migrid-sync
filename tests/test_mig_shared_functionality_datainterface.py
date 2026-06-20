@@ -326,6 +326,32 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
             }
         })
 
+
+    def test_peers_accepted_fetch(self):
+        self._provision_peer_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
+
+        payload = {
+            "peer_dn": self.TEST_PEER_DN,
+        }
+
+        request_body = {
+            'type': 'migux_apps_peers__accepted__fetch',
+            'operation': 'create',
+            **payload,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
+                                 'http://localhost/datainterface.py',
+                                 form=request_body,
+                                 mig_user_dn=self.TEST_CLIENT_ID)
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response['status']
+        self.assertEqual(status, 200)
+
+        data = json_response['data']
+        self.assertEqual(data['distinguished_name'], self.TEST_PEER_DN)
+
     def test_peers_accepted_import(self):
         date_expire_in_8_days = date.today() + timedelta(days=8)
         peers_csv = fixturepath("csv/peers-for-import.csv")
@@ -356,6 +382,28 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         # check email were sent
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertEqual(fake_send_email.total_emails_sent(), 4)
+
+    def test_peers_accepted_update(self):
+        self._provision_peer_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
+
+        payload = {
+            "peer_dn": self.TEST_PEER_DN,
+        }
+
+        request_body = {
+            'type': 'migux_apps_peers__accepted__update',
+            'operation': 'create',
+            **payload,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
+                                 'http://localhost/datainterface.py',
+                                 form=request_body,
+                                 mig_user_dn=self.TEST_CLIENT_ID)
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response['status']
+        self.assertEqual(status, 404)
 
     def test_peers_requsted_accept(self):
         _ensure_dirs_needed_for_userdb(self.configuration)
