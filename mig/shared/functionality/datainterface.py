@@ -321,7 +321,7 @@ def handle_POST_peers_requested_accept(configuration, request_info):
 
 
 HANDLERS_BY_PACKAGE = {
-    "migux.apps.peers": {
+    "peers": {
         "POST /new": handle_POST_peers_new,
         "GET /summary": handle_GET_peers_summary,
         "POST /accepted/delete": handle_POST_peers_accepted_delete,
@@ -334,7 +334,7 @@ HANDLERS_BY_PACKAGE = {
 }
 
 NORMALIZE_INPUTS_BY_PACKAGE = {
-    "migux.apps.peers": {
+    "peers": {
         "POST /new": convert_POST_peers_new,
         "POST /accepted/import": convert_POST_peers_accepted_import,
     }

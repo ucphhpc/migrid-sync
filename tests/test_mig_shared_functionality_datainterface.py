@@ -119,7 +119,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'migux_apps_peers__new',
+            'type': 'peers__new',
             'operation': 'create',
             **test_pending_peer,
         }
@@ -166,7 +166,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'migux_apps_peers__new',
+            'type': 'peers__new',
             'operation': 'create',
             **test_pending_peer,
         }
@@ -212,7 +212,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'migux_apps_peers__new',
+            'type': 'peers__new',
             'operation': 'create',
             "invite_on_email": True,
             **test_pending_peer,
@@ -241,7 +241,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self._provision_test_pending_user(self, self.TEST_PENDING_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
 
         request_body = {
-            'type': 'migux_apps_peers__summary',
+            'type': 'peers__summary',
             'operation': 'read',
         }
         prepared_wsgi = self.prepareWsgiAssert(self.configuration,
@@ -269,7 +269,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'migux_apps_peers__accepted__delete',
+            'type': 'peers__accepted__delete',
             'operation': 'delete',
             **test_pending_peer,
         }
@@ -305,7 +305,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'migux_apps_peers__accepted__delete',
+            'type': 'peers__accepted__delete',
             'operation': 'delete',
             **test_pending_peer,
         }
@@ -335,7 +335,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'migux_apps_peers__accepted__fetch',
+            'type': 'peers__accepted__fetch',
             'operation': 'create',
             **payload,
         }
@@ -358,7 +358,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         with open(peers_csv) as f:
             content = f.read()
         request_body = {
-            'type': 'migux_apps_peers__accepted__import',
+            'type': 'peers__accepted__import',
             'operation': 'delete',
             'label': 'some_peer_label',
             'kind': 'collaboration',
@@ -391,7 +391,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'migux_apps_peers__accepted__update',
+            'type': 'peers__accepted__update',
             'operation': 'create',
             **payload,
         }
@@ -416,7 +416,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'migux_apps_peers__requested__accept',
+            'type': 'peers__requested__accept',
             'operation': 'delete',
             **test_pending_peer,
         }
@@ -456,7 +456,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'migux_apps_peers__requested__delete',
+            'type': 'peers__requested__delete',
             'operation': 'delete',
             **test_pending_peer,
         }
