@@ -1685,7 +1685,8 @@ def peer_dict_from_fields(configuration, peer_fields_dict):
 
     peer_dict = fill_user(peer_dict)
     # This is required to match how client_id pending_peers are currently loaded
-    canonicaled_peer_dict = canonical_user(configuration, peer_dict, list(basic_fields.keys()))
+    combined_accepted_fields = list(basic_accepted.keys()) + list(extra_accepted.keys())
+    canonicaled_peer_dict = canonical_user(configuration, peer_dict, combined_accepted_fields)
     filled_canonicaled_peer_dict = fill_distinguished_name(canonicaled_peer_dict)
     return filled_canonicaled_peer_dict, None
 
