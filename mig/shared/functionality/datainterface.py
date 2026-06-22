@@ -24,12 +24,6 @@
 #
 # -- END_HEADER ---
 
-# This is intended as a more generic interface than workflowsjsoninterface.py
-# and jobsjsoninterface.py, especially as we're now adding a third
-# reportjsoninterface.py. It may need to be overhauled or expanded to be a
-# truly generic json interface and is currently only suitable for the various
-# workflow interactions
-
 """
 datainterface is a functionality module intended to expose routes consuming
 and returning data structures within constraints of the usually page-centric
