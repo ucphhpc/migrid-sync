@@ -47,30 +47,30 @@ the ability to easily extend the routes made avalable is a key feature here.
 from __future__ import absolute_import
 
 import cgi
-import importlib
-from io import BytesIO
 import json
 import os
-import re
 import sys
+from io import BytesIO
 
-from mig.shared import returnvalues
-
-from mig.lib.reqinfo import coalesce_request, booleanify, \
-    unconcatify, unlistify, unlistify_dict
 import mig.shared.accountreq as accountreq
-from mig.shared.base import distinguished_name_to_user
 import mig.shared.fileio as fileio
-from mig.shared.init import initialize_main_variables, make_start_entry, \
-    find_entry
-from mig.shared.functionality.peersaction import process_peer_action
 import mig.shared.returnvalues as returnvalues
-from mig.shared.safeinput import REJECT_UNSET, html_escape, \
-    valid_request_operation, valid_request_type
+from mig.lib.reqinfo import (
+    booleanify,
+    coalesce_request,
+    unconcatify,
+    unlistify,
+    unlistify_dict,
+)
+from mig.shared.base import distinguished_name_to_user
+from mig.shared.functionality.peersaction import process_peer_action
+from mig.shared.init import (
+    find_entry,
+    initialize_main_variables,
+    make_start_entry,
+)
+from mig.shared.safeinput import html_escape
 from mig.shared.scriptinput import fieldstorage_to_dict
-
-
-_STATUS_UNSET = object()
 
 
 def main(client_id, user_arguments_dict, environ=None, configuration=None):
@@ -86,22 +86,29 @@ def main(client_id, user_arguments_dict, environ=None, configuration=None):
         environ = os.environ
 
     # Ensure that the output format is in JSON
-    user_arguments_dict['output_format'] = ['json']
-    user_arguments_dict.pop('__DELAYED_INPUT__', None)
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id,
-                                  configuration=configuration,
-                                  op_title=False,
-                                  op_header=False,
-                                  op_menu=False)
+    user_arguments_dict["output_format"] = ["json"]
+    user_arguments_dict.pop("__DELAYED_INPUT__", None)
+    configuration, logger, output_objects, op_name = initialize_main_variables(
+        client_id,
+        configuration=configuration,
+        op_title=False,
+        op_header=False,
+        op_menu=False,
+    )
 
     # Now ensure output format above is applied by the WSGI wrappers
-    start_entry = find_entry(output_objects, 'start')
-    start_entry['override_format'] = True
+    start_entry = find_entry(output_objects, "start")
+    start_entry["override_format"] = True
 
-    return _main(configuration, logger, environ, op_name=op_name,
-                 output_objects=output_objects, client_id=client_id,
-                 user_arguments_dict=user_arguments_dict)
+    return _main(
+        configuration,
+        logger,
+        environ,
+        op_name=op_name,
+        output_objects=output_objects,
+        client_id=client_id,
+        user_arguments_dict=user_arguments_dict,
+    )
 
 
 def handle_GET_peers_summary(configuration, request_info):
@@ -109,12 +116,16 @@ def handle_GET_peers_summary(configuration, request_info):
     Request handler: GET /peers/summary
     """
 
-    accepted_peers = accountreq.list_peers_accepted(configuration, request_info.client_id)
-    requested_peers = accountreq.list_peers_requested(configuration, request_info.client_id)
+    accepted_peers = accountreq.list_peers_accepted(
+        configuration, request_info.client_id
+    )
+    requested_peers = accountreq.list_peers_requested(
+        configuration, request_info.client_id
+    )
 
     return 200, {
-        'accepted_count': len(accepted_peers),
-        'requested_count': len(requested_peers),
+        "accepted_count": len(accepted_peers),
+        "requested_count": len(requested_peers),
     }
 
 
@@ -123,7 +134,7 @@ def convert_POST_peers_new(request_data):
     Data conversion: POST /peers/new
     """
     args = unlistify_dict(request_data)
-    args['invite_on_email'] = booleanify(args.get('invite_on_email', 'false'))
+    args["invite_on_email"] = booleanify(args.get("invite_on_email", "false"))
     return args
 
 
@@ -133,12 +144,14 @@ def handle_POST_peers_new(configuration, request_info):
     """
 
     fields_dict = request_info.args
-    invite_on_email = fields_dict.pop('invite_on_email')
+    invite_on_email = fields_dict.pop("invite_on_email")
 
     success_map = {}
     errors_map = {}
     for index, peer_fields_dict in enumerate([fields_dict]):
-        peer_dict, errors = accountreq.peer_dict_from_fields(peer_fields_dict)
+        peer_dict, errors = accountreq.peer_dict_from_fields(
+            configuration, peer_fields_dict
+        )
         if errors:
             success_map[index] = False
             errors_map[index] = errors
@@ -147,15 +160,51 @@ def handle_POST_peers_new(configuration, request_info):
         # comment field must contain the requesting peer
         peer_dict["comment"] = request_info.client_email
 
-        success, temp_user_file_abs = accountreq.save_account_request(configuration, peer_dict)
+        # validate that an identical existing requested/accepted peer does not exist already
+        requested_peers = list(
+            accountreq.list_peers_requested(
+                configuration, request_info.client_id
+            )
+        )
+        if peer_dict["email"] in [
+            requested_peer["email"] for requested_peer in requested_peers
+        ]:
+            success_map[index] = False
+            # TODO, validate that errors are properly rendered clientside
+            errors_map[index] = {
+                "error": "you already have a requested peer with that email"
+            }
+            continue
+
+        accepted_peers = accountreq.list_peers_accepted(
+            configuration, request_info.client_id
+        )
+        if peer_dict["email"] in [
+            accepted_peer["email"] for accepted_peer in accepted_peers
+        ]:
+            success_map[index] = False
+            # TODO, validate that errors are properly rendered clientside
+            errors_map[index] = {
+                "error": "you already have an accepted peer with that email"
+            }
+            continue
+
+        # save the new peer
+        success, temp_user_file_abs = accountreq.save_account_request(
+            configuration, peer_dict
+        )
         if not success:
             success_map[index] = False
             continue
 
         req_id = os.path.basename(temp_user_file_abs)
-        success, _ = accountreq.peer_account_req(req_id, configuration, request_info.client_id,
-                                                    admin_copy=False,
-                                                    include_auto_email=False)
+        success, _ = accountreq.peer_account_req(
+            req_id,
+            configuration,
+            request_info.client_id,
+            admin_copy=False,
+            include_auto_email=False,
+        )
 
         success_map[index] = success
 
@@ -164,8 +213,8 @@ def handle_POST_peers_new(configuration, request_info):
     else:
         status = 200
     return status, {
-        'success_map': success_map,
-        'errors_map': errors_map,
+        "success_map": success_map,
+        "errors_map": errors_map,
     }
 
 
@@ -174,14 +223,16 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
     Request handler: DELETE /peers/accepted
     """
 
-    peers = request_info.arg_value('peers', list)
+    peers = request_info.arg_value("peers", list)
 
     success_map = {}
 
     for index, peer_dn in enumerate(peers):
         peer_user = distinguished_name_to_user(peer_dn)
 
-        name_to_user_failure = len(peer_user) == 1 and 'distinguished_name' in peer_user
+        name_to_user_failure = (
+            len(peer_user) == 1 and "distinguished_name" in peer_user
+        )
 
         success_map[index] = not name_to_user_failure
 
@@ -190,25 +241,36 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
     else:
         status = 200
         process_peer_action(
-            configuration, [], request_info.client_id, peers, 'remove', 'userid')
+            configuration, [], request_info.client_id, peers, "remove", "userid"
+        )
 
         # process_peer_action does not remove pending user files, do so
 
-        user_pending_reqid_by_dn = dict(accountreq.list_account_reqs_pairs(configuration))
-        reqids_for_deleted_peers = [reqid for peer_dn, reqid in user_pending_reqid_by_dn.items()]
+        user_pending_reqid_by_dn = dict(
+            accountreq.list_account_reqs_pairs(configuration)
+        )
+        reqids_for_deleted_peers = [
+            reqid for peer_dn, reqid in user_pending_reqid_by_dn.items()
+        ]
 
         for peer_reqid in reqids_for_deleted_peers:
-            pending_user_file_path = os.path.join(configuration.user_pending, peer_reqid)
+            pending_user_file_path = os.path.join(
+                configuration.user_pending, peer_reqid
+            )
             fileio.delete_file(pending_user_file_path, configuration.logger)
 
-    return status, { 'success_map': success_map }
+    return status, {"success_map": success_map}
 
 
 def handle_POST_peers_accepted_fetch(configuration, request_info):
     peer_dn = unlistify(request_info.args["peer_dn"])
 
-    accepted_peers = accountreq.list_peers_accepted(configuration, request_info.client_id)
-    accepted_by_dn = {peer['distinguished_name']: peer for peer in accepted_peers}
+    accepted_peers = accountreq.list_peers_accepted(
+        configuration, request_info.client_id
+    )
+    accepted_by_dn = {
+        peer["distinguished_name"]: peer for peer in accepted_peers
+    }
 
     if peer_dn in accepted_by_dn:
         return 200, accepted_by_dn[peer_dn]
@@ -221,7 +283,7 @@ def convert_POST_peers_accepted_import(request_data):
     Data conversion: POST /peers/accepted/import
     """
     args = unlistify_dict(request_data)
-    args['csvlines'] = unconcatify(args.pop('csvtext', ''), '\n')
+    args["csvlines"] = unconcatify(args.pop("csvtext", ""), "\n")
     return args
 
 
@@ -232,11 +294,20 @@ def handle_POST_peers_accepted_import(configuration, request_info):
 
     args = request_info.args
     updates = {
-        'kind': args.get('kind', ''),
-        'label': args.get('label', ''),
-        'raw_expire': args.get('expire', ''),
+        "kind": args.get("kind", ""),
+        "label": args.get("label", ""),
+        "raw_expire": args.get("expire", ""),
     }
-    _, returnvalue = process_peer_action(configuration, [], request_info.client_id, args['csvlines'], 'import', 'csvform', updates, do_invite=True)
+    _, returnvalue = process_peer_action(
+        configuration,
+        [],
+        request_info.client_id,
+        args["csvlines"],
+        "import",
+        "csvform",
+        updates,
+        do_invite=True,
+    )
 
     if returnvalue == returnvalues.OK:
         status = 200
@@ -254,30 +325,38 @@ def handle_POST_peers_requested_delete(configuration, request_info):
     Request handler: DELETE /peers/requested
     """
 
-    peers = request_info.arg_value('peers', list)
-    user_pending_reqid_by_dn = dict(accountreq.list_account_reqs_pairs(configuration))
+    peers = request_info.arg_value("peers", list)
+    user_pending_reqid_by_dn = dict(
+        accountreq.list_account_reqs_pairs(configuration)
+    )
 
     success_map = {}
-
     for index, peer_dn in enumerate(peers):
-        try:
-            peer_reqid = user_pending_reqid_by_dn[peer_dn]
-        except KeyError:
-            success_map[index] = False
-            continue
-
-        _, returnvalue = process_peer_action(configuration, [], request_info.client_id, [peer_dn], 'reject', 'userid', {})
+        # ensure that the client_id pending_peers are cleaned up regardless
+        # of whether a global user_pending request exists
+        _, returnvalue = process_peer_action(
+            configuration,
+            [],
+            request_info.client_id,
+            [peer_dn],
+            "reject",
+            "userid",
+            {},
+        )
         success = returnvalue == returnvalues.OK
         success_map[index] = success
 
         if not success:
             continue
 
-        # process_peer_action does not remove pending user files, do so
-        pending_user_file_path = os.path.join(configuration.user_pending, peer_reqid)
-        fileio.delete_file(pending_user_file_path, configuration.logger)
-
-    return 200, { 'success_map': success_map }
+        # process_peer_action does not remove the global user_pending files so we clean it up here
+        if peer_dn in user_pending_reqid_by_dn:
+            peer_reqid = user_pending_reqid_by_dn[peer_dn]
+            pending_user_file_path = os.path.join(
+                configuration.user_pending, peer_reqid
+            )
+            fileio.delete_file(pending_user_file_path, configuration.logger)
+    return 200, {"success_map": success_map}
 
 
 def handle_POST_peers_requested_accept(configuration, request_info):
@@ -285,8 +364,10 @@ def handle_POST_peers_requested_accept(configuration, request_info):
     Request handler: POST /peers/requested/accept
     """
 
-    peers = request_info.arg_value('peers', list)
-    user_pending_reqid_by_dn = dict(accountreq.list_account_reqs_pairs(configuration))
+    peers = request_info.arg_value("peers", list)
+    user_pending_reqid_by_dn = dict(
+        accountreq.list_account_reqs_pairs(configuration)
+    )
 
     success_map = {}
 
@@ -297,7 +378,16 @@ def handle_POST_peers_requested_accept(configuration, request_info):
             success_map[index] = False
             continue
 
-        _, returnvalue = process_peer_action(configuration, [], request_info.client_id, [peer_dn], 'accept', 'userid', {}, auto_expire=True)
+        _, returnvalue = process_peer_action(
+            configuration,
+            [],
+            request_info.client_id,
+            [peer_dn],
+            "accept",
+            "userid",
+            {},
+            auto_expire=True,
+        )
         success = returnvalue == returnvalues.OK
 
         if not success:
@@ -307,11 +397,17 @@ def handle_POST_peers_requested_accept(configuration, request_info):
 
         # peersaction "accept" does not create the user, do so
         # note that this does implicitly remove the pending user file
-        success, _ = accountreq.accept_account_req(peer_reqid, configuration, request_info.client_id, admin_copy=False, user_copy=True)
+        success, _ = accountreq.accept_account_req(
+            peer_reqid,
+            configuration,
+            request_info.client_id,
+            admin_copy=False,
+            user_copy=True,
+        )
 
         success_map[index] = success
 
-    return 200, { 'success_map': success_map }
+    return 200, {"success_map": success_map}
 
 
 HANDLERS_BY_PACKAGE = {
@@ -335,36 +431,63 @@ NORMALIZE_INPUTS_BY_PACKAGE = {
 }
 
 
-def _main(configuration, logger, environ, op_name='', output_objects=None, client_id=None,
-          user_arguments_dict=None):
+def create_api_response(output_objects, object_status, **result):
+    """
+    A helper function that creates the final 
+    datainterface API return structure to the output_objects.
+    """
+    output_objects.append(
+        {
+            "object_type": "objects",
+            "objects": {
+                **result,
+                "status": object_status,
+            },
+        }
+    )
+    return (output_objects, returnvalues.OK)
+
+
+def _main(
+    configuration,
+    logger,
+    environ,
+    op_name="",
+    output_objects=None,
+    client_id=None,
+    user_arguments_dict=None,
+):
 
     # Create new output_objects list with start entry if None was supplied
     if output_objects is None:
         output_objects = [make_start_entry()]
 
     # Set the response as containining JSON
-    output_objects[0]['headers'].append(('Content-Type', 'application/json'))
+    output_objects[0]["headers"].append(("Content-Type", "application/json"))
 
-    if 'wsgi.version' in environ:
-        raw_data = environ['wsgi.input'].read()
+    if "wsgi.version" in environ:
+        raw_data = environ["wsgi.input"].read()
     else:
         raw_data = sys.stdin.read()
 
-    requested_content_type = environ.get('CONTENT_TYPE', 'multipart/form-data')
-    requested_input_format = requested_content_type.split('/')[1]
+    requested_content_type = environ.get("CONTENT_TYPE", "multipart/form-data")
+    requested_input_format = requested_content_type.split("/")[1]
     request_data = None
 
-    if requested_input_format == 'json':
+    if requested_input_format == "json":
         try:
             request_data = json.loads(raw_data)
         except ValueError:
-            msg = "An invalid format was supplied to: '%s', requires a JSON " \
+            msg = (
+                "An invalid format was supplied to: '%s', requires a JSON "
                 "compatible format" % op_name
+            )
             logger.error(msg)
-            output_objects.append({'object_type': 'error_text',
-                                'text': html_escape(msg)})
+            output_objects.append(
+                {"object_type": "error_text", "text": html_escape(msg)}
+            )
             return (output_objects, returnvalues.CLIENT_ERROR)
-    elif raw_data == b'' and user_arguments_dict:
+    elif raw_data == b"" and user_arguments_dict:
         # The WSGI input path completely ignores delayed_input and just
         # unconditionally assumes it can process the raw data handle as
         # form data itself which it passes to us as user_arguments_dict.
@@ -375,71 +498,67 @@ def _main(configuration, logger, environ, op_name='', output_objects=None, clien
         request_data = user_arguments_dict
     else:
         if isinstance(raw_data, str):
-            raw_data = bytes(raw_data, 'utf8')
-        fieldstorage = cgi.FieldStorage(fp=BytesIO(raw_data),
-                                         environ=environ)
+            raw_data = bytes(raw_data, "utf8")
+        fieldstorage = cgi.FieldStorage(fp=BytesIO(raw_data), environ=environ)
         request_data = fieldstorage_to_dict(fieldstorage)
 
     # 1. validate data required for a basic JSON request
-
-    errors_info, request_info = coalesce_request(request_data, client_id=client_id)
+    errors_info, request_info = coalesce_request(
+        request_data, client_id=client_id
+    )
     if errors_info:
         logger.error("A validation error occurred: '%s'" % errors_info)
         msg = "Invalid input was supplied to the request API: %s" % errors_info
         # TODO, Transform error messages to something more readable
-        output_objects.append({'object_type': 'error_text',
-                               'text': html_escape(msg)})
+        output_objects.append(
+            {"object_type": "error_text", "text": html_escape(msg)}
+        )
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # 2. determine the specifics of the request being made
+    if request_info.request_package not in HANDLERS_BY_PACKAGE:
+        error = {"error": "the speficied route package handler was not found"}
+        return create_api_response(output_objects, 404, **error)
 
-    status = _STATUS_UNSET
-    result = None
+    # 2a. reference all routes that are implemented for the given package
+    acceptable_routes = HANDLERS_BY_PACKAGE[request_info.request_package]
 
-    try:
-        # 2a. reference all routes that are implemented for the given package
-        acceptable_routes = HANDLERS_BY_PACKAGE[request_info.request_package]
-        # 2b. grab the definition for the route being requested
-        request_handler = acceptable_routes[request_info.route]
-    except KeyError:
-        status = 404
-        result = {
-            'error': 'no such route',
-        }
+    if request_info.route not in acceptable_routes:
+        error = {"error": "the specified handler route was not found"}
+        return create_api_response(output_objects, 404, **error)
+    # 2b. grab the definition for the route being requested
+    request_handler = acceptable_routes[request_info.route]
 
-    try:
-        acceptable_normalizers = NORMALIZE_INPUTS_BY_PACKAGE[request_info.request_package]
-        normalize_inputs_fn = acceptable_normalizers[request_info.route]
+    # 2.1 determine if the specified route defines a handler for normalising
+    # the input request_data before it is passed to the request_handler
+    # This feature is optional
+    acceptable_normalizers = NORMALIZE_INPUTS_BY_PACKAGE.get(
+        request_info.request_package, None
+    )
+
+    normalize_inputs_fn = None
+    if acceptable_normalizers is not None:
+        normalize_inputs_fn = acceptable_normalizers.get(
+            request_info.route, None
+        )
+
+    if normalize_inputs_fn is not None:
         request_info.set_args(normalize_inputs_fn(request_info._request_data))
-    except KeyError:
-        pass
 
     # 3. attempt to handle the request
+    status = None
+    try:
+        status, data = request_handler(configuration, request_info)
+    except Exception:
+        # Currently the request_handler and the underlying validation logic
+        # can throw many types of exceptions. For now we capture them all siliently
+        # until we can for starters move up the input validation handling.
+        pass
 
-    if status is _STATUS_UNSET:
-        try:
-            status, data = request_handler(configuration, request_info)
+    if status is None:
+        return create_api_response(
+            output_objects, 500, error="an unkown error occurred"
+        )
 
-            result = {
-                'data': data,
-                'error': None
-            }
-        except Exception as any_exc:
-            pass
-
-    if status is _STATUS_UNSET:
-        status = 500
-    if not result:
-        result = {
-            'error': 'an unknown error occurred'
-        }
-
-    output_objects.append({
-        'object_type': 'objects',
-        'objects': {
-            **result,
-            'status': status,
-        }
-    })
-
-    return (output_objects, returnvalues.OK)
+    result = {"data": data, "error": None}
+    return create_api_response(output_objects, status, **result)
