@@ -280,7 +280,7 @@ class UserAssertMixin:
         for distinguished_name in distinguished_names:
             assert distinguished_name in all_fixture_pending_peers
             peer_dict = all_fixture_pending_peers[distinguished_name]
-            peer_dict['comment'] == against_user_email
+            assert peer_dict['comment'] == against_user_email
 
         self._provision_test_pending_user(self, distinguished_name, against_user_dn=against_user_dn)
 
