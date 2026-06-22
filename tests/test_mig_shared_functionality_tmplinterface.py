@@ -204,9 +204,42 @@ class MigSharedFunctionalityTmplInterface__migux(MigTestCase):
         self.assertOutputFailed(output_objects, status,
                 with_error_text='no such route')
 
-    def test_list_peers_arranges_template_output(self):
+    def test_list_accepted_peers_arranges_template_output(self):
         request_body = {
             'type': 'migux_apps_peers__accepted',
+            'operation': 'read',
+        }
+        wsgi_environ = create_wsgi_environ(self.configuration, 'http://localhost/foobar',
+                                           method='POST',
+                                           json=request_body)
+
+        (output_objects, status) = submain(self.configuration, self.logger,
+                                           client_id=self.TEST_CLIENT_ID,
+                                           environ=wsgi_environ)
+
+        self.assertOutputSucceeded(output_objects, status)
+        self.assertEqual(len(output_objects), 2)
+        relevant_obj = self.assertSingleOutputObject(output_objects,
+                                      with_object_type='template')
+
+        # directly compare the template args to allow a later equality check
+        template_args = relevant_obj['template_args']
+        self.assertEqual(list(template_args.keys()), ['peers_listing'])
+        template_args['peers_listing'] = _MARK_COMPARED
+
+        # now compare the template output object
+        self.assertEqual(relevant_obj, {
+            'object_type': 'template',
+            'template_name': 'search_result--accepted',
+            'template_group': 'migux.apps.peers',
+            'template_args': {
+                'peers_listing': _MARK_COMPARED
+            }
+        })
+
+    def test_list_requested_peers_arranges_template_output(self):
+        request_body = {
+            'type': 'migux_apps_peers__requested',
             'operation': 'read',
         }
         wsgi_environ = create_wsgi_environ(self.configuration, 'http://localhost/foobar',
@@ -236,7 +269,6 @@ class MigSharedFunctionalityTmplInterface__migux(MigTestCase):
                 'peers_listing': _MARK_COMPARED
             }
         })
-
 
 class MigSharedFunctionalityTmplinterface__accepted(MigTestCase,
                                                       WsgiAssertMixin,

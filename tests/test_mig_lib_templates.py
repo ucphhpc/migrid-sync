@@ -166,7 +166,10 @@ class TestMigSharedTemplates_instance_with_configuration(MigTestCase):
         store = init_global_templates(configuration)
 
         self.assertEqual(
-            store.list_templates(), [("search_result", "migux.apps.peers")]
+            store.list_templates(), [
+                ("search_result", "migux.apps.peers"),
+                ("search_result--accepted", "migux.apps.peers"),
+            ]
         )
 
 
