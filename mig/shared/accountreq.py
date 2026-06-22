@@ -1639,14 +1639,13 @@ def _normalize_rejected(rejected):
             for key, value in rejected.items()}
 
 
-def peer_dict_from_fields(peer_fields_dict):
+def peer_dict_from_fields(configuration, peer_fields_dict):
     """
     Creates a peer_dict from a simple dictionary containing fields
     and their values ensuring the validity of the key/value pairs.
     """
 
     rejected = {}
-
     basic_fields = {field_name: peer_fields_dict.get(field_name, '').strip()
                     for field_name in BASIC_PEER_FIELDS.keys()}
     basic_accepted, rejected = validated_input(basic_fields,
@@ -1684,10 +1683,11 @@ def peer_dict_from_fields(peer_fields_dict):
     expire_date = date.fromisoformat(peer_dict['expire'])
     peer_dict["expire"] = int(time.mktime(expire_date.timetuple()))
 
-    fill_user(peer_dict)
-    fill_distinguished_name(peer_dict)
-
-    return peer_dict, None
+    peer_dict = fill_user(peer_dict)
+    # This is required to match how client_id pending_peers are currently loaded
+    canonicaled_peer_dict = canonical_user(configuration, peer_dict, list(basic_fields.keys()))
+    filled_canonicaled_peer_dict = fill_distinguished_name(canonicaled_peer_dict)
+    return filled_canonicaled_peer_dict, None
 
 
 def parse_peers_userid(configuration, raw_entries):
