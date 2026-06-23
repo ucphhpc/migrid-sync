@@ -685,41 +685,48 @@ class TestMigSharedAccountstate__check_account_expire(MigTestCase):
         self.assertTrue(pending)
         self.assertEqual(expire, -1)
 
+    # TODO: handle underlying type errors gracefully and drop this test
     def test_check_account_expire_invalid_expire_type(self):
-        """Test that check_account_expire returns expired if expire is not a valid number."""
+        """Test that check_account_expire fails if expire is not a valid type."""
         configuration = self.configuration
         logger = self.logger
-        user_dict = {
-            "distinguished_name": TEST_USER_DN,
-            # Example invalid values that will pass assertions
-            "expire": "invalid",
-            # "expire": "-41"
-            # "expire": "-41.2"
-            # "expire": "11111111111111141.2"
-            #
-            # Example valid values that will fail assertions
-            # "expire": "4242"
-            # "expire": 4242
-            # "expire": -41.2
-            # "expire": 11111111111111141.2
-        }
-        update_user_dict(
-            logger, TEST_USER_DN, user_dict, self.expected_user_db_file
-        )
-        # Make sure cache doesn't interfere with type parsing
-        reset_account_expire_cache(configuration)
-        # Use expected error values to trigger asserts if assertRaises doesn't
-        pending, expire = False, -42
-        # Make sure function under test either fails with TypeError or returns
-        # values indicating failure to prevent further login use.
-        with self.assertRaises(TypeError):
-            pending, expire, _ = check_account_expire(
-                configuration, TEST_USER_DN
+
+        # Invalid values that will trigger TypeError in function under test
+        for invalid_expire in ("invalid", "-41", "-41.2", "111111111141.2",
+                               (1, 2)):
+            user_dict = {
+                "distinguished_name": TEST_USER_DN,
+                "expire": invalid_expire
+            }
+            update_user_dict(
+                logger, TEST_USER_DN, user_dict, self.expected_user_db_file
             )
-        self.assertFalse(pending, "got expected TypeError but not expired")
-        self.assertEqual(
-            expire, -42, "got expected TypeError but unexpected expire time"
-        )
+            # Make sure cache doesn't interfere with parsing
+            update_account_expire_cache(configuration, user_dict, delete=True)
+            # Ugly but TypeError here correctly prevents further login use
+            with self.assertRaises(TypeError):
+                _ = check_account_expire(configuration, TEST_USER_DN)
+
+    def test_check_account_expire_invalid_expire_value(self):
+        """Test that check_account_expire says expired if expire is an invalid value."""
+        configuration = self.configuration
+        logger = self.logger
+
+        # Invalid values that will fail without error in function under test
+        for invalid_expire in ("4242", None, False):
+            user_dict = {
+                "distinguished_name": TEST_USER_DN,
+                "expire": invalid_expire
+            }
+            update_user_dict(
+                logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+            )
+            # Make sure cache doesn't interfere with parsing
+            update_account_expire_cache(configuration, user_dict, delete=True)
+            # Assure these values return expired to prevent further login use
+            pending, expire, _ = check_account_expire(configuration,
+                                                      TEST_USER_DN)
+            self.assertFalse(pending)
 
     def test_check_account_expire_no_user_db_entry(self):
         """Test that check_account_expire returns expired if user is not in the DB."""
