@@ -27,6 +27,7 @@
 
 """Unit tests for the mig shared accountstate module"""
 
+import base64
 import os
 import time
 import unittest
@@ -49,19 +50,22 @@ from mig.shared.accountstate import (
 )
 
 # Imports required for the unit test wrapping
-from mig.shared.base import client_id_dir
+from mig.shared.base import client_id_dir, distinguished_name_to_user
 from mig.shared.defaults import (
     AUTH_CERTIFICATE,
     AUTH_GENERIC,
     AUTH_OPENID_CONNECT,
     AUTH_OPENID_V2,
+    DEFAULT_USER_ID_FORMAT,
+    UUID_USER_ID_FORMAT,
     cert_auto_extend_days,
     expire_marks_dir,
+    keyword_auto,
     oid_auto_extend_days,
     oidc_auto_extend_days,
     status_marks_dir,
 )
-from mig.shared.useradm import _ensure_dirs_needed_for_userdb
+from mig.shared.useradm import _ensure_dirs_needed_for_userdb, create_user
 from mig.shared.userdb import load_user_dict, update_user_dict
 
 # Imports required for the unit tests themselves
@@ -86,7 +90,41 @@ TEST_JUPYTER_SESSION_ID = (
 )
 TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[-1]
 TEST_USER_DIR = client_id_dir(TEST_USER_DN)
+# IMPORTANT: TEST_USER_UUID is *generated* as base16 of DN here
 OTHER_USER_DIR = client_id_dir(OTHER_USER_DN)
+
+
+def _provision_uuid_test_user(configuration, client_id, client_overrides=None):
+    """Helper to provision test users when UUID format is used"""
+    # TODO: merge something like this version into standard _provision_test_user?
+    # IMPORTANT: we need to use explicit create_user here for UUID format!
+    user_dict = distinguished_name_to_user(client_id)
+    # NOTE: generate unique and short id based on id to avoid test collisions
+    user_dict["unique_id"] = base64.b16encode(client_id.encode("utf8")).decode(
+        "ascii"
+    )
+    user_dict["short_id"] = base64.b16encode(
+        user_dict["email"].encode("utf8")
+    ).decode("ascii")
+    user_dict["comment"] = "This is the user account comment"
+    user_dict["locality"] = ""
+    user_dict["organizational_unit"] = ""
+    user_dict["password"] = ""
+    user_dict["password_hash"] = ""
+    if client_overrides is not None:
+        user_dict.update(client_overrides)
+
+    create_user(
+        user_dict,
+        configuration,
+        keyword_auto,
+        default_renew=True,
+        ask_renew=False,
+    )
+    return user_dict
+
+
+# TODO: test gdp usernames, too
 
 
 class TestMigSharedAccountstate__default_account_valid_days(MigTestCase):
@@ -685,23 +723,54 @@ class TestMigSharedAccountstate__check_account_expire(MigTestCase):
         self.assertTrue(pending)
         self.assertEqual(expire, -1)
 
+    # TODO: handle underlying type errors gracefully and drop this test
     def test_check_account_expire_invalid_expire_type(self):
-        """Test that check_account_expire returns expired if expire is not a number."""
+        """Test that check_account_expire fails if expire is not a valid type."""
         configuration = self.configuration
         logger = self.logger
-        user_dict = {
-            "distinguished_name": TEST_USER_DN,
-            "expire": "invalid",
-        }
-        update_user_dict(
-            logger, TEST_USER_DN, user_dict, self.expected_user_db_file
-        )
-        with self.assertRaises(TypeError):
+
+        # Invalid values that will trigger TypeError in function under test
+        for invalid_expire in (
+            "invalid",
+            "-41",
+            "-41.2",
+            "111111111141.2",
+            (1, 2),
+        ):
+            user_dict = {
+                "distinguished_name": TEST_USER_DN,
+                "expire": invalid_expire,
+            }
+            update_user_dict(
+                logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+            )
+            # Make sure cache doesn't interfere with parsing
+            update_account_expire_cache(configuration, user_dict, delete=True)
+            # Ugly but TypeError here correctly prevents further login use
+            with self.assertRaises(TypeError):
+                _ = check_account_expire(configuration, TEST_USER_DN)
+
+    def test_check_account_expire_invalid_expire_value(self):
+        """Test that check_account_expire says expired if expire is an invalid value."""
+        configuration = self.configuration
+        logger = self.logger
+
+        # Invalid values that will fail without error in function under test
+        for invalid_expire in ("4242", None, False):
+            user_dict = {
+                "distinguished_name": TEST_USER_DN,
+                "expire": invalid_expire,
+            }
+            update_user_dict(
+                logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+            )
+            # Make sure cache doesn't interfere with parsing
+            update_account_expire_cache(configuration, user_dict, delete=True)
+            # Assure these values return expired to prevent further login use
             pending, expire, _ = check_account_expire(
                 configuration, TEST_USER_DN
             )
             self.assertFalse(pending)
-            self.assertEqual(expire, -42)
 
     def test_check_account_expire_no_user_db_entry(self):
         """Test that check_account_expire returns expired if user is not in the DB."""
@@ -982,7 +1051,8 @@ class TestMigSharedAccountstate__account_expire_info(MigTestCase):
         self.assertTrue(expire_warn)
         self.assertEqual(account_expire, expect_expire)
         self.assertEqual(renew_days, configuration.oid_valid_days)
-        self.assertEqual(extend_days, 0)  # Because auto-renew is disabled
+        # NOTE: should be 0 because auto-renew is disabled
+        self.assertEqual(extend_days, 0)
 
     def test_account_expire_info_with_different_min_days_left(self):
         """Test account_expire_info with a custom min_days_left."""
@@ -1042,9 +1112,9 @@ class TestMigSharedAccountstate__detect_special_login(MigTestCase):
     def before_each(self):
         """Create the directories that the function may touch."""
         configuration = self.configuration
-        self.configuration.site_enable_sharelinks = True
-        self.configuration.site_enable_jobs = True
-        self.configuration.site_enable_jupyter = True
+        configuration.site_enable_sharelinks = True
+        configuration.site_enable_jobs = True
+        configuration.site_enable_jupyter = True
         # Ensure the home directories that the function may reference exist
         ensure_dirs_exist(configuration.user_home)
         ensure_dirs_exist(configuration.mrsl_files_dir)
@@ -1263,7 +1333,7 @@ class TestMigSharedAccountstate__check_account_status(
             accessible, _, _ = check_account_status(
                 configuration, OTHER_USER_DN
             )
-        self.assertFalse(accessible)
+            self.assertFalse(accessible)
         self.assertTrue(
             any("no such account" in msg for msg in log_capture.output)
         )
@@ -1280,9 +1350,11 @@ class TestMigSharedAccountstate__check_account_accessible(
     def before_each(self):
         """Set up test environment for check_account_accessible tests."""
         configuration = self.configuration
-        self.configuration.site_enable_sharelinks = True
-        self.configuration.site_enable_jobs = True
-        self.configuration.site_enable_jupyter = True
+        # Force X509 user ID format
+        configuration.site_user_id_format = DEFAULT_USER_ID_FORMAT
+        configuration.site_enable_sharelinks = True
+        configuration.site_enable_jobs = True
+        configuration.site_enable_jupyter = True
         # Ensure necessary directories exist
         ensure_dirs_exist(configuration.mig_system_files)
         ensure_dirs_exist(
@@ -1557,13 +1629,14 @@ class TestMigSharedAccountstate__check_account_accessible(
         update_account_expire_cache(configuration, user_dict)
         update_account_status_cache(configuration, user_dict)
 
+        # NOTE: should succeed because IO expire is disabled
         accessible = check_account_accessible(
             configuration, TEST_USER_DN, "sftp", io_login=True
         )
-        self.assertTrue(accessible)  # Because IO expire is disabled
+        self.assertTrue(accessible)
 
-    def test_check_account_accessible_openid_expire_disabled(self):
-        """Test that account remains accessible on OpenID (non-IO) when expire is not enforced."""
+    def test_check_account_accessible_openid_expire_disabled_direct(self):
+        """Test that account remains accessible on OpenID (non-IO) with direct DN when expire is not enforced."""
         configuration = self.configuration
         configuration.user_openid_enforce_expire = False
         # Set expire to past
@@ -1579,10 +1652,521 @@ class TestMigSharedAccountstate__check_account_accessible(
         update_account_expire_cache(configuration, user_dict)
         update_account_status_cache(configuration, user_dict)
 
+        # NOTE: should succeed because OpenID expire is disabled
+        # NOTE: we can also check with DN even if not really used
         accessible = check_account_accessible(
             configuration, TEST_USER_DN, "oid", io_login=False
         )
-        self.assertTrue(accessible)  # Because OpenID expire is disabled
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_openid_expire_disabled_on_email_alias(
+        self,
+    ):
+        """Test that account remains accessible on OpenID (non-IO) with email when expire is not enforced."""
+        configuration = self.configuration
+        configuration.user_openid_enforce_expire = False
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        # NOTE: should succeed because OpenID expire is disabled
+        accessible = check_account_accessible(
+            configuration, TEST_USER_EMAIL, "oid", io_login=False
+        )
+        self.assertTrue(accessible)
+
+
+class TestMigSharedAccountstate__check_account_accessible_uuid_user_id(
+    MigTestCase, UserAssertMixin
+):
+    """Coverage of accountstate check_account_accessible function with UUID user format."""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test environment for check_account_accessible tests."""
+        configuration = self.configuration
+        # Force UUID user ID format
+        configuration.site_user_id_format = UUID_USER_ID_FORMAT
+        configuration.site_enable_sharelinks = True
+        configuration.site_enable_jobs = True
+        configuration.site_enable_jupyter = True
+        # Ensure necessary directories exist
+        ensure_dirs_exist(configuration.mig_system_files)
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, expire_marks_dir)
+        )
+        ensure_dirs_exist(
+            os.path.join(configuration.mig_system_run, status_marks_dir)
+        )
+        # Set up user DB and keep paths for later use
+        _ensure_dirs_needed_for_userdb(configuration)
+        self.expected_user_db_home = os.path.normpath(
+            configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        # Provision a known test user on UUID format
+        self.test_user_dict = _provision_uuid_test_user(
+            configuration, TEST_USER_DN
+        )
+        self.test_user_id = self.test_user_dict["unique_id"]
+        self.test_user_short_id = self.test_user_dict["short_id"]
+
+        self.test_user_home_path = os.path.join(
+            configuration.user_home, self.test_user_id
+        )
+        # Verify home dir is functional
+        self.assertTrue(os.path.isdir(self.test_user_home_path))
+        # This simulates an existing short id link to X509 on to uuid dir in user_home
+        x509_link_in_home = os.path.join(
+            configuration.user_home, TEST_USER_DIR)
+        if not os.path.islink(x509_link_in_home):
+            os.symlink(self.test_user_id, x509_link_in_home)
+        # Verify link is functional
+        self.assertTrue(os.path.islink(x509_link_in_home))
+        self.assertEqual(
+            os.path.realpath(x509_link_in_home), self.test_user_home_path
+        )
+        email_link_in_home = os.path.join(
+            configuration.user_home, TEST_USER_EMAIL
+        )
+        if not os.path.islink(email_link_in_home):
+            os.symlink(TEST_USER_DIR, email_link_in_home)
+        # Verify link is functional
+        self.assertTrue(os.path.islink(email_link_in_home))
+        self.assertEqual(
+            os.path.realpath(email_link_in_home), self.test_user_home_path
+        )
+        short_id_link_in_home = os.path.join(
+            configuration.user_home, self.test_user_short_id
+        )
+        if not os.path.islink(short_id_link_in_home):
+            os.symlink(TEST_USER_DIR, short_id_link_in_home)
+        # Verify link is functional
+        self.assertTrue(os.path.islink(short_id_link_in_home))
+        self.assertEqual(
+            os.path.realpath(short_id_link_in_home), self.test_user_home_path
+        )
+
+    def test_check_account_accessible_active_user_web_access_direct(self):
+        """Test that an active UUID user is accessible via web (non-IO)."""
+        configuration = self.configuration
+        # Ensure the user is active and not expired
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": time.time() + 42 * 24 * 3600,  # far future
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        accessible = check_account_accessible(
+            configuration, TEST_USER_DN, "oidc", io_login=False
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_active_user_io_access_direct(self):
+        """Test that an active UUID user is accessible via SFTP (IO)."""
+        configuration = self.configuration
+        # Ensure the user is active and not expired
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": time.time() + 42 * 24 * 3600,  # far future
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        accessible = check_account_accessible(
+            configuration, TEST_USER_DN, "sftp"
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_active_user_web_access_on_email_alias(
+        self,
+    ):
+        """Test that an active UUID user is accessible via web (non-IO) using email alias."""
+        configuration = self.configuration
+        # Ensure the user is active and not expired
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": time.time() + 42 * 24 * 3600,  # far future
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        accessible = check_account_accessible(
+            configuration, TEST_USER_EMAIL, "oidc", io_login=False
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_active_user_sftp_access_on_email_alias(
+        self,
+    ):
+        """Test that an active UUID user is accessible via SFTP using email alias."""
+        configuration = self.configuration
+        # Ensure the user is active and not expired
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": time.time() + 42 * 24 * 3600,  # far future
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        accessible = check_account_accessible(
+            configuration, TEST_USER_EMAIL, "sftp"
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_locked_user_web_blocked(self):
+        """Test that a locked UUID user is not accessible on web (non-IO)."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": TEST_STATUS_LOCKED,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_status_cache(configuration, user_dict)
+
+        accessible = check_account_accessible(
+            configuration, TEST_USER_DN, "oidc", io_login=False
+        )
+        self.assertFalse(accessible)
+
+    def test_check_account_accessible_locked_user_io_blocked(self):
+        """Test that a locked UUID user is not accessible on SFTP (IO)."""
+        configuration = self.configuration
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": TEST_STATUS_LOCKED,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_status_cache(configuration, user_dict)
+
+        accessible = check_account_accessible(
+            configuration, TEST_USER_DN, "sftp"
+        )
+        self.assertFalse(accessible)
+
+    def test_check_account_accessible_expired_user_blocked(self):
+        """Test that an expired UUID user is inaccessible on web (non-ID) login."""
+        configuration = self.configuration
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        accessible = check_account_accessible(
+            configuration, TEST_USER_DN, "oidc", io_login=False
+        )
+        self.assertFalse(accessible)
+
+    def test_check_account_accessible_expired_user_sftp_access_blocked(self):
+        """Test that an expired UUID user is inaccessible on sftp if enenforced."""
+        configuration = self.configuration
+        configuration.site_io_account_expire = True
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        accessible = check_account_accessible(
+            configuration, TEST_USER_DN, "sftp"
+        )
+        self.assertFalse(accessible)
+
+    def test_check_account_accessible_special_login_sharelink_access(self):
+        """Test that a UUID sharelink is detected as special login and accessible."""
+        configuration = self.configuration
+        # Create a dummy RW sharelink to user home
+        sharelink_path = os.path.join(
+            configuration.sharelink_home, "read-write", TEST_RW_SHARE_ID
+        )
+        sharelink_target = os.path.join(configuration.user_home, TEST_USER_DIR)
+        ensure_dirs_exist(sharelink_target)
+        ensure_dirs_exist(os.path.dirname(sharelink_path))
+        os.symlink(sharelink_target, sharelink_path)
+
+        accessible = check_account_accessible(
+            configuration, TEST_RW_SHARE_ID, "sftp"
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_special_login_job_access(self):
+        """Test that a UUID job ID is detected as special login and accessible."""
+        configuration = self.configuration
+        configuration.site_enable_jobs = True
+        # Create a dummy job link to mrsl files entry
+        job_target_path = os.path.join(
+            configuration.mrsl_files_dir, TEST_JOB_ID
+        )
+        ensure_dirs_exist(job_target_path)
+        job_link_path = os.path.join(
+            configuration.sessid_to_mrsl_link_home, TEST_JOB_ID + ".mRSL"
+        )
+        ensure_dirs_exist(os.path.dirname(job_link_path))
+        os.symlink(job_target_path, job_link_path)
+
+        accessible = check_account_accessible(
+            configuration, TEST_JOB_ID, "sftp"
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_special_login_jupyter_access(self):
+        """Test that a UUID jupyter mount ID is detected as special login and accessible."""
+        configuration = self.configuration
+        configuration.site_enable_jupyter = True
+        # Create a dummy jupyter‑mount link to user home
+        jupyter_link_path = os.path.join(
+            configuration.sessid_to_jupyter_mount_link_home,
+            TEST_JUPYTER_SESSION_ID,
+        )
+        jupyter_target = os.path.join(configuration.user_home, TEST_USER_DIR)
+        ensure_dirs_exist(jupyter_target)
+        ensure_dirs_exist(os.path.dirname(jupyter_link_path))
+        os.symlink(jupyter_target, jupyter_link_path)
+
+        accessible = check_account_accessible(
+            configuration, TEST_JUPYTER_SESSION_ID, "sftp"
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_missing_user_web_rejected(self):
+        """Test that check_account_accessible rejects a missing UUID user on web (non-IO)."""
+        configuration = self.configuration
+        # TODO: adjust backend to handle missing link and drop try/except here
+        try:
+            accessible = check_account_accessible(
+                configuration, OTHER_USER_DN, "oidc", io_login=False
+            )
+        except FileNotFoundError:
+            accessible = False
+
+        self.assertFalse(accessible)
+
+    def test_check_account_accessible_missing_user_io_rejected(self):
+        """Test that check_account_accessible rejects a missing UUID user on SFTP (IO)."""
+        configuration = self.configuration
+        # TODO: adjust backend to handle missing link and drop try/except here
+        try:
+            accessible = check_account_accessible(
+                configuration, OTHER_USER_DN, "sftp"
+            )
+        except FileNotFoundError:
+            accessible = False
+
+        self.assertFalse(accessible)
+
+    def test_check_account_accessible_io_expire_disabled_on_email_alias(self):
+        """Test that UUID account remains accessible on SFTP (IO) with email when expire is not enforced."""
+        configuration = self.configuration
+        configuration.site_io_account_expire = False
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        # NOTE: should succeed because IO expire is disabled
+        accessible = check_account_accessible(
+            configuration, TEST_USER_EMAIL, "sftp", io_login=True
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_io_expire_disabled_on_short_id(self):
+        """Test that UUID account remains accessible on SFTP (IO) with short id when expire is not enforced."""
+        configuration = self.configuration
+        configuration.site_io_account_expire = False
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        # NOTE: should succeed because IO expire is disabled
+        accessible = check_account_accessible(
+            configuration, self.test_user_short_id, "sftp", io_login=True
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_io_expire_disabled_direct(self):
+        """Test that UUID account remains accessible on SFTP (IO) with DN when expire is not enforced."""
+        configuration = self.configuration
+        configuration.site_io_account_expire = False
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        # NOTE: should succeed because IO expire is disabled
+        accessible = check_account_accessible(
+            configuration, TEST_USER_DN, "sftp", io_login=True
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_openid_expire_disabled_on_email_alias(
+        self,
+    ):
+        """Test that UUID account remains accessible on OpenID (non-IO) with email when expire is not enforced."""
+        configuration = self.configuration
+        configuration.user_openid_enforce_expire = False
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        # NOTE: should succeed because OpenID expire is disabled
+        accessible = check_account_accessible(
+            configuration, TEST_USER_EMAIL, "oid", io_login=False
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_openid_expire_disabled_on_short_id(self):
+        """Test that UUID account remains accessible on OpenID (non-IO) with short id when expire is not enforced."""
+        configuration = self.configuration
+        configuration.user_openid_enforce_expire = False
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        # NOTE: should succeed because OpenID expire is disabled
+        # NOTE: short_id can be tested here because we explicitly link it
+        accessible = check_account_accessible(
+            configuration, self.test_user_short_id, "oid", io_login=False
+        )
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_openid_expire_disabled_direct(self):
+        """Test that UUID account remains accessible on OpenID (non-IO) with DN when expire is not enforced."""
+        configuration = self.configuration
+        configuration.user_openid_enforce_expire = False
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        # NOTE: should succeed because OpenID expire is disabled
+        accessible = check_account_accessible(
+            configuration, TEST_USER_DN, "oid", io_login=False
+        )
+        self.assertTrue(accessible)
+
+    @unittest.skip("TODO: enable login with plain UUID and enable test?")
+    def test_check_account_accessible_openid_expire_disabled_on_uuid(self):
+        """Test that UUID account remains accessible on OpenID (non-IO) with UUID when expire is not enforced."""
+        configuration = self.configuration
+        configuration.user_openid_enforce_expire = False
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        # NOTE: should succeed because OpenID expire is disabled
+        accessible = check_account_accessible(
+            configuration, self.test_user_id, "oid", io_login=False
+        )
+        self.assertTrue(accessible)
 
 
 class TestMigSharedAccountstate__check_update_account_expire(
@@ -1868,9 +2452,9 @@ class TestMigSharedAccountstate__check_update_account_expire(
             pending, expire, user_dict = check_update_account_expire(
                 configuration, OTHER_USER_DN, environ, min_days_left=14
             )
-        self.assertFalse(pending)
-        self.assertEqual(expire, -42)
-        self.assertIsNone(user_dict)
+            self.assertFalse(pending)
+            self.assertEqual(expire, -42)
+            self.assertIsNone(user_dict)
         self.assertTrue(
             any("no such account" in msg for msg in log_capture.output)
         )
