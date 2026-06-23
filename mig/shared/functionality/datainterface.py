@@ -171,9 +171,8 @@ def handle_POST_peers_new(configuration, request_info):
             requested_peer["email"] for requested_peer in requested_peers
         ]:
             success_map[index] = False
-            # TODO, validate that errors are properly rendered clientside
             errors_map[index] = {
-                "error": "you already have a requested peer with that email"
+                "email": "you already have a requested peer with that email"
             }
             continue
 
@@ -184,9 +183,8 @@ def handle_POST_peers_new(configuration, request_info):
             accepted_peer["email"] for accepted_peer in accepted_peers
         ]:
             success_map[index] = False
-            # TODO, validate that errors are properly rendered clientside
             errors_map[index] = {
-                "error": "you already have an accepted peer with that email"
+                "email": "you already have an accepted peer with that email"
             }
             continue
 
