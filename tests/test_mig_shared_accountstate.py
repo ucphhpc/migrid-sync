@@ -1980,27 +1980,17 @@ class TestMigSharedAccountstate__check_account_accessible_uuid_user_id(
     def test_check_account_accessible_missing_user_web_rejected(self):
         """Test that check_account_accessible rejects a missing UUID user on web (non-IO)."""
         configuration = self.configuration
-        # TODO: adjust backend to handle missing link and drop try/except here
-        try:
-            accessible = check_account_accessible(
-                configuration, OTHER_USER_DN, "oidc", io_login=False
-            )
-        except FileNotFoundError:
-            accessible = False
-
+        accessible = check_account_accessible(
+            configuration, OTHER_USER_DN, "oidc", io_login=False
+        )
         self.assertFalse(accessible)
 
     def test_check_account_accessible_missing_user_io_rejected(self):
         """Test that check_account_accessible rejects a missing UUID user on SFTP (IO)."""
         configuration = self.configuration
-        # TODO: adjust backend to handle missing link and drop try/except here
-        try:
-            accessible = check_account_accessible(
-                configuration, OTHER_USER_DN, "sftp"
-            )
-        except FileNotFoundError:
-            accessible = False
-
+        accessible = check_account_accessible(
+            configuration, OTHER_USER_DN, "sftp"
+        )
         self.assertFalse(accessible)
 
     def test_check_account_accessible_io_expire_disabled_on_email_alias(self):
