@@ -90,8 +90,8 @@ TEST_USER_DIR = client_id_dir(TEST_USER_DN)
 OTHER_USER_DIR = client_id_dir(OTHER_USER_DN)
 
 
-
 # TODO: test gdp usernames, too
+
 
 class TestMigSharedAccountstate__default_account_valid_days(MigTestCase):
     """Coverage of accountstate default_account_valid_days function."""
@@ -696,11 +696,16 @@ class TestMigSharedAccountstate__check_account_expire(MigTestCase):
         logger = self.logger
 
         # Invalid values that will trigger TypeError in function under test
-        for invalid_expire in ("invalid", "-41", "-41.2", "111111111141.2",
-                               (1, 2)):
+        for invalid_expire in (
+            "invalid",
+            "-41",
+            "-41.2",
+            "111111111141.2",
+            (1, 2),
+        ):
             user_dict = {
                 "distinguished_name": TEST_USER_DN,
-                "expire": invalid_expire
+                "expire": invalid_expire,
             }
             update_user_dict(
                 logger, TEST_USER_DN, user_dict, self.expected_user_db_file
@@ -720,7 +725,7 @@ class TestMigSharedAccountstate__check_account_expire(MigTestCase):
         for invalid_expire in ("4242", None, False):
             user_dict = {
                 "distinguished_name": TEST_USER_DN,
-                "expire": invalid_expire
+                "expire": invalid_expire,
             }
             update_user_dict(
                 logger, TEST_USER_DN, user_dict, self.expected_user_db_file
@@ -728,8 +733,9 @@ class TestMigSharedAccountstate__check_account_expire(MigTestCase):
             # Make sure cache doesn't interfere with parsing
             update_account_expire_cache(configuration, user_dict, delete=True)
             # Assure these values return expired to prevent further login use
-            pending, expire, _ = check_account_expire(configuration,
-                                                      TEST_USER_DN)
+            pending, expire, _ = check_account_expire(
+                configuration, TEST_USER_DN
+            )
             self.assertFalse(pending)
 
     def test_check_account_expire_no_user_db_entry(self):
@@ -1619,7 +1625,9 @@ class TestMigSharedAccountstate__check_account_accessible(
         )
         self.assertTrue(accessible)
 
-    def test_check_account_accessible_openid_expire_disabled_on_email_alias(self):
+    def test_check_account_accessible_openid_expire_disabled_on_email_alias(
+        self,
+    ):
         """Test that account remains accessible on OpenID (non-IO) with email when expire is not enforced."""
         configuration = self.configuration
         configuration.user_openid_enforce_expire = False
