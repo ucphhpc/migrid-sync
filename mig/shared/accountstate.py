@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountstate - various user account state helpers
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
