@@ -453,17 +453,43 @@ def check_account_accessible(configuration, username, proto, environ=None,
         # Use client_id_dir to make it work even if already expanded
         home_dir = os.path.join(configuration.user_home,
                                 client_id_dir(client_id))
+        # Expand to actual home dir and proceed from there
+        expanded_home = os.path.realpath(home_dir)
         if configuration.site_user_id_format == X509_USER_ID_FORMAT:
-            # Expand to actual home dir
-            expanded_home = os.path.realpath(home_dir)
+            client_dir = os.path.basename(expanded_home)
         elif configuration.site_user_id_format == UUID_USER_ID_FORMAT:
-            # Only follow first username -> client_id_dir symlink with UUID
-            expanded_home = os.readlink(home_dir)
+            # Traverse home_dir links to X509 dir name linking to expanded_home
+            next_link = home_dir
+            client_dir = None
+            expansions, max_expansions = 0, 3
+            while os.path.islink(next_link) and expansions < max_expansions:
+                _logger.debug("compare next link %s to expanded %s" %
+                              (next_link, expanded_home))
+                if os.readlink(next_link) == expanded_home:
+                    # Next link is the wanted X509 link to expanded UUID home
+                    _logger.debug("found %s account ID dir: %s -> %s" %
+                                  (client_id, next_link, expanded_home))
+                    client_dir = os.path.basename(next_link)
+                    break
+                else:
+                    # follow next_link and prepend user_home if relative
+                    next_link = os.readlink(next_link)
+                    max_expansions += 1
+                    if os.path.basename(next_link) == next_link:
+                        next_link = os.path.join(configuration.user_home,
+                                                 next_link)
+            if client_dir is None:
+                _logger.debug("link traversal for %s ended at %s" %
+                              (client_id, next_link))
+                _logger.warning("failed to lookup home and ID for %s" %
+                                username)
+                return False
         else:
             raise ValueError("invalid user ID format requested: %s" %
                              configuration.site_user_id_format)
-        real_id = os.path.basename(expanded_home)
-        client_id = client_dir_id(real_id)
+
+        # Now we can extract the desired X509 user ID
+        client_id = client_dir_id(client_dir)
 
     (account_accessible, account_status, _) = check_account_status(
         configuration, client_id)
