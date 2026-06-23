@@ -263,8 +263,20 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
     return status, {"success_map": success_map}
 
 
+def convert_POST_peers_accepted_fetch(request_data):
+    """
+    Data conversion: POST /peers/accepted/fetch
+    """
+    args = unlistify_dict(request_data)
+    args["peer_dn"] = unlistify(args.pop("peer_dn", ""))
+    return args
+
+
 def handle_POST_peers_accepted_fetch(configuration, request_info):
-    peer_dn = unlistify(request_info.args["peer_dn"])
+    """
+    Request handler: POST /peers/accepted/fetch
+    """
+    peer_dn = request_info.args["peer_dn"]
 
     accepted_peers = accountreq.list_peers_accepted(
         configuration, request_info.client_id
@@ -275,7 +287,6 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
 
     if peer_dn in accepted_by_dn:
         return 200, accepted_by_dn[peer_dn]
-
     return 404, {}
 
 
@@ -435,6 +446,7 @@ HANDLERS_BY_PACKAGE = {
 NORMALIZE_INPUTS_BY_PACKAGE = {
     "peers": {
         "POST /new": convert_POST_peers_new,
+        "POST /accepted/fetch": convert_POST_peers_accepted_fetch,
         "POST /accepted/import": convert_POST_peers_accepted_import,
     }
 }
@@ -442,7 +454,7 @@ NORMALIZE_INPUTS_BY_PACKAGE = {
 
 def create_api_response(output_objects, object_status, **result):
     """
-    A helper function that creates the final 
+    A helper function that creates the final
     datainterface API return structure to the output_objects.
     """
     output_objects.append(
@@ -570,4 +582,7 @@ def _main(
         )
 
     result = {"data": data, "error": None}
+    if status != 200:
+        # An 'expected' error occurred in the handler
+        result["error"] = "an error occurred in the route handler"
     return create_api_response(output_objects, status, **result)
