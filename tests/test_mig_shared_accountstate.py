@@ -55,6 +55,7 @@ from mig.shared.defaults import (
     AUTH_GENERIC,
     AUTH_OPENID_CONNECT,
     AUTH_OPENID_V2,
+    DEFAULT_USER_ID_FORMAT,
     cert_auto_extend_days,
     expire_marks_dir,
     oid_auto_extend_days,
@@ -88,6 +89,9 @@ TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[-1]
 TEST_USER_DIR = client_id_dir(TEST_USER_DN)
 OTHER_USER_DIR = client_id_dir(OTHER_USER_DN)
 
+
+
+# TODO: test gdp usernames, too
 
 class TestMigSharedAccountstate__default_account_valid_days(MigTestCase):
     """Coverage of accountstate default_account_valid_days function."""
@@ -1007,7 +1011,8 @@ class TestMigSharedAccountstate__account_expire_info(MigTestCase):
         self.assertTrue(expire_warn)
         self.assertEqual(account_expire, expect_expire)
         self.assertEqual(renew_days, configuration.oid_valid_days)
-        self.assertEqual(extend_days, 0)  # Because auto-renew is disabled
+        # NOTE: should be 0 because auto-renew is disabled
+        self.assertEqual(extend_days, 0)
 
     def test_account_expire_info_with_different_min_days_left(self):
         """Test account_expire_info with a custom min_days_left."""
@@ -1305,6 +1310,8 @@ class TestMigSharedAccountstate__check_account_accessible(
     def before_each(self):
         """Set up test environment for check_account_accessible tests."""
         configuration = self.configuration
+        # Force X509 user ID format
+        configuration.site_user_id_format = DEFAULT_USER_ID_FORMAT
         configuration.site_enable_sharelinks = True
         configuration.site_enable_jobs = True
         configuration.site_enable_jupyter = True
@@ -1582,13 +1589,14 @@ class TestMigSharedAccountstate__check_account_accessible(
         update_account_expire_cache(configuration, user_dict)
         update_account_status_cache(configuration, user_dict)
 
+        # NOTE: should succeed because IO expire is disabled
         accessible = check_account_accessible(
             configuration, TEST_USER_DN, "sftp", io_login=True
         )
-        self.assertTrue(accessible)  # Because IO expire is disabled
+        self.assertTrue(accessible)
 
-    def test_check_account_accessible_openid_expire_disabled(self):
-        """Test that account remains accessible on OpenID (non-IO) when expire is not enforced."""
+    def test_check_account_accessible_openid_expire_disabled_direct(self):
+        """Test that account remains accessible on OpenID (non-IO) with direct DN when expire is not enforced."""
         configuration = self.configuration
         configuration.user_openid_enforce_expire = False
         # Set expire to past
@@ -1604,10 +1612,35 @@ class TestMigSharedAccountstate__check_account_accessible(
         update_account_expire_cache(configuration, user_dict)
         update_account_status_cache(configuration, user_dict)
 
+        # NOTE: should succeed because OpenID expire is disabled
+        # NOTE: we can also check with DN even if not really used
         accessible = check_account_accessible(
             configuration, TEST_USER_DN, "oid", io_login=False
         )
-        self.assertTrue(accessible)  # Because OpenID expire is disabled
+        self.assertTrue(accessible)
+
+    def test_check_account_accessible_openid_expire_disabled_on_email_alias(self):
+        """Test that account remains accessible on OpenID (non-IO) with email when expire is not enforced."""
+        configuration = self.configuration
+        configuration.user_openid_enforce_expire = False
+        # Set expire to past
+        expire_ts = 42
+        user_dict = {
+            "distinguished_name": TEST_USER_DN,
+            "status": "active",
+            "expire": expire_ts,
+        }
+        update_user_dict(
+            self.logger, TEST_USER_DN, user_dict, self.expected_user_db_file
+        )
+        update_account_expire_cache(configuration, user_dict)
+        update_account_status_cache(configuration, user_dict)
+
+        # NOTE: should succeed because OpenID expire is disabled
+        accessible = check_account_accessible(
+            configuration, TEST_USER_EMAIL, "oid", io_login=False
+        )
+        self.assertTrue(accessible)
 
 
 class TestMigSharedAccountstate__check_update_account_expire(
