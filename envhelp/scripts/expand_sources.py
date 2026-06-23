@@ -43,7 +43,7 @@ SOURCE_URL_BASE = "https://github.com/ucphhpc"
 PACKAGE_REPOS_TO_BRANCH = {
     "migux": {
         "repository": "migrid-ux",
-        "repository_rev": "c96f38766ee54fd35c4b5e00d6274904e0ea8e7a",
+        "repository_rev": "e35a966a0d12ad886f52a73995a7a339286b626c",
     }
 }
 
