@@ -149,6 +149,7 @@ def handle_POST_peers_new(configuration, request_info):
     success_map = {}
     errors_map = {}
     for index, peer_fields_dict in enumerate([fields_dict]):
+        # input validation
         peer_dict, errors = accountreq.peer_dict_from_fields(
             configuration, peer_fields_dict
         )
@@ -224,9 +225,11 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
     """
 
     peers = request_info.arg_value("peers", list)
-
     success_map = {}
 
+    # TODO, for now the process_peer_action does the input validation and
+    # the peers handling, but in the future we want to move the input validation up to happen at the outset
+    # before handing the clientside values down to the underlying library logic
     for index, peer_dn in enumerate(peers):
         peer_user = distinguished_name_to_user(peer_dn)
 
@@ -298,6 +301,9 @@ def handle_POST_peers_accepted_import(configuration, request_info):
         "label": args.get("label", ""),
         "raw_expire": args.get("expire", ""),
     }
+    # TODO, for now the process_peer_action does the input validation and
+    # the peers handling, but in the future we want to move the input validation up to happen at the outset
+    # before handing the clientside values down to the underlying library logic
     _, returnvalue = process_peer_action(
         configuration,
         [],
@@ -330,6 +336,9 @@ def handle_POST_peers_requested_delete(configuration, request_info):
         accountreq.list_account_reqs_pairs(configuration)
     )
 
+    # TODO, for now the process_peer_action does the input validation and
+    # the peers handling, but in the future we want to move the input validation up to happen at the outset
+    # before handing the clientside values down to the underlying library logic
     success_map = {}
     for index, peer_dn in enumerate(peers):
         # ensure that the client_id pending_peers are cleaned up regardless
@@ -370,7 +379,9 @@ def handle_POST_peers_requested_accept(configuration, request_info):
     )
 
     success_map = {}
-
+    # TODO, for now the process_peer_action does the input validation and
+    # the peers handling, but in the future we want to move the input validation up to happen at the outset
+    # before handing the clientside values down to the underlying library logic
     for index, peer_dn in enumerate(peers):
         try:
             peer_reqid = user_pending_reqid_by_dn[peer_dn]
