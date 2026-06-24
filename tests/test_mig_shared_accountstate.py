@@ -61,6 +61,8 @@ from mig.shared.defaults import (
     cert_auto_extend_days,
     expire_marks_dir,
     keyword_auto,
+    cert_auto_extend_days,
+    expire_marks_dir,
     oid_auto_extend_days,
     oidc_auto_extend_days,
     status_marks_dir,
