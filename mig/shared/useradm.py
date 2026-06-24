@@ -1374,6 +1374,10 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
     update_account_expire_cache(configuration, user_dict)
     update_account_status_cache(configuration, user_dict)
 
+    # Clean up leftover markers for original user
+    update_account_expire_cache(configuration, old_user, delete=True)
+    update_account_status_cache(configuration, old_user, delete=True)
+
     if meta_only:
         return user_dict
 

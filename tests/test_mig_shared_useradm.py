@@ -36,9 +36,17 @@ import unittest
 from past.builtins import basestring
 
 # Imports required for the unit test wrapping
+from mig.shared.accountstate import (
+    get_account_expire_cache,
+    get_account_status_cache,
+    update_account_expire_cache,
+    update_account_status_cache
+)
 from mig.shared.base import client_id_dir, distinguished_name_to_user
 from mig.shared.defaults import (
     DEFAULT_USER_ID_FORMAT,
+    expire_marks_dir,
+    status_marks_dir,
     htaccess_filename,
     keyword_auto,
     ssh_conf_dir,
@@ -708,6 +716,10 @@ class TestMigSharedUseradm__edit_user(
             self.expected_user_db_home, "MiG-users.db"
         )
         ensure_dirs_exist(self.configuration.mig_system_files)
+        ensure_dirs_exist(os.path.join(self.configuration.mig_system_run,
+                                       expire_marks_dir))
+        ensure_dirs_exist(os.path.join(self.configuration.mig_system_run,
+                                       status_marks_dir))
         ensure_dirs_exist(self.configuration.resource_home)
 
     def _provide_configuration(self):
@@ -881,8 +893,8 @@ class TestMigSharedUseradm__edit_user(
         self._flush_test_user(TEST_USER_DN)
         self._flush_test_user(OTHER_USER_DN)
 
-    def test_edit_user_renames_user(self):
-        """Test editing fields that change the distinguished name"""
+    def test_edit_user_renames_user_with_cache_updates(self):
+        """Test edit user fields that change the user ID with cache updates"""
         self._provision_test_user(self, TEST_USER_DN)
         # Extract original for later verification
         pickled = self.assertPickledFile(
@@ -890,7 +902,23 @@ class TestMigSharedUseradm__edit_user(
             apply_hints=["convert_dict_bytes_to_strings_kv"],
         )
         user_dict = pickled[TEST_USER_DN]
+        # NOTE: we set missing status field here for testing later
+        user_dict["status"] = "active"
+        old_home = os.path.join(self.configuration.user_home, TEST_USER_DIR)
+        self.assertTrue(os.path.isdir(old_home))
+        # Mimic account expire and status cache updates from real use
+        result = update_account_expire_cache(self.configuration, user_dict)
+        self.assertTrue(result)
+        cached_expire = get_account_expire_cache(self.configuration,
+                                                 TEST_USER_DN)
+        self.assertEqual(cached_expire, user_dict["expire"])
+        result = update_account_status_cache(self.configuration, user_dict)
+        self.assertTrue(result)
+        cached_status = get_account_status_cache(self.configuration,
+                                                 TEST_USER_DN)
+        self.assertEqual(cached_status, user_dict["status"])
 
+        # Now proceed with actual function test
         changes = {"full_name": "Renamed User"}
         removes = []
         result = edit_user(
@@ -898,9 +926,9 @@ class TestMigSharedUseradm__edit_user(
             keyword_auto
         )
 
+        # Verify that the requested updates have fully completed
         new_dn = result["distinguished_name"]
         new_dir = new_dn.replace("/", "+").replace(" ", "_")
-
         pickled = self.assertPickledFile(
             self.expected_user_db_file,
             apply_hints=["convert_dict_bytes_to_strings_kv"],
@@ -916,16 +944,23 @@ class TestMigSharedUseradm__edit_user(
             else:
                 self.assertEqual(edited_user[field], user_dict[field])
 
-        old_home = os.path.join(self.configuration.user_home, TEST_USER_DIR)
         new_home = os.path.join(self.configuration.user_home, new_dir)
         self.assertFalse(os.path.exists(old_home))
         self.assertTrue(os.path.isdir(new_home))
 
-        old_settings = os.path.join(
-            self.configuration.user_settings, TEST_USER_DIR)
+        old_settings = os.path.join(self.configuration.user_settings,
+                                    TEST_USER_DIR)
         new_settings = os.path.join(self.configuration.user_settings, new_dir)
         self.assertFalse(os.path.exists(old_settings))
         self.assertTrue(os.path.isdir(new_settings))
+
+        # Make sure even expire and status cache files are gone
+        cached_expire = get_account_expire_cache(self.configuration,
+                                                 TEST_USER_DN)
+        self.assertEqual(cached_expire, None)
+        cached_status = get_account_status_cache(self.configuration,
+                                                 TEST_USER_DN)
+        self.assertEqual(cached_status, None)
 
         self._flush_test_user(new_dn)
 
