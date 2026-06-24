@@ -27,6 +27,7 @@
 
 """Unit tests for the griddaemons login helper functions"""
 
+import binascii
 import os
 import pickle
 import socket
@@ -35,11 +36,14 @@ import time
 import unittest
 
 # Imports required for the unit test wrapping
-from mig.shared.base import client_id_dir
+from mig.shared.base import client_id_dir, distinguished_name_to_user
 from mig.shared.defaults import (
     READ_ONLY_ACCESS,
     READ_WRITE_ACCESS,
+    UUID_USER_ID_FORMAT,
     WRITE_ONLY_ACCESS,
+    X509_USER_ID_FORMAT,
+    keyword_auto,
 )
 
 # Imports of the code under test
@@ -62,7 +66,7 @@ from mig.shared.griddaemons.login import (
 )
 
 # More imports required for the unit test wrapping
-from mig.shared.useradm import _ensure_dirs_needed_for_userdb
+from mig.shared.useradm import _ensure_dirs_needed_for_userdb, create_user
 
 # Imports required for the unit tests themselves
 from tests.support import (
@@ -99,6 +103,36 @@ TEST_USER_PUB_KEY = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCuJrICshi7S2KhV03qvgN
 TEST_USER_PW_HASH = (
     "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM1234uxi"
 )
+
+
+def _provision_uuid_test_user(configuration, client_id, client_overrides=None):
+    """Helper to provision test users when UUID format is used"""
+    # TODO: merge something like this version into standard _provision_test_user?
+    # IMPORTANT: we need to use explicit create_user here for UUID format!
+    user_dict = distinguished_name_to_user(client_id)
+    # NOTE: generate unique and short id based on id to avoid test collisions
+    user_dict["unique_id"] = binascii.hexlify(client_id.encode("utf8")).decode(
+        "ascii"
+    )
+    user_dict["short_id"] = binascii.hexlify(
+        user_dict["email"].encode("utf8")
+    ).decode("ascii")
+    user_dict["comment"] = "This is the user account comment"
+    user_dict["locality"] = ""
+    user_dict["organizational_unit"] = ""
+    user_dict["password"] = ""
+    user_dict["password_hash"] = ""
+    if client_overrides is not None:
+        user_dict.update(client_overrides)
+
+    create_user(
+        user_dict,
+        configuration,
+        keyword_auto,
+        default_renew=True,
+        ask_renew=False,
+    )
+    return user_dict
 
 
 def _prepare_auth_files(home_path, auth_protos=None):
@@ -554,6 +588,9 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
 
     def before_each(self):
         """Set up test configuration and reset state before each test"""
+        # Force X509 user id format
+        self.configuration.site_user_id_format = X509_USER_ID_FORMAT
+
         # Ensure required directories exist
         _ensure_dirs_needed_for_userdb(self.configuration)
         ensure_dirs_exist(self.configuration.sharelink_home)
@@ -617,6 +654,119 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
             configuration=self.configuration,
             username=TEST_USER_SHORT_ID,
             home=self.test_user_home,
+            password=TEST_USER_PW_HASH,
+            digest=None,
+            public_key=TEST_USER_PUB_KEY,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None,
+        )
+        dummy_user.last_update = current_time
+        daemon_conf["users"].append(dummy_user)
+
+        changed_paths = get_creds_changes(
+            daemon_conf,
+            TEST_USER_SHORT_ID,
+            self.auth_keys_path,
+            self.auth_passwords_path,
+            self.auth_digests_path,
+        )
+
+        self.assertEqual(len(changed_paths), 0)
+
+
+class MigSharedGriddaemonsLogin__get_creds_changes_uuid_user_id(MigTestCase):
+    """Unit tests for griddaemons login get_creds_changes function with UUID users"""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance"""
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test"""
+        # Force UUID user id format
+        self.configuration.site_user_id_format = UUID_USER_ID_FORMAT
+        # Ensure required directories exist
+        ensure_dirs_exist(self.configuration.mig_system_files)
+        _ensure_dirs_needed_for_userdb(self.configuration)
+        ensure_dirs_exist(self.configuration.sharelink_home)
+
+        self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf["time_stamp"] = 0
+        self.configuration.daemon_conf["users"] = []
+        self.configuration.daemon_conf["allow_publickey"] = True
+        self.configuration.daemon_conf["allow_password"] = True
+        # TODO: enable and test unsafe digest auth, too?
+        # self.configuration.daemon_conf['allow_digest'] = True
+        self.configuration.daemon_conf["allow_digest"] = False
+
+        user_dict = _provision_uuid_test_user(self.configuration, TEST_USER_DN)
+        self.test_user_id = user_id = user_dict["unique_id"]
+        client_dir = client_id_dir(TEST_USER_DN)
+        self.test_user_home = os.path.join(
+            self.configuration.user_home, user_id
+        )
+        self.test_user_dir = os.path.basename(self.test_user_home)
+        self.test_user_home_x509 = os.path.join(
+            self.configuration.user_home, client_dir
+        )
+        self.test_user_dir_x509 = os.path.basename(self.test_user_home_x509)
+        # Make sure X509 link are provisioned as well
+        if not os.path.islink(self.test_user_home_x509):
+            os.symlink(self.test_user_home, self.test_user_home_x509)
+
+        auth_files = _prepare_auth_files(self.test_user_home, ["ssh"])
+        self.auth_keys_path, self.auth_passwords_path = auth_files
+        self.auth_digests_path = None
+
+    def test_get_creds_changes_detects_new_files(self):
+        """Verify that new credential files are detected as changes"""
+        daemon_conf = self.configuration.daemon_conf
+
+        # Create a dummy user with a last_update in the past
+        past_timestamp = time.time() - 3600
+        # NOTE: we use x509 alias over uuid home as in real runs
+        dummy_user = Login(
+            configuration=self.configuration,
+            username=TEST_USER_SHORT_ID,
+            home=self.test_user_home_x509,
+            password=TEST_USER_PW_HASH,
+            digest=None,
+            public_key=TEST_USER_PUB_KEY,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None,
+        )
+        dummy_user.last_update = past_timestamp
+        daemon_conf["users"].append(dummy_user)
+
+        changed_paths = get_creds_changes(
+            daemon_conf,
+            "user",
+            self.auth_keys_path,
+            self.auth_passwords_path,
+            self.auth_digests_path,
+        )
+
+        self.assertIn(self.auth_keys_path, changed_paths)
+        self.assertIn(self.auth_passwords_path, changed_paths)
+        # self.assertIn(self.auth_digests_path, changed_paths)
+
+    def test_get_creds_changes_no_changes(self):
+        """Verify that unchanged credential files return an empty list"""
+        daemon_conf = self.configuration.daemon_conf
+
+        # Set the file modification times to now
+        current_time = time.time()
+
+        # Create a dummy user with last_update matching the file mtime
+        # NOTE: we use x509 alias over uuid home as in real runs
+        dummy_user = Login(
+            configuration=self.configuration,
+            username=TEST_USER_SHORT_ID,
+            home=self.test_user_home_x509,
             password=TEST_USER_PW_HASH,
             digest=None,
             public_key=TEST_USER_PUB_KEY,
@@ -1713,6 +1863,8 @@ class MigSharedGriddaemonsLogin__refresh_user_creds(
 
     def before_each(self):
         """Set up test configuration and reset state before each test."""
+        # Force X509 user id format
+        self.configuration.site_user_id_format = X509_USER_ID_FORMAT
         # Ensure required directories exist
         _ensure_dirs_needed_for_userdb(self.configuration)
         self.expected_user_db_home = os.path.normpath(
@@ -1842,6 +1994,239 @@ class MigSharedGriddaemonsLogin__refresh_user_creds(
         # Check that at least one login has the correct home directory
         home_found = any(
             login.home == self.test_user_dir for login in user_logins
+        )
+        self.assertTrue(home_found)
+
+    def test_refresh_user_creds_no_changes(self):
+        """Test that no changes are reported when credentials are unchanged."""
+        username = TEST_USER_EMAIL
+        _prepare_auth_files(self.test_user_home, ["ssh"])
+
+        # Pre-populate the users list with a Login object that has
+        # last_update set to the current time (simulating no changes)
+        current_time = time.time()
+        dummy_user = Login(
+            configuration=self.configuration,
+            username=username,
+            home=self.test_user_home,
+            password=TEST_USER_PW_HASH,
+            digest=None,
+            public_key=TEST_USER_PUB_KEY,
+            chroot=True,
+            access=None,
+            ip_addr=None,
+            user_dict=None,
+        )
+        dummy_user.last_update = current_time
+        self.configuration.daemon_conf["users"].append(dummy_user)
+
+        # Call the function under test
+        updated_conf, changed_users = refresh_user_creds(
+            configuration=self.configuration, protocol="ssh", username=username
+        )
+
+        # No changes should be reported
+        self.assertEqual(len(changed_users), 0)
+        # The user list should still contain only our dummy user
+        self.assertEqual(len(updated_conf["users"]), 1)
+        self.assertEqual(updated_conf["users"][0].username, username)
+
+    def test_refresh_user_creds_missing_user(self):
+        """Test that a missing user is skipped."""
+        username = "nosuchuser"
+
+        # Call the function under test
+        updated_conf, changed_users = refresh_user_creds(
+            configuration=self.configuration, protocol="ssh", username=username
+        )
+
+        # No changes should be reported because the home directory is missing
+        self.assertEqual(len(changed_users), 0)
+        self.assertEqual(len(updated_conf["users"]), 0)
+
+    def test_refresh_user_creds_invalid_protocol(self):
+        """Test that an invalid protocol returns early without changes."""
+        username = TEST_USER_EMAIL
+
+        # Call the function under test with an invalid protocol
+        updated_conf, changed_users = refresh_user_creds(
+            configuration=self.configuration,
+            protocol="invalid",
+            username=username,
+        )
+
+        # No changes should be reported
+        self.assertEqual(len(changed_users), 0)
+        self.assertEqual(len(updated_conf["users"]), 0)
+
+
+# TODO: merge X509 and UUID versions?
+
+
+class MigSharedGriddaemonsLogin__refresh_user_creds_uuid_user_id(
+    MigTestCase, UserAssertMixin
+):
+    """Unit tests for the griddaemons login refresh_user_creds helper with UUID users."""
+
+    def _provide_configuration(self):
+        """Return a test configuration instance."""
+        return "testconfig"
+
+    def before_each(self):
+        """Set up test configuration and reset state before each test."""
+        # Force UUID user id format
+        self.configuration.site_user_id_format = UUID_USER_ID_FORMAT
+        # Ensure required directories exist
+        ensure_dirs_exist(self.configuration.mig_system_files)
+        _ensure_dirs_needed_for_userdb(self.configuration)
+        self.expected_user_db_home = os.path.normpath(
+            self.configuration.user_db_home
+        )
+        self.expected_user_db_file = os.path.join(
+            self.expected_user_db_home, "MiG-users.db"
+        )
+        # NOTE: we need to set a password_hash for https test to work with
+        overrides = {}
+        overrides["password_hash"] = TEST_USER_PW_HASH
+
+        user_dict = _provision_uuid_test_user(
+            self.configuration, TEST_USER_DN, overrides
+        )
+        self.test_user_id = user_id = user_dict["unique_id"]
+        client_dir = client_id_dir(TEST_USER_DN)
+        self.test_user_home = os.path.join(
+            self.configuration.user_home, user_id
+        )
+        self.test_user_dir = os.path.basename(self.test_user_home)
+        self.test_user_home_x509 = os.path.join(
+            self.configuration.user_home, client_dir
+        )
+        self.test_user_dir_x509 = os.path.basename(self.test_user_home_x509)
+        # Make sure X509 and alias links are provisioned as well
+        if not os.path.islink(self.test_user_home_x509):
+            os.symlink(self.test_user_home, self.test_user_home_x509)
+        alias_link_path = os.path.join(
+            self.configuration.user_home, TEST_USER_EMAIL
+        )
+        if not os.path.islink(alias_link_path):
+            os.symlink(self.test_user_home_x509, alias_link_path)
+
+        ALIAS_FIELD = "email"
+        self.configuration.user_sftp_alias = ALIAS_FIELD
+        self.configuration.user_ftps_alias = ALIAS_FIELD
+        self.configuration.user_davs_alias = ALIAS_FIELD
+
+        # Common daemon configuration
+        self.configuration.daemon_conf = {}
+        self.configuration.daemon_conf["time_stamp"] = 0
+        self.configuration.daemon_conf["users"] = []
+        self.configuration.daemon_conf["root_dir"] = (
+            self.configuration.user_home
+        )
+        self.configuration.daemon_conf["db_path"] = self.expected_user_db_file
+        self.configuration.daemon_conf["allow_publickey"] = True
+        self.configuration.daemon_conf["allow_password"] = True
+        self.configuration.daemon_conf["allow_digest"] = False
+        self.configuration.daemon_conf["user_alias"] = ALIAS_FIELD
+
+    def test_refresh_user_creds_ssh_protocol(self):
+        """Test refreshing user credentials for SSH protocol."""
+        username = TEST_USER_EMAIL
+        _prepare_auth_files(self.test_user_home, ["ssh"])
+
+        # Call the function under test
+        updated_conf, changed_users = refresh_user_creds(
+            configuration=self.configuration, protocol="ssh", username=username
+        )
+
+        # The user should be in the changed list
+        self.assertIn(username, changed_users)
+
+        # Verify that Login objects were added to users
+        user_logins = [
+            obj
+            for obj in updated_conf["users"]
+            if obj.username == TEST_USER_DN or obj.username == username
+        ]
+        # We expect at least one login (the main username) and possibly aliases
+        self.assertGreaterEqual(len(user_logins), 1)
+
+        # Check that at least one login has the correct home directory
+        # TODO: is this X509 dir what we want here or the UUID one?
+        home_found = any(
+            login.home == self.test_user_dir_x509 for login in user_logins
+        )
+        self.assertTrue(home_found)
+
+    def test_refresh_user_creds_davs_protocol(self):
+        """Test refreshing user credentials for DAVS protocol."""
+        username = TEST_USER_EMAIL
+        _prepare_auth_files(self.test_user_home, ["davs"])
+
+        # Call the function under test
+        updated_conf, changed_users = refresh_user_creds(
+            configuration=self.configuration, protocol="davs", username=username
+        )
+
+        # The user should be in the changed list
+        self.assertIn(username, changed_users)
+
+        # Verify that Login objects were added to users
+        user_logins = [
+            obj for obj in updated_conf["users"] if obj.username == username
+        ]
+        self.assertEqual(len(user_logins), 1)
+        # TODO: is this X509 dir what we want here or the UUID one?
+        self.assertEqual(user_logins[0].home, self.test_user_dir_x509)
+
+    def test_refresh_user_creds_ftps_protocol(self):
+        """Test refreshing user credentials for FTPS protocol."""
+        username = TEST_USER_EMAIL
+        _prepare_auth_files(self.test_user_home, ["ftps"])
+
+        # Call the function under test
+        updated_conf, changed_users = refresh_user_creds(
+            configuration=self.configuration, protocol="ftps", username=username
+        )
+
+        # The user should be in the changed list
+        self.assertIn(username, changed_users)
+
+        # Verify that Login objects were added to users
+        user_logins = [
+            obj for obj in updated_conf["users"] if obj.username == username
+        ]
+        self.assertEqual(len(user_logins), 1)
+        # TODO: is this X509 dir what we want here or the UUID one?
+        self.assertEqual(user_logins[0].home, self.test_user_dir_x509)
+
+    def test_refresh_user_creds_https_protocol(self):
+        """Test refreshing user credentials for HTTPS protocol (uses user DB)."""
+        username = TEST_USER_EMAIL
+
+        # Call the function under test
+        updated_conf, changed_users = refresh_user_creds(
+            configuration=self.configuration,
+            protocol="https",
+            username=username,
+        )
+
+        # The user alias should be in the changed list
+        self.assertIn(TEST_USER_EMAIL, changed_users)
+
+        # Verify that Login objects were added to users for the username and its aliases
+        user_logins = [
+            obj
+            for obj in updated_conf["users"]
+            if obj.username == TEST_USER_DN or obj.username == username
+        ]
+        # We expect at least the main username and possibly aliases
+        self.assertGreaterEqual(len(user_logins), 1)
+
+        # Check that at least one login has the correct home directory
+        # TODO: is this X509 dir what we want here or the UUID one?
+        home_found = any(
+            login.home == self.test_user_dir_x509 for login in user_logins
         )
         self.assertTrue(home_found)
 
@@ -2090,7 +2475,6 @@ class MigSharedGriddaemonsLogin__update_login_map(MigTestCase):
             test_session,
             other_session,
         ]
-
         # Call the function under test
         update_login_map(
             daemon_conf=self.configuration.daemon_conf,

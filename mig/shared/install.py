@@ -500,6 +500,7 @@ def generate_confs(
     listen_clause='#Listen',
     serveralias_clause='#ServerAlias',
     distro='Debian',
+    user_id_format='X509',
     autolaunch_page=None,
     landing_page=None,
     skin='migrid-basic',
@@ -833,6 +834,7 @@ def _generate_confs_prepare(
     listen_clause,
     serveralias_clause,
     distro,
+    user_id_format,
     autolaunch_page,
     landing_page,
     skin,
@@ -1094,6 +1096,7 @@ def _generate_confs_prepare(
     user_dict['__LISTEN_CLAUSE__'] = listen_clause
     user_dict['__SERVERALIAS_CLAUSE__'] = serveralias_clause
     user_dict['__DISTRO__'] = distro
+    user_dict['__USER_ID_FORMAT__'] = user_id_format
     user_dict['__SKIN__'] = skin
     user_dict['__TITLE__'] = title
     user_dict['__SHORT_TITLE__'] = short_title

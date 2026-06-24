@@ -284,9 +284,11 @@ def _get_required_user_alias_links(configuration, real_dir, link_dir):
     return alias_links
 
 
-def lookup_client_id(configuration, user_id):
-    """Lookup the X509 format client_id linked to user_id based on the helper
-    symlink in user_id_alias_dir in configured mig_system_run location.
+def lookup_client_id_from_uuid(configuration, user_id):
+    """Lookup the X509 format client_id linked to UUID user_id based on the
+    helper symlink in user_id_alias_dir in configured mig_system_run location.
+    Automatic fallback to reverse lookup based on symlinks in user_home if
+    helper symlink is missing with write-through to mig_system_run cache.
     """
     _logger = configuration.logger
     alias_link = os.path.join(configuration.mig_system_run, user_id_alias_dir,
@@ -294,7 +296,8 @@ def lookup_client_id(configuration, user_id):
     _logger.debug("looking for alias link %r" % alias_link)
     # NOTE: use islink rather than exists here because it is a dead link if so
     if os.path.islink(alias_link):
-        target_path = os.path.realpath(alias_link)
+        # Only follow first chain even if mix of UUID and X509 links overlap
+        target_path = os.readlink(alias_link)
         client_dir = os.path.basename(target_path)
         _logger.debug("found linked alias %r for %r" % (client_dir, user_id))
     else:
@@ -302,6 +305,9 @@ def lookup_client_id(configuration, user_id):
         # mig_system_run, which is only scratch space.
         client_dir = False
         for name in listdir(configuration.user_home):
+            # Skip if not a DN-dir name to avoid hit e.g. on short alias links
+            if '=' not in name or '+' not in name:
+                continue
             link_path = os.path.join(configuration.user_home, name)
             if os.path.islink(link_path):
                 target = os.path.basename(os.path.realpath(link_path))
@@ -312,8 +318,9 @@ def lookup_client_id(configuration, user_id):
                     makedirs_rec(os.path.dirname(alias_link), configuration)
                     make_symlink(client_dir, alias_link, _logger)
                     break
+
         if not client_dir:
-            _logger.warning("found no alias %r" % user_id)
+            _logger.error("found no alias %r" % user_id)
             return user_id
     client_id = client_dir_id(client_dir)
     return client_id
@@ -1875,7 +1882,8 @@ def get_any_oid_user_dn(configuration, raw_login,
                       (native_dir, raw_login))
         if configuration.site_user_id_format == UUID_USER_ID_FORMAT:
             user_id = native_dir
-            distinguished_name = lookup_client_id(configuration, user_id)
+            distinguished_name = lookup_client_id_from_uuid(configuration,
+                                                            user_id)
         elif configuration.site_user_id_format == X509_USER_ID_FORMAT:
             distinguished_name = client_dir_id(native_dir)
         else:

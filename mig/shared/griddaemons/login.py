@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - grid daemon login helper functions
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -47,8 +47,7 @@ from mig.shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     https_authkeys, get_authkeys, ssh_authpasswords, davs_authpasswords, \
     ftps_authpasswords, https_authpasswords, get_authpasswords, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
-    generate_password_hash, generate_password_digest, load_user_dict, \
-    lookup_client_id
+    generate_password_hash, generate_password_digest, load_user_dict
 from mig.shared.validstring import possible_sharelink_id, possible_job_id, \
     possible_jupyter_mount_id
 
@@ -636,8 +635,7 @@ def refresh_job_creds(configuration, protocol, username):
         sessionid = username
         job_dict = unpickle(link_path, logger)
 
-    # We only allow connections from executing jobs that
-    # has a public key
+    # We only allow connections from executing jobs with a public key
     if job_dict is not None and isinstance(job_dict, dict) and \
             'STATUS' in job_dict and \
             job_dict['STATUS'] == 'EXECUTING' and \
@@ -852,15 +850,15 @@ def refresh_jupyter_creds(configuration, protocol, username):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, active_jupyter_creds)
     if not possible_jupyter_mount_id(configuration, username):
-        # logger.debug("ruled out %s as a possible jupyter_mount ID" \
-        #   % username)
+        # logger.debug("ruled out %s as a possible jupyter_mount ID" %
+        #              username)
         return (conf, active_jupyter_creds)
 
     logger.info("Getting active jupyter mount creds")
     link_path = os.path.join(configuration.sessid_to_jupyter_mount_link_home,
                              "%s" % username + ".jupyter_mount")
-    # logger.debug("jupyter linkpath: %s jupyter path exists: %s" % \
-    #                 (os.path.islink(link_path), os.path.exists(link_path)))
+    # logger.debug("jupyter linkpath: %s jupyter path exists: %s" %
+    #              (os.path.islink(link_path), os.path.exists(link_path)))
 
     jupyter_dict, sessionid = None, None
     if os.path.islink(link_path) and os.path.exists(link_path):
