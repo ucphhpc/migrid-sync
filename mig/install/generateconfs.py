@@ -174,6 +174,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'listen_clause',
         'serveralias_clause',
         'distro',
+        'user_id_format',
         'autolaunch_page',
         'landing_page',
         'skin',
