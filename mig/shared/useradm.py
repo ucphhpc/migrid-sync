@@ -296,7 +296,8 @@ def lookup_client_id_from_uuid(configuration, user_id):
     _logger.debug("looking for alias link %r" % alias_link)
     # NOTE: use islink rather than exists here because it is a dead link if so
     if os.path.islink(alias_link):
-        target_path = os.path.realpath(alias_link)
+        # Only follow first chain even if mix of UUID and X509 links overlap
+        target_path = os.readlink(alias_link)
         client_dir = os.path.basename(target_path)
         _logger.debug("found linked alias %r for %r" % (client_dir, user_id))
     else:

@@ -1731,6 +1731,28 @@ class TestMigSharedUseradm__lookup_client_id_from_uuid(MigTestCase):
         link_target = os.path.basename(os.path.realpath(alias_link_in_run))
         self.assertEqual(link_target, client_dir)
 
+    def test_lookup_client_id_from_uuid_via_alias_link_despite_reverse_link(self):
+        """Test lookup via existing alias link in mig_system_run even when reverse X509 link exists"""
+        configuration = self.configuration
+        client_id = TEST_USER_DN
+        user_id = TEST_USER_UUID
+        # Setup real directory for the client and alias link in mig_system_run
+        real_dir = os.path.join(configuration.user_home, user_id)
+        ensure_dirs_exist(real_dir)
+        alias_link = os.path.join(
+            configuration.mig_system_run, user_id_alias_dir, user_id)
+        ensure_dirs_exist(os.path.dirname(alias_link))
+        client_dir = client_id_dir(client_id)
+        os.symlink(client_dir, alias_link)
+        # Make the additional reverse link from X509 to UUID in mig_system_run
+        reverse_link = os.path.join(
+            configuration.mig_system_run, user_id_alias_dir, client_dir)
+        os.symlink(user_id, reverse_link)
+
+        # Assure reverse link doesn't interfere
+        result = lookup_client_id_from_uuid(configuration, user_id)
+        self.assertEqual(result, client_id)
+
     def test_lookup_client_id_from_uuid_fails_with_only_short_id_link(self):
         """Test lookup via reverse lookup in user_home fails on short id link"""
         configuration = self.configuration
