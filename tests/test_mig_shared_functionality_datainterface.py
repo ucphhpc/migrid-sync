@@ -130,20 +130,18 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
+        self.assertIn("status", json_response)
         status = json_response['status']
         self.assertEqual(status, 400)
 
-        # check we failed creation
-        success_map = json_response['data']['success_map']
-        self.assertEqual(success_map, {
-            '0': False
-        })
+        # check we failed creation -> missing expire, kind, label
+        self.assertIn("data", json_response)
+        self.assertIn("errors_map", json_response["data"])
 
         # check we failed creation
         errors_map = json_response['data']['errors_map']
         self.assertEqual(errors_map, {
             '0': {
-
                 'expire': 'expire is required but missing',
                 'kind': 'kind is required but missing',
                 'label': 'label is required but missing',
@@ -179,12 +177,6 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
 
         status = json_response['status']
         self.assertEqual(status, 400)
-
-        # check we failed creation
-        success_map = json_response['data']['success_map']
-        self.assertEqual(success_map, {
-            '0': False
-        })
 
         # check we failed creation
         errors_map = json_response['data']['errors_map']
@@ -316,15 +308,14 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
+        self.assertIn('status', json_response)
         status = json_response['status']
         self.assertEqual(status, 400)
 
-        data = json_response['data']
-        self.assertEqual(data, {
-            'success_map': {
-                '0': False,
-            }
-        })
+        self.assertIn('error', json_response)
+        error = json_response['error']
+        self.assertIsNotNone(error)
+        self.assertNotEqual(error, "")        
 
 
     def test_peers_accepted_fetch(self):
@@ -407,7 +398,6 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
 
     def test_peers_requsted_accept(self):
         _ensure_dirs_needed_for_userdb(self.configuration)
-        self._record_pending_peer(self.TEST_PENDING_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
         self.logger.declare_expected_error(comparison='startswith',
                                            expectation="expire '' could not be parsed into a valid date")
 
@@ -439,14 +429,9 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         user_peers = self.assertUserPeers(self.TEST_CLIENT_ID)
         self.assertIn(self.TEST_PENDING_PEER_DN, user_peers)
 
-         # check that the pending user was removed
-        pending_users_info_by_dn = self.retrievePendingUsers()
-        self.assertEqual(len(pending_users_info_by_dn), 0)
-
         # check emails were sent
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
-        self.assertTrue(fake_send_email.email_was_sent_to('pending_peer@example.com'))
 
     def test_peers_requested_delete(self):
         self._provision_pending_peer(self, self.TEST_PENDING_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
@@ -474,10 +459,6 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         # now check that the peer was removed
         user_pending_peers = self.assertUserPendingPeers(self.TEST_CLIENT_ID)
         self.assertEqual(len(user_pending_peers), 0)
-
-        # check that the pending user was removed
-        pending_users_info_by_dn = self.retrievePendingUsers()
-        self.assertEqual(len(pending_users_info_by_dn), 0)
 
         # check the email was sent
         fake_send_email = self.configuration.context_get('notifier').send_email

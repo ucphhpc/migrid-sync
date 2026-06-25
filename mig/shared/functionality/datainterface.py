@@ -53,7 +53,6 @@ import sys
 from io import BytesIO
 
 import mig.shared.accountreq as accountreq
-import mig.shared.fileio as fileio
 import mig.shared.returnvalues as returnvalues
 from mig.lib.reqinfo import (
     booleanify,
@@ -62,15 +61,56 @@ from mig.lib.reqinfo import (
     unlistify,
     unlistify_dict,
 )
-from mig.shared.base import distinguished_name_to_user
+from mig.shared.base import extract_field
+from mig.shared.fileio import delete_file
 from mig.shared.functionality.peersaction import process_peer_action
 from mig.shared.init import (
     find_entry,
     initialize_main_variables,
     make_start_entry,
 )
-from mig.shared.safeinput import html_escape
+from mig.shared.notification import send_email
+from mig.shared.safeinput import (
+    REJECT_UNSET,
+    html_escape,
+    valid_distinguished_name,
+    validated_input,
+)
 from mig.shared.scriptinput import fieldstorage_to_dict
+
+PEER_DN_TYPE_MAP = {"peer": valid_distinguished_name}
+
+
+# TODO, move the helper functions and the peers related handlers/normalizers
+# into their own submodule
+def validate_input_peer_distinguished_name(peer):
+    # TODO, add function description
+    signature = {"peer": REJECT_UNSET}
+    accepted, rejected = validated_input(
+        peer, signature, type_override=PEER_DN_TYPE_MAP, list_wrap=True
+    )
+    return unlistify_dict(accepted), unlistify_dict(rejected)
+
+
+def validate_input_peers_distinguished_names(peers):
+    # TODO, add function description
+    peer_validations = []
+    for peer in peers:
+        accepted, rejected = validate_input_peer_distinguished_name(peer)
+        peer_validation_results = {
+            "accepted": accepted,
+            "rejected": rejected,
+        }
+        peer_validations.append(peer_validation_results)
+    return peer_validations
+
+
+def create_handler_response(status, message=None, **ui_response_kwargs):
+    """
+    A helper function to create route handler responses.
+    """
+    response = {"status": status, "message": message}, {**ui_response_kwargs}
+    return response
 
 
 def main(client_id, user_arguments_dict, environ=None, configuration=None):
@@ -123,10 +163,11 @@ def handle_GET_peers_summary(configuration, request_info):
         configuration, request_info.client_id
     )
 
-    return 200, {
-        "accepted_count": len(accepted_peers),
-        "requested_count": len(requested_peers),
-    }
+    return create_handler_response(
+        200,
+        accepted_count=len(accepted_peers),
+        requested_count=len(requested_peers),
+    )
 
 
 def convert_POST_peers_new(request_data):
@@ -208,59 +249,125 @@ def handle_POST_peers_new(configuration, request_info):
         success_map[index] = success
 
     if errors_map:
-        status = 400
-    else:
-        status = 200
-    return status, {
-        "success_map": success_map,
-        "errors_map": errors_map,
-    }
+        return create_handler_response(400, errors_map=errors_map)
+
+    return create_handler_response(200, success_map=success_map)
+
+
+def convert_POST_peers_accepted_delete(request_data):
+    """
+    Data conversion: DELETE /peers/accepted/delete
+    """
+    args = request_data
+    # Align with the validate_input expectations for an input_dict
+    peers = args.get("peers", [])
+    args["peers"] = [{"peer": peer} for peer in peers]
+    return args
 
 
 def handle_POST_peers_accepted_delete(configuration, request_info):
     """
-    Request handler: DELETE /peers/accepted
+    Request handler: DELETE /peers/accepted/delete
     """
 
     peers = request_info.arg_value("peers", list)
-    success_map = {}
+    validations = validate_input_peers_distinguished_names(peers)
 
-    # TODO, for now the process_peer_action does the input validation and
-    # the peers handling, but in the future we want to move the input validation up to happen at the outset
-    # before handing the clientside values down to the underlying library logic
-    for index, peer_dn in enumerate(peers):
-        peer_user = distinguished_name_to_user(peer_dn)
+    validation_errors, validation_accepted = [], []
+    for index, validation in enumerate(validations):
+        if validation["rejected"]:
+            validation_errors.append(validation["rejected"])
+        if validation["accepted"]:
+            validation_accepted.append(validation["accepted"])
 
-        name_to_user_failure = (
-            len(peer_user) == 1 and "distinguished_name" in peer_user
+    if validation_errors:
+        return create_handler_response(
+            400,
+            error="failed to remove accepted peers, error: %s "
+            % validation_errors,
         )
 
-        success_map[index] = not name_to_user_failure
+    # Client existing accepted peers
+    accepted_peers = accountreq.list_peers_accepted(
+        configuration, request_info.client_id
+    )
+    accepted_by_dn = {
+        peer["distinguished_name"]: peer for peer in accepted_peers
+    }
 
-    if any((not success for success in success_map.values())):
-        status = 400
-    else:
-        status = 200
-        process_peer_action(
-            configuration, [], request_info.client_id, peers, "remove", "userid"
+    valid_client_peers_dn, invalid_client_peers_dn = [], []
+    for index, accepted in enumerate(validation_accepted):
+        peer_dn = accepted["peer"]
+        if peer_dn not in accepted_by_dn:
+            invalid_client_peers_dn.append(peer_dn)
+        else:
+            valid_client_peers_dn.append(peer_dn)
+
+    if invalid_client_peers_dn:
+        return create_handler_response(
+            400,
+            message="invalid peers that you don't have were found in your delete request, namely: %s"
+            % invalid_client_peers_dn,
         )
 
-        # process_peer_action does not remove pending user files, do so
+    success_map, errors_map = {}, {}
+    peers_deleted = []
+    for index, peer_dn in enumerate(valid_client_peers_dn):
+        if not accountreq.remove_accepted_peers_from_client(
+            configuration, request_info.client_id, [peer_dn]
+        ):
+            success_map[index] = False
+            errors_map[index] = {
+                "peer": "failed to remove the peer %s" % peer_dn
+            }
+            continue
+        else:
+            # For now we let the janitor clean the global user_pending
+            # peers requests
+            success_map[index] = True
+            peers_deleted.append(peer_dn)
 
-        user_pending_reqid_by_dn = dict(
-            accountreq.list_account_reqs_pairs(configuration)
+    if errors_map:
+        return create_handler_response(
+            400, success_map=success_map, errors_map=errors_map
         )
-        reqids_for_deleted_peers = [
-            reqid for peer_dn, reqid in user_pending_reqid_by_dn.items()
-        ]
 
-        for peer_reqid in reqids_for_deleted_peers:
-            pending_user_file_path = os.path.join(
-                configuration.user_pending, peer_reqid
-            )
-            fileio.delete_file(pending_user_file_path, configuration.logger)
+    # Notify admins about the changes
+    action = "peers_accepted_delete"
+    client_name = extract_field(request_info.client_id, "full_name")
+    notify_header = "%s %s by %s" % (
+        configuration.short_title,
+        action,
+        client_name,
+    )
 
-    return status, {"success_map": success_map}
+    notify_dict = {
+        "action": action,
+        "client_id": request_info.client_id,
+        "peers": "\n".join(peers_deleted),
+    }
+
+    # Kind: %(kind)s
+    # Expire: %(expire)s
+    # Label: %(label)s
+
+    notify_msg = """
+        Received %(action)s from %(client_id)s
+
+        Peers:
+        %(peers)s
+    """ % notify_dict
+
+    if not send_email(
+        configuration, configuration.admin_email, notify_header, notify_msg
+    ):
+        configuration.logger.error(
+            "failed to send notification to admins about the client %s deleting the following accepted peers succesfully %s"
+            % (request_info.client_id, "\n".join(peers_deleted))
+        )
+        # send_email logs this error, and since the peers have been deleted, we return it as
+        # an success
+    return create_handler_response(200, success_map=success_map)
 
 
 def convert_POST_peers_accepted_fetch(request_data):
@@ -268,7 +375,8 @@ def convert_POST_peers_accepted_fetch(request_data):
     Data conversion: POST /peers/accepted/fetch
     """
     args = unlistify_dict(request_data)
-    args["peer_dn"] = unlistify(args.pop("peer_dn", ""))
+    peer = unlistify(args.pop("peer_dn", ""))
+    args["peer"] = {"peer": peer}
     return args
 
 
@@ -276,7 +384,16 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
     """
     Request handler: POST /peers/accepted/fetch
     """
-    peer_dn = request_info.args["peer_dn"]
+    peer = request_info.args["peer"]
+    accepted, rejected = validate_input_peer_distinguished_name(peer)
+
+    if rejected:
+        return create_handler_response(
+            400,
+            message="failed to fetch the accepted with, recieved an incorrect peer argument %s"
+            % rejected,
+        )
+    peer_dn = accepted["peer"]
 
     accepted_peers = accountreq.list_peers_accepted(
         configuration, request_info.client_id
@@ -285,9 +402,9 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
         peer["distinguished_name"]: peer for peer in accepted_peers
     }
 
-    if peer_dn in accepted_by_dn:
-        return 200, accepted_by_dn[peer_dn]
-    return 404, {}
+    if peer_dn not in accepted_by_dn:
+        return create_handler_response(404, message="peer not found")
+    return create_handler_response(200, distinguished_name=peer_dn)
 
 
 def convert_POST_peers_accepted_import(request_data):
@@ -301,9 +418,8 @@ def convert_POST_peers_accepted_import(request_data):
 
 def handle_POST_peers_accepted_import(configuration, request_info):
     """
-    Request handler: DELETE /peers/accepted/import
+    Request handler: POST /peers/accepted/import
     """
-
     args = request_info.args
     updates = {
         "kind": args.get("kind", ""),
@@ -324,57 +440,197 @@ def handle_POST_peers_accepted_import(configuration, request_info):
         do_invite=True,
     )
 
-    if returnvalue == returnvalues.OK:
-        status = 200
-    else:
-        status = 400
-    return status, {}
+    if returnvalue != returnvalues.OK:
+        return create_handler_response(
+            400, message="failed to import the submitted peers"
+        )
+
+    return create_handler_response(200)
+
+
+def convert_POST_peers_accepted_update(request_data):
+    """
+    Data conversion: POST /peers/accepted/update
+    """
+    args = unlistify_dict(request_data)
+    args["peer"] = unlistify(args.pop("peer", ""))
+    args["expire"] = unlistify(args.pop("expire", ""))
+    return args
 
 
 def handle_POST_peers_accepted_update(configuration, request_info):
-    return 404, {}
-
-
-def handle_POST_peers_requested_delete(configuration, request_info):
     """
-    Request handler: DELETE /peers/requested
+    Request Handler: POST /peers/accepted/update
     """
 
-    peers = request_info.arg_value("peers", list)
-    user_pending_reqid_by_dn = dict(
-        accountreq.list_account_reqs_pairs(configuration)
+    peer_dn = request_info.args["peer"]
+    expire = request_info.args["expire"]
+
+    updates = {"raw_expire": expire}
+
+    accepted_peers = accountreq.list_peers_accepted(
+        configuration, request_info.client_id
     )
+    accepted_by_dn = {
+        peer["distinguished_name"]: peer for peer in accepted_peers
+    }
+    if peer_dn not in accepted_by_dn:
+        return create_handler_response(
+            404, message="you don't have an accepted peer with those details"
+        )
 
     # TODO, for now the process_peer_action does the input validation and
     # the peers handling, but in the future we want to move the input validation up to happen at the outset
     # before handing the clientside values down to the underlying library logic
-    success_map = {}
-    for index, peer_dn in enumerate(peers):
-        # ensure that the client_id pending_peers are cleaned up regardless
-        # of whether a global user_pending request exists
-        _, returnvalue = process_peer_action(
-            configuration,
-            [],
-            request_info.client_id,
-            [peer_dn],
-            "reject",
-            "userid",
-            {},
+    _, returnvalue = process_peer_action(
+        configuration,
+        [],
+        request_info.client_id,
+        [peer_dn],
+        "update",
+        "userid",
+        updates=updates,
+    )
+    if returnvalue != returnvalues.OK:
+        return create_handler_response(
+            400, message="failed to update the accepted peer %s" % peer_dn
         )
-        success = returnvalue == returnvalues.OK
-        success_map[index] = success
+    return create_handler_response(200)
 
-        if not success:
+
+def convert_POST_peers_requested_delete(request_data):
+    """
+    Data conversion: DELETE /peers/requested/delete
+    """
+    args = request_data
+    # Align with the validate_input expectations for an input_dict
+    peers = args.get("peers", [])
+    args["peers"] = [{"peer": peer} for peer in peers]
+    return args
+
+
+def handle_POST_peers_requested_delete(configuration, request_info):
+    """
+    Request handler: DELETE /peers/requested/delete
+    """
+
+    peers = request_info.arg_value("peers", list)
+    validations = validate_input_peers_distinguished_names(peers)
+    validation_errors, validation_accepted = [], []
+    for index, validation in enumerate(validations):
+        if validation["rejected"]:
+            validation_errors.append(validation["rejected"])
+        if validation["accepted"]:
+            validation_accepted.append(validation["accepted"])
+
+    if validation_errors:
+        return create_handler_response(
+            400,
+            error="failed to remove requested peers, error: %s "
+            % validation_errors,
+        )
+
+    # Client existing requested peers
+    requested_peers = accountreq.list_peers_requested(
+        configuration, request_info.client_id
+    )
+    requested_by_dn = {
+        peer["distinguished_name"]: peer for peer in requested_peers
+    }
+
+    valid_client_peers_dn, invalid_client_peers_dn = [], []
+    for index, accepted in enumerate(validation_accepted):
+        peer_dn = accepted["peer"]
+        if peer_dn not in requested_by_dn:
+            invalid_client_peers_dn.append(peer_dn)
+        else:
+            valid_client_peers_dn.append(peer_dn)
+
+    if invalid_client_peers_dn:
+        return create_handler_response(
+            400,
+            message="invalid peers that you don't have were found in your delete request, namely: %s"
+            % invalid_client_peers_dn,
+        )
+
+    success_map, errors_map = {}, {}
+    peers_deleted = {}
+
+    # Client current pending peers
+    current_requested_peers = dict(
+        accountreq.load_peers_pending(configuration, request_info.client_id)
+    )
+    for index, peer_dn in enumerate(valid_client_peers_dn):
+        peer_dict = current_requested_peers.get(peer_dn, None)
+
+        # Remove the client pending peer
+        if not accountreq.remove_pending_peers_from_client(
+            configuration, request_info.client_id, [peer_dn]
+        ):
+            success_map[index] = False
+            errors_map[index] = {
+                "peer": "failed to remove the peer %s" % peer_dn
+            }
             continue
 
-        # process_peer_action does not remove the global user_pending files so we clean it up here
-        if peer_dn in user_pending_reqid_by_dn:
-            peer_reqid = user_pending_reqid_by_dn[peer_dn]
-            pending_user_file_path = os.path.join(
-                configuration.user_pending, peer_reqid
-            )
-            fileio.delete_file(pending_user_file_path, configuration.logger)
-    return 200, {"success_map": success_map}
+        success_map[index] = True
+        peers_deleted[peer_dn] = peer_dict
+
+    if errors_map:
+        return create_handler_response(
+            400, success_map=success_map, errors_map=errors_map
+        )
+
+    # Notify admins about the changes
+    action = "peers_requested_delete"
+    client_name = extract_field(request_info.client_id, "full_name")
+    notify_header = "%s %s by %s" % (
+        configuration.short_title,
+        action,
+        client_name,
+    )
+    notify_peers = [
+        """
+            "Peer: %s
+            "Expire: %s
+        """ % (peer_dict["distinguished_name"], peer_dict["expire"])
+        for peer_dn, peer_dict in peers_deleted.items()
+    ]
+
+    notify_dict = {
+        "action": action,
+        "client_id": request_info.client_id,
+        "peers": "".join("%s \n" % notify_peer for notify_peer in notify_peers),
+    }
+
+    notify_msg = """
+        Received %(action)s from %(client_id)s
+
+        Peers:
+        %(peers)s
+    """ % notify_dict
+
+    if not send_email(
+        configuration, configuration.admin_email, notify_header, notify_msg
+    ):
+        configuration.logger.error(
+            "failed to send notification to admins about the client %s deleting the following requested peers succesfully %s"
+            % (request_info.client_id, "\n".join(peers_deleted.keys()))
+        )
+        # send_email logs this error, and since the peers have been deleted, we return it as
+        # an success
+    return create_handler_response(200, success_map=success_map)
+
+
+def convert_POST_peers_requested_accept(request_data):
+    """
+    Data conversion: POST /peers/requested/accept
+    """
+    args = request_data
+    # Align with the validate_input expectations for an input_dict
+    peers = args.get("peers", [])
+    args["peers"] = [{"peer": peer} for peer in peers]
+    return args
 
 
 def handle_POST_peers_requested_accept(configuration, request_info):
@@ -383,21 +639,28 @@ def handle_POST_peers_requested_accept(configuration, request_info):
     """
 
     peers = request_info.arg_value("peers", list)
-    user_pending_reqid_by_dn = dict(
-        accountreq.list_account_reqs_pairs(configuration)
-    )
+    validations = validate_input_peers_distinguished_names(peers)
+
+    validation_errors, validation_accepted = [], []
+    for index, validation in enumerate(validations):
+        if validation["rejected"]:
+            validation_errors.append(validation["rejected"])
+        if validation["accepted"]:
+            validation_accepted.append(validation["accepted"])
+
+    if validation_errors:
+        return create_handler_response(
+            400,
+            error="failed to accepted the peer(s), error: %s "
+            % validation_errors,
+        )
 
     success_map = {}
     # TODO, for now the process_peer_action does the input validation and
     # the peers handling, but in the future we want to move the input validation up to happen at the outset
     # before handing the clientside values down to the underlying library logic
-    for index, peer_dn in enumerate(peers):
-        try:
-            peer_reqid = user_pending_reqid_by_dn[peer_dn]
-        except KeyError:
-            success_map[index] = False
-            continue
-
+    for index, accepted in enumerate(validation_accepted):
+        peer_dn = accepted["peer"]
         _, returnvalue = process_peer_action(
             configuration,
             [],
@@ -415,19 +678,8 @@ def handle_POST_peers_requested_accept(configuration, request_info):
             success_map[index] = False
             continue
 
-        # peersaction "accept" does not create the user, do so
-        # note that this does implicitly remove the pending user file
-        success, _ = accountreq.accept_account_req(
-            peer_reqid,
-            configuration,
-            request_info.client_id,
-            admin_copy=False,
-            user_copy=True,
-        )
-
         success_map[index] = success
-
-    return 200, {"success_map": success_map}
+    return create_handler_response(200, success_map=success_map)
 
 
 HANDLERS_BY_PACKAGE = {
@@ -446,8 +698,12 @@ HANDLERS_BY_PACKAGE = {
 NORMALIZE_INPUTS_BY_PACKAGE = {
     "peers": {
         "POST /new": convert_POST_peers_new,
+        "POST /accepted/delete": convert_POST_peers_accepted_delete,
         "POST /accepted/fetch": convert_POST_peers_accepted_fetch,
         "POST /accepted/import": convert_POST_peers_accepted_import,
+        "POST /accepted/update": convert_POST_peers_accepted_update,
+        "POST /requested/accept": convert_POST_peers_requested_accept,
+        "POST /requested/delete": convert_POST_peers_requested_delete,
     }
 }
 
@@ -567,22 +823,58 @@ def _main(
         request_info.set_args(normalize_inputs_fn(request_info._request_data))
 
     # 3. attempt to handle the request
-    status = None
+    handler_exit_resp = None
     try:
-        status, data = request_handler(configuration, request_info)
+        handler_exit_resp, handler_data_resp = request_handler(
+            configuration, request_info
+        )
     except Exception:
         # Currently the request_handler and the underlying validation logic
         # can throw many types of exceptions. For now we capture them all siliently
         # until we can for starters move up the input validation handling.
         pass
 
-    if status is None:
+    if handler_exit_resp is None:
         return create_api_response(
             output_objects, 500, error="an unkown error occurred"
         )
 
-    result = {"data": data, "error": None}
-    if status != 200:
-        # An 'expected' error occurred in the handler
-        result["error"] = "an error occurred in the route handler"
-    return create_api_response(output_objects, status, **result)
+    if not isinstance(handler_exit_resp, dict):
+        return create_api_response(
+            output_objects,
+            500,
+            error="the route handler returned an incorrect structure type",
+        )
+
+    if "status" not in handler_exit_resp:
+        return create_api_response(
+            output_objects, 500, error="the route handler returned no status"
+        )
+
+    if not isinstance(handler_exit_resp["status"], int):
+        return create_api_response(
+            output_objects,
+            500,
+            error="the route handler returned an incorrect status type",
+        )
+
+    handler_status = handler_exit_resp["status"]
+    handler_message = handler_exit_resp.get("message", None)
+
+    # TODO, properly needs to be cleaned up, with a general
+    # return message, that can be an error. Should be intepreted depending on the handler_status
+    # e.g.
+    # result = {"data": handler_data_resp, "message": handler_message}
+    # However this requires mig-ux adjustments to work
+
+    result = {"data": handler_data_resp, "error": None}
+    if handler_status != 200:
+        if handler_message is not None:
+            result["error"] = handler_message
+        else:
+            if "errors_map" not in handler_data_resp:
+                result["error"] = (
+                    "an error occurred in the route handler but no error message was returned"
+                )
+
+    return create_api_response(output_objects, handler_status, **result)
