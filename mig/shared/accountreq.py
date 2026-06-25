@@ -810,115 +810,211 @@ def list_account_reqs_pairs(configuration):
     return user_dn_reqid_pairs
 
 
-def list_peers_requested(configuration, target_dn, filters=None):
+def list_peers_requested(configuration, client_id):
     """
     Return the requested peers corresponding to a particular user.
     """
 
-    _logger = configuration.logger
-    client_dir = client_id_dir(target_dn)
-    pending_peers_path = os.path.join(configuration.user_settings, client_dir,
-                                      pending_peers_filename)
-    try:
-        pending_peer_pairs = load(pending_peers_path)
-        pending_peers = [peer_dict for _, peer_dict in pending_peer_pairs]
-    except Exception as exc:
-        if os.path.exists(pending_peers_path):
-            _logger.warning("could not load pending peers from %s: %s" %
-                            (pending_peers_path, exc))
-        pending_peers = []
-    return pending_peers
+    pending_peers = load_peers_pending(configuration, client_id)
+    if not pending_peers:
+        return []
+    return [peer_dict for _, peer_dict in pending_peers]
 
 
-
-def list_peers_accepted(configuration, target_dn, filters=None):
+def list_peers_accepted(configuration, client_id):
     """
     Return the accepted peers corresponding to a particular user.
     """
+    accepted_peers = load_peers_accepted(configuration, client_id)
+    if not accepted_peers:
+        return []
+    return accepted_peers.values()
 
+
+def load_peers_pending(configuration, client_id):
+    """ Loads the pending peers for the client """
     _logger = configuration.logger
-    client_dir = client_id_dir(target_dn)
-    accepted_peers_path = os.path.join(configuration.user_settings, client_dir,
-                                      peers_filename)
+    client_dir = client_id_dir(client_id)
+    peers_path = os.path.join(configuration.user_settings, client_dir, pending_peers_filename)
+
     try:
-        accepted_peers = load(accepted_peers_path).values()
+        pending_peers = load_db_with_lock(peers_path, logger=_logger, exclusive=True)
     except Exception as exc:
-        if os.path.exists(accepted_peers_path):
+        if os.path.exists(peers_path):
             _logger.warning("could not load accepted peers from %s: %s" %
-                            (accepted_peers_path, exc))
-        accepted_peers = []
+                            (peers_path, exc))
+    return pending_peers
+
+
+def load_peers_accepted(configuration, client_id):
+    """ Loads the accepted peers for the client """
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
+
+    try:
+        accepted_peers = load_db_with_lock(peers_path, logger=_logger, exclusive=True)
+    except Exception as exc:
+        if os.path.exists(peers_path):
+            _logger.warning("could not load accepted peers from %s: %s" %
+                            (peers_path, exc))
     return accepted_peers
 
 
-def remove_peers_from_client(configuration, client_id, peer_dns, pending_or_accepted="pending"):
-    """
-    Remove a specified peer from the client.
+def acquire_lock_for_path(path, exclusive=False):
+    """Lock the path """
+    lock_path = "%s.lock" % path
+    return acquire_file_lock(lock_path, exclusive=exclusive)
 
-    peers: [x509_peer_dn_string, dict_of_peer_fields]
+
+def load_db_with_lock(path, logger=None, exclusive=False):
+    """ Retrieve the db """
+    if not os.path.exists(path):
+        return False
+
+    with acquire_lock_for_path(path, exclusive=exclusive) as _lock_handle:
+        try:
+            return unpickle(path, logger, allow_missing=False)
+        finally:
+            release_file_lock(_lock_handle)
+
+
+def remove_pending_peers_from_client(configuration, client_id, peers_dns):
     """
-    if pending_or_accepted not in ["pending", "accepted"]:
-        raise ValueError("pending_or_accepted must be either \"pending\" or \"accepted\"")
+    Remove a specified pending peer from the client.
+    Expects peers_dns to be a list of tuples, this is used to maintain the order
+    of the peers in the list when a user has to approve them.
+
+    peers_dns: [x509_peer_dn_string]
+    """
 
     _logger = configuration.logger
     client_dir = client_id_dir(client_id)
 
-    if pending_or_accepted == 'pending':
-        peers_path = os.path.join(configuration.user_settings, client_dir, pending_peers_filename)
-    else:
-        peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
-    peers_lock_path = "%s.lock" % peers_path
-    with acquire_file_lock(peers_lock_path, exclusive=True) as _lock_handle:
+    peers_path = os.path.join(configuration.user_settings, client_dir, pending_peers_filename)
+    with acquire_lock_for_path(peers_path, exclusive=True) as _lock_handle:
         try:
-            saved_peers = unpickle(peers_path, _logger, allow_missing=True)
-            if not saved_peers:
-                _logger.info("found no peers db at %s to delete the peer %s from for %s" % (peers_path, peer_dns, client_id))
+            peers_db = unpickle(peers_path, _logger, allow_missing=True)
+            if not peers_db:
+                _logger.info("found no pending peers db at %s to delete the peer %s from for %s" % (peers_path, peers_dns, client_id))
                 return True
 
-            updated_peers = {peer_dn: peer_dict for peer_dn, peer_dict in saved_peers.items() if peer_dn not in peer_dns}
-            if pickle(updated_peers, peers_path, _logger):
-                _logger.info("removed peer(s) %s from %s for %s" % (peer_dns, peers_path, client_id))
+            new_peers_db = [
+                (peer_dn, peer_dict)
+                for peer_dn, peer_dict in peers_db
+                if peer_dn not in peers_dns
+            ]
+            if pickle(new_peers_db, peers_path, _logger):
+                _logger.info("removed pending peer(s) %s from %s for %s" % (peers_dns, peers_path, client_id))
                 return True
 
-            _logger.error("deleting %s peer(s) from %s for %s failed" % (peer_dns, peers_path, client_id))
+            _logger.error("deleting pending peer(s) %s from %s for %s failed" % (peers_dns, peers_path, client_id))
             return False
         finally:
             release_file_lock(_lock_handle)
 
 
-def add_peers_to_client(configuration, client_id, peers, pending_or_accepted="pending"):
+def add_pending_peers_to_client(configuration, client_id, peers):
     """
-    Add a specified peer to the client
+    Add a specified pending peer from the client.
+    Expects peers to be a list of tuples, this is used to maintain the order
+    of the peers in the list when a user has to approve them.
+
+    peers: [(x509_peer_dn_string, dict_of_peer_fields)]
     """
-    if pending_or_accepted not in ["pending", "accepted"]:
-        raise ValueError("pending_or_accepted must be either \"pending\" or \"accepted\"")
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+
+    peers_path = os.path.join(configuration.user_settings, client_dir, pending_peers_filename)
+    with acquire_lock_for_path(peers_path, exclusive=True) as _lock_handle:
+        try:
+            peers_db = unpickle(peers_path, _logger, allow_missing=True)
+            if not peers_db:
+                peers_db = {}
+                _logger.warning("found no pending peers db at %s to add peer(s) %s to for %s" % (peers_path, peers, client_id))
+                _logger.info("creating a new pending peers db at %s" % peers_path)
+
+            change_peers = dict(peers)
+            # NOTE: always remove old first to replace any existing and move them last
+            peers_db = [
+                (peer_dn, peer_dict)
+                for (peer_dn, peer_dict) in peers_db
+                if peer_dn not in change_peers
+            ]
+
+            peers_db += peers
+            if pickle(peers_db, peers_path, _logger):
+                _logger.info("added pending peer(s) %s to %s for %s" % (peers, peers_path, client_id))
+                return True
+
+            _logger.error("adding pending peer(s) %s to %s for %s failed" % (peers, peers_path, client_id))
+            return False
+        finally:
+            release_file_lock(_lock_handle)
+
+
+
+def remove_accepted_peers_from_client(configuration, client_id, peers_dns):
+    """
+    Remove accepted peers from the client.
+    Expects peers_dns to be a list of x509 distinguished names to identify the peer.
+
+    peers_dns: [x509_peer_dn_string]
+    """
 
     _logger = configuration.logger
     client_dir = client_id_dir(client_id)
 
-    if pending_or_accepted == 'pending':
-        peers_path = os.path.join(configuration.user_settings, client_dir, pending_peers_filename)
-    else:
-        peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
-
-    peers_lock_path = "%s.lock" % peers_path
-    with acquire_file_lock(peers_lock_path, exclusive=True) as _lock_handle:
+    peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
+    with acquire_lock_for_path(peers_path, exclusive=True) as _lock_handle:
         try:
-            existing_peers = unpickle(peers_path, _logger, allow_missing=True)
-            if not existing_peers:
-                existing_peers = []
-                _logger.warning("found no peers db at %s to add peer(s) %s to for %s" % (peers_path, peers, client_id))
+            peers_db = unpickle(peers_path, _logger, allow_missing=True)
+            if not peers_db:
+                _logger.info("found no peers db at %s to delete the peer %s from for %s" % (peers_path, peers_dns, client_id))
+                return True
+
+            for peer_dn in peers_dns:
+                if peer_dn in peers_db:
+                    del peers_db[peer_dn]
+
+            if pickle(peers_db, peers_path, _logger):
+                _logger.info("removed peer(s) %s from %s for %s" % (peers_dns, peers_path, client_id))
+                return True
+
+            _logger.error("deleting %s peer(s) from %s for %s failed" % (peers_dns, peers_path, client_id))
+            return False
+        finally:
+            release_file_lock(_lock_handle)
+
+
+def add_accepted_peers_to_client(configuration, client_id, peers_dict):
+    """
+    Remove accepted peers from the client.
+    Expects peers to be a dictionary
+
+    peers: {x509_peer_dn_string, dict_of_peer_fields}
+    """
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+
+    peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
+    with acquire_lock_for_path(peers_path, exclusive=True) as _lock_handle:
+        try:
+            peers_db = unpickle(peers_path, _logger, allow_missing=True)
+            if not peers_db:
+                peers_db = {}
+                _logger.warning("found no peers db at %s to add peer(s) %s to for %s" % (peers_path, peers_dict, client_id))
                 _logger.info("creating a new peers db at %s" % peers_path)
 
-            existing_peers.extend(peers)
-            if pickle(existing_peers, peers_path, _logger):
-                _logger.info("added peer(s) %s to %s for %s" % (peers, peers_path, client_id))
+            peers_db.update(peers_dict)
+            if pickle(peers_db, peers_path, _logger):
+                _logger.info("added peer(s) %s to %s for %s" % (peers_dict, peers_path, client_id))
                 return True
 
-            _logger.error("adding peer(s) %s to %s for %s failed" % (peers, peers_path, client_id))
+            _logger.error("adding peer(s) %s to %s for %s failed" % (peers_dict, peers_path, client_id))
             return False
         finally:
             release_file_lock(_lock_handle)
-
 
 
 def is_account_req(req_id, configuration):
@@ -1829,5 +1925,5 @@ def manage_pending_peers(configuration, client_id, action, change_list):
         raise ValueError("unsupported action in manage pending peers: %s" % action)
 
     if action == "add":
-        return add_peers_to_client(configuration, client_id, change_list, pending_or_accepted="pending")
-    return remove_peers_from_client(configuration, client_id, change_list, pending_or_accepted="pending")
+        return add_pending_peers_to_client(configuration, client_id, change_list)
+    return remove_pending_peers_from_client(configuration, client_id, change_list)
