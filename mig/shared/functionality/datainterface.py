@@ -61,7 +61,7 @@ from mig.lib.reqinfo import (
     unlistify,
     unlistify_dict,
 )
-from mig.shared.base import extract_field
+from mig.shared.base import extract_field, fill_user
 from mig.shared.functionality.peersaction import process_peer_action
 from mig.shared.init import (
     find_entry,
@@ -83,8 +83,8 @@ PEER_DN_TYPE_MAP = {"peer": valid_distinguished_name}
 # TODO, move the helper functions and the peers related handlers/normalizers
 # into their own submodule
 def validate_input_peer_distinguished_name(peer):
-    """ Validates that the peer has a valid structure and only allowed characters 
-    
+    """Validates that the peer has a valid structure and only allowed characters
+
     peer: {"peer": peer_dn}
     """
     signature = {"peer": REJECT_UNSET}
@@ -95,8 +95,8 @@ def validate_input_peer_distinguished_name(peer):
 
 
 def validate_input_peers_distinguished_names(peers):
-    """ Validates the input of a list of peers 
-    
+    """Validates the input of a list of peers
+
     peers: [{"peer": peer_dn}]
     """
     peer_validations = []
@@ -116,6 +116,38 @@ def create_handler_response(status, message=None, **ui_response_kwargs):
     """
     response = {"status": status, "message": message}, {**ui_response_kwargs}
     return response
+
+
+def create_peers_notify_msg(
+    header_title, header_action, header_from, body_identifer, peers
+):
+    """A helper funtion to create a peers notification mesage"""
+    notify_header = "%s %s by %s" % (
+        header_title,
+        header_action,
+        header_from,
+    )
+
+    notify_peers = [
+        """
+            "Peer: %s
+            "Expire: %s
+        """ % (peer_dn, peer_dict["expire"])
+        for peer_dn, peer_dict in peers.items()
+    ]
+    notify_dict = {
+        "action": header_action,
+        "body_identifer": body_identifer,
+        "peers": "".join(notify_peers),
+    }
+    notify_msg = """
+        Received %(action)s from %(body_identifer)s
+
+        Peers:
+        %(peers)s
+    """ % notify_dict
+
+    return {"header": notify_header, "msg": notify_msg}
 
 
 def main(client_id, user_arguments_dict, environ=None, configuration=None):
@@ -194,6 +226,7 @@ def handle_POST_peers_new(configuration, request_info):
 
     success_map = {}
     errors_map = {}
+    created_peers = {}
     for index, peer_fields_dict in enumerate([fields_dict]):
         # input validation
         peer_dict, errors = accountreq.peer_dict_from_fields(
@@ -234,27 +267,52 @@ def handle_POST_peers_new(configuration, request_info):
             }
             continue
 
-        # save the new peer
-        success, temp_user_file_abs = accountreq.save_account_request(
-            configuration, peer_dict
+        peer_dn = peer_dict["distinguished_name"]
+        peer_dict = fill_user(peer_dict)
+        pending_peer_entry = (peer_dn, peer_dict)
+        saved = accountreq.add_pending_peers_to_client(
+            configuration, request_info.client_id, [pending_peer_entry]
         )
-        if not success:
-            success_map[index] = False
-            continue
-
-        req_id = os.path.basename(temp_user_file_abs)
-        success, _ = accountreq.peer_account_req(
-            req_id,
-            configuration,
-            request_info.client_id,
-            admin_copy=False,
-            include_auto_email=False,
-        )
-
-        success_map[index] = success
+        if not saved:
+            # Atm, we are only creating one peer here,
+            # so we can return early
+            return create_handler_response(
+                500,
+                message="failed to save the submitted peer, please contact support for help with this.",
+            )
+        created_peers[peer_dn] = peer_dict
+        success_map[index] = True
 
     if errors_map:
         return create_handler_response(400, errors_map=errors_map)
+
+    if not created_peers:
+        return create_handler_response(
+            500,
+            message="no errors were discovered, but the peer was not created, please contact support about this",
+        )
+
+    # notify admins about the succesful a<dditions
+    action = "peers_new"
+    client_name = extract_field(request_info.client_id, "full_name")
+    notify_dict = create_peers_notify_msg(
+        configuration.short_title,
+        action,
+        client_name,
+        request_info.client_id,
+        created_peers,
+    )
+
+    if not send_email(
+        configuration,
+        configuration.admin_email,
+        notify_dict["header"],
+        notify_dict["msg"],
+    ):
+        configuration.logger.error(
+            "failed to send notification to admins about the client %s creating new peers %s"
+            % (request_info.client_id, "\n".join(created_peers))
+        )
 
     return create_handler_response(200, success_map=success_map)
 
@@ -316,8 +374,9 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
         )
 
     success_map, errors_map = {}, {}
-    peers_deleted = []
+    peers_deleted = {}
     for index, peer_dn in enumerate(valid_client_peers_dn):
+        peer_dict = accepted_by_dn[peer_dn]
         if not accountreq.remove_accepted_peers_from_client(
             configuration, request_info.client_id, [peer_dn]
         ):
@@ -330,7 +389,7 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
             # For now we let the janitor clean the global user_pending
             # peers requests
             success_map[index] = True
-            peers_deleted.append(peer_dn)
+            peers_deleted[peer_dn] = peer_dict
 
     if errors_map:
         return create_handler_response(
@@ -342,30 +401,23 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
     # peers and their expiration date
     action = "peers_accepted_delete"
     client_name = extract_field(request_info.client_id, "full_name")
-    notify_header = "%s %s by %s" % (
+    notify_dict = create_peers_notify_msg(
         configuration.short_title,
         action,
         client_name,
+        request_info.client_id,
+        peers_deleted,
     )
 
-    notify_dict = {
-        "action": action,
-        "client_id": request_info.client_id,
-        "peers": "\n".join(peers_deleted),
-    }
-    notify_msg = """
-        Received %(action)s from %(client_id)s
-
-        Peers:
-        %(peers)s
-    """ % notify_dict
-
     if not send_email(
-        configuration, configuration.admin_email, notify_header, notify_msg
+        configuration,
+        configuration.admin_email,
+        notify_dict["header"],
+        notify_dict["msg"],
     ):
         configuration.logger.error(
             "failed to send notification to admins about the client %s deleting the following accepted peers succesfully %s"
-            % (request_info.client_id, "\n".join(peers_deleted))
+            % (request_info.client_id, "\n".join(peers_deleted.keys()))
         )
         # log this error so it is visible to admins, but since the client peers have been deleted, we return it as
         # an success to the client
@@ -564,7 +616,6 @@ def handle_POST_peers_requested_delete(configuration, request_info):
     )
     for index, peer_dn in enumerate(valid_client_peers_dn):
         peer_dict = current_requested_peers.get(peer_dn, None)
-
         # Remove the client pending peer
         if not accountreq.remove_pending_peers_from_client(
             configuration, request_info.client_id, [peer_dn]
@@ -586,34 +637,19 @@ def handle_POST_peers_requested_delete(configuration, request_info):
     # Notify admins about the changes
     action = "peers_requested_delete"
     client_name = extract_field(request_info.client_id, "full_name")
-    notify_header = "%s %s by %s" % (
+
+    notify_dict = create_peers_notify_msg(
         configuration.short_title,
         action,
         client_name,
+        request_info.client_id,
+        peers_deleted,
     )
-    notify_peers = [
-        """
-            "Peer: %s
-            "Expire: %s
-        """ % (peer_dict["distinguished_name"], peer_dict["expire"])
-        for peer_dn, peer_dict in peers_deleted.items()
-    ]
-
-    notify_dict = {
-        "action": action,
-        "client_id": request_info.client_id,
-        "peers": "".join("%s \n" % notify_peer for notify_peer in notify_peers),
-    }
-
-    notify_msg = """
-        Received %(action)s from %(client_id)s
-
-        Peers:
-        %(peers)s
-    """ % notify_dict
-
     if not send_email(
-        configuration, configuration.admin_email, notify_header, notify_msg
+        configuration,
+        configuration.admin_email,
+        notify_dict["header"],
+        notify_dict["msg"],
     ):
         configuration.logger.error(
             "failed to send notification to admins about the client %s deleting the following requested peers succesfully %s"
