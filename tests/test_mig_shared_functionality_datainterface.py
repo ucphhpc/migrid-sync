@@ -398,6 +398,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
 
     def test_peers_requsted_accept(self):
         _ensure_dirs_needed_for_userdb(self.configuration)
+        self._provision_pending_peer(self, self.TEST_PENDING_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
         self.logger.declare_expected_error(comparison='startswith',
                                            expectation="expire '' could not be parsed into a valid date")
 
@@ -428,6 +429,10 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         # now check that the peer was added
         user_peers = self.assertUserPeers(self.TEST_CLIENT_ID)
         self.assertIn(self.TEST_PENDING_PEER_DN, user_peers)
+
+        # check that the client pending peer is gone
+        pending_peers = self.assertUserPendingPeers(self.TEST_CLIENT_ID)
+        self.assertEqual(len(pending_peers), 0)
 
         # check emails were sent
         fake_send_email = self.configuration.context_get('notifier').send_email

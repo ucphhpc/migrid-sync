@@ -62,7 +62,6 @@ from mig.lib.reqinfo import (
     unlistify_dict,
 )
 from mig.shared.base import extract_field
-from mig.shared.fileio import delete_file
 from mig.shared.functionality.peersaction import process_peer_action
 from mig.shared.init import (
     find_entry,

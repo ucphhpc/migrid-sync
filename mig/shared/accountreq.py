@@ -1920,10 +1920,17 @@ def parse_peers(configuration, peers_content, peers_format, csv_sep=';'):
 
 
 def manage_pending_peers(configuration, client_id, action, change_list):
-    """Helper to manage changes to pending peers list of client_id"""
+    """
+    Helper to manage changes to pending peers list of client_id
+    
+    change_list: [(peer_dn, peer_dict)]
+    """
     if action not in ["add", "remove"]:
         raise ValueError("unsupported action in manage pending peers: %s" % action)
 
     if action == "add":
         return add_pending_peers_to_client(configuration, client_id, change_list)
-    return remove_pending_peers_from_client(configuration, client_id, change_list)
+
+    # Remove only needs a list of peer_dns
+    remove_list = [change[0] for change in change_list]
+    return remove_pending_peers_from_client(configuration, client_id, remove_list)
