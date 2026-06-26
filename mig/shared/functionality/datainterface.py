@@ -83,7 +83,10 @@ PEER_DN_TYPE_MAP = {"peer": valid_distinguished_name}
 # TODO, move the helper functions and the peers related handlers/normalizers
 # into their own submodule
 def validate_input_peer_distinguished_name(peer):
-    # TODO, add function description
+    """ Validates that the peer has a valid structure and only allowed characters 
+    
+    peer: {"peer": peer_dn}
+    """
     signature = {"peer": REJECT_UNSET}
     accepted, rejected = validated_input(
         peer, signature, type_override=PEER_DN_TYPE_MAP, list_wrap=True
@@ -92,7 +95,10 @@ def validate_input_peer_distinguished_name(peer):
 
 
 def validate_input_peers_distinguished_names(peers):
-    # TODO, add function description
+    """ Validates the input of a list of peers 
+    
+    peers: [{"peer": peer_dn}]
+    """
     peer_validations = []
     for peer in peers:
         accepted, rejected = validate_input_peer_distinguished_name(peer)
@@ -331,7 +337,9 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
             400, success_map=success_map, errors_map=errors_map
         )
 
-    # Notify admins about the changes
+    # Construct an email that is sent to
+    # the configuration.admin_email about the deleted
+    # peers and their expiration date
     action = "peers_accepted_delete"
     client_name = extract_field(request_info.client_id, "full_name")
     notify_header = "%s %s by %s" % (
@@ -345,11 +353,6 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
         "client_id": request_info.client_id,
         "peers": "\n".join(peers_deleted),
     }
-
-    # Kind: %(kind)s
-    # Expire: %(expire)s
-    # Label: %(label)s
-
     notify_msg = """
         Received %(action)s from %(client_id)s
 
@@ -364,8 +367,8 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
             "failed to send notification to admins about the client %s deleting the following accepted peers succesfully %s"
             % (request_info.client_id, "\n".join(peers_deleted))
         )
-        # send_email logs this error, and since the peers have been deleted, we return it as
-        # an success
+        # log this error so it is visible to admins, but since the client peers have been deleted, we return it as
+        # an success to the client
     return create_handler_response(200, success_map=success_map)
 
 
