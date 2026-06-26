@@ -220,17 +220,17 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         status = json_response['status']
         self.assertEqual(status, 200)
 
-        user_pending_entries = self.assertPendingUsers(expected_count=1)
-        user_pending_filename = user_pending_entries[0]
-        user_pending_file = os.path.join(self.configuration.user_pending, user_pending_filename)
-        actual = self.assertPickledFile(user_pending_file, apply_hints=['convert_dict_bytes_to_strings_kv'])
+        actual_peers_dict = self.assertUserPendingPeers(self.TEST_CLIENT_ID)
+        pending_peers_fixture.assertAgainstFixture(actual_peers_dict)
 
-        actual_peers_tuples = self.assertUserPendingPeers(self.TEST_CLIENT_ID)
-        pending_peers_fixture.assertAgainstFixture(actual_peers_tuples)
+        # Validate that the email was sent about the peer having been
+        # created
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
 
     def test_peers_summary(self):
         self._provision_peer_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
-        self._provision_test_pending_user(self, self.TEST_PENDING_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
 
         request_body = {
             'type': 'peers__summary',
@@ -398,7 +398,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
 
     def test_peers_requsted_accept(self):
         _ensure_dirs_needed_for_userdb(self.configuration)
-        self._provision_pending_peer(self, self.TEST_PENDING_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
+        self._record_pending_peer(self.TEST_PENDING_PEER_DN, self.TEST_CLIENT_ID)
         self.logger.declare_expected_error(comparison='startswith',
                                            expectation="expire '' could not be parsed into a valid date")
 

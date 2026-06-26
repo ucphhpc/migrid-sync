@@ -282,8 +282,6 @@ class UserAssertMixin:
             peer_dict = all_fixture_pending_peers[distinguished_name]
             assert peer_dict['comment'] == against_user_email
 
-        self._provision_test_pending_user(self, distinguished_name, against_user_dn=against_user_dn)
-
         fixture.write_to_dir(self.test_user_settings_dir, output_format='pickle')
 
     def _record_peer(self, fixture_relpath, against_user_dn):
@@ -308,15 +306,13 @@ class UserAssertMixin:
         prepared.write_to_dir(user_settings_dir, output_format='pickle')
 
     def _record_pending_peer(self, distinguished_name, against_user_dn):
-        """Fabricate a peer record against a particular user.
+        """Fabricate a peer pending record against a particular user.
         """
 
         try:
             fixture_relpath = _FIXTURE_NAME_BY_PENDING_PEER_DN[distinguished_name]
         except KeyError:
             raise AssertionError("unknown DN for record pending peer")
-
-        self._provision_test_pending_user(self, distinguished_name, against_user_dn=against_user_dn)
 
         prepared = _PreparedFixture.from_relpath(
             self,
