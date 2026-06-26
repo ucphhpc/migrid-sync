@@ -930,7 +930,7 @@ def add_pending_peers_to_client(configuration, client_id, peers):
         try:
             peers_db = unpickle(peers_path, _logger, allow_missing=True)
             if not peers_db:
-                peers_db = {}
+                peers_db = []
                 _logger.warning("found no pending peers db at %s to add peer(s) %s to for %s" % (peers_path, peers, client_id))
                 _logger.info("creating a new pending peers db at %s" % peers_path)
 
