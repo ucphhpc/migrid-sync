@@ -119,6 +119,20 @@ def _hints_apply_today_relative(value, modifier):
         raise NotImplementedError("unspported today_relative modifier")
 
 
+def _hints_apply_today_relative_date(value, modifer):
+    """
+    Geneate a date value by applying a declared delta to today's date.
+    """
+    kind, delta = modifer.split('|')
+    if kind == "days":
+        time_delta = timedelta(days=int(delta))
+        adjusted_datetime = date.today() + time_delta
+        return adjusted_datetime.isoformat()
+    else:
+        raise NotImplementedError("unspported today_relative_date modifier")
+
+
+
 def _hints_apply_dict_bytes_to_strings_kv(input_dict, modifier):
     """
     Convert a dictionary whose keys/values are bytes to one whose
@@ -227,6 +241,7 @@ _HINTS_APPLIERS_ARGLESS = {
 _FIXTUREFILE_APPLIERS_ATTRIBUTES = {
     'array_of_tuples': _hints_apply_array_of_tuples,
     'today_relative': _hints_apply_today_relative,
+    'today_relative_date': _hints_apply_today_relative_date
 }
 
 # hints applied when writing the contents of a fixture as a temporary file

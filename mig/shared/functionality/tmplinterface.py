@@ -67,6 +67,8 @@ from mig.shared.scriptinput import fieldstorage_to_dict
 def _coerce_date(value):
     if isinstance(value, date):
         return value
+    elif isinstance(value, str):
+        return date.fromisoformat(value)
     elif isinstance(value, int):
         return date.fromtimestamp(value)
     raise ValueError('value does not look like a date')

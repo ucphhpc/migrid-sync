@@ -10,7 +10,7 @@
     "organizational_unit": "",
     "expire": {
       "_FixtureHint": true,
-      "hint": "today_relative",
+      "hint": "today_relative_date",
       "modifier": "days|+5",
       "value": 0
     },

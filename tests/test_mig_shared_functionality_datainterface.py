@@ -490,9 +490,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
 
         self.assertEqual(peer["distinguished_name"], self.TEST_PEER_DN)
         self.assertIn("expire", peer)
-        # Returns the YYYY-MM-DDTHH:MM:SS format
-        saved_expire = datetime.fromtimestamp(peer['expire']).isoformat().split("T")[0]
-        self.assertEqual(saved_expire, expire_payload)
+        self.assertEqual(peer["expire"], expire_payload)
 
         # check emails were sent
         fake_send_email = self.configuration.context_get('notifier').send_email

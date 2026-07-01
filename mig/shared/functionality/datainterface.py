@@ -170,7 +170,10 @@ def create_peers_notify_msg(
 
 
 def validate_expire_value(expire_date):
-    expire = datetime.datetime.strptime(expire_date, "%Y-%m-%d")
+    try:
+        expire = datetime.datetime.strptime(expire_date, "%Y-%m-%d")
+    except ValueError:
+        return False, "incorrect expire format given, expected YYYY-MM-DD"
     now = datetime.datetime.now()
 
     if now + datetime.timedelta(days=peers_expire_min_days) > expire:
@@ -283,11 +286,6 @@ def handle_POST_peers_new(configuration, request_info):
             success_map[index] = False
             errors_map[index] = {"expire": expire_message}
             continue
-
-        # Transform the expire YYYY-MM-DD to epoch time
-        peer_dict["expire"] = accountreq.transform_account_datestr_to_epoch(
-            peer_dict["expire"]
-        )
 
         # comment field must contain the requesting peer
         peer_dict["comment"] = request_info.client_email
@@ -608,15 +606,10 @@ def handle_POST_peers_accepted_update(configuration, request_info):
             404, message="you don't have an accepted peer with those details"
         )
 
-    # Transform expire date to unix time
-    unix_expire_time = accountreq.transform_account_datestr_to_epoch(
-        expire_date
-    )
-
     # Update the underlying peer
     update_peer_dict = {
         peer_dn: {
-            "expire": unix_expire_time,
+            "expire": expire_date,
         }
     }
 
@@ -799,6 +792,7 @@ def handle_POST_peers_requested_accept(configuration, request_info):
         )
 
     success_map = {}
+
     # TODO, for now the process_peer_action does the input validation and
     # the peers handling, but in the future we want to move the input validation up to happen at the outset
     # before handing the clientside values down to the underlying library logic

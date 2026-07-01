@@ -9,7 +9,7 @@
       "email": "pending_peer1@example.com",
       "expire": {
         "_FixtureHint": true,
-        "hint": "today_relative",
+        "hint": "today_relative_date",
         "modifier": "days|+2",
         "value": 0
       },
@@ -31,7 +31,7 @@
       "email": "pending_peer2@example.com",
       "expire": {
         "_FixtureHint": true,
-        "hint": "today_relative",
+        "hint": "today_relative_date",
         "modifier": "days|+2",
         "value": 0
       },
@@ -54,7 +54,7 @@
       "email": "pending_peer3@example.com",
       "expire": {
         "_FixtureHint": true,
-        "hint": "today_relative",
+        "hint": "today_relative_date",
         "modifier": "days|+7",
         "value": 0
       },

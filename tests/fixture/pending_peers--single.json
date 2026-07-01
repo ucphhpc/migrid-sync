@@ -6,7 +6,7 @@
     "email": "pending_peer@example.com",
     "expire": {
       "_FixtureHint": true,
-      "hint": "today_relative",
+      "hint": "today_relative_date",
       "modifier": "days|+8",
       "value": 0
     },
