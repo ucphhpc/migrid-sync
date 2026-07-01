@@ -37,6 +37,7 @@ from datetime import date
 import os
 import re
 import time
+import copy
 
 # NOTE: the external iso3166 module is optional and only used if available
 try:
@@ -827,8 +828,8 @@ def list_peers_accepted(configuration, client_id):
     """
     accepted_peers = load_peers_accepted(configuration, client_id)
     if not accepted_peers:
-        return []
-    return accepted_peers.values()
+        return {}
+    return accepted_peers
 
 
 def load_peers_pending(configuration, client_id):
@@ -860,7 +861,6 @@ def load_peers_accepted(configuration, client_id):
                             (peers_path, exc))
     return accepted_peers
 
-
 def acquire_lock_for_path(path, exclusive=False):
     """Lock the path """
     lock_path = "%s.lock" % path
@@ -875,6 +875,35 @@ def load_db_with_lock(path, logger=None, exclusive=False):
     with acquire_lock_for_path(path, exclusive=exclusive) as _lock_handle:
         try:
             return unpickle(path, logger, allow_missing=False)
+        finally:
+            release_file_lock(_lock_handle)
+
+
+def update_peers_accepted(configuration, client_id, update_peer_dicts):
+    """ Update the accepted peers for the client """
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+
+    peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
+    with acquire_lock_for_path(peers_path, exclusive=True) as _lock_handle:
+        try:
+            peers_db = unpickle(peers_path, _logger, allow_missing=True)
+            if not peers_db:
+                _logger.info("found no peers db at %s to update the peer %s from for %s" % (peers_path, update_peer_dicts, client_id))
+                return True
+
+            copy_peers_db = copy.deepcopy(peers_db)
+            for peer_dn, peer_update_dict in update_peer_dicts.items():
+                if peer_dn not in copy_peers_db:
+                    continue
+                copy_peers_db[peer_dn].update(**peer_update_dict)
+
+            if pickle(copy_peers_db, peers_path, _logger):
+                _logger.info("updating accepted peer(s) %s from %s for %s" % (update_peer_dicts, peers_path, client_id))
+                return True
+
+            _logger.error("updating accepted peer(s) %s from %s for %s failed" % (update_peer_dicts, peers_path, client_id))
+            return False
         finally:
             release_file_lock(_lock_handle)
 
@@ -951,7 +980,6 @@ def add_pending_peers_to_client(configuration, client_id, peers):
             return False
         finally:
             release_file_lock(_lock_handle)
-
 
 
 def remove_accepted_peers_from_client(configuration, client_id, peers_dns):
@@ -1846,8 +1874,7 @@ def peer_dict_from_fields(configuration, peer_fields_dict):
         return peer_dict, errors
 
     # nudge expire into a unix time
-    expire_date = date.fromisoformat(peer_dict['expire'])
-    peer_dict["expire"] = int(time.mktime(expire_date.timetuple()))
+    peer_dict["expire"] = transform_account_datestr_to_epoch(peer_dict['expire'])
 
     peer_dict = fill_user(peer_dict)
     # This is required to match how client_id pending_peers are currently loaded
@@ -1855,6 +1882,18 @@ def peer_dict_from_fields(configuration, peer_fields_dict):
     canonicaled_peer_dict = canonical_user(configuration, peer_dict, combined_accepted_fields)
     filled_canonicaled_peer_dict = fill_distinguished_name(canonicaled_peer_dict)
     return filled_canonicaled_peer_dict, None
+
+
+def transform_account_datestr_to_epoch(expire):
+    """ Transform the expected expire date YYYY-MM-DD to epoch time """
+    expire_date = date.fromisoformat(expire)
+    return int(time.mktime(expire_date.timetuple()))
+
+
+def transform_account_epoch_to_date(expire):
+    """ Transform the expected epoch time to YYYY-MM-DD """
+    expire_date = date.fromisoformat(expire)
+    return expire_date.isoformat()
 
 
 def parse_peers_userid(configuration, raw_entries):
