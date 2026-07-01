@@ -791,31 +791,67 @@ def handle_POST_peers_requested_accept(configuration, request_info):
             % validation_errors,
         )
 
-    success_map = {}
-
-    # TODO, for now the process_peer_action does the input validation and
-    # the peers handling, but in the future we want to move the input validation up to happen at the outset
-    # before handing the clientside values down to the underlying library logic
-    for index, accepted in enumerate(validation_accepted):
-        peer_dn = accepted["peer"]
-        _, returnvalue = process_peer_action(
-            configuration,
-            [],
-            request_info.client_id,
-            [peer_dn],
-            "accept",
-            "userid",
-            {},
-            auto_expire=True,
+    accepted_peer_dns = [accepted["peer"] for accepted in validation_accepted]
+    existing_requested_peers = accountreq.load_peers_pending(
+        configuration, request_info.client_id
+    )
+    # 0 = peer_dn
+    # 1 = peer_dict
+    to_accept_peers = {
+        peer_tuple[0]: peer_tuple[1]
+        for peer_tuple in existing_requested_peers
+        if peer_tuple[0] in accepted_peer_dns
+    }
+    # TODO, implement a function that handles the removal and addition
+    # in one go
+    if not accountreq.add_accepted_peers_to_client(
+        configuration, request_info.client_id, to_accept_peers
+    ):
+        return create_handler_response(
+            400,
+            error="failed to accepted peers",
+            errors_map=[
+                {index: False} for index, peer_dn in enumerate(to_accept_peers)
+            ],
         )
-        success = returnvalue == returnvalues.OK
 
-        if not success:
-            # the peer was not recorded
-            success_map[index] = False
-            continue
+    # If accepted succesfully we can remove the pending peers
+    if not accountreq.remove_pending_peers_from_client(
+        configuration, request_info.client_id, list(to_accept_peers.keys())
+    ):
+        return create_handler_response(
+            400,
+            error="the peers were accepted but the removal of the pending ones failed",
+            errors_map=[
+                {index: False} for index, peer_dn in enumerate(to_accept_peers)
+            ],
+        )
 
-        success_map[index] = success
+    # We don't care about the order
+    success_map = {index: True for index, peer_dn in enumerate(to_accept_peers)}
+
+    # notify admins about the succesful additions
+    action = "peers_requested_accept"
+    client_name = extract_field(request_info.client_id, "full_name")
+    notify_dict = create_peers_notify_msg(
+        configuration.short_title,
+        action,
+        client_name,
+        request_info.client_id,
+        to_accept_peers,
+    )
+
+    if not send_email(
+        configuration,
+        configuration.admin_email,
+        notify_dict["header"],
+        notify_dict["msg"],
+    ):
+        configuration.logger.error(
+            "failed to send notification to admins about the client %s creating new peers %s"
+            % (request_info.client_id, "\n".join(created_peers))
+        )
+
     return create_handler_response(200, success_map=success_map)
 
 
