@@ -30,7 +30,7 @@
 
 from __future__ import print_function
 from collections import namedtuple
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import importlib
 import os
 import shutil
@@ -45,6 +45,7 @@ from tests.support.usersupp import UserAssertMixin
 from tests.support.wsgisupp import WsgiAssertMixin
 from envhelp.makeconfig import _ensure_dirs_needed_for_userdb
 
+from mig.shared.defaults import peers_expire_min_days
 from mig.shared.base import client_id_dir
 from mig.shared.configuration import Configuration
 from mig.shared.functionality.datainterface import _main as submain
@@ -229,6 +230,9 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertTrue(fake_send_email.called_once)
         self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
 
+    # TODO, add test for new peer that has a too short expire
+    # TODO, add a test for a new peer that has a too long expire
+
     def test_peers_summary(self):
         self._provision_peer_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
 
@@ -375,10 +379,13 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertEqual(fake_send_email.total_emails_sent(), 4)
 
     def test_peers_accepted_update(self):
+        date_expire_in_min = date.today() + timedelta(days=peers_expire_min_days) + timedelta(days=1)
         self._provision_peer_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
 
+        expire_payload = date_expire_in_min.isoformat()
         payload = {
             "peer_dn": self.TEST_PEER_DN,
+            "expire": expire_payload
         }
 
         request_body = {
@@ -394,7 +401,22 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
         status = json_response['status']
-        self.assertEqual(status, 404)
+        self.assertEqual(status, 200)
+
+        # validate that the accepted peer was updated
+        peers = self.assertUserPeers(self.TEST_CLIENT_ID)
+        peer = peers.get(self.TEST_PEER_DN, None)
+        self.assertIsNotNone(peer)
+
+        self.assertEqual(peer["distinguished_name"], self.TEST_PEER_DN)
+        self.assertIn("expire", peer)
+        # Returns the YYYY-MM-DDTHH:MM:SS format
+        saved_expire = datetime.fromtimestamp(peer['expire']).isoformat().split("T")[0]
+        self.assertEqual(saved_expire, expire_payload)
+
+        # check emails were sent
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
 
     def test_peers_requsted_accept(self):
         _ensure_dirs_needed_for_userdb(self.configuration)
