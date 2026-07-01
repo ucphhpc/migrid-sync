@@ -47,6 +47,7 @@ the ability to easily extend the routes made avalable is a key feature here.
 from __future__ import absolute_import
 
 import cgi
+import datetime
 import json
 import os
 import sys
@@ -62,6 +63,10 @@ from mig.lib.reqinfo import (
     unlistify_dict,
 )
 from mig.shared.base import extract_field, fill_user
+from mig.shared.defaults import (
+    peers_expire_max_days,
+    peers_expire_min_days,
+)
 from mig.shared.functionality.peersaction import process_peer_action
 from mig.shared.init import (
     find_entry,
@@ -72,12 +77,14 @@ from mig.shared.notification import send_email
 from mig.shared.safeinput import (
     REJECT_UNSET,
     html_escape,
+    valid_date,
     valid_distinguished_name,
     validated_input,
 )
 from mig.shared.scriptinput import fieldstorage_to_dict
 
 PEER_DN_TYPE_MAP = {"peer": valid_distinguished_name}
+PEER_EXPIRE_TYPE_MAP = {"expire": valid_date}
 
 
 # TODO, move the helper functions and the peers related handlers/normalizers
@@ -108,6 +115,18 @@ def validate_input_peers_distinguished_names(peers):
         }
         peer_validations.append(peer_validation_results)
     return peer_validations
+
+
+def validate_peer_expire(expire):
+    """Validates that the peer expire value has a valid structure and only allowed characters
+
+    peer: {"expire": expire}
+    """
+    signature = {"expire": REJECT_UNSET}
+    accepted, rejected = validated_input(
+        expire, signature, type_override=PEER_EXPIRE_TYPE_MAP, list_wrap=True
+    )
+    return unlistify_dict(accepted), unlistify_dict(rejected)
 
 
 def create_handler_response(status, message=None, **ui_response_kwargs):
@@ -148,6 +167,17 @@ def create_peers_notify_msg(
     """ % notify_dict
 
     return {"header": notify_header, "msg": notify_msg}
+
+
+def validate_expire_value(expire_date):
+    expire = datetime.datetime.strptime(expire_date, "%Y-%m-%d")
+    now = datetime.datetime.now()
+
+    if now + datetime.timedelta(days=peers_expire_min_days) > expire:
+        return False, "specified expire is in the past!"
+    if now + datetime.timedelta(days=peers_expire_max_days) < expire:
+        return False, "specified expire is too far in the future!"
+    return True, "specified expire is valid!"
 
 
 def main(client_id, user_arguments_dict, environ=None, configuration=None):
@@ -259,7 +289,7 @@ def handle_POST_peers_new(configuration, request_info):
             configuration, request_info.client_id
         )
         if peer_dict["email"] in [
-            accepted_peer["email"] for accepted_peer in accepted_peers
+            accepted_peer["email"] for accepted_peer in accepted_peers.values()
         ]:
             success_map[index] = False
             errors_map[index] = {
@@ -292,7 +322,7 @@ def handle_POST_peers_new(configuration, request_info):
             message="no errors were discovered, but the peer was not created, please contact support about this",
         )
 
-    # notify admins about the succesful a<dditions
+    # notify admins about the succesful additions
     action = "peers_new"
     client_name = extract_field(request_info.client_id, "full_name")
     notify_dict = create_peers_notify_msg(
@@ -355,7 +385,7 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
         configuration, request_info.client_id
     )
     accepted_by_dn = {
-        peer["distinguished_name"]: peer for peer in accepted_peers
+        peer["distinguished_name"]: peer for peer in accepted_peers.values()
     }
 
     valid_client_peers_dn, invalid_client_peers_dn = [], []
@@ -453,7 +483,7 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
         configuration, request_info.client_id
     )
     accepted_by_dn = {
-        peer["distinguished_name"]: peer for peer in accepted_peers
+        peer["distinguished_name"]: peer for peer in accepted_peers.values()
     }
 
     if peer_dn not in accepted_by_dn:
@@ -507,8 +537,11 @@ def convert_POST_peers_accepted_update(request_data):
     Data conversion: POST /peers/accepted/update
     """
     args = unlistify_dict(request_data)
-    args["peer"] = unlistify(args.pop("peer", ""))
-    args["expire"] = unlistify(args.pop("expire", ""))
+    peer = unlistify(args.pop("peer_dn", ""))
+    args["peer"] = {"peer": peer}
+
+    expire = unlistify(args.pop("expire", ""))
+    args["expire"] = {"expire": expire}
     return args
 
 
@@ -517,37 +550,87 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     Request Handler: POST /peers/accepted/update
     """
 
-    peer_dn = request_info.args["peer"]
-    expire = request_info.args["expire"]
+    input_peer = request_info.args["peer"]
+    input_expire = request_info.args["expire"]
 
-    updates = {"raw_expire": expire}
+    accepted, rejected = validate_input_peer_distinguished_name(input_peer)
+    if rejected:
+        return create_handler_response(
+            400,
+            message="failed to update the peer, recieved an incorrect peer argument %s"
+            % rejected,
+        )
+    peer_dn = accepted["peer"]
+
+    accepted_expire, rejected_expire = validate_peer_expire(input_expire)
+    if rejected_expire:
+        return create_handler_response(
+            400,
+            message="failed to update the peer, recieved an incorrect expire argument %s"
+            % rejected_expire,
+        )
+    expire_date = accepted_expire["expire"]
+
+    valid_expire_date, expire_message = validate_expire_value(expire_date)
+    if not valid_expire_date:
+        return create_handler_response(400, message=expire_message)
 
     accepted_peers = accountreq.list_peers_accepted(
         configuration, request_info.client_id
     )
     accepted_by_dn = {
-        peer["distinguished_name"]: peer for peer in accepted_peers
+        peer["distinguished_name"]: peer for peer in accepted_peers.values()
     }
     if peer_dn not in accepted_by_dn:
         return create_handler_response(
             404, message="you don't have an accepted peer with those details"
         )
 
-    # TODO, for now the process_peer_action does the input validation and
-    # the peers handling, but in the future we want to move the input validation up to happen at the outset
-    # before handing the clientside values down to the underlying library logic
-    _, returnvalue = process_peer_action(
-        configuration,
-        [],
-        request_info.client_id,
-        [peer_dn],
-        "update",
-        "userid",
-        updates=updates,
+    # Transform expire date to unix time
+    unix_expire_time = accountreq.transform_account_datestr_to_epoch(
+        expire_date
     )
-    if returnvalue != returnvalues.OK:
+
+    # Update the underlying peer
+    update_peer_dict = {
+        peer_dn: {
+            "expire": unix_expire_time,
+        }
+    }
+
+    if not accountreq.update_peers_accepted(
+        configuration, request_info.client_id, update_peer_dict
+    ):
         return create_handler_response(
             400, message="failed to update the accepted peer %s" % peer_dn
+        )
+
+    updated_peers = accountreq.list_peers_accepted(
+        configuration, request_info.client_id
+    )
+
+    peers_updated = {peer_dn: updated_peers[peer_dn]}
+
+    # Notify admins about the changes
+    action = "peers_accepted_update"
+    client_name = extract_field(request_info.client_id, "full_name")
+
+    notify_dict = create_peers_notify_msg(
+        configuration.short_title,
+        action,
+        client_name,
+        request_info.client_id,
+        peers_updated,
+    )
+    if not send_email(
+        configuration,
+        configuration.admin_email,
+        notify_dict["header"],
+        notify_dict["msg"],
+    ):
+        configuration.logger.error(
+            "failed to send notification to admins about the client %s deleting the following requested peers succesfully %s"
+            % (request_info.client_id, "\n".join(peers_updated.keys()))
         )
     return create_handler_response(200)
 
