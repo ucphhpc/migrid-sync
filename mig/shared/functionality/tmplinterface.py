@@ -168,7 +168,7 @@ def prepare_GET_migux_apps_peers_accepted(configuration, request_info):
     Data preparation function for mixux.apps.peers GET /accepted
     """
 
-    listing = accountreq.list_peers_accepted(configuration, request_info.client_id)
+    listing = accountreq.list_peers_accepted(configuration, request_info.client_id).values()
     return True, _peers_listing_filter(listing, request_info.args)
 
 
