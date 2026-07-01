@@ -172,7 +172,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
     }
 
     return process_peer_action(configuration, output_objects, client_id,
-                        peers_content, action, peers_format, updates,
+                        peers_content, action, peers_format, updates=updates,
                         do_invite=do_invite, logger=logger)
 
 
