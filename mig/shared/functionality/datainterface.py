@@ -644,7 +644,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s deleting the following requested peers succesfully %s"
+            "failed to send notification to admins about the client %s updating the following accepted peers succesfully %s"
             % (request_info.client_id, "\n".join(peers_updated.keys()))
         )
     return create_handler_response(200)
@@ -848,8 +848,8 @@ def handle_POST_peers_requested_accept(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s creating new peers %s"
-            % (request_info.client_id, "\n".join(created_peers))
+            "failed to send notification to admins about the client %s accepting the pending peers %s"
+            % (request_info.client_id, "\n".join(to_accept_peers))
         )
 
     return create_handler_response(200, success_map=success_map)
