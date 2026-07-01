@@ -7,7 +7,7 @@
     "expire": {
       "_FixtureHint": true,
       "hint": "today_relative",
-      "modifier": "days|+1",
+      "modifier": "days|+8",
       "value": 0
     },
     "full_name": "Pending Peer User",

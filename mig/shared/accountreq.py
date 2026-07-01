@@ -1874,8 +1874,6 @@ def peer_dict_from_fields(configuration, peer_fields_dict):
         return peer_dict, errors
 
     # nudge expire into a unix time
-    peer_dict["expire"] = transform_account_datestr_to_epoch(peer_dict['expire'])
-
     peer_dict = fill_user(peer_dict)
     # This is required to match how client_id pending_peers are currently loaded
     combined_accepted_fields = list(basic_accepted.keys()) + list(extra_accepted.keys())

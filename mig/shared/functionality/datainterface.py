@@ -174,9 +174,17 @@ def validate_expire_value(expire_date):
     now = datetime.datetime.now()
 
     if now + datetime.timedelta(days=peers_expire_min_days) > expire:
-        return False, "specified expire is in the past!"
+        return (
+            False,
+            "the specified expire must be atleast %s days ahead of today!"
+            % peers_expire_min_days,
+        )
     if now + datetime.timedelta(days=peers_expire_max_days) < expire:
-        return False, "specified expire is too far in the future!"
+        return (
+            False,
+            "the specified expire is too far in the future, must be within %s days!"
+            % peers_expire_max_days,
+        )
     return True, "specified expire is valid!"
 
 
@@ -266,6 +274,20 @@ def handle_POST_peers_new(configuration, request_info):
             success_map[index] = False
             errors_map[index] = errors
             continue
+
+        # validate expire range (min/max days)
+        valid_expire, expire_message = validate_expire_value(
+            peer_dict["expire"]
+        )
+        if not valid_expire:
+            success_map[index] = False
+            errors_map[index] = {"expire": expire_message}
+            continue
+
+        # Transform the expire YYYY-MM-DD to epoch time
+        peer_dict["expire"] = accountreq.transform_account_datestr_to_epoch(
+            peer_dict["expire"]
+        )
 
         # comment field must contain the requesting peer
         peer_dict["comment"] = request_info.client_email

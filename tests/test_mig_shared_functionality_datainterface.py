@@ -192,13 +192,14 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertPendingUsers(expected_count=0)
 
     def test_peers_new_valid(self):
-        date_expire_in_1_day = date.today() + timedelta(days=1)
+        # Minimum expire is 7 days
+        date_expire_in_8_days = date.today() + timedelta(days=8)
         test_pending_peer = {
             "country": "DK",
             "email": "pending_peer@example.com",
             "full_name": "Pending Peer User",
             "label": "some_peer_label",
-            "expire": date_expire_in_1_day.isoformat(),
+            "expire": date_expire_in_8_days.isoformat(),
             "organization": "Test Org",
             "kind": "project",
             "state": "NA",
@@ -230,8 +231,87 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertTrue(fake_send_email.called_once)
         self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
 
-    # TODO, add test for new peer that has a too short expire
-    # TODO, add a test for a new peer that has a too long expire
+    def test_peers_new_with_too_short_expire(self):
+        date_expire_in_3_days = date.today() + timedelta(days=3)
+        test_pending_peer = {
+            "country": "DK",
+            "email": "pending_peer@example.com",
+            "full_name": "Pending Peer User",
+            "label": "some_peer_label",
+            "expire": date_expire_in_3_days.isoformat(),
+            "organization": "Test Org",
+            "kind": "project",
+            "state": "NA",
+        }
+
+        request_body = {
+            'type': 'peers__new',
+            'operation': 'create',
+            "invite_on_email": True,
+            **test_pending_peer,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
+                                 'http://localhost/datainterface.py',
+                                 form=request_body,
+                                 mig_user_dn=self.TEST_CLIENT_ID)
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        self.assertIn("status", json_response)
+        status = json_response['status']
+        self.assertEqual(status, 400)
+
+        # check we failed creation due to expire being too short
+        self.assertIn("data", json_response)
+        self.assertIn("errors_map", json_response["data"])
+        errors_map = json_response['data']['errors_map']
+        self.assertIn('0', errors_map)
+        self.assertIn('expire', errors_map['0'])
+        self.assertIn("the specified expire must be atleast", errors_map['0']['expire'])
+
+        # check nothing was saved
+        self.assertPendingUsers(expected_count=0)
+
+    def test_peers_new_with_too_long_expire(self):
+        date_expire_in_4000_days = date.today() + timedelta(days=4000)
+        test_pending_peer = {
+            "country": "DK",
+            "email": "pending_peer@example.com",
+            "full_name": "Pending Peer User",
+            "label": "some_peer_label",
+            "expire": date_expire_in_4000_days.isoformat(),
+            "organization": "Test Org",
+            "kind": "project",
+            "state": "NA",
+        }
+
+        request_body = {
+            'type': 'peers__new',
+            'operation': 'create',
+            "invite_on_email": True,
+            **test_pending_peer,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
+                                 'http://localhost/datainterface.py',
+                                 form=request_body,
+                                 mig_user_dn=self.TEST_CLIENT_ID)
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        self.assertIn("status", json_response)
+        status = json_response['status']
+        self.assertEqual(status, 400)
+
+        # check we failed creation due to expire being too long
+        self.assertIn("data", json_response)
+        self.assertIn("errors_map", json_response["data"])
+        errors_map = json_response['data']['errors_map']
+        self.assertIn('0', errors_map)
+        self.assertIn('expire', errors_map['0'])
+        self.assertIn("the specified expire is too far in the future", errors_map['0']['expire'])
+
+        # check nothing was saved
+        self.assertPendingUsers(expected_count=0)
 
     def test_peers_summary(self):
         self._provision_peer_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
