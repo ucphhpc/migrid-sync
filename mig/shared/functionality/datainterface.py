@@ -77,6 +77,7 @@ from mig.shared.notification import send_email
 from mig.shared.safeinput import (
     REJECT_UNSET,
     html_escape,
+    valid_boolean,
     valid_date,
     valid_distinguished_name,
     validated_input,
@@ -85,6 +86,7 @@ from mig.shared.scriptinput import fieldstorage_to_dict
 
 PEER_DN_TYPE_MAP = {"peer": valid_distinguished_name}
 PEER_EXPIRE_TYPE_MAP = {"expire": valid_date}
+PEER_NOTIFY_TYPE_MAP = {"invite_on_email": valid_boolean}
 
 
 # TODO, move the helper functions and the peers related handlers/normalizers
@@ -125,6 +127,21 @@ def validate_peer_expire(expire):
     signature = {"expire": REJECT_UNSET}
     accepted, rejected = validated_input(
         expire, signature, type_override=PEER_EXPIRE_TYPE_MAP, list_wrap=True
+    )
+    return unlistify_dict(accepted), unlistify_dict(rejected)
+
+
+def validate_peer_invite_on_email(invite_on_email):
+    """Validates that the notify value has a valid structure and only allowed characters
+
+    peer: {"invite_on_email": invite_on_email}
+    """
+    signature = {"invite_on_email": REJECT_UNSET}
+    accepted, rejected = validated_input(
+        invite_on_email,
+        signature,
+        type_override=PEER_NOTIFY_TYPE_MAP,
+        list_wrap=True,
     )
     return unlistify_dict(accepted), unlistify_dict(rejected)
 
@@ -253,7 +270,10 @@ def convert_POST_peers_new(request_data):
     Data conversion: POST /peers/new
     """
     args = unlistify_dict(request_data)
-    args["invite_on_email"] = booleanify(args.get("invite_on_email", "false"))
+    # Optional field that will default to false
+    args["invite_on_email"] = {
+        "invite_on_email": booleanify(args.get("invite_on_email", "false"))
+    }
     return args
 
 
@@ -264,6 +284,15 @@ def handle_POST_peers_new(configuration, request_info):
 
     fields_dict = request_info.args
     invite_on_email = fields_dict.pop("invite_on_email")
+    accepted_invite, rejected_invite = validate_peer_invite_on_email(
+        invite_on_email
+    )
+    if not accepted_invite or rejected_invite:
+        return create_handler_response(
+            400,
+            message="failed to add a new peer, the recieved invite on email argument was rejected %s"
+            % rejected_invite,
+        )
 
     success_map = {}
     errors_map = {}
@@ -341,6 +370,8 @@ def handle_POST_peers_new(configuration, request_info):
             500,
             message="no errors were discovered, but the peer was not created, please contact support about this",
         )
+
+    # TODO Send email to peer about invitation
 
     # notify admins about the succesful additions
     action = "peers_new"
@@ -491,7 +522,7 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
     peer = request_info.args["peer"]
     accepted, rejected = validate_input_peer_distinguished_name(peer)
 
-    if rejected:
+    if not accepted or rejected:
         return create_handler_response(
             400,
             message="failed to fetch the accepted with, recieved an incorrect peer argument %s"

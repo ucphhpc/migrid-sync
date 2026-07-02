@@ -383,6 +383,16 @@ def valid_date(contents, min_length=10, max_length=10):
                      max_length)
 
 
+def valid_boolean(contents, min_length=1, max_length=5):
+    """Verify that supplied contents only contain something like 1, 0, true, false
+    contents"""
+
+    base_bool_digest = "10"
+    base_bool_chars = "truefals"
+    valid_bool_chars = base_bool_chars + base_bool_chars.upper() + base_bool_digest
+    __valid_contents(contents, valid_bool_chars, min_length=min_length, max_length=max_length)
+
+
 def valid_plain_text(
     text,
     min_length=-1,
