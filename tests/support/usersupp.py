@@ -267,7 +267,7 @@ class UserAssertMixin:
     @staticmethod
     def _provision_user_peers_pending_empty(user_settings_dir):
         pending_peers_path = os.path.join(user_settings_dir, "pending_peers")
-        with open(peers_path, 'wb') as outfile:
+        with open(pending_peers_path, 'wb') as outfile:
             pickle.dump({}, outfile)
 
     @staticmethod
