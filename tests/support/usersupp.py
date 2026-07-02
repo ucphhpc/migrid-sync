@@ -231,7 +231,7 @@ class UserAssertMixin:
                                                       distinguished_name)
 
     @staticmethod
-    def _provision_test_pending_user(testcase, *distinguished_names, against_user_dn=None):
+    def _provision_test_pending_user(testcase, distinguished_names, against_user_dn):
         self = testcase
 
         against_user_email = distinguished_name_to_user(against_user_dn)['email']
@@ -259,7 +259,22 @@ class UserAssertMixin:
         return req_ids
 
     @staticmethod
-    def _provision_peer_user(self, *distinguished_names, against_user_dn=None):
+    def _provision_user_peers_empty(user_settings_dir):
+        peers_path = os.path.join(user_settings_dir, "peers")
+        with open(peers_path, 'wb') as outfile:
+            pickle.dump({}, outfile)
+
+    @staticmethod
+    def _provision_user_peers_pending_empty(user_settings_dir):
+        pending_peers_path = os.path.join(user_settings_dir, "pending_peers")
+        with open(peers_path, 'wb') as outfile:
+            pickle.dump({}, outfile)
+
+    @staticmethod
+    def _provision_peer_user(self, distinguished_names, against_user_dn):
+        assert hasattr(self, "test_user_settings_dir")
+        assert self.test_user_settings_dir is not None
+
         peers_fixture = self.prepareFixtureAssert('peers--single', fixture_format='json')
         against_user_email = distinguished_name_to_user(against_user_dn)['email']
 
@@ -271,7 +286,10 @@ class UserAssertMixin:
         peers_fixture.write_to_dir(self.test_user_settings_dir, output_format='pickle')
 
     @staticmethod
-    def _provision_pending_peer(self, *distinguished_names, against_user_dn=None):
+    def _provision_pending_peer(self, distinguished_names, against_user_dn):
+        assert hasattr(self, "test_user_settings_dir")
+        assert self.test_user_settings_dir is not None
+
         fixture = self.prepareFixtureAssert('pending_peers--single', fixture_format='json')
         against_user_email = distinguished_name_to_user(against_user_dn)['email']
 

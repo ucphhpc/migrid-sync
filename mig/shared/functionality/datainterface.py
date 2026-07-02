@@ -319,9 +319,9 @@ def handle_POST_peers_new(configuration, request_info):
 
         peer_dn = peer_dict["distinguished_name"]
         peer_dict = fill_user(peer_dict)
-        pending_peer_entry = (peer_dn, peer_dict)
-        saved = accountreq.add_pending_peers_to_client(
-            configuration, request_info.client_id, [pending_peer_entry]
+        pending_peer_entry = {peer_dn: peer_dict}
+        saved = accountreq.add_accepted_peers_to_client(
+            configuration, request_info.client_id, pending_peer_entry
         )
         if not saved:
             # Atm, we are only creating one peer here,

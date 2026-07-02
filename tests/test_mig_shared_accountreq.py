@@ -138,7 +138,7 @@ class MigSharedAccountreq__peers_under_request(MigTestCase,
     def test_attempt_to_accept_without_target_user(self):
         self.assertDirEmpty(self.configuration.user_pending)
         self._provision_user_db_empty(self)
-        req_id, = UserAssertMixin._provision_test_pending_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_USER_DN)
+        req_id, = UserAssertMixin._provision_test_pending_user(self, [self.TEST_PEER_DN], self.TEST_USER_DN)
         _, request_dict = self._peer_dict_from_fixture()
         self.logger.declare_expected_error(comparison='startswith',
                                            expectation='no target users to request peer acceptance from')
@@ -155,7 +155,7 @@ class MigSharedAccountreq__peers_under_request(MigTestCase,
     def test_valid_accept(self):
         self.assertDirEmpty(self.configuration.user_pending)
         self._provision_test_user(self, self.TEST_USER_DN)
-        req_id, = self._provision_test_pending_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_USER_DN)
+        req_id, = self._provision_test_pending_user(self, [self.TEST_PEER_DN], self.TEST_USER_DN)
         _, request_dict = self._peer_dict_from_fixture()
         fake_notify_user = make_fake_notify_user()
 
@@ -218,7 +218,7 @@ class MigSharedAccountreq__users_pending(MigTestCase, FixtureAssertMixin):
 
     def test_listing_pending_user_requests(self):
         self.assertDirEmpty(self.configuration.user_pending)
-        pending_user_dir, = UserAssertMixin._provision_test_pending_user(self, TEST_PEER_DN, against_user_dn=TEST_USER_DN)
+        pending_user_dir, = UserAssertMixin._provision_test_pending_user(self, [TEST_PEER_DN], TEST_USER_DN)
         success, listing = accountreq.list_account_reqs(self.configuration)
 
         self.assertTrue(success)

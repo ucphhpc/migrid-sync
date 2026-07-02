@@ -1034,7 +1034,9 @@ def add_accepted_peers_to_client(configuration, client_id, peers_dict):
                 _logger.warning("found no peers db at %s to add peer(s) %s to for %s" % (peers_path, peers_dict, client_id))
                 _logger.info("creating a new peers db at %s" % peers_path)
 
-            peers_db.update(peers_dict)
+            for peer_dn, peer_dict in peers_dict.items():
+                peers_db[peer_dn] = peer_dict
+
             if pickle(peers_db, peers_path, _logger):
                 _logger.info("added peer(s) %s to %s for %s" % (peers_dict, peers_path, client_id))
                 return True

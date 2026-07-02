@@ -111,6 +111,8 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         return user_pending_entries
 
     def test_peers_new_with_missing_fields(self):
+        # Because the peer is not created, we can't assume that the peers db is created
+        self._provision_user_peers_empty(self.test_user_settings_dir)
         test_pending_peer = {
             "country": "DK",
             "email": "pending_peer@example.com",
@@ -124,10 +126,12 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
             'operation': 'create',
             **test_pending_peer,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            'http://localhost/datainterface.py',
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
@@ -150,9 +154,13 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         })
 
         # check nothing was saved
+        peers = self.assertUserPeers(self.TEST_CLIENT_ID)
+        self.assertEqual(peers, {})
         self.assertPendingUsers(expected_count=0)
 
     def test_peers_new_with_invalid_fields(self):
+        # Because the peer is not created, we can't assume that the peers db is created
+        self._provision_user_peers_empty(self.test_user_settings_dir)
         test_pending_peer = {
             "country": "DK",
             "email": "pending_peer@example.com",
@@ -189,6 +197,8 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         })
 
         # check nothing was saved
+        peers = self.assertUserPeers(self.TEST_CLIENT_ID)
+        self.assertEqual(peers, {})
         self.assertPendingUsers(expected_count=0)
 
     def test_peers_new_valid(self):
@@ -222,7 +232,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         status = json_response['status']
         self.assertEqual(status, 200)
 
-        actual_peers_dict = self.assertUserPendingPeers(self.TEST_CLIENT_ID)
+        actual_peers_dict = self.assertUserPeers(self.TEST_CLIENT_ID)
         pending_peers_fixture.assertAgainstFixture(actual_peers_dict)
 
         # Validate that the email was sent about the peer having been
@@ -314,7 +324,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertPendingUsers(expected_count=0)
 
     def test_peers_summary(self):
-        self._provision_peer_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
+        self._provision_peer_user(self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID)
 
         request_body = {
             'type': 'peers__summary',
@@ -338,7 +348,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         })
 
     def test_peers_accepted_delete(self):
-        self._provision_peer_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
+        self._provision_peer_user(self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID)
 
         test_pending_peer = {
             "peers": [self.TEST_PEER_DN],
@@ -403,7 +413,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
 
 
     def test_peers_accepted_fetch(self):
-        self._provision_peer_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
+        self._provision_peer_user(self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID)
 
         payload = {
             "peer_dn": self.TEST_PEER_DN,
@@ -460,7 +470,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
 
     def test_peers_accepted_update(self):
         date_expire_in_min = date.today() + timedelta(days=peers_expire_min_days) + timedelta(days=1)
-        self._provision_peer_user(self, self.TEST_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
+        self._provision_peer_user(self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID)
 
         expire_payload = date_expire_in_min.isoformat()
         payload = {
@@ -539,7 +549,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
 
     def test_peers_requested_delete(self):
-        self._provision_pending_peer(self, self.TEST_PENDING_PEER_DN, against_user_dn=self.TEST_CLIENT_ID)
+        self._provision_pending_peer(self, [self.TEST_PENDING_PEER_DN], self.TEST_CLIENT_ID)
 
         test_pending_peer = {
             "peers": [self.TEST_PENDING_PEER_DN],
