@@ -151,13 +151,13 @@ def __shellexec(
         stderr = force_unicode(stderr)
     if result == 0:
         logger.debug(
-            "%s %s: rc: %s, stdout: %s, error: %s"
-            % (command, " ".join(__args), rc, stdout, stderr)
+            "%s: rc: %s, stdout: %s, error: %s"
+            % (" ".join(__args), rc, stdout, stderr)
         )
     else:
         logger.error(
-            "shellexec: %s %s: rc: %s, stdout: %s, error: %s"
-            % (command, " ".join(__args), rc, stdout, stderr)
+            "shellexec: %s: rc: %s, stdout: %s, error: %s"
+            % (" ".join(__args), rc, stdout, stderr)
         )
 
     return (rc, stdout, stderr)
