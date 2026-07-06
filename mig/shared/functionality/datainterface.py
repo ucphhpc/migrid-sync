@@ -69,7 +69,6 @@ from mig.shared.defaults import (
     peers_expire_min_days,
     peers_fields,
 )
-from mig.shared.functionality.peersaction import process_peer_action
 from mig.shared.init import (
     find_entry,
     initialize_main_variables,
@@ -82,6 +81,7 @@ from mig.shared.safeinput import (
     valid_boolean,
     valid_date,
     valid_distinguished_name,
+    valid_peers_csvlines,
     validated_input,
 )
 from mig.shared.scriptinput import fieldstorage_to_dict
@@ -90,6 +90,9 @@ from mig.shared.url import urlencode
 PEER_DN_TYPE_MAP = {"peer": valid_distinguished_name}
 PEER_EXPIRE_TYPE_MAP = {"expire": valid_date}
 PEER_NOTIFY_TYPE_MAP = {"invite_on_email": valid_boolean}
+PEER_CSVLINES_TYPE_MAP = {
+    "csvlines": valid_peers_csvlines,
+}
 
 
 # TODO, move the helper functions and the peers related handlers/normalizers
@@ -125,7 +128,7 @@ def validate_input_peers_distinguished_names(peers):
 def validate_peer_expire(expire):
     """Validates that the peer expire value has a valid structure and only allowed characters
 
-    peer: {"expire": expire}
+    expire: {"expire": expire}
     """
     signature = {"expire": REJECT_UNSET}
     accepted, rejected = validated_input(
@@ -137,7 +140,7 @@ def validate_peer_expire(expire):
 def validate_peer_invite_on_email(invite_on_email):
     """Validates that the notify value has a valid structure and only allowed characters
 
-    peer: {"invite_on_email": invite_on_email}
+    invite_on_email: {"invite_on_email": invite_on_email}
     """
     signature = {"invite_on_email": REJECT_UNSET}
     accepted, rejected = validated_input(
@@ -147,6 +150,36 @@ def validate_peer_invite_on_email(invite_on_email):
         list_wrap=True,
     )
     return unlistify_dict(accepted), unlistify_dict(rejected)
+
+
+def validate_peers_import_fields(import_args):
+    """Validates the input of a peer import
+
+    import_args: {"label": label, "kind": kind, "expire": expire}
+    """
+    signature = accountreq.EXTRA_PEER_FIELDS
+    accepted, rejected = validated_input(
+        import_args,
+        signature,
+        type_override=accountreq.EXTRA_PEER_FIELDS_TYPE,
+        list_wrap=True,
+    )
+    return unlistify_dict(accepted), unlistify_dict(rejected)
+
+
+def validate_peers_csvlines(csvlines):
+    """Validates that the csvlines have a valid structure and only allowed characters
+
+    csvlines: {"csvlines": csvlines}
+    """
+    signature = {"csvlines": REJECT_UNSET}
+    accepted, rejected = validated_input(
+        csvlines,
+        signature,
+        type_override=PEER_CSVLINES_TYPE_MAP,
+        list_wrap=True,
+    )
+    return accepted, rejected
 
 
 def create_handler_response(status, message=None, **ui_response_kwargs):
@@ -203,9 +236,7 @@ def create_peer_invitation_msg(
     email_header = "%s Invitation" % short_title
 
     peer_url = os.path.join(
-        configuration.migserver_https_sid_url,
-        "cgi-sid",
-        "reqoid.py"
+        configuration.migserver_https_sid_url, "cgi-sid", "reqoid.py"
     )
 
     peer_req = {}
@@ -248,7 +279,7 @@ site administrators (%s).
     return {"header": email_header, "msg": email_msg}
 
 
-def validate_expire_value(expire_date):
+def validate_peer_expire_value(expire_date):
     try:
         expire = datetime.datetime.strptime(expire_date, "%Y-%m-%d")
     except ValueError:
@@ -371,7 +402,7 @@ def handle_POST_peers_new(configuration, request_info):
             continue
 
         # validate expire range (min/max days)
-        valid_expire, expire_message = validate_expire_value(
+        valid_expire, expire_message = validate_peer_expire_value(
             peer_dict["expire"]
         )
         if not valid_expire:
@@ -382,31 +413,12 @@ def handle_POST_peers_new(configuration, request_info):
         # comment field must contain the requesting peer
         peer_dict["comment"] = request_info.client_email
 
-        # validate that an identical existing requested/accepted peer does not exist already
-        requested_peers = list(
-            accountreq.list_peers_requested(
-                configuration, request_info.client_id
-            )
+        already_exists, exists_msg = accountreq.peer_already_exists(
+            configuration, request_info.client_id, peer_dict["email"]
         )
-        if peer_dict["email"] in [
-            requested_peer["email"] for requested_peer in requested_peers
-        ]:
+        if already_exists:
             success_map[index] = False
-            errors_map[index] = {
-                "email": "you already have a requested peer with that email"
-            }
-            continue
-
-        accepted_peers = accountreq.list_peers_accepted(
-            configuration, request_info.client_id
-        )
-        if peer_dict["email"] in [
-            accepted_peer["email"] for accepted_peer in accepted_peers.values()
-        ]:
-            success_map[index] = False
-            errors_map[index] = {
-                "email": "you already have an accepted peer with that email"
-            }
+            errors_map[index] = {"email": exists_msg}
             continue
 
         peer_dn = peer_dict["distinguished_name"]
@@ -640,6 +652,10 @@ def convert_POST_peers_accepted_import(request_data):
     """
     args = unlistify_dict(request_data)
     args["csvlines"] = unconcatify(args.pop("csvtext", ""), "\n")
+    # Optional field that will default to false
+    args["invite_on_email"] = {
+        "invite_on_email": booleanify(args.get("invite_on_email", "false"))
+    }
     return args
 
 
@@ -648,31 +664,177 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     Request handler: POST /peers/accepted/import
     """
     args = request_info.args
-    updates = {
-        "kind": args.get("kind", ""),
-        "label": args.get("label", ""),
-        "raw_expire": args.get("expire", ""),
-    }
-    # TODO, for now the process_peer_action does the input validation and
-    # the peers handling, but in the future we want to move the input validation up to happen at the outset
-    # before handing the clientside values down to the underlying library logic
-    _, returnvalue = process_peer_action(
-        configuration,
-        [],
-        request_info.client_id,
-        args["csvlines"],
-        "import",
-        "csvform",
-        updates,
-        do_invite=True,
+    # Validate invite on email
+    input_invite_on_email = args.pop("invite_on_email")
+    accepted_invite, rejected_invite = validate_peer_invite_on_email(
+        input_invite_on_email
     )
-
-    if returnvalue != returnvalues.OK:
+    if not accepted_invite or rejected_invite:
         return create_handler_response(
-            400, message="failed to import the submitted peers"
+            400,
+            message="failed to import peer(s), the recieved invite on email argument was rejected %s"
+            % rejected_invite,
+        )
+    invite_on_email = accepted_invite.get("invite_on_email", False)
+
+    # Validate the global peers args
+    common_peers_args = {
+        "label": args.pop("label", ""),
+        "kind": args.pop("kind", ""),
+        "expire": args.pop("expire", ""),
+    }
+    accepted_common, rejected_common = validate_peers_import_fields(
+        common_peers_args
+    )
+    if not accepted_common or rejected_common:
+        return create_handler_response(
+            400,
+            message="failed to import peer(s), the recieved import argument(s) was rejected %s"
+            % rejected_common,
         )
 
-    return create_handler_response(200)
+    # Validate the peers import field
+    csvlines = {"csvlines": args.pop("csvlines", [])}
+    accepted_csvlines, rejected_csvlines = validate_peers_csvlines(csvlines)
+    if not accepted_csvlines or rejected_csvlines:
+        return create_handler_response(
+            400,
+            message="failed to import peer(s), the recieved peers csvlines argument(s) was rejected %s"
+            % rejected_csvlines,
+        )
+
+    peers = accepted_csvlines.get("csvlines", [])
+    parsed_peers, parse_err = accountreq.parse_peers(
+        configuration, peers, "csvform"
+    )
+    if parse_err:
+        return create_handler_response(
+            400,
+            message="failed to import the submitted peers, err %s" % parse_err,
+        )
+
+    if not parsed_peers:
+        return create_handler_response(
+            400,
+            message="failed to find any peers in the submitted peers csvlines",
+        )
+
+    success_map, errors_map = {}, {}
+    created_peers = {}
+    for index, peer_fields_dict in enumerate(parsed_peers):
+        # Assign global key-value args
+        peer_fields_dict["label"] = accepted_common["label"]
+        peer_fields_dict["kind"] = accepted_common["kind"]
+        peer_fields_dict["expire"] = accepted_common["expire"]
+
+        # input validation
+        peer_dict, errors = accountreq.peer_dict_from_fields(
+            configuration, peer_fields_dict
+        )
+        if errors:
+            success_map[index] = False
+            errors_map[index] = errors
+            continue
+
+        # validate expire range (min/max days)
+        valid_expire, expire_message = validate_peer_expire_value(
+            peer_dict["expire"]
+        )
+        if not valid_expire:
+            success_map[index] = False
+            errors_map[index] = {"expire": expire_message}
+            continue
+
+        # comment field must contain the requesting peer
+        peer_dict["comment"] = request_info.client_email
+
+        already_exists, exists_msg = accountreq.peer_already_exists(
+            configuration, request_info.client_id, peer_dict["email"]
+        )
+        if already_exists:
+            success_map[index] = False
+            errors_map[index] = {"email": exists_msg}
+            continue
+
+        peer_dn = peer_dict["distinguished_name"]
+        peer_dict = fill_user(peer_dict)
+        pending_peer_entry = {peer_dn: peer_dict}
+        saved = accountreq.add_accepted_peers_to_client(
+            configuration, request_info.client_id, pending_peer_entry
+        )
+        if not saved:
+            success_map[index] = False
+            errors_map[index] = {
+                "email": "failed to save the imported peer, please contact support for help with this."
+            }
+            continue
+
+        created_peers[peer_dn] = peer_dict
+        success_map[index] = True
+
+        # validate that an identical existing requested/accepted peer does not exist already
+    if errors_map:
+        return create_handler_response(400, errors_map=errors_map)
+
+    if not created_peers:
+        return create_handler_response(
+            500,
+            message="no errors were discovered, but the peer was not created, please contact support about this",
+        )
+
+    # Send email to peer about invitation
+    client_name = extract_field(request_info.client_id, "full_name")
+    if invite_on_email:
+        for peer_dn, peer_dict in created_peers.items():
+            invite_msg = create_peer_invitation_msg(
+                configuration,
+                client_name,
+                request_info.client_email,
+                peer_dict,
+                peer_dict.get("kind", ""),
+            )
+            invite_log_msg = (
+                "Sending invitation: to: %s, header: %s, msg: %s, smtp_server: %s"
+                % (
+                    peer_dict["email"],
+                    invite_msg["header"],
+                    invite_msg["msg"],
+                    configuration.smtp_server,
+                )
+            )
+            configuration.logger.info(invite_log_msg)
+            if not send_email(
+                configuration,
+                peer_dict["email"],
+                invite_msg["header"],
+                invite_msg["msg"],
+            ):
+                configuration.logger.warning(
+                    "failed to send invitation email to peer %s"
+                    % peer_dict.get("email", "")
+                )
+
+    # notify admins about the succesful import
+    action = "peers_accepted_import"
+    notify_dict = create_peers_notify_msg(
+        configuration.short_title,
+        action,
+        client_name,
+        request_info.client_id,
+        created_peers,
+    )
+
+    if not send_email(
+        configuration,
+        configuration.admin_email,
+        notify_dict["header"],
+        notify_dict["msg"],
+    ):
+        configuration.logger.error(
+            "failed to send notification to admins about the client %s importing new peers %s"
+            % (request_info.client_id, "\n".join(created_peers))
+        )
+    return create_handler_response(200, success_map=success_map)
 
 
 def convert_POST_peers_accepted_update(request_data):
@@ -714,7 +876,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
         )
     expire_date = accepted_expire["expire"]
 
-    valid_expire_date, expire_message = validate_expire_value(expire_date)
+    valid_expire_date, expire_message = validate_peer_expire_value(expire_date)
     if not valid_expire_date:
         return create_handler_response(400, message=expire_message)
 

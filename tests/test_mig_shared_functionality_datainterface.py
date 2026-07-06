@@ -450,6 +450,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
             'kind': 'collaboration',
             'expire': date_expire_in_8_days.isoformat(),
             'csvtext': content,
+            'invite_on_email': True
         }
         prepared_wsgi = self.prepareWsgiAssert(self.configuration,
                                  'http://localhost/datainterface.py',
@@ -465,7 +466,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         content = self.assertUserPeers(self.TEST_CLIENT_ID)
         self.assertEqual(len(content), 3)
 
-        # check email were sent
+        # check email were sent to each invited peer
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertEqual(fake_send_email.total_emails_sent(), 4)
 
