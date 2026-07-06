@@ -60,7 +60,7 @@ from mig.shared.pwcrypto import check_hash, check_scramble
 from mig.shared.safeinput import name_extras, password_extras, \
     password_min_len, password_max_len, valid_password_chars, \
     valid_name_chars, dn_max_len, html_escape, validated_input, REJECT_UNSET, \
-    valid_commonname, valid_date
+    valid_commonname, valid_date, valid_peer_label, valid_peer_kind
 from mig.shared.serial import load, dump, dumps
 from mig.shared.useradm import user_request_reject, user_account_notify, \
     default_search, search_users, create_user
@@ -832,6 +832,30 @@ def list_peers_accepted(configuration, client_id):
     return accepted_peers
 
 
+def peer_already_exists(configuration, client_id, peer_email):
+    """Validate that an identical existing requested/accepted peer does not exist already
+    """
+    requested_peers = list(
+        list_peers_requested(
+            configuration, client_id
+        )
+    )
+    if peer_email in [
+        requested_peer["email"] for requested_peer in requested_peers
+    ]:
+        return True, "you already have a requested peer with that email"
+
+    accepted_peers = list_peers_accepted(
+        configuration, client_id
+    )
+    if peer_email in [
+        accepted_peer["email"] for accepted_peer in accepted_peers.values()
+    ]:
+        return True, "you already have an accepted peer with that email"
+    return False, "you do not have a peer with that email"
+
+
+
 def load_peers_pending(configuration, client_id):
     """ Loads the pending peers for the client """
     _logger = configuration.logger
@@ -860,6 +884,7 @@ def load_peers_accepted(configuration, client_id):
             _logger.warning("could not load accepted peers from %s: %s" %
                             (peers_path, exc))
     return accepted_peers
+
 
 def acquire_lock_for_path(path, exclusive=False):
     """Lock the path """
@@ -1782,20 +1807,11 @@ def parse_peers_form(configuration, raw_lines, csv_sep):
     return (peers, err)
 
 
-def valid_kind(value, **kwargs):
-    if not value in peer_kinds:
-        raise ValueError("invalid peer kind")
-
-
-def valid_label(value, **kwargs):
-    valid_commonname(value, extra_chars='-_')
-
-
 BASIC_PEER_FIELDS = dict([(i, REJECT_UNSET) for i in peers_fields])
 EXTRA_PEER_FIELDS_TYPE = {
     'expire': valid_date,
-    'kind': valid_kind,
-    'label': valid_label,
+    'kind': valid_peer_kind,
+    'label': valid_peer_label,
 }
 EXTRA_PEER_FIELDS = {
     'expire': REJECT_UNSET,

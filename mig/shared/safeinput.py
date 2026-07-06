@@ -59,7 +59,7 @@ from mig.shared.base import force_unicode, force_native_str
 from mig.shared.defaults import src_dst_sep, username_charset, \
     username_max_length, session_id_charset, session_id_length, \
     subject_id_charset, subject_id_min_length, subject_id_max_length, \
-    workflow_id_length, MAX_SWEEP, maxfill_fields
+    workflow_id_length, MAX_SWEEP, maxfill_fields, peer_kinds
 from mig.shared.listhandling import frange
 from mig.shared.validstring import valid_user_path, silent_email_validator
 from mig.shared.valuecheck import lines_value_checker, \
@@ -161,6 +161,8 @@ VALID_CLOUD_LABEL_CHARACTERS = VALID_FQDN_CHARACTERS + '+_=@'
 # We do allow space in image names
 VALID_CLOUD_NAME_CHARACTERS = VALID_CLOUD_LABEL_CHARACTERS + ' '
 VALID_CLOUD_INSTANCE_ID_CHARACTERS = VALID_CLOUD_NAME_CHARACTERS + ':'
+# Import peers lines allowed chars
+VALID_PEERS_CSV_CHARACTERS = ascii_letters + digits + '; .@_-'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
 ALLOW_UNSAFE = \
     'THIS INPUT IS NOT VERIFIED: DO NOT EVER PRINT IT UNESCAPED! '
@@ -1015,6 +1017,37 @@ def valid_cloud_name(
 
     valid_chars = VALID_CLOUD_NAME_CHARACTERS + extra_chars
     __valid_contents(cloud_name, valid_chars, min_length, max_length)
+
+
+def valid_peers_csvlines(
+    csvlines,
+    min_length=0,
+    max_length=255,
+    extra_chars=''
+):
+    """Verify that supplied peers csvlines only contains characters that we
+    consider valid in a peers csvlines.
+    """
+    valid_chars = VALID_PEERS_CSV_CHARACTERS + extra_chars
+    __valid_contents(csvlines, valid_chars, min_length, max_length)
+
+
+def valid_peer_label(
+    label,
+    min_length=0,
+    max_length=64,
+):
+    """Verify that supplied label only contains characters that we
+    consider valid in a peer label.
+    """
+    valid_commonname(
+        label, min_length=min_length, max_length=max_length, extra_chars='-_'
+    )
+
+
+def valid_peer_kind(value, **kwargs):
+    if not value in peer_kinds:
+        raise ValueError("invalid peer kind")
 
 
 def valid_workflow_pers_id(persistence_id):
