@@ -64,8 +64,10 @@ from mig.lib.reqinfo import (
 )
 from mig.shared.base import extract_field, fill_user
 from mig.shared.defaults import (
+    keyword_auto,
     peers_expire_max_days,
     peers_expire_min_days,
+    peers_fields,
 )
 from mig.shared.functionality.peersaction import process_peer_action
 from mig.shared.init import (
@@ -83,6 +85,7 @@ from mig.shared.safeinput import (
     validated_input,
 )
 from mig.shared.scriptinput import fieldstorage_to_dict
+from mig.shared.url import urlencode
 
 PEER_DN_TYPE_MAP = {"peer": valid_distinguished_name}
 PEER_EXPIRE_TYPE_MAP = {"expire": valid_date}
@@ -186,6 +189,65 @@ def create_peers_notify_msg(
     return {"header": notify_header, "msg": notify_msg}
 
 
+def create_peer_invitation_msg(
+    configuration, client_name, client_email, peer_user, kind
+):
+    """Create an invitation email message (header + body) for a single peer.
+
+    Returns a dict with 'header' and 'msg' keys containing the email header
+    and body respectively.
+    """
+    _logger = configuration.logger
+    short_title = configuration.short_title
+    admin_email = configuration.admin_email
+    email_header = "%s Invitation" % short_title
+
+    peer_url = os.path.join(
+        configuration.migserver_https_sid_url,
+        "cgi-sid",
+        "reqoid.py"
+    )
+
+    peer_req = {}
+    for field in peers_fields:
+        peer_req[field] = peer_user.get(field, "")
+
+    for explicit_field in configuration.site_peers_explicit_fields:
+        field_name = "peers_%s" % explicit_field
+        if explicit_field == "full_name":
+            peer_req[field_name] = client_name
+        elif explicit_field == "email":
+            peer_req[field_name] = client_email
+        else:
+            _logger.warning(
+                "unhandled explicit peers field: %s" % explicit_field
+            )
+            continue
+
+    peer_req["comment"] = "Invited by %s (%s) for %s purposes" % (
+        client_name,
+        client_email,
+        kind,
+    )
+    peer_req["ro_fields"] = keyword_auto
+    peer_url += "?%s" % urlencode(peer_req)
+
+    peer_name = peer_user.get("full_name", "")
+    email_msg_template = """Hi %%s,
+This is an automatic email sent on behalf of %s who vouched for you to get a
+user account on %s. You can accept the invitation by going to
+%%s
+entering a password of your choice and submitting the form.
+If you do not want a user account you can safely ignore this email.
+
+We would be grateful if you report any abuse of the invitation system to the
+site administrators (%s).
+""" % (client_name, short_title, admin_email)
+
+    email_msg = email_msg_template % (peer_name, peer_url)
+    return {"header": email_header, "msg": email_msg}
+
+
 def validate_expire_value(expire_date):
     try:
         expire = datetime.datetime.strptime(expire_date, "%Y-%m-%d")
@@ -283,9 +345,9 @@ def handle_POST_peers_new(configuration, request_info):
     """
 
     fields_dict = request_info.args
-    invite_on_email = fields_dict.pop("invite_on_email")
+    input_invite_on_email = fields_dict.pop("invite_on_email")
     accepted_invite, rejected_invite = validate_peer_invite_on_email(
-        invite_on_email
+        input_invite_on_email
     )
     if not accepted_invite or rejected_invite:
         return create_handler_response(
@@ -293,6 +355,7 @@ def handle_POST_peers_new(configuration, request_info):
             message="failed to add a new peer, the recieved invite on email argument was rejected %s"
             % rejected_invite,
         )
+    invite_on_email = accepted_invite.get("invite_on_email", False)
 
     success_map = {}
     errors_map = {}
@@ -371,11 +434,40 @@ def handle_POST_peers_new(configuration, request_info):
             message="no errors were discovered, but the peer was not created, please contact support about this",
         )
 
-    # TODO Send email to peer about invitation
+    # Send email to peer about invitation
+    client_name = extract_field(request_info.client_id, "full_name")
+    if invite_on_email:
+        for peer_dn, peer_dict in created_peers.items():
+            invite_msg = create_peer_invitation_msg(
+                configuration,
+                client_name,
+                request_info.client_email,
+                peer_dict,
+                peer_dict.get("kind", ""),
+            )
+            invite_log_msg = (
+                "Sending invitation: to: %s, header: %s, msg: %s, smtp_server: %s"
+                % (
+                    peer_dict["email"],
+                    invite_msg["header"],
+                    invite_msg["msg"],
+                    configuration.smtp_server,
+                )
+            )
+            configuration.logger.info(invite_log_msg)
+            if not send_email(
+                configuration,
+                peer_dict["email"],
+                invite_msg["header"],
+                invite_msg["msg"],
+            ):
+                configuration.logger.warning(
+                    "failed to send invitation email to peer %s"
+                    % peer_dict.get("email", "")
+                )
 
     # notify admins about the succesful additions
     action = "peers_new"
-    client_name = extract_field(request_info.client_id, "full_name")
     notify_dict = create_peers_notify_msg(
         configuration.short_title,
         action,
@@ -1032,11 +1124,14 @@ def _main(
         handler_exit_resp, handler_data_resp = request_handler(
             configuration, request_info
         )
-    except Exception:
+    except Exception as exc:
         # Currently the request_handler and the underlying validation logic
         # can throw many types of exceptions. For now we capture them all siliently
         # until we can for starters move up the input validation handling.
-        pass
+        logger.error(
+            "An exception occured in datainterface while processing the request handler %s"
+            % exc
+        )
 
     if handler_exit_resp is None:
         return create_api_response(

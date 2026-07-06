@@ -235,10 +235,11 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         actual_peers_dict = self.assertUserPeers(self.TEST_CLIENT_ID)
         pending_peers_fixture.assertAgainstFixture(actual_peers_dict)
 
-        # Validate that the email was sent about the peer having been
-        # created
+        # Validate that the peer invitation email and admin notification email
+        # were sent
         fake_send_email = self.configuration.context_get('notifier').send_email
-        self.assertTrue(fake_send_email.called_once)
+        self.assertEqual(fake_send_email.total_emails_sent(), 2)
+        self.assertTrue(fake_send_email.email_was_sent_to('pending_peer@example.com'))
         self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
 
     def test_peers_new_with_too_short_expire(self):
