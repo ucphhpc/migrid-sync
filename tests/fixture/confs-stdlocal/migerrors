@@ -62,11 +62,13 @@ ENABLE_QUOTA="False"
 
 [ "$ENABLE_NOTIFY" == "True" ] && grep -H " ERROR " $LOGDIR/notify.log | tail -n $MAXLINES
 
-[ "$ENABLE_JANITOR" == "True" ] && grep -H " ERROR " $LOGDIR/janitor.log | tail -n $MAXLINES
+[ "$ENABLE_JANITOR" == "True" ] && grep -H " ERROR " $LOGDIR/janitor.log | grep -E -v " expire [0-9:. -]+ vs [0-9:. -]+ prevents .+ as peer for " | tail -n $MAXLINES
 
-[ "$ENABLE_ACCOUNTING" == "True" ] && grep -H " ERROR " $LOGDIR/accounting.log | tail -n $MAXLINES
+# TODO: fix auto creation of freeze helper directory and skip partial archives without meta.pck then remove next ignores
+[ "$ENABLE_ACCOUNTING" == "True" ] && grep -H " ERROR " $LOGDIR/accounting.log | grep -E -v "Missing quota freeze path: ./.+/quota_home/lustre/freeze.|No such file or directory: ./.+/freeze_home/archive-.*/meta.pck." | tail -n $MAXLINES
 
-[ "$ENABLE_QUOTA" == "True" ] && grep -H " ERROR " $LOGDIR/quota.log | tail -n $MAXLINES
+# TODO: fix quota handling of old-style vgrids and remove next ignore
+[ "$ENABLE_QUOTA" == "True" ] && grep -H " ERROR " $LOGDIR/quota.log | grep -E -v "skipping entry: .*, no lustre data path:"  | tail -n $MAXLINES
 
 grep -H " ERROR " $LOGDIR/chkchroot.log | grep -E -v " from ${SECSCANIP} "| \
         grep -E -v "((HNAP1|GponForm|provisioning|provision|prov|polycom|yealink|CertProv|phpmyadmin|admin|cfg|wp|wordpress|cms|blog|old|new|test|dev|tmp|temp|remote|mgmt|properties|authenticate|tmui|ddem|a2billing|vtigercrm|secure|rpc|recordings|dana-na)(/.*|)|.*(Login|login|logon|configuration|header|admin|index)\.(php|jsp|asp)|(api/v1/pods|Telerik.Web.UI.WebResource.axd))" | \
