@@ -1252,7 +1252,7 @@ def _main(
 
     # 2. determine the specifics of the request being made
     if request_info.request_package not in HANDLERS_BY_PACKAGE:
-        error = {"error": "the speficied route package handler was not found"}
+        error = {"error": "the specified route package handler was not found"}
         return create_api_response(output_objects, 404, **error)
 
     # 2a. reference all routes that are implemented for the given package
