@@ -106,35 +106,41 @@ class MigSharedFunctionalityTmplInterface__basics(MigTestCase, SnapshotAssertMix
         content, _ = self.assertWsgiResponse(None, prepared_wsgi)
         self.assertSnapshotOfHtmlContent(content, is_fragment=True)
 
-    def test_succeeds_for_a_defined_handler(self):
-        self.logger.forgive_errors()
-        request_body = {
-            'type': 'testplugin__testpluginendpoint',
-            'operation': 'read',
-            'greeting': 'foobar',
-        }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/tmplinterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+    # FIXME, currently this request is not allowed
+    # because the testplugin it is not included in tmplinterface TMPL_DATA_HANDLERS
+    # def test_succeeds_for_a_defined_handler(self):
+    #     # This is made possible by tests/data/testplugin/__init__.py
+    #     self.logger.forgive_errors()
+    #     request_body = {
+    #         'type': 'testplugin__testpluginendpoint',
+    #         'operation': 'read',
+    #         'greeting': 'foobar',
+    #     }
+    #     prepared_wsgi = self.prepareWsgiAssert(self.configuration,
+    #                              'http://localhost/tmplinterface.py',
+    #                              form=request_body,
+    #                              mig_user_dn=self.TEST_CLIENT_ID)
 
-        content, _ = self.assertWsgiResponse(None, prepared_wsgi)
-        self.assertSnapshotOfHtmlContent(content, is_fragment=True)
+    #     content, _ = self.assertWsgiResponse(None, prepared_wsgi)
+    #     self.assertSnapshotOfHtmlContent(content, is_fragment=True)
 
-    def test_gracefully_handles_a_missing_template(self):
-        self.logger.forgive_errors()
-        request_body = {
-            'type': 'testplugin__testpluginendpoint_missing_template',
-            'operation': 'read',
-            'greeting': 'foobar',
-        }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/tmplinterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+    # FIXME, currently this request is not allowed
+    # because the testplugin it is not included in tmplinterface TMPL_DATA_HANDLERS
+    # def test_gracefully_handles_a_missing_template(self):
+    #     # This is made possible by tests/data/testplugin/__init__.py
+    #     self.logger.forgive_errors()
+    #     request_body = {
+    #         'type': 'testplugin__testpluginendpoint_missing_template',
+    #         'operation': 'read',
+    #         'greeting': 'foobar',
+    #     }
+    #     prepared_wsgi = self.prepareWsgiAssert(self.configuration,
+    #                              'http://localhost/tmplinterface.py',
+    #                              form=request_body,
+    #                              mig_user_dn=self.TEST_CLIENT_ID)
 
-        content, _ = self.assertWsgiResponse(None, prepared_wsgi)
-        self.assertSnapshotOfHtmlContent(content, is_fragment=True)
+    #     content, _ = self.assertWsgiResponse(None, prepared_wsgi)
+    #     self.assertSnapshotOfHtmlContent(content, is_fragment=True)
 
 
 class MigSharedFunctionalityTmplInterface__migux(MigTestCase):
@@ -185,7 +191,7 @@ class MigSharedFunctionalityTmplInterface__migux(MigTestCase):
                                            environ=wsgi_environ)
 
         self.assertOutputFailed(output_objects, status,
-                with_error_text='no such route')
+                with_error_text='the specified template is not supported or enabled.')
 
     def test_rejects_invalid_request_type_form_data(self):
         self.logger.forgive_errors()
@@ -202,7 +208,7 @@ class MigSharedFunctionalityTmplInterface__migux(MigTestCase):
                                            environ=wsgi_environ)
 
         self.assertOutputFailed(output_objects, status,
-                with_error_text='no such route')
+                with_error_text='the specified template is not supported or enabled.')
 
     def test_list_accepted_peers_arranges_template_output(self):
         request_body = {

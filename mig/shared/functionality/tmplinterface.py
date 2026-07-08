@@ -45,24 +45,23 @@ must respond with HTML fragments as opposed to a complete page.
 from __future__ import absolute_import
 
 import cgi
-from datetime import date
 import importlib
-from io import BytesIO
 import json
 import os
 import re
 import sys
-from types import SimpleNamespace
+from datetime import date
+from io import BytesIO
 
-from mig.lib.reqinfo import coalesce_request, uncommaify, unlistify
 import mig.shared.accountreq as accountreq
-from mig.shared.init import initialize_main_variables, make_start_entry
 import mig.shared.returnvalues as returnvalues
-from mig.shared.safeinput import REJECT_UNSET, html_escape
+from mig.lib.reqinfo import coalesce_request, uncommaify, unlistify
+from mig.shared.init import initialize_main_variables, make_start_entry
+from mig.shared.safeinput import html_escape
 from mig.shared.scriptinput import fieldstorage_to_dict
 
-
 # supporting logic
+
 
 def _coerce_date(value):
     if isinstance(value, date):
@@ -71,7 +70,7 @@ def _coerce_date(value):
         return date.fromisoformat(value)
     elif isinstance(value, int):
         return date.fromtimestamp(value)
-    raise ValueError('value does not look like a date')
+    raise ValueError("value does not look like a date")
 
 
 def _compile_condition_value(search_value):
@@ -122,13 +121,13 @@ def _search_dicts_matching(objects, conditions):
             if len(filters_to_or) == 1:
                 # single condition fast path
                 key = next(iter(filters_to_or))
-                obj_value = obj.get(key, '')
+                obj_value = obj.get(key, "")
                 condition = filters_to_or[key]
                 match = condition(obj_value)
                 continue
 
             for key, condition in filters_to_or.items():
-                obj_value = obj.get(key, '')
+                obj_value = obj.get(key, "")
                 match = condition(obj_value)
                 if match:
                     break
@@ -141,7 +140,8 @@ def _search_dicts_matching(objects, conditions):
 
 # main logic
 
-def main(client_id, user_arguments_dict, environ=None):
+
+def main(client_id, user_arguments_dict, environ=None, configuration=None):
     """
     Main function used by front end.
     :param client_id: A MiG user.
@@ -154,15 +154,25 @@ def main(client_id, user_arguments_dict, environ=None):
         environ = os.environ
 
     # Ensure that the output format is in JSON
-    user_arguments_dict['output_format'] = ['html']
-    user_arguments_dict.pop('__DELAYED_INPUT__', None)
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_title=False, op_header=False,
-                                  op_menu=False)
+    user_arguments_dict["output_format"] = ["html"]
+    user_arguments_dict.pop("__DELAYED_INPUT__", None)
+    configuration, logger, output_objects, op_name = initialize_main_variables(
+        client_id,
+        op_title=False,
+        op_header=False,
+        op_menu=False,
+        configuration=configuration,
+    )
 
-    return _main(configuration, logger, environ, op_name=op_name,
-                 output_objects=output_objects, client_id=client_id,
-                 user_arguments_dict=user_arguments_dict)
+    return _main(
+        configuration,
+        logger,
+        environ,
+        op_name=op_name,
+        output_objects=output_objects,
+        client_id=client_id,
+        user_arguments_dict=user_arguments_dict,
+    )
 
 
 def prepare_GET_migux_apps_peers_accepted(configuration, request_info):
@@ -170,7 +180,10 @@ def prepare_GET_migux_apps_peers_accepted(configuration, request_info):
     Data preparation function for mixux.apps.peers GET /accepted
     """
 
-    listing = accountreq.list_peers_accepted(configuration, request_info.client_id).values()
+    listing = accountreq.list_peers_accepted(
+        configuration, request_info.client_id
+    ).values()
+    # TODO, request_info.args have not been input validated at this point
     return True, _peers_listing_filter(listing, request_info.args)
 
 
@@ -179,7 +192,10 @@ def prepare_GET_migux_apps_peers_requested(configuration, request_info):
     Data preparation function for mixux.apps.peers GET /requested
     """
 
-    listing = accountreq.list_peers_requested(configuration, request_info.client_id)
+    listing = accountreq.list_peers_requested(
+        configuration, request_info.client_id
+    )
+    # TODO, request_info.args have not been input validated at this point
     return True, _peers_listing_filter(listing, request_info.args)
 
 
@@ -189,10 +205,12 @@ def convert_peers_listing_request_data(request_data):
     """
 
     request_data = dict(request_data)
-    request_data['query'] = unlistify(request_data.get('query', ''))
-    request_data['expire'] = unlistify(request_data.get('expire', ''))
-    request_data['kind'] = unlistify(request_data.get('kind', ''))
-    request_data['fields'] = uncommaify(unlistify(request_data.get('fields', '')))
+    request_data["query"] = unlistify(request_data.get("query", ""))
+    request_data["expire"] = unlistify(request_data.get("expire", ""))
+    request_data["kind"] = unlistify(request_data.get("kind", ""))
+    request_data["fields"] = uncommaify(
+        unlistify(request_data.get("fields", ""))
+    )
     return request_data
 
 
@@ -200,35 +218,59 @@ def _peers_listing_filter(objects, request_args):
     """
     Generate filters dictionary for a peers listing request.
     """
-
     conditions = []
 
-    query = request_args['query']
-    if not (query == '*' or query == ''):
-        conditions.append({
-            'full_name': query,
-            'email': query,
-        })
+    query = request_args["query"]
+    if not (query == "*" or query == ""):
+        conditions.append(
+            {
+                "full_name": query,
+                "email": query,
+            }
+        )
 
-    expire = request_args['expire']
-    if expire != '':
-        conditions.append({
-            'expire': date.fromisoformat(expire),
-        })
+    expire = request_args["expire"]
+    if expire != "":
+        conditions.append(
+            {
+                "expire": date.fromisoformat(expire),
+            }
+        )
 
-    kind = request_args['kind']
-    if kind != '':
-        conditions.append({
-            'kind': kind,
-        })
+    kind = request_args["kind"]
+    if kind != "":
+        conditions.append(
+            {
+                "kind": kind,
+            }
+        )
 
     return _search_dicts_matching(objects, conditions)
 
 
-_PREPARE_TMPLDATA_SUCEED_AND_EMPTY = lambda _, __: (True, None)
+def create_tmpl_response(
+    output_objects,
+    template_group,
+    template_name,
+    template_args,
+    object_type="template",
+):
+    """
+    A helper function that creates the final
+    tmplinterface return structure to the output_objects.
+    """
+    output_objects.append(
+        {
+            "object_type": object_type,
+            "template_group": template_group,
+            "template_name": template_name,
+            "template_args": template_args,
+        }
+    )
+    return (output_objects, returnvalues.OK)
 
 
-PREPARE_TMPLDATA_BY_PACKAGE = {
+TMPL_DATA_HANDLERS = {
     "migux.apps.peers": {
         "GET /accepted": prepare_GET_migux_apps_peers_accepted,
         "GET /requested": prepare_GET_migux_apps_peers_requested,
@@ -244,37 +286,47 @@ NORMALIZE_INPUTS_BY_PACKAGE = {
 }
 
 
-def _main(configuration, logger, environ, op_name='', output_objects=None, client_id=None,
-          user_arguments_dict=None):
+def _main(
+    configuration,
+    logger,
+    environ,
+    op_name="",
+    output_objects=None,
+    client_id=None,
+    user_arguments_dict=None,
+):
 
     # Create new output_objects list with start entry if None was supplied
     if output_objects is None:
         output_objects = [make_start_entry()]
 
     # Set the response as containining HTML
-    output_objects[0]['headers'].append(('Content-Type', 'text/html'))
+    output_objects[0]["headers"].append(("Content-Type", "text/html"))
 
-    if 'wsgi.version' in environ:
-        raw_data = environ['wsgi.input'].read()
+    if "wsgi.version" in environ:
+        raw_data = environ["wsgi.input"].read()
     else:
         raw_data = sys.stdin.read()
 
     # Input data
-    request_content_type = environ.get('CONTENT_TYPE', 'multipart/form-data')
-    request_input_format = request_content_type.split('/')[1]
+    request_content_type = environ.get("CONTENT_TYPE", "multipart/form-data")
+    request_input_format = request_content_type.split("/")[1]
     request_data = None
 
-    if request_input_format == 'json':
+    if request_input_format == "json":
         try:
             request_data = json.loads(raw_data)
         except ValueError:
-            msg = "An invalid format was supplied to: '%s', requires a JSON " \
+            msg = (
+                "An invalid format was supplied to: '%s', requires a JSON "
                 "compatible format" % op_name
+            )
             logger.error(msg)
-            output_objects.append({'object_type': 'error_text',
-                                'text': html_escape(msg)})
+            output_objects.append(
+                {"object_type": "error_text", "text": html_escape(msg)}
+            )
             return (output_objects, returnvalues.CLIENT_ERROR)
-    elif raw_data == b'' and user_arguments_dict:
+    elif raw_data == b"" and user_arguments_dict:
         # The WSGI input path completely ignores delayed_input and just
         # unconditionally assumes it can process the raw data handle as
         # form data itself which it passes to us as user_arguments_dict.
@@ -285,65 +337,147 @@ def _main(configuration, logger, environ, op_name='', output_objects=None, clien
         request_data = user_arguments_dict
     else:
         if isinstance(raw_data, str):
-            raw_data = bytes(raw_data, 'utf8')
-        fieldstorage = cgi.FieldStorage(fp=BytesIO(raw_data),
-                                        environ=environ)
+            raw_data = bytes(raw_data, "utf8")
+        fieldstorage = cgi.FieldStorage(fp=BytesIO(raw_data), environ=environ)
         request_data = fieldstorage_to_dict(fieldstorage)
 
     # 1. validate data required for a basic JSON request
-
-    errors_info, request_info = coalesce_request(request_data, client_id=client_id)
+    errors_info, request_info = coalesce_request(
+        request_data, client_id=client_id
+    )
     if errors_info:
         logger.error("A validation error occurred: '%s'" % errors_info)
         msg = "Invalid input was supplied to the request API: %s" % errors_info
         # TODO, Transform error messages to something more readable
-        output_objects.append({'object_type': 'error_text',
-                               'text': html_escape(msg)})
+        output_objects.append(
+            {"object_type": "error_text", "text": html_escape(msg)}
+        )
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # 2. determine the specifics of the request being made
 
-    try:
-        package_module = importlib.import_module(request_info.request_package)
-        responder = package_module.TEMPLATE_ROUTES[request_info.route]
-    except (AttributeError, ImportError, KeyError, TypeError):
-        output_objects.append({'object_type': 'error_text',
-                               'text': 'no such route'})
+    # Validate that the specified package is enabled
+    enabled_templates = configuration.division("TEMPLATES")
+    enabled_template_packages = enabled_templates.base_packages
+
+    # Extract the toplevel requested package name which is specified as an enabled
+    # [TEMPLATES]["base_packages"]
+    # TODO, validate per full module import
+    parent_requested_package = request_info.request_package.split(".")[0]
+    if parent_requested_package not in enabled_template_packages:
+        output_objects.append(
+            {
+                "object_type": "error_text",
+                "text": "the specified template is not supported or enabled.",
+            }
+        )
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    prepare_tmpldata_fn = _PREPARE_TMPLDATA_SUCEED_AND_EMPTY
     try:
-        acceptable_routes = PREPARE_TMPLDATA_BY_PACKAGE[request_info.request_package]
-        prepare_tmpldata_fn = acceptable_routes[request_info.route]
-    except KeyError:
-        pass
+        package_module = importlib.import_module(request_info.request_package)
+    except (ImportError, ModuleNotFoundError) as exc:
+        logger.error(
+            "failed to import the client specified tmplinterface request_package %s "
+            % exc
+        )
+        output_objects.append(
+            {
+                "object_type": "error_text",
+                "text": "the specified template package could not be imported",
+            }
+        )
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
-    try:
-        acceptable_normalizers = NORMALIZE_INPUTS_BY_PACKAGE[request_info.request_package]
-        normalize_inputs_fn = acceptable_normalizers[request_info.route]
+    if not hasattr(package_module, "TEMPLATE_ROUTES"):
+        output_objects.append(
+            {
+                "object_type": "error_text",
+                "text": "the specified template package does not declare the expected TEMPLATE_ROUTES",
+            }
+        )
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if request_info.route not in package_module.TEMPLATE_ROUTES:
+        output_objects.append(
+            {
+                "object_type": "error_text",
+                "text": "the specified template route is not supported by the selected template package",
+            }
+        )
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    responder = package_module.TEMPLATE_ROUTES[request_info.route]
+    if "generate_args" not in responder:
+        output_objects.append(
+            {
+                "object_type": "error_text",
+                "text": "the required 'generate_args' key was not found in the template package routes",
+            }
+        )
+
+    # 2a. reference all routes that are implemented for the given package
+    if request_info.request_package not in TMPL_DATA_HANDLERS:
+        output_objects.append(
+            {
+                "object_type": "error_text",
+                "text": "the specified route package handler was not found",
+            }
+        )
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # 2a. reference all routes that are implemented for the given package
+    acceptable_routes = TMPL_DATA_HANDLERS[request_info.request_package]
+    if request_info.route not in acceptable_routes:
+        output_objects.append(
+            {
+                "object_type": "error_text",
+                "text": "the specified template data handling route was not found",
+            }
+        )
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    template_data_handler = acceptable_routes[request_info.route]
+
+    # 2.1 determine if the specified route defines a handler for normalising
+    # the input request_data before it is passed to the template_data_handler
+    # This feature is optional
+    acceptable_normalizers = NORMALIZE_INPUTS_BY_PACKAGE.get(
+        request_info.request_package, None
+    )
+    normalize_inputs_fn = None
+    if acceptable_normalizers is not None:
+        normalize_inputs_fn = acceptable_normalizers.get(
+            request_info.route, None
+        )
+
+    if normalize_inputs_fn is not None:
         request_info.set_args(normalize_inputs_fn(request_info._request_data))
-    except KeyError:
-        pass
 
+    # 3. attempt to handle the request
+    template_data_exit_resp = None
     try:
-        success, data = prepare_tmpldata_fn(configuration, request_info)
-        if not success:
-            raise RuntimeError('error during data preparation')
-    except RuntimeError as exc:
-        output_objects.append({'object_type': 'error_text',
-                            'text': 'error during data preparation'})
-        return (output_objects, returnvalues.ERROR)
+        template_data_exit_resp, template_data_resp = template_data_handler(
+            configuration, request_info
+        )
     except Exception as exc:
-        output_objects.append({'object_type': 'error_text',
-                            'text': 'unknown error occurred'})
+        logger.error(
+            "An exception occured in tmplinterface while processing the template data handler %s"
+            % exc
+        )
+
+    if template_data_exit_resp is None:
+        output_objects.append(
+            {
+                "object_type": "error_text",
+                "text": "error during data preparation",
+            }
+        )
         return (output_objects, returnvalues.ERROR)
 
-    render_info = responder['generate_args'](request_info, data)
-
-    output_objects.append({
-        'object_type': 'template',
-        'template_group': request_info.request_package,
-        'template_name': render_info['template_name'],
-        'template_args': render_info['template_args']
-    })
-    return (output_objects, returnvalues.OK)
+    render_info = responder["generate_args"](request_info, template_data_resp)
+    return create_tmpl_response(
+        output_objects,
+        request_info.request_package,
+        render_info["template_name"],
+        render_info["template_args"],
+    )

@@ -84,7 +84,7 @@ class MigSharedFunctionalityDatainterface__generic(MigTestCase,
         self.assertEqual(status, 404)
 
         self.assertIn('error', json_response)
-        self.assertEqual(json_response['error'], 'the speficied route package handler was not found')
+        self.assertEqual(json_response['error'], 'the specified route package handler was not found')
 
 
 class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
