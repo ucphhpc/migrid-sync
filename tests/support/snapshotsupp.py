@@ -28,14 +28,14 @@
 
 import difflib
 import errno
-import re
 import os
+import re
 
 from tests.support.suppconst import TEST_BASE
 
-HTML_TAG = '<html>'
-MARKER_CONTENT_BEGIN = '<!-- Begin UI container -->'
-MARKER_CONTENT_END = '<!-- End UI container -->'
+HTML_TAG = "<html>"
+MARKER_CONTENT_BEGIN = "<!-- Begin UI container -->"
+MARKER_CONTENT_END = "<!-- End UI container -->"
 TEST_SNAPSHOTS_DIR = os.path.join(TEST_BASE, "snapshots")
 
 try:
@@ -57,9 +57,9 @@ def _html_content_only(value):
     # set the index after the content marker
     content_start_index += len(MARKER_CONTENT_BEGIN)
     # we now need to remove the container div inside it ..first find it
-    content_start_inner_div = value.find('<div', content_start_index)
+    content_start_inner_div = value.find("<div", content_start_index)
     # reset the content start to exclude up the end of the container div
-    content_start_index = value.find('>', content_start_inner_div) + 1
+    content_start_index = value.find(">", content_start_inner_div) + 1
 
     content_end_index = value.find(MARKER_CONTENT_END)
     assert content_end_index > -1, "unable to locate end of content"
@@ -75,31 +75,37 @@ def _html_fragment_only(value):
 
     content_length = len(value)
 
-    first_tag_index = value.find('<')
+    first_tag_index = value.find("<")
 
     first_tag_name = ""
     first_tag_index_close = first_tag_index + 1
     while first_tag_index_close < content_length:
         character = value[first_tag_index_close]
-        if character == '>':
+        if character == ">":
             break
         first_tag_name += character
         first_tag_index_close += 1
 
     # remove any attributes from the first found tag
     try:
-        first_tag_name = first_tag_name[0:first_tag_name.index(' ')]
+        first_tag_name = first_tag_name[0 : first_tag_name.index(" ")]
     except ValueError:
         pass
     assert first_tag_name, "fragment did not begin with a valid tag"
     assert first_tag_index_close != content_length, "fragment is unclosed"
 
     first_tag_closing = "</%s>" % (first_tag_name,)
-    after_first_tag_closing_index = value.rfind(first_tag_closing) + len(first_tag_closing)
+    after_first_tag_closing_index = value.rfind(first_tag_closing) + len(
+        first_tag_closing
+    )
 
-    trailing_characters_if_any = value[after_first_tag_closing_index:content_length]
+    trailing_characters_if_any = value[
+        after_first_tag_closing_index:content_length
+    ]
 
-    assert trailing_characters_if_any.rstrip() == '', "fragment did not end with its opening tag"
+    assert (
+        trailing_characters_if_any.rstrip() == ""
+    ), "fragment did not end with its opening tag"
 
     return value
 
@@ -114,7 +120,7 @@ def _delimited_lines(value):
     lines = []
 
     while from_index < last_index:
-        found_index = value.find('\n', from_index)
+        found_index = value.find("\n", from_index)
         if found_index == -1:
             break
         found_index += 1
@@ -130,8 +136,8 @@ def _delimited_lines(value):
 def _force_refresh_snapshots():
     """Check whether the environment specifies snapshots should be refreshed."""
 
-    env_refresh_snapshots = os.environ.get('REFRESH_SNAPSHOTS', 'no').lower()
-    return env_refresh_snapshots in ('true', 'yes', '1')
+    env_refresh_snapshots = os.environ.get("REFRESH_SNAPSHOTS", "no").lower()
+    return env_refresh_snapshots in ("true", "yes", "1")
 
 
 class SnapshotAssertMixin:
@@ -144,7 +150,7 @@ class SnapshotAssertMixin:
         In the case a snapshot does not exist it is saved on first invocation.
         """
 
-        file_name = ''.join([self._testMethodName, ".", extension])
+        file_name = "".join([self._testMethodName, ".", extension])
         file_path = os.path.join(TEST_SNAPSHOTS_DIR, file_name)
 
         if not os.path.isfile(file_path) or _force_refresh_snapshots():
@@ -163,13 +169,18 @@ class SnapshotAssertMixin:
         udiff = difflib.unified_diff(
             _delimited_lines(expected_content),
             _delimited_lines(actual_content),
-            'expected',
-            'actual'
+            "expected",
+            "actual",
         )
 
         display_snapshot_file = os.path.relpath(file_path, TEST_SNAPSHOTS_DIR)
         raise AssertionError(
-            "content did not match snapshot file: %s\n\n%s" % (display_snapshot_file, ''.join(udiff),))
+            "content did not match snapshot file: %s\n\n%s"
+            % (
+                display_snapshot_file,
+                "".join(udiff),
+            )
+        )
 
     def assertSnapshot(self, actual_content, extension=None):
         """Load a snapshot corresponding to the named test and check that what
@@ -190,4 +201,4 @@ class SnapshotAssertMixin:
             actual_content = _html_fragment_only(actual_content)
         else:
             actual_content = _html_content_only(actual_content)
-        self._snapshotsupp_compare_snapshot('html', actual_content)
+        self._snapshotsupp_compare_snapshot("html", actual_content)

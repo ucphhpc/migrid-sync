@@ -29,11 +29,11 @@ import os
 
 from tests.support._env import MIG_ENV
 
-if MIG_ENV == 'local':
+if MIG_ENV == "local":
     # Use abspath for __file__ on Py2
     _SUPPORT_DIR = os.path.dirname(os.path.abspath(__file__))
-elif MIG_ENV == 'docker':
-    _SUPPORT_DIR = '/usr/src/app/tests/support'
+elif MIG_ENV == "docker":
+    _SUPPORT_DIR = "/usr/src/app/tests/support"
 else:
     raise NotImplementedError("ABORT: unsupported environment: %s" % (MIG_ENV,))
 
@@ -46,7 +46,8 @@ ENVHELP_DIR = os.path.join(MIG_BASE, "envhelp")
 ENVHELP_OUTPUT_DIR = os.path.join(ENVHELP_DIR, "output")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     def print_root_relative(prefix, path):
         print("%s = <root>/%s" % (prefix, os.path.relpath(path, MIG_BASE)))
 

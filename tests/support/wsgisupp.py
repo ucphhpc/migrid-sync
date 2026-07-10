@@ -27,22 +27,21 @@
 
 """Test support library for WSGI."""
 
-from collections import namedtuple
 import codecs
+from collections import namedtuple
 from io import BytesIO
 from urllib.parse import urlencode, urlparse
 
 from werkzeug.datastructures import MultiDict
 
-
 # named type representing the tuple that is passed to WSGI handlers
-_PreparedWsgi = namedtuple('_PreparedWsgi', ['environ', 'start_response'])
+_PreparedWsgi = namedtuple("_PreparedWsgi", ["environ", "start_response"])
 
 
 class FakeWsgiStartResponse:
     """Glue object that conforms to the same interface as the start_response()
-       in the WSGI specs but records the calls to it such that they can be
-       inspected and, for our purposes, asserted against."""
+    in the WSGI specs but records the calls to it such that they can be
+    inspected and, for our purposes, asserted against."""
 
     def __init__(self):
         self.calls = []
@@ -51,7 +50,9 @@ class FakeWsgiStartResponse:
         self.calls.append((status, headers, exc))
 
 
-def create_wsgi_environ(configuration, wsgi_url, method='GET', query=None, headers=None, form=None):
+def create_wsgi_environ(
+    configuration, wsgi_url, method="GET", query=None, headers=None, form=None
+):
     """Populate the necessary variables that will constitute a valid WSGI
     environment given a URL to which we will make a requests under test and
     various other options that set up the nature of that request."""
@@ -59,21 +60,21 @@ def create_wsgi_environ(configuration, wsgi_url, method='GET', query=None, heade
     parsed_url = urlparse(wsgi_url)
 
     if query:
-        method = 'GET'
+        method = "GET"
 
         request_query = urlencode(query)
         wsgi_input = ()
     elif form:
-        method = 'POST'
-        request_query = ''
+        method = "POST"
+        request_query = ""
 
-        body = urlencode(MultiDict(form)).encode('ascii')
+        body = urlencode(MultiDict(form)).encode("ascii")
 
         headers = headers or {}
-        if not 'Content-Type' in headers:
-            headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        if not "Content-Type" in headers:
+            headers["Content-Type"] = "application/x-www-form-urlencoded"
 
-        headers['Content-Length'] = str(len(body))
+        headers["Content-Length"] = str(len(body))
         wsgi_input = BytesIO(body)
     else:
         request_query = parsed_url.query
@@ -83,26 +84,27 @@ def create_wsgi_environ(configuration, wsgi_url, method='GET', query=None, heade
         """Internal helper to ignore wsgi.errors close method calls"""
 
         def close(self, *ars, **kwargs):
-            """"Simply ignore"""
+            """ "Simply ignore"""
             pass
 
     environ = {}
-    environ['wsgi.errors'] = _errors()
-    environ['wsgi.input'] = wsgi_input
-    environ['wsgi.url_scheme'] = parsed_url.scheme
-    environ['wsgi.version'] = (1, 0)
-    environ['MIG_CONF'] = configuration.config_file
-    environ['HTTP_HOST'] = parsed_url.netloc
-    environ['PATH_INFO'] = parsed_url.path
-    environ['QUERY_STRING'] = request_query
-    environ['REQUEST_METHOD'] = method
-    environ['SCRIPT_URI'] = ''.join(
-        ('http://', environ['HTTP_HOST'], environ['PATH_INFO']))
+    environ["wsgi.errors"] = _errors()
+    environ["wsgi.input"] = wsgi_input
+    environ["wsgi.url_scheme"] = parsed_url.scheme
+    environ["wsgi.version"] = (1, 0)
+    environ["MIG_CONF"] = configuration.config_file
+    environ["HTTP_HOST"] = parsed_url.netloc
+    environ["PATH_INFO"] = parsed_url.path
+    environ["QUERY_STRING"] = request_query
+    environ["REQUEST_METHOD"] = method
+    environ["SCRIPT_URI"] = "".join(
+        ("http://", environ["HTTP_HOST"], environ["PATH_INFO"])
+    )
 
     if headers:
         for k, v in headers.items():
-            header_key = k.replace('-', '_').upper()
-            if header_key.startswith('CONTENT'):
+            header_key = k.replace("-", "_").upper()
+            if header_key.startswith("CONTENT"):
                 # Content-* headers must not be prefixed in WSGI
                 pass
             else:
@@ -119,15 +121,15 @@ def create_wsgi_start_response():
 def prepare_wsgi(configuration, url, **kwargs):
     return _PreparedWsgi(
         create_wsgi_environ(configuration, url, **kwargs),
-        create_wsgi_start_response()
+        create_wsgi_start_response(),
     )
 
 
 def _trigger_and_unpack_result(wsgi_result):
     chunks = list(wsgi_result)
     assert len(chunks) > 0, "invocation returned no output"
-    complete_value = b''.join(chunks)
-    decoded_value = codecs.decode(complete_value, 'utf8')
+    complete_value = b"".join(chunks)
+    decoded_value = codecs.decode(complete_value, "utf8")
     return decoded_value
 
 
@@ -140,7 +142,7 @@ class WsgiAssertMixin:
         content = _trigger_and_unpack_result(wsgi_result)
 
         def called_once(fake):
-            assert hasattr(fake, 'calls')
+            assert hasattr(fake, "calls")
             return len(fake.calls) == 1
 
         fake_start_response = fake_wsgi.start_response
