@@ -240,11 +240,13 @@ This software is mainly implemented in Python and extension modules:"""})
                            'class': 'urllink iconspace',
                            'title': 'Python Enchant Module at Python Package Index',
                            'text': 'Python Enchant Module (LGPL license)'})
+    output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'link',
                            'destination': 'https://pypi.org/project/email-validator',
                            'class': 'urllink iconspace',
                            'title': 'Python email-validator Module at Python Package Index',
                            'text': 'Python email-validator Module (CC0 1.0 license)'})
+    output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'link',
                            'destination': 'https://pypi.org/project/dnspython',
                            'class': 'urllink iconspace',
@@ -274,6 +276,7 @@ Web interfaces are served with the Apache HTTP Server:"""})
                            'title': 'JQuery Home Page',
                            'text': 'JQuery and extension modules (GPL/MIT and '
                            'Creative Commons 3.0 licenses)'})
+    output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'link',
                            'destination': 'https://jqueryui.com/',
                            'class': 'urllink iconspace',
@@ -383,6 +386,7 @@ Web interfaces are served with the Apache HTTP Server:"""})
                                'class': 'urllink iconspace',
                                'title': 'WsgiDAV Home Page',
                                'text': 'WsgiDAV Server Module (MIT license)'})
+        output_objects.append({'object_type': 'text', 'text': ''})
         output_objects.append({'object_type': 'link',
                                'destination':
                                'https://pypi.org/project/sslkeylog/',
@@ -515,6 +519,7 @@ JavaScript library from:"""})
                                'class': 'urllink iconspace',
                                'title': 'Apache OpenID Module Home Page',
                                'text': 'Apache OpenID Module (MIT license)'})
+        output_objects.append({'object_type': 'text', 'text': ''})
         output_objects.append({'object_type': 'link',
                                'destination': 'https://github.com/OpenIDC/mod_auth_openidc',
                                'class': 'urllink iconspace',
