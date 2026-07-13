@@ -254,7 +254,7 @@ This software is mainly implemented in Python and extension modules:"""})
     output_objects.append({'object_type': 'text', 'text': """
 Web interfaces are served with the Apache HTTP Server:"""})
     output_objects.append({'object_type': 'link',
-                           'destination': 'http://httpd.apache.org/',
+                           'destination': 'https://httpd.apache.org/',
                            'class': 'urllink iconspace',
                            'title': 'Apache HTTP Server Home Page',
                            'text': 'Apache HTTP Server with included modules '
@@ -269,11 +269,16 @@ Web interfaces are served with the Apache HTTP Server:"""})
     output_objects.append({'object_type': 'text', 'text':
                            "relying on JavaScript, styling and artwork from:"})
     output_objects.append({'object_type': 'link',
-                           'destination': 'http://jquery.com/',
+                           'destination': 'https://jquery.com/',
                            'class': 'urllink iconspace',
                            'title': 'JQuery Home Page',
                            'text': 'JQuery and extension modules (GPL/MIT and '
                            'Creative Commons 3.0 licenses)'})
+    output_objects.append({'object_type': 'link',
+                           'destination': 'https://jqueryui.com/',
+                           'class': 'urllink iconspace',
+                           'title': 'JQuery UI Home Page',
+                           'text': 'JQuery UI modules (MIT license)'})
     output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'link',
                            'destination': 'https://getbootstrap.com',
@@ -290,14 +295,14 @@ Web interfaces are served with the Apache HTTP Server:"""})
     output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'link',
                            'destination':
-                           'http://codemirror.net/',
+                           'https://codemirror.net/',
                            'class': 'urllink iconspace',
                            'title': 'CodeMirror Home Page',
                            'text': 'CodeMirror web code editor (BSD '
                            'compatible license)'})
     output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'link',
-                           'destination': 'http://markitup.jaysalvat.com/',
+                           'destination': 'https://markitup.jaysalvat.com/',
                            'class': 'urllink iconspace',
                            'title': 'markItUp! Home Page',
                            'text': 'markItUp! web markup editor (GPL/MIT '
@@ -306,7 +311,7 @@ Web interfaces are served with the Apache HTTP Server:"""})
                            "and icons from the following sources:"})
 
     output_objects.append({'object_type': 'link',
-                           'destination': 'http://www.iconarchive.com/artist/pixelmixer.html',
+                           'destination': 'https://www.iconarchive.com/artist/pixelmixer.html',
                            'class': 'urllink iconspace',
                            'title': 'PixelMixer Home Page',
                            'text': 'pixel-mixer.com icons (free to use, '
@@ -314,7 +319,7 @@ Web interfaces are served with the Apache HTTP Server:"""})
     output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'link',
                            'destination':
-                           'http://www.famfamfam.com/lab/icons/silk/',
+                           'https://www.famfamfam.com/lab/icons/silk/',
                            'class': 'urllink iconspace',
                            'title': 'FamFamFam Icons Home Page',
                            'text': 'famfamfam.com silk icons (Creative '
@@ -322,7 +327,7 @@ Web interfaces are served with the Apache HTTP Server:"""})
     output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'link',
                            'destination':
-                           'http://www.kde-look.org/content/show.php/'
+                           'https://www.kde-look.org/content/show.php/'
                            'Crystal+SVG?content=8341',
                            'class': 'urllink iconspace',
                            'title': 'KDE Crystal Icons HomePage',
@@ -340,7 +345,7 @@ Web interfaces are served with the Apache HTTP Server:"""})
                            "Core communication with dedicated resources use "
                            "OpenSSH client utilities:"})
     output_objects.append({'object_type': 'link',
-                           'destination': 'http://www.openssh.com/',
+                           'destination': 'https://www.openssh.com/',
                            'class': 'urllink iconspace',
                            'title': 'OpenSSH HomePage',
                            'text': 'OpenSSH secure remote shell and file '
@@ -415,18 +420,11 @@ Web interfaces are served with the Apache HTTP Server:"""})
                                'class': 'urllink iconspace',
                                'title': 'Seafile Home Page',
                                'text': 'Seafile Community Edition (various open source licenses)'})
-        output_objects.append({'object_type': 'text', 'text':
-                               "Seafile web pages are exposed with:"})
-        output_objects.append({'object_type': 'link',
-                               'destination': 'https://github.com/ceph/mod-proxy-fcgi',
-                               'class': 'urllink iconspace',
-                               'title': 'Apache FCGI Proxy Module Home Page',
-                               'text': 'Apache FCGI Proxy Module (Apache 2.0 license)'})
     if configuration.site_enable_transfers:
         output_objects.append({'object_type': 'text', 'text':
                                "Background data transfers use LFTP / RSync:"})
         output_objects.append({'object_type': 'link',
-                               'destination': 'http://lftp.yar.ru/',
+                               'destination': 'https://lftp.yar.ru/',
                                'class': 'urllink iconspace',
                                'title': 'LFTP Home Page',
                                'text': 'LFTP file transfer program (GPL license)'})
@@ -491,7 +489,7 @@ JavaScript library from:"""})
                                "SCM repositories are delivered with Mercurial:"
                                })
         output_objects.append({'object_type': 'link',
-                               'destination': 'http://mercurial.selenic.com/',
+                               'destination': 'https://www.mercurial-scm.org/',
                                'class': 'urllink iconspace',
                                'title': 'Mercurial SCM Home Page',
                                'text': 'Mercurial SCM (GPLv2 license)'})
@@ -499,24 +497,29 @@ JavaScript library from:"""})
         output_objects.append({'object_type': 'text', 'text':
                                """Trackers are delivered using Trac:"""})
         output_objects.append({'object_type': 'link',
-                               'destination': 'http://trac.edgewall.org/',
+                               'destination': 'https://trac.edgewall.org/',
                                'class': 'urllink iconspace',
                                'title': 'Trac Project Tracker Home Page',
                                'text': 'Trac Project Tracker (BSD license)'})
     if configuration.user_openid_address or configuration.user_openid_providers:
         output_objects.append({'object_type': 'text', 'text':
-                               """OpenID login/support is delivered with:"""})
+                               """OpenID 2.0 and Connect auth is delivered with:"""})
         output_objects.append({'object_type': 'link',
-                               'destination': 'https://github.com/openid/python-openid',
+                               'destination': 'https://github.com/necaris/python3-openid',
                                'class': 'urllink iconspace',
                                'title': 'Python OpenID Module at GitHub',
                                'text': 'Python OpenID Module (Apache 2.0 license)'})
         output_objects.append({'object_type': 'text', 'text': ''})
         output_objects.append({'object_type': 'link',
-                               'destination': 'http://findingscience.com/mod_auth_openid/',
+                               'destination': 'https://findingscience.com/mod_auth_openid/',
                                'class': 'urllink iconspace',
                                'title': 'Apache OpenID Module Home Page',
                                'text': 'Apache OpenID Module (MIT license)'})
+        output_objects.append({'object_type': 'link',
+                               'destination': 'https://github.com/OpenIDC/mod_auth_openidc',
+                               'class': 'urllink iconspace',
+                               'title': 'Apache OpenID Connect Module Home Page',
+                               'text': 'Apache OpenID Connect Module (Apache 2.0 license)'})
     if configuration.site_enable_jupyter:
         output_objects.append({'object_type': 'text', 'text': """
 The optional interactive computing integration through Jupyter relies on the
@@ -548,8 +551,8 @@ JSONRPC interface is delivered with the jsonrpclib module:"""})
                            'text': 'Python JSONRPClib Module (Apache 2.0 license)'})
 
     output_objects.append({'object_type': 'text', 'text': """
-The optional country code validation support in certificate and OpenID account
-creation relies on the iso3166 module from:"""})
+The optional country code validation support in account sign up relies on the
+iso3166 module from:"""})
     output_objects.append({'object_type': 'link',
                            'destination':
                            'https://pypi.org/project/iso3166/',
