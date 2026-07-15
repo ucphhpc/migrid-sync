@@ -117,9 +117,8 @@ def stub(function, user_arguments_dict, environ=None,
              'user_arguments_dict is not a dictionary/struct type!'}])
         return (output_objects, returnvalues.INVALID_ARGUMENT)
 
-    # NOTE: Force to UTF-8 - JSONRPC dict is unicode while XMLRPC is UTF-8
-    if user_arguments_dict:
-        user_arguments_dict = force_utf8_rec(user_arguments_dict)
+    # TODO: Force to unicode now with py3?
+    # NOTE: on py2 JSONRPC dict was unicode and XMLRPC UTF-8 so we forced utf8
 
     _logger.debug("run %s.main(%s)" % (function, user_arguments_dict))
     try:
