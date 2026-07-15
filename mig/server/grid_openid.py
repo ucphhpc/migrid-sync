@@ -211,7 +211,11 @@ def filter_why_pw(configuration, why):
         text = why.response.encodeToKVForm()
         return strip_password(configuration, text)
     elif isinstance(why, server.ProtocolError):
-        text = why.message
+        # NOTE: UntrustedReturnURL does not have message - fallback to str
+        if hasattr(why, 'message'):
+            text = why.message
+        else:
+            text = str(why)
         return strip_password(configuration, text)
     else:
         # IMPORTANT: do NOT log or show raw why as it may contain credentials
@@ -513,17 +517,17 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         except (KeyboardInterrupt, SystemExit):
             raise
-        except InputException as err:
-            logger.error("Invalid %r input: %s" % (key, err))
-            logger.debug("*** Begin Trace ***\n%s\n*** End trace ***" %
-                         cgitb.text(sys.exc_info(), context=10))
+        except (InputException, ValueError) as err:
+            logger.warning("Invalid %r input: %s" % (key, err))
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
+
+Please contact the site support %s if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (key, err)
-            self.showErrorPage(err_msg)
+</p>""" % (key, err, configuration.support_email)
+            self.showErrorPage(err_msg, error_code=400)
         except Exception as exc:
             error_ref = time.time()
             logger.error("do_GET with ref %d crashed: %s" % (error_ref, exc))
@@ -583,17 +587,17 @@ Internal error while handling your request - please contact the site support
 
         except (KeyboardInterrupt, SystemExit):
             raise
-        except InputException as err:
-            logger.error("Invalid %r input: %s" % (key, err))
-            logger.debug("*** Begin Trace ***\n%s\n*** End trace ***" %
-                         cgitb.text(sys.exc_info(), context=10))
+        except (InputException, ValueError) as err:
+            logger.warning("Invalid %r input: %s" % (key, err))
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
+
+Please contact the site support %s if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (key, err)
-            self.showErrorPage(err_msg)
+</p>""" % (key, err, configuration.support_email)
+            self.showErrorPage(err_msg, error_code=400)
         except Exception as exc:
             error_ref = time.time()
             logger.error("do_POST with ref %d crashed: %s" % (error_ref, exc))
@@ -643,6 +647,10 @@ Internal error while handling your request - please contact the site support
         if not request:
             try:
                 request = self.server.openid.decodeRequest(query)
+                if request is None:
+                    # Display text indicating that this is an endpoint.
+                    self.showAboutPage()
+                    return
             except server.ProtocolError as why:
                 # IMPORTANT: NEVER log or show raw why or query with password!
                 safe_query = strip_password(configuration, query)
@@ -815,9 +823,13 @@ inconsistent session state.
         """End-point handler"""
         try:
             request = self.server.openid.decodeRequest(query)
+            if request is None:
+                # Display text indicating that this is an endpoint.
+                self.showAboutPage()
+                return
             # Pass any errors from previous login attempts on for display
             request.error = query.get('err', '')
-        except server.ProtocolError as why:
+        except (ValueError, server.ProtocolError) as why:
             # IMPORTANT: NEVER log or show raw why or query with password!
             safe_query = strip_password(configuration, query)
             safe_why = filter_why_pw(configuration, why)
@@ -834,11 +846,6 @@ inconsistent session state.
 <h3>Error details:</h3>
 <pre>%s</pre>
 ''' % (configuration.short_title, html_escape(safe_why)))
-            return
-
-        if request is None:
-            # Display text indicating that this is an endpoint.
-            self.showAboutPage()
             return
 
         if request.mode in ["checkid_immediate", "checkid_setup"]:
