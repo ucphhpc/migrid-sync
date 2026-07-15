@@ -68,7 +68,7 @@ try:
     import http.cookies
     from http.server import HTTPServer, BaseHTTPRequestHandler
     from socketserver import ThreadingMixIn
-except Exception as exc:
+except Exception:
     print("ERROR: failed to init py 2/3 compatibility")
     exit(1)
 
@@ -83,18 +83,12 @@ import types
 
 
 try:
-    import openid
-except ImportError:
-    print("ERROR: the python openid module is required for this daemon")
-    sys.exit(1)
-
-try:
     from openid.consumer import discover
     from openid.extensions import sreg
     from openid.server import server
     from openid.store.filestore import FileOpenIDStore
 except ImportError:
-    print("ERROR: one or more python openid modules missing")
+    print("ERROR: one or more required python openid modules missing")
     sys.exit(1)
 
 try:
@@ -160,7 +154,7 @@ def valid_cert_dir(arg):
 def valid_cert_fields(arg):
     """Make sure only valid cert field names are allowed"""
     valid_job_id(arg, extra_chars=',')
-    if [i for i in arg.split(',') if not i in cert_field_names]:
+    if [i for i in arg.split(',') if i not in cert_field_names]:
         invalid_argument(arg)
 
 
@@ -309,7 +303,7 @@ class OpenIDHTTPServer(HTTPServer):
 
         # Add our own SReg fields to list of valid fields from sreg 1.1 spec
         for (key, val) in cert_field_map.items():
-            if not key in sreg.data_fields:
+            if key not in sreg.data_fields:
                 sreg.data_fields[key] = key.replace('_', ' ').title()
         # print "DEBUG: sreg fields: %s" % sreg.data_fields
         for name in cert_field_names:
@@ -481,7 +475,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             # Resolve retry url, strip password and err
 
             retry_query = {key: val for (key, val) in self.query.items()
-                           if not key in ['password', 'err']}
+                           if key not in ['password', 'err']}
             self.retry_url = "%s?%s" \
                 % (self.parsed_uri[2], urlencode(retry_query))
 
@@ -677,7 +671,7 @@ inconsistent session state.
         # Old IE 8 does not send contents of submit buttons thus only the
         # fields login_as and password are set with the allow requests. We
         # manually add a yes here if so to avoid the else case.
-        if not 'yes' in query and not 'no' in query:
+        if 'yes' not in query and 'no' not in query:
             query['yes'] = 'yes'
 
         if 'yes' in query:
@@ -764,7 +758,6 @@ inconsistent session state.
                 logger.warning("handleAllow rejected login %s" % identity)
                 # logger.debug("full query: %s" % self.query)
                 # logger.debug("full headers: %s" % self.headers)
-                fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 # Login failed - return to refering page to let user try again
                 retry_url = self.__retry_url_from_cookie()
@@ -1095,7 +1088,7 @@ inconsistent session state.
                 logger.debug("full query: %s" % self.query)
                 self.clearUser()
                 # Login failed - return to refering page to let user try again
-                cookies = self.headers.get('Cookie')
+                # cookies = self.headers.get('Cookie')
                 # print "found cookies: %s" % cookies
                 retry_url = self.__retry_url_from_cookie()
                 if retry_url:
