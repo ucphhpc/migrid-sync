@@ -31,6 +31,7 @@ methods through platform-independent Remote Procedure Calls.
 
 from __future__ import absolute_import
 
+import importlib
 import os
 import time
 
@@ -39,7 +40,7 @@ from mig.shared.base import force_utf8_rec
 from mig.shared.conf import get_configuration_object
 from mig.shared.httpsclient import extract_client_id
 from mig.shared.objecttypes import get_object_type_info
-from mig.shared.output import validate
+from mig.shared.output import validate, kwargs_for_functionality, dummy_main
 
 
 def system_method_signature(method_name):
@@ -80,27 +81,32 @@ def object_type_info(object_type):
     return get_object_type_info(object_type)
 
 
-def stub(function, user_arguments_dict):
+def stub(function, user_arguments_dict, environ=None,
+         _import_module=importlib.import_module):
     """Run backend function with supplied arguments"""
 
     before_time = time.time()
 
-    environ = os.environ
+    if environ is None:
+        environ = os.environ
     configuration = get_configuration_object()
     _logger = configuration.logger
 
     # get ID of user currently logged in
 
-    main = id
     client_id = extract_client_id(configuration, environ)
     output_objects = []
+    main = dummy_main
     _logger.debug("import main for function: %s" % function)
     try:
-        exec('from %s import main' % function)
+        # NOTE: dynamic module loading to find corresponding main function
+        module_handle = _import_module(function)
+        main = module_handle.main
     except Exception as err:
+        _logger.warning("import main for %s failed: %s" % (function, err))
         output_objects.extend([
             {'object_type': 'error_text', 'text':
-             'Could not import module! %s: %s' % (function, err)}])
+             'Could not load %r backend!' % function}])
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Save actual functionality backend for initialize_main_variables to expose
@@ -117,11 +123,13 @@ def stub(function, user_arguments_dict):
 
     _logger.debug("run %s.main(%s)" % (function, user_arguments_dict))
     try:
-
-        # TODO: add environ arg support to all main backends and use here
+        main_kwargs = kwargs_for_functionality(main,
+                                               configuration=configuration,
+                                               environ=environ)
 
         (output_objects, (ret_code, ret_msg)) = main(client_id,
-                                                     user_arguments_dict)
+                                                     user_arguments_dict,
+                                                     **main_kwargs)
     except Exception as err:
         _logger.error("%s main failed: %s" % (function, err))
         import traceback
