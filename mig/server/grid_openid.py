@@ -516,11 +516,11 @@ class ServerHandler(BaseHTTPRequestHandler):
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
 
-Please contact the site support %s if this persistently happens for valid use.
+Please contact %s if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (key, err, configuration.support_email)
+</p>""" % (key, err, html_escape(configuration.support_email))
             self.showErrorPage(err_msg, error_code=400)
         except Exception as exc:
             error_ref = time.time()
@@ -532,12 +532,12 @@ Please contact the site support %s if this persistently happens for valid use.
             filtered_exc = filtered_exc.replace(pw, '*' * len(pw))
             logger.debug("Traceback %s: %s" % (error_ref, filtered_exc))
             err_msg = """<p class='leftpad'>
-Internal error while handling your request - please contact the site support
-%s if this persistently happens and include the error reference %d.
+Internal error while handling your request - please contact %s
+and include the error reference %d if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (configuration.support_email, error_ref)
+</p>""" % (html_escape(configuration.support_email), error_ref)
             self.showErrorPage(err_msg, error_code=500)
 
     def do_POST(self):
@@ -586,11 +586,11 @@ Internal error while handling your request - please contact the site support
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
 
-Please contact the site support %s if this persistently happens for valid use.
+Please contact %s if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (key, err, configuration.support_email)
+</p>""" % (key, err, html_escape(configuration.support_email))
             self.showErrorPage(err_msg, error_code=400)
         except Exception as exc:
             error_ref = time.time()
@@ -605,12 +605,12 @@ Please contact the site support %s if this persistently happens for valid use.
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             err_msg = """<p class='leftpad'>
-Internal error while handling your request - please contact the site support
-%s if this persistently happens and include the error reference %d.
+Internal error while handling your request - please contact %s
+and include the error reference %d if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (configuration.support_email, error_ref)
+</p>""" % (html_escape(configuration.support_email), error_ref)
             # NOTE: socket write expects byte strings
             self.wfile.write(force_utf8(err_msg))
 
