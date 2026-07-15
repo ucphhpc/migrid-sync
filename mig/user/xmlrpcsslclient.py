@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # xmlrpcsslclient - XMLRPC client with HTTPS user certificate support
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -92,14 +93,18 @@ class SafeCertTransport(xmlrpc.client.SafeTransport):
     host = None
     conf = {}
 
-    def __init__(self, use_datetime=0, conf={}):
+    def __init__(self, use_datetime=False, use_builtin_types=False, headers=(),
+                 context=None, conf=None):
         """For backward compatibility with python < 2.7 . Call parent
         constructor and check if the new _connection attribute is set.
         If not we must switch to compatibility mode where the request
         method needs to be overridden.
         """
-        xmlrpc.client.SafeTransport.__init__(self, use_datetime)
-        self.conf.update(conf)
+        xmlrpc.client.SafeTransport.__init__(self, use_datetime=use_datetime,
+                                             use_builtin_types=use_builtin_types,
+                                             headers=headers, context=context)
+        if conf:
+            self.conf.update(conf)
 
         if not hasattr(self, '_connection'):
             # print "DEBUG: switch to compat mode"
@@ -133,7 +138,7 @@ class SafeCertTransport(xmlrpc.client.SafeTransport):
 
         if errcode != 200:
             raise xmlrpc.client.ProtocolError(host + handler, errcode,
-                                          errmsg, headers)
+                                              errmsg, headers)
 
         self.verbose = verbose
 
@@ -164,7 +169,7 @@ class SafeCertTransport(xmlrpc.client.SafeTransport):
 
         key_pw = self.conf.get('password', None)
         cacert = None
-        if conf['cacertfile'] and conf['cacertfile'] != 'AUTO':
+        if self.conf['cacertfile'] and self.conf['cacertfile'] != 'AUTO':
             cacert = self.conf['cacertfile']
         ssl_ctx = ssl.create_default_context(cafile=cacert)
         ssl_ctx.load_cert_chain(self.conf['certfile'],
@@ -176,11 +181,14 @@ class SafeCertTransport(xmlrpc.client.SafeTransport):
 
 def xmlrpcgetserver(conf):
     cert_transport = SafeCertTransport(conf=conf)
+    # TODO: extract ssl_ctx from cert_transport?
+    ssl_ctx = None
     server = xmlrpc.client.ServerProxy('https://%(host)s:%(port)s%(script)s' %
-                                   conf, transport=cert_transport,
-                                   # encoding='utf-8',
-                                   # verbose=True
-                                   )
+                                       conf, transport=cert_transport,
+                                       # encoding='utf-8',
+                                       # verbose=True
+                                       context=ssl_ctx
+                                       )
     return server
 
 

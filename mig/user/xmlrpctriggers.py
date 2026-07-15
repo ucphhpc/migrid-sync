@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # xmlrpcsslclient - XMLRPC client with HTTPS user certificate support
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,12 +20,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
 
-"""XMLRPC client with support for HTTPS using client certificates"""
+"""XMLRPC trigger helper with support for HTTPS using client certificates"""
+
 from __future__ import print_function
 
 from future import standard_library
@@ -65,16 +67,20 @@ if '__main__' == __name__:
     host_port[1] = int(host_port[1])
     conf['host'], conf['port'] = host_port
 
-    print('Testing XMLRPC client over HTTPS with user certificates for triggers')
-    print('You may get prompted for your MiG key/certificate passphrase before you can continue')
+    print('''Testing XMLRPC triggers against %(migserver)s with user certificate
+from %(certfile)s , key from %(keyfile)s and
+CA certificate %(cacertfile)s . You may get prompted for your MiG
+key/certificate passphrase before you can continue.
+    ''' % conf)
     server = xmlrpcgetserver(conf)
 
     methods = server.system.listMethods()
     print('supported remote methods:\n%s' % '\n'.join(methods))
     print()
-    print('submit() signature: %s'\
-        % server.system.methodSignature('submit'))
-    print('the signature is a tuple of output object type and a list of expected/default input values')
+    print('submit() signature: %s'
+          % server.system.methodSignature('submit'))
+    print('the signature is a tuple of output object type and a list of ')
+    print('expected/default input values')
     print('submit() help: %s' % server.system.methodHelp('submit'))
     print('please note that help is not yet available for all methods')
     print()
