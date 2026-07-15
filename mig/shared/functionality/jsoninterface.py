@@ -3,9 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# workflowsjsoninterface.py - JSON interface for
-# managing workflows via cgisid requests
-# Copyright (C) 2019-2020  The MiG Project lead by Brian Vinter
+# jsoninterface.py - JSON interface e.g. for workflows via cgisid requests
+# Copyright (C) 2019-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -26,13 +25,13 @@
 #
 # -- END_HEADER ---
 
-# This is intended as a more generic interface than workflowsjsoninterface.py
-# and jobsjsoninterface.py, especially as we're now adding a third
-# reportjsoninterface.py. It may need to be overhauled or expanded to be a
-# truly generic json interface and is currently only suitable for the various
-# workflow interactions
+# This is a generalisation of the original workflowsjsoninterface.py and
+# jobsjsoninterface.py added when adding a third reportjsoninterface.py.
+# It may need to be overhauled or expanded to be a truly generic json interface
+# and is currently only suitable for the various  workflow interactions
 
 """JSON interface for handling all workflow, job and report interactions."""
+
 from __future__ import absolute_import
 
 import json
