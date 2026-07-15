@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jsonrpcsslclient - JSONRPC client with HTTPS user certificate support
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,21 +20,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
 
 """JSONRPC client with support for HTTPS using client certificates. Requires
-the jsonrpclib module from
-https://pypi.python.org/pypi/jsonrpclib
+the forked jsonrpclib module from
+https://pypi.org/project/jsonrpclib-pelix
 to be installed on client and server. That is easily done with e.g.
-pip install jsonrpclib
-or
-apt install python-jsonrpclib
-or
-yum install python-jsonrpclib
-depending on the platform.
+pip install jsonrpclib-pelix
 """
 
 from __future__ import print_function
@@ -47,7 +43,7 @@ import ssl
 import sys
 import time
 
-from jsonrpclib import jsonrpc
+from jsonrpclib import jsonrpc, config
 from urllib.parse import urlparse
 
 
@@ -105,14 +101,15 @@ class SafeCertTransport(jsonrpc.SafeTransport):
     # Needed for jsonrpc
     _extra_headers = []
 
-    def __init__(self, conf={}):
+    def __init__(self, config, context=None, conf=None):
         """For backward compatibility with python < 2.7 . Call parent
         constructor and check if the new _connection attribute is set.
         If not we must switch to compatibility mode where the request
         method needs to be overridden.
         """
-        jsonrpc.SafeTransport.__init__(self)
-        self.conf.update(conf)
+        jsonrpc.SafeTransport.__init__(self, config=config, context=context)
+        if conf:
+            self.conf.update(conf)
 
         if not hasattr(self, '_connection'):
             # print "DEBUG: switch to compat mode"
@@ -189,11 +186,16 @@ class SafeCertTransport(jsonrpc.SafeTransport):
 
 
 def jsonrpcgetserver(conf):
-    cert_transport = SafeCertTransport(conf=conf)
+    jsonrpc_config = config.Config(version='1.0')
+    cert_transport = SafeCertTransport(jsonrpc_config, conf=conf)
+    # TODO: extract ssl_ctx from cert_transport?
+    ssl_ctx = None
     server = jsonrpc.ServerProxy('https://%(host)s:%(port)s%(script)s' %
                                  conf, transport=cert_transport,
                                  # encoding='utf-8',
                                  # verbose=True
+                                 config=jsonrpc_config,
+                                 context=ssl_ctx
                                  )
     return server
 
@@ -381,7 +383,7 @@ vgrid=Generic
 
 """
 
-    # (inlist, retval) = server.ls({"path": job_id_list]})
+    # (inlist, retval) = server.ls({"path": path_list})
     # print server.lsresowners({"unique_resource_name":["%s" % sys.argv[2]]})
     # print server.addresowner({"new_owner":["%s" % sys.argv[1]], "unique_resource_name":["%s" % sys.argv[2]]})
     # print server.lsresowners({"unique_resource_name":["%s" % sys.argv[2]]})
@@ -430,9 +432,9 @@ vgrid=Generic
 
     # (inlist, retval) = server.jobstatus({"job_id":["%s" % sys.argv[1]]})
     # (inlist, retval) = server.textarea({
-    #     "jobname_0_0_0":"abc", "fileupload_0_0_0filename":"nyfil.mrsl",
-    #     "submitmrsl_0":["ON"], "fileupload_0_0_0":["%s" % mrsl]
-    #     })
+    #    "jobname_0_0_0":"abc", "fileupload_0_0_0filename":"nyfil.mrsl",
+    #    "submitmrsl_0":["ON"], "fileupload_0_0_0":["%s" % mrsl]
+    #    })
     # print  "%s : %s" % (retval, inlist)
     # (inlist, retval) = server.editfile({"path":["/m2"], "submitjob":["True"], "editarea":["%s" % mrsl]})
     # (inlist, retval) = server.canceljob({"job_id":["%s" % sys.argv[1]]})

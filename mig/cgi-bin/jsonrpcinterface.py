@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jsonrpcinterface - Provides the entire JSONRPC interface over CGI
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -28,26 +28,21 @@
 """JSONRPC interface to expose all XGI methods through platform-independent
 JSON Remote Procedure Calls.
 
-Requires the jsonrpclib module from https://pypi.python.org/pypi/jsonrpclib
+Requires the jsonrpclib module from https://pypi.org/project/jsonrpclib-pelix
 to be installed. That is easily done with e.g.
-pip install jsonrpclib
-or
-apt install python-jsonrpclib
-or
-yum install python-jsonrpclib
-depending on the platform.
+pip install jsonrpclib-pelix
 """
+
 from __future__ import absolute_import
 
 from future import standard_library
 standard_library.install_aliases()
 from jsonrpclib.SimpleJSONRPCServer import CGIJSONRPCRequestHandler
-# NOTE: See below for explanation of this XMLRPC dependency 
+# NOTE: See below for explanation of this XMLRPC dependency
 from xmlrpc.server import CGIXMLRPCRequestHandler
 
 from mig.shared.rpcfunctions import expose_functions, system_method_signature, \
-       system_method_help
-
+    system_method_help
 
 
 class MiGCGIJSONRPCRequestHandler(CGIJSONRPCRequestHandler,
@@ -72,7 +67,7 @@ class MiGCGIJSONRPCRequestHandler(CGIJSONRPCRequestHandler,
 def serverMethodSignatures(server):
     """List all methods as well as signatures"""
     methods = CGIJSONRPCRequestHandler.system_listMethods(server)
-    methods_and_signatures = [(method, server.system_methodSignature(method)) \
+    methods_and_signatures = [(method, server.system_methodSignature(method))
                               for method in methods]
     return methods_and_signatures
 

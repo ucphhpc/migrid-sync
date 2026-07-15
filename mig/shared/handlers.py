@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # handlers - back end handler helpers
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -84,7 +84,7 @@ def check_enable_csrf(configuration, accepted_dict, environ=None):
     # We look for curl and xmlrpc/jsonrpc first in user agent to match e.g.
     # * curl/7.38.0
     # * xmlrpclib.py/1.0.1 (by www.pythonware.com)
-    # * jsonrpclib/0.1 (Python X.Y.Z)
+    # * jsonrpclib/1.0 (Python X.Y.Z)
     agent = environ.get('HTTP_USER_AGENT', 'UNKNOWN')
     if agent.lower().startswith('curl') or agent.lower().startswith('xmlrpc') \
             or agent.lower().startswith('python-xmlrpc') or \
