@@ -67,8 +67,7 @@ if '__main__' == __name__:
     host_port = url_tuple[1].split(':', 1)
     if len(host_port) < 2:
         host_port.append('443')
-    host_port[1] = int(host_port[1])
-    conf['host'], conf['port'] = host_port
+    conf['host'], conf['port'] = host_port[0], int(host_port[1])
 
     print('''Running XMLRPC cron script against %(migserver)s with user certificate
 from %(certfile)s , key from %(keyfile)s and
@@ -131,8 +130,8 @@ key/certificate passphrase before you can continue.
     # for i in xrange(len(path_list)):
     #    create_args['freeze_copy_%d' % i] = [path_list[i]]
 
-    #(outlist, retval) = server.crontab(crontab_args)
-    #(returnval, returnmsg) = retval
+    # (outlist, retval) = server.crontab(crontab_args)
+    # (returnval, returnmsg) = retval
     # if returnval != 0:
     #    print 'Error %s:%s ' % (returnval, returnmsg)
     #    sys.exit(1)
@@ -148,7 +147,7 @@ key/certificate passphrase before you can continue.
 
     # Dummy jobs for testing add and remove
     cron_jobs = ['49 13 * * * touch add-cron-job-test.txt']
-    at_jobs = ['2019-12-24 12:13:14 touch Christmas-test-+SCHEDYEAR+.txt']
+    at_jobs = ['2042-12-24 12:13:14 touch Christmas-test-+SCHEDYEAR+.txt']
 
     print('Running addcrontab method:')
     addcrontab_args = {'crontab': cron_jobs, 'atjobs': at_jobs,

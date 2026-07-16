@@ -67,8 +67,7 @@ if '__main__' == __name__:
     host_port = url_tuple[1].split(':', 1)
     if len(host_port) < 2:
         host_port.append('443')
-    host_port[1] = int(host_port[1])
-    conf['host'], conf['port'] = host_port
+    conf['host'], conf['port'] = host_port[0], int(host_port[1])
 
     print('''Running XMLRPC freeze backup location script against %(migserver)s
 with user certificate from %(certfile)s , key from %(keyfile)s and
@@ -78,7 +77,7 @@ key/certificate passphrase before you can continue.
     server = xmlrpcgetserver(conf)
 
     # Switch to display inline docs for showfreeze call
-    #show_docs = ['showfreeze']
+    # show_docs = ['showfreeze']
     show_docs = []
     for method in show_docs:
         print('%s() signature: %s' % (method,

@@ -219,8 +219,7 @@ if '__main__' == __name__:
     host_port = url_tuple[1].split(':', 1)
     if len(host_port) < 2:
         host_port.append('443')
-    host_port[1] = int(host_port[1])
-    conf['host'], conf['port'] = host_port
+    conf['host'], conf['port'] = host_port[0], int(host_port[1])
 
     print('''Testing XMLRPC client against %(migserver)s with user certificate
 from %(certfile)s , key from %(keyfile)s and
