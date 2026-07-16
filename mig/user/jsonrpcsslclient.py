@@ -186,7 +186,7 @@ class SafeCertTransport(jsonrpc.SafeTransport):
 
 
 def jsonrpcgetserver(conf):
-    jsonrpc_config = config.Config(version='1.0')
+    jsonrpc_config = config.Config()
     cert_transport = SafeCertTransport(jsonrpc_config, conf=conf)
     # TODO: extract ssl_ctx from cert_transport?
     ssl_ctx = None
