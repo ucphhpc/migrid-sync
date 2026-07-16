@@ -75,7 +75,7 @@ def read_user_conf():
             parts = thisline.split(None)
             (key, val) = parts[:2]
             (key, val) = key.strip(), val.strip()
-            if not key in needed_settings + optional_settings:
+            if key not in needed_settings + optional_settings:
                 continue
             if key in expand_paths:
                 val = os.path.expandvars(os.path.expanduser(val))
@@ -102,64 +102,13 @@ class SafeCertTransport(jsonrpc.SafeTransport):
     _extra_headers = []
 
     def __init__(self, config, context=None, conf=None):
-        """For backward compatibility with python < 2.7 . Call parent
-        constructor and check if the new _connection attribute is set.
-        If not we must switch to compatibility mode where the request
-        method needs to be overridden.
-        """
+        """Simply wrap parent constructor with our own conf added"""
         jsonrpc.SafeTransport.__init__(self, config=config, context=context)
         if conf:
             self.conf.update(conf)
 
-        if not hasattr(self, '_connection'):
-            # print "DEBUG: switch to compat mode"
-            self._connection = (None, None)
-            self.request = self._compat_request
-
-    def _compat_request(self, host, handler, request_body, verbose=0):
-        """For backward compatibility with < 2.7 : must override connection
-        calls to fit older httplib API.
-
-        Reuse existing connections to avoid repeating passphrase every single
-        time.
-        """
-
-        # issue JSON-RPC request
-
-        if not self.host:
-            self.host = self.make_connection(host)
-        if verbose:
-            self.host.set_debuglevel(1)
-
-        self.send_request(self.host, handler, request_body)
-
-        self.send_user_agent(self.host)
-        self.send_content(self.host, request_body)
-
-        resp = self.host.getresponse()
-        errcode = resp.status
-        errmsg = resp.reason
-        headers = resp.getheaders()
-
-        if errcode != 200:
-            raise jsonrpc.ProtocolError(host + handler, errcode,
-                                        errmsg, headers)
-
-        self.verbose = verbose
-
-        try:
-            sock = self.host._conn.sock
-        except AttributeError:
-            sock = None
-
-        # return self._parse_response(resp, sock)
-        return self.parse_response(resp)
-
     def make_connection(self, host):
-        """Override default HTTPS Transport to include key/cert support. This
-        is the python 2.7 version which changed internals and broke
-        backward compatibility. We use the exact same structure and do the
-        plumbing for backward compatibility in the constructor instead.
+        """Override default HTTPS Transport to include key/cert support.
 
         Reuses connections if possible to support HTTP/1.1 keep-alive.
 
