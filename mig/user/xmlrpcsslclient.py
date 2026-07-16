@@ -268,7 +268,10 @@ key/certificate passphrase before you can continue.
         {'job_id': job_id_list, 'flags': 'vs', 'max_jobs': '5'})
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print('Error %s:%s ' % (returnval, returnmsg))
+        print('Error %s:%s' % (returnval, returnmsg))
+        for ele in inlist:
+            if ele['object_type'] == 'error_text':
+                print(ele['text'])
 
     for ele in inlist:
         if ele['object_type'] == 'job_list':
@@ -431,13 +434,29 @@ vgrid=Generic
     # (inlist, retval) = server.editfile({"path":["/m2"], "submitjob":["True"], "editarea":["%s" % mrsl]})
     # (inlist, retval) = server.canceljob({"job_id":["%s" % sys.argv[1]]})
 
+    print("cat as text file")
+    (inlist, retval) = server.cat({"path": path_list, "flags": "v"})
+    print('cat status: %s' % retval)
+    if returnval != 0:
+        print('Error %s:%s' % (returnval, returnmsg))
+    for ele in inlist:
+        if ele['object_type'] == 'error_text':
+            print(ele['text'])
+        elif 'file_output' == ele['object_type']:
+            print(''.join(ele['lines']))
+
+    print("cat as binary file")
     try:
-        print("cat as binary file")
         (inlist, retval) = server.cat({"path": path_list, "flags": "vb"})
-        for entry in inlist:
-            if 'file_output' == entry['object_type']:
+        print('cat status: %s' % retval)
+        if returnval != 0:
+            print('Error %s:%s' % (returnval, returnmsg))
+        for ele in inlist:
+            if ele['object_type'] == 'error_text':
+                print(ele['text'])
+            elif 'file_output' == ele['object_type']:
                 # NOTE: xmlrpc wraps in object with contents in data attribute
-                print(''.join([i.data for i in entry['lines']]))
+                print([i.data for i in ele['lines']])
     except Exception as exc:
         print("Error: could not cat as binary file: %s" % exc)
 
@@ -461,9 +480,14 @@ ANY
         "jobname_0_0_0": "abc", "fileupload_0_0_0filename": "newfile.txt",
         "submitmrsl_0": ["OFF"], "fileupload_0_0_0": ["%s" % mrsl]
     })
-    print(inlist)
-
-    # print "DEBUG: %s\n%s" % (inlist, retval)
+    print('upload status: %s' % retval)
+    # print(inlist)
+    for entry in inlist:
+        if 'text' == entry['object_type']:
+            print('upload status: %s' % entry['text'])
+        elif 'fileuploadobjs' == entry['object_type']:
+            for obj in entry["fileuploadobjs"]:
+                print('uploaded %(name)s of %(size)db' % obj)
 
     print('submit job description in %s' % mrsl_path)
     (inlist, retval) = server.submit({'path': [mrsl_path]})
