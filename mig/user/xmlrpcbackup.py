@@ -36,7 +36,7 @@ import os
 import sys
 from urllib.parse import urlparse, parse_qs
 
-from xmlrpcsslclient import xmlrpcgetserver, read_user_conf
+from mig.user.xmlrpcsslclient import xmlrpcgetserver, read_user_conf
 
 
 if '__main__' == __name__:
