@@ -90,16 +90,36 @@ class SafeCertTransport(xmlrpc.client.SafeTransport):
     """HTTPS with user certificate"""
 
     host = None
+    ssl_ctx = None
     conf = {}
 
     def __init__(self, use_datetime=False, use_builtin_types=False, headers=(),
                  context=None, conf=None):
-        """Simply wrap parent constructor with our own conf added"""
+        """Wrap parent constructor with our conf and optional ssl_ctx init"""
         xmlrpc.client.SafeTransport.__init__(self, use_datetime=use_datetime,
                                              use_builtin_types=use_builtin_types,
                                              headers=headers, context=context)
         if conf:
             self.conf.update(conf)
+
+        if context is None:
+            self.ssl_ctx = self.__init_ssl_ctx()
+        else:
+            self.ssl_ctx = context
+
+    def __init_ssl_ctx(self):
+        """Helper to set up an ssl_ctx with client key and cert plus optional
+        reading of the key passphrase from conf to enable non-interactive use.
+        """
+        key_pw = self.conf.get('password', None)
+        cacert = None
+        if self.conf['cacertfile'] and self.conf['cacertfile'] != 'AUTO':
+            cacert = self.conf['cacertfile']
+        ssl_ctx = ssl.create_default_context(cafile=cacert)
+        ssl_ctx.load_cert_chain(self.conf['certfile'],
+                                keyfile=self.conf['keyfile'],
+                                password=key_pw)
+        return ssl_ctx
 
     def make_connection(self, host):
         """Override default HTTPS Transport to include key/cert support.
@@ -110,33 +130,26 @@ class SafeCertTransport(xmlrpc.client.SafeTransport):
         """
         if self._connection and host == self._connection[0]:
             return self._connection[1]
+
         try:
             HTTPS = http.client.HTTPSConnection
         except AttributeError:
             raise NotImplementedError(
                 "your version of httplib doesn't support HTTPS")
 
-        key_pw = self.conf.get('password', None)
-        cacert = None
-        if self.conf['cacertfile'] and self.conf['cacertfile'] != 'AUTO':
-            cacert = self.conf['cacertfile']
-        ssl_ctx = ssl.create_default_context(cafile=cacert)
-        ssl_ctx.load_cert_chain(self.conf['certfile'],
-                                keyfile=self.conf['keyfile'], password=key_pw)
         self._connection = host, HTTPS(self.conf['host'],
-                                       port=self.conf['port'], context=ssl_ctx)
+                                       port=self.conf['port'],
+                                       context=self.ssl_ctx)
         return self._connection[1]
 
 
 def xmlrpcgetserver(conf):
     cert_transport = SafeCertTransport(conf=conf)
-    # TODO: extract ssl_ctx from cert_transport?
-    ssl_ctx = None
     server = xmlrpc.client.ServerProxy('https://%(host)s:%(port)s%(script)s' %
                                        conf, transport=cert_transport,
                                        # encoding='utf-8',
                                        # verbose=True
-                                       context=ssl_ctx
+                                       context=cert_transport.ssl_ctx
                                        )
     return server
 
