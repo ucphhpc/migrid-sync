@@ -91,6 +91,7 @@ class SafeCertTransport(xmlrpc.client.SafeTransport):
 
     host = None
     ssl_ctx = None
+    _connection = None
     conf = {}
 
     def __init__(self, use_datetime=False, use_builtin_types=False, headers=(),
