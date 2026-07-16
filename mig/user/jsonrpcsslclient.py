@@ -93,19 +93,39 @@ def read_user_conf():
 
 
 class SafeCertTransport(jsonrpc.SafeTransport):
-
     """HTTPS with user certificate"""
 
     host = None
+    ssl_ctx = None
+    _connection = None
     conf = {}
     # Needed for jsonrpc
     _extra_headers = []
 
     def __init__(self, config, context=None, conf=None):
-        """Simply wrap parent constructor with our own conf added"""
+        """Wrap parent constructor with our conf and optional ssl_ctx init"""
         jsonrpc.SafeTransport.__init__(self, config=config, context=context)
         if conf:
             self.conf.update(conf)
+
+        if context is None:
+            self.ssl_ctx = self.__init_ssl_ctx()
+        else:
+            self.ssl_ctx = context
+
+    def __init_ssl_ctx(self):
+        """Helper to set up an ssl_ctx with client key and cert plus optional
+        reading of the key passphrase from conf to enable non-interactive use.
+        """
+        key_pw = self.conf.get('password', None)
+        cacert = None
+        if self.conf['cacertfile'] and self.conf['cacertfile'] != 'AUTO':
+            cacert = self.conf['cacertfile']
+        ssl_ctx = ssl.create_default_context(cafile=cacert)
+        ssl_ctx.load_cert_chain(self.conf['certfile'],
+                                keyfile=self.conf['keyfile'],
+                                password=key_pw)
+        return ssl_ctx
 
     def make_connection(self, host):
         """Override default HTTPS Transport to include key/cert support.
@@ -116,35 +136,28 @@ class SafeCertTransport(jsonrpc.SafeTransport):
         """
         if self._connection and host == self._connection[0]:
             return self._connection[1]
+
         try:
             HTTPS = http.client.HTTPSConnection
         except AttributeError:
             raise NotImplementedError(
                 "your version of httplib doesn't support HTTPS")
 
-        key_pw = self.conf.get('password', None)
-        cacert = None
-        if self.conf['cacertfile'] and self.conf['cacertfile'] != 'AUTO':
-            cacert = self.conf['cacertfile']
-        ssl_ctx = ssl.create_default_context(cafile=cacert)
-        ssl_ctx.load_cert_chain(self.conf['certfile'],
-                                keyfile=self.conf['keyfile'], password=key_pw)
         self._connection = host, HTTPS(self.conf['host'],
-                                       port=self.conf['port'], context=ssl_ctx)
+                                       port=self.conf['port'],
+                                       context=self.ssl_ctx)
         return self._connection[1]
 
 
 def jsonrpcgetserver(conf):
     jsonrpc_config = config.Config()
     cert_transport = SafeCertTransport(jsonrpc_config, conf=conf)
-    # TODO: extract ssl_ctx from cert_transport?
-    ssl_ctx = None
     server = jsonrpc.ServerProxy('https://%(host)s:%(port)s%(script)s' %
                                  conf, transport=cert_transport,
                                  # encoding='utf-8',
                                  # verbose=True
                                  config=jsonrpc_config,
-                                 context=ssl_ctx
+                                 context=cert_transport.ssl_ctx
                                  )
     return server
 
