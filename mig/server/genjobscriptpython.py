@@ -713,9 +713,10 @@ if not os.environ.get("MIG_JOBDIR", ""):
     ):
         """Print msg unless last command exitted with successcode"""
 
-        cmd = 'if ' + result + ' != ' + successcode + ':\n'
-        cmd += '\tprint "WARNING: ' + msg + "\(\" + " + result + " + \"\)\"\n"
-        cmd += '\n'
+        cmd = r'''
+if %s != %s:
+    print("WARNING: %r \(" + %s + "\)")
+''' % (result, successcode, msg, result)
         return cmd
 
     def log_on_error(

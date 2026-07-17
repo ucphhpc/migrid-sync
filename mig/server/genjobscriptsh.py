@@ -1105,9 +1105,11 @@ class GenJobScriptSh(object):
     ):
         """Print msg unless result contains success code"""
 
-        cmd = 'if [ $' + result + ' -ne ' + successcode + ' ]; then\n'
-        cmd += '\techo "WARNING: ' + msg + "\($" + result + "\)\"\n"
-        cmd += 'fi\n'
+        cmd = r'''
+if [ $%s -ne %s ]; then
+    echo "WARNING: %r \($%s\)"
+fi
+''' % (result, successcode, msg, result)
         return cmd
 
     def log_on_error(
