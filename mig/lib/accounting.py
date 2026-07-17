@@ -484,8 +484,10 @@ def update_accounting(configuration, verbose=False):
             legacy_freeze_meta_filepath = os.path.join(
                 configuration.freeze_home, freeze_name, freeze_meta_filename
             )
+            # Some Archives don't have meta and should just be quietly skipped
             legacy_freeze_meta = unpickle(
-                legacy_freeze_meta_filepath, configuration.logger
+                legacy_freeze_meta_filepath, configuration.logger,
+                allow_missing=True
             )
             if not legacy_freeze_meta:
                 msg = "Missing metadata for archive: %r" % freeze_name
