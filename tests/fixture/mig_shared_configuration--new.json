@@ -164,7 +164,6 @@
       ".*"
     ]
   ],
-  "site_prefer_python3": false,
   "site_signup_hint": "",
   "site_signup_methods": [
     "extcert"
