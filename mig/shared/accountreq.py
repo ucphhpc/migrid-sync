@@ -507,7 +507,7 @@ def account_request_template(configuration, password=True, default_values={}):
   </div>
         """
 
-    email_text_pattern = '.*[^ ]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+.*'
+    email_text_pattern = r'.*[^ ]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+.*'
     if configuration.site_peers_explicit_fields:
         # NOTE: dedicated peers field(s) instead of legacy Comment use
         comment_add = ''
