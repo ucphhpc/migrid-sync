@@ -101,7 +101,7 @@ def read_trigger_log(configuration, vgrid_name, flags):
 
     if not verbose(flags):
         # Strip system trigger lines containing '.meta/EXT.last_modified'
-        system_pattern = '[0-9 ,:-]* [A-Z]* .*/\.meta/.*\.last_modified.*\n'
+        system_pattern = r'[0-9 ,:-]* [A-Z]* .*/\.meta/.*\.last_modified.*\n'
         log_content = re.sub(system_pattern, '', log_content)
 
     return log_content
