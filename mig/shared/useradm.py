@@ -722,10 +722,10 @@ change."""
                 # NOTE: bail out here on edit/renewal as IDs are not unique
                 if do_lock:
                     unlock_user_db(flock)
-                raise ValueError("unique ID for %s (%r) has a collission!" %
+                raise ValueError("unique ID for %s (%r) has a collision!" %
                                  (client_id, user['unique_id']))
             else:
-                _logger.warning("retry unique ID for %s (%r) - collission" %
+                _logger.warning("retry unique ID for %s (%r) - collision" %
                                 (client_id, user['unique_id']))
             user['unique_id'] = generate_random_ascii(unique_id_length,
                                                       unique_id_charset)
