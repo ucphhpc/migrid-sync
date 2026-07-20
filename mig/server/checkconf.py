@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # checkconf - check MiGserver.conf file
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -39,7 +40,6 @@ from past.builtins import basestring
 import os
 import re
 import sys
-import types
 
 from mig.shared.configuration import Configuration, ConfigParser
 from mig.shared.configuration import fix_missing
@@ -115,8 +115,6 @@ def check_conf(conf_file):
 
     # Search object attributes for possible paths
 
-    attrs = []
-    ignore_attrs = ['__class__', '__doc__', '__module__']
     path_re = re.compile('(' + os.sep + "[\w\._-]*)+$")
 
     _logger = conf.logger
@@ -158,7 +156,7 @@ def check_conf(conf_file):
             else:
                 _logger.warning('%s: %s does not exist!', name, val)
                 print('* WARNING *: %s: %s does not exist!' % (name, val))
-                if not path in missing_paths:
+                if path not in missing_paths:
                     missing_paths.append(path)
                 warnings += 1
 
@@ -175,16 +173,18 @@ def check_conf(conf_file):
             missing_paths.sort()
 
             for path in missing_paths:
+                # Initialise path_type to a bogus value
+                path_type = False
                 if ALWAYS == answer:
 
-                    # 'always' answer reults in default type for all missing entries
+                    # 'always' answer results in default type for all missing entries
 
                     path_type = None
                 elif YES == answer:
                     path_type = \
                         ask_reply('Create %s as a (d)irectory, (f)ile or (p)ipe? [D/f/p] '
                                   % path)
-                if not path_type or 'D' == path_type.upper():
+                if path_type is None or 'D' == path_type.upper():
                     try:
                         os.makedirs(path)
                         print('created directory %s' % path)
