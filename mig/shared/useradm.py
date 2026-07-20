@@ -476,7 +476,7 @@ def verify_user_peers(configuration, db_path, client_id, user, now, verify_peer,
 
 
 def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
-                      reset_token, reset_auth_type, pw_match,
+                      reset_token, reset_auth_type, pw_match, invalid,
                       accepted_peer_list, force, verbose, ask_renew,
                       default_renew, do_lock, from_edit_user, ask_change_pw,
                       auto_create_db, create_backup):
@@ -546,6 +546,17 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
                       % alias)
             raise Exception(
                 'A conflicting user with alias %s already exists' % alias)
+
+    # Reject all other obviously invalid requests
+    if invalid:
+        if do_lock:
+            unlock_user_db(flock)
+        _logger.warning("%r requested account with invalid values: %s"
+                        % (client_id, ', '.join(invalid)))
+        if verbose:
+            print("User requested account with invalid values")
+        err = "Cannot create/renew user account with invalid values!"
+        raise Exception(err)
 
     if client_id not in user_db:
         _logger.debug('add new user %r in user DB' % client_id)
@@ -1095,6 +1106,11 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
         pw_match = user['pw_match']
         # Always remove any pw_match fields before DB insert
         del user['pw_match']
+    invalid = False
+    if 'invalid' in user:
+        invalid = user['invalid']
+        # Always remove any invalid markers before DB insert
+        del user['invalid']
 
     _logger.info('trying to create or renew user %r' % client_id)
     if verbose:
@@ -1123,8 +1139,8 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
 
     created = create_user_in_db(configuration, db_path, client_id, user, now,
                                 authorized, reset_token, reset_auth_type,
-                                pw_match, accepted_peer_list, force, verbose,
-                                ask_renew, default_renew, do_lock,
+                                pw_match, invalid, accepted_peer_list, force,
+                                verbose, ask_renew, default_renew, do_lock,
                                 from_edit_user, ask_change_pw, auto_create_db,
                                 create_backup)
     # Mark user updated for all logins

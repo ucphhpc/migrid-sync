@@ -431,6 +431,67 @@ class TestMigSharedUseradm__create_user(
                 ask_renew=False,
             )
 
+    def test_user_creation_with_invalid_marker_fails(self):
+        user_dict = {}
+        user_dict["full_name"] = "Test User"
+        user_dict["organization"] = "Test Org"
+        user_dict["state"] = "NA"
+        user_dict["country"] = "DK"
+        user_dict["email"] = "user@example.com"
+        user_dict["comment"] = "This is the create comment"
+        user_dict["password"] = "password"
+        user_dict["distinguished_name"] = TEST_USER_DN
+        # NOTE: inject invalid marker to prevent create
+        user_dict["invalid"] = ["invalid request detected"]
+
+        with self.assertLogs(level='WARNING') as log_capture:
+            with self.assertRaises(Exception):
+                create_user(
+                    user_dict,
+                    self.configuration,
+                    keyword_auto,
+                    default_renew=True,
+                    ask_renew=False,
+                )
+        self.assertTrue(any('invalid values' in msg for msg in
+                            log_capture.output))
+
+    def test_user_creation_with_invalid_markers_fails_renewal(self):
+        user_dict = {}
+        user_dict["full_name"] = "Test User"
+        user_dict["organization"] = "Test Org"
+        user_dict["state"] = "NA"
+        user_dict["country"] = "DK"
+        user_dict["email"] = "user@example.com"
+        user_dict["comment"] = "This is the create comment"
+        user_dict["password"] = "password"
+        user_dict["distinguished_name"] = TEST_USER_DN
+
+        try:
+            created = create_user(
+                user_dict, self.configuration, keyword_auto, default_renew=True
+            )
+        except Exception:
+            self.assertFalse(True, "should not be reached")
+
+        # Double check that valid user was created without 'invalid' field
+        self.assertTrue(created)
+        self.assertNotIn('invalid', created)
+
+        # NOTE: inject invalid marker to prevent renew
+        user_dict["invalid"] = ["invalid request detected"]
+        with self.assertLogs(level='WARNING') as log_capture:
+            with self.assertRaises(Exception):
+                create_user(
+                    user_dict,
+                    self.configuration,
+                    keyword_auto,
+                    default_renew=True,
+                    ask_renew=False,
+                )
+        self.assertTrue(any('invalid values' in msg for msg in
+                            log_capture.output))
+
 
 class MigSharedUseradm__assure_current_htaccess(MigTestCase):
     """Coverage of useradm behaviours around htaccess."""
