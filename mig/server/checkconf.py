@@ -173,16 +173,18 @@ def check_conf(conf_file):
             missing_paths.sort()
 
             for path in missing_paths:
-                default_path_type = 'D'
-                # We're past NO so ask on YES or use default path_type for AUTO
-                if YES == answer:
+                # Initialise path_type to a bogus value
+                path_type = False
+                if ALWAYS == answer:
+
+                    # 'always' answer results in default type for all missing entries
+
+                    path_type = None
+                elif YES == answer:
                     path_type = \
                         ask_reply('Create %s as a (d)irectory, (f)ile or (p)ipe? [D/f/p] '
-                                  % path) or default_path_type
-                else:
-                    path_type = default_path_type
-
-                if 'D' == path_type.upper():
+                                  % path)
+                if path_type is None or 'D' == path_type.upper():
                     try:
                         os.makedirs(path)
                         print('created directory %s' % path)
