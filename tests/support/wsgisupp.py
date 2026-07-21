@@ -51,6 +51,27 @@ class FakeWsgiStartResponse:
         self.calls.append((status, headers, exc))
 
 
+def create_http_environ(configuration):
+    """Small helper that can create a minimum viable environ dict suitable
+    for passing to http-facing code for the supplied configuration.
+    """
+
+    environ = {}
+    environ["MIG_CONF"] = configuration.config_file
+    environ["HTTP_HOST"] = "localhost"
+    environ["PATH_INFO"] = "/"
+    environ["REMOTE_ADDR"] = "127.0.0.1"
+    environ["SCRIPT_URI"] = "".join(
+        ("https://", environ["HTTP_HOST"], environ["PATH_INFO"])
+    )
+    return environ
+
+
+def _only_output_objects(output_objects, with_object_type=None):
+    """Filter output objects to pick only those of a specific object_type"""
+    return [o for o in output_objects if o["object_type"] == with_object_type]
+
+
 def create_wsgi_environ(configuration, wsgi_url, method='GET', query=None, headers=None, form=None):
     """Populate the necessary variables that will constitute a valid WSGI
     environment given a URL to which we will make a requests under test and

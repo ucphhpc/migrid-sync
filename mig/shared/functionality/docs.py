@@ -40,8 +40,10 @@ import os
 from mig.shared import mrslkeywords
 from mig.shared import resconfkeywords
 from mig.shared import returnvalues
+from mig.shared.base import requested_backend
 from mig.shared.functional import validate_input
-from mig.shared.init import initialize_main_variables
+from mig.shared.init import initialize_main_variables, make_title_entry, \
+    make_start_entry
 from mig.shared.output import get_valid_outputformats
 
 
@@ -215,7 +217,7 @@ The MiG software license follows below:<br />
     lic_text = ''.join(lic_lines[2:-1])
     output_objects.append({'object_type': 'html_form', 'text':
                            '<code>%s</code><br />' %
-                           lic_text.replace('\n', '<br \>')})
+                           lic_text.replace('\n', '<br />')})
 
     output_objects.append(
         {'object_type': 'header', 'text': 'Acknowledgements'})
@@ -606,8 +608,35 @@ The workflows also requires that the resources provide the SSHFS_MOUNT runtime e
                                'text': 'sshfs client (GNU v2.0)'})
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None):
+    """Main function wrapper used by front end"""
+
+    if environ is None:
+        environ = os.environ
+
+    (configuration, logger, output_objects, op_name) = \
+        initialize_main_variables(client_id)
+
+    return _main(configuration, logger, environ, op_name=op_name,
+                 output_objects=output_objects, client_id=client_id,
+                 user_arguments_dict=user_arguments_dict)
+
+
+def _main(configuration, logger, environ, op_name='', output_objects=None,
+          client_id=None, user_arguments_dict=None):
+    """Actual main function to generate contents for the front end"""
+
+    assert environ is not None, "required arg: environ"
+
+    if logger is None:
+        logger = configuration.logger
+
+    # Create new output_objects list with start entry if None was supplied
+    if output_objects is None:
+        output_objects = [make_start_entry()]
+        if not op_name:
+            op_name = requested_backend()
+        output_objects.append(make_title_entry('%s' % op_name))
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
