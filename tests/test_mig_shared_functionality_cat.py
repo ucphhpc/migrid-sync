@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_functionality_cat - unit test of the corresponding mig module
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -28,176 +28,198 @@
 """Unit tests of the MiG functionality file implementing the cat backend"""
 
 from __future__ import print_function
-import importlib
+
 import os
 import shutil
-import sys
-import unittest
 
-from tests.support import MIG_BASE, PY2, TEST_DATA_DIR, MigTestCase, testmain, \
-    temppath, ensure_dirs_exist
+# Imports of the code under test
+from mig.shared.functionality.cat import _main as submain
+from mig.shared.functionality.cat import main as realmain
 
-from mig.shared.base import client_id_dir
-from mig.shared.functionality.cat import _main as submain, main as realmain
+# Imports required for the unit tests themselves
+from tests.support import (
+    TEST_DATA_DIR,
+    MigTestCase,
+    testmain,
+)
+from tests.support.usersupp import TEST_USER_DN
+from tests.support.wsgisupp import create_http_environ, filter_output_objects
 
-
-def create_http_environ(configuration):
-    """Small helper that can create a minimum viable environ dict suitable
-    for passing to http-facing code for the supplied configuration.
-    """
-
-    environ = {}
-    environ['MIG_CONF'] = configuration.config_file
-    environ['HTTP_HOST'] = 'localhost'
-    environ['PATH_INFO'] = '/'
-    environ['REMOTE_ADDR'] = '127.0.0.1'
-    environ['SCRIPT_URI'] = ''.join(('https://', environ['HTTP_HOST'],
-                                     environ['PATH_INFO']))
-    return environ
+# Imports required for the unit test wrapping
 
 
-def _only_output_objects(output_objects, with_object_type=None):
-    return [o for o in output_objects if o['object_type'] == with_object_type]
 
 
 class MigSharedFunctionalityCat(MigTestCase):
     """Wrap unit tests for the corresponding module"""
 
-    TEST_CLIENT_ID = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
+    TEST_CLIENT_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     def before_each(self):
-        self.test_user_dir = self._provision_test_user(self, self.TEST_CLIENT_ID)
-        self.test_environ = create_http_environ(self.configuration)
+        self.test_user_dir = self._provision_test_user(self, TEST_USER_DN)
+        self.test_environ = create_http_environ(
+            self.configuration, "wsgi-bin/cat.py"
+        )
 
     def assertSingleOutputObject(self, output_objects, with_object_type=None):
         assert with_object_type is not None
-        found_objects = _only_output_objects(output_objects,
-                                             with_object_type=with_object_type)
+        found_objects = filter_output_objects(
+            output_objects, with_object_type=with_object_type
+        )
         self.assertEqual(len(found_objects), 1)
         return found_objects[0]
 
     def test_file_serving_a_single_file_match(self):
-        with open(os.path.join(self.test_user_dir, 'foobar.txt'), 'w'):
+        with open(os.path.join(self.test_user_dir, "foobar.txt"), "w"):
             pass
         payload = {
-            'path': ['foobar.txt'],
+            "path": ["foobar.txt"],
         }
 
-        (output_objects, status) = submain(self.configuration, self.logger,
-                                           client_id=self.TEST_CLIENT_ID,
-                                           user_arguments_dict=payload,
-                                           environ=self.test_environ)
+        output_objects, status = submain(
+            self.configuration,
+            self.logger,
+            client_id=TEST_USER_DN,
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+        )
 
         # NOTE: start entry with headers and actual content
         self.assertEqual(len(output_objects), 2)
-        self.assertSingleOutputObject(output_objects,
-                                      with_object_type='file_output')
+        self.assertSingleOutputObject(
+            output_objects, with_object_type="file_output"
+        )
 
     def test_file_serving_at_limit(self):
         test_binary_file = os.path.realpath(
-            os.path.join(TEST_DATA_DIR, 'loading.gif'))
+            os.path.join(TEST_DATA_DIR, "loading.gif")
+        )
         test_binary_file_size = os.stat(test_binary_file).st_size
-        with open(test_binary_file, 'rb') as fh_test_file:
+        with open(test_binary_file, "rb") as fh_test_file:
             test_binary_file_data = fh_test_file.read()
-        shutil.copyfile(test_binary_file, os.path.join(
-            self.test_user_dir, 'loading.gif'))
+        shutil.copyfile(
+            test_binary_file, os.path.join(self.test_user_dir, "loading.gif")
+        )
         payload = {
-            'output_format': ['file'],
-            'path': ['loading.gif'],
+            "output_format": ["file"],
+            "path": ["loading.gif"],
         }
 
         self.configuration.wwwserve_max_bytes = test_binary_file_size
 
-        (output_objects, status) = submain(self.configuration, self.logger,
-                                           client_id=self.TEST_CLIENT_ID,
-                                           user_arguments_dict=payload,
-                                           environ=self.test_environ)
+        output_objects, status = submain(
+            self.configuration,
+            self.logger,
+            client_id=TEST_USER_DN,
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+        )
 
         self.assertEqual(len(output_objects), 2)
-        relevant_obj = self.assertSingleOutputObject(output_objects,
-                                                     with_object_type='file_output')
-        self.assertEqual(len(relevant_obj['lines']), 1)
-        self.assertEqual(relevant_obj['lines'][0], test_binary_file_data)
+        relevant_obj = self.assertSingleOutputObject(
+            output_objects, with_object_type="file_output"
+        )
+        self.assertEqual(len(relevant_obj["lines"]), 1)
+        self.assertEqual(relevant_obj["lines"][0], test_binary_file_data)
 
     def test_file_serving_over_limit_without_storage_protocols(self):
-        test_binary_file = os.path.realpath(os.path.join(TEST_DATA_DIR,
-                                                         'loading.gif'))
+        test_binary_file = os.path.realpath(
+            os.path.join(TEST_DATA_DIR, "loading.gif")
+        )
         test_binary_file_size = os.stat(test_binary_file).st_size
-        with open(test_binary_file, 'rb') as fh_test_file:
-            test_binary_file_data = fh_test_file.read()
-        shutil.copyfile(test_binary_file, os.path.join(self.test_user_dir,
-                                                       'loading.gif'))
+        with open(test_binary_file, "rb") as fh_test_file:
+            _ = fh_test_file.read()
+        shutil.copyfile(
+            test_binary_file, os.path.join(self.test_user_dir, "loading.gif")
+        )
         payload = {
-            'output_format': ['file'],
-            'path': ['loading.gif'],
+            "output_format": ["file"],
+            "path": ["loading.gif"],
         }
 
         # NOTE: override default storage_protocols to empty in this test
         self.configuration.storage_protocols = []
         self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
 
-        (output_objects, status) = submain(self.configuration, self.logger,
-                                           client_id=self.TEST_CLIENT_ID,
-                                           user_arguments_dict=payload,
-                                           environ=self.test_environ)
+        output_objects, status = submain(
+            self.configuration,
+            self.logger,
+            client_id=TEST_USER_DN,
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+        )
 
         # NOTE: start entry with headers and actual error message
         self.assertEqual(len(output_objects), 2)
-        relevant_obj = self.assertSingleOutputObject(output_objects,
-                                                     with_object_type='error_text')
-        self.assertEqual(relevant_obj['text'],
-                         "Site configuration prevents web serving contents "
-                         "bigger than 3896 bytes")
+        relevant_obj = self.assertSingleOutputObject(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(
+            relevant_obj["text"],
+            "Site configuration prevents web serving contents "
+            "bigger than 3896 bytes",
+        )
 
     def test_file_serving_over_limit_with_storage_protocols_sftp(self):
-        test_binary_file = os.path.realpath(os.path.join(TEST_DATA_DIR,
-                                                         'loading.gif'))
+        test_binary_file = os.path.realpath(
+            os.path.join(TEST_DATA_DIR, "loading.gif")
+        )
         test_binary_file_size = os.stat(test_binary_file).st_size
-        with open(test_binary_file, 'rb') as fh_test_file:
-            test_binary_file_data = fh_test_file.read()
-        shutil.copyfile(test_binary_file, os.path.join(self.test_user_dir,
-                                                       'loading.gif'))
+        with open(test_binary_file, "rb") as fh_test_file:
+            _ = fh_test_file.read()
+        shutil.copyfile(
+            test_binary_file, os.path.join(self.test_user_dir, "loading.gif")
+        )
         payload = {
-            'output_format': ['file'],
-            'path': ['loading.gif'],
+            "output_format": ["file"],
+            "path": ["loading.gif"],
         }
 
-        self.configuration.storage_protocols = ['sftp']
+        self.configuration.storage_protocols = ["sftp"]
         self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
 
-        (output_objects, status) = submain(self.configuration, self.logger,
-                                           client_id=self.TEST_CLIENT_ID,
-                                           user_arguments_dict=payload,
-                                           environ=self.test_environ)
+        output_objects, status = submain(
+            self.configuration,
+            self.logger,
+            client_id=TEST_USER_DN,
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+        )
 
         # NOTE: start entry with headers and actual error message
-        relevant_obj = self.assertSingleOutputObject(output_objects,
-                                                     with_object_type='error_text')
-        self.assertEqual(relevant_obj['text'],
-                         "Site configuration prevents web serving contents "
-                         "bigger than 3896 bytes - please use better "
-                         "alternatives (SFTP) to retrieve large data")
+        relevant_obj = self.assertSingleOutputObject(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(
+            relevant_obj["text"],
+            "Site configuration prevents web serving contents "
+            "bigger than 3896 bytes - please use better "
+            "alternatives (SFTP) to retrieve large data",
+        )
 
-    @unittest.skipIf(PY2, "Python 3 only")
     def test_main_passes_environ(self):
         try:
-            result = realmain(self.TEST_CLIENT_ID, {}, self.test_environ)
+            result = realmain(TEST_USER_DN, {}, self.test_environ)
         except Exception as unexpectedexc:
             raise AssertionError(
-                "saw unexpected exception: %s" % (unexpectedexc,))
+                "saw unexpected exception: %s" % (unexpectedexc,)
+            )
 
-        (output_objects, status) = result
-        self.assertEqual(status[1], 'Client error')
+        output_objects, status = result
+        self.assertEqual(status[1], "Client error")
 
-        error_text_objects = _only_output_objects(output_objects,
-                                                  with_object_type='error_text')
+        error_text_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
         relevant_obj = error_text_objects[2]
         self.assertEqual(
-            relevant_obj['text'], 'Input arguments were rejected - not allowed for this script!')
+            relevant_obj["text"],
+            "Input arguments were rejected - not allowed for this script!",
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

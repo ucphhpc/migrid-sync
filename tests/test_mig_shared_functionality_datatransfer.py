@@ -106,6 +106,11 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(len(text_objects), 0)
 
+        # We expect 10 html snippets here
+        html_objects = filter_output_objects(output_objects,
+                                             with_object_type="html_form")
+        self.assertEqual(len(html_objects), 10)
+
     def test_deltransfer_without_transfer_id(self):
         non_existing_transfer_id = "non-existing-transfer-id"
         payload = {
