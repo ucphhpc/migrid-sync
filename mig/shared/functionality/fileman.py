@@ -31,10 +31,10 @@ their home directories.
 
 from __future__ import absolute_import
 
-import sys
+import os
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, requested_backend
+from mig.shared.base import requested_backend
 from mig.shared.defaults import trash_linkname, csrf_backends, csrf_field, \
     default_max_chunks
 from mig.shared.freezefunctions import import_freeze_form
@@ -692,7 +692,6 @@ def _main(configuration, logger, environ, op_name='', output_objects=None,
             op_name = requested_backend()
         output_objects.append(make_title_entry('%s' % op_name))
 
-    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
