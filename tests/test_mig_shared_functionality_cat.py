@@ -48,12 +48,8 @@ from tests.support.wsgisupp import create_http_environ, filter_output_objects
 # Imports required for the unit test wrapping
 
 
-
-
 class MigSharedFunctionalityCat(MigTestCase):
     """Wrap unit tests for the corresponding module"""
-
-    TEST_CLIENT_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
 
     def _provide_configuration(self):
         return "testconfig"
