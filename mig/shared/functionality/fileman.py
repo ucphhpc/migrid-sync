@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileman - File manager UI for browsing and manipulating files and folders
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -34,7 +34,7 @@ from __future__ import absolute_import
 import sys
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir
+from mig.shared.base import client_id_dir, requested_backend
 from mig.shared.defaults import trash_linkname, csrf_backends, csrf_field, \
     default_max_chunks
 from mig.shared.freezefunctions import import_freeze_form
@@ -44,7 +44,8 @@ from mig.shared.functionality.editor import advanced_editor_css_deps, \
 from mig.shared.gdp.all import get_project_from_client_id
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import themed_styles, legacy_user_interface
-from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.init import initialize_main_variables, extract_menu, \
+    find_entry, make_title_entry, make_start_entry
 from mig.shared.pwcrypto import sorted_hash_algos, default_algo
 from mig.shared.sharelinks import create_share_link_form, import_share_link_form
 
@@ -463,7 +464,7 @@ def js_tmpl_parts(configuration,
             ('%s' % (configuration.site_enable_transfers and legacy_buttons)).lower(),
         'enable_gdp':
             ('%s' % configuration.site_enable_gdp).lower(),
-        'max_stream_size': 64*1024*1024
+        'max_stream_size': 64 * 1024 * 1024
     }
 
     js_import = '''
@@ -661,11 +662,36 @@ def signature():
     return ['', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None):
+    """Main function wrapper used by front end"""
+
+    if environ is None:
+        environ = os.environ
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
+
+    return _main(configuration, logger, environ, op_name=op_name,
+                 output_objects=output_objects, client_id=client_id,
+                 user_arguments_dict=user_arguments_dict)
+
+
+def _main(configuration, logger, environ, op_name='', output_objects=None,
+          client_id=None, user_arguments_dict=None):
+    """Actual main function to generate contents for the front end"""
+
+    assert environ is not None, "required arg: environ"
+
+    if logger is None:
+        logger = configuration.logger
+
+    # Create new output_objects list with start entry if None was supplied
+    if output_objects is None:
+        output_objects = [make_start_entry()]
+        if not op_name:
+            op_name = requested_backend()
+        output_objects.append(make_title_entry('%s' % op_name))
+
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -675,6 +701,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
         # NOTE: path cannot use wildcards here
         typecheck_overrides={},
     )

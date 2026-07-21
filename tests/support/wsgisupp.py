@@ -51,7 +51,7 @@ class FakeWsgiStartResponse:
         self.calls.append((status, headers, exc))
 
 
-def create_http_environ(configuration):
+def create_http_environ(configuration, path_info=''):
     """Small helper that can create a minimum viable environ dict suitable
     for passing to http-facing code for the supplied configuration.
     """
@@ -59,10 +59,10 @@ def create_http_environ(configuration):
     environ = {}
     environ["MIG_CONF"] = configuration.config_file
     environ["HTTP_HOST"] = "localhost"
-    environ["PATH_INFO"] = "/"
+    environ["PATH_INFO"] = path_info
     environ["REMOTE_ADDR"] = "127.0.0.1"
     environ["SCRIPT_URI"] = "".join(
-        ("https://", environ["HTTP_HOST"], environ["PATH_INFO"])
+        ("https://", environ["HTTP_HOST"], path_info)
     )
     return environ
 

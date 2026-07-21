@@ -2,7 +2,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# test_mig_shared_functionality_docs - unit test of the corresponding mig module
+# test_mig_shared_functionality_fileman - unit test of the corresponding mig module
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # --- END_HEADER ---
 #
 
-"""Unit tests of the MiG functionality file implementing the docs backend"""
+"""Unit tests of the MiG functionality file implementing the fileman backend"""
 
 from __future__ import print_function
 
@@ -33,7 +33,7 @@ from __future__ import print_function
 import mig.shared.returnvalues as returnvalues
 
 # Imports of the code under test
-from mig.shared.functionality.docs import _main as submain
+from mig.shared.functionality.fileman import main as realmain
 
 # Imports required for the unit tests themselves
 from tests.support import (
@@ -44,7 +44,7 @@ from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
 from tests.support.wsgisupp import create_http_environ, filter_output_objects
 
 
-class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
+class MigSharedFunctionalityFileman(MigTestCase, UserAssertMixin):
     """Wrap unit tests for the corresponding module"""
 
     def _provide_configuration(self):
@@ -53,19 +53,13 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
     def before_each(self):
         self.test_user_dir = self._provision_test_user(self, TEST_USER_DN)
         self.test_environ = create_http_environ(
-            self.configuration, "wsgi-bin/docs.py"
+            self.configuration, "wsgi-bin/fileman.py"
         )
 
-    def test_show_default_site_docs(self):
-        payload = {"show": [""]}
-
-        output_objects, status = submain(
-            self.configuration,
-            self.logger,
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
-            environ=self.test_environ,
-        )
+    def test_show_default_user_fileman(self):
+        payload = {}
+        result = realmain(TEST_USER_DN, payload, self.test_environ)
+        output_objects, status = result
         self.assertEqual(status, returnvalues.OK)
 
         # We don't expect any error messages here
@@ -74,17 +68,17 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect two text messages here
+        # We don't expect any text messages here
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
-        self.assertEqual(len(text_objects), 2)
+        self.assertEqual(len(text_objects), 0)
 
-        # We expect 6 html snippets here
+        # We expect one html snippet here
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
-        self.assertEqual(len(html_objects), 6)
+        self.assertEqual(len(html_objects), 1)
 
 
 # TODO: add additional tests to cover other uses
