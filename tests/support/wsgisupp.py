@@ -67,7 +67,7 @@ def create_http_environ(configuration):
     return environ
 
 
-def _only_output_objects(output_objects, with_object_type=None):
+def filter_output_objects(output_objects, with_object_type=None):
     """Filter output objects to pick only those of a specific object_type"""
     return [o for o in output_objects if o["object_type"] == with_object_type]
 

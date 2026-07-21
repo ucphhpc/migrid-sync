@@ -28,6 +28,7 @@
 """Unit tests of the MiG functionality file implementing the docs backend"""
 
 from __future__ import print_function
+
 import os
 
 # Imports required for the unit test wrapping
@@ -35,17 +36,18 @@ import mig.shared.returnvalues as returnvalues
 from mig.shared.base import client_id_dir
 
 # Imports of the code under test
-from mig.shared.functionality.docs import _main as submain, main as realmain
+from mig.shared.functionality.docs import _main as submain
+from mig.shared.functionality.docs import main as realmain
 
 # Imports required for the unit tests themselves
 from tests.support import (
     MigTestCase,
-    testmain,
-    temppath,
     ensure_dirs_exist,
+    temppath,
+    testmain,
 )
 from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
-from tests.support.wsgisupp import create_http_environ, _only_output_objects
+from tests.support.wsgisupp import create_http_environ, filter_output_objects
 
 
 class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
@@ -61,7 +63,7 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
     def test_show_default_site_docs(self):
         payload = {"show": [""]}
 
-        (output_objects, status) = submain(
+        output_objects, status = submain(
             self.configuration,
             self.logger,
             client_id=TEST_USER_DN,
@@ -71,13 +73,15 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         self.assertEqual(status, returnvalues.OK)
 
         # We expect two text messages here
-        text_objects = _only_output_objects(
-            output_objects, with_object_type="text")
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
         self.assertEqual(len(text_objects), 2)
 
         # We expect 6 html snippets here
-        html_objects = _only_output_objects(output_objects,
-                                            with_object_type="html_form")
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
         self.assertEqual(len(html_objects), 6)
 
 

@@ -439,7 +439,7 @@ Web interfaces are served with the Apache HTTP Server:"""})
                                'title': 'RSync Home Page',
                                'text':
                                'RSync incremental file transfer client (GPL license)'})
-    if configuration.site_password_cracklib:
+    if password_dep and configuration.site_password_cracklib:
         output_objects.append({'object_type': 'text', 'text': """
 The optional password strength testing for SFTP/DAVS/FTPS servers relies
 on the Cracklib module from:"""})
