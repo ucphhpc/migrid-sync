@@ -40,6 +40,7 @@ import os
 from mig.shared import mrslkeywords
 from mig.shared import resconfkeywords
 from mig.shared import returnvalues
+from mig.shared.defaults import keyword_auto
 from mig.shared.functional import validate_input
 from mig.shared.init import lazy_init_backend
 from mig.shared.output import get_valid_outputformats
@@ -606,11 +607,12 @@ The workflows also requires that the resources provide the SSHFS_MOUNT runtime e
                                'text': 'sshfs client (GNU v2.0)'})
 
 
-def main(client_id, user_arguments_dict, environ=None, init_main_res=None):
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_menu': keyword_auto}):
     """Main function wrapper used by front end"""
 
     (configuration, logger, output_objects, op_name, environ) = \
-        lazy_init_backend(client_id, init_main_res, environ)
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(
