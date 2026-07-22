@@ -29,6 +29,8 @@
 
 from __future__ import print_function
 
+import unittest
+
 # Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
 
@@ -235,6 +237,152 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
             output_objects, with_object_type="html_form"
         )
         self.assertEqual(len(html_objects), 6)
+
+    def test_show_default_credits(self):
+        payload = {"show": ["credits"]}
+
+        output_objects, status = backend_main(
+            client_id=TEST_USER_DN,
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.OK)
+
+        # We don't expect any error messages here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
+        # We expect 20+ text messages here (fuzzy match)
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertTrue(len(text_objects) >= 20)
+
+        # We expect 3 html snippets here
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 3)
+
+        # We expect 20+ links here (fuzzy match)
+        link_objects = filter_output_objects(
+            output_objects, with_object_type="link"
+        )
+        self.assertTrue(len(link_objects) >= 20)
+
+    def test_show_cracklib_credits_when_enabled(self):
+        self.configuration.site_password_cracklib = True
+        # Needs one service with password login to trigger conditional
+        self.configuration.site_enable_sftp = True
+        payload = {"show": ["credits"]}
+
+        output_objects, status = backend_main(
+            client_id=TEST_USER_DN,
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.OK)
+
+        # We don't expect any error messages here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
+        # We expect 20+ links here (fuzzy match) including one for cracklib
+        link_objects = filter_output_objects(
+            output_objects, with_object_type="link"
+        )
+        self.assertTrue(len(link_objects) >= 20)
+        self.assertTrue(
+            [i for i in link_objects if 'cracklib' in i['title'].lower()])
+
+    def test_hide_cracklib_credits_when_disabled(self):
+        self.configuration.site_password_cracklib = False
+        # Needs one service with password login to trigger conditional
+        self.configuration.site_enable_sftp = True
+        payload = {"show": ["credits"]}
+
+        output_objects, status = backend_main(
+            client_id=TEST_USER_DN,
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.OK)
+
+        # We don't expect any error messages here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
+        # We expect 20+ links here (fuzzy match) including one for cracklib
+        link_objects = filter_output_objects(
+            output_objects, with_object_type="link"
+        )
+        self.assertTrue(len(link_objects) >= 20)
+        self.assertFalse(
+            [i for i in link_objects if 'cracklib' in i['title'].lower()])
+
+    @unittest.skip("TODO: fix unused detection in backend and re-enable")
+    def test_hide_cracklib_credits_when_unused(self):
+        # Hidden if no password login service enabled
+        self.configuration.site_password_cracklib = True
+        self.configuration.site_enable_sftp = False
+        payload = {"show": ["credits"]}
+
+        output_objects, status = backend_main(
+            client_id=TEST_USER_DN,
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.OK)
+
+        # We don't expect any error messages here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
+        # We expect 20+ links here (fuzzy match) including one for cracklib
+        link_objects = filter_output_objects(
+            output_objects, with_object_type="link"
+        )
+        self.assertTrue(len(link_objects) >= 20)
+        self.assertFalse(
+            [i for i in link_objects if 'cracklib' in i['title'].lower()])
+
+    @unittest.skip("TODO: fix broken br tag and re-enable")
+    def test_show_default_credits_no_longer_has_broken_html_br_tag(self):
+        payload = {"show": ["credits"]}
+
+        output_objects, status = backend_main(
+            client_id=TEST_USER_DN,
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.OK)
+
+        # We don't expect any error messages here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
+        # We expect 3 html snippets here
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 3)
+        self.assertFalse(
+            [i for i in html_objects if '<br \>' in i['text']])
 
 
 # TODO: add additional tests to cover other uses
