@@ -259,6 +259,19 @@ def lazy_init_backend(client_id, environ=None, init_main_res=None,
         # Create new output_objects list with start entry if None was supplied
         if output_objects is None:
             output_objects = [make_start_entry()]
-            output_objects.append(make_title_entry('%s' % op_name))
+            # Mimic initialize_main_variables use with init_kwargs
+            op_menu = init_kwargs.get('op_menu', True)
+            if op_menu == keyword_auto:
+                op_menu = bool(client_id)
+            skipwidgets = not configuration.site_enable_widgets or not client_id
+            skipuserstyle = not configuration.site_enable_styling or not client_id
+            title_object = make_title_entry('%s' % op_name,
+                                            skipmenu=(not op_menu),
+                                            skipwidgets=skipwidgets,
+                                            skipuserstyle=skipuserstyle,
+                                            skipuserprofile=(not client_id),
+                                            backend=op_name,
+                                            )
+            output_objects.append(title_object)
 
     return (configuration, logger, output_objects, op_name, environ)

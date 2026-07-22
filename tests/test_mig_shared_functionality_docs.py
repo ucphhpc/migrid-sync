@@ -56,7 +56,93 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
             self.configuration, "wsgi-bin/docs.py"
         )
 
+    def test_show_default_anonymous_site_docs(self):
+        payload = {"show": [""]}
+        self.configuration.site_enable_styling = False
+        self.configuration.site_enable_widgets = False
+
+        output_objects, status = backend_main(
+            client_id="",
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.OK)
+
+        # We don't expect any error messages here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
+        # We expect title without menu and user specifics here
+        title_objects = filter_output_objects(
+            output_objects, with_object_type="title"
+        )
+        self.assertEqual(len(title_objects), 1)
+        self.assertTrue(title_objects[0]["skipmenu"])
+        self.assertTrue(title_objects[0]["skipuserprofile"])
+        # No bling here for anon users
+        self.assertTrue(title_objects[0]["skipuserstyle"])
+        self.assertTrue(title_objects[0]["skipwidgets"])
+
+        # We expect two text messages here
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 2)
+
+        # We expect 6 html snippets here
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 6)
+
+    def test_show_default_anonymous_site_docs_with_bling(self):
+        payload = {"show": [""]}
+        self.configuration.site_enable_styling = True
+        self.configuration.site_enable_widgets = True
+
+        output_objects, status = backend_main(
+            client_id="",
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.OK)
+
+        # We don't expect any error messages here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
+        # We expect title without menu and user specifics here
+        title_objects = filter_output_objects(
+            output_objects, with_object_type="title"
+        )
+        self.assertEqual(len(title_objects), 1)
+        self.assertTrue(title_objects[0]["skipmenu"])
+        self.assertTrue(title_objects[0]["skipuserprofile"])
+        # No bling here for anon users
+        self.assertTrue(title_objects[0]["skipuserstyle"])
+        self.assertTrue(title_objects[0]["skipwidgets"])
+
+        # We expect two text messages here
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 2)
+
+        # We expect 6 html snippets here
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 6)
+
     def test_show_default_site_docs(self):
+        self.configuration.site_enable_styling = False
+        self.configuration.site_enable_widgets = False
         payload = {"show": [""]}
 
         output_objects, status = backend_main(
@@ -72,6 +158,71 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
+
+        # We expect title with menu and enabled user specifics here
+        title_objects = filter_output_objects(
+            output_objects, with_object_type="title"
+        )
+        self.assertEqual(len(title_objects), 1)
+        self.assertFalse(title_objects[0]["skipmenu"])
+        self.assertFalse(title_objects[0]["skipuserprofile"])
+        # Only bling here if enabled in conf
+        self.assertNotEqual(
+            title_objects[0]["skipuserstyle"],
+            self.configuration.site_enable_styling,
+        )
+        self.assertNotEqual(
+            title_objects[0]["skipwidgets"],
+            self.configuration.site_enable_widgets,
+        )
+
+        # We expect two text messages here
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 2)
+
+        # We expect 6 html snippets here
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 6)
+
+    def test_show_default_site_docs_with_bling(self):
+        self.configuration.site_enable_styling = True
+        self.configuration.site_enable_widgets = True
+        payload = {"show": [""]}
+
+        output_objects, status = backend_main(
+            client_id=TEST_USER_DN,
+            user_arguments_dict=payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.OK)
+
+        # We don't expect any error messages here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
+        # We expect title with menu and enabled user specifics here
+        title_objects = filter_output_objects(
+            output_objects, with_object_type="title"
+        )
+        self.assertEqual(len(title_objects), 1)
+        self.assertFalse(title_objects[0]["skipmenu"])
+        self.assertFalse(title_objects[0]["skipuserprofile"])
+        # Only bling here if enabled in conf
+        self.assertNotEqual(
+            title_objects[0]["skipuserstyle"],
+            self.configuration.site_enable_styling,
+        )
+        self.assertNotEqual(
+            title_objects[0]["skipwidgets"],
+            self.configuration.site_enable_widgets,
+        )
 
         # We expect two text messages here
         text_objects = filter_output_objects(
