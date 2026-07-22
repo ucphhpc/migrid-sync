@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # init - shared helpers to init functionality backends
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,6 @@ from __future__ import absolute_import
 
 import mimetypes
 import os
-import time
 
 from mig.shared.base import requested_backend, extract_field
 from mig.shared.conf import get_configuration_object
@@ -169,7 +168,7 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
             if settings:
                 title['user_settings'] = settings
                 base_menu = settings.get('SITE_BASE_MENU', 'default')
-                if not base_menu in configuration.site_base_menu:
+                if base_menu not in configuration.site_base_menu:
                     base_menu = 'default'
                 if base_menu == 'simple' and configuration.site_simple_menu:
                     title['base_menu'] = configuration.site_simple_menu
@@ -225,3 +224,33 @@ def extract_menu(configuration, title_entry):
     else:
         menu_items = configuration.site_default_menu
     return menu_items
+
+
+def lazy_init_backend(client_id, init_main_res=None, environ=None):
+    """Helper to allow direct and lazy init of backend main functions. Can be
+    passed an existing initialize_main_variables result tuple and environ for
+    direct use, but if either is left to None they will be populated with the
+    result of an initialize_main_variables call and as os.environ respectively.
+    The init_main_res tuple additionally is lazy filled if it is incomplete for
+    more flexible use e.g. in unit tests.
+    """
+    if environ is None:
+        environ = os.environ
+    if init_main_res is None:
+        (configuration, logger, output_objects, op_name) = \
+            initialize_main_variables(client_id)
+    else:
+        (configuration, logger, output_objects, op_name) = init_main_res
+        # Lzay fill any partial or missing entries
+        if configuration is None:
+            configuration = get_configuration_object()
+        if logger is None:
+            logger = configuration.logger
+        if not op_name:
+            op_name = requested_backend()
+        # Create new output_objects list with start entry if None was supplied
+        if output_objects is None:
+            output_objects = [make_start_entry()]
+            output_objects.append(make_title_entry('%s' % op_name))
+
+    return (configuration, logger, output_objects, op_name, environ)
