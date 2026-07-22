@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -40,7 +41,7 @@ from mig.shared.base import canonical_user, cert_field_map, client_id_dir, \
 from mig.shared.defaults import csrf_field, keyword_auto
 from mig.shared.functional import validate_input
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.init import find_entry, initialize_main_variables
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape
 from mig.shared.useradm import get_full_user_map
@@ -68,21 +69,24 @@ def signature(configuration):
     return ['html_form', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False, 'op_menu': False}):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False, op_menu=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     client_dir = client_id_dir(client_id)
     defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  defaults, output_objects,
-                                                 allow_rejects=False)
+                                                 allow_rejects=False,
+                                                 environ=environ)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     if not configuration.site_enable_openid or \
-            not 'migoid' in configuration.site_signup_methods:
+            'migoid' not in configuration.site_signup_methods:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              '''Local OpenID login is not enabled on this site'''})
@@ -96,9 +100,15 @@ def main(client_id, user_arguments_dict):
     title_entry['skipmenu'] = True
     form_fields = ['full_name', 'organization', 'email', 'country', 'state',
                    'password', 'verifypassword', 'comment']
+    # TODO: implement in make_title_entry instead with migration from output
+    for name in ('advanced', 'base', 'page', 'skin', ):
+        title_entry['style'][name] = title_entry['style'].get(name, '')
     title_entry['style']['advanced'] += account_css_helpers(configuration)
     add_import, add_init, add_ready = account_js_helpers(configuration,
                                                          form_fields)
+    # TODO: implement in make_title_entry instead with migration from output
+    for name in ('advanced', 'init', 'ready', 'body', ):
+        title_entry['script'][name] = title_entry['script'].get(name, '')
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
@@ -163,7 +173,7 @@ to your old files, jobs and privileges. </p>''' %
         user_map = get_full_user_map(configuration)
         user_dict = user_map.get(client_id, {})
         peers_fields = ['peers_%s' % field for field in
-                    configuration.site_peers_explicit_fields]
+                        configuration.site_peers_explicit_fields]
         for peers_field in peers_fields:
             peers_value = user_dict.get(peers_field, '')
             if peers_value:
@@ -171,7 +181,7 @@ to your old files, jobs and privileges. </p>''' %
 
     # Override with arg values if set
     for field in user_fields:
-        if not field in accepted:
+        if field not in accepted:
             continue
         override_val = accepted[field][-1].strip()
         if override_val:
@@ -210,7 +220,7 @@ to your old files, jobs and privileges. </p>''' %
                  list(cert_field_map) + given_peers]
     # Write-protect ID fields in auto-mode or if already logged in
     if keyword_auto in accepted['ro_fields'] or client_id:
-        ro_fields += [i for i in list(cert_field_map) if not i in ro_fields]
+        ro_fields += [i for i in list(cert_field_map) if i not in ro_fields]
     if reset_token:
         user_fields['reset_token'] = reset_token
         lock_fields = given_peers + ['comment']
