@@ -181,8 +181,6 @@ access the workflows.'''
               $(".workflow-tabs").tabs();
               $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
         '''
-        for name in ('advanced', 'init', 'ready'):
-            title_entry['script'][name] = title_entry['script'].get(name, '')
         title_entry['script']['advanced'] += add_import
         title_entry['script']['init'] += add_init
         title_entry['script']['ready'] += add_ready
