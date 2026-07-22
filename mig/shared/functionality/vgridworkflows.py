@@ -134,6 +134,11 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     operation = accepted['operation'][-1]
     flags = ''.join(accepted['flags'][-1])
 
+    if not configuration.site_enable_workflows:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Workflows are not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
         output_objects.append({'object_type': 'error_text',
@@ -176,6 +181,8 @@ access the workflows.'''
               $(".workflow-tabs").tabs();
               $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
         '''
+        for name in ('advanced', 'init', 'ready'):
+            title_entry['script'][name] = title_entry['script'].get(name, '')
         title_entry['script']['advanced'] += add_import
         title_entry['script']['init'] += add_init
         title_entry['script']['ready'] += add_ready
