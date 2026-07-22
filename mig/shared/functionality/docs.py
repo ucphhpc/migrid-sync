@@ -216,7 +216,7 @@ The MiG software license follows below:<br />
     lic_text = ''.join(lic_lines[2:-1])
     output_objects.append({'object_type': 'html_form', 'text':
                            '<code>%s</code><br />' %
-                           lic_text.replace('\n', '<br \>')})
+                           lic_text.replace('\n', '<br />')})
 
     output_objects.append(
         {'object_type': 'header', 'text': 'Acknowledgements'})
@@ -438,7 +438,7 @@ Web interfaces are served with the Apache HTTP Server:"""})
                                'title': 'RSync Home Page',
                                'text':
                                'RSync incremental file transfer client (GPL license)'})
-    if configuration.site_password_cracklib:
+    if password_dep and configuration.site_password_cracklib:
         output_objects.append({'object_type': 'text', 'text': """
 The optional password strength testing for SFTP/DAVS/FTPS servers relies
 on the Cracklib module from:"""})

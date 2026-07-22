@@ -29,8 +29,6 @@
 
 from __future__ import print_function
 
-import unittest
-
 # Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
 
@@ -329,7 +327,6 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
             [i for i in link_objects if "cracklib" in i["title"].lower()]
         )
 
-    @unittest.skip("TODO: fix unused detection in backend and re-enable")
     def test_hide_cracklib_credits_when_unused(self):
         # Hidden if no password login service enabled
         self.configuration.site_password_cracklib = True
@@ -359,7 +356,6 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
             [i for i in link_objects if "cracklib" in i["title"].lower()]
         )
 
-    @unittest.skip("TODO: fix broken br tag and re-enable")
     def test_show_default_credits_no_longer_has_broken_html_br_tag(self):
         payload = {"show": ["credits"]}
 
