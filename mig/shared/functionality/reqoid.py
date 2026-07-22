@@ -100,15 +100,9 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     title_entry['skipmenu'] = True
     form_fields = ['full_name', 'organization', 'email', 'country', 'state',
                    'password', 'verifypassword', 'comment']
-    # TODO: implement in make_title_entry instead with migration from output
-    for name in ('advanced', 'base', 'page', 'skin', ):
-        title_entry['style'][name] = title_entry['style'].get(name, '')
     title_entry['style']['advanced'] += account_css_helpers(configuration)
     add_import, add_init, add_ready = account_js_helpers(configuration,
                                                          form_fields)
-    # TODO: implement in make_title_entry instead with migration from output
-    for name in ('advanced', 'init', 'ready', 'body', ):
-        title_entry['script'][name] = title_entry['script'].get(name, '')
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
