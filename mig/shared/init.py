@@ -38,6 +38,10 @@ from mig.shared.defaults import keyword_auto
 from mig.shared.htmlgen import themed_styles, themed_scripts
 from mig.shared.settings import load_settings, load_widgets, load_profile
 
+title_style_helpers = {'base': '', 'advanced': '', 'page': '', 'skin': ''}
+title_script_helpers = {'base': '', 'advanced': '', 'skin': '', 'page': '',
+                        'init': '', 'ready': '', 'body': ''}
+
 
 def make_basic_entry(kind, values):
     """Create basic entry for output_objects"""
@@ -51,10 +55,14 @@ def make_start_entry(headers=[]):
     return make_basic_entry('start', {'headers': headers})
 
 
-def make_title_entry(text, meta='', style={}, script={}, skipmenu=False,
+def make_title_entry(text, meta='', style=None, script=None, skipmenu=False,
                      skipwidgets=False, skipuserstyle=False,
                      skipuserprofile=False, backend=''):
     """Create title entry for output_objects"""
+    if style is None:
+        style = title_style_helpers.copy()
+    if script is None:
+        script = title_script_helpers.copy()
     return make_basic_entry('title', {'text': text,
                                       'meta': meta,
                                       'style': style,

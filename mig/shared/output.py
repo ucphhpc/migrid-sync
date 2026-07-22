@@ -54,7 +54,8 @@ from mig.shared.base import hexlify
 from mig.shared.defaults import file_dest_sep, keyword_any, keyword_updating
 from mig.shared.htmlgen import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
-from mig.shared.init import find_entry, find_entry_index
+from mig.shared.init import find_entry, find_entry_index, \
+    title_script_helpers, title_style_helpers
 from mig.shared.objecttypes import validate
 from mig.shared.prettyprinttable import pprint_table
 from mig.shared.pwcrypto import sorted_hash_algos
@@ -788,15 +789,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             meta = i.get('meta', '')
             backend = i.get('backend', '')
             style_entry = i.get('style', '')
-            style_helpers = {'base': '', 'advanced': '', 'page': '',
-                             'skin': ''}
+            style_helpers = title_style_helpers.copy()
             if isinstance(style_entry, dict):
                 style_helpers.update(style_entry)
             else:
                 style_helpers['base'] += style_entry
             script_entry = i.get('script', '')
-            script_helpers = {'base': '', 'advanced': '', 'skin': '',
-                              'page': '', 'init': '', 'ready': '', 'body': ''}
+            script_helpers = title_script_helpers.copy()
             if isinstance(script_entry, dict):
                 script_helpers.update(script_entry)
             else:
