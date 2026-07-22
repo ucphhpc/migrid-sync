@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # datatransfer - import and export data in the backgroud
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -34,13 +35,13 @@ import socket
 import time
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, mask_creds, hexlify, requested_backend
+from mig.shared.base import client_id_dir, mask_creds, hexlify
 from mig.shared.defaults import default_pager_entries, csrf_field, protocol_aliases
 from mig.shared.fileio import read_tail_lines
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
-from mig.shared.init import initialize_main_variables, find_entry, make_title_entry, make_start_entry
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.parseflags import quiet
 from mig.shared.pwcrypto import make_digest, make_encrypt
 from mig.shared.transferfunctions import build_transferitem_object, \
@@ -56,8 +57,8 @@ edit_fields = ['transfer_id', 'protocol', 'fqdn', 'port', 'username',
 get_actions = ['show', 'fillimport', 'fillexport']
 transfer_actions = ['import', 'export', 'deltransfer', 'redotransfer']
 # TODO: add these internal data shuffling targets on a separate tab without
-#address and creds
-#shuffling_actions = ['move', 'copy', 'unpack', 'pack', 'remove']
+# address and creds
+# shuffling_actions = ['move', 'copy', 'unpack', 'pack', 'remove']
 shuffling_actions = []
 key_actions = ['generatekey', 'delkey']
 post_actions = transfer_actions + shuffling_actions + key_actions
@@ -88,35 +89,11 @@ def signature():
     return ['text', defaults]
 
 
-def main(client_id, user_arguments_dict, environ=None):
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None):
     """Main function wrapper used by front end"""
 
-    if environ is None:
-        environ = os.environ
-
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id)
-
-    return _main(configuration, logger, environ, op_name=op_name,
-                 output_objects=output_objects, client_id=client_id,
-                 user_arguments_dict=user_arguments_dict)
-
-
-def _main(configuration, logger, environ, op_name='', output_objects=None, client_id=None,
-          user_arguments_dict=None):
-    """Actual main function to generate contents for the front end"""
-
-    assert environ is not None, "required arg: environ"
-
-    if logger is None:
-        logger = configuration.logger
-
-    # Create new output_objects list with start entry if None was supplied
-    if output_objects is None:
-        output_objects = [make_start_entry()]
-        if not op_name:
-            op_name = requested_backend()
-        output_objects.append(make_title_entry('%s' % op_name))
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, init_main_res, environ)
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -836,7 +813,7 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                 try:
                     password_encrypted = make_encrypt(configuration, password)
                     password_digest = ''
-                except:
+                except Exception:
                     password_encrypted = ''
                     password_digest = make_digest(
                         'datatransfer', client_id, password,
