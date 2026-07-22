@@ -34,6 +34,7 @@ import os
 
 from mig.shared.base import requested_backend, extract_field
 from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import keyword_auto
 from mig.shared.htmlgen import themed_styles, themed_scripts
 from mig.shared.settings import load_settings, load_widgets, load_profile
 
@@ -138,6 +139,8 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
     output_objects.append(start_entry)
     op_name = requested_backend()
 
+    if op_menu == keyword_auto:
+        op_menu = bool(client_id)
     if op_title:
         skipwidgets = not configuration.site_enable_widgets or not client_id
         skipuserstyle = not configuration.site_enable_styling or not client_id
@@ -226,22 +229,27 @@ def extract_menu(configuration, title_entry):
     return menu_items
 
 
-def lazy_init_backend(client_id, init_main_res=None, environ=None):
+def lazy_init_backend(client_id, environ=None, init_main_res=None,
+                      init_kwargs=None):
     """Helper to allow direct and lazy init of backend main functions. Can be
     passed an existing initialize_main_variables result tuple and environ for
     direct use, but if either is left to None they will be populated with the
     result of an initialize_main_variables call and as os.environ respectively.
+    The initialize_main_variables call will include any additional kwars from
+    init_kwargs if so.
     The init_main_res tuple additionally is lazy filled if it is incomplete for
     more flexible use e.g. in unit tests.
     """
     if environ is None:
         environ = os.environ
+    if init_kwargs is None:
+        init_kwargs = {}
     if init_main_res is None:
         (configuration, logger, output_objects, op_name) = \
-            initialize_main_variables(client_id)
+            initialize_main_variables(client_id, **init_kwargs)
     else:
         (configuration, logger, output_objects, op_name) = init_main_res
-        # Lzay fill any partial or missing entries
+        # Lazy fill any partial or missing entries
         if configuration is None:
             configuration = get_configuration_object()
         if logger is None:
