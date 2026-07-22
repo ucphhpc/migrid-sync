@@ -25,7 +25,9 @@
 # --- END_HEADER ---
 #
 
-"""Unit tests of the MiG functionality file implementing the datatransfer backend"""
+"""Unit tests of the MiG functionality file implementing the datatransfer
+backend
+"""
 
 from __future__ import print_function
 
@@ -34,8 +36,7 @@ import mig.shared.returnvalues as returnvalues
 from mig.shared.defaults import CSRF_MINIMAL
 
 # Imports of the code under test
-from mig.shared.functionality.datatransfer import _main as submain
-from mig.shared.functionality.datatransfer import main as realmain
+from mig.shared.functionality.datatransfer import main as backend_main
 
 # Imports required for the unit tests themselves
 from tests.support import (
@@ -62,7 +63,7 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         self.assertFalse(self.configuration.site_enable_transfers)
         payload = {}
 
-        result = realmain(TEST_USER_DN, payload, self.test_environ)
+        result = backend_main(TEST_USER_DN, payload, self.test_environ)
         output_objects, status = result
         self.assertEqual(status, returnvalues.OK)
 
@@ -85,12 +86,11 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         payload = {"action": ["show"]}
         self.configuration.site_enable_transfers = True
 
-        output_objects, status = submain(
-            self.configuration,
-            self.logger,
+        output_objects, status = backend_main(
             client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
@@ -107,8 +107,9 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         self.assertEqual(len(text_objects), 0)
 
         # We expect 10 html snippets here
-        html_objects = filter_output_objects(output_objects,
-                                             with_object_type="html_form")
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
         self.assertEqual(len(html_objects), 10)
 
     def test_deltransfer_without_transfer_id(self):
@@ -121,12 +122,11 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         self.configuration.site_csrf_protection = CSRF_MINIMAL
         self.test_environ["REQUEST_METHOD"] = "post"
 
-        output_objects, status = submain(
-            self.configuration,
-            self.logger,
+        output_objects, status = backend_main(
             client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.CLIENT_ERROR)
 
@@ -149,12 +149,11 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         self.configuration.site_csrf_protection = CSRF_MINIMAL
         self.test_environ["REQUEST_METHOD"] = "post"
 
-        output_objects, status = submain(
-            self.configuration,
-            self.logger,
+        output_objects, status = backend_main(
             client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.CLIENT_ERROR)
 

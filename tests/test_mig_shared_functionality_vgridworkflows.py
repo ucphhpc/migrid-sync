@@ -25,7 +25,9 @@
 # --- END_HEADER ---
 #
 
-"""Unit tests of the MiG functionality file implementing the vgridworkflows backend"""
+"""Unit tests of the MiG functionality file implementing the vgridworkflows
+backend
+"""
 
 from __future__ import print_function
 
@@ -33,8 +35,7 @@ from __future__ import print_function
 import mig.shared.returnvalues as returnvalues
 
 # Imports of the code under test
-from mig.shared.functionality.vgridworkflows import _main as submain
-from mig.shared.functionality.vgridworkflows import main as realmain
+from mig.shared.functionality.vgridworkflows import main as backend_main
 
 # Imports required for the unit tests themselves
 from tests.support import (
@@ -65,7 +66,7 @@ class MigSharedFunctionalityVgridworkflows(MigTestCase, UserAssertMixin):
         self.assertFalse(self.configuration.site_enable_workflows)
         payload = {"vgrid_name": ["Generic"]}
 
-        result = realmain(TEST_USER_DN, payload, self.test_environ)
+        result = backend_main(TEST_USER_DN, payload, self.test_environ)
         output_objects, status = result
         self.assertEqual(status, returnvalues.SYSTEM_ERROR)
 
@@ -95,12 +96,11 @@ class MigSharedFunctionalityVgridworkflows(MigTestCase, UserAssertMixin):
         self.configuration.site_enable_workflows = True
         payload = {"vgrid_name": ["Generic"]}
 
-        output_objects, status = submain(
-            self.configuration,
-            self.logger,
+        output_objects, status = backend_main(
             client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 

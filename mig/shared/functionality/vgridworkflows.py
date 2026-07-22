@@ -44,7 +44,7 @@ import time
 
 from mig.lib.events import get_path_expand_map
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, requested_backend
+from mig.shared.base import client_id_dir
 from mig.shared.cmdapi import get_usage_map
 from mig.shared.defaults import keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
@@ -52,11 +52,9 @@ from mig.shared.defaults import keyword_all, keyword_auto, \
 from mig.shared.fileio import unpickle, makedirs_rec, move_file
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.htmlgen import man_base_js, man_base_html
-from mig.shared.init import initialize_main_variables, find_entry, \
-    make_title_entry, make_start_entry
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.parseflags import verbose
-from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \
-    vgrid_triggers, vgrid_set_triggers
+from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member
 
 default_pager_entries = 20
 
@@ -108,35 +106,11 @@ def read_trigger_log(configuration, vgrid_name, flags):
     return log_content
 
 
-def main(client_id, user_arguments_dict, environ=None):
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None):
     """Main function wrapper used by front end"""
 
-    if environ is None:
-        environ = os.environ
-
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
-
-    return _main(configuration, logger, environ, op_name=op_name,
-                 output_objects=output_objects, client_id=client_id,
-                 user_arguments_dict=user_arguments_dict)
-
-
-def _main(configuration, logger, environ, op_name='', output_objects=None,
-          client_id=None, user_arguments_dict=None):
-    """Actual main function to generate contents for the front end"""
-
-    assert environ is not None, "required arg: environ"
-
-    if logger is None:
-        logger = configuration.logger
-
-    # Create new output_objects list with start entry if None was supplied
-    if output_objects is None:
-        output_objects = [make_start_entry()]
-        if not op_name:
-            op_name = requested_backend()
-        output_objects.append(make_title_entry('%s' % op_name))
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, init_main_res, environ)
 
     defaults = signature()[1]
     title_entry = find_entry(output_objects, 'title')
@@ -149,8 +123,8 @@ def _main(configuration, logger, environ, op_name='', output_objects=None,
         output_objects,
         client_id,
         configuration,
-        environ=environ,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -172,7 +146,7 @@ access the workflows.'''
                                % vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if not operation in allowed_operations:
+    if operation not in allowed_operations:
         output_objects.append({'object_type': 'error_text', 'text':
                                '''Operation must be one of %s.''' %
                                ', '.join(allowed_operations)})

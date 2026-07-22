@@ -32,9 +32,11 @@ from __future__ import print_function
 import os
 import shutil
 
+# Imports required for the unit test wrapping
+import mig.shared.returnvalues as returnvalues
+
 # Imports of the code under test
-from mig.shared.functionality.cat import _main as submain
-from mig.shared.functionality.cat import main as realmain
+from mig.shared.functionality.cat import main as backend_main
 
 # Imports required for the unit tests themselves
 from tests.support import (
@@ -42,13 +44,11 @@ from tests.support import (
     MigTestCase,
     testmain,
 )
-from tests.support.usersupp import TEST_USER_DN
+from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
 from tests.support.wsgisupp import create_http_environ, filter_output_objects
 
-# Imports required for the unit test wrapping
 
-
-class MigSharedFunctionalityCat(MigTestCase):
+class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
     """Wrap unit tests for the corresponding module"""
 
     def _provide_configuration(self):
@@ -60,34 +60,27 @@ class MigSharedFunctionalityCat(MigTestCase):
             self.configuration, "wsgi-bin/cat.py"
         )
 
-    def assertSingleOutputObject(self, output_objects, with_object_type=None):
-        assert with_object_type is not None
-        found_objects = filter_output_objects(
-            output_objects, with_object_type=with_object_type
-        )
-        self.assertEqual(len(found_objects), 1)
-        return found_objects[0]
-
     def test_file_serving_a_single_file_match(self):
-        with open(os.path.join(self.test_user_dir, "foobar.txt"), "w"):
-            pass
+        test_data = "424242"
+        with open(os.path.join(self.test_user_dir, "foobar.txt"), "w") as fd:
+            fd.write(test_data)
         payload = {
             "path": ["foobar.txt"],
         }
 
-        output_objects, status = submain(
-            self.configuration,
-            self.logger,
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
-            environ=self.test_environ,
-        )
+        result = backend_main(TEST_USER_DN, payload, self.test_environ)
+        output_objects, status = result
+        self.assertEqual(status, returnvalues.OK)
 
-        # NOTE: start entry with headers and actual content
-        self.assertEqual(len(output_objects), 2)
-        self.assertSingleOutputObject(
+        # NOTE: start entry with headers, title, header and actual content
+        self.assertEqual(len(output_objects), 4)
+        file_output_objects = filter_output_objects(
             output_objects, with_object_type="file_output"
         )
+        self.assertEqual(len(file_output_objects), 1)
+        relevant_obj = file_output_objects[0]
+        self.assertEqual(len(relevant_obj["lines"]), 1)
+        self.assertEqual(relevant_obj["lines"][0], test_data)
 
     def test_file_serving_at_limit(self):
         test_binary_file = os.path.realpath(
@@ -106,18 +99,21 @@ class MigSharedFunctionalityCat(MigTestCase):
 
         self.configuration.wwwserve_max_bytes = test_binary_file_size
 
-        output_objects, status = submain(
-            self.configuration,
-            self.logger,
+        output_objects, status = backend_main(
             client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
+        self.assertEqual(status, returnvalues.OK)
 
-        self.assertEqual(len(output_objects), 2)
-        relevant_obj = self.assertSingleOutputObject(
+        # NOTE: start entry with headers, title and actual content
+        self.assertEqual(len(output_objects), 3)
+        file_output_objects = filter_output_objects(
             output_objects, with_object_type="file_output"
         )
+        self.assertEqual(len(file_output_objects), 1)
+        relevant_obj = file_output_objects[0]
         self.assertEqual(len(relevant_obj["lines"]), 1)
         self.assertEqual(relevant_obj["lines"][0], test_binary_file_data)
 
@@ -140,21 +136,22 @@ class MigSharedFunctionalityCat(MigTestCase):
         self.configuration.storage_protocols = []
         self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
 
-        output_objects, status = submain(
-            self.configuration,
-            self.logger,
+        output_objects, status = backend_main(
             client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
+        self.assertEqual(status, returnvalues.REJECT_PROCESSING_ERROR)
 
-        # NOTE: start entry with headers and actual error message
-        self.assertEqual(len(output_objects), 2)
-        relevant_obj = self.assertSingleOutputObject(
+        # NOTE: start entry with headers, title and actual error message
+        self.assertEqual(len(output_objects), 3)
+        error_text_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
+        self.assertEqual(len(error_text_objects), 1)
         self.assertEqual(
-            relevant_obj["text"],
+            error_text_objects[0]["text"],
             "Site configuration prevents web serving contents "
             "bigger than 3896 bytes",
         )
@@ -177,18 +174,21 @@ class MigSharedFunctionalityCat(MigTestCase):
         self.configuration.storage_protocols = ["sftp"]
         self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
 
-        output_objects, status = submain(
-            self.configuration,
-            self.logger,
+        output_objects, status = backend_main(
             client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
+        self.assertEqual(status, returnvalues.REJECT_PROCESSING_ERROR)
 
-        # NOTE: start entry with headers and actual error message
-        relevant_obj = self.assertSingleOutputObject(
+        # NOTE: start entry with headers, title and actual error message
+        self.assertEqual(len(output_objects), 3)
+        error_text_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
+        self.assertEqual(len(error_text_objects), 1)
+        relevant_obj = error_text_objects[0]
         self.assertEqual(
             relevant_obj["text"],
             "Site configuration prevents web serving contents "
@@ -197,16 +197,20 @@ class MigSharedFunctionalityCat(MigTestCase):
         )
 
     def test_main_passes_environ(self):
+        payload = {}
         try:
-            result = realmain(TEST_USER_DN, {}, self.test_environ)
+            result = backend_main(TEST_USER_DN, payload, self.test_environ)
         except Exception as unexpectedexc:
             raise AssertionError(
                 "saw unexpected exception: %s" % (unexpectedexc,)
             )
 
         output_objects, status = result
-        self.assertEqual(status[1], "Client error")
+        self.assertEqual(status, returnvalues.CLIENT_ERROR)
 
+        # NOTE: start entry with headers, title, header, three actual error
+        #       messages and finally a Go back link.
+        self.assertEqual(len(output_objects), 7)
         error_text_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )

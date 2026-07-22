@@ -33,7 +33,7 @@ from __future__ import print_function
 import mig.shared.returnvalues as returnvalues
 
 # Imports of the code under test
-from mig.shared.functionality.docs import _main as submain
+from mig.shared.functionality.docs import main as backend_main
 
 # Imports required for the unit tests themselves
 from tests.support import (
@@ -59,12 +59,11 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
     def test_show_default_site_docs(self):
         payload = {"show": [""]}
 
-        output_objects, status = submain(
-            self.configuration,
-            self.logger,
+        output_objects, status = backend_main(
             client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
