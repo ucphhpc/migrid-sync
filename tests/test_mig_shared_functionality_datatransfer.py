@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_functionality_datatransfer - unit test of the corresponding mig module
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -25,66 +25,57 @@
 # --- END_HEADER ---
 #
 
-"""Unit tests of the MiG functionality file implementing the datatransfer backend"""
+"""Unit tests of the MiG functionality file implementing the datatransfer
+backend
+"""
 
 from __future__ import print_function
-import os
 
+# Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
 from mig.shared.defaults import CSRF_MINIMAL
-from mig.shared.base import client_id_dir
-from mig.shared.functionality.datatransfer import _main as submain, main as realmain
 
+# Imports of the code under test
+from mig.shared.functionality.datatransfer import main as backend_main
+
+# Imports required for the unit tests themselves
 from tests.support import (
     MigTestCase,
     testmain,
-    temppath,
-    ensure_dirs_exist,
 )
+from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
+from tests.support.wsgisupp import create_http_environ, filter_output_objects
 
 
-def create_http_environ(configuration):
-    """Small helper that can create a minimum viable environ dict suitable
-    for passing to http-facing code for the supplied configuration.
-    """
-
-    environ = {}
-    environ["MIG_CONF"] = configuration.config_file
-    environ["HTTP_HOST"] = "localhost"
-    environ["PATH_INFO"] = "/"
-    environ["REMOTE_ADDR"] = "127.0.0.1"
-    environ["SCRIPT_URI"] = "".join(
-        ("https://", environ["HTTP_HOST"], environ["PATH_INFO"])
-    )
-    return environ
-
-
-def _only_output_objects(output_objects, with_object_type=None):
-    return [o for o in output_objects if o["object_type"] == with_object_type]
-
-
-class MigSharedFunctionalityDataTransfer(MigTestCase):
+class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
     """Wrap unit tests for the corresponding module"""
-
-    TEST_CLIENT_ID = (
-        "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
-    )
 
     def _provide_configuration(self):
         return "testconfig"
 
     def before_each(self):
-        self.test_user_dir = self._provision_test_user(self, self.TEST_CLIENT_ID)
-        self.test_environ = create_http_environ(self.configuration)
+        self.test_user_dir = self._provision_test_user(self, TEST_USER_DN)
+        self.test_environ = create_http_environ(
+            self.configuration, "wsgi-bin/datatransfer.py"
+        )
 
     def test_default_disabled_site_transfer(self):
         self.assertFalse(self.configuration.site_enable_transfers)
+        payload = {}
 
-        result = realmain(self.TEST_CLIENT_ID, {}, self.test_environ)
-        (output_objects, status) = result
+        result = backend_main(TEST_USER_DN, payload, self.test_environ)
+        output_objects, status = result
         self.assertEqual(status, returnvalues.OK)
 
-        text_objects = _only_output_objects(output_objects, with_object_type="text")
+        # We don't expect any error message here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
         self.assertEqual(len(text_objects), 1)
         self.assertIn("text", text_objects[0])
         text_object = text_objects[0]["text"]
@@ -95,41 +86,57 @@ class MigSharedFunctionalityDataTransfer(MigTestCase):
         payload = {"action": ["show"]}
         self.configuration.site_enable_transfers = True
 
-        (output_objects, status) = submain(
-            self.configuration,
-            self.logger,
-            client_id=self.TEST_CLIENT_ID,
+        output_objects, status = backend_main(
+            client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
+        # We don't expect any error messages here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
         # We don't expect any text messages here
-        text_objects = _only_output_objects(output_objects, with_object_type="text")
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
         self.assertEqual(len(text_objects), 0)
+
+        # We expect 10 html snippets here
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 10)
 
     def test_deltransfer_without_transfer_id(self):
         non_existing_transfer_id = "non-existing-transfer-id"
-        payload = {"action": ["deltransfer"], "transfer_id": [non_existing_transfer_id]}
+        payload = {
+            "action": ["deltransfer"],
+            "transfer_id": [non_existing_transfer_id],
+        }
         self.configuration.site_enable_transfers = True
         self.configuration.site_csrf_protection = CSRF_MINIMAL
         self.test_environ["REQUEST_METHOD"] = "post"
 
-        (output_objects, status) = submain(
-            self.configuration,
-            self.logger,
-            client_id=self.TEST_CLIENT_ID,
+        output_objects, status = backend_main(
+            client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.CLIENT_ERROR)
 
-        error_text_objects = _only_output_objects(
+        error_text_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_text_objects), 1)
         self.assertEqual(
-            error_text_objects[0]["text"], "existing transfer_id is required for delete"
+            error_text_objects[0]["text"],
+            "existing transfer_id is required for delete",
         )
 
     def test_redotransfer_without_transfer_id(self):
@@ -142,16 +149,15 @@ class MigSharedFunctionalityDataTransfer(MigTestCase):
         self.configuration.site_csrf_protection = CSRF_MINIMAL
         self.test_environ["REQUEST_METHOD"] = "post"
 
-        (output_objects, status) = submain(
-            self.configuration,
-            self.logger,
-            client_id=self.TEST_CLIENT_ID,
+        output_objects, status = backend_main(
+            client_id=TEST_USER_DN,
             user_arguments_dict=payload,
             environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.CLIENT_ERROR)
 
-        error_text_objects = _only_output_objects(
+        error_text_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_text_objects), 1)
@@ -161,7 +167,7 @@ class MigSharedFunctionalityDataTransfer(MigTestCase):
         )
 
 
-# TODO, add additional tests that succesfully makes data transfers across a range of protocols
+# TODO: extend tests to cover data transfers across a range of protocols
 
 if __name__ == "__main__":
     testmain()
