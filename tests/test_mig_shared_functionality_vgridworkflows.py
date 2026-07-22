@@ -100,7 +100,6 @@ class MigSharedFunctionalityVgridworkflows(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(len(html_objects), 0)
 
-    @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_show_default_user_vgridworkflows(self):
         payload = {"vgrid_name": ["Generic"]}
 
