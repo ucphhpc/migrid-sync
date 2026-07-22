@@ -91,11 +91,12 @@ def signature():
     return ['file_output', defaults]
 
 
-def main(client_id, user_arguments_dict, environ=None, init_main_res=None):
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs=None):
     """Main function wrapper used by front end"""
 
     (configuration, logger, output_objects, op_name, environ) = \
-        lazy_init_backend(client_id, init_main_res, environ)
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
 
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
