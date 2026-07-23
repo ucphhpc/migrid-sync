@@ -26,11 +26,9 @@
 # -- END_HEADER ---
 #
 
-
 """Home page generator with dynamic app selection"""
 
 from __future__ import absolute_import
-
 
 from mig.shared import returnvalues
 from mig.shared.defaults import csrf_field, user_home_label
