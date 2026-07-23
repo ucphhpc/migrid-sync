@@ -100,6 +100,40 @@ class MigSharedFunctionalityReqoid(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(len(html_objects), 0)
 
+    def test_reqoid_disabled_site_oid_signup(self):
+        self.configuration.site_signup_methods = []
+        payload = {}
+
+        output_objects, status = backend_main(
+            "",
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.SYSTEM_ERROR)
+
+        # Check expected error messages
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 1)
+        self.assertIn("text", error_objects[0])
+        text_object = error_objects[0]["text"]
+        expected_response_msg = "Local OpenID login is not enabled on this site"
+        self.assertIn(expected_response_msg, text_object)
+
+        # Check expected text messages
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 0)
+
+        # Check expected html messages
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 0)
+
     @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_show_default_anonymous_user_reqoid(self):
         payload = {}
