@@ -57,27 +57,27 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         self.test_environ = create_http_environ(
             self.configuration, "wsgi-bin/docs.py"
         )
-
-    def test_show_default_anonymous_site_docs(self):
-        payload = {"show": [""]}
         self.configuration.site_enable_styling = False
         self.configuration.site_enable_widgets = False
 
+    def test_show_default_anonymous_site_docs(self):
+        payload = {"show": [""]}
+
         output_objects, status = backend_main(
-            client_id="",
-            user_arguments_dict=payload,
+            "",
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect title without menu and user specifics here
+        # Check expected title contents
         title_objects = filter_output_objects(
             output_objects, with_object_type="title"
         )
@@ -88,13 +88,13 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         self.assertTrue(title_objects[0]["skipuserstyle"])
         self.assertTrue(title_objects[0]["skipwidgets"])
 
-        # We expect two text messages here
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 2)
 
-        # We expect 6 html snippets here
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
@@ -106,20 +106,20 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         self.configuration.site_enable_widgets = True
 
         output_objects, status = backend_main(
-            client_id="",
-            user_arguments_dict=payload,
+            "",
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect title without menu and user specifics here
+        # Check expected title contents
         title_objects = filter_output_objects(
             output_objects, with_object_type="title"
         )
@@ -130,38 +130,36 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         self.assertTrue(title_objects[0]["skipuserstyle"])
         self.assertTrue(title_objects[0]["skipwidgets"])
 
-        # We expect two text messages here
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 2)
 
-        # We expect 6 html snippets here
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
         self.assertEqual(len(html_objects), 6)
 
     def test_show_default_site_docs(self):
-        self.configuration.site_enable_styling = False
-        self.configuration.site_enable_widgets = False
         payload = {"show": [""]}
 
         output_objects, status = backend_main(
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
+            TEST_USER_DN,
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect title with menu and enabled user specifics here
+        # Check expected title contents
         title_objects = filter_output_objects(
             output_objects, with_object_type="title"
         )
@@ -178,13 +176,13 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
             self.configuration.site_enable_widgets,
         )
 
-        # We expect two text messages here
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 2)
 
-        # We expect 6 html snippets here
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
@@ -196,20 +194,20 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         payload = {"show": [""]}
 
         output_objects, status = backend_main(
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
+            TEST_USER_DN,
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect title with menu and enabled user specifics here
+        # Check expected title contents
         title_objects = filter_output_objects(
             output_objects, with_object_type="title"
         )
@@ -226,13 +224,13 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
             self.configuration.site_enable_widgets,
         )
 
-        # We expect two text messages here
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 2)
 
-        # We expect 6 html snippets here
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
@@ -249,25 +247,25 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect 20+ text messages here (fuzzy match)
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertTrue(len(text_objects) >= 20)
 
-        # We expect 3 html snippets here
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
         self.assertEqual(len(html_objects), 3)
 
-        # We expect 20+ links here (fuzzy match)
+        # Check expected links
         link_objects = filter_output_objects(
             output_objects, with_object_type="link"
         )
@@ -280,26 +278,27 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         payload = {"show": ["credits"]}
 
         output_objects, status = backend_main(
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
+            TEST_USER_DN,
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect 20+ links here (fuzzy match) including one for cracklib
+        # Check expected links
         link_objects = filter_output_objects(
             output_objects, with_object_type="link"
         )
         self.assertTrue(len(link_objects) >= 20)
         self.assertTrue(
-            [i for i in link_objects if 'cracklib' in i['title'].lower()])
+            [i for i in link_objects if "cracklib" in i["title"].lower()]
+        )
 
     def test_hide_cracklib_credits_when_disabled(self):
         self.configuration.site_password_cracklib = False
@@ -308,26 +307,27 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         payload = {"show": ["credits"]}
 
         output_objects, status = backend_main(
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
+            TEST_USER_DN,
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect 20+ links here (fuzzy match) including one for cracklib
+        # Check expected links
         link_objects = filter_output_objects(
             output_objects, with_object_type="link"
         )
         self.assertTrue(len(link_objects) >= 20)
         self.assertFalse(
-            [i for i in link_objects if 'cracklib' in i['title'].lower()])
+            [i for i in link_objects if "cracklib" in i["title"].lower()]
+        )
 
     @unittest.skip("TODO: fix unused detection in backend and re-enable")
     def test_hide_cracklib_credits_when_unused(self):
@@ -337,52 +337,52 @@ class MigSharedFunctionalityDocs(MigTestCase, UserAssertMixin):
         payload = {"show": ["credits"]}
 
         output_objects, status = backend_main(
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
+            TEST_USER_DN,
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect 20+ links here (fuzzy match) including one for cracklib
+        # Check expected links
         link_objects = filter_output_objects(
             output_objects, with_object_type="link"
         )
         self.assertTrue(len(link_objects) >= 20)
         self.assertFalse(
-            [i for i in link_objects if 'cracklib' in i['title'].lower()])
+            [i for i in link_objects if "cracklib" in i["title"].lower()]
+        )
 
     @unittest.skip("TODO: fix broken br tag and re-enable")
     def test_show_default_credits_no_longer_has_broken_html_br_tag(self):
         payload = {"show": ["credits"]}
 
         output_objects, status = backend_main(
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
+            TEST_USER_DN,
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect 3 html snippets here
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
         self.assertEqual(len(html_objects), 3)
-        self.assertFalse(
-            [i for i in html_objects if '<br \>' in i['text']])
+        self.assertFalse([i for i in html_objects if "<br \>" in i["text"]])
 
 
 # TODO: add additional tests to cover other uses
