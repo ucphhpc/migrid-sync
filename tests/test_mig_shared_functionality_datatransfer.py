@@ -26,7 +26,7 @@
 #
 
 """Unit tests of the MiG functionality file implementing the datatransfer
-backend
+backend.
 """
 
 from __future__ import print_function
@@ -58,21 +58,33 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         self.test_environ = create_http_environ(
             self.configuration, "wsgi-bin/datatransfer.py"
         )
+        self.configuration.site_enable_transfers = True
 
     def test_default_disabled_site_transfer(self):
-        self.assertFalse(self.configuration.site_enable_transfers)
+        self.configuration.site_enable_transfers = False
         payload = {}
 
-        result = backend_main(TEST_USER_DN, payload, self.test_environ)
-        output_objects, status = result
+        output_objects, status = backend_main(
+            TEST_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error message here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
+        # Check expected header messages
+        header_objects = filter_output_objects(
+            output_objects, with_object_type="header"
+        )
+        self.assertEqual(len(header_objects), 1)
+
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
@@ -94,19 +106,19 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We don't expect any text messages here
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 0)
 
-        # We expect 10 html snippets here
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )

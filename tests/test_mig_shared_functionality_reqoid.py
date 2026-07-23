@@ -63,16 +63,22 @@ class MigSharedFunctionalityReqoid(MigTestCase, UserAssertMixin):
         self.test_environ = create_http_environ(
             self.configuration, "wsgi-bin/reqoid.py"
         )
+        self.configuration.site_enable_openid = True
+        self.configuration.site_signup_methods = ["migoid"]
 
     def test_reqoid_disabled_site_openid(self):
-        self.assertFalse(self.configuration.site_enable_openid)
+        self.configuration.site_enable_openid = False
         payload = {}
 
-        result = backend_main(TEST_USER_DN, payload, self.test_environ)
-        output_objects, status = result
+        output_objects, status = backend_main(
+            TEST_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
         self.assertEqual(status, returnvalues.SYSTEM_ERROR)
 
-        # We expect one error message here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
@@ -82,13 +88,13 @@ class MigSharedFunctionalityReqoid(MigTestCase, UserAssertMixin):
         expected_response_msg = "Local OpenID login is not enabled on this site"
         self.assertIn(expected_response_msg, text_object)
 
-        # We don't expect any text message here
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 0)
 
-        # We don't expect any html snippets here
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
@@ -96,38 +102,42 @@ class MigSharedFunctionalityReqoid(MigTestCase, UserAssertMixin):
 
     @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_show_default_anonymous_user_reqoid(self):
-        self.configuration.site_enable_openid = True
-        self.configuration.site_signup_methods = ["migoid"]
         payload = {}
 
         output_objects, status = backend_main(
-            client_id="",
-            user_arguments_dict=payload,
+            "",
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect title without menu and user specifics here
+        # Check expected title contents
         title_objects = filter_output_objects(
             output_objects, with_object_type="title"
         )
         self.assertEqual(len(title_objects), 1)
         self.assertTrue(title_objects[0]["skipmenu"])
 
-        # We don't expect any text messages here
+        # Check expected header messages
+        header_objects = filter_output_objects(
+            output_objects, with_object_type="header"
+        )
+        self.assertEqual(len(header_objects), 1)
+
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 0)
 
-        # We expect 2 html snippets here and blank form
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
@@ -138,38 +148,36 @@ class MigSharedFunctionalityReqoid(MigTestCase, UserAssertMixin):
 
     @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_show_url_prefill_user_reqoid(self):
-        self.configuration.site_enable_openid = True
-        self.configuration.site_signup_methods = ["migoid"]
         payload = {"email": [TEST_USER_EMAIL]}
 
         output_objects, status = backend_main(
-            client_id="",
-            user_arguments_dict=payload,
+            "",
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect title without menu and user specifics here
+        # Check expected title contents
         title_objects = filter_output_objects(
             output_objects, with_object_type="title"
         )
         self.assertEqual(len(title_objects), 1)
         self.assertTrue(title_objects[0]["skipmenu"])
 
-        # We don't expect any text messages here
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 0)
 
-        # We expect 2 html snippets here and blank form
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
@@ -180,38 +188,36 @@ class MigSharedFunctionalityReqoid(MigTestCase, UserAssertMixin):
 
     @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_show_default_authenticated_user_reqoid(self):
-        self.configuration.site_enable_openid = True
-        self.configuration.site_signup_methods = ["migoid"]
         payload = {}
 
         output_objects, status = backend_main(
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
+            TEST_USER_DN,
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect title without menu and user specifics here
+        # Check expected title contents
         title_objects = filter_output_objects(
             output_objects, with_object_type="title"
         )
         self.assertEqual(len(title_objects), 1)
         self.assertTrue(title_objects[0]["skipmenu"])
 
-        # We don't expect any text messages here
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 0)
 
-        # We expect 3 html snippets here and pre-filled form for ID
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
