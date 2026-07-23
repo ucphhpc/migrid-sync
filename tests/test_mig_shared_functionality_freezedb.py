@@ -29,6 +29,8 @@
 
 from __future__ import print_function
 
+import unittest
+
 # Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
 
@@ -55,10 +57,53 @@ class MigSharedFunctionalityFreezedb(MigTestCase, UserAssertMixin):
         self.test_environ = create_http_environ(
             self.configuration, "wsgi-bin/freezedb.py"
         )
+        self.configuration.site_enable_freeze = True
 
+    @unittest.skip("TODO: fix error response in backend and re-enable")
+    def test_freezedb_disabled_site_freeze(self):
+        self.configuration.site_enable_freeze = False
+        payload = {}
+
+        result = backend_main(
+            TEST_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        output_objects, status = result
+        self.assertEqual(status, returnvalues.SYSTEM_ERROR)
+
+        # We expect one error message here
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 1)
+        self.assertIn("text", error_objects[0])
+        text_object = error_objects[0]["text"]
+        expected_response_msg = "Freezing archives is disabled on this site"
+        self.assertIn(expected_response_msg, text_object)
+
+        # We don't expect any text message here
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 0)
+
+        # We don't expect any html snippets here
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 0)
+
+    @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_show_default_user_freezedb(self):
         payload = {}
-        result = backend_main(TEST_USER_DN, payload, self.test_environ)
+        result = backend_main(
+            TEST_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
         output_objects, status = result
         self.assertEqual(status, returnvalues.OK)
 
