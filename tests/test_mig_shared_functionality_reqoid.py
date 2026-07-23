@@ -177,7 +177,9 @@ class MigSharedFunctionalityReqoid(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(len(html_objects), 2)
         relevant_obj = html_objects[1]
-        self.assertIn("Please enter your information", relevant_obj["text"])
+        # TODO: polish reqcert and reqoid to be consistent here
+        plain_text = relevant_obj["text"].replace('\n', ' ')
+        self.assertIn("Please enter your information", plain_text)
         self.assertNotIn("value='%s'" % TEST_USER_EMAIL, relevant_obj["text"])
 
     @unittest.skip("TODO: fix missing script init in backend and re-enable")
@@ -217,7 +219,9 @@ class MigSharedFunctionalityReqoid(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(len(html_objects), 2)
         relevant_obj = html_objects[1]
-        self.assertIn("Please enter your information", relevant_obj["text"])
+        # TODO: polish reqcert and reqoid to be consistent here
+        plain_text = relevant_obj["text"].replace('\n', ' ')
+        self.assertIn("Please enter your information", plain_text)
         self.assertIn("value='%s'" % TEST_USER_EMAIL, relevant_obj["text"])
 
     @unittest.skip("TODO: fix missing script init in backend and re-enable")

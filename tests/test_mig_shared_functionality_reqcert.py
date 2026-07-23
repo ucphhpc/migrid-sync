@@ -78,7 +78,7 @@ class MigSharedFunctionalityReqcert(MigTestCase, UserAssertMixin):
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
-        self.assertEqual(status, returnvalues.SYSTEM_ERROR)
+        self.assertEqual(status, returnvalues.CLIENT_ERROR)
 
         # Check expected error messages
         error_objects = filter_output_objects(
@@ -87,12 +87,8 @@ class MigSharedFunctionalityReqcert(MigTestCase, UserAssertMixin):
         self.assertEqual(len(error_objects), 1)
         self.assertIn("text", error_objects[0])
         text_object = error_objects[0]["text"]
-        # TODO: should we not hit this next error here?
-        # expected_response_msg = (
-        #    "User certificate requests are not supported on this site"
-        # )
         expected_response_msg = (
-            "X.509 certificate login is not enabled on this site"
+            "User certificate requests are not supported on this site"
         )
         self.assertIn(expected_response_msg, text_object)
 
@@ -186,9 +182,11 @@ class MigSharedFunctionalityReqcert(MigTestCase, UserAssertMixin):
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
-        self.assertEqual(len(html_objects), 2)
-        relevant_obj = html_objects[1]
-        self.assertIn("Please enter your information", relevant_obj["text"])
+        self.assertEqual(len(html_objects), 1)
+        relevant_obj = html_objects[0]
+        # TODO: polish reqcert and reqoid to be consistent here
+        plain_text = relevant_obj["text"].replace('\n', ' ')
+        self.assertIn("Please enter your information", plain_text)
         self.assertNotIn("value='%s'" % TEST_USER_EMAIL, relevant_obj["text"])
 
     @unittest.skip("TODO: fix missing script init in backend and re-enable")
@@ -226,9 +224,11 @@ class MigSharedFunctionalityReqcert(MigTestCase, UserAssertMixin):
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
-        self.assertEqual(len(html_objects), 2)
-        relevant_obj = html_objects[1]
-        self.assertIn("Please enter your information", relevant_obj["text"])
+        self.assertEqual(len(html_objects), 1)
+        relevant_obj = html_objects[0]
+        # TODO: polish reqcert and reqoid to be consistent here
+        plain_text = relevant_obj["text"].replace('\n', ' ')
+        self.assertIn("Please enter your information", plain_text)
         self.assertIn("value='%s'" % TEST_USER_EMAIL, relevant_obj["text"])
 
     @unittest.skip("TODO: fix missing script init in backend and re-enable")
@@ -266,12 +266,12 @@ class MigSharedFunctionalityReqcert(MigTestCase, UserAssertMixin):
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
-        self.assertEqual(len(html_objects), 3)
-        relevant_obj = html_objects[1]
+        self.assertEqual(len(html_objects), 2)
+        relevant_obj = html_objects[0]
         self.assertIn(
-            "you already have valid MiG credentials", relevant_obj["text"]
+            "you already have a valid MiG certificate", relevant_obj["text"]
         )
-        relevant_obj = html_objects[2]
+        relevant_obj = html_objects[1]
         self.assertIn("value='%s'" % TEST_USER_EMAIL, relevant_obj["text"])
 
 
