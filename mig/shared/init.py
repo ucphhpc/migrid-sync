@@ -158,7 +158,7 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
                                         skipuserprofile=(not client_id),
                                         backend=op_name,)
         # Make sure base_menu is always set for extract_menu
-        # Typicall overriden based on client_id cases below
+        # Typically overriden based on client_id cases below
         title_object['base_menu'] = configuration.site_default_menu
         output_objects.append(title_object)
     if op_header:
@@ -280,6 +280,9 @@ def lazy_init_backend(client_id, environ=None, init_main_res=None,
                                             skipuserprofile=(not client_id),
                                             backend=op_name,
                                             )
+            # Make sure base_menu is always set for extract_menu
+            # Typically overriden based on client_id cases below
+            title_object['base_menu'] = configuration.site_default_menu
             output_objects.append(title_object)
 
     return (configuration, logger, output_objects, op_name, environ)
