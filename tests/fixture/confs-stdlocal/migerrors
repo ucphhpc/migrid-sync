@@ -62,10 +62,10 @@ ENABLE_QUOTA="False"
 
 [ "$ENABLE_NOTIFY" == "True" ] && grep -a -H " ERROR " $LOGDIR/notify.log | tail -n $MAXLINES
 
-[ "$ENABLE_JANITOR" == "True" ] && grep -a -H " ERROR " $LOGDIR/janitor.log | grep -E -v " expire [0-9:. -]+ vs [0-9:. -]+ prevents .+ as peer for " | tail -n $MAXLINES
+[ "$ENABLE_JANITOR" == "True" ] && grep -a -H " ERROR " $LOGDIR/janitor.log | grep -E -v " expire [0-9:. -]+ .+ prevents .+ as peer for " | tail -n $MAXLINES
 
-# TODO: fix auto creation of freeze helper directory and skip partial archives without meta.pck then remove next ignores
-[ "$ENABLE_ACCOUNTING" == "True" ] && grep -a -H " ERROR " $LOGDIR/accounting.log | grep -E -v "Missing quota freeze path: ./.+/quota_home/lustre/freeze.|No such file or directory: ./.+/freeze_home/archive-.*/meta.pck." | tail -n $MAXLINES
+# TODO: skip or fix auto creation of missing freeze helper paths and skip partial archives without meta.pck and missing quota ID.json then remove next ignores
+[ "$ENABLE_ACCOUNTING" == "True" ] && grep -a -H " ERROR " $LOGDIR/accounting.log | grep -E -v "Missing quota freeze path: ./.+/quota_home/.+/freeze.|Failed to fetch freeze quota: ./.+/quota_home/.+/freeze/.+\.json.|No such file or directory: ./.+/freeze_home/archive-.*/meta\.pck.|No such file or directory: ./.+/quota_home/.+/freeze/.+\.json." | tail -n $MAXLINES
 
 # TODO: fix quota handling of old-style vgrids and remove next ignore
 [ "$ENABLE_QUOTA" == "True" ] && grep -a -H " ERROR " $LOGDIR/quota.log | grep -E -v "skipping entry: .*, no lustre data path:"  | tail -n $MAXLINES
