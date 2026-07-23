@@ -82,7 +82,14 @@ class MigSharedFunctionalityVgridman(MigTestCase, UserAssertMixin):
             output_objects, with_object_type="header"
         )
         self.assertEqual(len(header_objects), 1)
-        self.assertEqual(header_objects[0]["text"], "VGrid Management")
+        self.assertEqual(header_objects[0]["text"], "VGrids")
+
+        # Check expected title contents
+        title_objects = filter_output_objects(
+            output_objects, with_object_type="title"
+        )
+        self.assertEqual(len(title_objects), 1)
+        self.assertEqual(title_objects[0]["text"], "VGrid Management")
 
         # Check expected text messages
         text_objects = filter_output_objects(

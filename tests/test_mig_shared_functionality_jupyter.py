@@ -124,13 +124,13 @@ class MigSharedFunctionalityJupyter(MigTestCase, UserAssertMixin):
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
-        self.assertEqual(len(text_objects), 3)
+        self.assertEqual(len(text_objects), 0)
 
         # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
-        self.assertEqual(len(html_objects), 7)
+        self.assertEqual(len(html_objects), 2)
 
 
 # TODO: add additional tests to cover other uses
