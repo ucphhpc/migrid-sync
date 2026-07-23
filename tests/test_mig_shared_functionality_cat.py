@@ -68,12 +68,16 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
             "path": ["foobar.txt"],
         }
 
-        result = backend_main(TEST_USER_DN, payload, self.test_environ)
-        output_objects, status = result
+        output_objects, status = backend_main(
+            TEST_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
         self.assertEqual(status, returnvalues.OK)
 
         # NOTE: start entry with headers, title, header and actual content
-        self.assertEqual(len(output_objects), 4)
+        self.assertEqual(len(output_objects), 3)
         file_output_objects = filter_output_objects(
             output_objects, with_object_type="file_output"
         )
@@ -100,8 +104,8 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
         self.configuration.wwwserve_max_bytes = test_binary_file_size
 
         output_objects, status = backend_main(
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
+            TEST_USER_DN,
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
@@ -137,8 +141,8 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
         self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
 
         output_objects, status = backend_main(
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
+            TEST_USER_DN,
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
@@ -175,8 +179,8 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
         self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
 
         output_objects, status = backend_main(
-            client_id=TEST_USER_DN,
-            user_arguments_dict=payload,
+            TEST_USER_DN,
+            payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
@@ -199,18 +203,22 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
     def test_main_passes_environ(self):
         payload = {}
         try:
-            result = backend_main(TEST_USER_DN, payload, self.test_environ)
+            output_objects, status = backend_main(
+                TEST_USER_DN,
+                payload,
+                environ=self.test_environ,
+                init_main_res=(self.configuration, self.logger, None, None),
+            )
         except Exception as unexpectedexc:
             raise AssertionError(
                 "saw unexpected exception: %s" % (unexpectedexc,)
             )
 
-        output_objects, status = result
         self.assertEqual(status, returnvalues.CLIENT_ERROR)
 
         # NOTE: start entry with headers, title, header, three actual error
         #       messages and finally a Go back link.
-        self.assertEqual(len(output_objects), 7)
+        self.assertEqual(len(output_objects), 6)
         error_text_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )

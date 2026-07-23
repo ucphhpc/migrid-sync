@@ -53,27 +53,26 @@ class MigSharedFunctionalityJupyter(MigTestCase, UserAssertMixin):
         return "testconfig"
 
     def before_each(self):
-        self.configuration.site_enable_jupyter = True
-        self.configuration.site_enable_sftp = True
         self.test_user_dir = self._provision_test_user(self, TEST_USER_DN)
         self.test_environ = create_http_environ(
             self.configuration, "wsgi-bin/jupyter.py"
         )
+        self.configuration.site_enable_jupyter = True
+        self.configuration.site_enable_sftp = True
 
     def test_jupyter_disabled_site_jupyter(self):
         self.configuration.site_enable_jupyter = False
         payload = {}
 
-        result = backend_main(
+        output_objects, status = backend_main(
             TEST_USER_DN,
             payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
-        output_objects, status = result
         self.assertEqual(status, returnvalues.SYSTEM_ERROR)
 
-        # We expect one error message here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
@@ -85,13 +84,13 @@ class MigSharedFunctionalityJupyter(MigTestCase, UserAssertMixin):
         )
         self.assertIn(expected_response_msg, text_object)
 
-        # We don't expect any text message here
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 0)
 
-        # We don't expect any html snippets here
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
@@ -100,34 +99,34 @@ class MigSharedFunctionalityJupyter(MigTestCase, UserAssertMixin):
     @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_show_default_user_jupyter(self):
         payload = {}
-        result = backend_main(
+
+        output_objects, status = backend_main(
             TEST_USER_DN,
             payload,
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
-        output_objects, status = result
         self.assertEqual(status, returnvalues.OK)
 
-        # We don't expect any error messages here
+        # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 0)
 
-        # We expect one header messages here
+        # Check expected header messages
         header_objects = filter_output_objects(
             output_objects, with_object_type="header"
         )
         self.assertEqual(len(header_objects), 1)
 
-        # We expect three text messages here
+        # Check expected text messages
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
         self.assertEqual(len(text_objects), 3)
 
-        # We expect seven html snippet here
+        # Check expected html snippets
         html_objects = filter_output_objects(
             output_objects, with_object_type="html_form"
         )
