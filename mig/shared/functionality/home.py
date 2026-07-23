@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -30,13 +31,12 @@
 
 from __future__ import absolute_import
 
-import os
 
 from mig.shared import returnvalues
 from mig.shared.defaults import csrf_field, user_home_label
 from mig.shared.findtype import is_admin
 from mig.shared.functional import validate_input_and_cert
-from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.init import extract_menu, find_entry, lazy_init_backend
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import save_settings_js, save_settings_html, render_apps, \
     menu_items, legacy_user_interface, html_user_messages
@@ -112,8 +112,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     apps_field = 'SITE_USER_MENU'
     # NOTE: build list of all default and user selectable apps in that order
     app_list = [app_id for app_id in configuration.site_default_menu]
-    app_list += [app_id for app_id in configuration.site_user_menu if not
-                 app_id in app_list]
+    app_list += [app_id for app_id in configuration.site_user_menu if app_id not in app_list]
 
     mandatory_apps = []
     for app_name in configuration.site_default_menu:
@@ -221,12 +220,13 @@ def signature():
     return ['text', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False,
-                                  op_menu=client_id)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -235,6 +235,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
