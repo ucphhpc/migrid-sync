@@ -66,3 +66,6 @@ extend-exclude = [
     "sbin/grid_sftp.py",
     "sbin/grid_webdavs.py"
 ]
+
+[tool.bandit]
+exclude_dirs = [".git/", "tests/data/", "tests/fixture/"]
