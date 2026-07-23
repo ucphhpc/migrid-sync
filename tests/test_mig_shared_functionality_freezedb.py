@@ -61,7 +61,6 @@ class MigSharedFunctionalityFreezedb(MigTestCase, UserAssertMixin):
         )
         self.configuration.site_enable_freeze = True
 
-    @unittest.skip("TODO: fix error response in backend and re-enable")
     def test_freezedb_disabled_site_freeze(self):
         self.configuration.site_enable_freeze = False
         payload = {}

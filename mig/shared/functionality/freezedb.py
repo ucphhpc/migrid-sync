@@ -79,11 +79,11 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
 
     if not configuration.site_enable_freeze:
-        output_objects.append({'object_type': 'text', 'text':
+        output_objects.append({'object_type': 'error_text', 'text':
                                """Freezing archives is disabled on this site.
 Please contact the %s site support (%s) if you think it should be enabled.
 """ % (configuration.short_title, configuration.support_email)})
-        return (output_objects, returnvalues.OK)
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if operation not in allowed_operations:
         output_objects.append({'object_type': 'text', 'text':
