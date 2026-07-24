@@ -107,7 +107,7 @@ def read_trigger_log(configuration, vgrid_name, flags):
 
 
 def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
-         init_kwargs=None):
+         init_kwargs={'op_header': False}):
     """Main function wrapper used by front end"""
 
     (configuration, logger, output_objects, op_name, environ) = \
