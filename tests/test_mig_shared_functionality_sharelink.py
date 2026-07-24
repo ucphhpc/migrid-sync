@@ -31,8 +31,6 @@ backend.
 
 from __future__ import print_function
 
-import unittest
-
 # Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
 
@@ -61,7 +59,6 @@ class MigSharedFunctionalitySharelink(MigTestCase, UserAssertMixin):
         )
         self.configuration.site_enable_sharelinks = True
 
-    @unittest.skip("TODO: fix error response in backend and re-enable")
     def test_sharelink_disabled_site_sharelink(self):
         self.configuration.site_enable_sharelinks = False
         payload = {}

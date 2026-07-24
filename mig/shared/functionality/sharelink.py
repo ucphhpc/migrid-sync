@@ -127,11 +127,11 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     output_objects.append(header_entry)
 
     if not configuration.site_enable_sharelinks:
-        output_objects.append({'object_type': 'text', 'text':
+        output_objects.append({'object_type': 'error_text', 'text':
                                """Share linking is disabled on this site.
 Please contact the %s site support (%s) if you think it should be enabled.
 """ % (configuration.short_title, configuration.support_email)})
-        return (output_objects, returnvalues.OK)
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.info('sharelink %s from %s' % (action, client_id))
     logger.debug('sharelink from %s: %s' % (client_id, accepted))
