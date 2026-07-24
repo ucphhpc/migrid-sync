@@ -30,7 +30,6 @@
 
 from __future__ import absolute_import
 
-import os
 
 from mig.shared import returnvalues
 from mig.shared.auth import expire_twofactor_session
@@ -106,8 +105,6 @@ browser. Please refer to your browser and system documentation for details.
 
     title_entry = find_entry(output_objects, 'title')
 
-    # Always rely on os.environ here as that's what we have
-    environ = os.environ
     script_name = requested_backend(environ, strip_ext=False)
     # Check if twofactor is mandatory and not yet set up
     forced_twofactor = require_twofactor_setup(configuration, script_name,
