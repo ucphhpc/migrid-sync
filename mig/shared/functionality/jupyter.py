@@ -64,7 +64,6 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
         allow_rejects=False,
         environ=environ,
     )
-
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
