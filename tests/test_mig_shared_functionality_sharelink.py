@@ -25,7 +25,9 @@
 # --- END_HEADER ---
 #
 
-"""Unit tests of the MiG functionality file implementing the sharelink backend"""
+"""Unit tests of the MiG functionality file implementing the sharelink
+backend.
+"""
 
 from __future__ import print_function
 
