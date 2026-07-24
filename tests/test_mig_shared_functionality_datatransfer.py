@@ -82,7 +82,7 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         header_objects = filter_output_objects(
             output_objects, with_object_type="header"
         )
-        self.assertEqual(len(header_objects), 1)
+        self.assertEqual(len(header_objects), 2)
 
         # Check expected text messages
         text_objects = filter_output_objects(
