@@ -26,7 +26,6 @@
 # -- END_HEADER ---
 #
 
-
 """Account page with user details and account management options"""
 
 from __future__ import absolute_import
@@ -43,6 +42,7 @@ from mig.shared.accountstate import account_expire_info
 from mig.shared.base import extract_field, requested_page
 from mig.shared.defaults import (
     csrf_field,
+    keyword_auto,
     user_home_label,
     AUTH_MIG_OID,
     AUTH_MIG_OIDC,
@@ -52,7 +52,7 @@ from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import html_user_messages, man_base_js
 from mig.shared.httpsclient import detect_client_auth, find_auth_type_and_label
-from mig.shared.init import find_entry, initialize_main_variables
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.useradm import (
     get_full_user_map,
     default_search,
@@ -89,7 +89,7 @@ def html_tmpl(configuration, client_id, environ, title_entry):
     if user_dict:
         # NOTE: set min days high enough to always return renew and extend_days
         (_, _, renew_days, extend_days) = account_expire_info(
-            configuration, client_id, environ, 999999
+            configuration, client_id, environ=environ, min_days_left=999999
         )
         user_account += """
         <h3>Account Details</h3>
@@ -105,7 +105,8 @@ def html_tmpl(configuration, client_id, environ, title_entry):
             show_account[field] = copy.deepcopy(user_dict[field])
             if field == "expire":
                 # NOTE: translate epoch to proper datetime string
-                expire_dt = datetime.datetime.fromtimestamp(show_account[field])
+                expire_dt = datetime.datetime.fromtimestamp(
+                    show_account[field])
                 # strip usec for user-friendly time stamp
                 show_account[field] = expire_dt.replace(microsecond=0)
                 if extend_days > 0:
@@ -349,7 +350,8 @@ before your access renewal can be accepted.
     if configuration.site_enable_accounting:
         account_usage = get_usage(configuration, client_id)
         if account_usage is None:
-            logger.error("Failed to load acount usage for user: %r" % client_id)
+            logger.error(
+                "Failed to load acount usage for user: %r" % client_id)
             account_usage = {}
         accounting = account_usage.get("accounting", {})
         accounting_dt = datetime.datetime.fromtimestamp(
@@ -435,15 +437,13 @@ def signature():
     return ["text", defaults]
 
 
-def main(client_id, user_arguments_dict, environ=None):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False, 'op_menu': keyword_auto}):
+    """Main function wrapper used by front end"""
 
-    if environ is None:
-        environ = os.environ
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
 
-    (configuration, logger, output_objects, op_name) = (
-        initialize_main_variables(client_id, op_header=False, op_menu=client_id)
-    )
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -452,6 +452,7 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
