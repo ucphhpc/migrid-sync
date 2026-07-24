@@ -29,8 +29,6 @@
 
 from __future__ import print_function
 
-import unittest
-
 # Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
 
@@ -59,7 +57,6 @@ class MigSharedFunctionalityPeers(MigTestCase, UserAssertMixin):
         )
         self.configuration.site_enable_peers = True
 
-    @unittest.skip("TODO: fix error response in backend and re-enable")
     def test_peers_disabled_site_peers(self):
         self.configuration.site_enable_peers = False
         payload = {}

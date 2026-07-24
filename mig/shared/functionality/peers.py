@@ -197,11 +197,11 @@ function transfer_id_fields() {
     output_objects.append({'object_type': 'header', 'text': 'Peers'})
 
     if not configuration.site_enable_peers:
-        output_objects.append({'object_type': 'text', 'text':
+        output_objects.append({'object_type': 'error_text', 'text':
                                """Peers use is disabled on this site.
 Please contact the %s site support (%s) if you think it should be enabled.
 """ % (configuration.short_title, configuration.support_email)})
-        return (output_objects, returnvalues.OK)
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     user_map = get_full_user_map(configuration)
     user_dict = user_map.get(client_id, None)
