@@ -81,7 +81,7 @@ class MigSharedFunctionalityCrontab(MigTestCase, UserAssertMixin):
         self.assertEqual(len(error_objects), 1)
         self.assertIn("text", error_objects[0])
         text_object = error_objects[0]["text"]
-        expected_response_msg = "Share linking is disabled on this site"
+        expected_response_msg = "Scheduling tasks is disabled on this site"
         self.assertIn(expected_response_msg, text_object)
 
         # Check expected text messages
@@ -131,8 +131,8 @@ class MigSharedFunctionalityCrontab(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(len(html_objects), 7)
 
-    def test_save_invalid_crontab_fails(self):
-        payload = {'action': 'save', 'crontab': ['INVALID CONTENT']}
+    def test_crontab_invalid_action_fails(self):
+        payload = {"action": ["INVALID"]}
 
         output_objects, status = backend_main(
             TEST_USER_DN,
@@ -147,6 +147,90 @@ class MigSharedFunctionalityCrontab(MigTestCase, UserAssertMixin):
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 1)
+        relevant_obj = error_objects[0]
+        self.assertIn("Invalid action", relevant_obj["text"])
+
+        # Check expected header messages
+        header_objects = filter_output_objects(
+            output_objects, with_object_type="header"
+        )
+        self.assertEqual(len(header_objects), 0)
+
+        # Check expected text messages
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 0)
+
+        # Check expected html snippets
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 1)
+
+    def test_crontab_save_without_csrf_fails(self):
+        payload = {"action": ["save"], "crontab": [""]}
+
+        output_objects, status = backend_main(
+            TEST_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.CLIENT_ERROR)
+
+        # Check expected error messages
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 1)
+        relevant_obj = error_objects[0]
+        self.assertIn(
+            "CSRF-filtered POST requests to prevent unintended",
+            relevant_obj["text"],
+        )
+
+        # Check expected header messages
+        header_objects = filter_output_objects(
+            output_objects, with_object_type="header"
+        )
+        self.assertEqual(len(header_objects), 0)
+
+        # Check expected text messages
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 0)
+
+        # Check expected html snippets
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 1)
+
+    def test_save_invalid_crontab_fails(self):
+        payload = {"action": ["save"], "crontab": ["INVALID CONTENT"]}
+
+        output_objects, status = backend_main(
+            TEST_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.CLIENT_ERROR)
+
+        # Check expected error messages
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 1)
+        relevant_obj = error_objects[0]
+        # TODO: fix CSRF and adjust parser to reject invalid content here
+        # self.assertIn("Error parsing and saving", relevant_obj['text'])
+        self.assertIn(
+            "CSRF-filtered POST requests to prevent unintended",
+            relevant_obj["text"],
+        )
 
         # Check expected header messages
         header_objects = filter_output_objects(
@@ -167,7 +251,7 @@ class MigSharedFunctionalityCrontab(MigTestCase, UserAssertMixin):
         self.assertEqual(len(html_objects), 1)
 
     def test_save_invalid_atjobs_fails(self):
-        payload = {'action': 'save', 'atjobs': ['INVALID CONTENT']}
+        payload = {"action": ["save"], "atjobs": ["INVALID CONTENT"]}
 
         output_objects, status = backend_main(
             TEST_USER_DN,
@@ -182,6 +266,13 @@ class MigSharedFunctionalityCrontab(MigTestCase, UserAssertMixin):
             output_objects, with_object_type="error_text"
         )
         self.assertEqual(len(error_objects), 1)
+        relevant_obj = error_objects[0]
+        # TODO: fix CSRF and adjust parser to reject invalid content here
+        # self.assertIn("Error parsing and saving", relevant_obj['text'])
+        self.assertIn(
+            "CSRF-filtered POST requests to prevent unintended",
+            relevant_obj["text"],
+        )
 
         # Check expected header messages
         header_objects = filter_output_objects(
