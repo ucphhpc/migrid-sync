@@ -29,8 +29,6 @@
 
 from __future__ import print_function
 
-import unittest
-
 # Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
 
@@ -58,7 +56,6 @@ class MigSharedFunctionalitySetup(MigTestCase, UserAssertMixin):
             self.configuration, "wsgi-bin/setup.py"
         )
 
-    @unittest.skip("TODO: fix missing environ passing in backend and re-enable")
     def test_show_default_user_setup(self):
         payload = {}
 

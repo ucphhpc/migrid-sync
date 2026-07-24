@@ -636,8 +636,6 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     if configuration.site_enable_twofactor \
             and not configuration.site_enable_gdp:
         valid_topics.append('twofactor')
-    # Always rely on os.environ here as that's what we have
-    environ = os.environ
     script_name = requested_backend(environ, strip_ext=False)
     # Check if twofactor is mandatory and not yet set up
     forced_twofactor = require_twofactor_setup(configuration, script_name,
@@ -694,7 +692,7 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     policy_min_len, policy_min_classes = parse_password_policy(configuration)
     save_html = save_settings_html(configuration)
     (expire_warn, expire_time, renew_days, extend_days) = account_expire_info(
-        configuration, client_id)
+        configuration, client_id, environ=environ)
     expire_html = ''
     # NOTE: skip warn on forced_twofactor as Save is required anyway
     if expire_warn and not forced_twofactor:
@@ -1762,7 +1760,7 @@ value="%(default_authpassword)s" />
         <tr class="otp_wizard otp_ready hidden"><td>
         </td></tr>
         '''
-        auth_type, auth_flavor = detect_client_auth(configuration, os.environ)
+        auth_type, auth_flavor = detect_client_auth(configuration, environ)
         is_mig = auth_flavor in [AUTH_MIG_OID, AUTH_MIG_OIDC]
         is_ext = auth_flavor in [AUTH_EXT_OID, AUTH_EXT_OIDC]
         # NOTE: re-order to show active access method OpenID 2.0/Connect first
