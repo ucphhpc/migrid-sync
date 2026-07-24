@@ -131,6 +131,53 @@ class MigSharedFunctionalityFreezedb(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(len(html_objects), 5)
 
+    def test_freezedb_with_invalid_operation_fails(self):
+        payload = {"operation": ["INVALID"]}
+        output_objects, status = backend_main(
+            TEST_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        # TODO: change backends to return CLIENT_ERROR and update?
+        self.assertEqual(status, returnvalues.OK)
+
+        # Check expected error messages
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        # TODO: change backends to return error_text and update?
+        # self.assertEqual(len(error_objects), 1)
+        # self.assertIn("text", error_objects[0])
+        # text_object = error_objects[0]["text"]
+        # expected_response_msg = "Operation must be"
+        # self.assertIn(expected_response_msg, text_object)
+        self.assertEqual(len(error_objects), 0)
+
+        # Check expected header messages
+        header_objects = filter_output_objects(
+            output_objects, with_object_type="header"
+        )
+        self.assertEqual(len(header_objects), 0)
+
+        # Check expected title contents
+        title_objects = filter_output_objects(
+            output_objects, with_object_type="title"
+        )
+        self.assertEqual(len(title_objects), 1)
+
+        # Check expected text messages
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 1)
+
+        # Check expected html snippets
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 0)
+
 
 # TODO: add additional tests to cover other uses
 
