@@ -76,11 +76,16 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
 
     operation = accepted['operation'][-1]
 
+    if not configuration.site_enable_resources:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Resources are not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     if operation not in allowed_operations:
-        output_objects.append({'object_type': 'text', 'text':
+        output_objects.append({'object_type': 'error_text', 'text':
                                '''Operation must be one of %s.''' %
                                ', '.join(allowed_operations)})
-        return (output_objects, returnvalues.OK)
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     logger.info("%s %s begin for %s" % (op_name, operation, client_id))
     if operation in show_operations:

@@ -29,8 +29,6 @@
 
 from __future__ import print_function
 
-import unittest
-
 # Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
 
@@ -63,7 +61,6 @@ class MigSharedFunctionalityRedb(MigTestCase, UserAssertMixin):
         )
         self.configuration.site_enable_resources = True
 
-    @unittest.skip("TODO: fix missing enabled check in backend and re-enable")
     def test_redb_disabled_site_resources(self):
         self.configuration.site_enable_resources = False
         payload = {}
@@ -141,20 +138,17 @@ class MigSharedFunctionalityRedb(MigTestCase, UserAssertMixin):
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
-        # TODO: change backends to return CLIENT_ERROR and update?
-        self.assertEqual(status, returnvalues.OK)
+        self.assertEqual(status, returnvalues.CLIENT_ERROR)
 
         # Check expected error messages
         error_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
-        # TODO: change backends to return error_text and update?
-        # self.assertEqual(len(error_objects), 1)
-        # self.assertIn("text", error_objects[0])
-        # text_object = error_objects[0]["text"]
-        # expected_response_msg = "Operation must be"
-        # self.assertIn(expected_response_msg, text_object)
-        self.assertEqual(len(error_objects), 0)
+        self.assertEqual(len(error_objects), 1)
+        self.assertIn("text", error_objects[0])
+        text_object = error_objects[0]["text"]
+        expected_response_msg = "Operation must be"
+        self.assertIn(expected_response_msg, text_object)
 
         # Check expected header messages
         header_objects = filter_output_objects(
@@ -172,7 +166,7 @@ class MigSharedFunctionalityRedb(MigTestCase, UserAssertMixin):
         text_objects = filter_output_objects(
             output_objects, with_object_type="text"
         )
-        self.assertEqual(len(text_objects), 1)
+        self.assertEqual(len(text_objects), 0)
 
         # Check expected html snippets
         html_objects = filter_output_objects(
