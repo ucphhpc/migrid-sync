@@ -114,6 +114,11 @@ class MigSharedFunctionalityPeople(MigTestCase, UserAssertMixin):
             output_objects, with_object_type="error_text"
         )
         # TODO: change backends to return error_text and update?
+        # self.assertEqual(len(error_objects), 1)
+        # self.assertIn("text", error_objects[0])
+        # text_object = error_objects[0]["text"]
+        # expected_response_msg = "Operation must be"
+        # self.assertIn(expected_response_msg, text_object)
         self.assertEqual(len(error_objects), 0)
 
         # Check expected header messages
