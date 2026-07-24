@@ -268,7 +268,7 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     policy_min_len, policy_min_classes = parse_password_policy(configuration)
     save_html = save_settings_html(configuration)
     (expire_warn, expire_time, renew_days, extend_days) = account_expire_info(
-        configuration, client_id, environ=environ)
+        configuration, client_id)
     expire_html = ''
     if expire_warn:
         expire_warn_msg = '''<p class="warningtext">
