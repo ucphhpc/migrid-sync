@@ -31,12 +31,15 @@ from __future__ import absolute_import
 
 import mimetypes
 import os
-import time
 
 from mig.shared.base import requested_backend, extract_field
 from mig.shared.conf import get_configuration_object
 from mig.shared.htmlgen import themed_styles, themed_scripts
 from mig.shared.settings import load_settings, load_widgets, load_profile
+
+title_style_helpers = {'base': '', 'advanced': '', 'page': '', 'skin': ''}
+title_script_helpers = {'base': '', 'advanced': '', 'skin': '', 'page': '',
+                        'init': '', 'ready': '', 'body': ''}
 
 
 def make_basic_entry(kind, values):
@@ -51,10 +54,14 @@ def make_start_entry(headers=[]):
     return make_basic_entry('start', {'headers': headers})
 
 
-def make_title_entry(text, meta='', style={}, script={}, skipmenu=False,
+def make_title_entry(text, meta='', style=None, script=None, skipmenu=False,
                      skipwidgets=False, skipuserstyle=False,
                      skipuserprofile=False, backend=''):
     """Create title entry for output_objects"""
+    if style is None:
+        style = title_style_helpers.copy()
+    if script is None:
+        script = title_script_helpers.copy()
     return make_basic_entry('title', {'text': text,
                                       'meta': meta,
                                       'style': style,
@@ -169,7 +176,7 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
             if settings:
                 title['user_settings'] = settings
                 base_menu = settings.get('SITE_BASE_MENU', 'default')
-                if not base_menu in configuration.site_base_menu:
+                if base_menu not in configuration.site_base_menu:
                     base_menu = 'default'
                 if base_menu == 'simple' and configuration.site_simple_menu:
                     title['base_menu'] = configuration.site_simple_menu
