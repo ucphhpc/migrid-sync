@@ -76,8 +76,8 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # NOTE: start entry with headers, title, header and actual content
-        self.assertEqual(len(output_objects), 3)
+        # NOTE: start entry with http headers, title, header and actual content
+        self.assertEqual(len(output_objects), 4)
         file_output_objects = filter_output_objects(
             output_objects, with_object_type="file_output"
         )
@@ -111,8 +111,8 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(status, returnvalues.OK)
 
-        # NOTE: start entry with headers, title and actual content
-        self.assertEqual(len(output_objects), 3)
+        # NOTE: start entry with http headers, title, header and actual content
+        self.assertEqual(len(output_objects), 4)
         file_output_objects = filter_output_objects(
             output_objects, with_object_type="file_output"
         )
@@ -148,8 +148,8 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(status, returnvalues.REJECT_PROCESSING_ERROR)
 
-        # NOTE: start entry with headers, title and actual error message
-        self.assertEqual(len(output_objects), 3)
+        # NOTE: start entry with http headers, title, header and actual error
+        self.assertEqual(len(output_objects), 4)
         error_text_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
@@ -186,8 +186,8 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(status, returnvalues.REJECT_PROCESSING_ERROR)
 
-        # NOTE: start entry with headers, title and actual error message
-        self.assertEqual(len(output_objects), 3)
+        # NOTE: start entry with http headers, title, header and actual error
+        self.assertEqual(len(output_objects), 4)
         error_text_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )
@@ -216,9 +216,9 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
 
         self.assertEqual(status, returnvalues.CLIENT_ERROR)
 
-        # NOTE: start entry with headers, title, header, three actual error
-        #       messages and finally a Go back link.
-        self.assertEqual(len(output_objects), 6)
+        # NOTE: start entry with http headers, title, header, three actual
+        #       error messages and finally a Go back link.
+        self.assertEqual(len(output_objects), 7)
         error_text_objects = filter_output_objects(
             output_objects, with_object_type="error_text"
         )

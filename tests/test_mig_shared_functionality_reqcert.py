@@ -29,8 +29,6 @@
 
 from __future__ import print_function
 
-import unittest
-
 # Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
 
@@ -67,7 +65,6 @@ class MigSharedFunctionalityReqcert(MigTestCase, UserAssertMixin):
         self.configuration.ca_user = "mig-ca"
         self.configuration.site_signup_methods = ["migcert"]
 
-    @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_reqcert_disabled_site_ca(self):
         self.configuration.ca_fqdn = ""
         payload = {}
@@ -141,7 +138,6 @@ class MigSharedFunctionalityReqcert(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(len(html_objects), 0)
 
-    @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_show_default_anonymous_user_reqcert(self):
         payload = {}
 
@@ -189,7 +185,6 @@ class MigSharedFunctionalityReqcert(MigTestCase, UserAssertMixin):
         self.assertIn("Please enter your information", plain_text)
         self.assertNotIn("value='%s'" % TEST_USER_EMAIL, relevant_obj["text"])
 
-    @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_show_url_prefill_user_reqcert(self):
         payload = {"email": [TEST_USER_EMAIL]}
 
@@ -231,7 +226,6 @@ class MigSharedFunctionalityReqcert(MigTestCase, UserAssertMixin):
         self.assertIn("Please enter your information", plain_text)
         self.assertIn("value='%s'" % TEST_USER_EMAIL, relevant_obj["text"])
 
-    @unittest.skip("TODO: fix missing script init in backend and re-enable")
     def test_show_default_authenticated_user_reqcert(self):
         payload = {}
 
