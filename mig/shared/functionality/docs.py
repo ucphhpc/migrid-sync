@@ -608,7 +608,7 @@ The workflows also requires that the resources provide the SSHFS_MOUNT runtime e
 
 
 def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
-         init_kwargs={'op_menu': keyword_auto}):
+         init_kwargs={'op_header': False, 'op_menu': keyword_auto}):
     """Main function wrapper used by front end"""
 
     (configuration, logger, output_objects, op_name, environ) = \
