@@ -107,6 +107,7 @@ class MigSharedFunctionalityMigadmin(MigTestCase, UserAssertMixin):
         )
         self.assertEqual(len(html_objects), 1)
 
+    @unittest.skip("TODO: fix CI installation of pgrep and re-enable")
     def test_show_default_user_migadmin(self):
         payload = {}
 
