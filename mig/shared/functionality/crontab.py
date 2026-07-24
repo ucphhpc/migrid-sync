@@ -111,6 +111,7 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     (configuration, logger, output_objects, op_name, environ) = \
         lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
 
+    status = returnvalues.OK
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -183,11 +184,11 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
     if not configuration.site_enable_crontab:
-        output_objects.append({'object_type': 'text', 'text':
+        output_objects.append({'object_type': 'error_text', 'text':
                                """Scheduling tasks is disabled on this site.
 Please contact the %s site support (%s) if you think it should be enabled.
 """ % (configuration.short_title, configuration.support_email)})
-        return (output_objects, returnvalues.OK)
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.info('crontab %s from %s' % (action, client_id))
     logger.debug('crontab from %s: %s' % (client_id, accepted))
@@ -433,7 +434,7 @@ and so on. You have the following commands at your disposal:<br/>
                 output_objects.append({'object_type': 'error_text', 'text':
                                        'Error parsing and saving crontab: %s'
                                        % parse_msg})
-                output_status = returnvalues.CLIENT_ERROR
+                status = returnvalues.CLIENT_ERROR
             else:
                 if parse_msg:
                     output_objects.append({'object_type': 'html_form', 'text':
@@ -451,7 +452,7 @@ and so on. You have the following commands at your disposal:<br/>
                 output_objects.append({'object_type': 'error_text', 'text':
                                        'Error parsing and saving atjobs: %s'
                                        % parse_msg})
-                output_status = returnvalues.CLIENT_ERROR
+                status = returnvalues.CLIENT_ERROR
             else:
                 if parse_msg:
                     output_objects.append({'object_type': 'html_form', 'text':
@@ -464,4 +465,4 @@ and so on. You have the following commands at your disposal:<br/>
                                    'destination': 'crontab.py',
                                    'text': 'Return to schedule task overview'})
 
-    return (output_objects, returnvalues.OK)
+    return (output_objects, status)
