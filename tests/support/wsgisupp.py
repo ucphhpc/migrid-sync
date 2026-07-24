@@ -62,7 +62,7 @@ def create_http_environ(configuration, path_info=''):
     environ["PATH_INFO"] = path_info
     environ["REMOTE_ADDR"] = "127.0.0.1"
     environ["SCRIPT_URI"] = "".join(
-        ("https://", environ["HTTP_HOST"], path_info)
+        ("https://", environ["HTTP_HOST"], '/', path_info.lstrip('/'))
     )
     return environ
 
