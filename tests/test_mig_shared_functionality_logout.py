@@ -65,7 +65,6 @@ class MigSharedFunctionalityLogout(MigTestCase, UserAssertMixin):
     def test_show_default_user_logout(self):
         payload = {}
 
-        print("DEBUG: env %s" % self.test_environ)
         output_objects, status = backend_main(
             TEST_USER_DN,
             payload,
