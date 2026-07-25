@@ -546,9 +546,17 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
         if alias in user_aliases.values() and \
                 user_aliases.get(client_id, None) != alias:
             alias_conflict = True
+            conflict_list = [i for i in user_aliases \
+                             if user_aliases[i] == alias]
+            _logger.warning('create %r with alias %r would conflict: %s' %
+                            (client_id, alias, ', '.join(conflict_list)))
         if main_id in user_main_ids.values() and \
                 user_main_ids.get(client_id, None) != main_id:
             main_id_conflict = True
+            conflict_list = [i for i in user_main_ids \
+                             if user_main_ids[i] == main_id]
+            _logger.warning('create %r with main_id %r would conflict: %s' %
+                            (client_id, main_id, ', '.join(conflict_list)))
 
         if alias_conflict or main_id_conflict:
             if do_lock:
