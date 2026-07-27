@@ -36,12 +36,12 @@ import unittest
 from mig.lib.janitor import EXPIRE_DUMMY_JOBS_DAYS, EXPIRE_REQ_DAYS, \
     EXPIRE_STATE_DAYS, EXPIRE_TWOFACTOR_DAYS, MANAGE_TRIVIAL_REQ_MINUTES, \
     REMIND_REQ_DAYS, SECS_PER_DAY, SECS_PER_HOUR, SECS_PER_MINUTE, \
-    _clean_stale_state_files, _lookup_last_run, _update_last_run, \
-    clean_mig_system_files, clean_no_job_helpers, \
-    clean_sessid_to_mrls_link_home, clean_twofactor_sessions, \
-    clean_webserver_home, handle_cache_updates, handle_janitor_tasks, \
-    handle_pending_requests, handle_session_cleanup, handle_state_cleanup, \
-    manage_single_req, manage_trivial_user_requests, \
+    _clean_stale_state_files, _lookup_last_run, _lookup_req_throttle, \
+    _update_last_run, _update_req_throttle, clean_mig_system_files, \
+    clean_no_job_helpers, clean_sessid_to_mrls_link_home, \
+    clean_twofactor_sessions, clean_webserver_home, handle_cache_updates, \
+    handle_janitor_tasks, handle_pending_requests, handle_session_cleanup, \
+    handle_state_cleanup, manage_single_req, manage_trivial_user_requests, \
     remind_and_expire_user_pending, task_triggers
 from mig.shared.accountreq import save_account_request
 from mig.shared.base import client_id_dir
@@ -132,6 +132,25 @@ class MigLibJanitor(MigTestCase):
         self.assertEqual(stamp, expect)
         expect = time.time()
         stamp = _update_last_run(self.configuration, 'janitor_task', expect)
+        self.assertEqual(stamp, expect)
+
+    def test_request_throttle_bookkeeping(self):
+        """Register a request throttle timestamp and check it"""
+        expect = -1
+        stamp = _lookup_req_throttle(self.configuration, 'janitor_req')
+        self.assertEqual(stamp, expect)
+        expect = 42
+        stamp = _update_req_throttle(self.configuration, 'janitor_req', expect,
+                                     False)
+        self.assertEqual(stamp, expect)
+        expect = time.time()
+        stamp = _update_req_throttle(self.configuration, 'janitor_req', expect,
+                                     False)
+        self.assertEqual(stamp, expect)
+        # NOTE: reset to -1 on success
+        expect = -1
+        stamp = _update_req_throttle(self.configuration, 'janitor_req', 42,
+                                     True)
         self.assertEqual(stamp, expect)
 
     def test_clean_mig_system_files(self):
@@ -541,6 +560,62 @@ class MigLibJanitor(MigTestCase):
             path = os.path.join(test_dir, name)
             self.assertFalse(os.path.exists(path))
 
+    def test_manage_single_req_throttles_down_unsuccessful(self):
+        """Test request handling throttle for recently unsuccessful request"""
+        req_dict = {
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'password_hash': TEST_MODERN_PW_PBKDF2,
+            # NOTE: we need original email here to match provisioned user
+            'email': TEST_USER_EMAIL,
+        }
+        saved, req_path = save_account_request(self.configuration, req_dict)
+        req_id = os.path.basename(req_path)
+        now = time.time()
+        # Attempt handling with expected ignore
+        with self.assertLogs(level='INFO') as log_capture:
+            manage_single_req(
+                self.configuration,
+                req_id,
+                req_path,
+                self.user_db_path,
+                now
+            )
+        self.assertTrue(any('but not automated' in msg
+                            for msg in log_capture.output))
+        self.assertTrue(os.path.exists(req_path),
+                        "Removed failed req in %s" % req_path)
+
+        # Now verify that retry soon after gets throttled
+        with self.assertLogs(level='INFO') as log_capture:
+            manage_single_req(
+                self.configuration,
+                req_id,
+                req_path,
+                self.user_db_path,
+                now + 10
+            )
+        self.assertTrue(any('throttle down' in msg
+                            for msg in log_capture.output))
+        self.assertTrue(os.path.exists(req_path),
+                        "Removed throttled failing req in %s" % req_path)
+
+        # Now verify that retry long after is attempted again
+        with self.assertLogs(level='INFO') as log_capture:
+            manage_single_req(
+                self.configuration,
+                req_id,
+                req_path,
+                self.user_db_path,
+                now + 7200
+            )
+        self.assertTrue(any('but not automated' in msg
+                            for msg in log_capture.output))
+        self.assertTrue(os.path.exists(req_path),
+                        "Removed retried failing req in %s" % req_path)
+
     def test_manage_single_req_invalid(self):
         """Test request handling for invalid request"""
         req_dict = {
@@ -765,6 +840,31 @@ class MigLibJanitor(MigTestCase):
         # Check persistence (within process)
         retrieved = _lookup_last_run(self.configuration, task)
         self.assertEqual(retrieved, now)
+
+    def test_janitor_update_request_throttle(self):
+        """Test request throttle timestamp updates in janitor"""
+        now = time.time()
+        req = 'test-req'
+
+        # Initial state
+        stamp = _lookup_req_throttle(self.configuration, req)
+        self.assertEqual(stamp, -1)
+
+        # Update & verify
+        updated = _update_req_throttle(self.configuration, req, now, False)
+        self.assertEqual(updated, now)
+
+        # Check persistence (within process)
+        retrieved = _lookup_req_throttle(self.configuration, req)
+        self.assertEqual(retrieved, now)
+
+        # Remove & verify
+        updated = _update_req_throttle(self.configuration, req, now, True)
+        self.assertEqual(updated, -1)
+
+        # Check persistence (within process)
+        retrieved = _lookup_req_throttle(self.configuration, req)
+        self.assertEqual(retrieved, -1)
 
     def test__clean_stale_state_files_edge(self):
         """Test state file cleaner with special cases"""
