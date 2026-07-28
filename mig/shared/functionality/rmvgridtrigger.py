@@ -34,8 +34,8 @@ from mig.shared import returnvalues
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
-from mig.shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-    vgrid_is_trigger, vgrid_remove_triggers
+from mig.shared.vgrid import init_vgrid_script_add_rem, vgrid_is_default, \
+    vgrid_is_owner_or_member, vgrid_is_trigger, vgrid_remove_triggers
 
 
 def signature():
@@ -96,6 +96,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # In case of warnings, msg is non-empty while ret_val remains True
 
         output_objects.append({'object_type': 'warning', 'text': msg})
+
+    if vgrid_is_default(vgrid_name) or \
+        not vgrid_is_owner_or_member(vgrid_name, client_id,
+                                     configuration):
+        output_objects.append({'object_type': 'error_text',
+                               'text': '''You must be an active owner or member
+of %s %s to access the workflows.''' % (vgrid_name, label)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # if we get here user is either vgrid owner or has rule ownership
 
