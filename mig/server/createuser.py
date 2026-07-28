@@ -70,10 +70,14 @@ def usage(name='createuser.py'):
 Usage:
 %(name)s [OPTIONS] -u USER_FILE
 or
-%(name)s [OPTIONS] -r -i USER_ID
+%(name)s [OPTIONS] [FULL_NAME ORGANIZATION STATE COUNTRY EMAIL COMMENT PASSWORD]
+to create a new user account non-interactively
 or
-%(name)s [OPTIONS] [FULL_NAME ORGANIZATION STATE COUNTRY \
-    EMAIL COMMENT PASSWORD]
+%(name)s [OPTIONS]
+to create a new user account interactively
+or
+%(name)s [OPTIONS] -r -i USER_ID
+to renew an existing user, optionally with non-ID data changes.
 Where OPTIONS may be one or more of:
    -a AUTH_TYPE        Prepare account for AUTH_TYPE login (expire, password)
    -c CONF_FILE        Use CONF_FILE as server configuration
@@ -185,11 +189,9 @@ if '__main__' == __name__:
 
     if verbose:
         if conf_path:
-            if verbose:
-                print('using configuration in %s' % conf_path)
+            print('using configuration in %s' % conf_path)
         else:
-            if verbose:
-                print('using configuration from MIG_CONF (or default)')
+            print('using configuration from MIG_CONF (or default)')
 
     configuration = get_configuration_object(config_file=conf_path)
     logger = configuration.logger

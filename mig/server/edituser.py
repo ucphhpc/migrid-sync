@@ -36,13 +36,11 @@ import getopt
 import os
 import sys
 
-from mig.shared.base import fill_distinguished_name, fill_user, canonical_user, \
-    force_native_str_rec, is_gdp_user
+from mig.shared.base import canonical_user, distinguished_name_to_user, \
+    fill_distinguished_name, fill_user, force_native_str_rec, is_gdp_user
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import keyword_auto
 from mig.shared.serial import load
 from mig.shared.useradm import init_user_adm, edit_user
-from mig.shared.userdb import default_db_path
 
 
 def usage(name='edituser.py'):
@@ -56,8 +54,11 @@ Usage:
 or
 %(name)s [OPTIONS] -i USER_ID -n NEW_ID
 or
-%(name)s [OPTIONS] -i USER_ID [FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] \
-    [EMAIL]
+%(name)s [OPTIONS] -i USER_ID [FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] [EMAIL]
+to edit an existing user account non-interactively
+or
+%(name)s [OPTIONS] -i USER_ID
+to edit an existing user account interactively.
 Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
@@ -80,11 +81,12 @@ if '__main__' == __name__:
     verbose = False
     user_file = None
     user_id = None
+    new_id = None
     short_id = None
     role = None
     remove_fields = []
     user_dict = {}
-    opt_args = 'c:d:fhi:o:r:R:u:v'
+    opt_args = 'c:d:fhi:n:o:r:R:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -104,6 +106,8 @@ if '__main__' == __name__:
             sys.exit(0)
         elif opt == '-i':
             user_id = val
+        elif opt == '-n':
+            new_id = val
         elif opt == '-o':
             short_id = val
         elif opt == '-r':
@@ -124,18 +128,16 @@ if '__main__' == __name__:
 
     if verbose:
         if conf_path:
-            if verbose:
-                print('using configuration in %s' % conf_path)
+            print('using configuration in %s' % conf_path)
         else:
-            if verbose:
-                print('using configuration from MIG_CONF (or default)')
+            print('using configuration from MIG_CONF (or default)')
 
     # TODO: do we really want skip_log here?
     configuration = get_configuration_object(
         config_file=conf_path, skip_log=True)
     logger = configuration.logger
 
-    if user_file and args:
+    if (user_file or new_id) and args or user_file and new_id:
         print('Error: Only one kind of user specification allowed at a time')
         usage()
         sys.exit(1)
@@ -165,6 +167,11 @@ if '__main__' == __name__:
                   % len(args))
             usage()
             sys.exit(1)
+        # Force user ID fields to canonical form for consistency
+        # Title name, lowercase email, uppercase country and state, etc.
+        user_dict = canonical_user(configuration, raw_user, raw_user.keys())
+    elif new_id:
+        raw_user = distinguished_name_to_user(new_id)
         # Force user ID fields to canonical form for consistency
         # Title name, lowercase email, uppercase country and state, etc.
         user_dict = canonical_user(configuration, raw_user, raw_user.keys())
