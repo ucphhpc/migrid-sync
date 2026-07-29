@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resedit - Resource editor back end
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,14 +20,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
 
-# Martin Rehr martin@rehr.dk August 2005
-
 """Display resource editor"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -39,7 +39,7 @@ from mig.shared import returnvalues
 from mig.shared.defaults import csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.refunctions import list_runtime_environments
 from mig.shared.resource import init_conf, empty_resource_config
 from mig.shared.vgridaccess import res_vgrid_access
@@ -87,11 +87,13 @@ def available_choices(configuration, client_id, resource_id, field, spec):
     return choices
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs=None):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -100,6 +102,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -187,7 +190,7 @@ description, you can likely just leave the field alone.''' % configuration.short
     if hosturl:
         try:
             hostip = conf.get('HOSTIP', socket.gethostbyname(hosturl))
-        except:
+        except Exception:
             hostip = '<unknown>'
         output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
