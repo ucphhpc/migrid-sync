@@ -405,7 +405,6 @@ def generate_confs(
     enable_sitestatus=True,
     enable_quota=False,
     enable_accounting=False,
-    prefer_python3=False,
     io_account_expire=False,
     gdp_email_notify=False,
     user_interface="V3 V2",
@@ -738,7 +737,6 @@ def _generate_confs_prepare(
     enable_sitestatus,
     enable_quota,
     enable_accounting,
-    prefer_python3,
     io_account_expire,
     gdp_email_notify,
     user_interface,
@@ -998,7 +996,6 @@ def _generate_confs_prepare(
     user_dict['__ENABLE_SITESTATUS__'] = "%s" % enable_sitestatus
     user_dict['__ENABLE_QUOTA__'] = "%s" % enable_quota
     user_dict['__ENABLE_ACCOUNTING__'] = "%s" % enable_accounting
-    user_dict['__PREFER_PYTHON3__'] = "%s" % prefer_python3
     user_dict['__IO_ACCOUNT_EXPIRE__'] = "%s" % io_account_expire
     user_dict['__GDP_EMAIL_NOTIFY__'] = "%s" % gdp_email_notify
     user_dict['__USER_INTERFACE__'] = user_interface
@@ -1352,18 +1349,11 @@ cert, oid and sid based https!
         # WSGI shares auth and bin and only discriminates in backend
         xgi_bin = xgi_auth = 'wsgi-bin'
         user_dict['__WSGI_COMMENTED__'] = ''
-        # Switch between python 2 and 3 wsgi module on request
-        if prefer_python3:
-            user_dict['__WSGI_PY3_COMMENTED__'] = ''
-            user_dict['__WSGI_PY2_COMMENTED__'] = '#'
-        else:
-            user_dict['__WSGI_PY2_COMMENTED__'] = ''
-            user_dict['__WSGI_PY3_COMMENTED__'] = '#'
+        user_dict['__WSGI_PY3_COMMENTED__'] = ''
     else:
         xgi_bin = 'cgi-bin'
         xgi_auth = 'cgi-auth'
         user_dict['__WSGI_COMMENTED__'] = '#'
-        user_dict['__WSGI_PY2_COMMENTED__'] = '#'
         user_dict['__WSGI_PY3_COMMENTED__'] = '#'
 
     # Enable HSTS security improvement only if explicitly requested
