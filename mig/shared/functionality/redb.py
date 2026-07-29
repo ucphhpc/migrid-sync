@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # redb - manage runtime environments
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -35,9 +36,9 @@ from mig.shared.functional import validate_input_and_cert
 from mig.shared.refunctions import build_reitem_object
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.refunctions import get_re_map, CONF
-from mig.shared.vgridaccess import resources_using_re, get_re_provider_map
+from mig.shared.vgridaccess import get_re_provider_map
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']
@@ -51,11 +52,13 @@ def signature():
     return ['runtimeenvironments', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     defaults = signature()[1]
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Runtime Environments'
@@ -66,17 +69,23 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     operation = accepted['operation'][-1]
 
-    if not operation in allowed_operations:
-        output_objects.append({'object_type': 'text', 'text':
+    if not configuration.site_enable_resources:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Resources are not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    if operation not in allowed_operations:
+        output_objects.append({'object_type': 'error_text', 'text':
                                '''Operation must be one of %s.''' %
                                ', '.join(allowed_operations)})
-        return (output_objects, returnvalues.OK)
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     logger.info("%s %s begin for %s" % (op_name, operation, client_id))
     if operation in show_operations:
