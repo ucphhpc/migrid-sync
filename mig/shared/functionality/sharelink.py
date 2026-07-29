@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelink - backend to create and manage share links
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -30,7 +31,6 @@
 from __future__ import absolute_import
 
 from builtins import range
-import datetime
 import os
 
 from mig.shared import returnvalues
@@ -40,9 +40,8 @@ from mig.shared.defaults import default_pager_entries, keyword_owners, \
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.notification import notify_user_thread
-from mig.shared.pwcrypto import make_hash
 from mig.shared.sharelinks import build_sharelinkitem_object, load_share_links, \
     create_share_link, update_share_link, delete_share_link, \
     create_share_link_form, invite_share_link_form, \
@@ -68,11 +67,13 @@ def signature():
     return ['text', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -82,6 +83,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
         # NOTE: path cannot use wildcards here
         typecheck_overrides={}
     )
@@ -125,16 +127,16 @@ def main(client_id, user_arguments_dict):
     output_objects.append(header_entry)
 
     if not configuration.site_enable_sharelinks:
-        output_objects.append({'object_type': 'text', 'text':
+        output_objects.append({'object_type': 'error_text', 'text':
                                """Share linking is disabled on this site.
 Please contact the %s site support (%s) if you think it should be enabled.
 """ % (configuration.short_title, configuration.support_email)})
-        return (output_objects, returnvalues.OK)
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.info('sharelink %s from %s' % (action, client_id))
     logger.debug('sharelink from %s: %s' % (client_id, accepted))
 
-    if not action in valid_actions:
+    if action not in valid_actions:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Invalid action "%s" (supported: %s)' %
                                (action, ', '.join(valid_actions))})
@@ -362,7 +364,7 @@ comma-separated recipients.
 </textarea>
                                             ''' %
                                            (', '.join(notify_sent),
-                                            (auto_msg+msg).count('\n')+3,
+                                            (auto_msg + msg).count('\n') + 3,
                                             auto_msg, msg)
                                            })
             if expire:
