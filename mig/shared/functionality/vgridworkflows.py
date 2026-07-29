@@ -52,10 +52,9 @@ from mig.shared.defaults import keyword_all, keyword_auto, \
 from mig.shared.fileio import unpickle, makedirs_rec, move_file
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.htmlgen import man_base_js, man_base_html
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.parseflags import verbose
-from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \
-    vgrid_triggers, vgrid_set_triggers
+from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member
 
 default_pager_entries = 20
 
@@ -107,11 +106,13 @@ def read_trigger_log(configuration, vgrid_name, flags):
     return log_content
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     defaults = signature()[1]
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
@@ -124,6 +125,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -140,7 +142,7 @@ access the workflows.'''
                                % vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if not operation in allowed_operations:
+    if operation not in allowed_operations:
         output_objects.append({'object_type': 'error_text', 'text':
                                '''Operation must be one of %s.''' %
                                ', '.join(allowed_operations)})
