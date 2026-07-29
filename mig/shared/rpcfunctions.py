@@ -36,7 +36,6 @@ import os
 import time
 
 from mig.shared import returnvalues
-from mig.shared.base import force_utf8_rec
 from mig.shared.conf import get_configuration_object
 from mig.shared.httpsclient import extract_client_id
 from mig.shared.objecttypes import get_object_type_info
@@ -51,7 +50,7 @@ def system_method_signature(method_name):
         exec(compile('from mig.shared.functionality.%s import signature'
                      % method_name, '', 'single'))
         signature_string = "%s" % signature()
-    except:
+    except Exception:
         signature_string = 'none, array'
     return signature_string
 
@@ -64,13 +63,13 @@ def system_method_help(method_name):
         exec(compile('from mig.shared.functionality.%s import usage'
                      % method_name, '', 'single'))
         help_string = "%s" % usage()
-    except:
+    except Exception:
         try:
             exec(compile(
                 'from mig.shared.functionality.%s import __doc__ as method_help' %
                 method_name, '', 'single'))
             help_string = "%s" % method_help
-        except:
+        except Exception:
             help_string = ''
     return help_string
 
@@ -133,7 +132,10 @@ def stub(function, user_arguments_dict, environ=None,
         _logger.error("%s main failed: %s" % (function, err))
         import traceback
         _logger.debug("%s main trace:" % traceback.format_exc())
-        return ('Error calling function: %s' % err, returnvalues.ERROR)
+        output_objects.extend([
+            {'object_type': 'error_text', 'text':
+             'Error calling function: %s' % err}])
+        return (output_objects, returnvalues.ERROR)
 
     (val_ret, val_msg) = validate(output_objects)
     if not val_ret:
