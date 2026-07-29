@@ -399,6 +399,7 @@ vgrid=Generic
     print("cat as text file")
     (inlist, retval) = server.cat({"path": path_list, "flags": "v"})
     print('cat status: %s' % retval)
+    (returnval, returnmsg) = retval
     if returnval != 0:
         print('Error %s:%s' % (returnval, returnmsg))
     for ele in inlist:
@@ -411,6 +412,7 @@ vgrid=Generic
     try:
         (inlist, retval) = server.cat({"path": path_list, "flags": "vb"})
         print('cat status: %s' % retval)
+        (returnval, returnmsg) = retval
         if returnval != 0:
             print('Error %s:%s' % (returnval, returnmsg))
         for ele in inlist:
