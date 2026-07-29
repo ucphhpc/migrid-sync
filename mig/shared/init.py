@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # init - shared helpers to init functionality backends
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -31,10 +32,10 @@ from __future__ import absolute_import
 
 import mimetypes
 import os
-import time
 
 from mig.shared.base import requested_backend, extract_field
 from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import keyword_auto
 from mig.shared.htmlgen import themed_styles, themed_scripts
 from mig.shared.settings import load_settings, load_widgets, load_profile
 
@@ -125,19 +126,28 @@ def start_error(configuration, output_format, status_pair):
 
 
 def initialize_main_variables(client_id, op_title=True, op_header=True,
-                              op_menu=True, configuration=None):
+                              op_menu=True, op_name=None, configuration=None,
+                              logger=None, output_objects=None):
     """Script initialization is identical for most scripts in
     shared/functionality. This function should be called in most cases.
+    Allows passing of previously initialized components as args for flexible
+    use depending on code path.
     """
 
     if configuration is None:
         configuration = get_configuration_object()
+    if logger is None:
+        logger = configuration.logger
+    if output_objects is None:
+        output_objects = []
+        start_entry = make_start_entry()
+        output_objects.append(start_entry)
+    if op_name is None:
+        op_name = requested_backend()
 
-    logger = configuration.logger
-    output_objects = []
-    start_entry = make_start_entry()
-    output_objects.append(start_entry)
-    op_name = requested_backend()
+    # Automatic menu detection - only show it for authenticated users
+    if op_menu == keyword_auto:
+        op_menu = bool(client_id)
 
     if op_title:
         skipwidgets = not configuration.site_enable_widgets or not client_id
@@ -169,7 +179,7 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
             if settings:
                 title['user_settings'] = settings
                 base_menu = settings.get('SITE_BASE_MENU', 'default')
-                if not base_menu in configuration.site_base_menu:
+                if base_menu not in configuration.site_base_menu:
                     base_menu = 'default'
                 if base_menu == 'simple' and configuration.site_simple_menu:
                     title['base_menu'] = configuration.site_simple_menu
@@ -225,3 +235,30 @@ def extract_menu(configuration, title_entry):
     else:
         menu_items = configuration.site_default_menu
     return menu_items
+
+
+def lazy_init_backend(client_id, environ=None, init_main_res=None,
+                      init_kwargs=None):
+    """Helper to allow direct and lazy init of backend main functions. Can be
+    passed an existing initialize_main_variables result tuple and environ for
+    direct use, but if either is left to None they will be populated with the
+    result of an initialize_main_variables call and as os.environ respectively.
+    The initialize_main_variables call will include any additional kwars from
+    init_kwargs if so.
+    The init_main_res tuple additionally is lazy filled if it is incomplete for
+    more flexible use e.g. in unit tests.
+    """
+    if environ is None:
+        environ = os.environ
+    if init_kwargs is None:
+        init_kwargs = {}
+    if init_main_res is None:
+        (configuration, logger, output_objects, op_name) = \
+            initialize_main_variables(client_id, **init_kwargs)
+    else:
+        (conf, log, out, name) = init_main_res
+        (configuration, logger, output_objects, op_name) = \
+            initialize_main_variables(client_id, configuration=conf, logger=log,
+                                      output_objects=out, op_name=name,
+                                      **init_kwargs)
+    return (configuration, logger, output_objects, op_name, environ)
