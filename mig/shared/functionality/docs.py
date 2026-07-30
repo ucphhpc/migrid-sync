@@ -506,8 +506,8 @@ JavaScript library from:"""})
                                'title': 'Trac Project Tracker Home Page',
                                'text': 'Trac Project Tracker (BSD license)'})
     if configuration.user_openid_address or configuration.user_openid_providers:
-        output_objects.append({'object_type': 'text', 'text':
-                               """OpenID 2.0 and Connect authentication is delivered with:"""})
+        output_objects.append({'object_type': 'text', 'text': """OpenID 2.0 and
+OpenID Connect authentication is delivered with:"""})
         output_objects.append({'object_type': 'link',
                                'destination': 'https://github.com/necaris/python3-openid',
                                'class': 'urllink iconspace',
