@@ -115,7 +115,8 @@ class SafeCertTransport(xmlrpc.client.SafeTransport):
         """
         key_pw = self.conf.get('password', None)
         cacert = None
-        if self.conf.get('cacertfile', None) and self.conf['cacertfile'] != 'AUTO':
+        if self.conf.get('cacertfile', None) \
+                and self.conf['cacertfile'] != 'AUTO':
             cacert = self.conf['cacertfile']
         ssl_ctx = ssl.create_default_context(cafile=cacert)
         ssl_ctx.load_cert_chain(self.conf['certfile'],
