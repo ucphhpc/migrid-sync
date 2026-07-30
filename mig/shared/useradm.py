@@ -481,7 +481,7 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
                       default_renew, do_lock, from_edit_user, ask_change_pw,
                       auto_create_db, create_backup):
     """Handle all the parts of user creation or renewal relating to the user
-    datatbase.
+    database.
     """
     _logger = configuration.logger
     flock = None
@@ -1137,6 +1137,8 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
     else:
         _logger.info('skip peer verification for %s' % client_id)
 
+    # NOTE: we just pass the above state and error markers on to keep handling
+    #       of all the checks and known errors consistently in one place.
     created = create_user_in_db(configuration, db_path, client_id, user, now,
                                 authorized, reset_token, reset_auth_type,
                                 pw_match, invalid, accepted_peer_list, force,
