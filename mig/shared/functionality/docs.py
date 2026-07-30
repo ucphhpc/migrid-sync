@@ -540,12 +540,12 @@ openstack client module from:"""})
                                'text': 'Python OpenStack Client (Apache 2.0 license)'})
 
     output_objects.append({'object_type': 'text', 'text': """The optional
-JSONRPC interface is delivered with the jsonrpclib module:"""})
+JSONRPC interface is delivered with the Pelix-forked jsonrpclib module:"""})
     output_objects.append({'object_type': 'link',
-                           'destination': 'https://pypi.python.org/pypi/jsonrpclib',
+                           'destination': 'https://pypi.org/project/jsonrpclib-pelix',
                            'class': 'urllink iconspace',
-                           'title': 'Python JSONRPC Module at Python Package Index',
-                           'text': 'Python JSONRPClib Module (Apache 2.0 license)'})
+                           'title': 'Python JSONRPC Pelix Module fork at Python Package Index',
+                           'text': 'Python JSONRPClib Pelix Module (Apache 2.0 license)'})
 
     output_objects.append({'object_type': 'text', 'text': """
 The optional country code validation support in certificate and OpenID account
