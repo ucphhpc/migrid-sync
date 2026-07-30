@@ -173,18 +173,16 @@ def check_conf(conf_file):
             missing_paths.sort()
 
             for path in missing_paths:
-                # Initialise path_type to a bogus value
-                path_type = False
-                if ALWAYS == answer:
-
-                    # 'always' answer results in default type for all missing entries
-
-                    path_type = None
-                elif YES == answer:
+                default_path_type = 'D'
+                # We're past NO so ask on YES or use default path_type for AUTO
+                if YES == answer:
                     path_type = \
                         ask_reply('Create %s as a (d)irectory, (f)ile or (p)ipe? [D/f/p] '
-                                  % path)
-                if path_type is None or 'D' == path_type.upper():
+                                  % path) or default_path_type
+                else:
+                    path_type = default_path_type
+
+                if 'D' == path_type.upper():
                     try:
                         os.makedirs(path)
                         print('created directory %s' % path)
@@ -196,7 +194,7 @@ def check_conf(conf_file):
                         dirname = os.path.dirname(path)
                         if dirname and not os.path.exists(dirname):
                             os.makedirs(dirname)
-                            print('created directory %s' % dirname)
+                            print('created parent directory %s' % dirname)
                         touch_file(path)
                         print('created file %s' % path)
                     except Exception as err:
@@ -206,11 +204,14 @@ def check_conf(conf_file):
                         dirname = os.path.dirname(path)
                         if dirname and not os.path.exists(dirname):
                             os.makedirs(dirname)
-                            print('created directory %s' % dirname)
+                            print('created parent directory %s' % dirname)
                         os.mkfifo(path)
                         print('created pipe %s' % path)
                     except Exception as err:
-                        print('could not create file %s: %s' % (path, err))
+                        print('could not create pipe %s: %s' % (path, err))
+                else:
+                    print('skip unsupported path type for %s: %s' %
+                          (path, path_type))
     print('completed check of %s: %d warning(s)' % (conf_file, warnings))
     return warnings
 
