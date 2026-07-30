@@ -116,10 +116,12 @@ class SafeCertTransport(jsonrpc.SafeTransport):
     def __init_ssl_ctx(self):
         """Helper to set up an ssl_ctx with client key and cert plus optional
         reading of the key passphrase from conf to enable non-interactive use.
+        Uses any configured CA certificate, too, but defaults to system ones.
         """
         key_pw = self.conf.get('password', None)
         cacert = None
-        if self.conf['cacertfile'] and self.conf['cacertfile'] != 'AUTO':
+        if self.conf.get('cacertfile', None) and \
+                self.conf['cacertfile'] != 'AUTO':
             cacert = self.conf['cacertfile']
         ssl_ctx = ssl.create_default_context(cafile=cacert)
         ssl_ctx.load_cert_chain(self.conf['certfile'],
@@ -406,6 +408,7 @@ vgrid=Generic
     print("cat as text file")
     (inlist, retval) = server.cat({"path": path_list, "flags": "v"})
     print('cat status: %s' % retval)
+    (returnval, returnmsg) = retval
     if returnval != 0:
         print('Error %s:%s' % (returnval, returnmsg))
     for ele in inlist:
@@ -418,6 +421,7 @@ vgrid=Generic
     try:
         (inlist, retval) = server.cat({"path": path_list, "flags": "vb"})
         print('cat status: %s' % retval)
+        (returnval, returnmsg) = retval
         if returnval != 0:
             print('Error %s:%s' % (returnval, returnmsg))
         for ele in inlist:
