@@ -26,9 +26,9 @@
 # -- END_HEADER ---
 
 # This is a generalisation of the original workflowsjsoninterface.py and
-# jobsjsoninterface.py added when adding a third reportjsoninterface.py.
-# It may need to be overhauled or expanded to be a truly generic json interface
-# and is currently only suitable for the various  workflow interactions
+# Xjsoninterface.py backends added later. It may need to be overhauled or
+# expanded to be a truly generic json interface and is currently only suitable
+# for the various workflow interactions.
 
 """JSON interface for handling all workflow, job and report interactions."""
 
