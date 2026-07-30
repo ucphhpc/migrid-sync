@@ -440,8 +440,8 @@ class TestMigSharedUseradm__create_user(
                     default_renew=True,
                     ask_renew=False,
                 )
-        self.assertTrue(any('conflict' in msg for msg in
-                            log_capture.output))
+        expect_err = ' with main_id %(main_id)r would conflict:' % user_dict
+        self.assertTrue(any(expect_err in msg for msg in log_capture.output))
 
     def test_user_creation_with_openid_alias_conflict_fails(self):
         # NOTE: we need fake openid setup here for conflict detection code path
@@ -477,8 +477,8 @@ class TestMigSharedUseradm__create_user(
                     default_renew=True,
                     ask_renew=False,
                 )
-        self.assertTrue(any('conflict' in msg for msg in
-                            log_capture.output))
+        expect_err = ' with alias %(email)r would conflict:' % user_dict
+        self.assertTrue(any(expect_err in msg for msg in log_capture.output))
 
 
 class MigSharedUseradm__assure_current_htaccess(MigTestCase):
