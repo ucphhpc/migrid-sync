@@ -462,8 +462,8 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """Handle all HTTP GET requests"""
-        # Make sure safe key is always available for exception handler
-        show_key = 'UNKNOWN'
+        # Make sure show + raw key are always available for exception handler
+        show_key, raw_key = 'UNKNOWN', 'UNKNOWN'
         try:
             # NOTE: force native string even if socketserver provides bytes
             self.parsed_uri = urlparse(force_native_str(self.path))
@@ -558,8 +558,8 @@ and include the error reference %d if this persistently happens for valid use.
 
     def do_POST(self):
         """Handle all HTTP POST requests"""
-        # Make sure safe key is always available for exception handler
-        show_key = 'UNKNOWN'
+        # Make sure show + raw key are always available for exception handler
+        show_key, raw_key = 'UNKNOWN', 'UNKNOWN'
         try:
             # NOTE: force native string even if socketserver provides bytes
             self.parsed_uri = urlparse(force_native_str(self.path))
