@@ -108,7 +108,7 @@ try:
     from mig.shared.pwcrypto import make_simple_hash
     from mig.shared.safeinput import valid_distinguished_name, valid_password, \
         valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
-        valid_complex_url, html_escape, InputException
+        valid_complex_url, valid_fqdn, html_escape, InputException
     from mig.shared.tlsserver import hardened_ssl_context
     from mig.shared.url import urlparse, urlencode, check_local_site_url, \
         parse_qsl
@@ -141,6 +141,11 @@ def quoteattr(val):
     return '"%s"' % (esc,)
 
 
+def valid_query_key(arg):
+    """Make sure only valid query keys are allowed"""
+    valid_fqdn(arg, extra_chars='_')
+
+
 def valid_mode_name(arg):
     """Make sure only valid mode names are allowed"""
     valid_job_id(arg)
@@ -170,7 +175,7 @@ def valid_session_hash(arg):
 
 def invalid_argument(arg):
     """Always raise exception to mark argument invalid"""
-    raise ValueError("Unexpected query variable: %s" % quoteattr(arg))
+    raise InputException("Unexpected query variable: %s" % quoteattr(arg))
 
 
 def strip_password(configuration, obj):
@@ -457,22 +462,30 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """Handle all HTTP GET requests"""
-        # Make sure key is always available for exception handler
-        key = 'UNSET'
+        # Make sure show + raw key are always available for exception handler
+        show_key, raw_key = 'UNKNOWN', 'UNKNOWN'
         try:
             # NOTE: force native string even if socketserver provides bytes
             self.parsed_uri = urlparse(force_native_str(self.path))
             self.query = {}
-            for (key, val) in parse_qsl(self.parsed_uri[4]):
-                # print("DEBUG: checking input arg %s: '%s'" % (key, val))
-                validate_helper = self.validators.get(key, invalid_argument)
-                # Let validation errors pass to general exception handler below
-                validate_helper(val)
-                self.query[key] = val
+            for (raw_key, raw_val) in parse_qsl(self.parsed_uri[4]):
+                # logger.debug("checking get input arg %s: '%s'" % (raw_key,
+                #                                                   raw_val))
+                # IMPORTANT: we can neither trust raw_key nor raw_val here
+                show_key = 'REDACTED UNSAFE KEY'
+                # Let validation errors pass to input exception handler below
+                valid_query_key(raw_key)
+                # Now raw_key is validated and safe for use and web output
+                show_key = raw_key
+                validate_helper = self.validators.get(show_key,
+                                                      invalid_argument)
+                validate_helper(raw_val)
+                # Now raw_val is validated and safe for use and web output
+                self.query[show_key] = raw_val
 
             self.setUser()
 
-            # print "DEBUG: checking path '%s'" % self.parsed_uri[2]
+            # logger.debug("checking path '%s'" % self.parsed_uri[2])
             valid_path(self.parsed_uri[2])
 
             # Resolve retry url, strip password and err
@@ -514,8 +527,8 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         except (KeyboardInterrupt, SystemExit):
             raise
-        except (InputException, ValueError) as err:
-            logger.warning("Invalid %r input: %s" % (key, err))
+        except InputException as err:
+            logger.warning("Invalid %r input: %s" % (raw_key, err))
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
 
@@ -523,7 +536,7 @@ Please contact %s if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (key, err, html_escape(configuration.support_email))
+</p>""" % (show_key, err, html_escape(configuration.support_email))
             self.showErrorPage(err_msg, error_code=400)
         except Exception as exc:
             error_ref = time.time()
@@ -545,6 +558,8 @@ and include the error reference %d if this persistently happens for valid use.
 
     def do_POST(self):
         """Handle all HTTP POST requests"""
+        # Make sure show + raw key are always available for exception handler
+        show_key, raw_key = 'UNKNOWN', 'UNKNOWN'
         try:
             # NOTE: force native string even if socketserver provides bytes
             self.parsed_uri = urlparse(force_native_str(self.path))
@@ -554,16 +569,24 @@ and include the error reference %d if this persistently happens for valid use.
             post_data = force_native_str(self.rfile.read(content_length))
 
             self.query = {}
-            for (key, val) in parse_qsl(post_data):
-                # print "DEBUG: checking post input arg %s: '%s'" % (key, val)
-                validate_helper = self.validators.get(key, invalid_argument)
-                # Let validation errors pass to general exception handler below
-                validate_helper(val)
-                self.query[key] = val
+            for (raw_key, raw_val) in parse_qsl(post_data):
+                # logger.debug("checking post input arg %s: '%s'" % (raw_key,
+                #                                                    raw_val))
+                # IMPORTANT: we can neither trust raw_key nor raw_val here
+                show_key = 'REDACTED UNSAFE KEY'
+                # Let validation errors pass to input exception handler below
+                valid_query_key(raw_key)
+                # Now raw_key is validated and safe for use and web output
+                show_key = raw_key
+                validate_helper = self.validators.get(show_key,
+                                                      invalid_argument)
+                validate_helper(raw_val)
+                # Now raw_val is validated and safe for use and web output
+                self.query[show_key] = raw_val
 
             self.setUser()
 
-            # print "DEBUG: checking path '%s'" % self.parsed_uri[2]
+            # logger.debug("checking path '%s'" % self.parsed_uri[2])
             valid_path(self.parsed_uri[2])
             path = self.parsed_uri[2]
 
@@ -584,8 +607,8 @@ and include the error reference %d if this persistently happens for valid use.
 
         except (KeyboardInterrupt, SystemExit):
             raise
-        except (InputException, ValueError) as err:
-            logger.warning("Invalid %r input: %s" % (key, err))
+        except InputException as err:
+            logger.warning("Invalid %r input: %s" % (raw_key, err))
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
 
@@ -593,7 +616,7 @@ Please contact %s if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (key, err, html_escape(configuration.support_email))
+</p>""" % (show_key, err, html_escape(configuration.support_email))
             self.showErrorPage(err_msg, error_code=400)
         except Exception as exc:
             error_ref = time.time()
