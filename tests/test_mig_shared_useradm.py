@@ -401,7 +401,53 @@ class TestMigSharedUseradm__create_user(
         except Exception:
             self.assertFalse(True, "should not be reached")
 
-    def test_user_creation_with_id_collission_fails(self):
+    def test_user_creation_with_main_id_conflict_fails(self):
+        # NOTE: we need fake openid setup here for conflict detection code path
+        self.configuration.user_openid_providers = ["dummyoidprovider.org"]
+        self.configuration.user_openid_alias = "email"
+
+        user_dict = {}
+        user_dict["full_name"] = "Test User"
+        user_dict["organization"] = "Test Org"
+        user_dict["state"] = "NA"
+        user_dict["country"] = "DK"
+        user_dict["email"] = "user@example.com"
+        user_dict["comment"] = "This is the create comment"
+        user_dict["password"] = "password"
+        user_dict["distinguished_name"] = TEST_USER_DN
+        user_dict["main_id"] = "testmainid1234"
+
+        try:
+            create_user(
+                user_dict, self.configuration, keyword_auto, default_renew=True
+            )
+        except Exception:
+            self.assertFalse(True, "should not be reached")
+
+        # NOTE: reset distinguished_name and most ID fields but keep main_id
+        #       to test that main ID conflict still prevents the creation.
+        del user_dict["distinguished_name"]
+        del user_dict["unique_id"]
+        user_dict["full_name"] = "Changed Name"
+        user_dict["organization"] = "Changed Org"
+        user_dict["email"] = OTHER_USER_EMAIL
+        with self.assertLogs(level='WARNING') as log_capture:
+            with self.assertRaises(Exception):
+                create_user(
+                    user_dict,
+                    self.configuration,
+                    keyword_auto,
+                    default_renew=True,
+                    ask_renew=False,
+                )
+        expect_err = ' with main_id %(main_id)r would conflict:' % user_dict
+        self.assertTrue(any(expect_err in msg for msg in log_capture.output))
+
+    def test_user_creation_with_openid_alias_conflict_fails(self):
+        # NOTE: we need fake openid setup here for conflict detection code path
+        self.configuration.user_openid_providers = ["dummyoidprovider.org"]
+        self.configuration.user_openid_alias = "email"
+
         user_dict = {}
         user_dict["full_name"] = "Test User"
         user_dict["organization"] = "Test Org"
@@ -422,14 +468,17 @@ class TestMigSharedUseradm__create_user(
         # NOTE: reset distinguished_name and introduce an ID conflict to test
         del user_dict["distinguished_name"]
         user_dict["organization"] = "Another Org"
-        with self.assertRaises(Exception):
-            create_user(
-                user_dict,
-                self.configuration,
-                keyword_auto,
-                default_renew=True,
-                ask_renew=False,
-            )
+        with self.assertLogs(level='WARNING') as log_capture:
+            with self.assertRaises(Exception):
+                create_user(
+                    user_dict,
+                    self.configuration,
+                    keyword_auto,
+                    default_renew=True,
+                    ask_renew=False,
+                )
+        expect_err = ' with alias %(email)r would conflict:' % user_dict
+        self.assertTrue(any(expect_err in msg for msg in log_capture.output))
 
 
 class MigSharedUseradm__assure_current_htaccess(MigTestCase):
