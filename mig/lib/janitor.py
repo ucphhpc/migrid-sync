@@ -51,6 +51,9 @@ from mig.shared.userdb import default_db_path, load_user_dict
 REMIND_REQ_DAYS = 5
 EXPIRE_REQ_DAYS = 30
 MANAGE_TRIVIAL_REQ_MINUTES = 5
+# Throttle next attempt MANAGE_TRIVIAL_REQ_MINUTES times upon failed attempt.
+# I.e. retry in MANAGE_TRIVIAL_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER minutes.
+THROTTLE_REQ_MULTIPLIER = 12
 
 EXPIRE_STATE_DAYS = 30
 EXPIRE_DUMMY_JOBS_DAYS = 7
@@ -61,31 +64,82 @@ SECS_PER_HOUR = 60 * SECS_PER_MINUTE
 SECS_PER_DAY = 24 * SECS_PER_HOUR
 
 task_triggers = {}
+request_throttle = {}
+
+
+def __lookup_last_stamp(configuration, lookup_table, target):
+    """Check if target is registered in lookup_table with a timestamp.
+    Returns the timestamp of any such target in UN*X epoch time.
+    """
+    _logger = configuration.logger
+    # Lazy init
+    last_stamp = lookup_table[target] = lookup_table.get(target, -1)
+    if last_stamp > 0:
+        _logger.debug("last %s target registered at %d" % (target, last_stamp))
+    else:
+        _logger.debug("no last %s target registered in history" % target)
+    return last_stamp
+
+
+def __update_last_stamp(configuration, lookup_table, target, stamp):
+    """Update target mark in lookup_table with stamp in UN*X epoch time.
+    Returns the same updated timestamp for the mark.
+    """
+    _logger = configuration.logger
+    # TODO: add a more persistent marker e.g. in mig system run or files to
+    #      remember last status across restarts and reboots?
+    _logger.debug("register %s target stamp at %d" % (target, stamp))
+    lookup_table[target] = stamp
+    return lookup_table[target]
+
+
+def __remove_last_stamp(configuration, lookup_table, target):
+    """Remove any saved target mark in lookup_table. Returns the saved
+    timestamp for the removed mark or -1 if not found.
+    """
+    if target in lookup_table:
+        saved = lookup_table[target]
+        del lookup_table[target]
+    else:
+        saved = -1
+    return saved
 
 
 def _lookup_last_run(configuration, target):
     """Check if target task is pending using internal accounting for task.
-    Returns the timestamp when the task was last run in UN*X epoch.
+    Returns the timestamp when the task was last run in UN*X epoch time.
     """
-    _logger = configuration.logger
-    # Lazy init
-    last_stamp = task_triggers[target] = task_triggers.get(target, -1)
-    if last_stamp > 0:
-        _logger.debug("last %s task ran at %d" % (target, last_stamp))
-    else:
-        _logger.debug("no last %s task run in history" % target)
-    return last_stamp
+    return __lookup_last_stamp(configuration, task_triggers, target)
 
 
 def _update_last_run(configuration, target, stamp):
     """Update target task pending mark using internal accounting and supplied
-    task timestamp in UN*X epoch.
+    task stamp in UN*X epoch time.
     Returns the same updated timestamp for the task.
     """
-    # TODO: add a more persistent marker e.g. in mig system run or files to
-    #      remember last status across restarts and reboots?
-    task_triggers[target] = stamp
-    return task_triggers[target]
+    return __update_last_stamp(configuration, task_triggers, target, stamp)
+
+
+def _lookup_req_throttle(configuration, target):
+    """Check if target has a throttle marker from a previous failed attempt.
+    Returns the stamp of any such registered failed attempt in UN*X epoch time.
+    """
+    return __lookup_last_stamp(configuration, request_throttle, target)
+
+
+def _update_req_throttle(configuration, target, stamp, success):
+    """Update req_path throttle marker with supplied stamp in UN*X epoch time
+    based on success boolean. Upon success any mark is removed as req is then
+    gone.
+    Returns the same updated timestamp if updated and -1 if it was removed.
+    """
+    if success:
+        __remove_last_stamp(configuration, request_throttle, target)
+        return -1
+    else:
+        __update_last_stamp(configuration, request_throttle, target,
+                            stamp)
+        return stamp
 
 
 def _clean_stale_state_files(
@@ -290,11 +344,15 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
     user_copy = True
     admin_copy = True
     default_renew = False
-    if req_invalid:
+    throttle_secs = 60 * MANAGE_TRIVIAL_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER
+    if _lookup_req_throttle(configuration, req_path) + throttle_secs > now:
+        _logger.info("throttle down %r account request %s retry" %
+                     (client_id, req_id))
+    elif req_invalid:
         _logger.info("%r made an invalid account request" % client_id)
         # NOTE: 'invalid' is a list of validation error strings if set
         reason = "invalid request: %s." % ". ".join(req_invalid)
-        (rej_status, rej_err) = reject_account_req(
+        rej_status, rej_err = reject_account_req(
             req_id,
             configuration,
             reason,
@@ -316,7 +374,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         peer_id = user_dict.get("peers", [None])[0]
         # NOTE: let authorized reqs (with valid peer) renew even with pw change
         default_renew = True
-        if accept_account_req(
+        acc_status, acc_err = accept_account_req(
             req_id,
             configuration,
             peer_id,
@@ -324,10 +382,14 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             admin_copy=admin_copy,
             auth_type=auth_type,
             default_renew=default_renew,
-        ):
-            _logger.info("accepted authorized %r access renew" % client_id)
+        )
+        if not acc_status:
+            _logger.warning(
+                "failed authorized %r access renew: %s" % (client_id, acc_err)
+            )
         else:
-            _logger.warning("failed authorized %r access renew" % client_id)
+            _logger.info("accepted authorized %r access renew" % client_id)
+        _update_req_throttle(configuration, req_path, now, acc_status)
     elif reset_token:
         # TODO: handle loaded user_dict == None here (e.g. recently removed)
         #       to avoid verify_reset_token failing on DN access.
@@ -339,7 +401,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
                 "%r requested and authorized password reset" % client_id
             )
             peer_id = user_dict.get("peers", [None])[0]
-            (acc_status, acc_err) = accept_account_req(
+            acc_status, acc_err = accept_account_req(
                 req_id,
                 configuration,
                 peer_id,
@@ -355,13 +417,14 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
                 )
             else:
                 _logger.info("accepted %r password reset" % client_id)
+            _update_req_throttle(configuration, req_path, now, acc_status)
         else:
             _logger.warning(
                 "%r requested password reset with bad token: %s"
                 % (client_id, reset_token)
             )
             reason = "invalid password reset token"
-            (rej_status, rej_err) = reject_account_req(
+            rej_status, rej_err = reject_account_req(
                 req_id,
                 configuration,
                 reason,
@@ -376,11 +439,12 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
                 )
             else:
                 _logger.info("rejected %r password reset" % client_id)
+            _update_req_throttle(configuration, req_path, now, rej_status)
     elif req_expire < now:
         #  NOTE: probably should no longer happen after initial auto clean
         _logger.warning("%r request is now past expire" % client_id)
         reason = "expired request - please re-request if still relevant"
-        (rej_status, rej_err) = reject_account_req(
+        rej_status, rej_err = reject_account_req(
             req_id,
             configuration,
             reason,
@@ -390,14 +454,16 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         )
         if not rej_status:
             _logger.warning(
-                "failed to reject expired %r request: %s" % (client_id, rej_err)
+                "failed to reject expired %r request: %s" % (
+                    client_id, rej_err)
             )
         else:
             _logger.info("rejected %r request now past expire" % client_id)
+        _update_req_throttle(configuration, req_path, now, rej_status)
     elif existing_user_collision(configuration, req_dict, client_id):
         _logger.warning("ID collision in request from %r" % client_id)
         reason = "ID collision - please re-request with *existing* ID fields"
-        (rej_status, rej_err) = reject_account_req(
+        rej_status, rej_err = reject_account_req(
             req_id,
             configuration,
             reason,
@@ -412,13 +478,17 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             )
         else:
             _logger.info("rejected %r request with ID collision" % client_id)
+        _update_req_throttle(configuration, req_path, now, rej_status)
     elif user_dict:
-        _logger.info("%r requested access renewal" % client_id)
-        # TODO: renew if trivial with existing valid peer
+        _logger.info("%r requested access renewal but not automated" %
+                     client_id)
+        # TODO: renew if trivial with existing valid peer?
+        _update_req_throttle(configuration, req_path, now, False)
     else:
         _logger.info(
             "%r requested a new account requiring operator" % client_id
         )
+        _update_req_throttle(configuration, req_path, now, False)
 
 
 def manage_trivial_user_requests(configuration, now=None):
@@ -443,7 +513,8 @@ def manage_trivial_user_requests(configuration, now=None):
             continue
         req_id = filename
         req_path = os.path.join(configuration.user_pending, req_id)
-        _logger.debug("checking if account request in %r is trivial" % req_path)
+        _logger.debug(
+            "checking if account request in %r is trivial" % req_path)
         req_age = now - os.path.getmtime(req_path)
         req_age_minutes = req_age / SECS_PER_MINUTE
         if req_age_minutes > MANAGE_TRIVIAL_REQ_MINUTES:
@@ -453,7 +524,8 @@ def manage_trivial_user_requests(configuration, now=None):
             )
             manage_single_req(configuration, req_id, req_path, db_path, now)
             handled += 1
-    _logger.debug("handled %d trivial user account request action(s)" % handled)
+    _logger.debug(
+        "handled %d trivial user account request action(s)" % handled)
     return handled
 
 
@@ -498,7 +570,7 @@ def remind_and_expire_user_pending(configuration, now=None):
             )
             user_copy = True
             admin_copy = True
-            (rej_status, rej_err) = reject_account_req(
+            rej_status, rej_err = reject_account_req(
                 req_id,
                 configuration,
                 reason,
@@ -512,7 +584,8 @@ def remind_and_expire_user_pending(configuration, now=None):
                     % (req_id, client_id, rej_err)
                 )
             else:
-                _logger.info("expired %s request from %r" % (req_id, client_id))
+                _logger.info("expired %s request from %r" %
+                             (req_id, client_id))
             handled += 1
     _logger.debug("handled %d user account request action(s)" % handled)
     return handled

@@ -23,14 +23,23 @@ else
 	REQS_PATH = ./requirements.txt
 endif
 
+.PHONY: info
 info:
 	@echo "Welcome to MiGrid"
 	@echo
 	@echo "The following should help you get started:"
 	@echo
-	@echo "'make test'      - run the test suite (default python 3)"
-	@echo "'make test PYVER=X.Y' - run the test suite (python version X.Y)"
-	@echo "'make unittest'  - execute tests locally for development"
+	@echo "'make test'            - run the test suite (default python 3)"
+	@echo "'make test PYVER=X.Y'  - run the test suite (python version X.Y)"
+	@echo "'make unittest'        - execute tests locally for development"
+	@echo "'make lint-python'     - lint python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make secscan-python'  - security scan python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make format-python'   - format python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make clean'           - clean up cache and other temporary files"
+	@echo "'make distclean'       - clean up completely to pristine state"
+
+.PHONY: help
+help: info
 
 .PHONY: fmt
 fmt:
@@ -42,7 +51,7 @@ endif
 
 # NOTE: black and isort use pyproject.toml to temporarily exclude a few paths
 .PHONY: format-python
-format-python:
+format-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS)
 	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS)
 
@@ -57,15 +66,28 @@ endif
 
 # NOTE: black and isort use pyproject.toml to temporarily exclude a few paths
 .PHONY: style-check-python
-style-check-python:
+style-check-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS) --check
 	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS) --check-only
 
 # NOTE: pylint and ruff use pyproject.toml to temporarily exclude a few paths
 .PHONY: lint-python
-lint-python:
+lint-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only
 	@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS)
+
+.PHONY: secscan
+secscan:
+ifneq ($(MIG_ENV),'local')
+	@echo "unavailable outside local development environment"
+	@exit 1
+endif
+	@make secscan-python
+
+# NOTE: bandit uses pyproject.toml to temporarily exclude a few paths
+.PHONY: secscan-python
+secscan-python: dependencies
+	@$(LOCAL_PYTHON_BIN) -m bandit -r $(LINT_ENFORCE_DIRS)
 
 .PHONY: clean
 clean:

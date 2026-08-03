@@ -68,7 +68,7 @@ try:
     import http.cookies
     from http.server import HTTPServer, BaseHTTPRequestHandler
     from socketserver import ThreadingMixIn
-except Exception as exc:
+except Exception:
     print("ERROR: failed to init py 2/3 compatibility")
     exit(1)
 
@@ -83,18 +83,12 @@ import types
 
 
 try:
-    import openid
-except ImportError:
-    print("ERROR: the python openid module is required for this daemon")
-    sys.exit(1)
-
-try:
     from openid.consumer import discover
     from openid.extensions import sreg
     from openid.server import server
     from openid.store.filestore import FileOpenIDStore
 except ImportError:
-    print("ERROR: one or more python openid modules missing")
+    print("ERROR: one or more required python openid modules missing")
     sys.exit(1)
 
 try:
@@ -114,7 +108,7 @@ try:
     from mig.shared.pwcrypto import make_simple_hash
     from mig.shared.safeinput import valid_distinguished_name, valid_password, \
         valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
-        valid_complex_url, html_escape, InputException
+        valid_complex_url, valid_fqdn, html_escape, InputException
     from mig.shared.tlsserver import hardened_ssl_context
     from mig.shared.url import urlparse, urlencode, check_local_site_url, \
         parse_qsl
@@ -147,6 +141,11 @@ def quoteattr(val):
     return '"%s"' % (esc,)
 
 
+def valid_query_key(arg):
+    """Make sure only valid query keys are allowed"""
+    valid_fqdn(arg, extra_chars='_')
+
+
 def valid_mode_name(arg):
     """Make sure only valid mode names are allowed"""
     valid_job_id(arg)
@@ -160,7 +159,7 @@ def valid_cert_dir(arg):
 def valid_cert_fields(arg):
     """Make sure only valid cert field names are allowed"""
     valid_job_id(arg, extra_chars=',')
-    if [i for i in arg.split(',') if not i in cert_field_names]:
+    if [i for i in arg.split(',') if i not in cert_field_names]:
         invalid_argument(arg)
 
 
@@ -176,7 +175,7 @@ def valid_session_hash(arg):
 
 def invalid_argument(arg):
     """Always raise exception to mark argument invalid"""
-    raise ValueError("Unexpected query variable: %s" % quoteattr(arg))
+    raise InputException("Unexpected query variable: %s" % quoteattr(arg))
 
 
 def strip_password(configuration, obj):
@@ -211,7 +210,14 @@ def filter_why_pw(configuration, why):
         text = why.response.encodeToKVForm()
         return strip_password(configuration, text)
     elif isinstance(why, server.ProtocolError):
-        text = why.message
+        # NOTE: UntrustedReturnURL does not have message but it may have been
+        #       renamed to openid_message - fallback to str
+        if hasattr(why, 'openid_message'):
+            text = why.openid_message
+        elif hasattr(why, 'message'):
+            text = why.message
+        else:
+            text = str(why)
         return strip_password(configuration, text)
     else:
         # IMPORTANT: do NOT log or show raw why as it may contain credentials
@@ -305,7 +311,7 @@ class OpenIDHTTPServer(HTTPServer):
 
         # Add our own SReg fields to list of valid fields from sreg 1.1 spec
         for (key, val) in cert_field_map.items():
-            if not key in sreg.data_fields:
+            if key not in sreg.data_fields:
                 sreg.data_fields[key] = key.replace('_', ' ').title()
         # print "DEBUG: sreg fields: %s" % sreg.data_fields
         for name in cert_field_names:
@@ -456,28 +462,36 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """Handle all HTTP GET requests"""
-        # Make sure key is always available for exception handler
-        key = 'UNSET'
+        # Make sure show + raw key are always available for exception handler
+        show_key, raw_key = 'UNKNOWN', 'UNKNOWN'
         try:
             # NOTE: force native string even if socketserver provides bytes
             self.parsed_uri = urlparse(force_native_str(self.path))
             self.query = {}
-            for (key, val) in parse_qsl(self.parsed_uri[4]):
-                # print("DEBUG: checking input arg %s: '%s'" % (key, val))
-                validate_helper = self.validators.get(key, invalid_argument)
-                # Let validation errors pass to general exception handler below
-                validate_helper(val)
-                self.query[key] = val
+            for (raw_key, raw_val) in parse_qsl(self.parsed_uri[4]):
+                # logger.debug("checking get input arg %s: '%s'" % (raw_key,
+                #                                                   raw_val))
+                # IMPORTANT: we can neither trust raw_key nor raw_val here
+                show_key = 'REDACTED UNSAFE KEY'
+                # Let validation errors pass to input exception handler below
+                valid_query_key(raw_key)
+                # Now raw_key is validated and safe for use and web output
+                show_key = raw_key
+                validate_helper = self.validators.get(show_key,
+                                                      invalid_argument)
+                validate_helper(raw_val)
+                # Now raw_val is validated and safe for use and web output
+                self.query[show_key] = raw_val
 
             self.setUser()
 
-            # print "DEBUG: checking path '%s'" % self.parsed_uri[2]
+            # logger.debug("checking path '%s'" % self.parsed_uri[2])
             valid_path(self.parsed_uri[2])
 
             # Resolve retry url, strip password and err
 
             retry_query = {key: val for (key, val) in self.query.items()
-                           if not key in ['password', 'err']}
+                           if key not in ['password', 'err']}
             self.retry_url = "%s?%s" \
                 % (self.parsed_uri[2], urlencode(retry_query))
 
@@ -514,16 +528,16 @@ class ServerHandler(BaseHTTPRequestHandler):
         except (KeyboardInterrupt, SystemExit):
             raise
         except InputException as err:
-            logger.error("Invalid %r input: %s" % (key, err))
-            logger.debug("*** Begin Trace ***\n%s\n*** End trace ***" %
-                         cgitb.text(sys.exc_info(), context=10))
+            logger.warning("Invalid %r input: %s" % (raw_key, err))
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
+
+Please contact %s if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (key, err)
-            self.showErrorPage(err_msg)
+</p>""" % (show_key, err, html_escape(configuration.support_email))
+            self.showErrorPage(err_msg, error_code=400)
         except Exception as exc:
             error_ref = time.time()
             logger.error("do_GET with ref %d crashed: %s" % (error_ref, exc))
@@ -534,16 +548,18 @@ Invalid '%s' input: %s
             filtered_exc = filtered_exc.replace(pw, '*' * len(pw))
             logger.debug("Traceback %s: %s" % (error_ref, filtered_exc))
             err_msg = """<p class='leftpad'>
-Internal error while handling your request - please contact the site support
-%s if this persistently happens and include the error reference %d.
+Internal error while handling your request - please contact %s
+and include the error reference %d if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (configuration.support_email, error_ref)
+</p>""" % (html_escape(configuration.support_email), error_ref)
             self.showErrorPage(err_msg, error_code=500)
 
     def do_POST(self):
         """Handle all HTTP POST requests"""
+        # Make sure show + raw key are always available for exception handler
+        show_key, raw_key = 'UNKNOWN', 'UNKNOWN'
         try:
             # NOTE: force native string even if socketserver provides bytes
             self.parsed_uri = urlparse(force_native_str(self.path))
@@ -553,16 +569,24 @@ Internal error while handling your request - please contact the site support
             post_data = force_native_str(self.rfile.read(content_length))
 
             self.query = {}
-            for (key, val) in parse_qsl(post_data):
-                # print "DEBUG: checking post input arg %s: '%s'" % (key, val)
-                validate_helper = self.validators.get(key, invalid_argument)
-                # Let validation errors pass to general exception handler below
-                validate_helper(val)
-                self.query[key] = val
+            for (raw_key, raw_val) in parse_qsl(post_data):
+                # logger.debug("checking post input arg %s: '%s'" % (raw_key,
+                #                                                    raw_val))
+                # IMPORTANT: we can neither trust raw_key nor raw_val here
+                show_key = 'REDACTED UNSAFE KEY'
+                # Let validation errors pass to input exception handler below
+                valid_query_key(raw_key)
+                # Now raw_key is validated and safe for use and web output
+                show_key = raw_key
+                validate_helper = self.validators.get(show_key,
+                                                      invalid_argument)
+                validate_helper(raw_val)
+                # Now raw_val is validated and safe for use and web output
+                self.query[show_key] = raw_val
 
             self.setUser()
 
-            # print "DEBUG: checking path '%s'" % self.parsed_uri[2]
+            # logger.debug("checking path '%s'" % self.parsed_uri[2])
             valid_path(self.parsed_uri[2])
             path = self.parsed_uri[2]
 
@@ -584,16 +608,16 @@ Internal error while handling your request - please contact the site support
         except (KeyboardInterrupt, SystemExit):
             raise
         except InputException as err:
-            logger.error("Invalid %r input: %s" % (key, err))
-            logger.debug("*** Begin Trace ***\n%s\n*** End trace ***" %
-                         cgitb.text(sys.exc_info(), context=10))
+            logger.warning("Invalid %r input: %s" % (raw_key, err))
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
+
+Please contact %s if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (key, err)
-            self.showErrorPage(err_msg)
+</p>""" % (show_key, err, html_escape(configuration.support_email))
+            self.showErrorPage(err_msg, error_code=400)
         except Exception as exc:
             error_ref = time.time()
             logger.error("do_POST with ref %d crashed: %s" % (error_ref, exc))
@@ -607,12 +631,12 @@ Invalid '%s' input: %s
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             err_msg = """<p class='leftpad'>
-Internal error while handling your request - please contact the site support
-%s if this persistently happens and include the error reference %d.
+Internal error while handling your request - please contact %s
+and include the error reference %d if this persistently happens for valid use.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>""" % (configuration.support_email, error_ref)
+</p>""" % (html_escape(configuration.support_email), error_ref)
             # NOTE: socket write expects byte strings
             self.wfile.write(force_utf8(err_msg))
 
@@ -643,6 +667,10 @@ Internal error while handling your request - please contact the site support
         if not request:
             try:
                 request = self.server.openid.decodeRequest(query)
+                if request is None:
+                    # Display text indicating that this is an endpoint.
+                    self.showAboutPage()
+                    return
             except server.ProtocolError as why:
                 # IMPORTANT: NEVER log or show raw why or query with password!
                 safe_query = strip_password(configuration, query)
@@ -669,7 +697,7 @@ inconsistent session state.
         # Old IE 8 does not send contents of submit buttons thus only the
         # fields login_as and password are set with the allow requests. We
         # manually add a yes here if so to avoid the else case.
-        if not 'yes' in query and not 'no' in query:
+        if 'yes' not in query and 'no' not in query:
             query['yes'] = 'yes'
 
         if 'yes' in query:
@@ -756,7 +784,6 @@ inconsistent session state.
                 logger.warning("handleAllow rejected login %s" % identity)
                 # logger.debug("full query: %s" % self.query)
                 # logger.debug("full headers: %s" % self.headers)
-                fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 # Login failed - return to refering page to let user try again
                 retry_url = self.__retry_url_from_cookie()
@@ -815,9 +842,13 @@ inconsistent session state.
         """End-point handler"""
         try:
             request = self.server.openid.decodeRequest(query)
+            if request is None:
+                # Display text indicating that this is an endpoint.
+                self.showAboutPage()
+                return
             # Pass any errors from previous login attempts on for display
             request.error = query.get('err', '')
-        except server.ProtocolError as why:
+        except (ValueError, server.ProtocolError) as why:
             # IMPORTANT: NEVER log or show raw why or query with password!
             safe_query = strip_password(configuration, query)
             safe_why = filter_why_pw(configuration, why)
@@ -834,11 +865,6 @@ inconsistent session state.
 <h3>Error details:</h3>
 <pre>%s</pre>
 ''' % (configuration.short_title, html_escape(safe_why)))
-            return
-
-        if request is None:
-            # Display text indicating that this is an endpoint.
-            self.showAboutPage()
             return
 
         if request.mode in ["checkid_immediate", "checkid_setup"]:
@@ -1088,7 +1114,7 @@ inconsistent session state.
                 logger.debug("full query: %s" % self.query)
                 self.clearUser()
                 # Login failed - return to refering page to let user try again
-                cookies = self.headers.get('Cookie')
+                # cookies = self.headers.get('Cookie')
                 # print "found cookies: %s" % cookies
                 retry_url = self.__retry_url_from_cookie()
                 if retry_url:

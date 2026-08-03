@@ -54,8 +54,8 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.htmlgen import man_base_js, man_base_html
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import verbose
-from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \
-    vgrid_triggers, vgrid_set_triggers
+from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_default, \
+    vgrid_is_owner_or_member
 
 default_pager_entries = 20
 
@@ -132,15 +132,15 @@ def main(client_id, user_arguments_dict):
     operation = accepted['operation'][-1]
     flags = ''.join(accepted['flags'][-1])
 
-    if not vgrid_is_owner_or_member(vgrid_name, client_id,
-                                    configuration):
+    if vgrid_is_default(vgrid_name) or \
+        not vgrid_is_owner_or_member(vgrid_name, client_id,
+                                     configuration):
         output_objects.append({'object_type': 'error_text',
-                               'text': '''You must be an owner or member of %s vgrid to
-access the workflows.'''
-                               % vgrid_name})
+                               'text': '''You must be an owner or member of %s
+%s to access the workflows.''' % (vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if not operation in allowed_operations:
+    if operation not in allowed_operations:
         output_objects.append({'object_type': 'error_text', 'text':
                                '''Operation must be one of %s.''' %
                                ', '.join(allowed_operations)})

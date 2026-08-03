@@ -33,7 +33,7 @@ from __future__ import absolute_import
 try:
     from future import standard_library
     standard_library.install_aliases()
-except Exception as exc:
+except Exception:
     print("ERROR: failed to init compatibility helpers")
     exit(1)
 
@@ -49,12 +49,11 @@ from mig.shared import returnvalues
 from mig.shared.bailout import bailout_title, crash_helper, \
     filter_output_objects
 from mig.shared.base import force_native_str, hexlify
-from mig.shared.defaults import file_dest_sep, keyword_any, keyword_updating
-from mig.shared.base import hexlify
-from mig.shared.defaults import file_dest_sep, keyword_any, keyword_updating
+from mig.shared.defaults import file_dest_sep, keyword_updating
 from mig.shared.htmlgen import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
-from mig.shared.init import find_entry, find_entry_index
+from mig.shared.init import find_entry, find_entry_index, \
+    title_script_helpers, title_style_helpers
 from mig.shared.objecttypes import validate
 from mig.shared.prettyprinttable import pprint_table
 from mig.shared.pwcrypto import sorted_hash_algos
@@ -392,7 +391,7 @@ ___%s___
             content_keys = ['share_id', 'path']
             mangle_fields = ['access', 'created', 'invites']
             for (key, title) in optional_cols:
-                if not key in skip_list:
+                if key not in skip_list:
                     header[0].append(title)
                     # Some fields need mangling for text print
                     if key in mangle_fields:
@@ -582,7 +581,6 @@ ctime\t%(ctime)s
             if len(i['dir_listings']) == 0:
                 continue
             columns = 6
-            cols = 0
             if i.get('show_dest', False):
                 columns += 1
             for dir_listing in i['dir_listings']:
@@ -788,15 +786,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             meta = i.get('meta', '')
             backend = i.get('backend', '')
             style_entry = i.get('style', '')
-            style_helpers = {'base': '', 'advanced': '', 'page': '',
-                             'skin': ''}
+            style_helpers = title_style_helpers.copy()
             if isinstance(style_entry, dict):
                 style_helpers.update(style_entry)
             else:
                 style_helpers['base'] += style_entry
             script_entry = i.get('script', '')
-            script_helpers = {'base': '', 'advanced': '', 'skin': '',
-                              'page': '', 'init': '', 'ready': '', 'body': ''}
+            script_helpers = title_script_helpers.copy()
             if isinstance(script_entry, dict):
                 script_helpers.update(script_entry)
             else:
@@ -1115,9 +1111,6 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'html_form':
             lines.append(i['text'])
         elif i['object_type'] == 'dir_listings':
-            redirect_name = i.get('redirect_name',
-                                  configuration.site_user_redirect)
-            redirect_path = i.get('redirect_path', redirect_name)
             ls_url_template = i['ls_url_template']
             rmdir_url_template = i['rmdir_url_template']
             rm_url_template = i['rm_url_template']
@@ -1935,7 +1928,7 @@ want to reference the contents in a publication.
         <th>Path</th>
     ''')
             for (key, title) in optional_cols:
-                if not key in skip_list:
+                if key not in skip_list:
                     lines.append('<th>%s</th>' % title)
             lines.append('''
     </tr>
@@ -1945,20 +1938,19 @@ want to reference the contents in a publication.
             for single_share in sharelinks:
                 openlink = single_share.get('opensharelink', '')
                 openlink_html = ''
-                if openlink and not 'opensharelink' in skip_list:
+                if openlink and 'opensharelink' not in skip_list:
                     openlink_html = html_link(openlink)
                 editlink = single_share.get('editsharelink', '')
                 editlink_html = ''
-                if editlink and not 'editsharelink' in skip_list:
+                if editlink and 'editsharelink' not in skip_list:
                     editlink_html = html_link(editlink)
                 else:
                     # Leave the icon space empty if not set (used in edit)
                     editlink_html = '<span class="iconleftpad"></span>'
                 dellink = single_share.get('delsharelink', '')
                 dellink_html = ''
-                if dellink and not 'delsharelink' in skip_list:
+                if dellink and 'delsharelink' not in skip_list:
                     dellink_html = html_link(dellink)
-                access = ' & '.join(single_share['access'])
                 lines.append('''
 <tr>
 <td>%s</td><td class="centertext">%s%s%s</td><td>%s</td>''' % (single_share['share_id'],
@@ -1966,7 +1958,7 @@ want to reference the contents in a publication.
                                                                dellink_html,
                                                                single_share['path']))
                 for (key, title) in optional_cols:
-                    if not key in skip_list:
+                    if key not in skip_list:
                         if isinstance(single_share[key], basestring):
                             val = single_share[key]
                         elif isinstance(single_share[key], list):
@@ -2104,7 +2096,7 @@ want to reference the contents in a publication.
             page_entries = i.get('page_entries', [5, 10, 20, 25, 40, 50, 80,
                                                   100, 250, 500, 1000])
             default_entries = i.get('default_entries', 20)
-            if not default_entries in page_entries:
+            if default_entries not in page_entries:
                 page_entries.append(default_entries)
             form_prepend = i.get('form_prepend', '')
             form_append = i.get('form_append', '')
@@ -2701,7 +2693,7 @@ def xmlrpc_format(configuration, ret_val, ret_msg, out_obj):
     for entry in out_obj:
         if entry.get('wrap_binary', False):
             for key in entry.get('wrap_targets', []):
-                if not key in entry:
+                if key not in entry:
                     continue
                 entry[key] = xmlrpc.client.Binary(entry[key])
     return xmlrpc.client.dumps((out_obj, ), allow_none=True)
@@ -2796,7 +2788,7 @@ def get_outputformat_helper(name, default_format='html'):
     """Lookup the format helper function for outputformat name, with fallback
     to default_format if not available.
     """
-    if not name in _valid_output_formats:
+    if name not in _valid_output_formats:
         if default_format in _valid_output_formats:
             # Fall back to default format
             name = default_format
@@ -2824,7 +2816,7 @@ def format_output(
 
     logger = configuration.logger
     # logger.debug("format output to %s" % outputformat)
-    valid_formats = get_valid_outputformats()
+    # valid_formats = get_valid_outputformats()
     (val_ret, val_msg) = validate(out_obj, configuration)
     if not val_ret:
         logger.error("%s formatting failed: %s (%s)" %
@@ -2871,7 +2863,7 @@ def format_output(
             }] + out_obj
 
     # NOTE: strip wsgi helpers and info unless needed for output formatting
-    if not outputformat in ('txt', 'html', 'file'):
+    if outputformat not in ('txt', 'html', 'file'):
         out_obj = [i for i in out_obj if i['object_type'] != 'wsgi']
 
     # logger.debug("%s formatting output" % outputformat)

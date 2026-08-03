@@ -82,7 +82,7 @@ The software needed for the above optional components is mainly provided by:
 -Python OpenSSL module (https://pypi.python.org/pypi/pyOpenSSL/)
 -Python WSGI WebDAV module (http://wsgidav.readthedocs.org/)
 -Python watchdog module (https://pypi.python.org/pypi/watchdog/)
--Python jsonrpclib module (https://pypi.python.org/pypi/jsonrpclib/)
+-Python forked jsonrpclib module (https://pypi.org/project/jsonrpclib-pelix)
 -Python irclib module (https://pypi.python.org/pypi/python-irclib/)
 -Python requests module (https://pypi.python.org/pypi/requests/)
 -Python cracklib module (https://pypi.org/project/cracklib/)
