@@ -132,7 +132,7 @@ def _parse_pkey_to_openssh_format(paramiko_pkey):
     return "%s %s" % (paramiko_pkey.get_name(), paramiko_pkey.get_base64())
 
 
-def _create_job_mrsl_file(test_case, session_id, job_dict):
+def _create_job_mrsl_file(test_case, session_id, job_dict, override_modification_time=None):
     """Helper to create a .mRSL pickle file and symlink."""
     mrsl_dir = test_case.configuration.sessid_to_mrsl_link_home
     ensure_dirs_exist(mrsl_dir)
@@ -141,6 +141,13 @@ def _create_job_mrsl_file(test_case, session_id, job_dict):
     pickle_path = temppath("job_%s.pkl" % session_id, test_case)
     with open(pickle_path, "wb") as pkl_fd:
         pickle.dump(job_dict, pkl_fd)
+
+    # If we need to manually override the modification time
+    if override_modification_time is not None:
+        # We leave the access time to what it is already
+        access_time = os.path.getatime(pickle_path)
+        os.utime(pickle_path,
+        (access_time, override_modification_time))
 
     # Create symlink
     link_path = os.path.join(mrsl_dir, "%s.mRSL" % session_id)
@@ -1105,6 +1112,7 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
     def test_refresh_job_creds_non_executing_status(self):
         """Job with non-EXECUTING status should be removed as inactive."""
+        start_time = time.time()
         daemon_conf = self.configuration.daemon_conf
         # Directly register test job as executing before test
         job_dict = {
@@ -1115,7 +1123,14 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             "MOUNTSSHPUBLICKEY": TEST_USER_PUB_KEY,
             "RESOURCE_CONFIG": {"HOSTURL": "localhost"},
         }
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+
+        # Since the refresh_job_creds depends on a
+        # time.time() (add_job_object) vs os.path.getmtime (_create_job_mrsl_file/refresh_job_creds) comparison
+        # the timing can be out of order due to resolution limitations
+        # https://stackoverflow.com/questions/77007324/os-path-getmtime-inconsistent-with-time-time
+        # Therefore are we enforce that the test uses an increasing modification time
+        link_path = _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time)
+
         # Pre-add job to active jobs in conf jobs list
         add_job_object(
             self.configuration,
@@ -1123,13 +1138,15 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             TEST_JOB_USER_DIR,
             pubkey=TEST_USER_PUB_KEY,
         )
+
         # NOTE: double check that job is in place for test
         self.assertEqual(len(daemon_conf["jobs"]), 1)
         self.assertIn(TEST_JOB_ID, [i.username for i in daemon_conf["jobs"]])
 
         # Now mark finished and test that refresh removes it
         job_dict["STATUS"] = "FINISHED"
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        link_path = _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time + 2)
+        print("Second timestamp %s\n" % os.stat(link_path).st_mtime_ns)
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
         )
@@ -1139,6 +1156,7 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
     def test_refresh_job_creds_full_execution_cycle(self):
         """Job going through states should be added and removed when done."""
+        start_time = time.time()
         job_dict = {
             "STATUS": "QUEUED",
             "SESSIONID": TEST_JOB_ID,
@@ -1147,7 +1165,12 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             "MOUNTSSHPUBLICKEY": TEST_USER_PUB_KEY,
             "RESOURCE_CONFIG": {"HOSTURL": "localhost"},
         }
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        # Since the refresh_job_creds depends on a
+        # time.time() (add_job_object) vs os.path.getmtime (_create_job_mrsl_file/refresh_job_creds) comparison
+        # the timing can be out of order due to resolution limitations
+        # https://stackoverflow.com/questions/77007324/os-path-getmtime-inconsistent-with-time-time
+        # Therefore are we enforce that the test uses an increasing modification time
+        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time + 1)
 
         # Verify that still only queued jobs don't get added
         conf, changed = refresh_job_creds(
@@ -1159,7 +1182,7 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
         # Verify that job gets added when changing to executing
         job_dict["STATUS"] = "EXECUTING"
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time + 2)
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
         )
@@ -1170,7 +1193,7 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
         # Verify that jobs get removed again when finished
         job_dict["STATUS"] = "FINISHED"
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time + 3)
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
         )
