@@ -1146,7 +1146,6 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
         # Now mark finished and test that refresh removes it
         job_dict["STATUS"] = "FINISHED"
         link_path = _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time + 2)
-        print("Second timestamp %s\n" % os.stat(link_path).st_mtime_ns)
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
         )
