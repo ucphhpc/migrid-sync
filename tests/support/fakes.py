@@ -71,10 +71,17 @@ class FakeSendEmail:
     def forgive_email(self):
         self._checked = True
 
+    def _called_times(self, count):
+        self._checked = True
+        return len(self.calls) == count
+
     @property
     def called_once(self):
-        self._checked = True
-        return len(self.calls) == 1
+        return self._called_times(1)
+
+    @property
+    def called_twice(self):
+        return self._called_times(2)
 
     def email_was_sent_to(self, email_address):
         recipients = self._recipients()
