@@ -1126,8 +1126,8 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             "RESOURCE_CONFIG": {"HOSTURL": "localhost"},
         }
 
-        # Since the refresh_job_creds depends on a
-        # time.time() (add_job_object) vs os.path.getmtime (_create_job_mrsl_file/refresh_job_creds) comparison
+        # NOTE: Since the refresh_job_creds depends on a comparison between
+        # time.time() (add_job_object) and os.path.getmtime (_create_job_mrsl_file/refresh_job_creds)
         # the timing can be out-of-order due to resolution limitations
         # https://stackoverflow.com/questions/77007324/os-path-getmtime-inconsistent-with-time-time
         # Therefore we enforce that the test uses an increasing modification time
@@ -1173,9 +1173,9 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             "MOUNTSSHPUBLICKEY": TEST_USER_PUB_KEY,
             "RESOURCE_CONFIG": {"HOSTURL": "localhost"},
         }
-        # Since the refresh_job_creds depends on a
-        # time.time() (add_job_object) vs os.path.getmtime (_create_job_mrsl_file/refresh_job_creds) comparison
-        # the timing can be out of order due to resolution limitations
+        # NOTE: Since the refresh_job_creds depends on a comparison between
+        # time.time() (add_job_object) and os.path.getmtime (_create_job_mrsl_file/refresh_job_creds)
+        # the timing can be out-of-order due to resolution limitations
         # https://stackoverflow.com/questions/77007324/os-path-getmtime-inconsistent-with-time-time
         # Therefore we enforce that the test uses an increasing modification time
         _create_job_mrsl_file(
