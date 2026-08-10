@@ -144,6 +144,7 @@ def _create_job_mrsl_file(test_case, session_id, job_dict, override_modification
 
     # If we need to manually override the modification time
     if override_modification_time is not None:
+        assert isinstance(override_modification_time, (int, float))
         # We leave the access time to what it is already
         access_time = os.path.getatime(pickle_path)
         os.utime(pickle_path,
@@ -1126,9 +1127,9 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
         # Since the refresh_job_creds depends on a
         # time.time() (add_job_object) vs os.path.getmtime (_create_job_mrsl_file/refresh_job_creds) comparison
-        # the timing can be out of order due to resolution limitations
+        # the timing can be out-of-order due to resolution limitations
         # https://stackoverflow.com/questions/77007324/os-path-getmtime-inconsistent-with-time-time
-        # Therefore are we enforce that the test uses an increasing modification time
+        # Therefore we enforce that the test uses an increasing modification time
         link_path = _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time)
 
         # Pre-add job to active jobs in conf jobs list
@@ -1168,7 +1169,7 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
         # time.time() (add_job_object) vs os.path.getmtime (_create_job_mrsl_file/refresh_job_creds) comparison
         # the timing can be out of order due to resolution limitations
         # https://stackoverflow.com/questions/77007324/os-path-getmtime-inconsistent-with-time-time
-        # Therefore are we enforce that the test uses an increasing modification time
+        # Therefore we enforce that the test uses an increasing modification time
         _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time + 1)
 
         # Verify that still only queued jobs don't get added
