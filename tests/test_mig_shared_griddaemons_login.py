@@ -132,7 +132,9 @@ def _parse_pkey_to_openssh_format(paramiko_pkey):
     return "%s %s" % (paramiko_pkey.get_name(), paramiko_pkey.get_base64())
 
 
-def _create_job_mrsl_file(test_case, session_id, job_dict, override_modification_time=None):
+def _create_job_mrsl_file(
+    test_case, session_id, job_dict, override_modification_time=None
+):
     """Helper to create a .mRSL pickle file and symlink."""
     mrsl_dir = test_case.configuration.sessid_to_mrsl_link_home
     ensure_dirs_exist(mrsl_dir)
@@ -147,8 +149,7 @@ def _create_job_mrsl_file(test_case, session_id, job_dict, override_modification
         assert isinstance(override_modification_time, (int, float))
         # We leave the access time to what it is already
         access_time = os.path.getatime(pickle_path)
-        os.utime(pickle_path,
-        (access_time, override_modification_time))
+        os.utime(pickle_path, (access_time, override_modification_time))
 
     # Create symlink
     link_path = os.path.join(mrsl_dir, "%s.mRSL" % session_id)
@@ -1130,7 +1131,9 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
         # the timing can be out-of-order due to resolution limitations
         # https://stackoverflow.com/questions/77007324/os-path-getmtime-inconsistent-with-time-time
         # Therefore we enforce that the test uses an increasing modification time
-        link_path = _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time)
+        link_path = _create_job_mrsl_file(
+            self, TEST_JOB_ID, job_dict, override_modification_time=start_time
+        )
 
         # Pre-add job to active jobs in conf jobs list
         add_job_object(
@@ -1146,7 +1149,12 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
         # Now mark finished and test that refresh removes it
         job_dict["STATUS"] = "FINISHED"
-        link_path = _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time + 2)
+        link_path = _create_job_mrsl_file(
+            self,
+            TEST_JOB_ID,
+            job_dict,
+            override_modification_time=start_time + 2,
+        )
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
         )
@@ -1170,7 +1178,12 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
         # the timing can be out of order due to resolution limitations
         # https://stackoverflow.com/questions/77007324/os-path-getmtime-inconsistent-with-time-time
         # Therefore we enforce that the test uses an increasing modification time
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time + 1)
+        _create_job_mrsl_file(
+            self,
+            TEST_JOB_ID,
+            job_dict,
+            override_modification_time=start_time + 1,
+        )
 
         # Verify that still only queued jobs don't get added
         conf, changed = refresh_job_creds(
@@ -1182,7 +1195,12 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
         # Verify that job gets added when changing to executing
         job_dict["STATUS"] = "EXECUTING"
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time + 2)
+        _create_job_mrsl_file(
+            self,
+            TEST_JOB_ID,
+            job_dict,
+            override_modification_time=start_time + 2,
+        )
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
         )
@@ -1193,7 +1211,12 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
         # Verify that jobs get removed again when finished
         job_dict["STATUS"] = "FINISHED"
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time + 3)
+        _create_job_mrsl_file(
+            self,
+            TEST_JOB_ID,
+            job_dict,
+            override_modification_time=start_time + 3,
+        )
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
         )
