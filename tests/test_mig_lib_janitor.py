@@ -69,6 +69,8 @@ TEST_MODERN_PW_PBKDF2 = \
     "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM2134uix"
 TEST_NEW_MODERN_PW_PBKDF2 = \
     "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$B22uw6C7C4VFiYAe4Vf10n581pjXFHrn"
+TEST_OTHER_MODERN_PW_PBKDF2 = \
+    "PBKDF2$sha256$10000$XDAwMDAwMDAwMDAw$B22uw6C7C4VFiYAe4Vf10n581pjXY123"
 TEST_INVALID_PW_PBKDF2 = \
     "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$B22uw6C7C4VFiYAe4Vf1rn1pjX0n58FH"
 # NOTE: tokens always should contain a multiple of 4 chars
@@ -654,7 +656,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         self.assertFalse(os.path.exists(req_path),
                          "Failed to clean invalid req for %s" % req_path)
 
-        # FIXME: should this really be sending email?
+        # NOTE: invalid request results in request rejected email
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
         self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
@@ -742,7 +744,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         self.assertFalse(os.path.exists(req_path),
                          "Failed to clean token req for %s" % req_path)
 
-        # FIXME: should this really be sending an email?
+        # NOTE: token verification failure results in request rejected email
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
         self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
@@ -1185,7 +1187,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         self.assertFalse(os.path.exists(req_path),
                          "Failed cleanup invalid token for %s" % req_path)
 
-        # FIXME: should this really be sending email?
+        # NOTE: token verification failure results in request rejected email
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
         self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
@@ -1234,6 +1236,151 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get('notifier').send_email
         self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+
+    def test_verify_reset_token_single_use(self):
+        """Test token single use"""
+        req_dict = {
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
+            'email': TEST_USER_EMAIL,
+            'comment': '',
+            'password': '',
+            'password_hash': TEST_MODERN_PW_PBKDF2,
+            'expire': time.time() + 30 * SECS_PER_DAY,  # Future expiration
+        }
+
+        timestamp = time.time()
+        reset_token = generate_reset_token(self.configuration, req_dict,
+                                           TEST_SERVICE, timestamp)
+        req_dict['reset_token'] = reset_token
+        # Change password_hash here to mimic pw change
+        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
+        saved, req_path = save_account_request(self.configuration, req_dict)
+        req_id = os.path.basename(req_path)
+
+        # NOTE: when using real user mail we currently hit send email errors.
+        #       We forgive those errors here and only check any known warnings.
+        # TODO: integrate generic skip email support and adjust here to fit
+        self.logger.forgive_errors()
+        with self.assertLogs(level='INFO') as log_capture:
+            manage_single_req(
+                self.configuration,
+                req_id,
+                req_path,
+                self.user_db_path,
+                time.time()
+            )
+        # Verify that first pw change succeeded
+        self.assertTrue(any('created/renewed user' in msg.lower()
+                            for msg in log_capture.output))
+        self.assertFalse(os.path.exists(req_path),
+                         "Failed cleanup invalid token for %s" % req_path)
+
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+
+        # Change password_hash again to mimic another pw change with same token
+        req_dict['password_hash'] = TEST_OTHER_MODERN_PW_PBKDF2
+        saved, req_path = save_account_request(self.configuration, req_dict)
+        req_id = os.path.basename(req_path)
+
+        # NOTE: when using real user mail we currently hit send email errors.
+        #       We forgive those errors here and only check any known warnings.
+        # TODO: integrate generic skip email support and adjust here to fit
+        self.logger.forgive_errors()
+        with self.assertLogs(level='WARNING') as log_capture:
+            manage_single_req(
+                self.configuration,
+                req_id,
+                req_path,
+                self.user_db_path,
+                time.time()
+            )
+
+        # Now verify original token is no longer valid since pw hash changed
+        self.assertTrue(any('wrong hash' in msg.lower()
+                            for msg in log_capture.output))
+        self.assertFalse(os.path.exists(req_path),
+                         "Failed cleanup invalid token for %s" % req_path)
+
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_twice)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+
+    def test_verify_reset_token_single_use_race(self):
+        """Test token single use even when submitted under duress"""
+        req_dict = {
+            'client_id': TEST_USER_DN,
+            'distinguished_name': TEST_USER_DN,
+            'auth': [TEST_AUTH],
+            'full_name': TEST_USER_FULLNAME,
+            'organization': TEST_USER_ORG,
+            'email': TEST_USER_EMAIL,
+            'comment': '',
+            'password': '',
+            'password_hash': TEST_MODERN_PW_PBKDF2,
+            'expire': time.time() + 30 * SECS_PER_DAY,  # Future expiration
+        }
+
+        timestamp = time.time()
+        reset_token = generate_reset_token(self.configuration, req_dict,
+                                           TEST_SERVICE, timestamp)
+        req_dict['reset_token'] = reset_token
+        # Change password_hash here to mimic pw change
+        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
+        saved, req_path = save_account_request(self.configuration, req_dict)
+        req_id = os.path.basename(req_path)
+
+        # Change password_hash again to mimic another pw change with same token
+        race_dict = req_dict.copy()
+        race_dict['password_hash'] = TEST_OTHER_MODERN_PW_PBKDF2
+        raced, race_path = save_account_request(self.configuration, race_dict)
+        race_id = os.path.basename(race_path)
+
+        # NOTE: when using real user mail we currently hit send email errors.
+        #       We forgive those errors here and only check any known warnings.
+        # TODO: integrate generic skip email support and adjust here to fit
+        self.logger.forgive_errors()
+        with self.assertLogs(level='INFO') as log_capture:
+            manage_single_req(
+                self.configuration,
+                req_id,
+                req_path,
+                self.user_db_path,
+                time.time()
+            )
+        # Verify that first pw change succeeded
+        self.assertTrue(any('created/renewed user' in msg.lower()
+                            for msg in log_capture.output))
+        self.assertFalse(os.path.exists(req_path),
+                         "Failed cleanup invalid token for %s" % req_path)
+
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+
+        # Now verify race fails since pw hash changed to invalidate token
+        with self.assertLogs(level='WARNING') as log_capture:
+            manage_single_req(
+                self.configuration,
+                race_id,
+                race_path,
+                self.user_db_path,
+                time.time()
+            )
+
+        self.assertTrue(any('wrong hash' in msg.lower()
+                            for msg in log_capture.output))
+        self.assertFalse(os.path.exists(race_path),
+                         "Failed cleanup invalid token for %s" % race_path)
+
+        fake_send_email = self.configuration.context_get('notifier').send_email
+        self.assertTrue(fake_send_email.called_twice)
         self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
 
     def test_remind_and_expire_edge_cases(self):
