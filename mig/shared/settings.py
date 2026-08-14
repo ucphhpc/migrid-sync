@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - helpers for handling user settings
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -98,7 +99,7 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
     try:
         settings_dir = os.path.join(configuration.user_settings, client_dir)
         os.mkdir(settings_dir)
-    except:
+    except Exception:
         pass
 
     pickle_filename = os.path.join(configuration.user_settings, client_dir,
@@ -151,7 +152,8 @@ def parse_and_save_duplicati(filename, client_id, configuration):
     if status[0]:
         mark_user_modified(configuration, client_id)
         saved_values = load_duplicati(client_id, configuration)
-        if not saved_values:
+        # NOTE: differentiate between empty dict and False on load failure
+        if not saved_values and not isinstance(saved_values, dict):
             _logger.error('loading just saved %s duplicati settings failed!'
                           % client_id)
             return (False, 'could not load saved Duplicati settings!')
@@ -183,7 +185,7 @@ Backup destination page during import.'''
             _logger.warning('no saved %s creds for %s' % (saved_protocol,
                                                           client_id))
 
-        for backup_name in saved_values['BACKUPS']:
+        for backup_name in saved_values.get('BACKUPS', []):
             fill_helper['backup_name'] = backup_name
             fill_helper['backup_dir'] = os.path.join(duplicati_conf_dir,
                                                      backup_name)
@@ -199,7 +201,7 @@ Backup destination page during import.'''
             backup_dst = os.path.join(duplicati_dir, backup_name)
             try:
                 os.makedirs(backup_dst)
-            except:
+            except Exception:
                 # probably exists
                 pass
             json_name = "%s.json" % backup_name
@@ -207,8 +209,8 @@ Backup destination page during import.'''
             if not write_file(filled_json, json_path, _logger):
                 _logger.error("failed to write duplicati backup %s to %s" % (
                     backup_name, json_path))
-                status[0] = False
-                status[1] += " Failed to write duplicati backup %s" % backup_name
+                warn = " Failed to write duplicati backup %s" % backup_name
+                status = (False, status[1] + warn)
     return status
 
 
@@ -226,7 +228,8 @@ def parse_and_save_twofactor(filename, client_id, configuration, overrides={}):
                                    overrides)
     if status[0]:
         saved_values = load_twofactor(client_id, configuration)
-        if not saved_values:
+        # NOTE: differentiate between empty dict and False on load failure
+        if not saved_values and not isinstance(saved_values, dict):
             _logger.error('loading just saved %s twofactor settings failed!'
                           % client_id)
             return (False, 'could not load saved 2FA settings!')
@@ -254,7 +257,7 @@ def parse_and_save_publickeys(keys_path, keys_content, client_id,
                 continue
             try:
                 parse_pub_key(key)
-            except Exception as exc:
+            except Exception:
                 raise Exception('Invalid public key: %s' % key)
         if not write_file(keys_content, keys_path, _logger):
             _logger.error("failed to write public keys for %s to %s" %
@@ -350,7 +353,7 @@ def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
     # Create proto conf dir for any old users
     try:
         os.mkdir(proto_conf_path)
-    except:
+    except Exception:
         pass
     keys_path = os.path.join(proto_conf_path, authkeys_filename)
     key_status = parse_and_save_publickeys(keys_path, publickeys, client_id,
@@ -419,7 +422,7 @@ def load_section_helper(client_id, configuration, section_filename,
         real_keys = section_keys
         # NOTE: force list copy here as we delete inline below
         for key in list(section_dict):
-            if not key in real_keys:
+            if key not in real_keys:
                 del section_dict[key]
     return section_dict
 
