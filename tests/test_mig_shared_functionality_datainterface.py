@@ -116,8 +116,8 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         self._provision_user_peers_empty(self.test_user_settings_dir)
         test_accepted_peer = {
             "country": "DK",
-            "email": "pending_peer@example.com",
-            "full_name": "Pending Peer User",
+            "email": "peer@example.com",
+            "full_name": "Test User",
             "organization": "Test Org",
             "state": "NA",
         }
@@ -167,8 +167,8 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         self._provision_user_peers_empty(self.test_user_settings_dir)
         test_accepted_peer = {
             "country": "DK",
-            "email": "pending_peer@example.com",
-            "full_name": "Pending Peer User",
+            "email": "peer@example.com",
+            "full_name": "Test User",
             "organization": "Test Org",
             "state": "NA",
             "label": "some_peer_label",
@@ -215,8 +215,8 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         date_expire_in_8_days = date.today() + timedelta(days=8)
         test_new_accepted_peer = {
             "country": "DK",
-            "email": "pending_peer@example.com",
-            "full_name": "Pending Peer User",
+            "email": "peer@example.com",
+            "full_name": "Test User",
             "label": "some_peer_label",
             "expire": date_expire_in_8_days.isoformat(),
             "organization": "Test Org",
@@ -242,13 +242,12 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         status = json_response["status"]
         self.assertEqual(status, 200)
 
-        # Validate the fields being set
         # Validate that the peer invitation email and admin notification email
         # were sent
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertEqual(fake_send_email.total_emails_sent(), 2)
         self.assertTrue(
-            fake_send_email.email_was_sent_to("pending_peer@example.com")
+            fake_send_email.email_was_sent_to("peer@example.com")
         )
         self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
@@ -256,8 +255,8 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         date_expire_in_3_days = date.today() + timedelta(days=3)
         test_accepted_peer = {
             "country": "DK",
-            "email": "pending_peer@example.com",
-            "full_name": "Pending Peer User",
+            "email": "peer@example.com",
+            "full_name": "Test User",
             "label": "some_peer_label",
             "expire": date_expire_in_3_days.isoformat(),
             "organization": "Test Org",
@@ -301,8 +300,8 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         date_expire_in_4000_days = date.today() + timedelta(days=4000)
         test_accepted_peer = {
             "country": "DK",
-            "email": "pending_peer@example.com",
-            "full_name": "Pending Peer User",
+            "email": "peer@example.com",
+            "full_name": "Test User",
             "label": "some_peer_label",
             "expire": date_expire_in_4000_days.isoformat(),
             "organization": "Test Org",
@@ -342,6 +341,57 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
 
         # check nothing was saved
         self.assertPendingUsers(expected_count=0)
+
+    def test_peers_new_valid_on_disk(self):
+        # We don't want to test email sending here
+        # just the correctness of the datastructure
+        self.configuration.context_get('notifier').send_email.forgive_email()
+
+        self._provision_user_peers_empty(self.test_user_settings_dir)
+        date_expire_in_8_days = date.today() + timedelta(days=8)
+        test_new_accepted_peer = {
+            "country": "DK",
+            "email": "peer@example.com",
+            "full_name": "Test User",
+            "label": "some_peer_label",
+            "expire": date_expire_in_8_days.isoformat(),
+            "organization": "Test Org",
+            "kind": "project",
+            "state": "NA",
+        }
+
+        request_body = {
+            "type": "peers__new",
+            "operation": "create",
+            "invite_on_email": True,
+            **test_new_accepted_peer,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response["status"]
+        self.assertEqual(status, 200)
+        
+        peers = self.assertUserPeers(self.TEST_CLIENT_ID)
+        self.assertEqual(len(peers), 1)
+        self.assertIn(self.TEST_PEER_DN, peers)
+
+        peer = peers[self.TEST_PEER_DN]
+        self.assertEqual(peer["distinguished_name"], self.TEST_PEER_DN)
+        self.assertEqual(peer["full_name"], test_new_accepted_peer["full_name"])
+        self.assertEqual(peer["organization"], test_new_accepted_peer["organization"])
+        self.assertEqual(peer["email"], test_new_accepted_peer["email"])
+        self.assertEqual(peer["country"], test_new_accepted_peer["country"])
+        self.assertEqual(peer["state"], test_new_accepted_peer["state"])
+        self.assertEqual(peer["label"], test_new_accepted_peer["label"])
+        self.assertEqual(peer["kind"], test_new_accepted_peer["kind"])
+        self.assertEqual(peer["expire"], test_new_accepted_peer["expire"])
 
     def test_peers_summary(self):
         self._provision_peer_user(
