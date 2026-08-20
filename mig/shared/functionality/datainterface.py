@@ -81,8 +81,8 @@ from mig.shared.safeinput import (
     valid_boolean,
     valid_date,
     valid_distinguished_name,
-    valid_peer_label,
     valid_peer_kind,
+    valid_peer_label,
     valid_peers_csvlines,
     validated_input,
 )
@@ -175,19 +175,15 @@ def validate_peers_update_fields(update_args):
     update_args: {"label": label, "kind": kind, "expire": expire}
     """
     # During an update these are optional
-    signature = {
-        'label': [''],
-        'kind': [''],
-        'expire': ['']
-    }
+    signature = {"label": [""], "kind": [""], "expire": [""]}
 
     accepted, rejected = validated_input(
         update_args,
         signature,
         type_override={
-            'label': valid_peer_label,
-            'kind': valid_peer_kind,
-            'expire': valid_date
+            "label": valid_peer_label,
+            "kind": valid_peer_kind,
+            "expire": valid_date,
         },
         list_wrap=True,
     )
@@ -927,11 +923,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
 
     # Update the underlying peer
     update_peer_dict = {
-        peer_dn: {
-            "label": label,
-            "kind": kind,
-            "expire": expire
-        }
+        peer_dn: {"label": label, "kind": kind, "expire": expire}
     }
 
     if not accountreq.update_peers_accepted(
