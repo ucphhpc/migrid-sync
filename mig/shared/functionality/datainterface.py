@@ -81,6 +81,8 @@ from mig.shared.safeinput import (
     valid_boolean,
     valid_date,
     valid_distinguished_name,
+    valid_peer_label,
+    valid_peer_kind,
     valid_peers_csvlines,
     validated_input,
 )
@@ -162,6 +164,31 @@ def validate_peers_import_fields(import_args):
         import_args,
         signature,
         type_override=accountreq.EXTRA_PEER_FIELDS_TYPE,
+        list_wrap=True,
+    )
+    return unlistify_dict(accepted), unlistify_dict(rejected)
+
+
+def validate_peers_update_fields(update_args):
+    """Validates the input of a peer update
+
+    update_args: {"label": label, "kind": kind, "expire": expire}
+    """
+    # During an update these are optional
+    signature = {
+        'label': [''],
+        'kind': [''],
+        'expire': ['']
+    }
+
+    accepted, rejected = validated_input(
+        update_args,
+        signature,
+        type_override={
+            'label': valid_peer_label,
+            'kind': valid_peer_kind,
+            'expire': valid_date
+        },
         list_wrap=True,
     )
     return unlistify_dict(accepted), unlistify_dict(rejected)
@@ -855,9 +882,9 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     Request Handler: POST /peers/accepted/update
     """
 
-    input_peer = request_info.args["peer"]
-    input_expire = request_info.args["expire"]
+    args = request_info.args
 
+    input_peer = args["peer"]
     accepted, rejected = validate_input_peer_distinguished_name(input_peer)
     if rejected:
         return create_handler_response(
@@ -867,18 +894,25 @@ def handle_POST_peers_accepted_update(configuration, request_info):
         )
     peer_dn = accepted["peer"]
 
-    accepted_expire, rejected_expire = validate_peer_expire(input_expire)
-    if rejected_expire:
+    # Validate the global peers args
+    common_update_args = {
+        "label": args.pop("label", ""),
+        "kind": args.pop("kind", ""),
+        "expire": args.pop("expire", ""),
+    }
+    accepted_common, rejected_common = validate_peers_update_fields(
+        common_update_args
+    )
+    if not accepted_common or rejected_common:
         return create_handler_response(
             400,
-            message="failed to update the peer, recieved an incorrect expire argument %s"
-            % rejected_expire,
+            message="failed to update peer, the recieved update argument(s) was rejected %s"
+            % rejected_common,
         )
-    expire_date = accepted_expire["expire"]
 
-    valid_expire_date, expire_message = validate_peer_expire_value(expire_date)
-    if not valid_expire_date:
-        return create_handler_response(400, message=expire_message)
+    label = accepted_common["label"]
+    kind = accepted_common["kind"]
+    expire = accepted_common["expire"]
 
     accepted_peers = accountreq.list_peers_accepted(
         configuration, request_info.client_id
@@ -894,7 +928,9 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     # Update the underlying peer
     update_peer_dict = {
         peer_dn: {
-            "expire": expire_date,
+            "label": label,
+            "kind": kind,
+            "expire": expire
         }
     }
 

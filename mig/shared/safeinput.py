@@ -1046,7 +1046,13 @@ def valid_peer_label(
 
 
 def valid_peer_kind(value, **kwargs):
-    if not value in peer_kinds:
+    """Verify that the supplied kind is either an empty string,
+    or one of peer_kinds.
+    """
+    if value == '':
+        return True
+
+    if value not in peer_kinds:
         raise ValueError("invalid peer kind")
 
 

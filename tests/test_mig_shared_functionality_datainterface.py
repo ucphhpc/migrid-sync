@@ -474,10 +474,14 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         date_expire_in_min = date.today() + timedelta(days=peers_expire_min_days) + timedelta(days=1)
         self._provision_peer_user(self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID)
 
-        expire_payload = date_expire_in_min.isoformat()
+        new_label = "update_peer_label"
+        new_expire = date_expire_in_min.isoformat()
+        new_kind = ""
         payload = {
             "peer_dn": self.TEST_PEER_DN,
-            "expire": expire_payload
+            "label": new_label,
+            "kind": "",
+            "expire": new_expire
         }
 
         request_body = {
@@ -501,8 +505,12 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertIsNotNone(peer)
 
         self.assertEqual(peer["distinguished_name"], self.TEST_PEER_DN)
+        self.assertIn("label", peer)
+        self.assertEqual(peer["label"], new_label)
+        self.assertIn("kind", peer)
+        self.assertEqual(peer["kind"], new_kind)
         self.assertIn("expire", peer)
-        self.assertEqual(peer["expire"], expire_payload)
+        self.assertEqual(peer["expire"], new_expire)
 
         # check emails were sent
         fake_send_email = self.configuration.context_get('notifier').send_email
