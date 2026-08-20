@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -29,81 +28,83 @@
 """Unit tests of the MiG functionality file implementing the cat backend"""
 
 from __future__ import print_function
-from collections import namedtuple
-from datetime import date, timedelta, datetime
-import importlib
-import os
-import shutil
-import sys
-import unittest
 
-from tests.support import MIG_BASE, PY2, TEST_DATA_DIR, MigTestCase, testmain, \
-    temppath, ensure_dirs_exist
+import os
+from datetime import date, timedelta
+
+from envhelp.makeconfig import _ensure_dirs_needed_for_userdb
+from mig.shared.defaults import peers_expire_min_days
+from tests.support import MigTestCase, testmain
 from tests.support.fixturesupp import FixtureAssertMixin, fixturepath
 from tests.support.picklesupp import PickleAssertMixin
 from tests.support.usersupp import UserAssertMixin
 from tests.support.wsgisupp import WsgiAssertMixin
-from envhelp.makeconfig import _ensure_dirs_needed_for_userdb
-
-from mig.shared.defaults import peers_expire_min_days
-from mig.shared.base import client_id_dir
-from mig.shared.configuration import Configuration
-from mig.shared.functionality.datainterface import _main as submain
 
 
 def _only_output_objects(output_objects, with_object_type=None):
-    return [o for o in output_objects if o['object_type'] == with_object_type]
+    return [o for o in output_objects if o["object_type"] == with_object_type]
 
 
-class MigSharedFunctionalityDatainterface__generic(MigTestCase,
-                                                   WsgiAssertMixin):
+class MigSharedFunctionalityDatainterface__generic(
+    MigTestCase, WsgiAssertMixin
+):
     """Tests of end to end generic behaviour of datainterface"""
 
-    TEST_CLIENT_ID = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
+    TEST_CLIENT_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     def before_each(self):
         self._provision_test_user(self, self.TEST_CLIENT_ID)
 
     def test_wsgi_nonexistent_route(self):
         request_body = {
-            'type': '__nonexistent',
-            'operation': 'create',
-            'content': 'insert me',
+            "type": "__nonexistent",
+            "operation": "create",
+            "content": "insert me",
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 404)
 
-        self.assertIn('error', json_response)
-        self.assertEqual(json_response['error'], 'the specified route package handler was not found')
+        self.assertIn("error", json_response)
+        self.assertEqual(
+            json_response["error"],
+            "the specified route package handler was not found",
+        )
 
 
-class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
-                                                                  WsgiAssertMixin,
-                                                                  FixtureAssertMixin,
-                                                                  PickleAssertMixin,
-                                                                  UserAssertMixin):
+class MigSharedFunctionalityDatainterface__peers_wsgi(
+    MigTestCase,
+    WsgiAssertMixin,
+    FixtureAssertMixin,
+    PickleAssertMixin,
+    UserAssertMixin,
+):
     """Tests of the end to end peers behaviours of datainterface"""
 
-    TEST_CLIENT_ID = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
-    TEST_PEER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com'
-    TEST_PENDING_PEER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User/emailAddress=pending_peer@example.com'
+    TEST_CLIENT_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
+    TEST_PEER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com"
+    TEST_PENDING_PEER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User/emailAddress=pending_peer@example.com"
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     def before_each(self):
-        user_paths_dict = self._provision_test_user_return_dict(self, self.TEST_CLIENT_ID, )
-        self.test_user_settings_dir = user_paths_dict['user_settings_dir']
+        user_paths_dict = self._provision_test_user_return_dict(
+            self,
+            self.TEST_CLIENT_ID,
+        )
+        self.test_user_settings_dir = user_paths_dict["user_settings_dir"]
 
     def assertPendingUsers(self, expected_count=0):
         user_pending_entries = os.listdir(self.configuration.user_pending)
@@ -118,25 +119,25 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
             "email": "pending_peer@example.com",
             "full_name": "Pending Peer User",
             "organization": "Test Org",
-            "state": "NA"
+            "state": "NA",
         }
 
         request_body = {
-            'type': 'peers__new',
-            'operation': 'create',
+            "type": "peers__new",
+            "operation": "create",
             **test_pending_peer,
         }
         prepared_wsgi = self.prepareWsgiAssert(
             self.configuration,
-            'http://localhost/datainterface.py',
+            "http://localhost/datainterface.py",
             form=request_body,
-            mig_user_dn=self.TEST_CLIENT_ID
+            mig_user_dn=self.TEST_CLIENT_ID,
         )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
         self.assertIn("status", json_response)
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 400)
 
         # check we failed creation -> missing expire, kind, label
@@ -144,14 +145,17 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertIn("errors_map", json_response["data"])
 
         # check we failed creation
-        errors_map = json_response['data']['errors_map']
-        self.assertEqual(errors_map, {
-            '0': {
-                'expire': 'expire is required but missing',
-                'kind': 'kind is required but missing',
-                'label': 'label is required but missing',
-            }
-        })
+        errors_map = json_response["data"]["errors_map"]
+        self.assertEqual(
+            errors_map,
+            {
+                "0": {
+                    "expire": "expire is required but missing",
+                    "kind": "kind is required but missing",
+                    "label": "label is required but missing",
+                }
+            },
+        )
 
         # check nothing was saved
         peers = self.assertUserPeers(self.TEST_CLIENT_ID)
@@ -173,28 +177,33 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'peers__new',
-            'operation': 'create',
+            "type": "peers__new",
+            "operation": "create",
             **test_pending_peer,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 400)
 
         # check we failed creation
-        errors_map = json_response['data']['errors_map']
-        self.assertEqual(errors_map, {
-            '0': {
-                'expire': 'shorter than minimum length (10)',
-                'kind': 'invalid peer kind',
-            }
-        })
+        errors_map = json_response["data"]["errors_map"]
+        self.assertEqual(
+            errors_map,
+            {
+                "0": {
+                    "expire": "shorter than minimum length (10)",
+                    "kind": "invalid peer kind",
+                }
+            },
+        )
 
         # check nothing was saved
         peers = self.assertUserPeers(self.TEST_CLIENT_ID)
@@ -216,29 +225,31 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'peers__new',
-            'operation': 'create',
+            "type": "peers__new",
+            "operation": "create",
             "invite_on_email": True,
             **test_new_accepted_peer,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 200)
-
-        actual_peers_dict = self.assertUserPeers(self.TEST_CLIENT_ID)
 
         # Validate that the peer invitation email and admin notification email
         # were sent
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertEqual(fake_send_email.total_emails_sent(), 2)
-        self.assertTrue(fake_send_email.email_was_sent_to('pending_peer@example.com'))
-        self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
+        self.assertTrue(
+            fake_send_email.email_was_sent_to("pending_peer@example.com")
+        )
+        self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
     def test_peers_new_with_too_short_expire(self):
         date_expire_in_3_days = date.today() + timedelta(days=3)
@@ -254,29 +265,33 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'peers__new',
-            'operation': 'create',
+            "type": "peers__new",
+            "operation": "create",
             "invite_on_email": True,
             **test_pending_peer,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
         self.assertIn("status", json_response)
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 400)
 
         # check we failed creation due to expire being too short
         self.assertIn("data", json_response)
         self.assertIn("errors_map", json_response["data"])
-        errors_map = json_response['data']['errors_map']
-        self.assertIn('0', errors_map)
-        self.assertIn('expire', errors_map['0'])
-        self.assertIn("the specified expire must be atleast", errors_map['0']['expire'])
+        errors_map = json_response["data"]["errors_map"]
+        self.assertIn("0", errors_map)
+        self.assertIn("expire", errors_map["0"])
+        self.assertIn(
+            "the specified expire must be atleast", errors_map["0"]["expire"]
+        )
 
         # check nothing was saved
         self.assertPendingUsers(expected_count=0)
@@ -295,94 +310,112 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'peers__new',
-            'operation': 'create',
+            "type": "peers__new",
+            "operation": "create",
             "invite_on_email": True,
             **test_pending_peer,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
         self.assertIn("status", json_response)
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 400)
 
         # check we failed creation due to expire being too long
         self.assertIn("data", json_response)
         self.assertIn("errors_map", json_response["data"])
-        errors_map = json_response['data']['errors_map']
-        self.assertIn('0', errors_map)
-        self.assertIn('expire', errors_map['0'])
-        self.assertIn("the specified expire is too far in the future", errors_map['0']['expire'])
+        errors_map = json_response["data"]["errors_map"]
+        self.assertIn("0", errors_map)
+        self.assertIn("expire", errors_map["0"])
+        self.assertIn(
+            "the specified expire is too far in the future",
+            errors_map["0"]["expire"],
+        )
 
         # check nothing was saved
         self.assertPendingUsers(expected_count=0)
 
     def test_peers_summary(self):
-        self._provision_peer_user(self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID)
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
 
         request_body = {
-            'type': 'peers__summary',
-            'operation': 'read',
+            "type": "peers__summary",
+            "operation": "read",
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
-
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 200)
 
-        data = json_response['data']
-        self.assertEqual(data, {
-            'accepted_count': 1,
-            'requested_count': 0,
-        })
+        data = json_response["data"]
+        self.assertEqual(
+            data,
+            {
+                "accepted_count": 1,
+                "requested_count": 0,
+            },
+        )
 
     def test_peers_accepted_delete(self):
-        self._provision_peer_user(self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID)
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
 
         test_pending_peer = {
             "peers": [self.TEST_PEER_DN],
         }
 
         request_body = {
-            'type': 'peers__accepted__delete',
-            'operation': 'delete',
+            "type": "peers__accepted__delete",
+            "operation": "delete",
             **test_pending_peer,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 200)
 
-        data = json_response['data']
-        self.assertEqual(data, {
-            'success_map': {
-                '0': True,
-            }
-        })
+        data = json_response["data"]
+        self.assertEqual(
+            data,
+            {
+                "success_map": {
+                    "0": True,
+                }
+            },
+        )
 
         # now check that the peer was removed
         content = self.assertUserPeers(self.TEST_CLIENT_ID)
         self.assertEqual(len(content), 0)
 
         # check the email was sent
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
     def test_peers_accepted_delete_invalid_dn(self):
         test_pending_peer = {
@@ -390,51 +423,56 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         }
 
         request_body = {
-            'type': 'peers__accepted__delete',
-            'operation': 'delete',
+            "type": "peers__accepted__delete",
+            "operation": "delete",
             **test_pending_peer,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        self.assertIn('status', json_response)
-        status = json_response['status']
+        self.assertIn("status", json_response)
+        status = json_response["status"]
         self.assertEqual(status, 400)
 
-        self.assertIn('error', json_response)
-        error = json_response['error']
+        self.assertIn("error", json_response)
+        error = json_response["error"]
         self.assertIsNotNone(error)
-        self.assertNotEqual(error, "")        
-
+        self.assertNotEqual(error, "")
 
     def test_peers_accepted_fetch(self):
-        self._provision_peer_user(self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID)
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
 
         payload = {
             "peer_dn": self.TEST_PEER_DN,
         }
 
         request_body = {
-            'type': 'peers__accepted__fetch',
-            'operation': 'create',
+            "type": "peers__accepted__fetch",
+            "operation": "create",
             **payload,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 200)
 
-        data = json_response['data']
-        self.assertEqual(data['distinguished_name'], self.TEST_PEER_DN)
+        data = json_response["data"]
+        self.assertEqual(data["distinguished_name"], self.TEST_PEER_DN)
 
     def test_peers_accepted_import(self):
         date_expire_in_8_days = date.today() + timedelta(days=8)
@@ -442,22 +480,24 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         with open(peers_csv) as f:
             content = f.read()
         request_body = {
-            'type': 'peers__accepted__import',
-            'operation': 'delete',
-            'label': 'some_peer_label',
-            'kind': 'collaboration',
-            'expire': date_expire_in_8_days.isoformat(),
-            'csvtext': content,
-            'invite_on_email': True
+            "type": "peers__accepted__import",
+            "operation": "delete",
+            "label": "some_peer_label",
+            "kind": "collaboration",
+            "expire": date_expire_in_8_days.isoformat(),
+            "csvtext": content,
+            "invite_on_email": True,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 200)
 
         # now check that peers were created
@@ -465,12 +505,18 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertEqual(len(content), 3)
 
         # check email were sent to each invited peer
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertEqual(fake_send_email.total_emails_sent(), 4)
 
     def test_peers_accepted_update(self):
-        date_expire_in_min = date.today() + timedelta(days=peers_expire_min_days) + timedelta(days=1)
-        self._provision_peer_user(self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID)
+        date_expire_in_min = (
+            date.today()
+            + timedelta(days=peers_expire_min_days)
+            + timedelta(days=1)
+        )
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
 
         new_label = "update_peer_label"
         new_expire = date_expire_in_min.isoformat()
@@ -479,22 +525,24 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
             "peer_dn": self.TEST_PEER_DN,
             "label": new_label,
             "kind": "",
-            "expire": new_expire
+            "expire": new_expire,
         }
 
         request_body = {
-            'type': 'peers__accepted__update',
-            'operation': 'create',
+            "type": "peers__accepted__update",
+            "operation": "create",
             **payload,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 200)
 
         # validate that the accepted peer was updated
@@ -511,38 +559,42 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertEqual(peer["expire"], new_expire)
 
         # check emails were sent
-        fake_send_email = self.configuration.context_get('notifier').send_email
-        self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
+        fake_send_email = self.configuration.context_get("notifier").send_email
+        self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
     def test_peers_requsted_accept(self):
         _ensure_dirs_needed_for_userdb(self.configuration)
-        self._record_pending_peer(self.TEST_PENDING_PEER_DN, self.TEST_CLIENT_ID)
-        self.logger.declare_expected_error(comparison='startswith',
-                                           expectation="expire '' could not be parsed into a valid date")
+        self._record_pending_peer(
+            self.TEST_PENDING_PEER_DN, self.TEST_CLIENT_ID
+        )
+        self.logger.declare_expected_error(
+            comparison="startswith",
+            expectation="expire '' could not be parsed into a valid date",
+        )
 
         test_pending_peer = {
             "peers": [self.TEST_PENDING_PEER_DN],
         }
 
         request_body = {
-            'type': 'peers__requested__accept',
-            'operation': 'delete',
+            "type": "peers__requested__accept",
+            "operation": "delete",
             **test_pending_peer,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 200)
 
-        data = json_response['data']
-        self.assertEqual(data['success_map'], {
-            '0': True
-        })
+        data = json_response["data"]
+        self.assertEqual(data["success_map"], {"0": True})
 
         # now check that the peer was added
         user_peers = self.assertUserPeers(self.TEST_CLIENT_ID)
@@ -553,30 +605,33 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertEqual(len(pending_peers), 0)
 
         # check emails were sent
-        fake_send_email = self.configuration.context_get('notifier').send_email
-        self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
+        fake_send_email = self.configuration.context_get("notifier").send_email
+        self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
     def test_peers_requested_delete(self):
-        self._provision_pending_peer(self, [self.TEST_PENDING_PEER_DN], self.TEST_CLIENT_ID)
+        self._provision_pending_peer(
+            self, [self.TEST_PENDING_PEER_DN], self.TEST_CLIENT_ID
+        )
 
         test_pending_peer = {
             "peers": [self.TEST_PENDING_PEER_DN],
         }
 
         request_body = {
-            'type': 'peers__requested__delete',
-            'operation': 'delete',
+            "type": "peers__requested__delete",
+            "operation": "delete",
             **test_pending_peer,
         }
-        prepared_wsgi = self.prepareWsgiAssert(self.configuration,
-                                 'http://localhost/datainterface.py',
-                                 form=request_body,
-                                 mig_user_dn=self.TEST_CLIENT_ID)
-
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
 
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
-        status = json_response['status']
+        status = json_response["status"]
         self.assertEqual(status, 200)
 
         # now check that the peer was removed
@@ -584,10 +639,10 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertEqual(len(user_pending_peers), 0)
 
         # check the email was sent
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('admin@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()
