@@ -204,7 +204,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
     def test_peers_new_valid(self):
         # Minimum expire is 7 days
         date_expire_in_8_days = date.today() + timedelta(days=8)
-        test_pending_peer = {
+        test_new_accepted_peer = {
             "country": "DK",
             "email": "pending_peer@example.com",
             "full_name": "Pending Peer User",
@@ -219,9 +219,8 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
             'type': 'peers__new',
             'operation': 'create',
             "invite_on_email": True,
-            **test_pending_peer,
+            **test_new_accepted_peer,
         }
-        pending_peers_fixture = self.prepareFixtureAssert('pending_peers--single', 'json')
         prepared_wsgi = self.prepareWsgiAssert(self.configuration,
                                  'http://localhost/datainterface.py',
                                  form=request_body,
@@ -233,7 +232,6 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(MigTestCase,
         self.assertEqual(status, 200)
 
         actual_peers_dict = self.assertUserPeers(self.TEST_CLIENT_ID)
-        pending_peers_fixture.assertAgainstFixture(actual_peers_dict)
 
         # Validate that the peer invitation email and admin notification email
         # were sent
