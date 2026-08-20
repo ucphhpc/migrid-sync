@@ -246,9 +246,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         # were sent
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertEqual(fake_send_email.total_emails_sent(), 2)
-        self.assertTrue(
-            fake_send_email.email_was_sent_to("peer@example.com")
-        )
+        self.assertTrue(fake_send_email.email_was_sent_to("peer@example.com"))
         self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
     def test_peers_new_with_too_short_expire(self):
@@ -345,7 +343,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
     def test_peers_new_valid_on_disk(self):
         # We don't want to test email sending here
         # just the correctness of the datastructure
-        self.configuration.context_get('notifier').send_email.forgive_email()
+        self.configuration.context_get("notifier").send_email.forgive_email()
 
         self._provision_user_peers_empty(self.test_user_settings_dir)
         date_expire_in_8_days = date.today() + timedelta(days=8)
@@ -377,7 +375,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
 
         status = json_response["status"]
         self.assertEqual(status, 200)
-        
+
         peers = self.assertUserPeers(self.TEST_CLIENT_ID)
         self.assertEqual(len(peers), 1)
         self.assertIn(self.TEST_PEER_DN, peers)
@@ -385,7 +383,9 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         peer = peers[self.TEST_PEER_DN]
         self.assertEqual(peer["distinguished_name"], self.TEST_PEER_DN)
         self.assertEqual(peer["full_name"], test_new_accepted_peer["full_name"])
-        self.assertEqual(peer["organization"], test_new_accepted_peer["organization"])
+        self.assertEqual(
+            peer["organization"], test_new_accepted_peer["organization"]
+        )
         self.assertEqual(peer["email"], test_new_accepted_peer["email"])
         self.assertEqual(peer["country"], test_new_accepted_peer["country"])
         self.assertEqual(peer["state"], test_new_accepted_peer["state"])
@@ -532,7 +532,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
             content = f.read()
         request_body = {
             "type": "peers__accepted__import",
-            "operation": "delete",
+            "operation": "create",
             "label": "some_peer_label",
             "kind": "collaboration",
             "expire": date_expire_in_8_days.isoformat(),
@@ -629,7 +629,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
 
         request_body = {
             "type": "peers__requested__accept",
-            "operation": "delete",
+            "operation": "create",
             **test_pending_peer,
         }
         prepared_wsgi = self.prepareWsgiAssert(
