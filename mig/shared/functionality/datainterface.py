@@ -917,7 +917,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if not valid_expire:
         return create_handler_response(
             400,
-            errors_maps={"0": {"expire": expire_message}}
+            errors_map={"0": {"expire": expire_message}}
         )
 
     accepted_peers = accountreq.list_peers_accepted(
