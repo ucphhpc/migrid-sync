@@ -50,7 +50,7 @@ import json
 import os
 import re
 import sys
-from datetime import date
+from datetime import date, datetime
 from io import BytesIO
 
 import mig.shared.accountreq as accountreq
@@ -87,6 +87,10 @@ def _compile_condition_value(search_value):
 
 
 def _compile_condition(condition):
+    """
+    Returns a dictionary with the passed key identifier unchanged
+    and the result of calling _compile_condition_value on the value.
+    """
     return {k: _compile_condition_value(v) for k, v in condition.items()}
 
 
@@ -195,8 +199,26 @@ def prepare_GET_migux_apps_peers_requested(configuration, request_info):
     listing = accountreq.list_peers_requested(
         configuration, request_info.client_id
     )
+    # When a peer request is accepted and forwarded from migadmin.py
+    # it is inserted into the user's user_settings/client_id/pending_peers file.
+    # Here the expire value is set to the maximum time a peer can be valid as an EPOCH timestamp.
+    # Therefore we need to transform this into the YYYY-MM-DD format to make it understandable for the user
+    # who is going to accept the request.
+
+    transformed_requested_peers = []
+    for requested_peer_dict in listing:
+        converted_peer_dict = {}
+        for key, value in requested_peer_dict.items():
+            if key == "expire":
+                expire_date = datetime.fromtimestamp(value)
+                value = expire_date.strftime("%Y-%m-%d")
+            converted_peer_dict[key] = value
+        transformed_requested_peers.append(converted_peer_dict)
+
     # TODO, request_info.args have not been input validated at this point
-    return True, _peers_listing_filter(listing, request_info.args)
+    return True, _peers_listing_filter(
+        transformed_requested_peers, request_info.args
+    )
 
 
 def convert_peers_listing_request_data(request_data):
@@ -474,6 +496,9 @@ def _main(
         )
         return (output_objects, returnvalues.ERROR)
 
+    # We pass the template_data_resp to the client ux library here, which
+    # is responsible for accepting and rendering it to the client
+    # so the request itself does not return the content.
     render_info = responder["generate_args"](request_info, template_data_resp)
     return create_tmpl_response(
         output_objects,
