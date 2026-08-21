@@ -910,6 +910,16 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     kind = accepted_common["kind"]
     expire = accepted_common["expire"]
 
+    # validate expire range (min/max days)
+    valid_expire, expire_message = validate_peer_expire_value(
+        expire
+    )
+    if not valid_expire:
+        return create_handler_response(
+            400,
+            errors_maps={"0": {"expire": expire_message}}
+        )
+
     accepted_peers = accountreq.list_peers_accepted(
         configuration, request_info.client_id
     )
