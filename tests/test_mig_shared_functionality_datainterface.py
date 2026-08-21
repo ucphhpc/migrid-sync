@@ -30,7 +30,7 @@
 from __future__ import print_function
 
 import os
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from envhelp.makeconfig import _ensure_dirs_needed_for_userdb
 from mig.shared.defaults import peers_expire_min_days
@@ -658,6 +658,63 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         # check emails were sent
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
+
+    def test_peers_requested_accept_on_disk(self):
+        # We don't want to test email sending here
+        # just the correctness of the datastructure
+        self.configuration.context_get("notifier").send_email.forgive_email()
+
+        _ensure_dirs_needed_for_userdb(self.configuration)
+        self._record_pending_peer(
+            self.TEST_PENDING_PEER_DN, self.TEST_CLIENT_ID
+        )
+        self.logger.declare_expected_error(
+            comparison="startswith",
+            expectation="expire '' could not be parsed into a valid date",
+        )
+        # Assert that the pending_peers on disk is as expected
+        user_pending_peers = self.assertUserPendingPeers(self.TEST_CLIENT_ID)
+        self.assertIn(self.TEST_PENDING_PEER_DN, user_pending_peers)
+        self.assertEqual(len(user_pending_peers), 1)
+        pending_peer = user_pending_peers[self.TEST_PENDING_PEER_DN]
+
+        test_pending_peer = {
+            "peers": [self.TEST_PENDING_PEER_DN],
+        }
+        request_body = {
+            "type": "peers__requested__accept",
+            "operation": "create",
+            **test_pending_peer,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response["status"]
+        self.assertEqual(status, 200)
+
+        user_peers = self.assertUserPeers(self.TEST_CLIENT_ID)
+        self.assertIn(self.TEST_PENDING_PEER_DN, user_peers)
+
+        # Now validate that the peers entry matches the values
+        # from the original pending_peer, with the caveat
+        # that the expire field should be transformed
+        # from an EPOCH value to a datetime timestamp ala YYYY-MM-DD
+        accepted_peer = user_peers[self.TEST_PENDING_PEER_DN]
+
+        old_expire_epoch = pending_peer.pop("expire")
+        new_expire_dateformat = accepted_peer.pop("expire")
+        self.assertDictEqual(pending_peer, accepted_peer)
+
+        old_expire_dateformat = datetime.fromtimestamp(
+            old_expire_epoch
+        ).strftime("%Y-%m-%d")
+        self.assertEqual(old_expire_dateformat, new_expire_dateformat)
 
     def test_peers_requested_delete(self):
         self._provision_pending_peer(

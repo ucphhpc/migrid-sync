@@ -1115,10 +1115,32 @@ def handle_POST_peers_requested_accept(configuration, request_info):
         for peer_tuple in existing_requested_peers
         if peer_tuple[0] in accepted_peer_dns
     }
+
+    # For now we have a special case user_settings/client_id/pending_peers
+    # has its expire format set to an EPOCH value that is set to the
+    # maximum when the migadmin.py approves the peer request and forwards
+    # it to the users pending_peers file.
+    # However the accepted_peers file user_settings/client_id/peers
+    # expects it to be the datetime format YYYY-MN-DD, therefore
+    # we have to transform the pending peer expire value when we accept it.
+    # In the future when an opportune momement comes we likely want
+    # to make the expire format an EPOCH value all the way through and
+    # just transform it when display it to a user.
+
+    prepared_to_accept_peers = {}
+    for peer_dn, peer_dict in to_accept_peers.items():
+        converted_peer_dict = {}
+        for key, value in peer_dict.items():
+            if key == "expire":
+                expire_date = datetime.datetime.fromtimestamp(value)
+                value = expire_date.strftime("%Y-%m-%d")
+            converted_peer_dict[key] = value
+        prepared_to_accept_peers[peer_dn] = converted_peer_dict
+
     # TODO, implement a function that handles the removal and addition
-    # in one go
+    # in one go such that the entire operation is locked
     if not accountreq.add_accepted_peers_to_client(
-        configuration, request_info.client_id, to_accept_peers
+        configuration, request_info.client_id, prepared_to_accept_peers
     ):
         return create_handler_response(
             400,
