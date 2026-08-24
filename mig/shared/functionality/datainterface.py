@@ -159,7 +159,11 @@ def validate_peers_import_fields(import_args):
 
     import_args: {"label": label, "kind": kind, "expire": expire}
     """
-    signature = accountreq.EXTRA_PEER_FIELDS
+    signature = {
+        "label": [""],
+        "kind": [""],
+        "expire": accountreq.EXTRA_PEER_FIELDS["expire"]
+    }
     accepted, rejected = validated_input(
         import_args,
         signature,
