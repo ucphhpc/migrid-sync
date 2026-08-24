@@ -54,7 +54,8 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.htmlgen import man_base_js, man_base_html
 from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.parseflags import verbose
-from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member
+from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_default, \
+    vgrid_is_owner_or_member
 
 default_pager_entries = 20
 
@@ -139,12 +140,12 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
                                '''Workflows are not enabled on this system'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    if not vgrid_is_owner_or_member(vgrid_name, client_id,
-                                    configuration):
+    if vgrid_is_default(vgrid_name) or \
+        not vgrid_is_owner_or_member(vgrid_name, client_id,
+                                     configuration):
         output_objects.append({'object_type': 'error_text',
-                               'text': '''You must be an owner or member of %s vgrid to
-access the workflows.'''
-                               % vgrid_name})
+                               'text': '''You must be an owner or explicit member
+of %s %s to access the workflows.''' % (vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if operation not in allowed_operations:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # xmlrpcsslclient - XMLRPC client with HTTPS user certificate support
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -68,7 +69,7 @@ def read_user_conf():
             parts = thisline.split(None)
             (key, val) = parts[:2]
             (key, val) = key.strip(), val.strip()
-            if not key in needed_settings + optional_settings:
+            if key not in needed_settings + optional_settings:
                 continue
             if key in expand_paths:
                 val = os.path.expandvars(os.path.expanduser(val))
@@ -86,69 +87,45 @@ def read_user_conf():
 
 
 class SafeCertTransport(xmlrpc.client.SafeTransport):
-
     """HTTPS with user certificate"""
 
     host = None
+    ssl_ctx = None
+    _connection = None
     conf = {}
 
-    def __init__(self, use_datetime=0, conf={}):
-        """For backward compatibility with python < 2.7 . Call parent
-        constructor and check if the new _connection attribute is set.
-        If not we must switch to compatibility mode where the request
-        method needs to be overridden.
+    def __init__(self, use_datetime=False, use_builtin_types=False, headers=(),
+                 context=None, conf=None):
+        """Wrap parent constructor with our conf and optional ssl_ctx init"""
+        xmlrpc.client.SafeTransport.__init__(self, use_datetime=use_datetime,
+                                             use_builtin_types=use_builtin_types,
+                                             headers=headers, context=context)
+        if conf:
+            self.conf.update(conf)
+
+        if context is None:
+            self.ssl_ctx = self.__init_ssl_ctx()
+        else:
+            self.ssl_ctx = context
+
+    def __init_ssl_ctx(self):
+        """Helper to set up an ssl_ctx with client key and cert plus optional
+        reading of the key passphrase from conf to enable non-interactive use.
+        Uses any configured CA certificate, too, but defaults to system ones.
         """
-        xmlrpc.client.SafeTransport.__init__(self, use_datetime)
-        self.conf.update(conf)
-
-        if not hasattr(self, '_connection'):
-            # print "DEBUG: switch to compat mode"
-            self._connection = (None, None)
-            self.request = self._compat_request
-
-    def _compat_request(self, host, handler, request_body, verbose=0):
-        """For backward compatibility with < 2.7 : must override connection
-        calls to fit older httplib API.
-
-        Reuse existing connections to avoid repeating passphrase every single
-        time.
-        """
-
-        # issue XML-RPC request
-
-        if not self.host:
-            self.host = self.make_connection(host)
-        if verbose:
-            self.host.set_debuglevel(1)
-
-        self.send_request(self.host, handler, request_body)
-
-        self.send_user_agent(self.host)
-        self.send_content(self.host, request_body)
-
-        resp = self.host.getresponse()
-        errcode = resp.status
-        errmsg = resp.reason
-        headers = resp.getheaders()
-
-        if errcode != 200:
-            raise xmlrpc.client.ProtocolError(host + handler, errcode,
-                                          errmsg, headers)
-
-        self.verbose = verbose
-
-        try:
-            sock = self.host._conn.sock
-        except AttributeError:
-            sock = None
-
-        return self._parse_response(resp, sock)
+        key_pw = self.conf.get('password', None)
+        cacert = None
+        if self.conf.get('cacertfile', None) \
+                and self.conf['cacertfile'] != 'AUTO':
+            cacert = self.conf['cacertfile']
+        ssl_ctx = ssl.create_default_context(cafile=cacert)
+        ssl_ctx.load_cert_chain(self.conf['certfile'],
+                                keyfile=self.conf['keyfile'],
+                                password=key_pw)
+        return ssl_ctx
 
     def make_connection(self, host):
-        """Override default HTTPS Transport to include key/cert support. This
-        is the python 2.7 version which changed internals and broke
-        backward compatibility. We use the exact same structure and do the
-        plumbing for backward compatibility in the constructor instead.
+        """Override default HTTPS Transport to include key/cert support.
 
         Reuses connections if possible to support HTTP/1.1 keep-alive.
 
@@ -156,31 +133,27 @@ class SafeCertTransport(xmlrpc.client.SafeTransport):
         """
         if self._connection and host == self._connection[0]:
             return self._connection[1]
+
         try:
             HTTPS = http.client.HTTPSConnection
         except AttributeError:
             raise NotImplementedError(
                 "your version of httplib doesn't support HTTPS")
 
-        key_pw = self.conf.get('password', None)
-        cacert = None
-        if conf['cacertfile'] and conf['cacertfile'] != 'AUTO':
-            cacert = self.conf['cacertfile']
-        ssl_ctx = ssl.create_default_context(cafile=cacert)
-        ssl_ctx.load_cert_chain(self.conf['certfile'],
-                                keyfile=self.conf['keyfile'], password=key_pw)
         self._connection = host, HTTPS(self.conf['host'],
-                                       port=self.conf['port'], context=ssl_ctx)
+                                       port=self.conf['port'],
+                                       context=self.ssl_ctx)
         return self._connection[1]
 
 
 def xmlrpcgetserver(conf):
     cert_transport = SafeCertTransport(conf=conf)
     server = xmlrpc.client.ServerProxy('https://%(host)s:%(port)s%(script)s' %
-                                   conf, transport=cert_transport,
-                                   # encoding='utf-8',
-                                   # verbose=True
-                                   )
+                                       conf, transport=cert_transport,
+                                       # encoding='utf-8',
+                                       # verbose=True
+                                       context=cert_transport.ssl_ctx
+                                       )
     return server
 
 
@@ -211,8 +184,7 @@ if '__main__' == __name__:
     host_port = url_tuple[1].split(':', 1)
     if len(host_port) < 2:
         host_port.append('443')
-    host_port[1] = int(host_port[1])
-    conf['host'], conf['port'] = host_port
+    conf['host'], conf['port'] = host_port[0], int(host_port[1])
 
     print('''Testing XMLRPC client against %(migserver)s with user certificate
 from %(certfile)s , key from %(keyfile)s and
@@ -260,7 +232,10 @@ key/certificate passphrase before you can continue.
         {'job_id': job_id_list, 'flags': 'vs', 'max_jobs': '5'})
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print('Error %s:%s ' % (returnval, returnmsg))
+        print('Error %s:%s' % (returnval, returnmsg))
+        for ele in inlist:
+            if ele['object_type'] == 'error_text':
+                print(ele['text'])
 
     for ele in inlist:
         if ele['object_type'] == 'job_list':
@@ -423,13 +398,31 @@ vgrid=Generic
     # (inlist, retval) = server.editfile({"path":["/m2"], "submitjob":["True"], "editarea":["%s" % mrsl]})
     # (inlist, retval) = server.canceljob({"job_id":["%s" % sys.argv[1]]})
 
+    print("cat as text file")
+    (inlist, retval) = server.cat({"path": path_list, "flags": "v"})
+    print('cat status: %s' % retval)
+    (returnval, returnmsg) = retval
+    if returnval != 0:
+        print('Error %s:%s' % (returnval, returnmsg))
+    for ele in inlist:
+        if ele['object_type'] == 'error_text':
+            print(ele['text'])
+        elif 'file_output' == ele['object_type']:
+            print(''.join(ele['lines']))
+
+    print("cat as binary file")
     try:
-        print("cat as binary file")
         (inlist, retval) = server.cat({"path": path_list, "flags": "vb"})
-        for entry in inlist:
-            if 'file_output' == entry['object_type']:
+        print('cat status: %s' % retval)
+        (returnval, returnmsg) = retval
+        if returnval != 0:
+            print('Error %s:%s' % (returnval, returnmsg))
+        for ele in inlist:
+            if ele['object_type'] == 'error_text':
+                print(ele['text'])
+            elif 'file_output' == ele['object_type']:
                 # NOTE: xmlrpc wraps in object with contents in data attribute
-                print(''.join([i.data for i in entry['lines']]))
+                print([i.data for i in ele['lines']])
     except Exception as exc:
         print("Error: could not cat as binary file: %s" % exc)
 
@@ -453,9 +446,14 @@ ANY
         "jobname_0_0_0": "abc", "fileupload_0_0_0filename": "newfile.txt",
         "submitmrsl_0": ["OFF"], "fileupload_0_0_0": ["%s" % mrsl]
     })
-    print(inlist)
-
-    # print "DEBUG: %s\n%s" % (inlist, retval)
+    print('upload status: %s' % retval)
+    # print(inlist)
+    for entry in inlist:
+        if 'text' == entry['object_type']:
+            print('upload status: %s' % entry['text'])
+        elif 'fileuploadobjs' == entry['object_type']:
+            for obj in entry["fileuploadobjs"]:
+                print('uploaded %(name)s of %(size)db' % obj)
 
     print('submit job description in %s' % mrsl_path)
     (inlist, retval) = server.submit({'path': [mrsl_path]})

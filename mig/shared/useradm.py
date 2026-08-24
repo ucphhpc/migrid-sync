@@ -512,14 +512,14 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
         user_db = load_user_db(db_path, do_lock=False)
         if verbose:
             print('Loaded existing user DB from: %s' % db_path)
-    except Exception as err:
+    except Exception:
         if not force:
             if do_lock:
                 unlock_user_db(flock)
             raise Exception("Failed to load user DB: '%s'" % db_path)
 
-    # Prevent alias clashes by refusing addition of new users with same
-    # alias. We only allow renew of existing user.
+    # Prevent alias and main_id clashes by refusing addition of new users with
+    # same value. We only allow renewal of existing users with match.
 
     # NOTE: careful to skip GDP project users here
     if configuration.user_openid_providers and \
@@ -527,25 +527,50 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
         if not configuration.site_enable_gdp:
             user_aliases = dict([(key, val[configuration.user_openid_alias])
                                  for (key, val) in user_db.items()])
-            alias = user[configuration.user_openid_alias]
+            user_main_ids = dict([(key, val.get('main_id', None))
+                                  for (key, val) in user_db.items()])
         elif not is_gdp_user(configuration, client_id):
             user_aliases = dict([(key, val[configuration.user_openid_alias])
                                  for (key, val) in user_db.items() if not
                                  is_gdp_user(configuration, key)])
-            alias = user[configuration.user_openid_alias]
+            user_main_ids = dict([(key, val.get('main_id', None))
+                                  for (key, val) in user_db.items() if not
+                                  is_gdp_user(configuration, key)])
         else:
             user_aliases = {}
-            alias = None
+            user_main_ids = {}
 
+        # NOTE: all (or no) users should have alias so default to None for hit
+        alias = user.get(configuration.user_openid_alias, None)
+        # NOTE: optional for accounts to have main_id so use UNSET to differ
+        main_id = user.get('main_id', 'UNSET')
+        alias_conflict, main_id_conflict = False, False
         if alias in user_aliases.values() and \
                 user_aliases.get(client_id, None) != alias:
+            alias_conflict = True
+            conflict_list = [i for i in user_aliases
+                             if user_aliases[i] == alias]
+            _logger.warning('create %r with alias %r would conflict: %s' %
+                            (client_id, alias, ', '.join(conflict_list)))
+        if main_id in user_main_ids.values() and \
+                user_main_ids.get(client_id, None) != main_id:
+            main_id_conflict = True
+            conflict_list = [i for i in user_main_ids
+                             if user_main_ids[i] == main_id]
+            _logger.warning('create %r with main_id %r would conflict: %s' %
+                            (client_id, main_id, ', '.join(conflict_list)))
+
+        if alias_conflict or main_id_conflict:
             if do_lock:
                 unlock_user_db(flock)
+            _logger.warning('refuse create %r with alias %s / id %s conflict'
+                            % (client_id, alias, main_id))
             if verbose:
-                print('Attempting create user with conflicting alias %s'
-                      % alias)
+                print('Attempting create user with alias %s / id %s conflict'
+                      % (alias, main_id))
             raise Exception(
-                'A conflicting user with alias %s already exists' % alias)
+                'A conflicting user with alias %s / id %s already exists' %
+                (alias, main_id))
 
     if client_id not in user_db:
         _logger.debug('add new user %r in user DB' % client_id)
@@ -569,6 +594,8 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
         else:
             if do_lock:
                 unlock_user_db(flock)
+            _logger.warning('refusing to renew %s account for %r' %
+                            (account_status, client_id))
             if verbose:
                 print('Refusing to renew %s account for %r' % (account_status,
                                                                client_id))
@@ -722,11 +749,13 @@ change."""
                 # NOTE: bail out here on edit/renewal as IDs are not unique
                 if do_lock:
                     unlock_user_db(flock)
-                raise ValueError("unique ID for %s (%r) has a collission!" %
+                _logger.warning("refuse renew %s (%r) with collision" %
+                                (client_id, user['unique_id']))
+                raise ValueError("unique ID for %s (%r) has a collision!" %
                                  (client_id, user['unique_id']))
             else:
-                _logger.warning("retry unique ID for %s (%r) - collission" %
-                                (client_id, user['unique_id']))
+                _logger.info("regenerate unique ID for %s (%r) - in use" %
+                             (client_id, user['unique_id']))
             user['unique_id'] = generate_random_ascii(unique_id_length,
                                                       unique_id_charset)
         if not found_unique:

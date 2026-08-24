@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # checkconf - check MiGserver.conf file
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -39,7 +40,6 @@ from past.builtins import basestring
 import os
 import re
 import sys
-import types
 
 from mig.shared.configuration import Configuration, ConfigParser
 from mig.shared.configuration import fix_missing
@@ -115,8 +115,6 @@ def check_conf(conf_file):
 
     # Search object attributes for possible paths
 
-    attrs = []
-    ignore_attrs = ['__class__', '__doc__', '__module__']
     path_re = re.compile('(' + os.sep + "[\w\._-]*)+$")
 
     _logger = conf.logger
@@ -158,7 +156,7 @@ def check_conf(conf_file):
             else:
                 _logger.warning('%s: %s does not exist!', name, val)
                 print('* WARNING *: %s: %s does not exist!' % (name, val))
-                if not path in missing_paths:
+                if path not in missing_paths:
                     missing_paths.append(path)
                 warnings += 1
 
@@ -175,16 +173,16 @@ def check_conf(conf_file):
             missing_paths.sort()
 
             for path in missing_paths:
-                if ALWAYS == answer:
-
-                    # 'always' answer reults in default type for all missing entries
-
-                    path_type = None
-                elif YES == answer:
+                default_path_type = 'D'
+                # We're past NO so ask on YES or use default path_type for AUTO
+                if YES == answer:
                     path_type = \
                         ask_reply('Create %s as a (d)irectory, (f)ile or (p)ipe? [D/f/p] '
-                                  % path)
-                if not path_type or 'D' == path_type.upper():
+                                  % path) or default_path_type
+                else:
+                    path_type = default_path_type
+
+                if 'D' == path_type.upper():
                     try:
                         os.makedirs(path)
                         print('created directory %s' % path)
@@ -196,7 +194,7 @@ def check_conf(conf_file):
                         dirname = os.path.dirname(path)
                         if dirname and not os.path.exists(dirname):
                             os.makedirs(dirname)
-                            print('created directory %s' % dirname)
+                            print('created parent directory %s' % dirname)
                         touch_file(path)
                         print('created file %s' % path)
                     except Exception as err:
@@ -206,11 +204,14 @@ def check_conf(conf_file):
                         dirname = os.path.dirname(path)
                         if dirname and not os.path.exists(dirname):
                             os.makedirs(dirname)
-                            print('created directory %s' % dirname)
+                            print('created parent directory %s' % dirname)
                         os.mkfifo(path)
                         print('created pipe %s' % path)
                     except Exception as err:
-                        print('could not create file %s: %s' % (path, err))
+                        print('could not create pipe %s: %s' % (path, err))
+                else:
+                    print('skip unsupported path type for %s: %s' %
+                          (path, path_type))
     print('completed check of %s: %d warning(s)' % (conf_file, warnings))
     return warnings
 

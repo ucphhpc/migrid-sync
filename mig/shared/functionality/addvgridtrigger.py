@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridtrigger - add vgrid trigger
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Add a trigger to a given vgrid"""
+
 from __future__ import absolute_import
 
 import os
@@ -40,9 +41,9 @@ from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
-from mig.shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
-    vgrid_is_trigger_owner, vgrid_list_subvgrids, vgrid_add_triggers, \
-    vgrid_triggers
+from mig.shared.vgrid import init_vgrid_script_add_rem, vgrid_is_default, \
+    vgrid_is_owner_or_member, vgrid_is_trigger, vgrid_is_trigger_owner, \
+    vgrid_list_subvgrids, vgrid_add_triggers, vgrid_triggers
 from mig.shared import returnvalues
 
 
@@ -161,6 +162,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         output_objects.append({'object_type': 'warning', 'text': msg})
 
+    if vgrid_is_default(vgrid_name) or \
+        not vgrid_is_owner_or_member(vgrid_name, client_id,
+                                     configuration):
+        output_objects.append({'object_type': 'error_text',
+                               'text': '''You must be an active owner or member
+of %s %s to access the workflows.''' % (vgrid_name, label)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     # if we get here user is either vgrid owner or allowed to add rule
 
     # don't add if already in vgrid or parent vgrid - but update if owner
@@ -196,7 +205,7 @@ sub-%(vgrid_label)s and try again''' % {'rule_id': rule_id,
                                         'vgrid_label': label}})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if not action in valid_trigger_actions:
+    if action not in valid_trigger_actions:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              "invalid action value %s" % action})
@@ -205,7 +214,7 @@ sub-%(vgrid_label)s and try again''' % {'rule_id': rule_id,
     if keyword_all in changes:
         changes = valid_trigger_changes
     for change in changes:
-        if not change in valid_trigger_changes:
+        if change not in valid_trigger_changes:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  "found invalid change value %s" % change})
