@@ -213,6 +213,9 @@ def create_handler_response(status, message=None, **ui_response_kwargs):
     """
     A helper function to create route handler responses.
     """
+    if message is None:
+        message = "an unspecified error occurred"
+
     response = {"status": status, "message": message}, {**ui_response_kwargs}
     return response
 
@@ -922,6 +925,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if not valid_expire:
         return create_handler_response(
             400,
+            message="an incorrect End Date value was recieved.",
             errors_map={"0": {"expire": expire_message}}
         )
 
