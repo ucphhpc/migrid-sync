@@ -670,7 +670,8 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
 
     if peer_dn not in accepted_by_dn:
         return create_handler_response(404, message="peer not found")
-    return create_handler_response(200, distinguished_name=peer_dn)
+    fetched_peer = accepted_by_dn[peer_dn]
+    return create_handler_response(200, **fetched_peer)
 
 
 def convert_POST_peers_accepted_import(request_data):
