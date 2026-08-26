@@ -1318,6 +1318,7 @@ HANDLERS_BY_PACKAGE = {
 NORMALIZE_INPUTS_BY_PACKAGE = {
     "peers": {
         "POST /new": convert_POST_peers_new,
+        "POST /send_invitation": convert_POST_peers_send_invitation,
         "POST /accepted/delete": convert_POST_peers_accepted_delete,
         "POST /accepted/fetch": convert_POST_peers_accepted_fetch,
         "POST /accepted/import": convert_POST_peers_accepted_import,
