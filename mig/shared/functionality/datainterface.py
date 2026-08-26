@@ -464,13 +464,12 @@ def handle_POST_peers_send_invitation(configuration, request_info):
             )
         )
         configuration.logger.info(invite_log_msg)
-        email_sent = send_email(
+        if not send_email(
             configuration,
             peer_dict["email"],
             invite_msg["header"],
             invite_msg["msg"],
-        )
-        if not email_sent:
+        ):
             configuration.logger.warning(
                 "failed to send invitation email to peer %s"
                 % peer_dict.get("email", "")
