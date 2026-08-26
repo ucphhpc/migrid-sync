@@ -171,7 +171,7 @@ if '__main__' == __name__:
         raw_user = distinguished_name_to_user(new_id)
     elif user_file:
         try:
-            user_dict = load(user_file)
+            raw_user = load(user_file)
         except Exception as err:
             print('Error in %r user extraction: %s' % (user_file, err))
             usage()
