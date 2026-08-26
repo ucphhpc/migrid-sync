@@ -162,7 +162,7 @@ def validate_peers_import_fields(import_args):
     signature = {
         "label": [""],
         "kind": [""],
-        "expire": accountreq.EXTRA_PEER_FIELDS["expire"]
+        "expire": accountreq.EXTRA_PEER_FIELDS["expire"],
     }
     accepted, rejected = validated_input(
         import_args,
@@ -386,6 +386,100 @@ def handle_GET_peers_summary(configuration, request_info):
         accepted_count=len(accepted_peers),
         requested_count=len(requested_peers),
     )
+
+
+def convert_POST_peers_send_invitation(request_data):
+    """
+    Data conversion: POST /peers/new
+    """
+    args = request_data
+    # Align with the validate_input expectations for an input_dict
+    peers = args.get("peers", [])
+    args["peers"] = [{"peer": peer} for peer in peers]
+    return args
+
+
+def handle_POST_peers_send_invitation(configuration, request_info):
+    """
+    Request handler: POST /peers/send_invitation
+    """
+    peers = request_info.arg_value("peers", list)
+    validations = validate_input_peers_distinguished_names(peers)
+
+    validation_errors, validation_accepted = [], []
+    for index, validation in enumerate(validations):
+        if validation["rejected"]:
+            validation_errors.append(validation["rejected"])
+        if validation["accepted"]:
+            validation_accepted.append(validation["accepted"])
+
+    if validation_errors:
+        return create_handler_response(
+            400,
+            error="failed to send invitations to peers, error: %s "
+            % validation_errors,
+        )
+
+    # Client existing accepted peers
+    accepted_peers = accountreq.list_peers_accepted(
+        configuration, request_info.client_id
+    )
+    accepted_by_dn = {
+        peer["distinguished_name"]: peer for peer in accepted_peers.values()
+    }
+    client_name = extract_field(request_info.client_id, "full_name")
+
+    valid_client_peers_dn, invalid_client_peers_dn = {}, []
+    for index, accepted in enumerate(validation_accepted):
+        peer_dn = accepted["peer"]
+        if peer_dn not in accepted_by_dn:
+            invalid_client_peers_dn.append(peer_dn)
+        else:
+            peer_dict = accepted_by_dn[peer_dn]
+            valid_client_peers_dn[peer_dn] = peer_dict
+
+    if invalid_client_peers_dn:
+        return create_handler_response(
+            400,
+            message="you tried to send invitations to peers that you dont have, namely: %s"
+            % invalid_client_peers_dn,
+        )
+
+    peer_invitations = {}
+    for peer_dn, peer_dict in valid_client_peers_dn.items():
+        invite_msg = create_peer_invitation_msg(
+            configuration,
+            client_name,
+            request_info.client_email,
+            peer_dict,
+            peer_dict.get("kind", ""),
+        )
+        invite_log_msg = (
+            "Sending invitation: to: %s, header: %s, msg: %s, smtp_server: %s"
+            % (
+                peer_dict["email"],
+                invite_msg["header"],
+                invite_msg["msg"],
+                configuration.smtp_server,
+            )
+        )
+        configuration.logger.info(invite_log_msg)
+        email_sent = send_email(
+            configuration,
+            peer_dict["email"],
+            invite_msg["header"],
+            invite_msg["msg"],
+        )
+        if not email_sent:
+            configuration.logger.warning(
+                "failed to send invitation email to peer %s"
+                % peer_dict.get("email", "")
+            )
+            peer_invitations[peer_dn] = False
+        else:
+            peer_invitations[peer_dn] = True
+
+    return create_handler_response(200, peer_invitations=peer_invitations)
 
 
 def convert_POST_peers_new(request_data):
@@ -919,14 +1013,12 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     expire = accepted_common["expire"]
 
     # validate expire range (min/max days)
-    valid_expire, expire_message = validate_peer_expire_value(
-        expire
-    )
+    valid_expire, expire_message = validate_peer_expire_value(expire)
     if not valid_expire:
         return create_handler_response(
             400,
             message="an incorrect End Date value was recieved.",
-            errors_map={"0": {"expire": expire_message}}
+            errors_map={"0": {"expire": expire_message}},
         )
 
     accepted_peers = accountreq.list_peers_accepted(
@@ -1213,6 +1305,7 @@ HANDLERS_BY_PACKAGE = {
     "peers": {
         "POST /new": handle_POST_peers_new,
         "GET /summary": handle_GET_peers_summary,
+        "POST /send_invitation": handle_POST_peers_send_invitation,
         "POST /accepted/delete": handle_POST_peers_accepted_delete,
         "POST /accepted/fetch": handle_POST_peers_accepted_fetch,
         "POST /accepted/import": handle_POST_peers_accepted_import,
