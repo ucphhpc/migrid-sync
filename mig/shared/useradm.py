@@ -1639,8 +1639,11 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
             print('unexpectedly got no saved status after edit %r' % client_id)
         _logger.error("something failed in edit user %r - delay unlocking" %
                       client_id)
-    else:
+    elif saved_status:
         user_dict['status'] = saved_status
+    else:
+        # NOTE: save will ignore empty string values so force to 'active' here
+        user_dict['status'] = 'active'
     # NOTE: only backup user DB here if we didn't already do so in call above
     create_user(user_dict, conf_path, db_path, force, verbose,
                 ask_renew=False, default_renew=True, from_edit_user=True,
