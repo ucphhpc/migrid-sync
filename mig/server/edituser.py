@@ -69,7 +69,7 @@ Where OPTIONS may be one or more of:
    -o SHORT_ID         Change OpenID alias of user to SHORT_ID
    -r FIELDS           Remove FIELDS for user in user DB
    -R ROLES            Change user affiliation to ROLES
-   -u USER_FILE      Update to new user information from pickle file
+   -u USER_FILE        Update to new user information from pickle file
    -v                  Verbose output
 """ % {'name': name})
 
@@ -167,19 +167,13 @@ if '__main__' == __name__:
                   % len(args))
             usage()
             sys.exit(1)
-        # Force user ID fields to canonical form for consistency
-        # Title name, lowercase email, uppercase country and state, etc.
-        user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     elif new_id:
         raw_user = distinguished_name_to_user(new_id)
-        # Force user ID fields to canonical form for consistency
-        # Title name, lowercase email, uppercase country and state, etc.
-        user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     elif user_file:
         try:
             user_dict = load(user_file)
         except Exception as err:
-            print('Error in user name extraction: %s' % err)
+            print('Error in %r user extraction: %s' % (user_file, err))
             usage()
             sys.exit(1)
     elif not configuration.site_enable_gdp:
@@ -192,15 +186,15 @@ if '__main__' == __name__:
         raw_user['state'] = input('State: ')
         raw_user['country'] = input('2-letter Country Code: ')
         raw_user['email'] = input('Email: ')
-        # Force user ID fields to canonical form for consistency
-        # Title name, lowercase email, uppercase country and state, etc.
-        user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     else:
         print("Error: Missing one or more of the arguments: "
               + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
               + "[EMAIL]")
         sys.exit(1)
 
+    # Force user ID fields to canonical form for consistency
+    # Title name, lowercase email, uppercase country and state, etc.
+    user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     fill_distinguished_name(user_dict)
 
     # logger.debug('edituser to new ID: %(distinguished_name)s' % user_dict)
