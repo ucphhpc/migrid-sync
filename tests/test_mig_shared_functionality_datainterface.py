@@ -613,6 +613,107 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
+    def test_peers_send_invitation_valid(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+
+        request_body = {
+            "type": "peers__send_invitation",
+            "operation": "create",
+            "peers": [self.TEST_PEER_DN],
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response["status"]
+        self.assertEqual(status, 200)
+        self.assertIn("peer_invitations", json_response["data"])
+        self.assertTrue(
+            json_response["data"]["peer_invitations"][self.TEST_PEER_DN]
+        )
+
+        fake_send_email = self.configuration.context_get("notifier").send_email
+        self.assertEqual(fake_send_email.total_emails_sent(), 1)
+        self.assertTrue(fake_send_email.email_was_sent_to("peer@example.com"))
+
+    def test_peers_send_invitation_invalid_dn(self):
+        request_body = {
+            "type": "peers__send_invitation",
+            "operation": "create",
+            "peers": ["foo/bar/baz"],
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response["status"]
+        self.assertEqual(status, 400)
+        self.assertIn("error", json_response)
+        self.assertTrue(len(json_response["error"]) > 0)
+
+    def test_peers_send_invitation_nonexistent_peer(self):
+        non_existent_dn = "/C=DK/ST=NA/L=NA/O=Nonexistent/OU=NA/CN=Nonexistent Peer/emailAddress=nonexistent@example.com"
+
+        request_body = {
+            "type": "peers__send_invitation",
+            "operation": "create",
+            "peers": [non_existent_dn],
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response["status"]
+        self.assertEqual(status, 400)
+        self.assertIn("error", json_response)
+        self.assertTrue(len(json_response["error"]) > 0)
+
+    def test_peers_send_invitation_multiple_peers(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+
+        request_body = {
+            "type": "peers__send_invitation",
+            "operation": "create",
+            "peers": [self.TEST_PEER_DN],
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response["status"]
+        self.assertEqual(status, 200)
+        self.assertIn("peer_invitations", json_response["data"])
+        self.assertTrue(
+            json_response["data"]["peer_invitations"][self.TEST_PEER_DN]
+        )
+
+        fake_send_email = self.configuration.context_get("notifier").send_email
+        self.assertTrue(fake_send_email.email_was_sent_to("peer@example.com"))
+
     def test_peers_requsted_accept(self):
         _ensure_dirs_needed_for_userdb(self.configuration)
         self._record_pending_peer(
