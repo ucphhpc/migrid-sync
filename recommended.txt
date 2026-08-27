@@ -19,7 +19,7 @@ pyOpenSSL
 pyftpdlib
 watchdog
 scandir
-python-openid
+python3-openid
 # NOTE: this used to be called irclib and is untested for any recent versions 
 irc
 # Use the maintained fork of the now stale original jsonrpclib
