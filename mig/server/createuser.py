@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createuser - Create or renew a MiG user with all the necessary directories
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,12 +20,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
 
-"""Add or renew MiG user in user DB and in file system"""
+"""Add or renew MiG user in user database and file system"""
 
 from __future__ import print_function
 from __future__ import absolute_import
@@ -50,7 +51,7 @@ from mig.shared.useradm import init_user_adm, create_user, load_user_dict
 from mig.shared.userdb import default_db_path
 
 cert_warn = """
-Please note that you *must* use either the -i CERT_DN option to createuser
+Please note that you *must* use either the -i USER_ID option to createuser
 or use importuser instead if you want to use other certificate DN formats
 than the one expected by MiG (/C=.*/ST=.*/L=NA/O=.*/CN=.*/emailAddress=.*)
 Otherwise those users will NOT be able to access their MiG interfaces!
@@ -67,12 +68,16 @@ def usage(name='createuser.py'):
     print("""Create user in the MiG user database and file system.
 %(cert_warn)s
 Usage:
-%(name)s [OPTIONS] [FULL_NAME ORGANIZATION STATE COUNTRY \
-    EMAIL COMMENT PASSWORD]
-or
 %(name)s [OPTIONS] -u USER_FILE
 or
-%(name)s [OPTIONS] -i CERT_DN
+%(name)s [OPTIONS] [FULL_NAME ORGANIZATION STATE COUNTRY EMAIL COMMENT PASSWORD]
+to create a new user account non-interactively
+or
+%(name)s [OPTIONS]
+to create a new user account interactively
+or
+%(name)s [OPTIONS] -r -i USER_ID
+to renew an existing user, optionally with non-ID data changes.
 Where OPTIONS may be one or more of:
    -a AUTH_TYPE        Prepare account for AUTH_TYPE login (expire, password)
    -c CONF_FILE        Use CONF_FILE as server configuration
@@ -80,7 +85,7 @@ Where OPTIONS may be one or more of:
    -e EXPIRE           Set user account expiration to EXPIRE (epoch)
    -f                  Force operations to continue past errors
    -h                  Show this help
-   -i CERT_DN          Use CERT_DN as user ID despite what other fields suggest
+   -i USER_ID          Use USER_ID as user ID despite what other fields suggest
    -o SHORT_ID         Add SHORT_ID as OpenID alias for user
    -p PEER_PATTERN     Verify in Peers of existing account matching PEER_PATTERN
    -r                  Renew user account with existing values
@@ -167,7 +172,7 @@ if '__main__' == __name__:
             override_fields['role'] = role
         elif opt == '-s':
             # Translate slack days into seconds as
-            slack_secs = int(float(val)*24*3600)
+            slack_secs = int(float(val) * 24 * 3600)
         elif opt == '-u':
             user_file = val
             # NOTE: hashing should already be handled explicitly
@@ -184,11 +189,9 @@ if '__main__' == __name__:
 
     if verbose:
         if conf_path:
-            if verbose:
-                print('using configuration in %s' % conf_path)
+            print('using configuration in %s' % conf_path)
         else:
-            if verbose:
-                print('using configuration from MIG_CONF (or default)')
+            print('using configuration from MIG_CONF (or default)')
 
     configuration = get_configuration_object(config_file=conf_path)
     logger = configuration.logger
@@ -216,9 +219,7 @@ if '__main__' == __name__:
 
     raw_user = {}
     if args:
-        #logger.debug('createuser called with args: %s' % args)
-        # logger.debug('createuser using default %s and fs %s encoding' %
-        #             (sys.getdefaultencoding(), sys.getfilesystemencoding()))
+        # logger.debug('createuser called with args: %s' % args)
         try:
             raw_user['full_name'] = args[0]
             raw_user['organization'] = args[1]
@@ -245,7 +246,7 @@ if '__main__' == __name__:
             usage()
             sys.exit(1)
     elif default_renew and user_id:
-        #logger.debug('createuser called with user_id: %s' % [user_id])
+        # logger.debug('createuser called with user_id: %s' % [user_id])
         saved = load_user_dict(logger, user_id, db_path, verbose)
         if not saved:
             print('Error: no such user in user db: %s' % user_id)
@@ -254,6 +255,7 @@ if '__main__' == __name__:
         user_dict.update(saved)
         del user_dict['expire']
     elif not configuration.site_enable_gdp:
+        # NOTE: We do not allow interactive user management on GDP systems
         if verbose:
             print('''Entering interactive mode
 %s''' % cert_warn)
@@ -293,7 +295,7 @@ if '__main__' == __name__:
     elif 'distinguished_name' not in user_dict:
         fill_distinguished_name(user_dict)
 
-    #logger.debug('createuser with ID: %s' % [user_dict['distinguished_name']])
+    # logger.debug('createuser with ID: %(distinguished_name)s' % user_dict)
     fill_user(user_dict)
 
     force_native_str_rec(user_dict)
@@ -312,25 +314,25 @@ if '__main__' == __name__:
     # Now all user fields are set and we can begin adding the user
 
     if verbose:
-        print('using user dict: %s' % user_dict)
+        print('Creating DB entry and dirs using dict: %s' % user_dict)
     try:
-        create_user(user_dict, configuration, db_path, force, verbose,
-                    ask_renew, default_renew, verify_peer=peer_pattern,
-                    peer_expire_slack=slack_secs, ask_change_pw=ask_change_pw)
+        user = create_user(user_dict, configuration, db_path, force, verbose,
+                           ask_renew, default_renew, verify_peer=peer_pattern,
+                           peer_expire_slack=slack_secs,
+                           ask_change_pw=ask_change_pw)
         if configuration.site_enable_gdp:
             (success_here, msg) = ensure_gdp_user(configuration,
                                                   "127.0.0.1",
                                                   user_dict['distinguished_name'])
             if not success_here:
                 raise Exception("Failed to ensure GDP user: %s" % msg)
-
     except Exception as exc:
         print("Error creating user: %s" % exc)
         import traceback
         logger.warning("Error creating user: %s" % traceback.format_exc())
         sys.exit(1)
-    print('Created or updated %s in user database and in file system' %
-          user_dict['distinguished_name'])
+    print('Created or updated %s in user database and file system' %
+          user['distinguished_name'])
     if user_file:
         if verbose:
             print('Cleaning up tmp file: %s' % user_file)
