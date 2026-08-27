@@ -229,7 +229,7 @@ if '__main__' == __name__:
     except Exception as exc:
         print("Error editing user: %s" % exc)
         import traceback
-        logger.warning("Error creating user: %s" % traceback.format_exc())
+        logger.warning("Error editing user: %s" % traceback.format_exc())
         sys.exit(1)
     print('%s\nchanged to\n%s\nin user database and file system' %
           (user_id, user['distinguished_name']))
