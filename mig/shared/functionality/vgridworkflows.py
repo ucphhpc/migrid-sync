@@ -52,7 +52,7 @@ from mig.shared.defaults import keyword_all, keyword_auto, \
 from mig.shared.fileio import unpickle, makedirs_rec, move_file
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.htmlgen import man_base_js, man_base_html
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.parseflags import verbose
 from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_default, \
     vgrid_is_owner_or_member
@@ -107,11 +107,13 @@ def read_trigger_log(configuration, vgrid_name, flags):
     return log_content
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs=None):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     defaults = signature()[1]
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
@@ -124,6 +126,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -132,12 +135,17 @@ def main(client_id, user_arguments_dict):
     operation = accepted['operation'][-1]
     flags = ''.join(accepted['flags'][-1])
 
+    if not configuration.site_enable_workflows:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Workflows are not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     if vgrid_is_default(vgrid_name) or \
         not vgrid_is_owner_or_member(vgrid_name, client_id,
                                      configuration):
         output_objects.append({'object_type': 'error_text',
-                               'text': '''You must be an owner or member of %s
-%s to access the workflows.''' % (vgrid_name, label)})
+                               'text': '''You must be an owner or explicit member
+of %s %s to access the workflows.''' % (vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if operation not in allowed_operations:
