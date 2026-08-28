@@ -161,6 +161,8 @@ VALID_CLOUD_LABEL_CHARACTERS = VALID_FQDN_CHARACTERS + '+_=@'
 # We do allow space in image names
 VALID_CLOUD_NAME_CHARACTERS = VALID_CLOUD_LABEL_CHARACTERS + ' '
 VALID_CLOUD_INSTANCE_ID_CHARACTERS = VALID_CLOUD_NAME_CHARACTERS + ':'
+# Valid templates field selection chars
+VALID_TEMPLATES_FIELD_CHARACTERS = ascii_letters
 # Import peers lines allowed chars
 VALID_PEERS_CSV_CHARACTERS = ascii_letters + digits + '; .@_-'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
@@ -1019,6 +1021,20 @@ def valid_cloud_name(
     __valid_contents(cloud_name, valid_chars, min_length, max_length)
 
 
+def valid_template_field(
+    field,
+    min_length=0,
+    max_length=64,
+    extra_chars=''
+    ):
+    """Verify that supplied field only contains characters that we
+    consider valid for a template to declare as a field that can be templated.
+    """
+
+    valid_chars = VALID_TEMPLATES_FIELD_CHARACTERS + extra_chars
+    __valid_contents(field, valid_chars, min_length, max_length)
+
+
 def valid_peers_csvlines(
     csvlines,
     min_length=0,
@@ -1030,6 +1046,39 @@ def valid_peers_csvlines(
     """
     valid_chars = VALID_PEERS_CSV_CHARACTERS + extra_chars
     __valid_contents(csvlines, valid_chars, min_length, max_length)
+
+
+def valid_peer_query(
+    query,
+    min_length=0,
+    max_length=64
+):
+    """Verify that supplied label only contains characters that we
+    consider valid in a peer query.
+
+    A query can be used to search for a label or email of a peer
+    """
+
+    valid_commonname(
+        query,
+        min_length=min_length,
+        max_length=max_length,
+        extra_chars="-_*@"
+    )
+
+
+def valid_peer_expire_optional(
+    expire,
+    min_length=10,
+    max_length=10,
+):
+    """Verify that the supplied expire value is either empty or a valid date
+    """
+
+    if expire == "":
+        return True
+
+    valid_date(expire, min_length=min_length, max_length=max_length)
 
 
 def valid_peer_label(

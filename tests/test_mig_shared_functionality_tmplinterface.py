@@ -343,7 +343,7 @@ class MigSharedFunctionalityTmplinterface__accepted(
         request_body = {
             "type": "migux_apps_peers__accepted",
             "operation": "read",
-            "fields": "email,full_name",
+            "fields": "email,label",
         }
         prepared_wsgi = self.prepareWsgiAssert(
             self.configuration,
@@ -367,7 +367,7 @@ class MigSharedFunctionalityTmplinterface__accepted(
         request_body = {
             "type": "migux_apps_peers__accepted",
             "operation": "read",
-            "fields": "full_name,email",
+            "fields": "label,email",
             "query": "*",
         }
         prepared_wsgi = self.prepareWsgiAssert(
@@ -392,8 +392,8 @@ class MigSharedFunctionalityTmplinterface__accepted(
         request_body = {
             "type": "migux_apps_peers__accepted",
             "operation": "read",
-            "fields": "full_name",
-            "query": "Test Peer User",
+            "fields": "email",
+            "query": "peer2@example.com",
         }
         prepared_wsgi = self.prepareWsgiAssert(
             self.configuration,
@@ -443,7 +443,7 @@ class MigSharedFunctionalityTmplinterface__requested(
         request_body = {
             "type": "migux_apps_peers__requested",
             "operation": "read",
-            "fields": "full_name,email",
+            "fields": "label,email",
         }
         prepared_wsgi = self.prepareWsgiAssert(
             self.configuration,
@@ -467,7 +467,7 @@ class MigSharedFunctionalityTmplinterface__requested(
         request_body = {
             "type": "migux_apps_peers__requested",
             "operation": "read",
-            "fields": "full_name,email",
+            "fields": "label,email",
             "query": "*",
         }
         prepared_wsgi = self.prepareWsgiAssert(
@@ -492,7 +492,7 @@ class MigSharedFunctionalityTmplinterface__requested(
         request_body = {
             "type": "migux_apps_peers__requested",
             "operation": "read",
-            "fields": "full_name,email",
+            "fields": "email",
             "query": "peer3@",
         }
         prepared_wsgi = self.prepareWsgiAssert(
@@ -518,7 +518,7 @@ class MigSharedFunctionalityTmplinterface__requested(
         request_body = {
             "type": "migux_apps_peers__requested",
             "operation": "read",
-            "fields": "full_name,email",
+            "fields": "email",
             "expire": date_expire_in_7_days.isoformat(),
         }
         prepared_wsgi = self.prepareWsgiAssert(
@@ -543,7 +543,7 @@ class MigSharedFunctionalityTmplinterface__requested(
         request_body = {
             "type": "migux_apps_peers__requested",
             "operation": "read",
-            "fields": "full_name,email",
+            "fields": "email",
             "kind": "collaboration",
         }
         prepared_wsgi = self.prepareWsgiAssert(

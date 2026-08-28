@@ -53,15 +53,20 @@ import sys
 from datetime import date, datetime
 from io import BytesIO
 
-from mig.lib.reqinfo import coalesce_request, uncommaify, unlistify
+from mig.lib.reqinfo import (
+    coalesce_request,
+    uncommaify,
+    unlistify,
+    unlistify_dict,
+)
 from mig.shared import accountreq, returnvalues
 from mig.shared.init import initialize_main_variables, make_start_entry
 from mig.shared.safeinput import (
-    REJECT_UNSET,
     html_escape,
-    valid_date,
+    valid_peer_expire_optional,
     valid_peer_kind,
     valid_peer_query,
+    valid_template_field,
     validated_input,
 )
 from mig.shared.scriptinput import fieldstorage_to_dict
@@ -187,44 +192,65 @@ def main(client_id, user_arguments_dict, environ=None, configuration=None):
     )
 
 
-# Validate optional query, kind, expire
+def convert_peers_listing_request_data(request_data):
+    """
+    Convert MiG style wrapped request data to a standard data structure.
+    """
+
+    args = unlistify_dict(request_data)
+
+    query = unlistify(args.pop("query", ""))
+    args["query"] = query
+
+    expire = unlistify(args.pop("expire", ""))
+    args["expire"] = expire
+
+    kind = unlistify(args.pop("kind", ""))
+    args["kind"] = kind
+
+    fields = uncommaify(unlistify(request_data.pop("fields", "")))
+    args["fields"] = fields
+    return args
 
 
-def validate_peers_search_fields(search_args):
+def validate_peers_search_inputs(search_args):
     """Validates the input of a peer search
 
-    search_args: {"query": query, "kind": kind, "expire": expire}
+    search_args: {"fields": [], "query": query, "kind": kind, "expire": expire}
     """
 
     # The query can either be a peer label or an email
-    # Therefore we need to check against both kinds
-    signature = {"query": REJECT_UNSET, "kind": [""], "expire": [""]}
+    # Therefore we need to check against both kinds.
+    signature = {"fields": [""], "query": [""], "kind": [""], "expire": [""]}
     accepted, rejected = validated_input(
         search_args,
         signature,
         type_override={
+            "fields": valid_template_field,
             "query": valid_peer_query,
             "kind": valid_peer_kind,
-            "expire": valid_date,
+            "expire": valid_peer_expire_optional,
         },
+        list_wrap=True,
     )
-    return accepted, rejected
+    return unlistify_dict(accepted), unlistify_dict(rejected)
 
 
 def prepare_GET_migux_apps_peers_accepted(configuration, request_info):
     """
     Data preparation function for mixux.apps.peers GET /accepted
     """
-
-    accepted, rejected = validate_peers_search_fields(request_info.args)
-    if not accepted or rejected:
-        return False, rejected
+    accepted_inputs, rejected_inputs = validate_peers_search_inputs(
+        request_info.args
+    )
+    if not accepted_inputs or rejected_inputs:
+        return False, rejected_inputs
 
     listing = accountreq.list_peers_accepted(
         configuration, request_info.client_id
     ).values()
 
-    return True, _peers_listing_filter(listing, accepted)
+    return True, _peers_listing_filter(listing, accepted_inputs)
 
 
 def prepare_GET_migux_apps_peers_requested(configuration, request_info):
@@ -232,9 +258,11 @@ def prepare_GET_migux_apps_peers_requested(configuration, request_info):
     Data preparation function for mixux.apps.peers GET /requested
     """
 
-    accepted, rejected = validate_peers_search_fields(request_info.args)
-    if not accepted or rejected:
-        return False, rejected
+    accepted_inputs, rejected_inputs = validate_peers_search_inputs(
+        request_info.args
+    )
+    if not accepted_inputs or rejected_inputs:
+        return False, rejected_inputs
 
     listing = accountreq.list_peers_requested(
         configuration, request_info.client_id
@@ -256,22 +284,9 @@ def prepare_GET_migux_apps_peers_requested(configuration, request_info):
             converted_peer_dict[key] = value
         transformed_requested_peers.append(converted_peer_dict)
 
-    return True, _peers_listing_filter(transformed_requested_peers, accepted)
-
-
-def convert_peers_listing_request_data(request_data):
-    """
-    Convert MiG style wrapped request data to a standard data structure.
-    """
-
-    request_data = dict(request_data)
-    request_data["query"] = unlistify(request_data.get("query", ""))
-    request_data["expire"] = unlistify(request_data.get("expire", ""))
-    request_data["kind"] = unlistify(request_data.get("kind", ""))
-    request_data["fields"] = uncommaify(
-        unlistify(request_data.get("fields", ""))
+    return True, _peers_listing_filter(
+        transformed_requested_peers, accepted_inputs
     )
-    return request_data
 
 
 def _peers_listing_filter(objects, request_args):
@@ -293,7 +308,7 @@ def _peers_listing_filter(objects, request_args):
     if expire != "":
         conditions.append(
             {
-                "expire": date.fromisoformat(expire),
+                "expire": datetime.fromisoformat(expire).date(),
             }
         )
 

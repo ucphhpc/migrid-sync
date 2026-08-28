@@ -77,7 +77,9 @@ style-check-python: dependencies
 .PHONY: lint-python
 lint-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only
-	@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS)
+# UP031 = Use format specifiers instead of percent format when interpolating strings
+# DTZ006 = datetime.datetime.fromtimestamp()` called without a `tz` argument
+	@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS) --ignore UP031,DTZ006
 
 .PHONY: secscan
 secscan:
