@@ -92,7 +92,7 @@ class FakeSendEmail:
 
     @property
     def called_once(self):
-        was_called_once = len(self.calls) == 1
+        was_called_once = self._called_times(1)
         if was_called_once:
             self._forgive = True
         return was_called_once
