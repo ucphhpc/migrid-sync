@@ -306,7 +306,6 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'seafile_ro_access',
         'public_use_https',
         'jupyter_services_enable_proxy_https',
-        'prefer_python3',
         'io_account_expire',
         'gdp_email_notify',
     ]

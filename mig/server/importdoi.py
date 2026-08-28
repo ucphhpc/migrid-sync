@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # importdoi - Import DOIs from provided uri
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,12 +20,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
 
 """Import any missing DOIs from provided URI - useful from cron job"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -37,23 +39,27 @@ import sys
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import public_archive_doi
 
+# NOTE: the verb used to query DOIs in version 2 of the DataCite REST API
+#       https://support.datacite.org/docs/api
+DOI_QUERY_VERB = 'dois'
+
 
 def __datacite_req(format, query):
     """Low-level helper to make a request for data from DataCite"""
     url = os.path.join('https://api.datacite.org', format, query)
-    #print "DEBUG: query datacite REST service on %s" % url
+    # print "DEBUG: query datacite REST service on %s" % url
     response = requests.get(url)
     if response.status_code != 200:
         raise Exception("unexpected response for %s : %s : %s" %
                         (url, response.status_code, response.text))
-    #print "DEBUG: response\n%s" % response.text
+    # print "DEBUG: response\n%s" % response.text
     parsed = json.loads(response.text)
     return parsed
 
 
 def datacite_query(query):
     """Make a query against the DataCite REST interface"""
-    return __datacite_req('works', query)
+    return __datacite_req(DOI_QUERY_VERB, query)
 
 
 def datacite_full(doi):
@@ -116,11 +122,11 @@ or to match only those registered to erda.ku.dk:
         except Exception as exc:
             print("ERROR in DataCite request: %s" % exc)
             sys.exit(2)
-        #print "DEBUG: parsed datacite response with %d fields" % len(parsed)
+        # print "DEBUG: parsed datacite response with %d fields" % len(parsed)
         # parsed is a dicionary with a data entry holding a list of summary
         # result dicts. The other entry is meta.
         parsed_index = parsed.get("data", [])
-        #print "DEBUG: repeat full lookup for individual sparse entries"
+        # print "DEBUG: repeat full lookup for individual sparse entries"
         parsed_data = []
         for entry in parsed_index:
             attributes = entry.get('attributes', {})
@@ -142,13 +148,13 @@ or to match only those registered to erda.ku.dk:
         if not isinstance(entry, dict):
             print("WARNING skip malformed entry: %s" % entry)
             continue
-        #print "DEBUG: handle entry: %s" % entry
+        # print "DEBUG: handle entry: %s" % entry
         doi_url = entry.get("id", None)
         doi = entry.get("doi", None)
         archive_url = entry.get('url', '')
         archive_id = os.path.basename(os.path.dirname(archive_url))
         if not archive_id or not doi_url:
-            print("WARNING DOI or archive ID missing from %s (%s %s)" % \
+            print("WARNING DOI or archive ID missing from %s (%s %s)" %
                   (entry, archive_id, doi_url))
             continue
         archive_root = os.path.join(configuration.wwwpublic, 'archives',
@@ -174,6 +180,6 @@ or to match only those registered to erda.ku.dk:
             if verbose:
                 print("\t%s" % entry)
 
-    print("Found %d existing - and imported %d of %d new DOI entries" % \
+    print("Found %d existing - and imported %d of %d new DOI entries" %
           (existing, imported, new))
     sys.exit(0)

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_notify - Notify users about relevant system events
-# Copyright (C) 2010-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -53,7 +54,7 @@ stop_running = multiprocessing.Event()
 notify_interval = 60
 received_notifications = {}
 
-
+# TODO: switch to shared stop helper from mig.lib.daemon
 def stop_handler(sig, frame):
     """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
     # Print blank line to avoid mix with Ctrl-C line
@@ -131,9 +132,9 @@ def send_notifications(configuration):
             % (total_events, timestr) \
             + notify_message
         status = send_email(configuration,
-            recipient,
-            subject,
-            notify_message)
+                            recipient,
+                            subject,
+                            notify_message)
         if status:
             logger.info("Send email with %s events to: %s"
                         % (total_events, recipient))
@@ -219,6 +220,9 @@ def handle_notifications(configuration):
     try:
         while not stop_running.is_set():
             for direntry in os.listdir(notify_home):
+                # NOTE: skip placeholder and scm state files
+                if direntry in ignore_file_names:
+                    continue
                 abspath = os.path.join(notify_home, direntry)
                 if os.path.isfile(abspath):
                     recv_notification(configuration, abspath)
@@ -305,7 +309,7 @@ if __name__ == "__main__":
     if sys.argv[argpos:]:
         try:
             delay = int(sys.argv[argpos])
-        except Exception as err:
+        except Exception:
             print("Invalid delay arg: %s" % (sys.argv[argpos]))
             sys.exit(1)
 

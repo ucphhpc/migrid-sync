@@ -7,6 +7,7 @@ dumb-pypi
 isort
 pylint
 ruff
+bandit
 # We need paramiko for the ssh unit tests
 # IMPORTANT: there's a known security issue (CVE-2023-48795) in paramiko<3.4.0
 #            as explained on https://www.paramiko.org/changelog.html#3.4.0

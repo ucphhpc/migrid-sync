@@ -576,7 +576,6 @@ _CONFIGURATION_PROPERTIES = {
     'workflows_vgrid_recipes_home': '',
     'workflows_vgrid_history_home': '',
     'site_user_id_format': DEFAULT_USER_ID_FORMAT,
-    'site_prefer_python3': False,
     'site_autolaunch_page': '',
     'site_landing_page': '',
     'site_skin': '',
@@ -2006,11 +2005,6 @@ location.""" % self.config_file)
             self.site_assets = config.get('SITE', 'assets')
         else:
             self.site_assets = "/assets"
-        if config.has_option('SITE', 'prefer_python3'):
-            self.site_prefer_python3 = config.getboolean('SITE',
-                                                         'prefer_python3')
-        else:
-            self.site_prefer_python3 = False
         if config.has_option('SITE', 'user_id_format'):
             self.site_user_id_format = config.get('SITE', 'user_id_format')
             if not self.site_user_id_format in valid_user_id_formats:
@@ -2808,8 +2802,9 @@ location.""" % self.config_file)
     def apply_loaded_config_to_division(self, division, config):
         defaults = _FIX_MISSING_DEFINITIONS[division]
         relevant = {k: config.get(division, k, fallback=defaults[k])
-                        for k in defaults}
-        normalise_division = getattr(self, "division_normalise_%s" % (division,))
+                    for k in defaults}
+        normalise_division = getattr(
+            self, "division_normalise_%s" % (division,))
         normalise_division(relevant)
 
     def division_normalise_TEMPLATES(self, candidates):

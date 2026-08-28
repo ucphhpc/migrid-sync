@@ -1114,8 +1114,15 @@ def accept_account_req(req_id, configuration, peer_id,
         expire = default_account_expire(configuration, auth_type)
 
     if peer_id:
+        _logger.debug("using provided peer %s" % peer_id)
         override_fields['peer_pattern'] = peer_id
         override_fields['status'] = 'temporal'
+    elif configuration.site_enable_peers and \
+            configuration.site_peers_mandatory:
+        _logger.warning("forcing auto-detect peer on req missing one")
+        peer_id = keyword_auto
+    else:
+        _logger.debug("not enforcing peer on account req missing one")
 
     try:
         req_dict = load(req_path)
@@ -1153,8 +1160,9 @@ def accept_account_req(req_id, configuration, peer_id,
     _logger.info('%s %s in user database and in file system' %
                  (operation_type.title(), user_dict['distinguished_name']))
     try:
-        create_user(user_dict, conf_path, db_path, False, False, False,
-                    default_renew, verify_peer=peer_id)
+        create_user(user_dict, conf_path, db_path, force=False, verbose=False,
+                    ask_renew=False, default_renew=default_renew,
+                    verify_peer=peer_id)
     except Exception as exc:
         err_msg = "%s user %s failed: %s" % (operation_type.title(),
                                              user_dict['distinguished_name'],
