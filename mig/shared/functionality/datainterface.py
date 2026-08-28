@@ -53,8 +53,6 @@ import os
 import sys
 from io import BytesIO
 
-import mig.shared.accountreq as accountreq
-import mig.shared.returnvalues as returnvalues
 from mig.lib.reqinfo import (
     booleanify,
     coalesce_request,
@@ -62,6 +60,7 @@ from mig.lib.reqinfo import (
     unlistify,
     unlistify_dict,
 )
+from mig.shared import accountreq, returnvalues
 from mig.shared.base import extract_field, fill_user
 from mig.shared.defaults import (
     keyword_auto,
@@ -390,7 +389,7 @@ def handle_GET_peers_summary(configuration, request_info):
 
 def convert_POST_peers_send_invitation(request_data):
     """
-    Data conversion: POST /peers/new
+    Data conversion: POST /peers/send_invitation
     """
     args = request_data
     # Align with the validate_input expectations for an input_dict
@@ -1231,7 +1230,7 @@ def handle_POST_peers_requested_accept(configuration, request_info):
     # maximum when the migadmin.py approves the peer request and forwards
     # it to the users pending_peers file.
     # However the accepted_peers file user_settings/client_id/peers
-    # expects it to be the datetime format YYYY-MN-DD, therefore
+    # expects it to be the date format YYYY-MN-DD, therefore
     # we have to transform the pending peer expire value when we accept it.
     # In the future when an opportune momement comes we likely want
     # to make the expire format an EPOCH value all the way through and
@@ -1242,7 +1241,7 @@ def handle_POST_peers_requested_accept(configuration, request_info):
         converted_peer_dict = {}
         for key, value in peer_dict.items():
             if key == "expire":
-                expire_date = datetime.datetime.fromtimestamp(value)
+                expire_date = datetime.datetime.fromtimestamp(value).date()
                 value = expire_date.strftime("%Y-%m-%d")
             converted_peer_dict[key] = value
         prepared_to_accept_peers[peer_dn] = converted_peer_dict

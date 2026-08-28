@@ -53,11 +53,17 @@ import sys
 from datetime import date, datetime
 from io import BytesIO
 
-import mig.shared.accountreq as accountreq
-import mig.shared.returnvalues as returnvalues
 from mig.lib.reqinfo import coalesce_request, uncommaify, unlistify
+from mig.shared import accountreq, returnvalues
 from mig.shared.init import initialize_main_variables, make_start_entry
-from mig.shared.safeinput import html_escape
+from mig.shared.safeinput import (
+    REJECT_UNSET,
+    html_escape,
+    valid_date,
+    valid_peer_kind,
+    valid_peer_query,
+    validated_input,
+)
 from mig.shared.scriptinput import fieldstorage_to_dict
 
 # supporting logic
@@ -66,11 +72,13 @@ from mig.shared.scriptinput import fieldstorage_to_dict
 def _coerce_date(value):
     if isinstance(value, date):
         return value
+    elif isinstance(value, datetime):
+        return value.date()
     elif isinstance(value, str):
-        return date.fromisoformat(value)
+        return datetime.fromisoformat(value).date()
     elif isinstance(value, int):
-        return date.fromtimestamp(value)
-    raise ValueError("value does not look like a date")
+        return datetime.fromtimestamp(value).date()
+    raise ValueError("value does not look like a datetime")
 
 
 def _compile_condition_value(search_value):
@@ -179,16 +187,44 @@ def main(client_id, user_arguments_dict, environ=None, configuration=None):
     )
 
 
+# Validate optional query, kind, expire
+
+
+def validate_peers_search_fields(search_args):
+    """Validates the input of a peer search
+
+    search_args: {"query": query, "kind": kind, "expire": expire}
+    """
+
+    # The query can either be a peer label or an email
+    # Therefore we need to check against both kinds
+    signature = {"query": REJECT_UNSET, "kind": [""], "expire": [""]}
+    accepted, rejected = validated_input(
+        search_args,
+        signature,
+        type_override={
+            "query": valid_peer_query,
+            "kind": valid_peer_kind,
+            "expire": valid_date,
+        },
+    )
+    return accepted, rejected
+
+
 def prepare_GET_migux_apps_peers_accepted(configuration, request_info):
     """
     Data preparation function for mixux.apps.peers GET /accepted
     """
 
+    accepted, rejected = validate_peers_search_fields(request_info.args)
+    if not accepted or rejected:
+        return False, rejected
+
     listing = accountreq.list_peers_accepted(
         configuration, request_info.client_id
     ).values()
-    # TODO, request_info.args have not been input validated at this point
-    return True, _peers_listing_filter(listing, request_info.args)
+
+    return True, _peers_listing_filter(listing, accepted)
 
 
 def prepare_GET_migux_apps_peers_requested(configuration, request_info):
@@ -196,9 +232,14 @@ def prepare_GET_migux_apps_peers_requested(configuration, request_info):
     Data preparation function for mixux.apps.peers GET /requested
     """
 
+    accepted, rejected = validate_peers_search_fields(request_info.args)
+    if not accepted or rejected:
+        return False, rejected
+
     listing = accountreq.list_peers_requested(
         configuration, request_info.client_id
     )
+
     # When a peer request is accepted and forwarded from migadmin.py
     # it is inserted into the user's user_settings/client_id/pending_peers file.
     # Here the expire value is set to the maximum time a peer can be valid as an EPOCH timestamp.
@@ -210,15 +251,12 @@ def prepare_GET_migux_apps_peers_requested(configuration, request_info):
         converted_peer_dict = {}
         for key, value in requested_peer_dict.items():
             if key == "expire":
-                expire_date = datetime.fromtimestamp(value)
+                expire_date = datetime.fromtimestamp(value).date()
                 value = expire_date.strftime("%Y-%m-%d")
             converted_peer_dict[key] = value
         transformed_requested_peers.append(converted_peer_dict)
 
-    # TODO, request_info.args have not been input validated at this point
-    return True, _peers_listing_filter(
-        transformed_requested_peers, request_info.args
-    )
+    return True, _peers_listing_filter(transformed_requested_peers, accepted)
 
 
 def convert_peers_listing_request_data(request_data):
@@ -246,7 +284,7 @@ def _peers_listing_filter(objects, request_args):
     if not (query == "*" or query == ""):
         conditions.append(
             {
-                "full_name": query,
+                "label": query,
                 "email": query,
             }
         )
