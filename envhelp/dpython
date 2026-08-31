@@ -78,7 +78,6 @@ CONTAINER_USER_UID=$LOCAL_USER_UID
 IMAGEID=$(${DOCKER_BIN} build -f "$DOCKER_FILE" . -q \
                                                   --build-arg "pyver=$PYVER" \
                                                   --build-arg "CONTAINER_USER_UID=$CONTAINER_USER_UID" \
-                                                  --build-arg "EXTRA_INDEX_URL=$EXTRA_INDEX_URL" \
 )
 
 if [ "$IMAGEID" != "$IMAGEID_STORED" ]; then
