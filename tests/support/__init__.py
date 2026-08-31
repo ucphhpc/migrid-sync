@@ -38,15 +38,11 @@ import pickle
 import shutil
 import stat
 import sys
-<<<<<<< HEAD
-from unittest import TestCase, main as testmain
-=======
 from collections import defaultdict
 from configparser import ConfigParser
 from types import SimpleNamespace
 from unittest import TestCase
 from unittest import main as testmain
->>>>>>> next
 
 import tests.support.fakes as fakes
 from tests.support._env import MIG_ENV, PY2
@@ -217,13 +213,9 @@ class MigTestCase(TestCase):
 
     @staticmethod
     def _make_configuration_instance(testcase, configuration_to_make):
-<<<<<<< HEAD
         if configuration_to_make == 'preexisting':
             return testcase._configuration
         elif configuration_to_make == 'fakeconfig':
-=======
-        if configuration_to_make == "fakeconfig":
->>>>>>> next
             fake_configuration = FakeConfiguration(logger=testcase.logger)
             from mig.shared.conf import RuntimeConfiguration
 
@@ -253,7 +245,6 @@ class MigTestCase(TestCase):
 
         if configuration_to_make == "unspecified":
             raise AssertionError(
-<<<<<<< HEAD
                 "configuration access but testcase did not request it")
         elif configuration_to_make == 'preexisting':
             # unconditionally proceed so as to be certain that a valid
@@ -261,10 +252,6 @@ class MigTestCase(TestCase):
             pass
         elif self._configuration is not None:
             return self._configuration
-=======
-                "configuration access but testcase did not request it"
-            )
->>>>>>> next
 
         configuration_instance = self._make_configuration_instance(
             self, configuration_to_make

@@ -226,16 +226,11 @@ class UserAssertMixin:
         # write out all the users we have assembled by populating an empty
         # fixture with their data but using a known fixture name and thus one
         # suitably hinted so a production format pickle file ends up on-disk
-<<<<<<< HEAD
         prepared_fixture = _PreparedFixture.from_relpath(testcase, 'MiG-users.db--example', fixture_format='json')
-=======
-        prepared_fixture = _PreparedFixture(testcase, "MiG-users.db--example")
->>>>>>> next
         prepared_fixture.fixture_data = users_by_dn
         prepared_fixture.write_to_dir(conf_user_db_home, output_format="pickle")
 
         for distinguished_name in distinguished_names:
-<<<<<<< HEAD
             UserAssertMixin._provision_test_user_dirs(testcase,
                                                       distinguished_name)
 
@@ -381,8 +376,3 @@ class UserAssertMixin:
             )
 
         return pending_users_info_by_dn
-=======
-            UserAssertMixin._provision_test_user_dirs(
-                testcase, distinguished_name
-            )
->>>>>>> next
