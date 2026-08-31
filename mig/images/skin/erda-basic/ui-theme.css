@@ -1,14 +1,14 @@
 /*!
- * jQuery UI CSS Framework 1.12.1
- * http://jqueryui.com
+ * jQuery UI CSS Framework 1.14.2
+ * https://jqueryui.com
  *
- * Copyright jQuery Foundation and other contributors
+ * Copyright OpenJS Foundation and other contributors
  * Released under the MIT license.
- * http://jquery.org/license
+ * https://jquery.org/license
  *
- * http://api.jqueryui.com/category/theming/
+ * https://api.jqueryui.com/category/theming/
  *
- * To view and modify this theme, visit http://jqueryui.com/themeroller/?scope=&folderName=custom-theme&bgImgOpacityError=45&bgImgOpacityHighlight=55&bgImgOpacityActive=50&bgImgOpacityHover=75&bgImgOpacityDefault=45&bgImgOpacityContent=100&bgImgOpacityHeader=75&cornerRadiusShadow=5px&offsetLeftShadow=5px&offsetTopShadow=5px&thicknessShadow=0px&opacityShadow=45&bgImgOpacityShadow=55&bgTextureShadow=flat&bgColorShadow=%23999999&opacityOverlay=30&bgImgOpacityOverlay=75&bgTextureOverlay=flat&bgColorOverlay=%23aaaaaa&iconColorError=%23fcd113&fcError=%23ffffff&borderColorError=%23cd0a0a&bgTextureError=gloss_wave&bgColorError=%23e14f1c&iconColorHighlight=%23f7a50d&fcHighlight=%23915608&borderColorHighlight=%23fcd113&bgTextureHighlight=glass&bgColorHighlight=%23f8da4e&iconColorActive=%23fff&fcActive=%23ffffff&borderColorActive=%2377d5f7&bgTextureActive=gloss_wave&bgColorActive=%23147&iconColorHover=%23056b93&fcHover=%23026890&borderColorHover=%23448dae&bgTextureHover=glass&bgColorHover=%2379c9ec&iconColorDefault=%23e0fdff&fcDefault=%23ffffff&borderColorDefault=%2377d5f7&bgTextureDefault=glass&bgColorDefault=%230078ae&iconColorContent=%230078ae&fcContent=%23222222&borderColorContent=%23a6c9e2&bgTextureContent=inset_hard&bgColorContent=%23fcfdfd&iconColorHeader=%23d8e7f3&fcHeader=%23eaf5f7&borderColorHeader=%234297d7&bgTextureHeader=gloss_wave&bgColorHeader=%232191c0&cornerRadius=5px&fwDefault=normal&fsDefault=1.1em&ffDefault=Verdana%2CArial%2Csans-serif
+ * To view and modify this theme, visit https://jqueryui.com/themeroller/?ffDefault=Verdana%2CArial%2Csans-serif&fsDefault=1.1em&fwDefault=normal&cornerRadius=5px&bgColorHeader=%232191c0&bgTextureHeader=gloss_wave&borderColorHeader=%234297d7&fcHeader=%23eaf5f7&iconColorHeader=%23d8e7f3&bgColorContent=%23fcfdfd&bgTextureContent=inset_hard&borderColorContent=%23a6c9e2&fcContent=%23222222&iconColorContent=%230078ae&bgColorDefault=%230078ae&bgTextureDefault=glass&borderColorDefault=%2377d5f7&fcDefault=%23ffffff&iconColorDefault=%23e0fdff&bgColorHover=%2379c9ec&bgTextureHover=glass&borderColorHover=%23448dae&fcHover=%23026890&iconColorHover=%23056b93&bgColorActive=%23147&bgTextureActive=gloss_wave&borderColorActive=%2377d5f7&fcActive=%23ffffff&iconColorActive=%23fff&bgColorHighlight=%23f8da4e&bgTextureHighlight=glass&borderColorHighlight=%23fcd113&fcHighlight=%23915608&iconColorHighlight=%23f7a50d&bgColorError=%23e14f1c&bgTextureError=gloss_wave&borderColorError=%23cd0a0a&fcError=%23ffffff&iconColorError=%23fcd113&bgColorOverlay=%23aaaaaa&bgTextureOverlay=flat&bgImgOpacityOverlay=75&opacityOverlay=30&bgColorShadow=%23999999&bgTextureShadow=flat&bgImgOpacityShadow=55&opacityShadow=45&thicknessShadow=0px&offsetTopShadow=5px&offsetLeftShadow=5px&cornerRadiusShadow=5px&bgImgOpacityError=45&bgImgOpacityHighlight=55&bgImgOpacityActive=50&bgImgOpacityHover=75&bgImgOpacityDefault=45&bgImgOpacityContent=100&bgImgOpacityHeader=75
  */
 
 
@@ -172,18 +172,13 @@ a.ui-button:active,
 .ui-widget-content .ui-priority-secondary,
 .ui-widget-header .ui-priority-secondary {
 	opacity: .7;
-	filter:Alpha(Opacity=70); /* support: IE8 */
 	font-weight: normal;
 }
 .ui-state-disabled,
 .ui-widget-content .ui-state-disabled,
 .ui-widget-header .ui-state-disabled {
 	opacity: .35;
-	filter:Alpha(Opacity=35); /* support: IE8 */
 	background-image: none;
-}
-.ui-state-disabled .ui-icon {
-	filter:Alpha(Opacity=35); /* support: IE8 - See #6059 */
 }
 
 /* Icons
@@ -224,7 +219,10 @@ a.ui-button:active,
 }
 
 /* positioning */
-.ui-icon-blank { background-position: 16px 16px; }
+/* Three classes needed to override `.ui-button:hover .ui-icon` */
+.ui-icon-blank.ui-icon-blank.ui-icon-blank {
+	background-image: none;
+}
 .ui-icon-caret-1-n { background-position: 0 0; }
 .ui-icon-caret-1-ne { background-position: -16px 0; }
 .ui-icon-caret-1-e { background-position: -32px 0; }
@@ -435,9 +433,7 @@ a.ui-button:active,
 .ui-widget-overlay {
 	background: #aaaaaa;
 	opacity: .3;
-	filter: Alpha(Opacity=30); /* support: IE8 */
 }
 .ui-widget-shadow {
-	-webkit-box-shadow: 5px 5px 0px #999999;
 	box-shadow: 5px 5px 0px #999999;
 }

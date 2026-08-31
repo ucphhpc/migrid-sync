@@ -52,7 +52,7 @@ ENABLE_QUOTA="__ENABLE_QUOTA__"
 
 [ "$ENABLE_DAVS" == "True" ] && grep -a -H " ERROR " $LOGDIR/davs.log | grep -E -v "The handshake operation timed out|decryption failed or bad record mac|length too short|no ciphers specified|(unknown error|parse tlsext|https proxy request) \(_ssl.c:\)|SSL/TLS wrap of .* failed unexpectedly:|Failed password login for .* from ${SECSCANIP}|ERROR (Invalid user(name)?|auth failed) .* from ${SECSCANIP}|${SECSCANIP}, .* Invalid user(name)?|GDP: Project logout failed for user: .* from ip: ${SECSCANIP} with|Invalid username [a-zA-Z0-9._-]* from|ERROR Account disabled or expired|invalid share mode (write|read)-only for |: Invalid path characters" | tail -n $MAXLINES
 
-[ "$ENABLE_OPENID" == "True" ] && grep -a -H " ERROR " $LOGDIR/openid.log | grep -E -v "crashed: Unexpected query variable|retry_url: shorter than minimum length|invalid retry_url: found invalid character|crashed: int\(\) argument must be a string|input: shorter than minimum length|input: found invalid character:" | tail -n $MAXLINES
+[ "$ENABLE_OPENID" == "True" ] && grep -a -H " ERROR " $LOGDIR/openid.log | grep -E -v "crashed: Unexpected query variable|retry_url: shorter than minimum length|invalid retry_url: found invalid character|crashed: int\(\) argument must be a string|input: shorter than minimum length|input: found invalid character:| not under trust_root " | tail -n $MAXLINES
 
 [ "$ENABLE_CRONTAB" == "True" ] && grep -a -H " ERROR " $LOGDIR/cron.log | tail -n $MAXLINES
 

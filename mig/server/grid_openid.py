@@ -210,12 +210,10 @@ def filter_why_pw(configuration, why):
         text = why.response.encodeToKVForm()
         return strip_password(configuration, text)
     elif isinstance(why, server.ProtocolError):
-        # NOTE: UntrustedReturnURL does not have message but it may have been
-        #       renamed to openid_message - fallback to str
-        if hasattr(why, 'openid_message'):
-            text = why.openid_message
-        elif hasattr(why, 'message'):
-            text = why.message
+        # NOTE: UntrustedReturnURL does not have message but raw str suffices.
+        #       Always force to str for strip_password to apply.
+        if hasattr(why, 'message'):
+            text = str(why.message)
         else:
             text = str(why)
         return strip_password(configuration, text)

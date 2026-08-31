@@ -476,12 +476,12 @@ def verify_user_peers(configuration, db_path, client_id, user, now, verify_peer,
 
 
 def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
-                      reset_token, reset_auth_type, pw_match,
+                      reset_token, reset_auth_type, pw_match, invalid,
                       accepted_peer_list, force, verbose, ask_renew,
                       default_renew, do_lock, from_edit_user, ask_change_pw,
                       auto_create_db, create_backup):
     """Handle all the parts of user creation or renewal relating to the user
-    datatbase.
+    database.
     """
     _logger = configuration.logger
     flock = None
@@ -571,6 +571,17 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
             raise Exception(
                 'A conflicting user with alias %s / id %s already exists' %
                 (alias, main_id))
+
+    # Reject all other obviously invalid requests
+    if invalid:
+        if do_lock:
+            unlock_user_db(flock)
+        _logger.warning("%r requested account with invalid values: %s"
+                        % (client_id, ', '.join(invalid)))
+        if verbose:
+            print("User requested account with invalid values")
+        err = "Cannot create/renew user account with invalid values!"
+        raise Exception(err)
 
     if client_id not in user_db:
         _logger.debug('add new user %r in user DB' % client_id)
@@ -1124,6 +1135,11 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
         pw_match = user['pw_match']
         # Always remove any pw_match fields before DB insert
         del user['pw_match']
+    invalid = False
+    if 'invalid' in user:
+        invalid = user['invalid']
+        # Always remove any invalid markers before DB insert
+        del user['invalid']
 
     _logger.info('trying to create or renew user %r' % client_id)
     if verbose:
@@ -1150,10 +1166,12 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
     else:
         _logger.info('skip peer verification for %s' % client_id)
 
+    # NOTE: we just pass the above state and error markers on to keep handling
+    #       of all the checks and known errors consistently in one place.
     created = create_user_in_db(configuration, db_path, client_id, user, now,
                                 authorized, reset_token, reset_auth_type,
-                                pw_match, accepted_peer_list, force, verbose,
-                                ask_renew, default_renew, do_lock,
+                                pw_match, invalid, accepted_peer_list, force,
+                                verbose, ask_renew, default_renew, do_lock,
                                 from_edit_user, ask_change_pw, auto_create_db,
                                 create_backup)
     # Mark user updated for all logins
@@ -1621,8 +1639,11 @@ def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
             print('unexpectedly got no saved status after edit %r' % client_id)
         _logger.error("something failed in edit user %r - delay unlocking" %
                       client_id)
-    else:
+    elif saved_status:
         user_dict['status'] = saved_status
+    else:
+        # NOTE: save will ignore empty string values so force to 'active' here
+        user_dict['status'] = 'active'
     # NOTE: only backup user DB here if we didn't already do so in call above
     create_user(user_dict, conf_path, db_path, force, verbose,
                 ask_renew=False, default_renew=True, from_edit_user=True,

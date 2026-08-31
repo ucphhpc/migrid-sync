@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # seahub - site style overrides for all seafile pages
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -32,12 +32,12 @@
 
 /* Replace the different orange colors in the original css specs. 
    Keep rules in sync with styles from:
-   seafile/seafile-server-latest/seahub/media/css/*.css 
+   seafile/seafile-server-latest/seahub/media/css/*.css
    and use something like the following simplified mappings:
    #eb8205 / #ee8204 / #f7941d / #de3f1c / #DD4B39 / #c77405 / #f59f00 / #e83 -> #46743c
    #f93 / #ff9933 / #feac74 / #fbcb09 / #a68558 -> #679c5b
    #fff1a8 / #f89a68 / #feefb8 / #fdf5ce / #fddaa4 / #f9edbe -> #8fd182
-   rgba(241, 150, 69, 0.25) -> rgba(103, 156, 91, 0.25) 
+   rgba(241, 150, 69, 0.25) -> rgba(103, 156, 91, 0.25)
 */
 
 a { 
@@ -99,6 +99,10 @@ a:focus, a:hover {
 .nav .nav-item.active .nav-link {
     color: #679c5b;
     border-color: #46743c;
+}
+/* NOTE: color before active nav item added in 13.x */
+.nav-item.active::before {
+    background-color: #46743c !important;
 }
 .nav .nav-item .nav-link:hover {
     /* NOTE: diverge from std color mapping here to avoid that active nav elem
