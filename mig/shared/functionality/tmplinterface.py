@@ -448,9 +448,14 @@ def _main(
         request_data, client_id=client_id
     )
     if errors_info:
-        logger.error("A validation error occurred: '%s'" % errors_info)
-        msg = "Invalid input was supplied to the request API: %s" % errors_info
-        # TODO, Transform error messages to something more readable
+        logger.error(
+            "A validation error occurred on the general structure of the template API request: '%s'"
+            % errors_info
+        )
+        msg = (
+            "The general request structure supplied to the request API was invalid or had illegal inputs, failed with the error: %s"
+            % errors_info
+        )
         output_objects.append(
             {"object_type": "error_text", "text": html_escape(msg)}
         )
