@@ -71,8 +71,10 @@ class FakeSendEmail:
             return
 
         display_recipients = sorted(suprise_recipients)
-        raise AssertionError('detected email sending without expectation: \n  %s'
-                                % ('\n  '.join(display_recipients),))
+        raise AssertionError(
+            "detected email sending without expectation: \n  %s"
+            % ("\n  ".join(display_recipients),)
+        )
 
     def is_checked(self):
         if self._forgive:

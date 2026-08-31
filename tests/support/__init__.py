@@ -213,9 +213,9 @@ class MigTestCase(TestCase):
 
     @staticmethod
     def _make_configuration_instance(testcase, configuration_to_make):
-        if configuration_to_make == 'preexisting':
+        if configuration_to_make == "preexisting":
             return testcase._configuration
-        elif configuration_to_make == 'fakeconfig':
+        elif configuration_to_make == "fakeconfig":
             fake_configuration = FakeConfiguration(logger=testcase.logger)
             from mig.shared.conf import RuntimeConfiguration
 
@@ -245,8 +245,9 @@ class MigTestCase(TestCase):
 
         if configuration_to_make == "unspecified":
             raise AssertionError(
-                "configuration access but testcase did not request it")
-        elif configuration_to_make == 'preexisting':
+                "configuration access but testcase did not request it"
+            )
+        elif configuration_to_make == "preexisting":
             # unconditionally proceed so as to be certain that a valid
             # configuration has been supplied and get it instrumented
             pass

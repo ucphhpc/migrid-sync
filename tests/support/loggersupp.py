@@ -97,12 +97,14 @@ class FakeLogger:
 
         assert isinstance(expectation, str)
 
-        if comparison == 'startswith':
+        if comparison == "startswith":
             is_expected = lambda s: s.startswith(expectation)
-        elif comparison == 'equal':
+        elif comparison == "equal":
             is_expected = lambda s: s == expectation
         else:
-            raise NotImplementedError("unsupported comparsion %s" % (comparison,))
+            raise NotImplementedError(
+                "unsupported comparsion %s" % (comparison,)
+            )
         self.expected_by_channel["error"].append(is_expected)
 
     def forgive_errors(self):

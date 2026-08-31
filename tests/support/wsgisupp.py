@@ -29,23 +29,23 @@
 
 import codecs
 import importlib
-from collections import namedtuple
-from io import BytesIO
 import json as jsonlib
 import os
 import sys
+from collections import namedtuple
+from io import BytesIO
 from urllib.parse import urlencode, urlparse
 
 from tests.support.suppconst import MIG_BASE
 
-OBJECTS_TYPE = 'objects'
+OBJECTS_TYPE = "objects"
 
 
 def _import_forcibly(module_name, relative_module_dir=None):
     """Custom import function to allow an import of a file for testing
     that resides within a non-module directory."""
 
-    module_path = os.path.join(MIG_BASE, 'mig')
+    module_path = os.path.join(MIG_BASE, "mig")
     if relative_module_dir is not None:
         module_path = os.path.join(module_path, relative_module_dir)
     sys.path.append(module_path)
@@ -54,7 +54,7 @@ def _import_forcibly(module_name, relative_module_dir=None):
     return mod
 
 
-migwsgi = _import_forcibly('migwsgi', relative_module_dir='wsgi-bin')
+migwsgi = _import_forcibly("migwsgi", relative_module_dir="wsgi-bin")
 
 
 class FakeWsgiStartResponse:
@@ -87,11 +87,19 @@ def _urlencode_form(form_content):
         field_key_and_value_pairs = form_content
     else:
         raise AssertionError("invalid form content")
-    return urlencode(field_key_and_value_pairs, doseq=True).encode('ascii')
+    return urlencode(field_key_and_value_pairs, doseq=True).encode("ascii")
 
 
-def create_wsgi_environ(configuration, wsgi_url, method=None, query=None, headers=None, form=None, json=None,
-        mig_user_dn=None):
+def create_wsgi_environ(
+    configuration,
+    wsgi_url,
+    method=None,
+    query=None,
+    headers=None,
+    form=None,
+    json=None,
+    mig_user_dn=None,
+):
     """Populate the necessary variables that will constitute a valid WSGI
     environment given a URL to which we will make a requests under test and
     various other options that set up the nature of that request."""
@@ -123,15 +131,15 @@ def create_wsgi_environ(configuration, wsgi_url, method=None, query=None, header
             # use as-is
             pass
         elif isinstance(json, dict):
-            body = jsonlib.dumps(json).encode('utf8')
+            body = jsonlib.dumps(json).encode("utf8")
         else:
             raise NotImplementedError()
 
-        method = 'POST'
-        request_query = ''
+        method = "POST"
+        request_query = ""
 
-        headers['Content-Type'] = 'application/json'
-        headers['Content-Length'] = str(len(body))
+        headers["Content-Type"] = "application/json"
+        headers["Content-Length"] = str(len(body))
         wsgi_input = BytesIO(body)
     else:
         assert method is not None, "method required with no payload specified"
@@ -142,7 +150,7 @@ def create_wsgi_environ(configuration, wsgi_url, method=None, query=None, header
         """Internal helper to ignore wsgi.errors close method calls"""
 
         def close(self, *ars, **kwargs):
-            """ "Simply ignore"""
+            """Simply ignore"""
             pass
 
     environ = {}
@@ -160,14 +168,14 @@ def create_wsgi_environ(configuration, wsgi_url, method=None, query=None, header
     )
 
     if mig_user_dn:
-        environ['REMOTE_USER'] = mig_user_dn
+        environ["REMOTE_USER"] = mig_user_dn
 
-    path_parts = parsed_url.path.split('/')
+    path_parts = parsed_url.path.split("/")
     maybe_script_name = path_parts[-1]
     _, script_ext = os.path.splitext(path_parts[-1])
-    if script_ext != '':
+    if script_ext != "":
         # the script has an extension, so treat it as a functionality file
-        environ['SCRIPT_NAME'] = maybe_script_name
+        environ["SCRIPT_NAME"] = maybe_script_name
 
     if headers:
         for k, v in headers.items():
@@ -207,22 +215,21 @@ class _PreparedWsgi:
         )
 
         return migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
     @staticmethod
     def trigger_and_unpack_result(wsgi_result):
         chunks = list(wsgi_result)
         assert len(chunks) > 0, "invocation returned no output"
-        complete_value = b''.join(chunks)
-        decoded_value = codecs.decode(complete_value, 'utf8')
+        complete_value = b"".join(chunks)
+        decoded_value = codecs.decode(complete_value, "utf8")
         return decoded_value
 
 
 def prepare_wsgi(configuration, url, **kwargs):
-    if 'method' not in kwargs:
-        kwargs['method'] = 'GET'
+    if "method" not in kwargs:
+        kwargs["method"] = "GET"
     return _PreparedWsgi(configuration, url, **kwargs)
 
 
@@ -232,10 +239,14 @@ class WsgiAssertMixin:
     def prepareWsgiAssert(self, configuration, url, **kwargs):
         return _PreparedWsgi(configuration, url, **kwargs)
 
-    def assertWsgiResponse(self, wsgi_result, prepared_wsgi,
-                                        expected_status_code=None,
-                                        expected_content_type=None,
-                                        content_format=None):
+    def assertWsgiResponse(
+        self,
+        wsgi_result,
+        prepared_wsgi,
+        expected_status_code=None,
+        expected_content_type=None,
+        content_format=None,
+    ):
         assert isinstance(prepared_wsgi, _PreparedWsgi)
 
         if wsgi_result:
@@ -269,13 +280,17 @@ class WsgiAssertMixin:
 
         headers = dict(wsgi_call[1])
 
-        expecting_json = content_format == 'json'
+        expecting_json = content_format == "json"
         if expecting_json and not expected_content_type:
-            expected_content_type = 'application/json'
+            expected_content_type = "application/json"
 
         if expected_content_type:
-            actual_content_type = headers.get('Content-Type', 'none/none')
-            self.assertEqual(actual_content_type, expected_content_type, "mismatched Content-Type")
+            actual_content_type = headers.get("Content-Type", "none/none")
+            self.assertEqual(
+                actual_content_type,
+                expected_content_type,
+                "mismatched Content-Type",
+            )
 
         if expecting_json:
             try:
@@ -286,10 +301,16 @@ class WsgiAssertMixin:
         return content, headers
 
     def assertWsgiJsonResponse(self, prepared_wsgi):
-        content, _ = self.assertWsgiResponse(None, prepared_wsgi, None, content_format='json')
+        content, _ = self.assertWsgiResponse(
+            None, prepared_wsgi, None, content_format="json"
+        )
 
         assert isinstance(content, list)
 
-        found_objects = [obj for obj in content if obj['object_type'] == OBJECTS_TYPE]
-        assert len(found_objects) == 1, "object with type '%s' was not found" % (OBJECTS_TYPE,)
+        found_objects = [
+            obj for obj in content if obj["object_type"] == OBJECTS_TYPE
+        ]
+        assert (
+            len(found_objects) == 1
+        ), "object with type '%s' was not found" % (OBJECTS_TYPE,)
         return found_objects[0][OBJECTS_TYPE]
