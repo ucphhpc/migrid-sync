@@ -162,6 +162,9 @@ def create_text_response(
     object_type="objects",
     output_return_code=returnvalues.OK,
 ):
+    """
+    A helper function for creating output_object responses.
+    """
     output_objects.append({"object_type": object_type, "text": output_text})
     return (output_objects, output_return_code)
 
