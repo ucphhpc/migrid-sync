@@ -60,6 +60,7 @@ from mig.lib.reqinfo import (
     unlistify_dict,
 )
 from mig.shared import accountreq, returnvalues
+from mig.shared.functionality.datainterface import create_handler_response
 from mig.shared.init import initialize_main_variables, make_start_entry
 from mig.shared.safeinput import (
     html_escape,
@@ -155,6 +156,16 @@ def _search_dicts_matching(objects, conditions):
     return hits
 
 
+def create_text_response(
+    output_objects,
+    output_text,
+    object_type="objects",
+    output_return_code=returnvalues.OK,
+):
+    output_objects.append({"object_type": object_type, "text": output_text})
+    return (output_objects, output_return_code)
+
+
 # main logic
 
 
@@ -244,13 +255,19 @@ def prepare_GET_migux_apps_peers_accepted(configuration, request_info):
         request_info.args
     )
     if not accepted_inputs or rejected_inputs:
-        return False, rejected_inputs
+        return create_handler_response(
+            400,
+            message="failed to validate the input arguments when listing your accepted peers, error: %s"
+            % rejected_inputs,
+        )
 
     listing = accountreq.list_peers_accepted(
         configuration, request_info.client_id
     ).values()
 
-    return True, _peers_listing_filter(listing, accepted_inputs)
+    return create_handler_response(
+        200, data=_peers_listing_filter(listing, accepted_inputs)
+    )
 
 
 def prepare_GET_migux_apps_peers_requested(configuration, request_info):
@@ -262,7 +279,11 @@ def prepare_GET_migux_apps_peers_requested(configuration, request_info):
         request_info.args
     )
     if not accepted_inputs or rejected_inputs:
-        return False, rejected_inputs
+        return create_handler_response(
+            400,
+            error="failed to validate the input arguments when listing your requsted peers, error: %s"
+            % rejected_inputs,
+        )
 
     listing = accountreq.list_peers_requested(
         configuration, request_info.client_id
@@ -284,8 +305,11 @@ def prepare_GET_migux_apps_peers_requested(configuration, request_info):
             converted_peer_dict[key] = value
         transformed_requested_peers.append(converted_peer_dict)
 
-    return True, _peers_listing_filter(
-        transformed_requested_peers, accepted_inputs
+    return create_handler_response(
+        200,
+        data=_peers_listing_filter(
+            transformed_requested_peers, accepted_inputs
+        ),
     )
 
 
@@ -440,14 +464,12 @@ def _main(
     # TODO, validate per full module import
     parent_requested_package = request_info.request_package.split(".")[0]
     if parent_requested_package not in enabled_template_packages:
-        output_objects.append(
-            {
-                "object_type": "error_text",
-                "text": "the specified template is not supported or enabled.",
-            }
+        return create_text_response(
+            output_objects,
+            "the specified template is not supported or enabled.",
+            object_type="error_text",
+            output_return_code=returnvalues.CLIENT_ERROR,
         )
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     try:
         package_module = importlib.import_module(request_info.request_package)
     except (ImportError, ModuleNotFoundError) as exc:
@@ -455,61 +477,56 @@ def _main(
             "failed to import the client specified tmplinterface request_package %s "
             % exc
         )
-        output_objects.append(
-            {
-                "object_type": "error_text",
-                "text": "the specified template package could not be imported",
-            }
+        return create_text_response(
+            output_objects,
+            "the specified template package could not be imported",
+            object_type="error_text",
+            output_return_code=returnvalues.CLIENT_ERROR,
         )
-        return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not hasattr(package_module, "TEMPLATE_ROUTES"):
-        output_objects.append(
-            {
-                "object_type": "error_text",
-                "text": "the specified template package does not declare the expected TEMPLATE_ROUTES",
-            }
+        return create_text_response(
+            output_objects,
+            "the specified template package does not declare the expected TEMPLATE_ROUTES",
+            object_type="error_text",
+            output_return_code=returnvalues.CLIENT_ERROR,
         )
-        return (output_objects, returnvalues.CLIENT_ERROR)
 
     if request_info.route not in package_module.TEMPLATE_ROUTES:
-        output_objects.append(
-            {
-                "object_type": "error_text",
-                "text": "the specified template route is not supported by the selected template package",
-            }
+        return create_text_response(
+            output_objects,
+            "the specified template route is not supported by the selected template package",
+            object_type="error_text",
+            output_return_code=returnvalues.CLIENT_ERROR,
         )
-        return (output_objects, returnvalues.CLIENT_ERROR)
 
     responder = package_module.TEMPLATE_ROUTES[request_info.route]
     if "generate_args" not in responder:
-        output_objects.append(
-            {
-                "object_type": "error_text",
-                "text": "the required 'generate_args' key was not found in the template package routes",
-            }
+        return create_text_response(
+            output_objects,
+            "the required 'generate_args' key was not found in the template package routes",
+            object_type="error_text",
+            output_return_code=returnvalues.CLIENT_ERROR,
         )
 
     # 2a. reference all routes that are implemented for the given package
     if request_info.request_package not in TMPL_DATA_HANDLERS:
-        output_objects.append(
-            {
-                "object_type": "error_text",
-                "text": "the specified route package handler was not found",
-            }
+        return create_text_response(
+            output_objects,
+            "the specified route package handler was not found",
+            object_type="error_text",
+            output_return_code=returnvalues.CLIENT_ERROR,
         )
-        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # 2a. reference all routes that are implemented for the given package
     acceptable_routes = TMPL_DATA_HANDLERS[request_info.request_package]
     if request_info.route not in acceptable_routes:
-        output_objects.append(
-            {
-                "object_type": "error_text",
-                "text": "the specified template data handling route was not found",
-            }
+        return create_text_response(
+            output_objects,
+            "the specified template data handling route was not found",
+            object_type="error_text",
+            output_return_code=returnvalues.CLIENT_ERROR,
         )
-        return (output_objects, returnvalues.CLIENT_ERROR)
 
     template_data_handler = acceptable_routes[request_info.route]
 
@@ -535,24 +552,86 @@ def _main(
             configuration, request_info
         )
     except Exception as exc:
+        # Currently the template_data_handler and the underlying validation logic
+        # can throw many types of exceptions. For now we capture them all siliently
+        # until we can for starters move up the input validation handling.
         logger.error(
             "An exception occured in tmplinterface while processing the template data handler %s"
             % exc
         )
 
     if template_data_exit_resp is None:
-        output_objects.append(
-            {
-                "object_type": "error_text",
-                "text": "error during data preparation",
-            }
+        return create_text_response(
+            output_objects,
+            "an unknown error occurred during data preparation",
+            object_type="error_text",
+            output_return_code=returnvalues.SYSTEM_ERROR,
         )
-        return (output_objects, returnvalues.ERROR)
 
+    if not isinstance(template_data_exit_resp, dict):
+        return create_text_response(
+            output_objects,
+            "the route template handler returned an incorrect structure type",
+            object_type="error_text",
+            output_return_code=returnvalues.ERROR,
+        )
+
+    if "status" not in template_data_exit_resp:
+        return create_text_response(
+            output_objects,
+            "the route template handler returned no status",
+            object_type="error_text",
+            output_return_code=returnvalues.ERROR,
+        )
+
+    if not isinstance(template_data_exit_resp["status"], int):
+        return create_text_response(
+            output_objects,
+            "the route template handler returned an incorrect status type",
+            object_type="error_text",
+            output_return_code=returnvalues.ERROR,
+        )
+
+    template_handler_status = template_data_exit_resp["status"]
+    template_handler_message = template_data_exit_resp.get("message", None)
+
+    if template_handler_status != 200:
+        if template_handler_message is not None:
+            template_handler_message = (
+                "an unknown error occurred from the template handler"
+            )
+        return create_text_response(
+            output_objects,
+            template_handler_message,
+            object_type="error_text",
+            output_return_code=returnvalues.ERROR,
+        )
+
+    if "data" not in template_data_resp:
+        return create_text_response(
+            output_objects,
+            "failed to find the required 'data' key in the template data response",
+            object_type="error_text",
+            output_return_code=returnvalues.ERROR,
+        )
+
+    template_data = template_data_resp["data"]
     # We pass the template_data_resp to the client ux library here, which
     # is responsible for accepting and rendering it to the client
     # so the request itself does not return the content.
-    render_info = responder["generate_args"](request_info, template_data_resp)
+    # The template_data is required to be iterable and support being called
+    # with iter(template_data)
+    try:
+        iter(template_data)
+    except TypeError:
+        return create_text_response(
+            output_objects,
+            "the template handler returned a datastructure that cannot be iterated",
+            object_type="error_text",
+            output_return_code=returnvalues.ERROR,
+        )
+
+    render_info = responder["generate_args"](request_info, template_data)
     return create_tmpl_response(
         output_objects,
         request_info.request_package,
