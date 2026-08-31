@@ -1327,14 +1327,16 @@ NORMALIZE_INPUTS_BY_PACKAGE = {
 }
 
 
-def create_api_response(output_objects, object_status, **result):
+def create_api_response(
+    output_objects, object_status, object_type="objects", **result
+):
     """
     A helper function that creates the final
     datainterface API return structure to the output_objects.
     """
     output_objects.append(
         {
-            "object_type": "objects",
+            "object_type": object_type,
             "objects": {
                 **result,
                 "status": object_status,
@@ -1353,7 +1355,6 @@ def _main(
     client_id=None,
     user_arguments_dict=None,
 ):
-
     # Create new output_objects list with start entry if None was supplied
     if output_objects is None:
         output_objects = [make_start_entry()]
