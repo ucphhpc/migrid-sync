@@ -29,8 +29,8 @@
 
 import pickle
 
-from tests.support.suppconst import TEST_OUTPUT_DIR
 from tests.support.fixturesupp import _HINTS_APPLIERS_ARGLESS
+from tests.support.suppconst import TEST_OUTPUT_DIR
 
 
 class PickleAssertMixin:
@@ -44,7 +44,7 @@ class PickleAssertMixin:
         having been optionally transformed as requested by hints.
         """
 
-        with open(pickle_file_path, 'rb') as picklefile:
+        with open(pickle_file_path, "rb") as picklefile:
             pickled = pickle.load(picklefile)
 
         if not apply_hints:

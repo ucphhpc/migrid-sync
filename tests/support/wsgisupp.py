@@ -27,9 +27,9 @@
 
 """Test support library for WSGI."""
 
-from collections import namedtuple
 import codecs
 import importlib
+from collections import namedtuple
 from io import BytesIO
 import json as jsonlib
 import os
@@ -59,8 +59,8 @@ migwsgi = _import_forcibly('migwsgi', relative_module_dir='wsgi-bin')
 
 class FakeWsgiStartResponse:
     """Glue object that conforms to the same interface as the start_response()
-       in the WSGI specs but records the calls to it such that they can be
-       inspected and, for our purposes, asserted against."""
+    in the WSGI specs but records the calls to it such that they can be
+    inspected and, for our purposes, asserted against."""
 
     def __init__(self):
         self.calls = []
@@ -99,21 +99,21 @@ def create_wsgi_environ(configuration, wsgi_url, method=None, query=None, header
     parsed_url = urlparse(wsgi_url)
 
     if query:
-        method = 'GET'
+        method = "GET"
 
         request_query = urlencode(query)
         wsgi_input = ()
     elif form:
-        method = 'POST'
-        request_query = ''
+        method = "POST"
+        request_query = ""
 
         body = _urlencode_form(form)
 
         headers = headers or {}
-        if not 'Content-Type' in headers:
-            headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        if not "Content-Type" in headers:
+            headers["Content-Type"] = "application/x-www-form-urlencoded"
 
-        headers['Content-Length'] = str(len(body))
+        headers["Content-Length"] = str(len(body))
         wsgi_input = BytesIO(body)
     elif json:
         headers = headers or {}
@@ -142,21 +142,22 @@ def create_wsgi_environ(configuration, wsgi_url, method=None, query=None, header
         """Internal helper to ignore wsgi.errors close method calls"""
 
         def close(self, *ars, **kwargs):
-            """"Simply ignore"""
+            """ "Simply ignore"""
             pass
 
     environ = {}
-    environ['wsgi.errors'] = _errors()
-    environ['wsgi.input'] = wsgi_input
-    environ['wsgi.url_scheme'] = parsed_url.scheme
-    environ['wsgi.version'] = (1, 0)
-    environ['MIG_CONF'] = configuration.config_file
-    environ['HTTP_HOST'] = parsed_url.netloc
-    environ['PATH_INFO'] = parsed_url.path
-    environ['QUERY_STRING'] = request_query
-    environ['REQUEST_METHOD'] = method
-    environ['SCRIPT_URI'] = ''.join(
-        ('http://', environ['HTTP_HOST'], environ['PATH_INFO']))
+    environ["wsgi.errors"] = _errors()
+    environ["wsgi.input"] = wsgi_input
+    environ["wsgi.url_scheme"] = parsed_url.scheme
+    environ["wsgi.version"] = (1, 0)
+    environ["MIG_CONF"] = configuration.config_file
+    environ["HTTP_HOST"] = parsed_url.netloc
+    environ["PATH_INFO"] = parsed_url.path
+    environ["QUERY_STRING"] = request_query
+    environ["REQUEST_METHOD"] = method
+    environ["SCRIPT_URI"] = "".join(
+        ("http://", environ["HTTP_HOST"], environ["PATH_INFO"])
+    )
 
     if mig_user_dn:
         environ['REMOTE_USER'] = mig_user_dn
@@ -170,8 +171,8 @@ def create_wsgi_environ(configuration, wsgi_url, method=None, query=None, header
 
     if headers:
         for k, v in headers.items():
-            header_key = k.replace('-', '_').upper()
-            if header_key.startswith('CONTENT'):
+            header_key = k.replace("-", "_").upper()
+            if header_key.startswith("CONTENT"):
                 # Content-* headers must not be prefixed in WSGI
                 pass
             else:
@@ -245,7 +246,7 @@ class WsgiAssertMixin:
         content = _PreparedWsgi.trigger_and_unpack_result(wsgi_result)
 
         def called_once(fake):
-            assert hasattr(fake, 'calls')
+            assert hasattr(fake, "calls")
             return len(fake.calls) == 1
 
         fake_start_response = prepared_wsgi.start_response

@@ -27,13 +27,13 @@
 
 """Fixture related details within the test support library."""
 
-from configparser import ConfigParser
-from datetime import date, timedelta
 import inspect
 import json
 import os
 import pickle
 import shutil
+from configparser import ConfigParser
+from datetime import date, timedelta
 from time import mktime
 from types import SimpleNamespace
 
@@ -52,30 +52,35 @@ def _fixturefile_loadrelative(fixture_name, fixture_format=None):
     assert fixture_format is not None, "fixture format must be specified"
     relative_path_with_ext = "%s.%s" % (fixture_name, fixture_format)
     tmp_path = os.path.join(TEST_FIXTURE_DIR, relative_path_with_ext)
-    assert os.path.isfile(tmp_path), \
-        'fixture named "%s" with format %s is not present: %s' % \
-        (fixture_name, fixture_format, relative_path_with_ext)
+    assert os.path.isfile(
+        tmp_path
+    ), 'fixture named "%s" with format %s is not present: %s' % (
+        fixture_name,
+        fixture_format,
+        relative_path_with_ext,
+    )
 
     data = None
 
-    if fixture_format == 'binary':
-        with open(tmp_path, 'rb') as binfile:
+    if fixture_format == "binary":
+        with open(tmp_path, "rb") as binfile:
             data = binfile.read()
-    elif fixture_format == 'json':
+    elif fixture_format == "json":
         with open(tmp_path) as jsonfile:
             data = json.load(jsonfile, object_hook=_FixtureHint.object_hook)
             _hints_apply_from_instances_if_present(data)
             _hints_apply_from_fixture_ini_if_present(fixture_name, data)
     else:
         raise AssertionError(
-            "unsupported fixture format: %s" % (fixture_format,))
+            "unsupported fixture format: %s" % (fixture_format,)
+        )
 
     return data, tmp_path
 
 
-def _fixturefile_normname(relative_path, prefix=''):
+def _fixturefile_normname(relative_path, prefix=""):
     """Grab normname from relative_path and optionally add a path prefix"""
-    normname, _ = relative_path.split('--')
+    normname, _ = relative_path.split("--")
     if prefix:
         return os.path.join(prefix, normname)
     return normname
@@ -97,6 +102,7 @@ def _fixturefile_normname(relative_path, prefix=''):
 #
 # <hints>
 
+
 def _hints_apply_array_of_tuples(value, modifier):
     """
     Convert list of lists such that its values are instead tuples.
@@ -110,7 +116,7 @@ def _hints_apply_today_relative(value, modifier):
     Geneate a time value by applying a declared delta to today's date.
     """
 
-    kind, delta = modifier.split('|')
+    kind, delta = modifier.split("|")
     if kind == "days":
         time_delta = timedelta(days=int(delta))
         adjusted_datetime = date.today() + time_delta
@@ -146,15 +152,17 @@ def _hints_apply_dict_bytes_to_strings_kv(input_dict, modifier):
     for k, v in input_dict.items():
         key_to_use = k
         if isinstance(k, bytes):
-            key_to_use = str(k, 'utf8')
+            key_to_use = str(k, "utf8")
 
         if isinstance(v, dict):
-            output_dict[key_to_use] = _hints_apply_dict_bytes_to_strings_kv(v, modifier)
+            output_dict[key_to_use] = _hints_apply_dict_bytes_to_strings_kv(
+                v, modifier
+            )
             continue
 
         val_to_use = v
         if isinstance(v, bytes):
-            val_to_use = str(v, 'utf8')
+            val_to_use = str(v, "utf8")
 
         output_dict[key_to_use] = val_to_use
 
@@ -174,15 +182,17 @@ def _hints_apply_dict_strings_to_bytes_kv(input_dict, modifier):
     for k, v in input_dict.items():
         key_to_use = k
         if isinstance(k, str):
-            key_to_use = bytes(k, 'utf8')
+            key_to_use = bytes(k, "utf8")
 
         if isinstance(v, dict):
-            output_dict[key_to_use] = _hints_apply_dict_strings_to_bytes_kv(v, modifier)
+            output_dict[key_to_use] = _hints_apply_dict_strings_to_bytes_kv(
+                v, modifier
+            )
             continue
 
         val_to_use = v
         if isinstance(v, str):
-            val_to_use = bytes(v, 'utf8')
+            val_to_use = bytes(v, "utf8")
 
         output_dict[key_to_use] = val_to_use
 
@@ -246,7 +256,7 @@ _FIXTUREFILE_APPLIERS_ATTRIBUTES = {
 
 # hints applied when writing the contents of a fixture as a temporary file
 _FIXTUREFILE_APPLIERS_ONWRITE = {
-    'convert_dict_strings_to_bytes_kv': _hints_apply_dict_strings_to_bytes_kv,
+    "convert_dict_strings_to_bytes_kv": _hints_apply_dict_strings_to_bytes_kv,
 }
 
 
@@ -316,10 +326,10 @@ def _hints_apply_from_fixture_ini_if_present(fixture_name, json_object):
 
     # apply any attriutes hints ahead of specified conversions such that any
     # key can be specified matching what is visible within the loaded fixture
-    for item_name, item_hint_unparsed in hints['ATTRIBUTES'].items():
+    for item_name, item_hint_unparsed in hints["ATTRIBUTES"].items():
         loaded_value = json_object[item_name]
 
-        item_hint_and_maybe_modifier = item_hint_unparsed.split('--')
+        item_hint_and_maybe_modifier = item_hint_unparsed.split("--")
         item_hint = item_hint_and_maybe_modifier[0]
         if len(item_hint_and_maybe_modifier) == 2:
             modifier = item_hint_and_maybe_modifier[1]
@@ -344,7 +354,9 @@ class _FixtureHint:
     def decode_hint(hint_obj):
         """Produce a value based on the properties of a hint instance."""
         assert isinstance(hint_obj, _FixtureHint)
-        value_from_loaded_value = _FIXTUREFILE_APPLIERS_ATTRIBUTES[hint_obj.hint]
+        value_from_loaded_value = _FIXTUREFILE_APPLIERS_ATTRIBUTES[
+            hint_obj.hint
+        ]
         return value_from_loaded_value(hint_obj.value, hint_obj.modifier)
 
     @staticmethod
@@ -355,10 +367,13 @@ class _FixtureHint:
         """
 
         if "_FixtureHint" in decoded_object:
-            fixture_hint = _FixtureHint(decoded_object["hint"], decoded_object["modifier"])
+            fixture_hint = _FixtureHint(
+                decoded_object["hint"], decoded_object["modifier"]
+            )
             return _FixtureHint.decode_hint(fixture_hint)
 
         return decoded_object
+
 
 # </hints>
 
@@ -372,7 +387,7 @@ def fixturepath(relative_path):
 def _to_display_path(value):
     """Convert an absolute path to one to be shown as part of test output."""
     display_path = os.path.relpath(value, MIG_BASE)
-    if not display_path.startswith('.'):
+    if not display_path.startswith("."):
         return "./" + display_path
     return display_path
 
@@ -382,11 +397,11 @@ class _PreparedFixture:
     Object representing a loaded fixture prepared for use within a test case.
     """
 
-    def __init__(self, testcase,
-                 fixture_name,
-                 fixture_format,
-                 fixture_data,
-                 native_fixture_data):
+    NO_DATA = object()
+
+    def __init__(
+        self, testcase, fixture_name, native_fixture_data, fixture_format="", fixture_data=NO_DATA
+    ):
         self.testcase = testcase
         self.fixture_name = fixture_name
         self.fixture_format = fixture_format
@@ -418,9 +433,12 @@ class _PreparedFixture:
             if self.fixture_format:
                 message_infix = " with format %s" % (self.fixture_format,)
             else:
-                message_infix = ''
+                message_infix = ""
             message = "value differed from fixture named %s%s\n\n%s" % (
-                self.fixture_name, message_infix, raised_exception)
+                self.fixture_name,
+                message_infix,
+                raised_exception,
+            )
             raise AssertionError(message)
 
     def write_to_dir(self, target_dir, output_format=None):
@@ -432,7 +450,9 @@ class _PreparedFixture:
         assert os.path.isabs(target_dir)
 
         # convert fixture name (which includes the varaint) to the target file
-        fixture_file_target = _fixturefile_normname(self.fixture_name, prefix=target_dir)
+        fixture_file_target = _fixturefile_normname(
+            self.fixture_name, prefix=target_dir
+        )
 
         output_data = self.fixture_data
 
@@ -442,18 +462,19 @@ class _PreparedFixture:
         onwrite_hints = _choose_names_from_hints_ini(hints, section='ONWRITE')
         output_data = apply_named_hints(output_data, *onwrite_hints)
 
-        if output_format == 'binary':
-            with open(fixture_file_target, 'wb') as fixture_outputfile:
+        if output_format == "binary":
+            with open(fixture_file_target, "wb") as fixture_outputfile:
                 fixture_outputfile.write(output_data)
-        elif output_format == 'json':
-            with open(fixture_file_target, 'w') as fixture_outputfile:
+        elif output_format == "json":
+            with open(fixture_file_target, "w") as fixture_outputfile:
                 json.dump(output_data, fixture_outputfile)
-        elif output_format == 'pickle':
-            with open(fixture_file_target, 'wb') as fixture_outputfile:
+        elif output_format == "pickle":
+            with open(fixture_file_target, "wb") as fixture_outputfile:
                 pickle.dump(output_data, fixture_outputfile)
         else:
             raise AssertionError(
-                "unsupported fixture format: %s" % (output_format,))
+                "unsupported fixture format: %s" % (output_format,)
+            )
 
     @staticmethod
     def from_relpath(testcase, fixture_name, fixture_format):
@@ -477,10 +498,12 @@ class _PreparedFixture:
             fixture_data = raw_fixture_data
             native_fixture_data = raw_fixture_data
 
-        return _PreparedFixture(testcase, fixture_name, fixture_format, fixture_data, native_fixture_data)
+        return _PreparedFixture(testcase, fixture_name, native_fixture_data, fixture_format, fixture_data)
 
 
 class FixtureAssertMixin:
     def prepareFixtureAssert(self, fixture_relpath, fixture_format=None):
         """Prepare to assert a value against a fixture."""
-        return _PreparedFixture.from_relpath(self, fixture_relpath, fixture_format)
+        return _PreparedFixture.from_relpath(
+            self, fixture_relpath, fixture_format
+        )

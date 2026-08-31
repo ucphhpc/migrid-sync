@@ -28,9 +28,9 @@
 
 """Logger related details within the test support library."""
 
-from collections import defaultdict
 import os
 import re
+from collections import defaultdict
 
 from tests.support.suppconst import MIG_BASE, TEST_BASE
 
@@ -47,7 +47,8 @@ class FakeLogger:
     """
 
     RE_UNCLOSEDFILE = re.compile(
-        'unclosed file <.*? name=\'(?P<location>.*?)\'( .*?)?>')
+        "unclosed file <.*? name='(?P<location>.*?)'( .*?)?>"
+    )
 
     def __init__(self):
         self.channels_dict = defaultdict(list)
@@ -77,13 +78,19 @@ class FakeLogger:
 
         # complain loudly (and in detail) in the case of unclosed files
         if len(unclosed_by_file) > 0:
-            messages = '\n'.join({' --> %s: line=%s, file=%s' % (fname, lineno, outname)
-                                  for fname, (lineno, outname) in unclosed_by_file.items()})
-            raise RuntimeError('unclosed files encountered:\n%s' % (messages,))
+            messages = "\n".join(
+                {
+                    " --> %s: line=%s, file=%s" % (fname, lineno, outname)
+                    for fname, (lineno, outname) in unclosed_by_file.items()
+                }
+            )
+            raise RuntimeError("unclosed files encountered:\n%s" % (messages,))
 
-        if channels_dict['error'] and not forgive_by_channel['error']:
-            raise RuntimeError('errors reported to logger:\n%s' %
-                               '\n'.join(channels_dict['error']))
+        if channels_dict["error"] and not forgive_by_channel["error"]:
+            raise RuntimeError(
+                "errors reported to logger:\n%s"
+                % "\n".join(channels_dict["error"])
+            )
 
     def declare_expected_error(self, comparison="equal", expectation=None):
         """Record a particular logged error message as expected."""
@@ -110,26 +117,26 @@ class FakeLogger:
 
     def debug(self, line):
         """Mock log action of same name"""
-        self._append_as('debug', line)
+        self._append_as("debug", line)
 
     def error(self, line):
         """Mock log action of same name"""
-        self._append_as('error', line)
+        self._append_as("error", line)
 
     def info(self, line):
         """Mock log action of same name"""
-        self._append_as('info', line)
+        self._append_as("info", line)
 
     def warning(self, line):
         """Mock log action of same name"""
-        self._append_as('warning', line)
+        self._append_as("warning", line)
 
     def write(self, message):
         """Actual write handler"""
-        channel, namespace, specifics = message.split(':', 2)
+        channel, namespace, specifics = message.split(":", 2)
 
         # ignore everything except warnings sent by the python runtime
-        if not (channel == 'WARNING' and namespace == 'py.warnings'):
+        if not (channel == "WARNING" and namespace == "py.warnings"):
             return
 
         filename_and_datatuple = FakeLogger.identify_unclosed_file(specifics)
@@ -139,10 +146,10 @@ class FakeLogger:
     @staticmethod
     def identify_unclosed_file(specifics):
         """Warn about unclosed files"""
-        filename, lineno, exc_name, message = specifics.split(':', 3)
+        filename, lineno, exc_name, message = specifics.split(":", 3)
 
         exc_name = exc_name.lstrip()
-        if exc_name != 'ResourceWarning':
+        if exc_name != "ResourceWarning":
             return
 
         matched = FakeLogger.RE_UNCLOSEDFILE.match(message.lstrip())
@@ -151,7 +158,8 @@ class FakeLogger:
 
         relative_testfile = os.path.relpath(filename, start=MIG_BASE)
         relative_outputfile = os.path.relpath(
-            matched.groups('location')[0], start=TEST_BASE)
+            matched.groups("location")[0], start=TEST_BASE
+        )
         return (relative_testfile, (lineno, relative_outputfile))
 
 
