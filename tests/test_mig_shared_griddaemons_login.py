@@ -907,7 +907,7 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
             ip_addr=None,
             user_dict=None,
         )
-        dummy_share.last_update = self.start_time
+        dummy_share.last_update = self.start_time + 1
         daemon_conf["shares"].append(dummy_share)
 
         changed_paths = get_share_changes(
