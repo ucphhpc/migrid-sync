@@ -891,6 +891,8 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
         ensure_dirs_exist(user_shared_keys)
         share_link_path = os.path.join(self.ro_share_home, TEST_RO_SHARE_ID)
         os.symlink(user_shared_dir, share_link_path)
+        # Ensure that the link has the same mtime as the last_update
+        os.utime(share_link_path, (self.start_time, self.start_time))
 
         # Create a dummy share with last_update matching file mtime
         dummy_share = Login(
