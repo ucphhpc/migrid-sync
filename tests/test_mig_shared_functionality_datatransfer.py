@@ -108,6 +108,17 @@ class MigSharedFunctionalityDataTransfer(MigTestCase):
         text_objects = _only_output_objects(output_objects, with_object_type="text")
         self.assertEqual(len(text_objects), 0)
 
+        # We expect 10 html snippets here
+        html_objects = _only_output_objects(output_objects,
+                                            with_object_type="html_form")
+        self.assertEqual(len(html_objects), 10)
+        # NOTE: next bit verifies the correct switch to an r-string
+        found_pattern = False
+        for entry in html_objects:
+            if entry['text'].find(r'="[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+"') != -1:
+                found_pattern = True
+        self.assertTrue(found_pattern)
+
     def test_deltransfer_without_transfer_id(self):
         non_existing_transfer_id = "non-existing-transfer-id"
         payload = {"action": ["deltransfer"], "transfer_id": [non_existing_transfer_id]}

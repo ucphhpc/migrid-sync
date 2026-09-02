@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqjupyterservice - Redirect the user to a backend jupyter service host
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -41,6 +42,7 @@ Finally the user is redirected to the jupyterhub home page where a new notebook
 server can be instantiated and mount the users linked homedrive with the passed
 keyset.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -116,7 +118,7 @@ def to_unix_account(input_str):
     if not isinstance(input_str, basestring) or not input_str:
         return None
     input_str = input_str.lower()
-    valid_unix_name = "".join(re.findall('[a-z0-9_.\-]+', input_str))
+    valid_unix_name = "".join(re.findall(r'[a-z0-9_.\-]+', input_str))
     if not valid_unix_name:
         return None
     return valid_unix_name[:32]
@@ -135,8 +137,9 @@ def mig_to_mount_adapt(mig):
     if "@" in mount_string and ":" in mount_string:
         # Expects that the mount_string is in the format
         # @mount_url:mount_path
-        target_host = mount_string[mount_string.index("@")+1:mount_string.index(":")]
-        target_path = mount_string[mount_string.index(":")+1:]        
+        target_host = mount_string[mount_string.index(
+            "@") + 1:mount_string.index(":")]
+        target_path = mount_string[mount_string.index(":") + 1:]
 
     mount = {
         'targetHost': target_host,
@@ -228,6 +231,7 @@ def get_newest_mount(jupyter_mounts):
         else:
             old_mounts.append(mount)
     return latest, old_mounts
+
 
 @__require_requests
 def get_host_from_service(configuration, service, base_url=None):
@@ -352,6 +356,7 @@ def signature():
     }
     return ['', defaults]
 
+
 @__require_requests
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -410,7 +415,8 @@ def main(client_id, user_arguments_dict):
         )
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    host = get_host_from_service(configuration, service, base_url="/%s" % service["service_name"])
+    host = get_host_from_service(configuration, service, base_url="/%s" %
+                                 service["service_name"])
     # Get an active jupyterhost
     if not host:
         logger.error("No active jupyterhub host could be found")
@@ -526,8 +532,8 @@ def main(client_id, user_arguments_dict):
                 workflow_session_id = get_workflow_session_id(configuration,
                                                               client_id)
                 if not workflow_session_id:
-                    workflow_session_id = create_workflow_session_id(configuration,
-                                                                     client_id)
+                    workflow_session_id = create_workflow_session_id(
+                        configuration, client_id)
                 # TODO get these dynamically
                 workflows_url = configuration.migserver_https_sid_url + \
                     '/cgi-sid/jsoninterface.py?output_format=json'
@@ -543,10 +549,12 @@ def main(client_id, user_arguments_dict):
             # Refresh cookies
             session.get(url_hub)
             # Authenticate and submit data
-            response = jupyterhub_session_post_request(session, url_auth, headers=auth_header)
+            response = jupyterhub_session_post_request(session, url_auth,
+                                                       headers=auth_header)
             if response.status_code == 200:
                 for user_data_type, user_data in user_post_data.items():
-                    response = jupyterhub_session_post_request(session, url_data, json={user_data_type: user_data})
+                    response = jupyterhub_session_post_request(
+                        session, url_data, json={user_data_type: user_data})
                     if response.status_code != 200:
                         logger.error(
                             "Jupyter: User %s failed to submit data %s to %s"
@@ -562,7 +570,7 @@ def main(client_id, user_arguments_dict):
 
     # Create a new keyset
     # Create login session id
-    session_id = generate_random_ascii(2*session_id_bytes,
+    session_id = generate_random_ascii(2 * session_id_bytes,
                                        charset='0123456789abcdef')
 
     # Generate private/public keys
@@ -654,13 +662,15 @@ def main(client_id, user_arguments_dict):
         # Refresh cookies
         session.get(url_hub)
         # Authenticate
-        response = jupyterhub_session_post_request(session, url_auth, headers=auth_header)
+        response = jupyterhub_session_post_request(session, url_auth,
+                                                   headers=auth_header)
         if response.status_code == 200:
             for user_data_type, user_data in user_post_data.items():
-                response = jupyterhub_session_post_request(session, url_data, json={user_data_type: user_data})
+                response = jupyterhub_session_post_request(
+                    session, url_data, json={user_data_type: user_data})
                 if response.status_code != 200:
                     logger.error("Jupyter: User %s failed to submit data %s to %s"
-                                % (client_id, user_data, url_data))
+                                 % (client_id, user_data, url_data))
         else:
             logger.error("Jupyter: User %s failed to authenticate against %s"
                          % (client_id, url_auth))
