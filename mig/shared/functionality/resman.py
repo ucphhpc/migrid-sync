@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resman - manage resources
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2025  The MiG Project lead by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -40,7 +41,7 @@ from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.modified import pending_resources_update, pending_vgrids_update
 from mig.shared.resource import anon_to_real_res_map
 from mig.shared.vgridaccess import user_visible_res_confs, get_resource_map, \
-    OWNERS, CONF
+    load_resource_map, CONF, OWNERS
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']
@@ -152,7 +153,11 @@ to open resource management.
         logger.info("get vgrid and resource map with caching %s" % caching)
         visible_res_confs = user_visible_res_confs(configuration, client_id,
                                                    caching)
-        res_map = get_resource_map(configuration, caching)
+        # NOTE: prevent refresh if janitor is enabled as it handles all updates
+        if configuration.site_enable_janitor:
+            (res_map, _) = load_resource_map(configuration, caching=caching)
+        else:
+            res_map = get_resource_map(configuration, caching)
         anon_map = anon_to_real_res_map(configuration.resource_home)
 
         # NOTE: use simple pending check if caching to avoid lock during update
