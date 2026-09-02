@@ -96,6 +96,7 @@ miu_css = '''
 <!-- MarkItUp style -->
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/skins/markitup/style.css"/>
 <!--
+<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/default/style.css" title="txt2tags"/>
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/txt2tags/style.css" title="txt2tags"/>
 -->
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/html/style.css" title="html"/>
@@ -103,6 +104,13 @@ miu_css = '''
 miu_javascript = '''
 <!-- MarkItUp scripts -->
 <script type="text/javascript" src="/images/lib/markitup/markitup/jquery.markitup.js"></script>
+<!--
+<script type="text/javascript" src="/images/lib/markitup/markitup/sets/default/set.js"></script>
+<script type="text/javascript">
+var myDefaultSettings = mySettings;
+myDefaultSettings["nameSpace"] = "default";
+</script>
+-->
 <script type="text/javascript" src="/images/lib/markitup/markitup/sets/html/set.js"></script>
 <script type="text/javascript">
 var myHtmlSettings = mySettings;
@@ -112,7 +120,7 @@ myHtmlSettings["nameSpace"] = "html";
 <script type="text/javascript" src="/images/lib/markitup/markitup/sets/txt2tags/set.js"></script>
 <script type="text/javascript">
 var myTxt2TagsSettings = mySettings;
-myTxt2TagsSettings["nameSpace"] = "markitup-txt2tags";
+myTxt2TagsSettings["nameSpace"] = "txt2tags";
 </script>
 -->
 '''
