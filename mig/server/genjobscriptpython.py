@@ -150,9 +150,9 @@ from os.path import join, getsize
 '''
 
     def print_start(self, name='job'):
-        """print 'starting new job'"""
+        """Print 'starting new job'"""
 
-        return "print 'Starting new %s with JOB_ID: %s'\n" % \
+        return "print('Starting new %s with JOB_ID: %s')\n" % \
                (name, self.job_dict['JOB_ID'])
 
     def create_files(self, files):
@@ -584,7 +584,7 @@ if not os.environ.get("MIG_JOBDIR", ""):
 
         for exe in self.job_dict['EXECUTE']:
             exe = exe.replace('"', '\\"')
-            cmd += 'print "' + pretext + exe + '"\n'
+            cmd += 'print("' + pretext + exe + '")\n'
 
             cmd += 'if "' + exe + '".find(" >> ") != -1:\n'
             cmd += '   filehandle = subprocess.Popen("' + exe + ' 2>> ' + \
@@ -599,7 +599,7 @@ if not os.environ.get("MIG_JOBDIR", ""):
             cmd += 'else:\n'
             cmd += '  status = "%s" % status\n'
             cmd += 'status_handle.write("' + exe + ' %s\\n" % status)\n'
-            cmd += 'print "' + posttext + '%s" % status\n'
+            cmd += 'print("' + posttext + '%s" % status)\n'
 
         cmd += 'status_handle.close()\n'
 
@@ -711,10 +711,10 @@ if not os.environ.get("MIG_JOBDIR", ""):
         successcode='0',
         msg='ERROR: unexpected exit code!',
     ):
-        """Print msg unless last command exitted with successcode"""
+        """Print msg unless last command exited with successcode"""
 
         cmd = 'if ' + result + ' != ' + successcode + ':\n'
-        cmd += '\tprint "WARNING: ' + msg + "\(\" + " + result + " + \"\)\"\n"
+        cmd += '\tprint("WARNING: ' + msg + ' (" + ' + result + ' + ")")\n'
         cmd += '\n'
         return cmd
 
@@ -751,8 +751,8 @@ if not os.environ.get("MIG_JOBDIR", ""):
         reflected in frontend_script!
         """
 
-        return 'print "' + name + ' script end reached ' + \
-               self.job_dict['JOB_ID'] + '" \nsys.exit(' + exitcode + ')\n' + \
+        return 'print("' + name + ' script end reached ' + \
+               self.job_dict['JOB_ID'] + '")\nsys.exit(' + exitcode + ')\n' + \
                '### END OF SCRIPT ###\n'
 
     def clean_up(self):
