@@ -604,7 +604,7 @@ def _main(
     template_handler_message = template_data_exit_resp.get("message", None)
 
     if template_handler_status != 200:
-        if template_handler_message is not None:
+        if template_handler_message is None:
             template_handler_message = (
                 "an unknown error occurred from the template handler"
             )
