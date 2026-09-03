@@ -61,19 +61,24 @@ from mig.lib.reqinfo import (
     unlistify_dict,
 )
 from mig.shared import accountreq, returnvalues
-from mig.shared.base import extract_field, fill_user
+from mig.shared.base import extract_field, fill_user, string_snippet
 from mig.shared.defaults import (
+    CSRF_WARN,
+    csrf_field,
+    csrf_token_header,
     keyword_auto,
     peers_expire_max_days,
     peers_expire_min_days,
     peers_fields,
 )
+from mig.shared.handlers import check_enable_csrf, get_csrf_limit
 from mig.shared.init import (
     find_entry,
     initialize_main_variables,
     make_start_entry,
 )
 from mig.shared.notification import send_email
+from mig.shared.pwcrypto import make_csrf_token
 from mig.shared.safeinput import (
     REJECT_UNSET,
     html_escape,
@@ -94,6 +99,52 @@ PEER_NOTIFY_TYPE_MAP = {"invite_on_email": valid_boolean}
 PEER_CSVLINES_TYPE_MAP = {
     "csvlines": valid_peers_csvlines,
 }
+
+
+def _validate_csrf_token(configuration, request_info, environ=None):
+    """
+    Validates that the csrf token in the request matches the expected token.
+    """
+    _logger = configuration.logger
+
+    if not check_enable_csrf(configuration, request_info.request_data, environ):
+        return True
+
+    # Extract token from request data or header
+    csrf_token = request_info.request_data.get(csrf_field, "")
+    if not csrf_token and environ:
+        csrf_token = environ.get(csrf_token_header, "")
+
+    if not csrf_token:
+        _logger.warning(
+            "No CSRF token provided for request route: %s by: %s"
+            % (request_info.route, request_info.client_email)
+        )
+        return False
+
+    # Generate expected token
+    limit = get_csrf_limit(configuration, environ)
+    expected_token = make_csrf_token(
+        configuration,
+        request_info.method,
+        request_info.route,
+        request_info.client_id,
+        limit=limit,
+    )
+
+    # Compare tokens (use string_snippet for logging to avoid exposing full tokens)
+    if csrf_token != expected_token:
+        msg = "CSRF check failed in datainterface: %s vs %s" % (
+            string_snippet(csrf_token),
+            string_snippet(expected_token),
+        )
+        if configuration.site_csrf_protection != CSRF_WARN:
+            _logger.error(msg)
+            return False
+        else:
+            _logger.warning(msg)
+            return True
+    return True
 
 
 # TODO, move the helper functions and the peers related handlers/normalizers
@@ -1416,6 +1467,11 @@ def _main(
             {"object_type": "error_text", "text": html_escape(msg)}
         )
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # 1a. validate the CSRF token if it is present
+    if not _validate_csrf_token(configuration, request_info, environ=environ):
+        error = {"error": "the supplied CSRF token was invalid"}
+        return create_api_response(output_objects, 403, **error)
 
     # 2. determine the specifics of the request being made
     if request_info.request_package not in HANDLERS_BY_PACKAGE:
