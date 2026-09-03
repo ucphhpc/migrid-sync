@@ -101,9 +101,13 @@ TEST_USER_PW_HASH = (
 )
 
 
-def _prepare_auth_files(home_path, auth_protos=None):
+def _prepare_auth_files(
+    home_path, auth_protos=None, override_modification_time=None
+):
     """Helper to create helper auth files for on eor more auth_protos.
     If None is passed ssh, ftps and davs auth files will be made.
+    Currently the override_modification_time sets the same timestamp across
+    every auth file this function creates.
     """
     auth_files = []
     if auth_protos is None:
@@ -120,10 +124,24 @@ def _prepare_auth_files(home_path, auth_protos=None):
                 creds_fd.write(TEST_USER_PUB_KEY)
             auth_files.append(authkeys_path)
 
+            if override_modification_time is not None:
+                assert isinstance(override_modification_time, (int, float))
+                access_time = os.path.getatime(authkeys_path)
+                os.utime(
+                    authkeys_path, (access_time, override_modification_time)
+                )
+
         authpasswords_path = os.path.join(dot_proto_dir, "authorized_passwords")
         with open(authpasswords_path, "w") as creds_fd:
             creds_fd.write(TEST_USER_PW_HASH)
         auth_files.append(authpasswords_path)
+
+        if override_modification_time is not None:
+            assert isinstance(override_modification_time, (int, float))
+            access_time = os.path.getatime(authpasswords_path)
+            os.utime(
+                authpasswords_path, (access_time, override_modification_time)
+            )
     return auth_files
 
 
@@ -132,7 +150,9 @@ def _parse_pkey_to_openssh_format(paramiko_pkey):
     return "%s %s" % (paramiko_pkey.get_name(), paramiko_pkey.get_base64())
 
 
-def _create_job_mrsl_file(test_case, session_id, job_dict):
+def _create_job_mrsl_file(
+    test_case, session_id, job_dict, override_modification_time=None
+):
     """Helper to create a .mRSL pickle file and symlink."""
     mrsl_dir = test_case.configuration.sessid_to_mrsl_link_home
     ensure_dirs_exist(mrsl_dir)
@@ -141,6 +161,13 @@ def _create_job_mrsl_file(test_case, session_id, job_dict):
     pickle_path = temppath("job_%s.pkl" % session_id, test_case)
     with open(pickle_path, "wb") as pkl_fd:
         pickle.dump(job_dict, pkl_fd)
+
+    # If we need to manually override the modification time
+    if override_modification_time is not None:
+        assert isinstance(override_modification_time, (int, float))
+        # We leave the access time to what it is already
+        access_time = os.path.getatime(pickle_path)
+        os.utime(pickle_path, (access_time, override_modification_time))
 
     # Create symlink
     link_path = os.path.join(mrsl_dir, "%s.mRSL" % session_id)
@@ -568,7 +595,12 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
         self.configuration.daemon_conf["allow_digest"] = False
 
         self.test_user_home = self._provision_test_user(self, TEST_USER_DN)
-        auth_files = _prepare_auth_files(self.test_user_home, ["ssh"])
+        self.start_time = time.time()
+        auth_files = _prepare_auth_files(
+            self.test_user_home,
+            ["ssh"],
+            override_modification_time=self.start_time,
+        )
         self.auth_keys_path, self.auth_passwords_path = auth_files
         self.auth_digests_path = None
 
@@ -577,7 +609,7 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
         daemon_conf = self.configuration.daemon_conf
 
         # Create a dummy user with a last_update in the past
-        past_timestamp = time.time() - 3600
+        past_timestamp = self.start_time - 3600
         dummy_user = Login(
             configuration=self.configuration,
             username=TEST_USER_SHORT_ID,
@@ -609,9 +641,6 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
         """Verify that unchanged credential files return an empty list"""
         daemon_conf = self.configuration.daemon_conf
 
-        # Set the file modification times to now
-        current_time = time.time()
-
         # Create a dummy user with last_update matching the file mtime
         dummy_user = Login(
             configuration=self.configuration,
@@ -625,7 +654,7 @@ class MigSharedGriddaemonsLogin__get_creds_changes(MigTestCase):
             ip_addr=None,
             user_dict=None,
         )
-        dummy_user.last_update = current_time
+        dummy_user.last_update = self.start_time
         daemon_conf["users"].append(dummy_user)
 
         changed_paths = get_creds_changes(
@@ -659,18 +688,16 @@ class MigSharedGriddaemonsLogin__get_job_changes(MigTestCase):
         # self.configuration.daemon_conf['allow_digest'] = True
         self.configuration.daemon_conf["allow_digest"] = False
 
-        self.auth_keys_path = temppath("authorized_keys", self)
-        self.auth_passwords_path = temppath("authorized_passwords", self)
-        # self.auth_digests_path = temppath('authhorized_digests', self)
+        # Create sample credential files
+        self.test_user_home = self._provision_test_user(self, TEST_USER_DN)
+        self.start_time = time.time()
+        auth_files = _prepare_auth_files(
+            self.test_user_home,
+            ["ssh"]
+        )
+        self.auth_keys_path, self.auth_passwords_path = auth_files
         self.auth_digests_path = None
 
-        # Create sample credential files
-        with open(self.auth_keys_path, "w") as creds_fd:
-            creds_fd.write(TEST_USER_PUB_KEY)
-        with open(self.auth_passwords_path, "w") as creds_fd:
-            creds_fd.write(TEST_USER_PW_HASH)
-        # with open(self.auth_digests_path, 'w') as creds_fd:
-        #    creds_fd.write(TEST_USER_DIGEST)
 
     def test_get_job_changes_new_job(self):
         """Verify that a new job mrsl file is detected as a change"""
@@ -679,6 +706,9 @@ class MigSharedGriddaemonsLogin__get_job_changes(MigTestCase):
         mrsl_path = temppath("test_job.mRSL", self)
         with open(mrsl_path, "w") as mrsl_fd:
             mrsl_fd.write("test content")
+        # Ensure that we compare get_job_changes last_update vs a time.time timestamp
+        access_time = os.path.getatime(mrsl_path)
+        os.utime(mrsl_path, (access_time, self.start_time))
 
         changed_paths = get_job_changes(
             daemon_conf, "test_session_id", mrsl_path
@@ -693,6 +723,8 @@ class MigSharedGriddaemonsLogin__get_job_changes(MigTestCase):
         mrsl_path = temppath("test_job.mRSL", self)
         with open(mrsl_path, "w") as mrsl_fd:
             mrsl_fd.write("test content")
+        access_time = os.path.getatime(mrsl_path)
+        os.utime(mrsl_path, (access_time, self.start_time))
 
         # Create a dummy job with last_update matching file mtime
         current_time = time.time()
@@ -776,18 +808,15 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
         # self.configuration.daemon_conf['allow_digest'] = True
         self.configuration.daemon_conf["allow_digest"] = False
 
-        self.auth_keys_path = temppath("authorized_keys", self)
-        self.auth_passwords_path = temppath("authorized_passwords", self)
-        # self.auth_digests_path = temppath('authhorized_digests', self)
+        self.test_user_home = self._provision_test_user(self, TEST_USER_DN)
+        self.start_time = time.time()
+        auth_files = _prepare_auth_files(
+            self.test_user_home,
+            ["ssh"]
+        )
+        self.auth_keys_path, self.auth_passwords_path = auth_files
         self.auth_digests_path = None
 
-        # Create sample credential files
-        with open(self.auth_keys_path, "w") as creds_fd:
-            creds_fd.write(TEST_USER_PUB_KEY)
-        with open(self.auth_passwords_path, "w") as creds_fd:
-            creds_fd.write(TEST_USER_PW_HASH)
-        # with open(self.auth_digests_path, 'w') as creds_fd:
-        #    creds_fd.write(TEST_USER_DIGEST)
 
     def test_get_share_changes_detects_updates(self):
         """Verify that share link and key file changes are detected"""
@@ -805,7 +834,7 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
         os.symlink(user_shared_dir, share_link_path)
 
         # Create a dummy share with a last_update in the past
-        past_timestamp = time.time() - 3600
+        past_timestamp = self.start_time - 3600
         dummy_share = Login(
             configuration=self.configuration,
             username=TEST_RO_SHARE_ID,
@@ -862,9 +891,10 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
         ensure_dirs_exist(user_shared_keys)
         share_link_path = os.path.join(self.ro_share_home, TEST_RO_SHARE_ID)
         os.symlink(user_shared_dir, share_link_path)
+        # Ensure that the link has the same mtime as the last_update
+        os.utime(share_link_path, (self.start_time, self.start_time))
 
         # Create a dummy share with last_update matching file mtime
-        current_time = time.time()
         dummy_share = Login(
             configuration=self.configuration,
             username=TEST_RO_SHARE_ID,
@@ -877,7 +907,7 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
             ip_addr=None,
             user_dict=None,
         )
-        dummy_share.last_update = current_time
+        dummy_share.last_update = self.start_time + 1
         daemon_conf["shares"].append(dummy_share)
 
         changed_paths = get_share_changes(
@@ -1047,6 +1077,7 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
     def test_refresh_job_creds_link_unchanged(self):
         """Unchanged link (mtime <= time_stamp) should return no changes."""
+        start_time = time.time()
         job_dict = {
             "STATUS": "EXECUTING",
             "SESSIONID": "staticjob",
@@ -1055,19 +1086,15 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             "MOUNTSSHPUBLICKEY": TEST_USER_PUB_KEY,
             "RESOURCE_CONFIG": {"HOSTURL": "localhost"},
         }
-        _create_job_mrsl_file(self, "staticjob", job_dict)
+        # Manually set the modification time on the job files to be current_time
+        _create_job_mrsl_file(self, "staticjob", job_dict, override_modification_time=start_time)
 
-        # Pre-populate conf with job having current timestamp
-        current_time = time.time()
-        self.configuration.daemon_conf["time_stamp"] = current_time
         add_job_object(
             self.configuration,
             "staticjob",
             TEST_JOB_USER_DIR,
             pubkey=TEST_USER_PUB_KEY,
         )
-        # Manually set last_update to now to simulate "fresh"
-        self.configuration.daemon_conf["jobs"][0].last_update = current_time
 
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", "staticjob"
@@ -1077,6 +1104,7 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
     def test_refresh_job_creds_valid_job_added(self):
         """Valid executing job with key should be added to jobs."""
+        start_time = time.time()
         job_dict = {
             "STATUS": "EXECUTING",
             "SESSIONID": TEST_JOB_ID,
@@ -1085,7 +1113,8 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             "MOUNTSSHPUBLICKEY": TEST_USER_PUB_KEY,
             "RESOURCE_CONFIG": {"HOSTURL": "localhost"},
         }
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+
+        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time)
 
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
@@ -1105,6 +1134,7 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
     def test_refresh_job_creds_non_executing_status(self):
         """Job with non-EXECUTING status should be removed as inactive."""
+        start_time = time.time()
         daemon_conf = self.configuration.daemon_conf
         # Directly register test job as executing before test
         job_dict = {
@@ -1115,7 +1145,16 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             "MOUNTSSHPUBLICKEY": TEST_USER_PUB_KEY,
             "RESOURCE_CONFIG": {"HOSTURL": "localhost"},
         }
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+
+        # NOTE: Since the refresh_job_creds depends on a comparison between
+        # time.time() (add_job_object) and os.path.getmtime (_create_job_mrsl_file/refresh_job_creds)
+        # the timing can be out-of-order due to resolution limitations
+        # https://stackoverflow.com/questions/77007324/os-path-getmtime-inconsistent-with-time-time
+        # Therefore we enforce that the test uses an increasing modification time
+        link_path = _create_job_mrsl_file(
+            self, TEST_JOB_ID, job_dict, override_modification_time=start_time
+        )
+
         # Pre-add job to active jobs in conf jobs list
         add_job_object(
             self.configuration,
@@ -1123,13 +1162,19 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             TEST_JOB_USER_DIR,
             pubkey=TEST_USER_PUB_KEY,
         )
+
         # NOTE: double check that job is in place for test
         self.assertEqual(len(daemon_conf["jobs"]), 1)
         self.assertIn(TEST_JOB_ID, [i.username for i in daemon_conf["jobs"]])
 
         # Now mark finished and test that refresh removes it
         job_dict["STATUS"] = "FINISHED"
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        link_path = _create_job_mrsl_file(
+            self,
+            TEST_JOB_ID,
+            job_dict,
+            override_modification_time=start_time + 2,
+        )
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
         )
@@ -1139,6 +1184,7 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
     def test_refresh_job_creds_full_execution_cycle(self):
         """Job going through states should be added and removed when done."""
+        start_time = time.time()
         job_dict = {
             "STATUS": "QUEUED",
             "SESSIONID": TEST_JOB_ID,
@@ -1147,7 +1193,17 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             "MOUNTSSHPUBLICKEY": TEST_USER_PUB_KEY,
             "RESOURCE_CONFIG": {"HOSTURL": "localhost"},
         }
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        # NOTE: Since the refresh_job_creds depends on a comparison between
+        # time.time() (add_job_object) and os.path.getmtime (_create_job_mrsl_file/refresh_job_creds)
+        # the timing can be out-of-order due to resolution limitations
+        # https://stackoverflow.com/questions/77007324/os-path-getmtime-inconsistent-with-time-time
+        # Therefore we enforce that the test uses an increasing modification time
+        _create_job_mrsl_file(
+            self,
+            TEST_JOB_ID,
+            job_dict,
+            override_modification_time=start_time + 1,
+        )
 
         # Verify that still only queued jobs don't get added
         conf, changed = refresh_job_creds(
@@ -1159,7 +1215,12 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
         # Verify that job gets added when changing to executing
         job_dict["STATUS"] = "EXECUTING"
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        _create_job_mrsl_file(
+            self,
+            TEST_JOB_ID,
+            job_dict,
+            override_modification_time=start_time + 2,
+        )
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
         )
@@ -1170,7 +1231,12 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
 
         # Verify that jobs get removed again when finished
         job_dict["STATUS"] = "FINISHED"
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict)
+        _create_job_mrsl_file(
+            self,
+            TEST_JOB_ID,
+            job_dict,
+            override_modification_time=start_time + 3,
+        )
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
         )
@@ -1404,16 +1470,13 @@ class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
         self.configuration.daemon_conf["allow_password"] = True
         self.configuration.daemon_conf["allow_digest"] = False
 
-        # Paths that the function will look at
-        self.auth_keys_path = temppath("authorized_keys", self)
-        self.auth_passwords_path = temppath("authorized_passwords", self)
+        self.test_user_home = self._provision_test_user(self, TEST_USER_DN)
+        auth_files = _prepare_auth_files(
+            self.test_user_home,
+            ["ssh"]
+        )
+        self.auth_keys_path, self.auth_passwords_path = auth_files
         self.auth_digests_path = None
-
-        # Create dummy credential files
-        with open(self.auth_keys_path, "w") as creds_fd:
-            creds_fd.write(TEST_USER_PUB_KEY)
-        with open(self.auth_passwords_path, "w") as creds_fd:
-            creds_fd.write(TEST_USER_PW_HASH)
 
     def test_refresh_share_creds_adds_new_share(self):
         """A new share link should be added to daemon_conf['shares']."""
