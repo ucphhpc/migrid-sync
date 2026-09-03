@@ -104,6 +104,13 @@ class _RequestInfo(SimpleNamespace):
 
         return "%s /%s" % (self.method, self.request_type)
 
+    @property
+    def request_data(self):
+        """
+        Return the request data.
+        """
+        return self._request_data
+
     def _arg_string(self, arg, fallback=None):
         """
         Return a particular value as a string regardless of whether the
@@ -176,7 +183,6 @@ class _RequestInfo(SimpleNamespace):
         kwargs["request_type"] = request_type
         kwargs["request_package"] = request_package
         kwargs["_request_data"] = request_data
-        kwargs["_convert_data"] = _passthrough
         kwargs["_unpacked_client"] = None
         kwargs["_args"] = None
 
