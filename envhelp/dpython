@@ -75,7 +75,11 @@ IMAGEID_STORED=$(cat "$DOCKER_IMAGEID_FILE" 2>/dev/null || echo "")
 # explicit statement of the uid for use within the container for clarity
 CONTAINER_USER_UID=$LOCAL_USER_UID
 
-IMAGEID=$(${DOCKER_BIN} build -f "$DOCKER_FILE" . -q --build-arg "pyver=$PYVER" --build-arg "CONTAINER_USER_UID=$CONTAINER_USER_UID")
+IMAGEID=$(${DOCKER_BIN} build -f "$DOCKER_FILE" . -q \
+                                                  --build-arg "pyver=$PYVER" \
+                                                  --build-arg "CONTAINER_USER_UID=$CONTAINER_USER_UID" \
+)
+
 if [ "$IMAGEID" != "$IMAGEID_STORED" ]; then
     echo "rebuilt for changes"
 

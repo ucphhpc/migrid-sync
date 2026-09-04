@@ -1,0 +1,69 @@
+[
+  [
+    "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User 1/emailAddress=pending_peer1@example.com",
+    {
+      "comment": "",
+      "country": "DK",
+      "created": 1727434813.0792377,
+      "distinguished_name": "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User 1/emailAddress=pending_peer1@example.com",
+      "email": "pending_peer1@example.com",
+      "expire": {
+        "_FixtureHint": true,
+        "hint": "today_relative",
+        "modifier": "days|+2",
+        "value": 0
+      },
+      "full_name": "Pending Peer User 1",
+      "locality": "",
+      "openid_names": [],
+      "organization": "Test Org",
+      "organizational_unit": "",
+      "state": "NA"
+    }
+  ],
+  [
+    "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User 2/emailAddress=pending_peer2@example.com",
+    {
+      "comment": "",
+      "country": "DK",
+      "created": 1727434813.0792377,
+      "distinguished_name": "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User 2/emailAddress=pending_peer2@example.com",
+      "email": "pending_peer2@example.com",
+      "expire": {
+        "_FixtureHint": true,
+        "hint": "today_relative",
+        "modifier": "days|+2",
+        "value": 0
+      },
+      "full_name": "Pending Peer User 2",
+      "locality": "",
+      "openid_names": [],
+      "organization": "Test Org",
+      "organizational_unit": "",
+      "state": "NA",
+      "kind": "collaboration"
+    }
+  ],
+  [
+    "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User 3/emailAddress=pending_peer3@example.com",
+    {
+      "comment": "",
+      "country": "DK",
+      "created": 1727434813.0792377,
+      "distinguished_name": "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User 3/emailAddress=pending_peer3@example.com",
+      "email": "pending_peer3@example.com",
+      "expire": {
+        "_FixtureHint": true,
+        "hint": "today_relative",
+        "modifier": "days|+7",
+        "value": 0
+      },
+      "full_name": "Pending Peer User 3",
+      "locality": "",
+      "openid_names": [],
+      "organization": "Test Org",
+      "organizational_unit": "",
+      "state": "NA"
+    }
+  ]
+]
