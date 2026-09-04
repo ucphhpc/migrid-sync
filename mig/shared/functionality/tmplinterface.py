@@ -38,7 +38,7 @@ series of routes that can specify which template they must respond with.
 The primary constraints are an inability to make direct use of URL paths and
 the only usable submission medium for structured data being a POST. We define
 a json payload which encodes the route information. This is decoded upon an
-incomng request and the corresponding route handler triggered. The handler
+incoming request and the corresponding route handler triggered. The handler
 must respond with HTML fragments as opposed to a complete page.
 """
 
@@ -402,7 +402,7 @@ def _main(
     if output_objects is None:
         output_objects = [make_start_entry()]
 
-    # Set the response as containining HTML
+    # Set the response as containing HTML
     output_objects[0]["headers"].append(("Content-Type", "text/html"))
 
     if "wsgi.version" in environ:
@@ -561,7 +561,7 @@ def _main(
         )
     except Exception as exc:
         # Currently the template_data_handler and the underlying validation logic
-        # can throw many types of exceptions. For now we capture them all siliently
+        # can throw many types of exceptions. For now we capture them all silently
         # until we can for starters move up the input validation handling.
         logger.error(
             "An exception occured in tmplinterface while processing the template data handler %s"

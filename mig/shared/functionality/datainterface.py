@@ -29,7 +29,7 @@ datainterface is a functionality module intended to expose routes consuming
 and returning data structures within constraints of the usually page-centric
 MiGrid request/response model.
 
-Dynamic web applications are usually structured around making inidividual
+Dynamic web applications are usually structured around making individual
 requests to a series of routes to request data or operations. This module
 carefully provides a bridge allowing a series of routes to be exposed by MiG.
 
@@ -40,8 +40,8 @@ incoming request and the corresponding route handler triggered with a simple
 dictionary of args. This resembles flask or FastAPI in the Python world.
 
 Note the above design takes some cues from the jsoninterface module but unlike
-it, which is very specfic to workflows and was not desgined for extensibility,
-the ability to easily extend the routes made avalable is a key feature here.
+it, which is very specific to workflows and was not designed for extensibility,
+the ability to easily extend the routes made available is a key feature here.
 """
 
 from __future__ import absolute_import
@@ -222,7 +222,7 @@ def create_handler_response(status, message=None, **ui_response_kwargs):
 def create_peers_notify_msg(
     header_title, header_action, header_from, body_identifer, peers
 ):
-    """A helper funtion to create a peers notification mesage"""
+    """A helper function to create a peers notification mesage"""
     notify_header = "%s %s by %s" % (
         header_title,
         header_action,
@@ -318,7 +318,7 @@ def validate_peer_expire_value(expire_date):
     if now + datetime.timedelta(days=peers_expire_min_days) > expire:
         return (
             False,
-            "the specified expire must be atleast %s days ahead of today!"
+            "the specified expire must be at least %s days ahead of today!"
             % peers_expire_min_days,
         )
     if now + datetime.timedelta(days=peers_expire_max_days) < expire:
@@ -440,7 +440,7 @@ def handle_POST_peers_send_invitation(configuration, request_info):
     if invalid_client_peers_dn:
         return create_handler_response(
             400,
-            message="you tried to send invitations to peers that you dont have, namely: %s"
+            message="you tried to send invitations to peers that you don' t have, namely: %s"
             % invalid_client_peers_dn,
         )
 
@@ -505,7 +505,7 @@ def handle_POST_peers_new(configuration, request_info):
     if not accepted_invite or rejected_invite:
         return create_handler_response(
             400,
-            message="failed to add a new peer, the recieved invite on email argument was rejected %s"
+            message="failed to add a new peer, the received invite on email argument was rejected %s"
             % rejected_invite,
         )
     invite_on_email = accepted_invite.get("invite_on_email", False)
@@ -600,7 +600,7 @@ def handle_POST_peers_new(configuration, request_info):
                     % peer_dict.get("email", "")
                 )
 
-    # notify admins about the succesful additions
+    # notify admins about the successful additions
     action = "peers_new"
     notify_dict = create_peers_notify_msg(
         configuration.short_title,
@@ -723,7 +723,7 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s deleting the following accepted peers succesfully %s"
+            "failed to send notification to admins about the client %s deleting the following accepted peers successfully %s"
             % (request_info.client_id, "\n".join(peers_deleted.keys()))
         )
         # log this error so it is visible to admins, but since the client peers have been deleted, we return it as
@@ -751,7 +751,7 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
     if not accepted or rejected:
         return create_handler_response(
             400,
-            message="failed to fetch the accepted with, recieved an incorrect peer argument %s"
+            message="failed to fetch the accepted with, received an incorrect peer argument %s"
             % rejected,
         )
     peer_dn = accepted["peer"]
@@ -795,7 +795,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_invite or rejected_invite:
         return create_handler_response(
             400,
-            message="failed to import peer(s), the recieved invite on email argument was rejected %s"
+            message="failed to import peer(s), the received invite on email argument was rejected %s"
             % rejected_invite,
         )
     invite_on_email = accepted_invite.get("invite_on_email", False)
@@ -812,7 +812,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_common or rejected_common:
         return create_handler_response(
             400,
-            message="failed to import peer(s), the recieved import argument(s) was rejected %s"
+            message="failed to import peer(s), the received import argument(s) was rejected %s"
             % rejected_common,
         )
 
@@ -822,7 +822,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_csvlines or rejected_csvlines:
         return create_handler_response(
             400,
-            message="failed to import peer(s), the recieved peers csvlines argument(s) was rejected %s"
+            message="failed to import peer(s), the received peers csvlines argument(s) was rejected %s"
             % rejected_csvlines,
         )
 
@@ -937,7 +937,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
                     % peer_dict.get("email", "")
                 )
 
-    # notify admins about the succesful import
+    # notify admins about the successful import
     action = "peers_accepted_import"
     notify_dict = create_peers_notify_msg(
         configuration.short_title,
@@ -985,7 +985,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if rejected:
         return create_handler_response(
             400,
-            message="failed to update the peer, recieved an incorrect peer argument %s"
+            message="failed to update the peer, received an incorrect peer argument %s"
             % rejected,
         )
     peer_dn = accepted["peer"]
@@ -1002,7 +1002,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if not accepted_common or rejected_common:
         return create_handler_response(
             400,
-            message="failed to update peer, the recieved update argument(s) was rejected %s"
+            message="failed to update peer, the received update argument(s) was rejected %s"
             % rejected_common,
         )
 
@@ -1015,7 +1015,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if not valid_expire:
         return create_handler_response(
             400,
-            message="an incorrect End Date value was recieved.",
+            message="an incorrect End Date value was received.",
             errors_map={"0": {"expire": expire_message}},
         )
 
@@ -1066,7 +1066,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s updating the following accepted peers succesfully %s"
+            "failed to send notification to admins about the client %s updating the following accepted peers successfully %s"
             % (request_info.client_id, "\n".join(peers_updated.keys()))
         )
     return create_handler_response(200)
@@ -1172,7 +1172,7 @@ def handle_POST_peers_requested_delete(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s deleting the following requested peers succesfully %s"
+            "failed to send notification to admins about the client %s deleting the following requested peers successfully %s"
             % (request_info.client_id, "\n".join(peers_deleted.keys()))
         )
         # send_email logs this error, and since the peers have been deleted, we return it as
@@ -1232,7 +1232,7 @@ def handle_POST_peers_requested_accept(configuration, request_info):
     # However the accepted_peers file user_settings/client_id/peers
     # expects it to be the date format YYYY-MN-DD, therefore
     # we have to transform the pending peer expire value when we accept it.
-    # In the future when an opportune momement comes we likely want
+    # In the future when an opportune moment comes we likely want
     # to make the expire format an EPOCH value all the way through and
     # just transform it when display it to a user.
 
@@ -1259,7 +1259,7 @@ def handle_POST_peers_requested_accept(configuration, request_info):
             ],
         )
 
-    # If accepted succesfully we can remove the pending peers
+    # If accepted successfully we can remove the pending peers
     if not accountreq.remove_pending_peers_from_client(
         configuration, request_info.client_id, list(to_accept_peers.keys())
     ):
@@ -1274,7 +1274,7 @@ def handle_POST_peers_requested_accept(configuration, request_info):
     # We don't care about the order
     success_map = {index: True for index, peer_dn in enumerate(to_accept_peers)}
 
-    # notify admins about the succesful additions
+    # notify admins about the successful additions
     action = "peers_requested_accept"
     client_name = extract_field(request_info.client_id, "full_name")
     notify_dict = create_peers_notify_msg(
@@ -1359,7 +1359,7 @@ def _main(
     if output_objects is None:
         output_objects = [make_start_entry()]
 
-    # Set the response as containining JSON
+    # Set the response as containing JSON
     output_objects[0]["headers"].append(("Content-Type", "application/json"))
 
     if "wsgi.version" in environ:
@@ -1455,7 +1455,7 @@ def _main(
         )
     except Exception as exc:
         # Currently the request_handler and the underlying validation logic
-        # can throw many types of exceptions. For now we capture them all siliently
+        # can throw many types of exceptions. For now we capture them all silently
         # until we can for starters move up the input validation handling.
         logger.error(
             "An exception occured in datainterface while processing the request handler %s"
@@ -1464,7 +1464,7 @@ def _main(
 
     if handler_exit_resp is None:
         return create_api_response(
-            output_objects, 500, error="an unkown error occurred"
+            output_objects, 500, error="an unknown error occurred"
         )
 
     if not isinstance(handler_exit_resp, dict):
