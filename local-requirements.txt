@@ -3,6 +3,7 @@
 # This list is mainly used to specify addons needed for the unit tests.
 autopep8
 black
+dumb-pypi
 isort
 pylint
 ruff

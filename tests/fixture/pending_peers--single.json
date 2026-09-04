@@ -1,0 +1,21 @@
+{
+  "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User/emailAddress=pending_peer@example.com": {
+    "comment": "test@example.com",
+    "country": "DK",
+    "distinguished_name": "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User/emailAddress=pending_peer@example.com",
+    "email": "pending_peer@example.com",
+    "expire": {
+      "_FixtureHint": true,
+      "hint": "today_relative",
+      "modifier": "days|+8",
+      "value": 0
+    },
+    "full_name": "Pending Peer User",
+    "locality": "",
+    "organization": "Test Org",
+    "organizational_unit": "",
+    "state": "NA",
+    "kind": "project",
+    "label": "some_peer_label"
+  }
+}
