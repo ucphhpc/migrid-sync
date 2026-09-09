@@ -385,6 +385,10 @@ is stricly required for all use. Please do so before you try again.
                         'text': 'Failed to save your %s cloud instance after the instance creation itself failed ' %
                         service_title}
                     )
+            else:
+                logger.info("retrieve status %s cloud instance %s for %s, no instance found: %s" %
+                    (cloud_id, instance_id, client_id, status_msg)
+                )
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
