@@ -444,7 +444,8 @@ def requested_page(environ=None, fallback='home.py', name_only=False,
         return re.sub(r'[^a-zA-Z0-9:/._-]+', '', page_path)
 
 
-def requested_url_base(environ=None, include_unsafe=False, uri_field='SCRIPT_URI'):
+def requested_url_base(environ=None, include_unsafe=False,
+                       uri_field='SCRIPT_URI'):
     """Lookup requested url base from environ or os.environ if not provided.
     If the include_unsafe arg is set the result includes potentially unsafe
     values without proper filtering and thus MUST be used very carefully,
@@ -453,6 +454,9 @@ def requested_url_base(environ=None, include_unsafe=False, uri_field='SCRIPT_URI
     if environ is None:
         environ = os.environ
     full_url = environ.get(uri_field, None)
+    if full_url is None:
+        raise ValueError("Failed to read requested url base, missing %r field"
+                         % uri_field)
     parts = full_url.split('/', 3)
     url_base = '/'.join(parts[:3])
     if include_unsafe:

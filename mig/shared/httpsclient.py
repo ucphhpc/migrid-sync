@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # httpsclient - Shared functions for all HTTPS clients
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,8 @@ from __future__ import absolute_import
 import os
 import socket
 
-from mig.shared.base import is_gdp_user, get_xgi_bin, auth_type_description
+from mig.shared.base import is_gdp_user, get_xgi_bin, auth_type_description, \
+    requested_url_base
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_GENERIC, AUTH_NONE, AUTH_MIG_OID, AUTH_EXT_OID, \
     AUTH_MIG_OIDC, AUTH_EXT_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT, \
@@ -109,7 +110,7 @@ def unescape(esc_str):
 
 def extract_base_url(configuration, environ):
     """Extract base URL of requested page from environ"""
-    page_url = environ["SCRIPT_URI"]
+    page_url = requested_url_base(environ)
     parts = page_url.split('/')
     if not parts or not parts[0] in ('http:', 'https:'):
         configuration.logger.error(
@@ -442,7 +443,7 @@ def require_twofactor_setup(configuration, script_name, client_id, environ):
     (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
     if keyword_all in twofactor_protos or 'https' in twofactor_protos or \
             twofactor_short_flavors[auth_flavor] in twofactor_protos:
-        #_logger.debug("checking %s forced twofactor setup" % client_id)
+        # _logger.debug("checking %s forced twofactor setup" % client_id)
         saved = load_twofactor(client_id, configuration)
         if not saved:
             _logger.debug(
@@ -465,7 +466,7 @@ def require_twofactor_setup(configuration, script_name, client_id, environ):
                 "found flavor %s for %s and saved: %s" % (auth_flavor,
                                                           client_id, saved))
 
-        #_logger.debug("required twofactor setup complete for %s" % client_id)
+        # _logger.debug("required twofactor setup complete for %s" % client_id)
 
     _logger.debug("not forcing %s to twofactor setup" % client_id)
     return False
