@@ -382,7 +382,8 @@ is stricly required for all use. Please do so before you try again.
                              (cloud_id, instance_id, client_id, deleted_msg))
                 output_objects.append({
                     'object_type': 'error_text',
-                    'text': 'Failed to delete your %s cloud instance after the instance creation itself failed, please contact support to clean up the failed instance' %
+                    'text': """Failed to delete your %s cloud instance after the instance creation,
+                    please contact support to clean up the failed instance""" %
                     service_title
                 })
 
