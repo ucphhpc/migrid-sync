@@ -715,7 +715,7 @@ if __name__ == "__main__":
         os.environ['MIG_CONF'] = conf_path
 
     client_id = ' ME '
-    cloud_is = 'mist'
+    cloud_id = 'mist'
     instance_id = 'My-Misty-Test-01'
     action = 'status'
     if sys.argv[1:]:
