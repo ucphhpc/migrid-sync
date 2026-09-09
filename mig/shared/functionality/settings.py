@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - back end for the settings page
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -29,7 +30,6 @@
 
 from __future__ import absolute_import
 
-import base64
 import os
 import time
 
@@ -37,11 +37,12 @@ from mig.shared import returnvalues
 from mig.shared.accountstate import account_expire_info
 from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
-    get_short_id, requested_url_base
+    get_short_id
 from mig.shared.defaults import default_mrsl_filename, \
     default_css_filename, profile_img_max_kb, profile_img_extensions, \
     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
-    duplicati_schedule_choices
+    duplicati_schedule_choices, AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, \
+    AUTH_EXT_OIDC
 from mig.shared.duplicatikeywords import get_duplicati_specs, \
     get_duplicati_protocol_map
 from mig.shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
@@ -50,6 +51,7 @@ from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
     legacy_user_interface, save_settings_js, save_settings_html, menu_items
+from mig.shared.httpsclient import detect_client_auth
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.profilekeywords import get_profile_specs
 from mig.shared.pwcrypto import parse_password_policy
@@ -271,7 +273,7 @@ def main(client_id, user_arguments_dict):
         expire_warn_msg = '''<p class="warningtext">
 NOTE: your %s account access including efficient file service access expires on
 %s. You can always repeat sign up to extend general access with another %s days.
-%s  
+%s
 </p>'''
         auto_renew_msg = '''Alternatively simply either hit Save below now
 <em>or</em> log in here again after that date to quickly extend your access for
@@ -381,7 +383,7 @@ NOTE: your %s account access including efficient file service access expires on
                         entry += '</div>'
                     else:
                         entry += ''
-                except:
+                except Exception:
                     # failed on evaluating configuration.%s
 
                     area = '''
@@ -442,7 +444,7 @@ NOTE: your %s account access including efficient file service access expires on
             """ % entry
 
         # Only end form with submit here if general is a stand-alone topic
-        if not 'profile' in topic_list:
+        if 'profile' not in topic_list:
             html += """
         <tr><td>
         %(save_html)s
@@ -477,7 +479,7 @@ NOTE: your %s account access including efficient file service access expires on
         for path in os.listdir(base_dir):
             real_path = os.path.join(base_dir, path)
             if os.path.splitext(path)[1].strip('.') in profile_img_extensions \
-                    and os.path.getsize(real_path) < profile_img_max_kb*1024:
+                    and os.path.getsize(real_path) < profile_img_max_kb * 1024:
                 images.append(path)
         configuration.public_image = images
         target_op = 'settingsaction'
@@ -486,7 +488,7 @@ NOTE: your %s account access including efficient file service access expires on
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         # Only begin new form and container if profile is a stand-alone topic
         html = ''
-        if not 'general' in topic_list:
+        if 'general' not in topic_list:
             html = '''
 <div id="profile">
 <form class="save_settings save_profile" method="%(form_method)s" action="%(target_op)s.py">
@@ -553,7 +555,7 @@ so you may have to avoid blank lines in your text below.
                 <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
                                 % (keyword, selected, choice, choice)
                         html += '</div>'
-                except:
+                except Exception:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if keyword in current_profile_dict:
@@ -819,7 +821,7 @@ get the default empty widget spaces.<br />
                     <input type="checkbox" name="%s" %s value="%s">%s<br />'''\
                             % (keyword, selected, choice, choice)
                         widgets_html += '</div>'
-                except:
+                except Exception:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if keyword in current_widgets_dict:
@@ -1686,9 +1688,9 @@ value="%(default_authpassword)s" />
             pretty_proto = proto_map[proto]
             if not enabled_map[proto]:
                 continue
-            if not pretty_proto in configuration.protocol:
+            if pretty_proto not in configuration.protocol:
                 configuration.protocol.append(pretty_proto)
-            if not username_map[proto] in configuration.username:
+            if username_map[proto] not in configuration.username:
                 configuration.username.append(username_map[proto])
 
         target_op = 'settingsaction'
@@ -1751,7 +1753,7 @@ for %(site)s backup use.</p>
                 <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
                                 % (keyword, selected, choice, choice)
                         html += '</div>'
-                except:
+                except Exception:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if keyword in current_duplicati_dict:
@@ -2076,14 +2078,9 @@ value="%(default_authpassword)s" />
         <tr class="otp_wizard otp_ready hidden"><td>
         </td></tr>
         '''
-        cur_url = requested_url_base()
-        is_mig, is_ext = False, False
-        if cur_url.startswith(configuration.migserver_https_mig_oid_url) or \
-                cur_url.startswith(configuration.migserver_https_mig_oidc_url):
-            is_mig = True
-        if cur_url.startswith(configuration.migserver_https_ext_oid_url) or \
-                cur_url.startswith(configuration.migserver_https_ext_oidc_url):
-            is_ext = True
+        auth_type, auth_flavor = detect_client_auth(configuration, os.environ)
+        is_mig = auth_flavor in [AUTH_MIG_OID, AUTH_MIG_OIDC]
+        is_ext = auth_flavor in [AUTH_EXT_OID, AUTH_EXT_OIDC]
         # NOTE: re-order to show active access method openid first
         if is_ext and twofactor_entries[0][0] == 'MIG_OID_TWOFACTOR' and \
                 twofactor_entries[1][0] == 'EXT_OID_TWOFACTOR' or \
@@ -2135,7 +2132,7 @@ value="%(default_authpassword)s" />
                         entry += '</div>'
                     else:
                         entry += ''
-                except:
+                except Exception:
                     # failed on evaluating configuration.%s
 
                     area = '''

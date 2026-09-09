@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # setup - back end for the client access setup page
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -36,7 +37,7 @@ from mig.shared import returnvalues
 from mig.shared.accountstate import account_expire_info
 from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
-    get_short_id, requested_url_base, requested_backend
+    get_short_id, requested_backend
 from mig.shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
     duplicati_schedule_choices, keyword_all, AUTH_MIG_OID, AUTH_EXT_OID, \
     AUTH_MIG_OIDC, AUTH_EXT_OIDC
@@ -54,7 +55,7 @@ from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape, password_min_len, password_max_len, \
     valid_password_chars
-from mig.shared.settings import load_settings, load_ssh, load_davs, load_ftps, \
+from mig.shared.settings import load_ssh, load_davs, load_ftps, \
     load_seafile, load_duplicati, load_cloud, load_twofactor
 from mig.shared.ssh import supported_pub_key_parsers
 from mig.shared.twofactorkeywords import get_twofactor_specs
@@ -772,7 +773,7 @@ fingerprint %s first time you connect.''' % ' or '.join(fingerprints)
         <div class="title centertext">SFTP access to your %(site)s account</div>
 
 <p>
-<p>You can enable SFTP login to your %(site)s account and use it for efficient
+You can enable SFTP login to your %(site)s account and use it for efficient
 file and folder upload/download or even for seamless data access from your
 Windows, Mac OS X and Linux/UN*X computer.
 </p>
@@ -1396,9 +1397,9 @@ value="%(default_authpassword)s" />
             pretty_proto = proto_map[proto]
             if not enabled_map[proto]:
                 continue
-            if not pretty_proto in configuration.protocol:
+            if pretty_proto not in configuration.protocol:
                 configuration.protocol.append(pretty_proto)
-            if not username_map[proto] in configuration.username:
+            if username_map[proto] not in configuration.username:
                 configuration.username.append(username_map[proto])
 
         csrf_token = make_csrf_token(configuration, form_method, target_op,
@@ -1458,7 +1459,7 @@ for %(site)s backup use.</p>
                 <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
                                 % (keyword, selected, choice, choice)
                         html += '</div>'
-                except:
+                except Exception:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if keyword in current_duplicati_dict:
@@ -1756,7 +1757,6 @@ value="%(default_authpassword)s" />
         <tr class="otp_wizard otp_ready hidden"><td>
         </td></tr>
         '''
-        cur_url = requested_url_base()
         auth_type, auth_flavor = detect_client_auth(configuration, os.environ)
         is_mig = auth_flavor in [AUTH_MIG_OID, AUTH_MIG_OIDC]
         is_ext = auth_flavor in [AUTH_EXT_OID, AUTH_EXT_OIDC]
@@ -1823,7 +1823,7 @@ value="%(default_authpassword)s" />
                         entry += '</div>'
                     else:
                         entry += ''
-                except:
+                except Exception:
                     # failed on evaluating configuration.%s
 
                     area = '''
