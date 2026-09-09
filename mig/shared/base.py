@@ -41,7 +41,7 @@ import sys
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from mig.shared.defaults import default_str_coding, default_fs_coding, \
-    keyword_all, keyword_auto, _user_invisible_files, \
+    keyword_all, _user_invisible_files, \
     _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, csrf_field, \
     gdp_distinguished_field, valid_gdp_auth_scripts, valid_gdp_anon_scripts, \
     STR_KIND, FS_KIND, AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_CERTIFICATE, \
@@ -258,7 +258,7 @@ def distinguished_name_to_user(distinguished_name):
         (key, val) = field.split(_key_val_sep, 1)
         if 'NA' == val:
             val = ''
-        if not key in cert_field_map.values():
+        if key not in cert_field_map.values():
             user_dict[key] = val
         else:
             for (name, short) in cert_field_order:
@@ -295,7 +295,7 @@ def canonical_user(configuration, user_dict, limit_fields):
     """
     canonical = {}
     for (key, val) in user_dict.items():
-        if not key in limit_fields:
+        if key not in limit_fields:
             continue
         if isinstance(val, basestring):
             val = val.strip()
@@ -501,7 +501,7 @@ def is_unicode(val):
     `isinstance(val, unicode)`
     and the like since it breaks when combined with python-future and futurize.
     """
-    return (type(u"") == type(val))
+    return (type(u"") is type(val))
 
 
 def force_utf8(val, highlight='', stringify=True):
@@ -799,17 +799,17 @@ def generate_https_urls(configuration, url_template, helper_dict):
     ext_oidc_url = configuration.migserver_https_ext_oidc_url
     locations = []
     for i in configuration.site_login_methods:
-        if i == 'migcert' and mig_cert_url and not mig_cert_url in locations:
+        if i == 'migcert' and mig_cert_url and mig_cert_url not in locations:
             locations.append(mig_cert_url)
-        elif i == 'extcert' and ext_cert_url and not ext_cert_url in locations:
+        elif i == 'extcert' and ext_cert_url and ext_cert_url not in locations:
             locations.append(ext_cert_url)
-        elif i == 'migoid' and mig_oid_url and not mig_oid_url in locations:
+        elif i == 'migoid' and mig_oid_url and mig_oid_url not in locations:
             locations.append(mig_oid_url)
-        elif i == 'extoid' and ext_oid_url and not ext_oid_url in locations:
+        elif i == 'extoid' and ext_oid_url and ext_oid_url not in locations:
             locations.append(ext_oid_url)
-        elif i == 'migoidc' and mig_oidc_url and not mig_oidc_url in locations:
+        elif i == 'migoidc' and mig_oidc_url and mig_oidc_url not in locations:
             locations.append(mig_oidc_url)
-        elif i == 'extoidc' and ext_oidc_url and not ext_oidc_url in locations:
+        elif i == 'extoidc' and ext_oidc_url and ext_oidc_url not in locations:
             locations.append(ext_oidc_url)
     filled_list = []
     for https_base in locations:
@@ -954,7 +954,6 @@ def legacy_main(configuration, print=print, _exit=sys.exit):
     orig_id = '/C=DK/ST=NA/L=NA/O=Ajax Inc/OU=NA/CN=John Doe/emailAddress=john.doe@ajaxinc.org'
     client_dir = client_id_dir(orig_id)
     client_id = client_dir_id(client_dir)
-    test_paths = ['simple.txt', 'somedir/somefile.txt']
     sample_file = _user_invisible_files[0]
     sample_dir = _user_invisible_dirs[0]
     illegal = ["%s%s%s" % (prefix, sample_dir, suffix) for (prefix, suffix) in

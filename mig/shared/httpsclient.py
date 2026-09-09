@@ -42,7 +42,7 @@ from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     keyword_all, csrf_field
 from mig.shared.gdp.all import get_project_user_dn
 from mig.shared.handlers import get_csrf_limit
-from mig.shared.pwcrypto import make_csrf_token, make_csrf_trust_token
+from mig.shared.pwcrypto import make_csrf_trust_token
 from mig.shared.settings import load_twofactor
 from mig.shared.url import urlencode, parse_qsl, \
     base32urlencode
@@ -104,7 +104,7 @@ def unescape(esc_str):
     """Remove backslash escapes from a string"""
     try:
         return esc_str.decode('string_escape')
-    except:
+    except Exception:
         return esc_str
 
 
@@ -112,7 +112,7 @@ def extract_base_url(configuration, environ):
     """Extract base URL of requested page from environ"""
     page_url = requested_url_base(environ)
     parts = page_url.split('/')
-    if not parts or not parts[0] in ('http:', 'https:'):
+    if not parts or parts[0] not in ('http:', 'https:'):
         configuration.logger.error(
             "error in base url extraction from %s" % environ)
         raise ValueError("Invalid request page format: %s" % page_url)
@@ -552,7 +552,7 @@ def check_source_ip(remote_ip, unique_resource_name, proxy_fqdn=None):
         except socket.gaierror:
             pass
 
-    if not remote_ip in res_ip_list + proxy_ip_list:
+    if remote_ip not in res_ip_list + proxy_ip_list:
         raise ValueError("Source IP address %s not in resource alias IPs %s"
                          % (remote_ip, ', '.join(res_ip_list + proxy_ip_list)))
 
