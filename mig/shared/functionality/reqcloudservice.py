@@ -370,25 +370,22 @@ is stricly required for all use. Please do so before you try again.
             logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, cloud_id, instance_id, client_id,
                           action_msg))
-            # Check if the instance was created but failed on a later step
-            # If it was created we can save it to let the user clean it up afterwards
-            cloud_status, status_msg = status_of_cloud_instance(
-                configuration, client_id, cloud_id, cloud_flavor, instance_id
-            )
-            if cloud_status:
-                if not cloud_save_instance(configuration, client_id, cloud_id,
-                                           instance_id, cloud_dict):
-                    logger.error("backup new %s cloud instance %s for %s failed" %
-                                 (cloud_id, instance_id, client_id))
-                    output_objects.append({
-                        'object_type': 'error_text',
-                        'text': 'Failed to save your %s cloud instance after the instance creation itself failed ' %
-                        service_title}
-                    )
-            else:
-                logger.info("retrieve status %s cloud instance %s for %s, no instance found: %s" %
-                    (cloud_id, instance_id, client_id, status_msg)
-                )
+
+            # Clean up any created instance during the failed creation flow.
+            # By default it allows for missing instances so it will succeed
+            # if the instance was never created.
+            deleted, deleted_msg = delete_cloud_instance(configuration, client_id,
+                                                         cloud_id, cloud_flavor,
+                                                         instance_id)
+            if not deleted:
+                logger.error("delete %s new failed cloud instance %s for %s failed: %s" %
+                             (cloud_id, instance_id, client_id, deleted_msg))
+                output_objects.append({
+                    'object_type': 'error_text',
+                    'text': 'Failed to delete your %s cloud instance after the instance creation itself failed, please contact support to clean up the failed instance' %
+                    service_title
+                })
+
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
