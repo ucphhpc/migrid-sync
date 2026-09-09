@@ -415,6 +415,9 @@ def run_cron_command(
         os.environ["HTTP_USER_AGENT"] = "grid cron daemon"
         os.environ["BACKEND_NAME"] = "%s" % function
         os.environ["PATH_INFO"] = "%s.py" % function
+        # Make sure SCRIPT_URI is available for URL lookup in input validation
+        os.environ["SCRIPT_URI"] = os.environ.get(
+            "SCRIPT_URI", "https://localhost/cgi-bin/%s.py" % function)
         os.environ["REQUEST_METHOD"] = form_method.upper()
         # We may need a REMOTE_ADDR for gdplog call even if not really enabled
         os.environ["REMOTE_ADDR"] = "127.0.0.1"
@@ -514,6 +517,9 @@ def run_events_command(
         os.environ["HTTP_USER_AGENT"] = "grid events daemon"
         os.environ["BACKEND_NAME"] = "%s" % function
         os.environ["PATH_INFO"] = "%s.py" % function
+        # Make sure SCRIPT_URI is available for URL lookup in input validation
+        os.environ["SCRIPT_URI"] = os.environ.get(
+            "SCRIPT_URI", "https://localhost/cgi-bin/%s.py" % function)
         os.environ["REQUEST_METHOD"] = form_method.upper()
         # We may need a REMOTE_ADDR for gdplog call even if not really enabled
         os.environ["REMOTE_ADDR"] = "127.0.0.1"
