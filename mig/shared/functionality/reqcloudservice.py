@@ -370,6 +370,21 @@ is stricly required for all use. Please do so before you try again.
             logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, cloud_id, instance_id, client_id,
                           action_msg))
+            # Check if the instance was created but failed on a later step
+            # If it was created we can save it to let the user clean it up afterwards
+            cloud_status, status_msg = status_of_cloud_instance(
+                configuration, client_id, cloud_id, cloud_flavor, instance_id
+            )
+            if cloud_status:
+                if not cloud_save_instance(configuration, client_id, cloud_id,
+                                           instance_id, cloud_dict):
+                    logger.error("backup new %s cloud instance %s for %s failed" %
+                                 (cloud_id, instance_id, client_id))
+                    output_objects.append({
+                        'object_type': 'error_text',
+                        'text': 'Failed to save your %s cloud instance after the instance creation itself failed ' %
+                        service_title}
+                    )
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
