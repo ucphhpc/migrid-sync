@@ -31,10 +31,12 @@ backend.
 
 from __future__ import print_function
 
+import os
 import unittest
 
 # Imports required for the unit test wrapping
 import mig.shared.returnvalues as returnvalues
+from mig.shared.vgrid import vgrid_set_entities
 
 # Imports of the code under test
 from mig.shared.functionality.vgridworkflows import main as backend_main
@@ -52,14 +54,54 @@ from tests.support.wsgisupp import create_http_environ, filter_output_objects
 class MigSharedFunctionalityVgridworkflows(MigTestCase, UserAssertMixin):
     """Wrap unit tests for the corresponding module"""
 
+    TEST_VGRID_NAME = 'testvgrid'
+
     def _provide_configuration(self):
         return "testconfig"
+
+    # TODO: integrate in tests infrastructure and use here and in vgridaccess
+    def _create_vgrid(self, vgrid_name, *, owners=None, members=None,
+                      resources=None, settings=None, triggers=None):
+        """Helper to create valid skeleton vgrid for testing"""
+        vgrid_path = os.path.join(self.configuration.vgrid_home, vgrid_name)
+        ensure_dirs_exist(vgrid_path)
+        # Save vgrid owners, members, resources, settings and triggers
+        if owners is None:
+            owners = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'owners', owners, allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if members is None:
+            members = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'members', members,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if resources is None:
+            resources = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'resources', resources,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if settings is None:
+            settings = [('vgrid_name', vgrid_name)]
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'settings', settings,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if triggers is None:
+            triggers = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'triggers', triggers,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
 
     def before_each(self):
         ensure_dirs_exist(self.configuration.resource_home)
         ensure_dirs_exist(self.configuration.vgrid_home)
         ensure_dirs_exist(self.configuration.mig_system_files)
         self.test_user_dir = self._provision_test_user(self, TEST_USER_DN)
+        self._create_vgrid(self.TEST_VGRID_NAME, owners=[TEST_USER_DN])
         self.test_environ = create_http_environ(
             self.configuration, "wsgi-bin/vgridworkflows.py"
         )
@@ -68,7 +110,7 @@ class MigSharedFunctionalityVgridworkflows(MigTestCase, UserAssertMixin):
     @unittest.skip("TODO: fix missing enabled check in backend and re-enable")
     def test_vgridworkflows_disabled_site_workflows(self):
         self.configuration.site_enable_workflows = False
-        payload = {"vgrid_name": ["Generic"]}
+        payload = {"vgrid_name": [self.TEST_VGRID_NAME]}
 
         output_objects, status = backend_main(
             TEST_USER_DN,
@@ -101,7 +143,7 @@ class MigSharedFunctionalityVgridworkflows(MigTestCase, UserAssertMixin):
         self.assertEqual(len(html_objects), 0)
 
     def test_show_default_user_vgridworkflows(self):
-        payload = {"vgrid_name": ["Generic"]}
+        payload = {"vgrid_name": [self.TEST_VGRID_NAME]}
 
         output_objects, status = backend_main(
             TEST_USER_DN,
@@ -184,7 +226,8 @@ class MigSharedFunctionalityVgridworkflows(MigTestCase, UserAssertMixin):
         self.assertEqual(len(html_objects), 0)
 
     def test_vgridworkflows_with_invalid_operation_fails(self):
-        payload = {"operation": ["INVALID"], "vgrid_name": ["Generic"]}
+        payload = {"operation": ["INVALID"], "vgrid_name":
+                   [self.TEST_VGRID_NAME]}
         output_objects, status = backend_main(
             TEST_USER_DN,
             payload,
@@ -202,6 +245,50 @@ class MigSharedFunctionalityVgridworkflows(MigTestCase, UserAssertMixin):
         self.assertIn("text", error_objects[0])
         text_object = error_objects[0]["text"]
         expected_response_msg = "Operation must be"
+        self.assertIn(expected_response_msg, text_object)
+
+        # Check expected header messages
+        header_objects = filter_output_objects(
+            output_objects, with_object_type="header"
+        )
+        self.assertEqual(len(header_objects), 0)
+
+        # Check expected title contents
+        title_objects = filter_output_objects(
+            output_objects, with_object_type="title"
+        )
+        self.assertEqual(len(title_objects), 1)
+
+        # Check expected text messages
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 0)
+
+        # Check expected html snippets
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 0)
+
+    def test_vgridworkflows_with_default_vgrid_fails(self):
+        payload = {"vgrid_name": ["Generic"]}
+        output_objects, status = backend_main(
+            TEST_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.CLIENT_ERROR)
+
+        # Check expected error messages
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 1)
+        self.assertIn("text", error_objects[0])
+        text_object = error_objects[0]["text"]
+        expected_response_msg = "You must be an owner "
         self.assertIn(expected_response_msg, text_object)
 
         # Check expected header messages
