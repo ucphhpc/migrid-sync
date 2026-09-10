@@ -134,12 +134,12 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     operation = accepted['operation'][-1]
     flags = ''.join(accepted['flags'][-1])
 
-    if not vgrid_is_owner_or_member(vgrid_name, client_id,
-                                    configuration):
+    if vgrid_is_default(vgrid_name) or \
+        not vgrid_is_owner_or_member(vgrid_name, client_id,
+                                     configuration):
         output_objects.append({'object_type': 'error_text',
-                               'text': '''You must be an owner or member of %s vgrid to
-access the workflows.'''
-                               % vgrid_name})
+                               'text': '''You must be an owner or member of %s
+%s to access the workflows.''' % (vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if operation not in allowed_operations:
