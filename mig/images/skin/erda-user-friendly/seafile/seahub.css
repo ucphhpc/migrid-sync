@@ -58,6 +58,9 @@ a:focus, a:hover {
 .repo-op a.op-link:hover {
     color: #46743c;
 }
+.repo-list-item.active:before, .tree-node-hight-light::before {
+    background-color: #46743c !important;
+}
 
 .op-target {
     color:#46743c;
@@ -101,7 +104,7 @@ a:focus, a:hover {
     border-color: #46743c;
 }
 /* NOTE: color before active nav item added in 13.x */
-.nav-item.active::before {
+.nav-item.active::before, .nav-link.active::before  {
     background-color: #46743c !important;
 }
 .nav .nav-item .nav-link:hover {
