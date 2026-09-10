@@ -54,7 +54,8 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.htmlgen import man_base_js, man_base_html
 from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.parseflags import verbose
-from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member
+from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_default, \
+    vgrid_is_owner_or_member
 
 default_pager_entries = 20
 
