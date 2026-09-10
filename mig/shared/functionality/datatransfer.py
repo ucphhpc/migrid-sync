@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # datatransfer - import and export data in the backgroud
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -56,8 +57,8 @@ edit_fields = ['transfer_id', 'protocol', 'fqdn', 'port', 'username',
 get_actions = ['show', 'fillimport', 'fillexport']
 transfer_actions = ['import', 'export', 'deltransfer', 'redotransfer']
 # TODO: add these internal data shuffling targets on a separate tab without
-#address and creds
-#shuffling_actions = ['move', 'copy', 'unpack', 'pack', 'remove']
+# address and creds
+# shuffling_actions = ['move', 'copy', 'unpack', 'pack', 'remove']
 shuffling_actions = []
 key_actions = ['generatekey', 'delkey']
 post_actions = transfer_actions + shuffling_actions + key_actions
@@ -596,7 +597,7 @@ into.<br/>
                 selected = ''
             transfer_html += '<option %s value="%s">%s</option>' % \
                              (selected, key, val)
-        transfer_html += '''
+        transfer_html += r'''
 </select>
 </td></tr>
 <tr><td>

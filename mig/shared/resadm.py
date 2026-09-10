@@ -1122,8 +1122,7 @@ def resource_fe_action(
             # Try pkill if ordinary kill doesn't work (-PGID not
             # always supported)
 
-            command = 'kill -9 -' + pgid + ' || pkill -9 -g ' + pgid\
-                + " \.\*"
+            command = r'kill -9 -%s || pkill -9 -g %s \.\*' % (pgid, pgid)
             (exit_code, executed_command) = \
                 execute_on_resource(command, False, resource_config,
                                     logger)

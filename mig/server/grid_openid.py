@@ -131,7 +131,7 @@ cert_field_aliases = {}
 
 # NOTE: response may contain password on the form
 # (<Symbol Bare namespace>, 'password'): 'S3cr3tP4ssw0rd'
-pw_pattern = "\(<Symbol Bare namespace>, 'password'\): '(.+)'"
+pw_pattern = r"\(<Symbol Bare namespace>, 'password'\): '(.+)'"
 pw_regexp = re.compile(pw_pattern)
 
 

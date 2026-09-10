@@ -904,7 +904,7 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
     if not callback:
         callback = 'function() { return false; }'
     # TODO: migrate to assets
-    add_import = '''
+    add_import = r'''
 <!--  Filemanager is only needed for fancy upload init wrapper -->
 <script type="text/javascript" src="/assets/vendor/jquery.form/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
