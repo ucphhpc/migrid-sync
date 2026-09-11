@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - back end for the settings page
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -29,7 +30,6 @@
 
 from __future__ import absolute_import
 
-import base64
 import os
 import time
 
@@ -50,7 +50,7 @@ from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
     legacy_user_interface, save_settings_js, save_settings_html, menu_items
-from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.init import extract_menu, find_entry, lazy_init_backend
 from mig.shared.profilekeywords import get_profile_specs
 from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape, password_min_len, password_max_len, \
@@ -90,11 +90,13 @@ def signature():
     return ['html_form', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -104,6 +106,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -381,7 +384,7 @@ NOTE: your %s account access including efficient file service access expires on
                         entry += '</div>'
                     else:
                         entry += ''
-                except:
+                except Exception:
                     # failed on evaluating configuration.%s
 
                     area = '''
@@ -442,7 +445,7 @@ NOTE: your %s account access including efficient file service access expires on
             """ % entry
 
         # Only end form with submit here if general is a stand-alone topic
-        if not 'profile' in topic_list:
+        if 'profile' not in topic_list:
             html += """
         <tr><td>
         %(save_html)s
@@ -477,7 +480,7 @@ NOTE: your %s account access including efficient file service access expires on
         for path in os.listdir(base_dir):
             real_path = os.path.join(base_dir, path)
             if os.path.splitext(path)[1].strip('.') in profile_img_extensions \
-                    and os.path.getsize(real_path) < profile_img_max_kb*1024:
+                    and os.path.getsize(real_path) < profile_img_max_kb * 1024:
                 images.append(path)
         configuration.public_image = images
         target_op = 'settingsaction'
@@ -486,7 +489,7 @@ NOTE: your %s account access including efficient file service access expires on
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         # Only begin new form and container if profile is a stand-alone topic
         html = ''
-        if not 'general' in topic_list:
+        if 'general' not in topic_list:
             html = '''
 <div id="profile">
 <form class="save_settings save_profile" method="%(form_method)s" action="%(target_op)s.py">
@@ -553,7 +556,7 @@ so you may have to avoid blank lines in your text below.
                 <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
                                 % (keyword, selected, choice, choice)
                         html += '</div>'
-                except:
+                except Exception:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if keyword in current_profile_dict:
@@ -819,7 +822,7 @@ get the default empty widget spaces.<br />
                     <input type="checkbox" name="%s" %s value="%s">%s<br />'''\
                             % (keyword, selected, choice, choice)
                         widgets_html += '</div>'
-                except:
+                except Exception:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if keyword in current_widgets_dict:
@@ -1686,9 +1689,9 @@ value="%(default_authpassword)s" />
             pretty_proto = proto_map[proto]
             if not enabled_map[proto]:
                 continue
-            if not pretty_proto in configuration.protocol:
+            if pretty_proto not in configuration.protocol:
                 configuration.protocol.append(pretty_proto)
-            if not username_map[proto] in configuration.username:
+            if username_map[proto] not in configuration.username:
                 configuration.username.append(username_map[proto])
 
         target_op = 'settingsaction'
@@ -1751,7 +1754,7 @@ for %(site)s backup use.</p>
                 <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
                                 % (keyword, selected, choice, choice)
                         html += '</div>'
-                except:
+                except Exception:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if keyword in current_duplicati_dict:
@@ -2135,7 +2138,7 @@ value="%(default_authpassword)s" />
                         entry += '</div>'
                     else:
                         entry += ''
-                except:
+                except Exception:
                     # failed on evaluating configuration.%s
 
                     area = '''
