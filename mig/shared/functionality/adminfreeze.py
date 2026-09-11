@@ -51,6 +51,7 @@ def signature():
                 'freeze_id': [keyword_auto]}
     return ['html_form', defaults]
 
+
 def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
          init_kwargs={'op_header': False}):
     """Main function wrapper used by front end"""
@@ -85,11 +86,11 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     title_entry['text'] = title
 
     if not configuration.site_enable_freeze:
-        output_objects.append({'object_type': 'text', 'text':
+        output_objects.append({'object_type': 'error_text', 'text':
                                """Freezing archives is disabled on this site.
 Please contact the %s site support (%s) if you think it should be enabled.
 """ % (configuration.short_title, configuration.support_email)})
-        return (output_objects, returnvalues.OK)
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Load existing freeze for stepwise construction if requested
     freeze_dict = {'ID': freeze_id, 'FLAVOR': flavor}

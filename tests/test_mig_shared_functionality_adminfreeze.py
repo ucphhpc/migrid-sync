@@ -61,7 +61,6 @@ class MigSharedFunctionalityAdminfreeze(MigTestCase, UserAssertMixin):
         )
         self.configuration.site_enable_freeze = True
 
-    @unittest.skip("TODO: fix error response in backend and re-enable")
     def test_adminfreeze_disabled_site_freeze(self):
         self.configuration.site_enable_freeze = False
         payload = {}
@@ -72,7 +71,7 @@ class MigSharedFunctionalityAdminfreeze(MigTestCase, UserAssertMixin):
             environ=self.test_environ,
             init_main_res=(self.configuration, self.logger, None, None),
         )
-        self.assertEqual(status, returnvalues.SYSTEM_ERROR)
+        self.assertEqual(status, returnvalues.CLIENT_ERROR)
 
         # Check expected error messages
         error_objects = filter_output_objects(
