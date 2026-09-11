@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # setup - back end for the client access setup page
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -36,7 +37,7 @@ from mig.shared import returnvalues
 from mig.shared.accountstate import account_expire_info
 from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
-    get_short_id, requested_url_base, requested_backend
+    get_short_id, requested_backend
 from mig.shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
     duplicati_schedule_choices, keyword_all, AUTH_MIG_OID, AUTH_EXT_OID, \
     AUTH_MIG_OIDC, AUTH_EXT_OIDC
@@ -50,11 +51,11 @@ from mig.shared.htmlgen import man_base_js, man_base_html, console_log_javascrip
     save_settings_js, save_settings_html
 from mig.shared.httpsclient import detect_client_auth, require_twofactor_setup, \
     protected_twofactor_settings, missing_twofactor_settings
-from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.init import extract_menu, find_entry, lazy_init_backend
 from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape, password_min_len, password_max_len, \
     valid_password_chars
-from mig.shared.settings import load_settings, load_ssh, load_davs, load_ftps, \
+from mig.shared.settings import load_ssh, load_davs, load_ftps, \
     load_seafile, load_duplicati, load_cloud, load_twofactor
 from mig.shared.ssh import supported_pub_key_parsers
 from mig.shared.twofactorkeywords import get_twofactor_specs
@@ -527,11 +528,15 @@ and key as described in the Login Details.
     return snippet
 
 
-def main(client_id, user_arguments_dict, target_op='settingsaction'):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
+    # Override to use shared backend for saving
+    target_op = 'settingsaction'
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -541,6 +546,7 @@ def main(client_id, user_arguments_dict, target_op='settingsaction'):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -1396,9 +1402,9 @@ value="%(default_authpassword)s" />
             pretty_proto = proto_map[proto]
             if not enabled_map[proto]:
                 continue
-            if not pretty_proto in configuration.protocol:
+            if pretty_proto not in configuration.protocol:
                 configuration.protocol.append(pretty_proto)
-            if not username_map[proto] in configuration.username:
+            if username_map[proto] not in configuration.username:
                 configuration.username.append(username_map[proto])
 
         csrf_token = make_csrf_token(configuration, form_method, target_op,
@@ -1458,7 +1464,7 @@ for %(site)s backup use.</p>
                 <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
                                 % (keyword, selected, choice, choice)
                         html += '</div>'
-                except:
+                except Exception:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if keyword in current_duplicati_dict:
@@ -1756,7 +1762,6 @@ value="%(default_authpassword)s" />
         <tr class="otp_wizard otp_ready hidden"><td>
         </td></tr>
         '''
-        cur_url = requested_url_base()
         auth_type, auth_flavor = detect_client_auth(configuration, os.environ)
         is_mig = auth_flavor in [AUTH_MIG_OID, AUTH_MIG_OIDC]
         is_ext = auth_flavor in [AUTH_EXT_OID, AUTH_EXT_OIDC]
@@ -1823,7 +1828,7 @@ value="%(default_authpassword)s" />
                         entry += '</div>'
                     else:
                         entry += ''
-                except:
+                except Exception:
                     # failed on evaluating configuration.%s
 
                     area = '''
