@@ -909,13 +909,14 @@ just use the one that looks most familiar or try them in turn)"""
         expected = 'http://server.org:8001'
         self.assertEqual(result, expected)
 
-    # TODO: adjust tested function to bail out on missing uri_field
-    @unittest.skipIf(True, "requires fix in tested function")
     def test_requested_url_base_missing(self):
         """Test requested_url_base when uri_field not present"""
         fake_env = {}
-        result = requested_url_base(fake_env)
-        self.assertEqual(result, '')
+        try:
+            result = requested_url_base(fake_env)
+        except:
+            result = False
+        self.assertFalse(result, "allowed invalid missing uri field")
 
     def test_requested_url_base_safe_filter(self):
         """Test unsafe character filtering in url base"""
@@ -943,7 +944,7 @@ just use the one that looks most familiar or try them in turn)"""
             ('https://site.com', 'https://site.com'),
             ('http://a/single/slash', 'http://a'),
             ('file:///absolute/path', 'file://'),
-            ('invalid.proto://double/slash', 'invalid.proto://double')
+            ('ftp://double/slash', 'ftp://double')
         ]
         for (input_url, expected) in test_cases:
             fake_env = {'SCRIPT_URI': input_url}
@@ -1366,4 +1367,5 @@ class TestMigSharedBase__legacy_main(MigTestCase):
             """Keep track of printed output"""
             raise_on_error_exit.last_print = value
 
-        legacy_main(self.configuration, print=record_last_print, _exit=raise_on_error_exit)
+        legacy_main(self.configuration, print=record_last_print,
+                    _exit=raise_on_error_exit)
