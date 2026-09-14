@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminvgrid - administrate a vgrid
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -28,6 +29,7 @@
 """List owners, members, resources and triggers for vgrid and show html
 controls to administrate them.
 """
+
 from __future__ import absolute_import
 
 from builtins import zip
@@ -43,7 +45,7 @@ from mig.shared.accessrequests import list_access_requests, load_access_request,
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.sharelinks import build_sharelinkitem_object
 from mig.shared.vgrid import vgrid_add_remove_table, vgrid_list, vgrid_is_owner, \
     vgrid_settings, vgrid_sharelinks, vgrid_list_parents, vgrid_owners, \
@@ -69,12 +71,13 @@ def signature():
     defaults = {'vgrid_name': REJECT_UNSET}
     return ['html_form', defaults]
 
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
@@ -87,6 +90,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -345,7 +349,7 @@ def main(client_id, user_arguments_dict):
             include_share = False
             # Direct sharelinks (careful not to greedy match A/B with A/BCD)
             if rel_path == vgrid_name or \
-                    rel_path.startswith(vgrid_name+os.sep):
+                    rel_path.startswith(vgrid_name + os.sep):
                 include_share = True
             # Parent vgrid sharelinks that in effect also give access here
             for parent in parent_vgrids:

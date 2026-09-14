@@ -1,0 +1,241 @@
+# -*- coding: utf-8 -*-
+#
+# --- BEGIN_HEADER ---
+#
+# test_mig_shared_functionality_adminvgrid - unit test of the corresponding mig module
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
+#
+# --- END_HEADER ---
+#
+
+"""Unit tests of the MiG functionality file implementing the adminvgrid
+backend.
+"""
+
+from __future__ import print_function
+
+import os
+import unittest
+
+# Imports required for the unit test wrapping
+import mig.shared.returnvalues as returnvalues
+from mig.shared.vgrid import vgrid_set_entities
+
+# Imports of the code under test
+from mig.shared.functionality.adminvgrid import main as backend_main
+
+# Imports required for the unit tests themselves
+from tests.support import (
+    MigTestCase,
+    ensure_dirs_exist,
+    testmain,
+)
+from tests.support.usersupp import OTHER_USER_DN, TEST_USER_DN, UserAssertMixin
+from tests.support.wsgisupp import create_http_environ, filter_output_objects
+
+
+class MigSharedFunctionalityAdminvgrid(MigTestCase, UserAssertMixin):
+    """Wrap unit tests for the corresponding module"""
+
+    TEST_VGRID_NAME = 'testvgrid'
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    # TODO: integrate in tests infrastructure and use here and in vgridaccess
+    def _create_vgrid(self, vgrid_name, *, owners=None, members=None,
+                      resources=None, settings=None, triggers=None):
+        """Helper to create valid skeleton vgrid for testing"""
+        vgrid_path = os.path.join(self.configuration.vgrid_home, vgrid_name)
+        ensure_dirs_exist(vgrid_path)
+        # Save vgrid owners, members, resources, settings and triggers
+        if owners is None:
+            owners = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'owners', owners, allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if members is None:
+            members = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'members', members,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if resources is None:
+            resources = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'resources', resources,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if settings is None:
+            settings = [('vgrid_name', vgrid_name)]
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'settings', settings,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+        if triggers is None:
+            triggers = []
+        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
+                                             'triggers', triggers,
+                                             allow_empty=True)
+        self.assertEqual(success_and_msg, (True, ""))
+
+    def before_each(self):
+        ensure_dirs_exist(self.configuration.mig_system_files)
+        self._provision_test_users(self, TEST_USER_DN, OTHER_USER_DN)
+        self._create_vgrid(self.TEST_VGRID_NAME, owners=[TEST_USER_DN])
+        self.test_environ = create_http_environ(
+            self.configuration, "wsgi-bin/adminvgrid.py"
+        )
+
+    def test_show_user_adminvgrid(self):
+        payload = {"vgrid_name": [self.TEST_VGRID_NAME]}
+
+        output_objects, status = backend_main(
+            TEST_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.OK)
+
+        # Check expected error messages
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 0)
+
+        # Check expected header messages
+        header_objects = filter_output_objects(
+            output_objects, with_object_type="header"
+        )
+        self.assertEqual(len(header_objects), 1)
+
+        # Check expected text messages
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 0)
+
+        # Check expected html snippets
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 22)
+
+    def test_adminvgrid_with_invalid_name_fails(self):
+        payload = {"vgrid_name": ["INVALID"]}
+        with self.assertLogs(level="ERROR") as log_capture:
+            output_objects, status = backend_main(
+                TEST_USER_DN,
+                payload,
+                environ=self.test_environ,
+                init_main_res=(self.configuration, self.logger, None, None),
+            )
+        self.assertEqual(status, returnvalues.SYSTEM_ERROR)
+        self.assertTrue(
+            any("Failed to load owners for INVALID" in msg for msg in
+                log_capture.output)
+        )
+
+        # Check expected error messages
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 1)
+        self.assertIn("text", error_objects[0])
+        text_object = error_objects[0]["text"]
+        expected_response_msg = "Only owners of INVALID can administrate it"
+        self.assertIn(expected_response_msg, text_object)
+
+        # Check expected header messages
+        header_objects = filter_output_objects(
+            output_objects, with_object_type="header"
+        )
+        self.assertEqual(len(header_objects), 1)
+
+        # Check expected title contents
+        title_objects = filter_output_objects(
+            output_objects, with_object_type="title"
+        )
+        self.assertEqual(len(title_objects), 1)
+
+        # Check expected text messages
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 0)
+
+        # Check expected html snippets
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 2)
+
+    def test_adminvgrid_with_non_owner_fails(self):
+        payload = {"vgrid_name": [self.TEST_VGRID_NAME]}
+        # NOTE: no logs to check here
+        output_objects, status = backend_main(
+            OTHER_USER_DN,
+            payload,
+            environ=self.test_environ,
+            init_main_res=(self.configuration, self.logger, None, None),
+        )
+        self.assertEqual(status, returnvalues.SYSTEM_ERROR)
+
+        # Check expected error messages
+        error_objects = filter_output_objects(
+            output_objects, with_object_type="error_text"
+        )
+        self.assertEqual(len(error_objects), 1)
+        self.assertIn("text", error_objects[0])
+        text_object = error_objects[0]["text"]
+        expected_response_msg = "Only owners of %s can administrate it" % \
+            self.TEST_VGRID_NAME
+        self.assertIn(expected_response_msg, text_object)
+
+        # Check expected header messages
+        header_objects = filter_output_objects(
+            output_objects, with_object_type="header"
+        )
+        self.assertEqual(len(header_objects), 1)
+
+        # Check expected title contents
+        title_objects = filter_output_objects(
+            output_objects, with_object_type="title"
+        )
+        self.assertEqual(len(title_objects), 1)
+
+        # Check expected text messages
+        text_objects = filter_output_objects(
+            output_objects, with_object_type="text"
+        )
+        self.assertEqual(len(text_objects), 0)
+
+        # Check expected html snippets
+        html_objects = filter_output_objects(
+            output_objects, with_object_type="html_form"
+        )
+        self.assertEqual(len(html_objects), 2)
+
+
+# TODO: add additional tests to cover other uses
+
+if __name__ == "__main__":
+    testmain()
