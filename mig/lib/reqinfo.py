@@ -111,6 +111,17 @@ class _RequestInfo(SimpleNamespace):
         """
         return self._request_data
 
+
+    @property
+    def csrf_token(self):
+        """
+        Return the CSRF token for the request.
+        """
+        csrf_token = self.request_data.get("csrf_token", None)
+        if isinstance(csrf_token, list):
+            csrf_token = csrf_token[0]
+        return csrf_token
+
     def _arg_string(self, arg, fallback=None):
         """
         Return a particular value as a string regardless of whether the
@@ -142,6 +153,7 @@ class _RequestInfo(SimpleNamespace):
         Explicitly set the values that will be made available as request args.
         """
         setattr(self, "_args", args)
+
 
     @classmethod
     def create(cls, client_id, operation, sent_type, request_data):
