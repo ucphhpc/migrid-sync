@@ -101,21 +101,18 @@ PEER_CSVLINES_TYPE_MAP = {
 }
 
 
-def _validate_csrf_token(configuration, request_info, environ=None):
+def _validate_csrf_token(configuration, request_info, environ):
     """
     Validates that the csrf token in the request matches the expected token.
     """
     _logger = configuration.logger
 
-    if not check_enable_csrf(configuration, request_info.request_data, environ):
+
+    if not check_enable_csrf(configuration, request_info.request_data, environ=environ):
         return True
 
     # Extract token from request data or header
-    csrf_token = request_info.request_data.get(csrf_field, "")
-    if not csrf_token and environ:
-        csrf_token = environ.get(csrf_token_header, "")
-
-    if not csrf_token:
+    if request_info.csrf_token is None:
         _logger.warning(
             "No CSRF token provided for request route: %s by: %s"
             % (request_info.route, request_info.client_email)
@@ -123,7 +120,7 @@ def _validate_csrf_token(configuration, request_info, environ=None):
         return False
 
     # Generate expected token
-    limit = get_csrf_limit(configuration, environ)
+    limit = get_csrf_limit(configuration, environ=environ)
     expected_token = make_csrf_token(
         configuration,
         request_info.method,
@@ -133,7 +130,7 @@ def _validate_csrf_token(configuration, request_info, environ=None):
     )
 
     # Compare tokens (use string_snippet for logging to avoid exposing full tokens)
-    if csrf_token != expected_token:
+    if request_info.csrf_token != expected_token:
         msg = "CSRF check failed in datainterface: %s vs %s" % (
             string_snippet(csrf_token),
             string_snippet(expected_token),
@@ -145,6 +142,10 @@ def _validate_csrf_token(configuration, request_info, environ=None):
             _logger.warning(msg)
             return True
     return True
+
+
+def _state_change_request(environ):
+    return environ["REQUEST_METHOD"] in ["POST", "PUT", "PATCH", "DELETE"]
 
 
 # TODO, move the helper functions and the peers related handlers/normalizers
@@ -556,7 +557,7 @@ def handle_POST_peers_new(configuration, request_info):
     if not accepted_invite or rejected_invite:
         return create_handler_response(
             400,
-            message="failed to add a new peer, the recieved invite on email argument was rejected %s"
+            message="failed to add a new peer, the received invite on email argument was rejected %s"
             % rejected_invite,
         )
     invite_on_email = accepted_invite.get("invite_on_email", False)
@@ -802,7 +803,7 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
     if not accepted or rejected:
         return create_handler_response(
             400,
-            message="failed to fetch the accepted with, recieved an incorrect peer argument %s"
+            message="failed to fetch the accepted with, received an incorrect peer argument %s"
             % rejected,
         )
     peer_dn = accepted["peer"]
@@ -846,7 +847,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_invite or rejected_invite:
         return create_handler_response(
             400,
-            message="failed to import peer(s), the recieved invite on email argument was rejected %s"
+            message="failed to import peer(s), the received invite on email argument was rejected %s"
             % rejected_invite,
         )
     invite_on_email = accepted_invite.get("invite_on_email", False)
@@ -863,7 +864,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_common or rejected_common:
         return create_handler_response(
             400,
-            message="failed to import peer(s), the recieved import argument(s) was rejected %s"
+            message="failed to import peer(s), the received import argument(s) was rejected %s"
             % rejected_common,
         )
 
@@ -873,7 +874,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_csvlines or rejected_csvlines:
         return create_handler_response(
             400,
-            message="failed to import peer(s), the recieved peers csvlines argument(s) was rejected %s"
+            message="failed to import peer(s), the received peers csvlines argument(s) was rejected %s"
             % rejected_csvlines,
         )
 
@@ -1036,7 +1037,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if rejected:
         return create_handler_response(
             400,
-            message="failed to update the peer, recieved an incorrect peer argument %s"
+            message="failed to update the peer, received an incorrect peer argument %s"
             % rejected,
         )
     peer_dn = accepted["peer"]
@@ -1053,7 +1054,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if not accepted_common or rejected_common:
         return create_handler_response(
             400,
-            message="failed to update peer, the recieved update argument(s) was rejected %s"
+            message="failed to update peer, the received update argument(s) was rejected %s"
             % rejected_common,
         )
 
@@ -1066,7 +1067,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if not valid_expire:
         return create_handler_response(
             400,
-            message="an incorrect End Date value was recieved.",
+            message="an incorrect End Date value was received.",
             errors_map={"0": {"expire": expire_message}},
         )
 
@@ -1410,7 +1411,7 @@ def _main(
     if output_objects is None:
         output_objects = [make_start_entry()]
 
-    # Set the response as containining JSON
+    # Set the response as containing JSON
     output_objects[0]["headers"].append(("Content-Type", "application/json"))
 
     if "wsgi.version" in environ:
@@ -1468,8 +1469,8 @@ def _main(
         )
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # 1a. validate the CSRF token if it is present
-    if not _validate_csrf_token(configuration, request_info, environ=environ):
+    if _state_change_request(environ) and not _validate_csrf_token(configuration, request_info, environ):
+    # 1a. validate the CSRF token if it is present for post requests
         error = {"error": "the supplied CSRF token was invalid"}
         return create_api_response(output_objects, 403, **error)
 
