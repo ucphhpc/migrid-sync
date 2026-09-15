@@ -1,0 +1,17 @@
+name: Security Check Python Code
+
+on:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      # required for all workflows
+      security-events: write
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
+    steps:
+      - name: Perform Python Security Check with Bandit
+        uses: PyCQA/bandit-action@v1
