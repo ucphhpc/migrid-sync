@@ -34,14 +34,13 @@ from types import SimpleNamespace
 from jinja2 import Template
 
 from mig.lib.templates import (
-    TemplateStore,
     MissingCacheDirError,
+    TemplateStore,
     UnknownTemplateError,
     init_global_templates,
 )
 from mig.shared.conf import get_configuration_object
 from tests.support import (
-    MIG_BASE,
     TEST_DATA_DIR,
     TEST_OUTPUT_DIR,
     MigTestCase,
@@ -97,7 +96,12 @@ class TestMigSharedTemplates_instance(MigTestCase):
         template_vars = store.extract_variables(
             "inner_template", "testplugin.inner", "html"
         )
-        self.assertEqual(template_vars, set(["inner_variable"]))
+        self.assertEqual(
+            template_vars,
+            set(
+                ["inner_variable"]
+            ),
+        )
 
     def test_extract_variables_empty(self):
         store = TemplateStore.from_names(
@@ -166,10 +170,12 @@ class TestMigSharedTemplates_instance_with_configuration(MigTestCase):
         store = init_global_templates(configuration)
 
         self.assertEqual(
-            store.list_templates(), [
+            store.list_templates(),
+            [
+                ("csrf_tokens", "migux.apps.peers"),
                 ("search_result", "migux.apps.peers"),
                 ("search_result--accepted", "migux.apps.peers"),
-            ]
+            ],
         )
 
 
@@ -185,7 +191,7 @@ class TestMigSharedTemplates_cli(MigTestCase):
     def after_each(self):
         # clean up the configuration file specified cache directory
         shutil.rmtree(TEST_TEMPLATE_CACHE_DIR, ignore_errors=True)
-        pass
+
 
     def test_command_cache(self):
         test_conf_file = os.path.join(
@@ -226,7 +232,7 @@ class TestMigSharedTemplates_cli(MigTestCase):
         def _print(value):
             pass
 
-        with self.assertRaises(MissingCacheDirError) as raised:
+        with self.assertRaises(MissingCacheDirError) as _:
             self.TEMPLATES_CLI.main(args, _print=_print)
 
 
