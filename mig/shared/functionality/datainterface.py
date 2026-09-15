@@ -64,8 +64,6 @@ from mig.shared import accountreq, returnvalues
 from mig.shared.base import extract_field, fill_user, string_snippet
 from mig.shared.defaults import (
     CSRF_WARN,
-    csrf_field,
-    csrf_token_header,
     keyword_auto,
     peers_expire_max_days,
     peers_expire_min_days,
@@ -107,8 +105,9 @@ def _validate_csrf_token(configuration, request_info, environ):
     """
     _logger = configuration.logger
 
-
-    if not check_enable_csrf(configuration, request_info.request_data, environ=environ):
+    if not check_enable_csrf(
+        configuration, request_info.request_data, environ=environ
+    ):
         return True
 
     # Extract token from request data or header
@@ -132,7 +131,7 @@ def _validate_csrf_token(configuration, request_info, environ):
     # Compare tokens (use string_snippet for logging to avoid exposing full tokens)
     if request_info.csrf_token != expected_token:
         msg = "CSRF check failed in datainterface: %s vs %s" % (
-            string_snippet(csrf_token),
+            string_snippet(request_info.csrf_token),
             string_snippet(expected_token),
         )
         if configuration.site_csrf_protection != CSRF_WARN:
@@ -1469,8 +1468,10 @@ def _main(
         )
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if _state_change_request(environ) and not _validate_csrf_token(configuration, request_info, environ):
-    # 1a. validate the CSRF token if it is present for post requests
+    if _state_change_request(environ) and not _validate_csrf_token(
+        configuration, request_info, environ
+    ):
+        # 1a. validate the CSRF token if it is present for post requests
         error = {"error": "the supplied CSRF token was invalid"}
         return create_api_response(output_objects, 403, **error)
 
