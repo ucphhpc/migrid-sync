@@ -115,7 +115,7 @@ def check_conf(conf_file):
 
     # Search object attributes for possible paths
 
-    path_re = re.compile('(' + os.sep + "[\w\._-]*)+$")
+    path_re = re.compile(r'(%s[\w\._-]*)+$' % os.sep)
 
     _logger = conf.logger
     _logger.info('Checking configuration paths in %s ...', conf_file)
