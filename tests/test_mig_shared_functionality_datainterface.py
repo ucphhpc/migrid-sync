@@ -288,7 +288,7 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         self.assertIn("0", errors_map)
         self.assertIn("expire", errors_map["0"])
         self.assertIn(
-            "the specified expire must be atleast", errors_map["0"]["expire"]
+            "the specified expire must be at least", errors_map["0"]["expire"]
         )
 
         # check nothing was saved

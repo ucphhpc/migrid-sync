@@ -242,7 +242,7 @@ def template_insert(template_file, insert_identifiers, unique=False):
                 f_index += 1
                 contents.insert(f_index, v)
         else:
-            print("A non-valid insert identifer dictionary value was supplied, "
+            print("A non-valid insert identifier dictionary value was supplied, "
                   "supports string and list")
             return False
     if not write_file_lines(contents, template_file, None):
