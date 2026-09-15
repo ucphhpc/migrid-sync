@@ -56,6 +56,9 @@ class MigSharedFunctionalityDatainterface__generic(
         return "testconfig"
 
     def before_each(self):
+        # We disable the csrf check this piece of testing
+        # since we only care about functionality here
+        self.configuration.site_csrf_protection = "MINIMAL"
         self._provision_test_user(self, self.TEST_CLIENT_ID)
 
     def test_wsgi_nonexistent_route(self):
@@ -100,6 +103,10 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         return "testconfig"
 
     def before_each(self):
+        # We disable the csrf check this piece of testing
+        # since we only care about functionality here
+        self.configuration.site_csrf_protection = "MINIMAL"
+
         user_paths_dict = self._provision_test_user_return_dict(
             self,
             self.TEST_CLIENT_ID,
