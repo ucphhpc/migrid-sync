@@ -100,7 +100,8 @@ menu_items['jupyter'] = {'class': 'jupyter fas fa-jupyter', 'url': 'jupyter.py',
 menu_items['cloud'] = {'class': 'cloud fas fa-cloud', 'url': 'cloud.py',
                        'title': 'Cloud',
                        'hover': 'Access the associated cloud computing services'}
-menu_items['peers'] = {'class': 'peers fas fa-address-card', 'url': 'peers.py',
+menu_items['peers'] = {'class': 'peers fas fa-address-card',
+                       'url': 'javascript:migappBootstrap(\'peers\')',
                        'title': 'Peers',
                        'hover': 'Vouch for collaboration partner or course participant accounts'}
 menu_items['statistics'] = {'class': 'statistics fas fa-poll', 'url': 'showstats.py',
@@ -1841,6 +1842,7 @@ def get_xgi_html_preamble(
 %s
 </title>
 %s
+<script src="/assets/migux/migappBootstrap.js"></script>
 </head>
     ''' % (title, head_extras)
     return out

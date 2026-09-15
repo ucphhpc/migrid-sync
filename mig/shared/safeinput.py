@@ -59,7 +59,7 @@ from mig.shared.base import force_unicode, force_native_str
 from mig.shared.defaults import src_dst_sep, username_charset, \
     username_max_length, session_id_charset, session_id_length, \
     subject_id_charset, subject_id_min_length, subject_id_max_length, \
-    workflow_id_length, MAX_SWEEP, maxfill_fields
+    workflow_id_length, MAX_SWEEP, maxfill_fields, peer_kinds
 from mig.shared.listhandling import frange
 from mig.shared.validstring import valid_user_path, silent_email_validator
 from mig.shared.valuecheck import lines_value_checker, \
@@ -161,6 +161,10 @@ VALID_CLOUD_LABEL_CHARACTERS = VALID_FQDN_CHARACTERS + '+_=@'
 # We do allow space in image names
 VALID_CLOUD_NAME_CHARACTERS = VALID_CLOUD_LABEL_CHARACTERS + ' '
 VALID_CLOUD_INSTANCE_ID_CHARACTERS = VALID_CLOUD_NAME_CHARACTERS + ':'
+# Valid templates field selection chars
+VALID_TEMPLATES_FIELD_CHARACTERS = ascii_letters + "_"
+# Import peers lines allowed chars
+VALID_PEERS_CSV_CHARACTERS = ascii_letters + digits + '; .@_-'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
 ALLOW_UNSAFE = \
     'THIS INPUT IS NOT VERIFIED: DO NOT EVER PRINT IT UNESCAPED! '
@@ -381,6 +385,16 @@ def valid_date(contents, min_length=10, max_length=10):
 
     __valid_contents(contents, digits + '-/', min_length,
                      max_length)
+
+
+def valid_boolean(contents, min_length=1, max_length=5):
+    """Verify that supplied contents only contain something like 1, 0, true, false
+    contents"""
+
+    base_bool_digest = "10"
+    base_bool_chars = "truefals"
+    valid_bool_chars = base_bool_chars + base_bool_chars.upper() + base_bool_digest
+    __valid_contents(contents, valid_bool_chars, min_length=min_length, max_length=max_length)
 
 
 def valid_plain_text(
@@ -1005,6 +1019,90 @@ def valid_cloud_name(
 
     valid_chars = VALID_CLOUD_NAME_CHARACTERS + extra_chars
     __valid_contents(cloud_name, valid_chars, min_length, max_length)
+
+
+def valid_template_field(
+    field,
+    min_length=0,
+    max_length=64,
+    extra_chars=''
+    ):
+    """Verify that supplied field only contains characters that we
+    consider valid for a template to declare as a field that can be templated.
+    """
+
+    valid_chars = VALID_TEMPLATES_FIELD_CHARACTERS + extra_chars
+    __valid_contents(field, valid_chars, min_length, max_length)
+
+
+def valid_peers_csvlines(
+    csvlines,
+    min_length=0,
+    max_length=255,
+    extra_chars=''
+):
+    """Verify that supplied peers csvlines only contains characters that we
+    consider valid in a peers csvlines.
+    """
+    valid_chars = VALID_PEERS_CSV_CHARACTERS + extra_chars
+    __valid_contents(csvlines, valid_chars, min_length, max_length)
+
+
+def valid_peer_query(
+    query,
+    min_length=0,
+    max_length=64
+):
+    """Verify that supplied label only contains characters that we
+    consider valid in a peer query.
+
+    A query can be used to search for a label or email of a peer
+    """
+
+    valid_commonname(
+        query,
+        min_length=min_length,
+        max_length=max_length,
+        extra_chars="-_*@"
+    )
+
+
+def valid_peer_expire_optional(
+    expire,
+    min_length=10,
+    max_length=10,
+):
+    """Verify that the supplied expire value is either empty or a valid date
+    """
+
+    if expire == "":
+        return True
+
+    valid_date(expire, min_length=min_length, max_length=max_length)
+
+
+def valid_peer_label(
+    label,
+    min_length=0,
+    max_length=64,
+):
+    """Verify that supplied label only contains characters that we
+    consider valid in a peer label.
+    """
+    valid_commonname(
+        label, min_length=min_length, max_length=max_length, extra_chars='-_'
+    )
+
+
+def valid_peer_kind(value, **kwargs):
+    """Verify that the supplied kind is either an empty string,
+    or one of peer_kinds.
+    """
+    if value == '':
+        return True
+
+    if value not in peer_kinds:
+        raise ValueError("invalid peer kind")
 
 
 def valid_workflow_pers_id(persistence_id):
