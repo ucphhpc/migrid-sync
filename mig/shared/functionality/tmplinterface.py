@@ -62,8 +62,10 @@ from mig.lib.reqinfo import (
 from mig.shared import accountreq, returnvalues
 from mig.shared.functionality.datainterface import create_handler_response
 from mig.shared.init import initialize_main_variables, make_start_entry
+from mig.shared.pwcrypto import make_csrf_token
 from mig.shared.safeinput import (
     html_escape,
+    valid_csrf_request_field,
     valid_peer_expire_optional,
     valid_peer_kind,
     valid_peer_query,
@@ -206,6 +208,23 @@ def main(client_id, user_arguments_dict, environ=None, configuration=None):
     )
 
 
+def convert_csrf_tokens_request_data(request_data):
+    """
+    Convert MiG style wrapped request data to a standard data structure.
+    """
+    args = unlistify_dict(request_data)
+    requests = uncommaify(unlistify(request_data.pop("requests", "")))
+    args["requests"] = requests
+
+    # We have to ensure that the expected fields are present
+    # as required by the underlying csrf_tokens.html.jinja template
+    # in migux is included in the request_info.args list as it is used
+    # to extract the csrf tokens to render the template.
+    fields = ["tokens", "method", "operation"]
+    args["fields"] = fields
+    return args
+
+
 def convert_peers_listing_request_data(request_data):
     """
     Convert MiG style wrapped request data to a standard data structure.
@@ -247,6 +266,7 @@ def validate_peers_search_inputs(search_args):
         },
         list_wrap=True,
     )
+
     return unlistify_dict(accepted), unlistify_dict(rejected)
 
 
@@ -350,6 +370,58 @@ def _peers_listing_filter(objects, request_args):
     return _search_dicts_matching(objects, conditions)
 
 
+def validate_csrf_requests_input(csrf_args):
+    """Validates the input of a peer search
+
+    csrf_args: {"requests": [], "fields": []}
+    """
+
+    # The query can either be a peer label or an email
+    # Therefore we need to check against both kinds.
+    signature = {"requests": [""], "fields": [""]}
+    accepted, rejected = validated_input(
+        csrf_args,
+        signature,
+        type_override={
+            "requests": valid_csrf_request_field,
+            "fields": valid_template_field,
+        },
+        list_wrap=True,
+    )
+    # We skip unlisting fields since this is expected to be a list
+    return accepted, unlistify_dict(rejected)
+
+
+def prepare_GET_migux_apps_peers_csrf_tokens(configuration, request_info):
+    """
+    Data preparation function for mixux.apps.peers GET /csrf_tokens
+    """
+    # Validate the requests parameter
+    accepted, rejected = validate_csrf_requests_input(request_info.args)
+    if not accepted or rejected:
+        return create_handler_response(
+            400,
+            error="failed to validate the request for csrf tokens for the specific arguments, error: %s"
+            % rejected,
+        )
+
+    accepted_requests = accepted["requests"]
+    tokens = []
+    for request_object in accepted_requests:
+        method_obj, operation_obj = request_object.split("&")
+        method = method_obj.split("=")[1]
+        operation = operation_obj.split("=")[1]
+
+        token = make_csrf_token(
+            configuration, method, operation, request_info.client_id
+        )
+        tokens.append(
+            {"token": token, "method": method, "operation": operation}
+        )
+
+    return create_handler_response(200, data=tokens)
+
+
 def create_tmpl_response(
     output_objects,
     template_group,
@@ -376,6 +448,7 @@ TMPL_DATA_HANDLERS = {
     "migux.apps.peers": {
         "GET /accepted": prepare_GET_migux_apps_peers_accepted,
         "GET /requested": prepare_GET_migux_apps_peers_requested,
+        "GET /csrf_tokens": prepare_GET_migux_apps_peers_csrf_tokens,
     }
 }
 
@@ -384,6 +457,7 @@ NORMALIZE_INPUTS_BY_PACKAGE = {
     "migux.apps.peers": {
         "GET /accepted": convert_peers_listing_request_data,
         "GET /requested": convert_peers_listing_request_data,
+        "GET /csrf_tokens": convert_csrf_tokens_request_data,
     }
 }
 

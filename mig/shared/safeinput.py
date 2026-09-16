@@ -162,7 +162,7 @@ VALID_CLOUD_LABEL_CHARACTERS = VALID_FQDN_CHARACTERS + '+_=@'
 VALID_CLOUD_NAME_CHARACTERS = VALID_CLOUD_LABEL_CHARACTERS + ' '
 VALID_CLOUD_INSTANCE_ID_CHARACTERS = VALID_CLOUD_NAME_CHARACTERS + ':'
 # Valid templates field selection chars
-VALID_TEMPLATES_FIELD_CHARACTERS = ascii_letters + "_"
+VALID_TEMPLATES_FIELD_CHARACTERS = ascii_letters + '_'
 # Import peers lines allowed chars
 VALID_PEERS_CSV_CHARACTERS = ascii_letters + digits + '; .@_-'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
@@ -1032,6 +1032,20 @@ def valid_template_field(
     """
 
     valid_chars = VALID_TEMPLATES_FIELD_CHARACTERS + extra_chars
+    __valid_contents(field, valid_chars, min_length, max_length)
+
+
+def valid_csrf_request_field(
+    field,
+    min_length=0,
+    max_length=255,
+    extra_chars=''
+    ):
+    """Verify that supplied field only contains characters that we
+    consider valid for a template to declare as a field that can be templated.
+    """
+
+    valid_chars = VALID_URL_CHARACTERS + extra_chars + ','
     __valid_contents(field, valid_chars, min_length, max_length)
 
 
