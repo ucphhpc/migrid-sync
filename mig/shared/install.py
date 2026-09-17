@@ -62,7 +62,7 @@ from mig.shared.defaults import default_http_port, default_https_port, \
 from mig.shared.compat import ensure_native_string
 from mig.shared.fileio import read_file, read_file_lines, write_file, \
     write_file_lines
-from mig.shared.htmlgen import menu_items
+from mig.shared.htmlgen import get_menu_items
 from mig.shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
 from mig.shared.pwcrypto import password_requirements, make_simple_hash, \
@@ -2270,11 +2270,11 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         default_menu = 'home files submitjob jobs vgrids resources ' \
             'runtimeenvs people settings downloads transfers ' \
             'sharelinks crontab docs logout'
-    allow_menu = ' '.join([i for i in default_menu.split() if i in menu_items])
+    allow_menu = ' '.join([i for i in default_menu.split() if i in get_menu_items()])
     user_dict['__DEFAULT_MENU__'] = allow_menu
     if not user_menu:
         user_menu = ''
-    allow_menu = ' '.join([i for i in user_menu.split() if i in menu_items])
+    allow_menu = ' '.join([i for i in user_menu.split() if i in get_menu_items()])
     user_dict['__USER_MENU__'] = allow_menu
 
     # Collect final variable values for log

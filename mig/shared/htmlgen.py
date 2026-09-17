@@ -40,107 +40,112 @@ from mig.shared.defaults import default_pager_entries, trash_linkname, \
 
 ICONS_ONLY, TEXT_ONLY = "ICONS_ONLY", "TEXT_ONLY"
 
-# Define all possible menu items
-menu_items = {}
-# Old dashboard
-menu_items['dashboard'] = {'class': 'dashboard fas fa-tachometer-alt', 'url': 'dashboard.py',
-                           'legacy_only': True, 'title': 'Dashboard',
-                           'hover': 'The original dashboard start page'}
-# New dashboard replacement
-menu_items['home'] = {'class': 'home fas fa-home', 'url': 'home.py',
-                      'legacy_only': False, 'title': 'Home',
-                      'hover': 'App overview and launch page'}
-menu_items['submitjob'] = {'class': 'submitjob fas fa-running', 'url': 'submitjob.py',
-                           'title': 'Submit Job',
-                           'hover': 'Submit a job for execution on a resource'}
-menu_items['files'] = {'class': 'files fas fa-folder', 'url': 'fileman.py', 'title': 'Files',
-                       'hover': 'Manage files and folders in your home directory'}
-menu_items['jobs'] = {'class': 'jobs fas fa-tasks', 'url': 'jobman.py', 'title': 'Jobs',
-                      'hover': 'Manage and monitor your grid jobs'}
-menu_items['vgrids'] = {'class': 'vgrids fas fa-network-wired', 'url': 'vgridman.py',
-                        'title': 'VGrids',
-                        'hover': 'Virtual organisations sharing some resources and files'}
-menu_items['resources'] = {'class': 'resources fas fa-server', 'url': 'resman.py',
-                           'title': 'Resources',
-                           'hover': 'Resources available in the system'}
-menu_items['downloads'] = {'class': 'downloads fas fa-download', 'url': 'downloads.py',
-                           'title': 'Downloads',
-                           'hover': 'Download scripts to work directly from your local machine'}
-menu_items['runtimeenvs'] = {'class': 'runtimeenvs fas fa-warehouse', 'url': 'redb.py',
-                             'title': 'Runtime Envs',
-                             'hover': 'Runtime environments: software which can be made available'}
-menu_items['archives'] = {'class': 'archives fas fa-archive', 'url': 'freezedb.py',
-                          'title': 'Archives',
-                          'hover': 'Frozen archives: write-once file archives'}
-menu_items['account'] = {'class': 'account fas fa-account', 'url': 'account.py',
-                         'legacy_only': True, 'title': 'Account',
-                         'hover': 'Account info and management'}
-menu_items['settings'] = {'class': 'settings fas fa-user', 'url': 'settings.py',
-                          'legacy_only': True, 'title': 'Settings',
-                          'hover': 'Your personal settings for these pages'}
-menu_items['setup'] = {'class': 'setup fas fa-user-cog', 'url': 'setup.py',
-                       'legacy_only': True, 'title': 'Setup',
-                       'hover': 'Your client access setup for this site'}
-menu_items['transfers'] = {'class': 'transfers fas fa-datatransfer', 'url': 'datatransfer.py',
-                           'title': 'Data Transfers',
-                           'hover': 'For background batch transfers of data'}
-menu_items['sharelinks'] = {'class': 'sharelinks fas fa-share-alt', 'url': 'sharelink.py',
-                            'title': 'Share Links',
-                            'hover': 'Manage share links for easy data exchange'}
-menu_items['crontab'] = {'class': 'crontab fas fa-calendar-check', 'url': 'crontab.py',
-                         'title': 'Schedule Tasks',
-                         'hover': 'Your personal task scheduler'}
-# NOTE: we rely on seafile location from conf and only fill it in render
-menu_items['seafile'] = {'class': 'seafile fas fa-seafile', 'url': '', 'title': 'Seafile',
-                         'hover': 'Access the associated Seafile service',
-                         'target': '_blank'}
-menu_items['jupyter'] = {'class': 'jupyter fas fa-jupyter', 'url': 'jupyter.py',
-                         'title': 'Jupyter',
-                         'hover': 'Access the associated Jupyter data analysis services'}
-menu_items['cloud'] = {'class': 'cloud fas fa-cloud', 'url': 'cloud.py',
-                       'title': 'Cloud',
-                       'hover': 'Access the associated cloud computing services'}
-menu_items['peers'] = {'class': 'peers fas fa-address-card', 'url': 'peers.py',
-                       'title': 'Peers',
-                       'hover': 'Vouch for collaboration partner or course participant accounts'}
-menu_items['statistics'] = {'class': 'statistics fas fa-poll', 'url': 'showstats.py',
-                            'legacy_only': True, 'title': 'Statistics',
-                            'hover': 'Usage overview for resources and users on this server'}
-menu_items['docs'] = {'class': 'docs fas fa-book', 'url': 'docs.py',
-                      'title': 'Docs',
-                      'hover': 'Some built-in documentation for reference'}
-menu_items['people'] = {'class': 'people fas fa-users', 'url': 'people.py',
-                        'title': 'People',
-                        'hover': 'View and communicate with other users'}
-menu_items['migadmin'] = {'class': 'migadmin fas fa-user-lock', 'url': 'migadmin.py',
-                          'title': 'Server Admin',
-                          'hover': 'Administrate this server'}
-menu_items['logout'] = {'class': 'logout fas fa-sign-out-alt',
-                        'url': 'logout.py', 'title': 'Logout',
-                        'legacy_only': True, 'hover': 'Logout'}
-# GDP-only action to close active project login
-menu_items['close'] = {'class': 'close fas fa-arrow-circle-up',
-                       'url': 'gdpman.py?action=close_project',
-                       'title': 'Close', 'legacy_only': True,
-                       'hover': 'Close active project and return to project management'}
+def get_menu_items(user_settings=None):
+    """Return list of menu items to show for user with user_settings"""
+
+    # Define all possible menu items
+    menu_items = {}
+    # Old dashboard
+    menu_items['dashboard'] = {'class': 'dashboard fas fa-tachometer-alt', 'url': 'dashboard.py',
+                            'legacy_only': True, 'title': 'Dashboard',
+                            'hover': 'The original dashboard start page'}
+    # New dashboard replacement
+    menu_items['home'] = {'class': 'home fas fa-home', 'url': 'home.py',
+                        'legacy_only': False, 'title': 'Home',
+                        'hover': 'App overview and launch page'}
+    menu_items['submitjob'] = {'class': 'submitjob fas fa-running', 'url': 'submitjob.py',
+                            'title': 'Submit Job',
+                            'hover': 'Submit a job for execution on a resource'}
+    menu_items['files'] = {'class': 'files fas fa-folder', 'url': 'fileman.py', 'title': 'Files',
+                        'hover': 'Manage files and folders in your home directory'}
+    menu_items['jobs'] = {'class': 'jobs fas fa-tasks', 'url': 'jobman.py', 'title': 'Jobs',
+                        'hover': 'Manage and monitor your grid jobs'}
+    menu_items['vgrids'] = {'class': 'vgrids fas fa-network-wired', 'url': 'vgridman.py',
+                            'title': 'VGrids',
+                            'hover': 'Virtual organisations sharing some resources and files'}
+    menu_items['resources'] = {'class': 'resources fas fa-server', 'url': 'resman.py',
+                            'title': 'Resources',
+                            'hover': 'Resources available in the system'}
+    menu_items['downloads'] = {'class': 'downloads fas fa-download', 'url': 'downloads.py',
+                            'title': 'Downloads',
+                            'hover': 'Download scripts to work directly from your local machine'}
+    menu_items['runtimeenvs'] = {'class': 'runtimeenvs fas fa-warehouse', 'url': 'redb.py',
+                                'title': 'Runtime Envs',
+                                'hover': 'Runtime environments: software which can be made available'}
+    menu_items['archives'] = {'class': 'archives fas fa-archive', 'url': 'freezedb.py',
+                            'title': 'Archives',
+                            'hover': 'Frozen archives: write-once file archives'}
+    menu_items['account'] = {'class': 'account fas fa-account', 'url': 'account.py',
+                            'legacy_only': True, 'title': 'Account',
+                            'hover': 'Account info and management'}
+    menu_items['settings'] = {'class': 'settings fas fa-user', 'url': 'settings.py',
+                            'legacy_only': True, 'title': 'Settings',
+                            'hover': 'Your personal settings for these pages'}
+    menu_items['setup'] = {'class': 'setup fas fa-user-cog', 'url': 'setup.py',
+                        'legacy_only': True, 'title': 'Setup',
+                        'hover': 'Your client access setup for this site'}
+    menu_items['transfers'] = {'class': 'transfers fas fa-datatransfer', 'url': 'datatransfer.py',
+                            'title': 'Data Transfers',
+                            'hover': 'For background batch transfers of data'}
+    menu_items['sharelinks'] = {'class': 'sharelinks fas fa-share-alt', 'url': 'sharelink.py',
+                                'title': 'Share Links',
+                                'hover': 'Manage share links for easy data exchange'}
+    menu_items['crontab'] = {'class': 'crontab fas fa-calendar-check', 'url': 'crontab.py',
+                            'title': 'Schedule Tasks',
+                            'hover': 'Your personal task scheduler'}
+    # NOTE: we rely on seafile location from conf and only fill it in render
+    menu_items['seafile'] = {'class': 'seafile fas fa-seafile', 'url': '', 'title': 'Seafile',
+                            'hover': 'Access the associated Seafile service',
+                            'target': '_blank'}
+    menu_items['jupyter'] = {'class': 'jupyter fas fa-jupyter', 'url': 'jupyter.py',
+                            'title': 'Jupyter',
+                            'hover': 'Access the associated Jupyter data analysis services'}
+    menu_items['cloud'] = {'class': 'cloud fas fa-cloud', 'url': 'cloud.py',
+                        'title': 'Cloud',
+                        'hover': 'Access the associated cloud computing services'}
+    menu_items['peers'] = {'class': 'peers fas fa-address-card', 'url': 'peers.py',
+                        'title': 'Peers',
+                        'hover': 'Vouch for collaboration partner or course participant accounts'}
+    menu_items['statistics'] = {'class': 'statistics fas fa-poll', 'url': 'showstats.py',
+                                'legacy_only': True, 'title': 'Statistics',
+                                'hover': 'Usage overview for resources and users on this server'}
+    menu_items['docs'] = {'class': 'docs fas fa-book', 'url': 'docs.py',
+                        'title': 'Docs',
+                        'hover': 'Some built-in documentation for reference'}
+    menu_items['people'] = {'class': 'people fas fa-users', 'url': 'people.py',
+                            'title': 'People',
+                            'hover': 'View and communicate with other users'}
+    menu_items['migadmin'] = {'class': 'migadmin fas fa-user-lock', 'url': 'migadmin.py',
+                            'title': 'Server Admin',
+                            'hover': 'Administrate this server'}
+    menu_items['logout'] = {'class': 'logout fas fa-sign-out-alt',
+                            'url': 'logout.py', 'title': 'Logout',
+                            'legacy_only': True, 'hover': 'Logout'}
+    # GDP-only action to close active project login
+    menu_items['close'] = {'class': 'close fas fa-arrow-circle-up',
+                        'url': 'gdpman.py?action=close_project',
+                        'title': 'Close', 'legacy_only': True,
+                        'hover': 'Close active project and return to project management'}
+    return menu_items
+
 
 # Define all possible VGrid page columns
 vgrid_items = {}
 vgrid_items['files'] = {'class': 'vgridfiles', 'title': 'Files',
                         'hover': 'Open shared files'}
 vgrid_items['web'] = {'class': 'vgridweb', 'title': 'Web Pages',
-                      'hover': 'View/edit private and public web pages'}
+                    'hover': 'View/edit private and public web pages'}
 vgrid_items['scm'] = {'class': 'vgridscm', 'title': 'SCM',
-                      'hover':
-                      'Inspect private and public Source Code Management systems'}
+                    'hover':
+                    'Inspect private and public Source Code Management systems'}
 vgrid_items['tracker'] = {'class': 'vgridtracker', 'title': 'Tracker Tools',
-                          'hover': 'Open private and public project collaboration tools'}
+                        'hover': 'Open private and public project collaboration tools'}
 vgrid_items['forum'] = {'class': 'vgridforum', 'title': 'Forum',
                         'hover': 'Enter private forum'}
 vgrid_items['workflows'] = {'class': 'vgridworkflows', 'title': 'Workflows',
                             'hover': 'Enter private workflows'}
 vgrid_items['monitor'] = {'class': 'vgridmonitor', 'title': 'Monitor',
-                          'hover': 'Open private resource monitor'}
+                        'hover': 'Open private resource monitor'}
 
 
 def html_print(formatted_text, html=True):
@@ -176,6 +181,7 @@ def render_menu(configuration, menu_class='navmenu',
                 user_menu=[], user_settings={}, display=keyword_all):
     """Render the menu contents using configuration"""
 
+    menu_items = get_menu_items(user_settings=user_settings)
     legacy_ui = legacy_user_interface(configuration, user_settings)
     raw_order = []
     raw_order += base_menu
@@ -284,6 +290,7 @@ def render_apps(configuration, title_entry, active_menu):
     """Render the apps selection contents using configuration"""
 
     user_settings = title_entry.get('user_settings', {})
+    menu_items = get_menu_items(user_settings=user_settings)
     legacy_ui = legacy_user_interface(configuration, user_settings)
     raw_order = []
     raw_order += active_menu
