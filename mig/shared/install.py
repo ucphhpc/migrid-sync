@@ -2268,7 +2268,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
 
     if not default_menu:
         default_menu = 'home files submitjob jobs vgrids resources ' \
-            'runtimeenvs people settings downloads transfers ' \
+            'runtimeenvs people settings setup downloads transfers ' \
             'sharelinks crontab docs logout'
     allow_menu = ' '.join([i for i in default_menu.split() if i in menu_items])
     user_dict['__DEFAULT_MENU__'] = allow_menu
