@@ -860,6 +860,222 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
 
+class MigSharedFunctionalityDatainterface__peers_csrf_failures_wsgi(
+    MigTestCase,
+    WsgiAssertMixin,
+    FixtureAssertMixin,
+    PickleAssertMixin,
+    UserAssertMixin,
+):
+    """Tests of CSRF failure responses (403) for peers state-changing operations"""
+
+    TEST_CLIENT_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
+    TEST_PEER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com"
+    TEST_PENDING_PEER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User/emailAddress=pending_peer@example.com"
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        self.configuration.site_csrf_protection = "FULL"
+        user_paths_dict = self._provision_test_user_return_dict(
+            self,
+            self.TEST_CLIENT_ID,
+        )
+        self.test_user_settings_dir = user_paths_dict["user_settings_dir"]
+
+    def test_peers_new_missing_csrf_token(self):
+        test_new_accepted_peer = {
+            "country": "DK",
+            "email": "peer@example.com",
+            "full_name": "Test User",
+            "label": "some_peer_label",
+            "expire": (date.today() + timedelta(days=8)).isoformat(),
+            "organization": "Test Org",
+            "kind": "project",
+            "state": "NA",
+        }
+
+        request_body = {
+            "type": "peers__new",
+            "operation": "create",
+            "invite_on_email": True,
+            **test_new_accepted_peer,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 403)
+
+    def test_peers_new_wrong_csrf_token(self):
+        test_new_accepted_peer = {
+            "country": "DK",
+            "email": "peer@example.com",
+            "full_name": "Test User",
+            "label": "some_peer_label",
+            "expire": (date.today() + timedelta(days=8)).isoformat(),
+            "organization": "Test Org",
+            "kind": "project",
+            "state": "NA",
+            "csrf_token": "invalid_token",
+        }
+
+        request_body = {
+            "type": "peers__new",
+            "operation": "create",
+            "invite_on_email": True,
+            **test_new_accepted_peer,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 403)
+        # We expect a logged error here when a wrong CSRF token is provided
+        self.logger.forgive_errors()
+
+    def test_peers_accepted_delete_missing_csrf_token(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+
+        request_body = {
+            "type": "peers__accepted__delete",
+            "operation": "delete",
+            "peers": [self.TEST_PEER_DN],
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 403)
+
+    def test_peers_accepted_delete_wrong_csrf_token(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+
+        request_body = {
+            "type": "peers__accepted__delete",
+            "operation": "delete",
+            "peers": [self.TEST_PEER_DN],
+            "csrf_token": "wrong_token",
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 403)
+        # We expect a logged error here when a wrong CSRF token is provided
+        self.logger.forgive_errors()
+
+    def test_peers_accepted_update_missing_csrf_token(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+
+        request_body = {
+            "type": "peers__accepted__update",
+            "operation": "create",
+            "peer_dn": self.TEST_PEER_DN,
+            "label": "updated_label",
+            "kind": "",
+            "expire": (
+                date.today() + timedelta(days=peers_expire_min_days + 1)
+            ).isoformat(),
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 403)
+
+    def test_peers_accepted_update_wrong_csrf_token(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+
+        request_body = {
+            "type": "peers__accepted__update",
+            "operation": "create",
+            "peer_dn": self.TEST_PEER_DN,
+            "label": "updated_label",
+            "kind": "",
+            "expire": (
+                date.today() + timedelta(days=peers_expire_min_days + 1)
+            ).isoformat(),
+            "csrf_token": "wrong_token",
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 403)
+        # We expect a logged error here when a wrong CSRF token is provided
+        self.logger.forgive_errors()
+
+    def test_peers_send_invitation_missing_csrf_token(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+
+        request_body = {
+            "type": "peers__send_invitation",
+            "operation": "create",
+            "peers": [self.TEST_PEER_DN],
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 403)
+
+    def test_peers_send_invitation_wrong_csrf_token(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+
+        request_body = {
+            "type": "peers__send_invitation",
+            "operation": "create",
+            "peers": [self.TEST_PEER_DN],
+            "csrf_token": "wrong_token",
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 403)
+        # We expect a logged error here when a wrong CSRF token is provided
+        self.logger.forgive_errors()
+
+
 class MigSharedFunctionalityDatainterface__peers_csrf_wsgi(
     MigTestCase,
     WsgiAssertMixin,
@@ -871,17 +1087,21 @@ class MigSharedFunctionalityDatainterface__peers_csrf_wsgi(
 
     TEST_CLIENT_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
     TEST_PEER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com"
+    TEST_PENDING_PEER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Pending Peer User/emailAddress=pending_peer@example.com"
 
     def _provide_configuration(self):
         return "testconfig"
 
     def before_each(self):
-        self.configuration.site_csrf_protection = "WARN"
+        self.configuration.site_csrf_protection = "FULL"
         user_paths_dict = self._provision_test_user_return_dict(
             self,
             self.TEST_CLIENT_ID,
         )
         self.test_user_settings_dir = user_paths_dict["user_settings_dir"]
+        # We don't want to test email sending here
+        # just the correctness of the datastructure
+        self.configuration.context_get("notifier").send_email.forgive_email()
 
     def test_peers_new_valid_with_token(self):
         csrf_token = make_csrf_token(
@@ -924,6 +1144,201 @@ class MigSharedFunctionalityDatainterface__peers_csrf_wsgi(
         self.assertEqual(fake_send_email.total_emails_sent(), 2)
         self.assertTrue(fake_send_email.email_was_sent_to("peer@example.com"))
         self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
+
+    def test_peers_accepted_delete_valid_token(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+        csrf_token = make_csrf_token(
+            self.configuration,
+            "POST",
+            "/peers/accepted/delete",
+            self.TEST_CLIENT_ID,
+        )
+
+        request_body = {
+            "type": "peers__accepted__delete",
+            "operation": "delete",
+            "peers": [self.TEST_PEER_DN],
+            "csrf_token": csrf_token,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 200)
+
+        content = self.assertUserPeers(self.TEST_CLIENT_ID)
+        self.assertEqual(len(content), 0)
+
+    def test_peers_accepted_update_valid_token(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+        csrf_token = make_csrf_token(
+            self.configuration,
+            "POST",
+            "/peers/accepted/update",
+            self.TEST_CLIENT_ID,
+        )
+        new_label = "updated_csrf_label"
+
+        request_body = {
+            "type": "peers__accepted__update",
+            "operation": "create",
+            "peer_dn": self.TEST_PEER_DN,
+            "label": new_label,
+            "kind": "",
+            "expire": (
+                date.today() + timedelta(days=peers_expire_min_days + 1)
+            ).isoformat(),
+            "csrf_token": csrf_token,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 200)
+
+        peers = self.assertUserPeers(self.TEST_CLIENT_ID)
+        peer = peers.get(self.TEST_PEER_DN, None)
+        self.assertIsNotNone(peer)
+        self.assertEqual(peer["label"], new_label)
+
+    def test_peers_send_invitation_valid_token(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+        csrf_token = make_csrf_token(
+            self.configuration,
+            "POST",
+            "/peers/send_invitation",
+            self.TEST_CLIENT_ID,
+        )
+
+        request_body = {
+            "type": "peers__send_invitation",
+            "operation": "create",
+            "peers": [self.TEST_PEER_DN],
+            "csrf_token": csrf_token,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 200)
+        self.assertIn("peer_invitations", json_response["data"])
+
+        fake_send_email = self.configuration.context_get("notifier").send_email
+        self.assertTrue(fake_send_email.email_was_sent_to("peer@example.com"))
+
+    def test_peers_accepted_import_valid_token(self):
+        csrf_token = make_csrf_token(
+            self.configuration,
+            "POST",
+            "/peers/accepted/import",
+            self.TEST_CLIENT_ID,
+        )
+        peers_csv = fixturepath("csv/peers-for-import.csv")
+        with open(peers_csv) as f:
+            content = f.read()
+        request_body = {
+            "type": "peers__accepted__import",
+            "operation": "create",
+            "label": "some_peer_label",
+            "kind": "collaboration",
+            "expire": (date.today() + timedelta(days=8)).isoformat(),
+            "csvtext": content,
+            "invite_on_email": True,
+            "csrf_token": csrf_token,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 200)
+
+        content = self.assertUserPeers(self.TEST_CLIENT_ID)
+        self.assertEqual(len(content), 3)
+
+    def test_peers_requested_delete_valid_token(self):
+        self._provision_pending_peer(
+            self, [self.TEST_PENDING_PEER_DN], self.TEST_CLIENT_ID
+        )
+        csrf_token = make_csrf_token(
+            self.configuration,
+            "POST",
+            "/peers/requested/delete",
+            self.TEST_CLIENT_ID,
+        )
+
+        request_body = {
+            "type": "peers__requested__delete",
+            "operation": "delete",
+            "peers": [self.TEST_PENDING_PEER_DN],
+            "csrf_token": csrf_token,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 200)
+
+        user_pending_peers = self.assertUserPendingPeers(self.TEST_CLIENT_ID)
+        self.assertEqual(len(user_pending_peers), 0)
+
+    def test_peers_requested_accept_valid_token(self):
+        _ensure_dirs_needed_for_userdb(self.configuration)
+        self._record_pending_peer(
+            self.TEST_PENDING_PEER_DN, self.TEST_CLIENT_ID
+        )
+        self.logger.declare_expected_error(
+            comparison="startswith",
+            expectation="expire '' could not be parsed into a valid date",
+        )
+        csrf_token = make_csrf_token(
+            self.configuration,
+            "POST",
+            "/peers/requested/accept",
+            self.TEST_CLIENT_ID,
+        )
+
+        request_body = {
+            "type": "peers__requested__accept",
+            "operation": "create",
+            "peers": [self.TEST_PENDING_PEER_DN],
+            "csrf_token": csrf_token,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 200)
+        self.assertEqual(json_response["data"]["success_map"], {"0": True})
+
+        user_peers = self.assertUserPeers(self.TEST_CLIENT_ID)
+        self.assertIn(self.TEST_PENDING_PEER_DN, user_peers)
+
+        pending_peers = self.assertUserPendingPeers(self.TEST_CLIENT_ID)
+        self.assertEqual(len(pending_peers), 0)
 
 
 if __name__ == "__main__":
