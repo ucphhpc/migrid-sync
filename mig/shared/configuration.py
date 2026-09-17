@@ -392,7 +392,7 @@ def _generate_fix_missing_definitions():
     monitor_section = {'sleep_secs': '60',
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
-    settings_section = {'language': 'English', 'user_interface': ['V2', 'V3'],
+    settings_section = {'language': 'English', 'user_interface': ['V2', 'V3', 'V4'],
                         'submitui': ['fields', 'textarea', 'files']}
     feasibility_section = {'resource_seen_within_hours': '24',
                            'skip_validation': '',
@@ -783,7 +783,7 @@ _CONFIGURATION_PROPERTIES = {
 
     'expire_peer': 600,
     'language': ['English'],
-    'user_interface': ['V2', 'V3'],
+    'user_interface': ['V2', 'V3', 'V4'],
     'new_user_default_ui': keyword_auto,
     'submitui': ['fields', 'textarea', 'files'],
     # Init user default page with no selection to use site landing page
