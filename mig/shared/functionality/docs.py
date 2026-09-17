@@ -179,7 +179,7 @@ def license_information(configuration, output_objects):
     output_objects.append({'object_type': 'html_form', 'text': """
 %s is based on the Minimum intrusion Grid (MiG) middleware. You can read about
 MiG at the
-<a class='urllink iconspace' href='https://sourceforge.net/projects/migrid/'>
+<a class='urllink iconspace' href='https://github.com/ucphhpc/migrid-sync/wiki'>
 project web site</a>.<br />
 The MiG software license follows below:<br />
 """ % configuration.site_title})

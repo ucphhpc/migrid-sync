@@ -2175,7 +2175,8 @@ location.""" % self.config_file)
         if config.has_option('SITE', 'external_doc'):
             self.site_external_doc = config.get('SITE', 'external_doc')
         else:
-            self.site_external_doc = "https://sourceforge.net/p/migrid/wiki/"
+            self.site_external_doc = \
+                "https://github.com/ucphhpc/migrid-sync/wiki"
         if config.has_option('SITE', 'enable_wsgi'):
             self.site_enable_wsgi = config.getboolean('SITE', 'enable_wsgi')
         else:
