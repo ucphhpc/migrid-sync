@@ -506,7 +506,7 @@ def generate_confs(
     short_title='MiG',
     extra_userpage_scripts='',
     extra_userpage_styles='',
-    external_doc='https://sourceforge.net/p/migrid/wiki',
+    external_doc='https://github.com/ucphhpc/migrid-sync/wiki',
     vgrid_label='VGrid',
     secscan_addr='UNSET',
     default_menu='',
