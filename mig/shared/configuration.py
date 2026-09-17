@@ -2045,7 +2045,8 @@ location.""" % self.config_file)
             self.site_default_menu = ['home', 'files', 'submitjob', 'jobs',
                                       'resources', 'vgrids', 'downloads',
                                       'runtimeenvs', 'people', 'settings',
-                                      'crontab', 'account', 'docs', 'logout']
+                                      'setup', 'crontab', 'account', 'docs',
+                                      'logout']
         if config.has_option('SITE', 'simple_menu'):
             req = config.get('SITE', 'simple_menu').split()
             self.site_simple_menu = [i for i in req if i in get_menu_items()]
@@ -2059,7 +2060,7 @@ location.""" % self.config_file)
             self.site_advanced_menu = ['home', 'submitjob', 'files',
                                        'jobs', 'vgrids', 'resources',
                                        'downloads', 'runtimeenvs', 'people',
-                                       'settings', 'crontab', 'docs',
+                                       'settings', 'setup', 'crontab', 'docs',
                                        'logout']
         if config.has_option('SITE', 'user_menu'):
             req = config.get('SITE', 'user_menu').split()
@@ -2176,7 +2177,8 @@ location.""" % self.config_file)
         if config.has_option('SITE', 'external_doc'):
             self.site_external_doc = config.get('SITE', 'external_doc')
         else:
-            self.site_external_doc = "https://sourceforge.net/p/migrid/wiki/"
+            self.site_external_doc = \
+                "https://github.com/ucphhpc/migrid-sync/wiki"
         if config.has_option('SITE', 'enable_wsgi'):
             self.site_enable_wsgi = config.getboolean('SITE', 'enable_wsgi')
         else:

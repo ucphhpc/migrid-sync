@@ -506,7 +506,7 @@ def generate_confs(
     short_title='MiG',
     extra_userpage_scripts='',
     extra_userpage_styles='',
-    external_doc='https://sourceforge.net/p/migrid/wiki',
+    external_doc='https://github.com/ucphhpc/migrid-sync/wiki',
     vgrid_label='VGrid',
     secscan_addr='UNSET',
     default_menu='',
@@ -2268,7 +2268,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
 
     if not default_menu:
         default_menu = 'home files submitjob jobs vgrids resources ' \
-            'runtimeenvs people settings downloads transfers ' \
+            'runtimeenvs people settings setup downloads transfers ' \
             'sharelinks crontab docs logout'
     allow_menu = ' '.join([i for i in default_menu.split() if i in get_menu_items()])
     user_dict['__DEFAULT_MENU__'] = allow_menu
