@@ -35,8 +35,8 @@ import sys
 from datetime import date, timedelta
 from types import SimpleNamespace
 
-import mig.shared.returnvalues as returnvalues
 from mig.lib.templates.__main__ import main as templates_main
+from mig.shared import returnvalues
 from mig.shared.conf import get_configuration_object
 from mig.shared.functionality.tmplinterface import _main as submain
 from tests.support import TEST_DATA_DIR, TEST_OUTPUT_DIR, MigTestCase, testmain
@@ -545,6 +545,40 @@ class MigSharedFunctionalityTmplinterface__requested(
             "operation": "read",
             "fields": "email",
             "kind": "collaboration",
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/tmplinterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+
+        content, _ = self.assertWsgiResponse(
+            None,
+            prepared_wsgi,
+            expected_status_code=200,
+            expected_content_type="text/html",
+        )
+
+        content_trimmed = _trim_ends_of_lines(content)
+        self.assertSnapshot(content_trimmed, extension="html")
+
+
+class MigSharedFunctionalityTmplinterface__csrf_tokens(
+    MigTestCase, WsgiAssertMixin, SnapshotAssertMixin
+):
+    """Tests of the csrf_tokens endpoint"""
+
+    TEST_CLIENT_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def test_responds_with_csrf_tokens_for_form_data(self):
+        request_body = {
+            "type": "migux_apps_peers__csrf_tokens",
+            "operation": "read",
+            "requests": "method=POST&operation=/peers/peer_accept,method=POST&operation=/peers/peer_reject",
         }
         prepared_wsgi = self.prepareWsgiAssert(
             self.configuration,

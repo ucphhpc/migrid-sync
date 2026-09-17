@@ -34,6 +34,7 @@ from datetime import date, datetime, timedelta
 
 from envhelp.makeconfig import _ensure_dirs_needed_for_userdb
 from mig.shared.defaults import peers_expire_min_days
+from mig.shared.pwcrypto import make_csrf_token
 from tests.support import MigTestCase, testmain
 from tests.support.fixturesupp import FixtureAssertMixin, fixturepath
 from tests.support.picklesupp import PickleAssertMixin
@@ -844,7 +845,6 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
             form=request_body,
             mig_user_dn=self.TEST_CLIENT_ID,
         )
-
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
         status = json_response["status"]
@@ -857,6 +857,72 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         # check the email was sent
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
+        self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
+
+
+class MigSharedFunctionalityDatainterface__peers_csrf_wsgi(
+    MigTestCase,
+    WsgiAssertMixin,
+    FixtureAssertMixin,
+    PickleAssertMixin,
+    UserAssertMixin,
+):
+    """Tests of the end to end peers behaviours of datainterface"""
+
+    TEST_CLIENT_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
+    TEST_PEER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com"
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        self.configuration.site_csrf_protection = "WARN"
+        user_paths_dict = self._provision_test_user_return_dict(
+            self,
+            self.TEST_CLIENT_ID,
+        )
+        self.test_user_settings_dir = user_paths_dict["user_settings_dir"]
+
+    def test_peers_new_valid_with_token(self):
+        csrf_token = make_csrf_token(
+            self.configuration, "POST", "/peers/new", self.TEST_CLIENT_ID
+        )
+        # Minimum expire is 7 days
+        date_expire_in_8_days = date.today() + timedelta(days=8)
+        test_new_accepted_peer = {
+            "country": "DK",
+            "email": "peer@example.com",
+            "full_name": "Test User",
+            "label": "some_peer_label",
+            "expire": date_expire_in_8_days.isoformat(),
+            "organization": "Test Org",
+            "kind": "project",
+            "state": "NA",
+            "csrf_token": csrf_token,
+        }
+
+        request_body = {
+            "type": "peers__new",
+            "operation": "create",
+            "invite_on_email": True,
+            **test_new_accepted_peer,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response["status"]
+        self.assertEqual(status, 200)
+
+        # Validate that the peer invitation email and admin notification email
+        # were sent
+        fake_send_email = self.configuration.context_get("notifier").send_email
+        self.assertEqual(fake_send_email.total_emails_sent(), 2)
+        self.assertTrue(fake_send_email.email_was_sent_to("peer@example.com"))
         self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
 

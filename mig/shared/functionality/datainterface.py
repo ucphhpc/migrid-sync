@@ -114,7 +114,7 @@ def _validate_csrf_token(configuration, request_info, environ):
     if request_info.csrf_token is None:
         _logger.warning(
             "No CSRF token provided for request route: %s by: %s"
-            % (request_info.route, request_info.client_email)
+            % (request_info.full_route, request_info.client_email)
         )
         return False
 
@@ -123,7 +123,7 @@ def _validate_csrf_token(configuration, request_info, environ):
     expected_token = make_csrf_token(
         configuration,
         request_info.method,
-        request_info.route,
+        request_info.full_route,
         request_info.client_id,
         limit=limit,
     )
@@ -144,7 +144,12 @@ def _validate_csrf_token(configuration, request_info, environ):
 
 
 def _state_change_request(environ):
-    return environ["REQUEST_METHOD"] in ["POST", "PUT", "PATCH", "DELETE"]
+    return environ["REQUEST_METHOD"].upper() in [
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+    ]
 
 
 # TODO, move the helper functions and the peers related handlers/normalizers
@@ -259,14 +264,15 @@ def validate_peers_csvlines(csvlines):
     return accepted, rejected
 
 
-def create_handler_response(status, message=None, **ui_response_kwargs):
+def create_handler_response(
+    status, message=None, error=None, **ui_response_kwargs
+):
     """
     A helper function to create route handler responses.
     """
-    if message is None:
-        message = "an unspecified error occurred"
-
-    response = {"status": status, "message": message}, {**ui_response_kwargs}
+    response = {"status": status, "message": message, "error": error}, {
+        **ui_response_kwargs
+    }
     return response
 
 
@@ -491,7 +497,7 @@ def handle_POST_peers_send_invitation(configuration, request_info):
     if invalid_client_peers_dn:
         return create_handler_response(
             400,
-            message="you tried to send invitations to peers that you don' t have, namely: %s"
+            error="you tried to send invitations to peers that you don' t have, namely: %s"
             % invalid_client_peers_dn,
         )
 
@@ -556,7 +562,7 @@ def handle_POST_peers_new(configuration, request_info):
     if not accepted_invite or rejected_invite:
         return create_handler_response(
             400,
-            message="failed to add a new peer, the received invite on email argument was rejected %s"
+            error="failed to add a new peer, the received invite on email argument was rejected %s"
             % rejected_invite,
         )
     invite_on_email = accepted_invite.get("invite_on_email", False)
@@ -605,7 +611,7 @@ def handle_POST_peers_new(configuration, request_info):
             # so we can return early
             return create_handler_response(
                 500,
-                message="failed to save the submitted peer, please contact support for help with this.",
+                error="failed to save the submitted peer, please contact support for help with this.",
             )
         created_peers[peer_dn] = peer_dict
         success_map[index] = True
@@ -616,7 +622,7 @@ def handle_POST_peers_new(configuration, request_info):
     if not created_peers:
         return create_handler_response(
             500,
-            message="no errors were discovered, but the peer was not created, please contact support about this",
+            error="no errors were discovered, but the peer was not created, please contact support about this",
         )
 
     # Send email to peer about invitation
@@ -727,7 +733,7 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
     if invalid_client_peers_dn:
         return create_handler_response(
             400,
-            message="invalid peers that you don't have were found in your delete request, namely: %s"
+            error="invalid peers that you don't have were found in your delete request, namely: %s"
             % invalid_client_peers_dn,
         )
 
@@ -802,7 +808,7 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
     if not accepted or rejected:
         return create_handler_response(
             400,
-            message="failed to fetch the accepted with, received an incorrect peer argument %s"
+            error="failed to fetch the accepted with, received an incorrect peer argument %s"
             % rejected,
         )
     peer_dn = accepted["peer"]
@@ -815,7 +821,7 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
     }
 
     if peer_dn not in accepted_by_dn:
-        return create_handler_response(404, message="peer not found")
+        return create_handler_response(404, error="peer not found")
     fetched_peer = accepted_by_dn[peer_dn]
     return create_handler_response(200, **fetched_peer)
 
@@ -846,7 +852,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_invite or rejected_invite:
         return create_handler_response(
             400,
-            message="failed to import peer(s), the received invite on email argument was rejected %s"
+            error="failed to import peer(s), the received invite on email argument was rejected %s"
             % rejected_invite,
         )
     invite_on_email = accepted_invite.get("invite_on_email", False)
@@ -863,7 +869,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_common or rejected_common:
         return create_handler_response(
             400,
-            message="failed to import peer(s), the received import argument(s) was rejected %s"
+            error="failed to import peer(s), the received import argument(s) was rejected %s"
             % rejected_common,
         )
 
@@ -873,7 +879,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_csvlines or rejected_csvlines:
         return create_handler_response(
             400,
-            message="failed to import peer(s), the received peers csvlines argument(s) was rejected %s"
+            error="failed to import peer(s), the received peers csvlines argument(s) was rejected %s"
             % rejected_csvlines,
         )
 
@@ -884,13 +890,13 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if parse_err:
         return create_handler_response(
             400,
-            message="failed to import the submitted peers, err %s" % parse_err,
+            error="failed to import the submitted peers, err %s" % parse_err,
         )
 
     if not parsed_peers:
         return create_handler_response(
             400,
-            message="failed to find any peers in the submitted peers csvlines",
+            error="failed to find any peers in the submitted peers csvlines",
         )
 
     success_map, errors_map = {}, {}
@@ -953,7 +959,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not created_peers:
         return create_handler_response(
             500,
-            message="no errors were discovered, but the peer was not created, please contact support about this",
+            error="no errors were discovered, but the peer was not created, please contact support about this",
         )
 
     # Send email to peer about invitation
@@ -1036,7 +1042,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if rejected:
         return create_handler_response(
             400,
-            message="failed to update the peer, received an incorrect peer argument %s"
+            error="failed to update the peer, received an incorrect peer argument %s"
             % rejected,
         )
     peer_dn = accepted["peer"]
@@ -1053,7 +1059,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if not accepted_common or rejected_common:
         return create_handler_response(
             400,
-            message="failed to update peer, the received update argument(s) was rejected %s"
+            error="failed to update peer, the received update argument(s) was rejected %s"
             % rejected_common,
         )
 
@@ -1066,7 +1072,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if not valid_expire:
         return create_handler_response(
             400,
-            message="an incorrect End Date value was received.",
+            error="an incorrect End Date value was received.",
             errors_map={"0": {"expire": expire_message}},
         )
 
@@ -1078,7 +1084,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     }
     if peer_dn not in accepted_by_dn:
         return create_handler_response(
-            404, message="you don't have an accepted peer with those details"
+            404, error="you don't have an accepted peer with those details"
         )
 
     # Update the underlying peer
@@ -1090,7 +1096,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
         configuration, request_info.client_id, update_peer_dict
     ):
         return create_handler_response(
-            400, message="failed to update the accepted peer %s" % peer_dn
+            400, error="failed to update the accepted peer %s" % peer_dn
         )
 
     updated_peers = accountreq.list_peers_accepted(
@@ -1174,7 +1180,7 @@ def handle_POST_peers_requested_delete(configuration, request_info):
     if invalid_client_peers_dn:
         return create_handler_response(
             400,
-            message="invalid peers that you don't have were found in your delete request, namely: %s"
+            error="invalid peers that you don't have were found in your delete request, namely: %s"
             % invalid_client_peers_dn,
         )
 
@@ -1545,18 +1551,19 @@ def _main(
         )
 
     handler_status = handler_exit_resp["status"]
-    handler_message = handler_exit_resp.get("message", None)
+    handler_error_msg = handler_exit_resp.get("error", None)
 
     # TODO, properly needs to be cleaned up, with a general
-    # return message, that can be an error. Should be intepreted depending on the handler_status
+    # return message, that can be an error. Should be interpreted depending on the handler_status
     # e.g.
+    # handler_message = handler_exit_resp.get("message", None)
     # result = {"data": handler_data_resp, "message": handler_message}
     # However this requires mig-ux adjustments to work
 
     result = {"data": handler_data_resp, "error": None}
     if handler_status != 200:
-        if handler_message is not None:
-            result["error"] = handler_message
+        if handler_error_msg is not None:
+            result["error"] = handler_error_msg
         else:
             if "errors_map" not in handler_data_resp:
                 result["error"] = (

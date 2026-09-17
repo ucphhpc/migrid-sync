@@ -105,22 +105,18 @@ class _RequestInfo(SimpleNamespace):
         return "%s /%s" % (self.method, self.request_type)
 
     @property
+    def full_route(self):
+        """
+        Provide the full path of the resource being requested.
+        """
+        return "/%s/%s" % (self.request_package, self.request_type)
+
+    @property
     def request_data(self):
         """
         Return the request data.
         """
         return self._request_data
-
-
-    @property
-    def csrf_token(self):
-        """
-        Return the CSRF token for the request.
-        """
-        csrf_token = self.request_data.get("csrf_token", None)
-        if isinstance(csrf_token, list):
-            csrf_token = csrf_token[0]
-        return csrf_token
 
     def _arg_string(self, arg, fallback=None):
         """
@@ -189,11 +185,17 @@ class _RequestInfo(SimpleNamespace):
             request_package = ".%s" % (local_package_name,)
         request_type = "/".join(request_types)
 
+        # Extract csrf token from request data if present
+        csrf_token = request_data.pop("csrf_token", None)
+        if isinstance(csrf_token, list):
+            csrf_token = csrf_token[0]
+    
         kwargs = {}
         kwargs["method"] = method
         kwargs["client_id"] = client_id
         kwargs["request_type"] = request_type
         kwargs["request_package"] = request_package
+        kwargs["csrf_token"] = csrf_token
         kwargs["_request_data"] = request_data
         kwargs["_unpacked_client"] = None
         kwargs["_args"] = None
