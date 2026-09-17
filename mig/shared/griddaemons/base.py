@@ -104,8 +104,8 @@ def flags_to_mode(flags):
     missing file creation flag should generally be handled separately.
     The same goes for handling of invalid flag combinations.
 
-    This function is inspired by the XMP example in the fuse-python code
-    https://github.com/libfuse/
+    This function is inspired by the XMP example in the python-fuse code
+    https://github.com/libfuse/python-fuse/blob/master/example/xmp.py
     but we need to prevent truncation unless explicitly requested.
     """
     # Truncate per default when enabling write - disable later if needed
