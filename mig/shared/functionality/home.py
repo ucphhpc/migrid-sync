@@ -39,7 +39,7 @@ from mig.shared.functional import validate_input_and_cert
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import save_settings_js, save_settings_html, render_apps, \
-    menu_items, legacy_user_interface, html_user_messages
+    get_menu_items, legacy_user_interface, html_user_messages
 from mig.shared.settings import load_settings
 from mig.shared.settingskeywords import get_keywords_dict
 
@@ -50,6 +50,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     active_menu = extract_menu(configuration, title_entry)
     user_settings = title_entry.get('user_settings', {})
     legacy_ui = legacy_user_interface(configuration, user_settings)
+    menu_items = get_menu_items(user_settings=user_settings)
     user_msg, show_user_msg = '', 'hidden'
     if configuration.site_enable_user_messages:
         user_msg = html_user_messages(configuration, client_id)
