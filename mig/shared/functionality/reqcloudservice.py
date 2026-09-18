@@ -370,6 +370,23 @@ is stricly required for all use. Please do so before you try again.
             logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, cloud_id, instance_id, client_id,
                           action_msg))
+
+            # Clean up any created instance during the failed creation flow.
+            # By default it allows for missing instances so it will succeed
+            # if the instance was never created.
+            deleted, deleted_msg = delete_cloud_instance(configuration, client_id,
+                                                         cloud_id, cloud_flavor,
+                                                         instance_id)
+            if not deleted:
+                logger.error("delete %s new failed cloud instance %s for %s failed: %s" %
+                             (cloud_id, instance_id, client_id, deleted_msg))
+                output_objects.append({
+                    'object_type': 'error_text',
+                    'text': """Failed to delete your %s cloud instance after the instance creation,
+                    please contact support to clean up the failed instance""" %
+                    service_title
+                })
+
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
@@ -700,7 +717,7 @@ if __name__ == "__main__":
         os.environ['MIG_CONF'] = conf_path
 
     client_id = ' ME '
-    cloud_is = 'mist'
+    cloud_id = 'mist'
     instance_id = 'My-Misty-Test-01'
     action = 'status'
     if sys.argv[1:]:
