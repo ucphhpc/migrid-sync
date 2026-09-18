@@ -149,7 +149,7 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
         self.assertTrue(isinstance(updated, dict))
         self.assertEqual(updated['EMAIL'], [TEST_USER_EMAIL, OTHER_USER_EMAIL])
 
-    def test_update_settings_user_interface_back(self):
+    def test_update_settings_user_interface_downgrade(self):
         with open(self.TEST_SETTINGS_MRSL, 'w') as mrsl_fd:
             mrsl_fd.write(INIT_SETTINGS_MRSL)
         save_status, save_msg = parse_and_save_settings(
@@ -164,7 +164,7 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
         self.assertTrue(isinstance(updated, dict))
         self.assertEqual(updated['USER_INTERFACE'], ['V2'])
 
-    def test_update_settings_user_interface_forward(self):
+    def test_update_settings_user_interface_upgrade(self):
         with open(self.TEST_SETTINGS_MRSL, 'w') as mrsl_fd:
             mrsl_fd.write(INIT_SETTINGS_MRSL)
         save_status, save_msg = parse_and_save_settings(
@@ -172,12 +172,12 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
         self.assertTrue(save_status)
         self.assertFalse(save_msg)
 
-        changes = {'USER_INTERFACE': ['V42']}
+        changes = {'USER_INTERFACE': ['V4']}
         updated = update_settings(
             TEST_USER_DN, self.configuration, changes, self.settings_defaults)
         # NOTE: updated should be a non-empty dict at this point
         self.assertTrue(isinstance(updated, dict))
-        self.assertEqual(updated['USER_INTERFACE'], ['V42'])
+        self.assertEqual(updated['USER_INTERFACE'], ['V4'])
 
     @unittest.skip("Fix parser to reject invalid ui values and enable")
     def test_update_settings_user_interface_invalid_fails(self):
