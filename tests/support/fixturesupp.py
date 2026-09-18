@@ -27,6 +27,7 @@
 
 """Fixture related details within the test support library."""
 
+import inspect
 import json
 import os
 import pickle
@@ -124,6 +125,19 @@ def _hints_apply_today_relative(value, modifier):
         raise NotImplementedError("unspported today_relative modifier")
 
 
+def _hints_apply_today_relative_date(value, modifer):
+    """
+    Geneate a date value by applying a declared delta to today's date.
+    """
+    kind, delta = modifer.split("|")
+    if kind == "days":
+        time_delta = timedelta(days=int(delta))
+        adjusted_datetime = date.today() + time_delta
+        return adjusted_datetime.isoformat()
+    else:
+        raise NotImplementedError("unspported today_relative_date modifier")
+
+
 def _hints_apply_dict_bytes_to_strings_kv(input_dict, modifier):
     """
     Convert a dictionary whose keys/values are bytes to one whose
@@ -184,18 +198,64 @@ def _hints_apply_dict_strings_to_bytes_kv(input_dict, modifier):
     return output_dict
 
 
+def _hints_apply_strings_to_bytes_rec(input_value, modifier):
+    """
+    Recursively convert strings to bytes, including any items
+    contained within iterables, stopping at the values of keys.
+    """
+
+    if hasattr(input_value, "items"):
+        return _hints_apply_dict_strings_to_bytes_kv(input_value, modifier)
+    elif isinstance(input_value, (list, tuple)):
+        input_type = type(input_value)
+        return input_type(
+            (
+                _hints_apply_strings_to_bytes_rec(item, modifier)
+                for item in input_value
+            )
+        )
+    elif isinstance(input_value, str):
+        return bytes(input_value, "utf8")
+    else:
+        raise NotImplementedError("unsupported recusrive conversion attempt")
+
+
+def _hints_apply_dict_to_pairs(input_value, modifier):
+    """
+    Convert an array of pairs to a dictionary.
+    """
+
+    assert modifier is None
+
+    return list(input_value.items())
+
+
+def _hints_apply_pairs_to_dict(input_value, modifier):
+    """
+    Convert an array of pairs to a dictionary.
+    """
+
+    assert modifier is None
+
+    return dict(input_value)
+
+
 # hints that can be aplied without an additional modifier argument
 _HINTS_APPLIERS_ARGLESS = {
     "array_of_tuples": _hints_apply_array_of_tuples,
+    "dict_to_pairs": _hints_apply_dict_to_pairs,
     "today_relative": _hints_apply_today_relative,
     "convert_dict_bytes_to_strings_kv": _hints_apply_dict_bytes_to_strings_kv,
     "convert_dict_strings_to_bytes_kv": _hints_apply_dict_strings_to_bytes_kv,
+    "strings_to_bytes_rec": _hints_apply_strings_to_bytes_rec,
+    "pairs_to_dict": _hints_apply_pairs_to_dict,
 }
 
 # hints applicable to the conversion of attributes during fixture loading
 _FIXTUREFILE_APPLIERS_ATTRIBUTES = {
     "array_of_tuples": _hints_apply_array_of_tuples,
     "today_relative": _hints_apply_today_relative,
+    "today_relative_date": _hints_apply_today_relative_date,
 }
 
 # hints applied when writing the contents of a fixture as a temporary file
@@ -204,8 +264,24 @@ _FIXTUREFILE_APPLIERS_ONWRITE = {
 }
 
 
+def apply_named_hints(input_value, *hint_names):
+    if not hint_names:
+        return input_value
+
+    # hints apply _inplace_, thus we dup the input value here to avoid
+    # inadvertently making changes to it that may leak out to our callers
+    output_value = input_value.copy()
+    for hint_name in hint_names:
+        hint_fn = _HINTS_APPLIERS_ARGLESS.get(hint_name)
+        output_value = hint_fn(output_value, None)
+    return output_value
+
+
 def _hints_apply_from_instances_if_present(json_object):
     """Recursively apply hints to any hint instances in the supplied data."""
+
+    if isinstance(json_object, list):
+        return json_object
 
     for k, v in json_object.items():
         if isinstance(v, dict):
@@ -215,6 +291,14 @@ def _hints_apply_from_instances_if_present(json_object):
         if isinstance(v, _FixtureHint):
             json_object[k] = _FixtureHint.decode_hint(v)
             pass
+
+
+def _choose_names_from_hints_ini(hints, section):
+    return [
+        hint_name
+        for hint_name in hints[section]
+        if hints.getboolean(section, hint_name)
+    ]
 
 
 def _load_hints_ini_for_fixture_if_present(fixture_name):
@@ -232,7 +316,7 @@ def _load_hints_ini_for_fixture_if_present(fixture_name):
         pass
 
     # ensure empty required fixture to avoid extra conditionals later
-    for required_section in ["ATTRIBUTES"]:
+    for required_section in ["ATTRIBUTES", "ONREAD", "ONWRITE"]:
         if not hints.has_section(required_section):
             hints.add_section(required_section)
 
@@ -323,14 +407,20 @@ class _PreparedFixture:
     NO_DATA = object()
 
     def __init__(
-        self, testcase, fixture_name, fixture_format="", fixture_data=NO_DATA
+        self,
+        testcase,
+        fixture_name,
+        native_fixture_data,
+        fixture_format="",
+        fixture_data=NO_DATA,
     ):
         self.testcase = testcase
         self.fixture_name = fixture_name
         self.fixture_format = fixture_format
         self.fixture_data = fixture_data
+        self.native_fixture_data = native_fixture_data
 
-    def assertAgainstFixture(self, value):
+    def assertAgainstFixture(self, value, as_native=False):
         """Compare a value against fixture data ensuring that in the case of
         failure the location of the fixture is prepended to the diff."""
 
@@ -339,9 +429,14 @@ class _PreparedFixture:
         originalMaxDiff = testcase.maxDiff
         testcase.maxDiff = None
 
+        if as_native:
+            expected_data = self.native_fixture_data
+        else:
+            expected_data = self.fixture_data
+
         raised_exception = None
         try:
-            testcase.assertEqual(value, self.fixture_data)
+            testcase.assertEqual(value, expected_data)
         except AssertionError as diffexc:
             raised_exception = diffexc
         finally:
@@ -364,10 +459,6 @@ class _PreparedFixture:
         directory applying any onwrite hints that may be specified.
         """
 
-        assert (
-            self.fixture_data is not self.NO_DATA
-        ), "fixture is not populated with data"
-
         assert os.path.isabs(target_dir)
 
         # convert fixture name (which includes the varaint) to the target file
@@ -379,18 +470,9 @@ class _PreparedFixture:
 
         # now apply any onwrite conversions
         hints = _load_hints_ini_for_fixture_if_present(self.fixture_name)
-        for item_name in hints["ONWRITE"]:
-            if item_name not in _FIXTUREFILE_APPLIERS_ONWRITE:
-                raise AssertionError(
-                    "unsupported fixture conversion: %s" % (item_name,)
-                )
 
-            enabled = hints.getboolean("ONWRITE", item_name)
-            if not enabled:
-                continue
-
-            hint_fn = _FIXTUREFILE_APPLIERS_ONWRITE[item_name]
-            output_data = hint_fn(output_data, None)
+        onwrite_hints = _choose_names_from_hints_ini(hints, section="ONWRITE")
+        output_data = apply_named_hints(output_data, *onwrite_hints)
 
         if output_format == "binary":
             with open(fixture_file_target, "wb") as fixture_outputfile:
@@ -413,11 +495,30 @@ class _PreparedFixture:
         containing its data.
         """
 
-        fixture_data, fixture_path = _fixturefile_loadrelative(
+        raw_fixture_data, fixture_path = _fixturefile_loadrelative(
             fixture_name, fixture_format
         )
+
+        hints = _load_hints_ini_for_fixture_if_present(fixture_name)
+
+        onread_hints = _choose_names_from_hints_ini(hints, section="ONREAD")
+        if onread_hints:
+            # hint apply functions operate _inplace_, so given we need to
+            # preserve the loaded fixture data we clone the loaded value
+            fixture_data = raw_fixture_data.copy()
+            native_fixture_data = apply_named_hints(
+                raw_fixture_data, *onread_hints
+            )
+        else:
+            fixture_data = raw_fixture_data
+            native_fixture_data = raw_fixture_data
+
         return _PreparedFixture(
-            testcase, fixture_name, fixture_format, fixture_data
+            testcase,
+            fixture_name,
+            native_fixture_data,
+            fixture_format,
+            fixture_data,
         )
 
 

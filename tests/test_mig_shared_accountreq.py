@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_accountreq - unit test of the corresponding mig lib module
-# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -36,61 +36,40 @@ import unittest
 # Imports of the code under test
 import mig.shared.accountreq as accountreq
 # Imports required for the unit test wrapping
-from mig.shared.base import distinguished_name_to_user, fill_distinguished_name
+from mig.shared.base import canonical_user, distinguished_name_to_user, \
+    fill_distinguished_name, get_client_id, client_id_dir
 from mig.shared.defaults import keyword_auto
 # Imports required for the unit tests themselves
-from tests.support import MigTestCase, ensure_dirs_exist, testmain
-from tests.support.fixturesupp import FixtureAssertMixin
-from tests.support.usersupp import UserAssertMixin
+from tests.support import MigTestCase, testmain, ensure_dirs_exist
+from tests.support.fixturesupp import FixtureAssertMixin, _PreparedFixture
+from tests.support.picklesupp import PickleAssertMixin
+from tests.support.usersupp import UserAssertMixin, \
+    TEST_USER_DN, TEST_PEER_DN, TEST_PENDING_PEER_DN
 
 
-class MigSharedAccountreq__peers(MigTestCase, FixtureAssertMixin):
+def make_fake_notify_user(*args):
+    class FakeNotifyUser:
+        def __init__(self):
+            self.calls = []
+
+        def __call__(self, *args):
+            self.calls.append(args)
+            return (True, [])
+
+        @property
+        def called_once(self):
+            return len(self.calls) == 1
+
+    return FakeNotifyUser()
+
+
+class MigSharedAccountreq__peers_helpers(MigTestCase,
+                                 FixtureAssertMixin,
+                                 PickleAssertMixin,
+                                 UserAssertMixin):
     """Unit tests for peers related functions within the accountreq module"""
 
-    TEST_PEER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com'
-    TEST_USER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com'
-
-    @property
-    def user_settings_dir(self):
-        return self.configuration.user_settings
-
-    @property
-    def user_pending_dir(self):
-        return self.configuration.user_pending
-
-    def _load_saved_peer(self, absolute_path):
-        self.assertPathWithin(absolute_path, start=self.user_pending_dir)
-        with open(absolute_path, 'rb') as pickle_file:
-            value = pickle.load(pickle_file)
-
-        def _string_if_bytes(value):
-            if isinstance(value, bytes):
-                return str(value, 'utf8')
-            else:
-                return value
-        return {_string_if_bytes(x): _string_if_bytes(y)
-                for x, y in value.items()}
-
-    def _peer_dict_from_fixture(self):
-        prepared_fixture = self.prepareFixtureAssert("peer_user_dict",
-                                                     fixture_format="json")
-        fixture_data = prepared_fixture.fixture_data
-        assert fixture_data["distinguished_name"] == self.TEST_PEER_DN
-        return fixture_data
-
-    def _record_peer_acceptance(self, test_client_dir_name,
-                                peer_distinguished_name):
-        """Fabricate a peer acceptance record in a particular user settings dir.
-        """
-
-        test_user_accepted_peers_file = os.path.join(
-            self.user_settings_dir, test_client_dir_name, "peers")
-        expire_tomorrow = datetime.date.today() + datetime.timedelta(days=1)
-        with open(test_user_accepted_peers_file, "wb") as \
-                test_user_accepted_peers:
-            pickle.dump({peer_distinguished_name:
-                         {'expire': str(expire_tomorrow)}},
-                        test_user_accepted_peers)
+    TEST_USER_DN = TEST_USER_DN
 
     def _provide_configuration(self):
         return 'testconfig'
@@ -103,62 +82,148 @@ class MigSharedAccountreq__peers(MigTestCase, FixtureAssertMixin):
         ensure_dirs_exist(self.configuration.resource_pending)
         ensure_dirs_exist(self.configuration.mig_system_files)
 
-    def test_a_new_peer(self):
-        # precondition
+    def test_direct_addition_of_a_pending_peer(self):
         self.assertDirEmpty(self.configuration.user_pending)
-        request_dict = self._peer_dict_from_fixture()
+        self._provision_test_user(self, self.TEST_USER_DN)
+        pending_peers_fixture = self.prepareFixtureAssert('pending_peers--single', 'json')
+        assert TEST_PENDING_PEER_DN in pending_peers_fixture.fixture_data
+        peer_dict = pending_peers_fixture.fixture_data[TEST_PENDING_PEER_DN]
+        assert peer_dict['distinguished_name'] == TEST_PENDING_PEER_DN
 
-        success, _ = accountreq.save_account_request(self.configuration,
-                                                     request_dict)
+        success = accountreq.manage_pending_peers(
+                                                self.configuration,
+                                                self.TEST_USER_DN,
+                                                "add",
+                                                [(TEST_PENDING_PEER_DN, peer_dict)])
 
-        # check that we have an output directory now
-        absolute_files = self.assertDirNotEmpty(self.user_pending_dir)
+        self.assertTrue(success)
+        actual_peers_dict = self.assertUserPendingPeers(self.TEST_USER_DN)
+        self.assertEqual(len(actual_peers_dict), 1)
+        pending_peers_fixture.assertAgainstFixture(actual_peers_dict)
+
+
+class MigSharedAccountreq__peers_under_request(MigTestCase,
+                                 FixtureAssertMixin,
+                                 PickleAssertMixin,
+                                 UserAssertMixin):
+
+    TEST_PEER_DN = TEST_PEER_DN
+    TEST_USER_DN = TEST_USER_DN
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        ensure_dirs_exist(self.configuration.user_pending)
+
+    def _peer_dict_from_fixture(self):
+        prepared_fixture = self.prepareFixtureAssert("peers--single", fixture_format="json")
+        fixture_data = prepared_fixture.fixture_data
+        assert isinstance(fixture_data, dict)
+        assert self.TEST_PEER_DN in fixture_data
+        return self.TEST_PEER_DN, fixture_data[self.TEST_PEER_DN]
+
+    def test_attempt_to_accept_without_pending_user(self):
+        self.assertDirEmpty(self.configuration.user_pending)
+        self.logger.declare_expected_error(comparison='startswith',
+                                           expectation='peer account request tmpNOEXIST extraction failed')
+
+        success, message = accountreq.peer_account_req('tmpNOEXIST',
+                                                 self.configuration,
+                                                 self.TEST_USER_DN)
+
+        self.assertFalse(success)
+        self.assertTrue(message.startswith('peer account request tmpNOEXIST extraction failed'))
+
+    def test_attempt_to_accept_without_target_user(self):
+        self.assertDirEmpty(self.configuration.user_pending)
+        self._provision_user_db_empty(self)
+        req_id, = UserAssertMixin._provision_test_pending_user(self, [self.TEST_PEER_DN], self.TEST_USER_DN)
+        _, request_dict = self._peer_dict_from_fixture()
+        self.logger.declare_expected_error(comparison='startswith',
+                                           expectation='no target users to request peer acceptance from')
+
+
+        success, message = accountreq.peer_account_req(req_id,
+                                                 self.configuration,
+                                                 self.TEST_USER_DN,
+                                                 request_dict)
+
+        self.assertFalse(success)
+        self.assertEqual(message, 'no valid target peer acceptance users')
+
+    def test_valid_accept(self):
+        self.assertDirEmpty(self.configuration.user_pending)
+        self._provision_test_user(self, self.TEST_USER_DN)
+        req_id, = self._provision_test_pending_user(self, [self.TEST_PEER_DN], self.TEST_USER_DN)
+        _, request_dict = self._peer_dict_from_fixture()
+        fake_notify_user = make_fake_notify_user()
+
+        success, _ = accountreq.peer_account_req(req_id,
+                                                 self.configuration,
+                                                 self.TEST_USER_DN,
+                                                 request_dict,
+                                                 _notify_user=fake_notify_user)
+
+        self.assertTrue(success)
+        # check user_pending is unchanged
+        absolute_files = self.assertDirNotEmpty(self.configuration.user_pending)
         self.assertEqual(len(absolute_files), 1)
-        # check the saved peer
-        peer_user_dict = self._load_saved_peer(absolute_files[0])
-        self.assertEqual(peer_user_dict, request_dict)
+        # check the peer was notified
+        self.assertTrue(fake_notify_user.called_once)
 
-    def test_listing_peers(self):
-        # precondition
-        self.assertDirEmpty(self.user_pending_dir)
-        request_dict = self._peer_dict_from_fixture()
-        accountreq.save_account_request(self.configuration, request_dict)
 
+class MigSharedAccountreq__peers_existing(MigTestCase,
+                                          FixtureAssertMixin,
+                                          UserAssertMixin):
+    """Unit tests for peers related functions within the accountreq module"""
+
+    TEST_PEER_DN = TEST_PEER_DN
+    TEST_USER_DN = TEST_USER_DN
+    TEST_PENDING_PEER_DN = TEST_PENDING_PEER_DN
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        ensure_dirs_exist(self.configuration.user_pending)
+        self._provision_test_user(self, TEST_USER_DN)
+
+    def test_listing_accepted_peers(self):
+        self.assertDirEmpty(self.configuration.user_pending)
+        self._record_peer('peers--single', against_user_dn=TEST_USER_DN)
+
+        listing = accountreq.list_peers_accepted(self.configuration,
+                                                          TEST_USER_DN)
+
+        self.assertEqual(len(listing), 1)
+
+    def test_listing_requested_peers(self):
+        self.assertDirEmpty(self.configuration.user_pending)
+        self._record_pending_peer(TEST_PENDING_PEER_DN, against_user_dn=TEST_USER_DN)
+
+        listing = accountreq.list_peers_requested(self.configuration,
+                                                          TEST_USER_DN)
+
+        self.assertEqual(len(listing), 1)
+
+
+class MigSharedAccountreq__users_pending(MigTestCase, FixtureAssertMixin):
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        ensure_dirs_exist(self.configuration.user_pending)
+
+    def test_listing_pending_user_requests(self):
+        self.assertDirEmpty(self.configuration.user_pending)
+        pending_user_dir, = UserAssertMixin._provision_test_pending_user(self, [TEST_PEER_DN], TEST_USER_DN)
         success, listing = accountreq.list_account_reqs(self.configuration)
 
         self.assertTrue(success)
         self.assertEqual(len(listing), 1)
-        # check the fabricated peer was listed
-        # sadly listing returns _relative_ dirs
-        peer_temp_file_name = listing[0]
-        peer_pickle_file = os.path.join(self.user_pending_dir,
-                                        peer_temp_file_name)
-        peer_pickle = self._load_saved_peer(peer_pickle_file)
-        self.assertEqual(peer_pickle['distinguished_name'], self.TEST_PEER_DN)
-
-    def test_peer_acceptance(self):
-        test_client_dir = self._provision_test_user(self, self.TEST_USER_DN)
-        test_client_dir_name = os.path.basename(test_client_dir)
-        self._record_peer_acceptance(test_client_dir_name, self.TEST_PEER_DN)
-        self.assertDirEmpty(self.user_pending_dir)
-        request_dict = self._peer_dict_from_fixture()
-        success, req_path = accountreq.save_account_request(self.configuration,
-                                                            request_dict)
-        arranged_req_id = os.path.basename(req_path)
-
-        # NOTE: when using real user mail we currently hit send email errors.
-        #       We forgive those errors here and only check any known warnings.
-        # TODO: integrate generic skip email support and adjust here to fit
-        self.logger.forgive_errors()
-        success, message = accountreq.accept_account_req(arranged_req_id,
-                                                         self.configuration,
-                                                         keyword_auto)
-
-        self.assertTrue(success)
-
-        fake_send_email = self.configuration.context_get('notifier').send_email
-        self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('peer@example.com'))
+        self.assertEqual(listing[0], pending_user_dir)
 
 
 class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
@@ -337,8 +402,7 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
                                                      self.TEST_SERVICE,
                                                      self.TEST_USER['email'],
                                                      self.TEST_USER_PW)
-        # print("DEBUG: early checks on invalid renew collision req: %s" %
-        #      checked)
+        # print("DEBUG: early checks on invalid renew collision req: %s" % checked)
         self.assertTrue(checked['invalid'], "early validation failed")
 
     def test_early_validation_checks_invalid_renew_pw_change(self):
@@ -349,8 +413,7 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
                                                      self.TEST_SERVICE,
                                                      self.TEST_USER['email'],
                                                      self.TEST_USER_PW + 'N3w')
-        # print("DEBUG: early checks on invalid renew pw change req: %s" %
-        #      checked)
+        # print("DEBUG: early checks on invalid renew pw change req: %s" % checked)
         self.assertTrue(checked['invalid'], "early validation failed")
 
     def test_early_validation_checks_invalid_renew_suspended(self):
@@ -363,8 +426,7 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
                                                      self.TEST_SERVICE,
                                                      self.TEST_USER['email'],
                                                      self.TEST_USER_PW)
-        # print("DEBUG: early checks on invalid renew suspended req: %s" %
-        #      checked)
+        # print("DEBUG: early checks on invalid renew suspended req: %s" % checked)
         self.assertTrue(checked['invalid'], "early validation failed")
 
 
