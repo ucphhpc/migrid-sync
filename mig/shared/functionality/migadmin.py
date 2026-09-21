@@ -28,7 +28,6 @@
 status and configuration view.
 """
 
-
 import os
 
 from mig.shared import returnvalues
@@ -110,12 +109,9 @@ def format_stats(filename, stats):
     """Helper to format stats dict for human display"""
     # TODO: handle all dict contents and polish display
     html = ""
-    html += (
-        """<h3>Saved %s</h3>
+    html += """<h3>Saved %s</h3>
 <h4>Disk Use</h4>
-"""
-        % filename
-    )
+""" % filename
     for parts in stats["disk"]["use"]:
         html += """<p>
 """
@@ -153,11 +149,11 @@ def main(client_id, user_arguments_dict, environ=None):
 
     if environ is None:
         environ = os.environ
-    (configuration, logger, output_objects, op_name) = (
-        initialize_main_variables(client_id, op_header=False)
+    configuration, logger, output_objects, op_name = initialize_main_variables(
+        client_id, op_header=False
     )
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input_and_cert(
+    validate_status, accepted = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
@@ -173,11 +169,8 @@ def main(client_id, user_arguments_dict, environ=None):
     job_list = accepted["job_id"]
     lines = int(accepted["lines"][-1])
 
-    meta = (
-        """<meta http-equiv="refresh" content="%s" />
-"""
-        % configuration.sleep_secs
-    )
+    meta = """<meta http-equiv="refresh" content="%s" />
+""" % configuration.sleep_secs
     title_entry = find_entry(output_objects, "title")
     title_entry["text"] = "%s administration panel" % configuration.short_title
     title_entry["container_class"] = "fillwidth"
@@ -193,21 +186,18 @@ def main(client_id, user_arguments_dict, environ=None):
         "sort_order": "[[9,0]]",
         "refresh_call": 'document.location="?action=reloadaccountreq"',
     }
-    (add_import, add_init, add_ready) = man_base_js(configuration, [table_spec])
+    add_import, add_init, add_ready = man_base_js(configuration, [table_spec])
     show_tab_index = 0
     if action in accountreq_actions:
         # NOTE: show Account Requests tab and disable reload
         show_tab_index = 1
         title_entry["meta"] = ""
-    add_ready += (
-        """
+    add_ready += """
             var preselected_tab = %d;
             $(".migadmin-tabs").tabs({
                 active: preselected_tab
                 });
-"""
-        % show_tab_index
-    )
+""" % show_tab_index
     title_entry["script"]["advanced"] += add_import
     title_entry["script"]["init"] += add_init
     title_entry["script"]["ready"] += add_ready
@@ -232,7 +222,7 @@ def main(client_id, user_arguments_dict, environ=None):
         )
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    (auth_type, _auth_flavor) = detect_client_auth(configuration, environ)
+    auth_type, _auth_flavor = detect_client_auth(configuration, environ)
     # TODO: Support OpenID with 2FA requirement as well
     view_auth, act_auth = [], []
     auth_map = {
@@ -293,7 +283,7 @@ def main(client_id, user_arguments_dict, environ=None):
         elif action == "createaccountreq":
             peer_id = request_text
             for req_id in req_list:
-                (success, err) = accept_account_req(
+                success, err = accept_account_req(
                     req_id, configuration, peer_id, default_renew=True
                 )
                 if success:
@@ -307,9 +297,7 @@ def main(client_id, user_arguments_dict, environ=None):
         elif action == "peeraccountreq":
             peer_id = request_text
             for req_id in req_list:
-                (success, err) = peer_account_req(
-                    req_id, configuration, peer_id
-                )
+                success, err = peer_account_req(req_id, configuration, peer_id)
                 if success:
                     action_msg = "Made Peer account request for %s" % req_id
                 else:
@@ -321,7 +309,7 @@ def main(client_id, user_arguments_dict, environ=None):
         elif action == "rejectaccountreq":
             reject_msg = request_text
             for req_id in req_list:
-                (success, err) = reject_account_req(
+                success, err = reject_account_req(
                     req_id, configuration, reject_msg
                 )
                 if success:
@@ -366,24 +354,18 @@ provide access to e.g. managing the grid job queues.
         lines,
         lines,
     )
-    show += (
-        """
+    show += """
 <form method='get' action='migadmin.py'>
     <input type='hidden' name='lines' value='%s' />
     <input type='submit' value='Log Jobs' />
     <select name='action'>
-"""
-        % lines
-    )
-    drop += (
-        """
+""" % lines
+    drop += """
 <form method='get' action='migadmin.py'>
     <input type='hidden' name='lines' value='%s' />
     <input type='submit' value='Drop Job' />
     <select name='action'>
-"""
-        % lines
-    )
+""" % lines
     for queue in ["queued", "executing", "done"]:
         selected = ""
         if action.find(queue) != -1:
@@ -501,23 +483,17 @@ provide access to e.g. managing the grid job queues.
 """
 
     if action_err:
-        status_frame = (
-            """
+        status_frame = """
 <div id='action_status' class='status_box'>
     <span class='error errortext iconleftpad iconspace'>%s</span>
 </div>
-"""
-            % action_err
-        )
+""" % action_err
     elif action_msg:
-        status_frame = (
-            """
+        status_frame = """
 <div id='action_status' class='status_box'>
     <span class='ok iconleftpad iconspace'>%s</span>
 </div>
-"""
-            % action_msg
-        )
+""" % action_msg
     else:
         status_frame = ""
 
@@ -571,7 +547,7 @@ provide access to e.g. managing the grid job queues.
         {"object_type": "header", "text": "Pending Account Requests"}
     )
 
-    (list_status, ret) = list_account_reqs(configuration)
+    list_status, ret = list_account_reqs(configuration)
     if not list_status:
         logger.error("%s: failed for '%s': %s" % (op_name, client_id, ret))
         output_objects.append({"object_type": "error_text", "text": ret})
@@ -585,7 +561,7 @@ provide access to e.g. managing the grid job queues.
     )
     accountreqs = []
     for req_id in ret:
-        (load_status, req_dict) = get_account_req(req_id, configuration)
+        load_status, req_dict = get_account_req(req_id, configuration)
         if not load_status:
             logger.error(
                 "%s: load failed for '%s': %s" % (op_name, req_id, req_dict)
