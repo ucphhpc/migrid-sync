@@ -196,7 +196,7 @@ def main(client_id, user_arguments_dict):
     if configuration.site_enable_widgets and configuration.site_script_deps:
         valid_topics.append('widgets')
     if 'setup' not in active_menu:
-        page_title = 'Profile Settings'
+        page_title = 'Settings and Setup'
         if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
             valid_topics.append('sftp')
         if configuration.site_enable_davs:
@@ -213,7 +213,7 @@ def main(client_id, user_arguments_dict):
                 and not configuration.site_enable_gdp:
             valid_topics.append('twofactor')
     else:
-        page_title = 'Settings and Setup'
+        page_title = 'Profile Settings'
 
     caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
     topic_list = accepted['topic']
