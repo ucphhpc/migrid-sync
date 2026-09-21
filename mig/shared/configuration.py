@@ -392,7 +392,7 @@ def _generate_fix_missing_definitions():
     monitor_section = {'sleep_secs': '60',
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
-    settings_section = {'language': 'English', 'user_interface': ['V2', 'V3'],
+    settings_section = {'language': 'English', 'user_interface': ['V3', 'V2'],
                         'submitui': ['fields', 'textarea', 'files']}
     feasibility_section = {'resource_seen_within_hours': '24',
                            'skip_validation': '',
@@ -783,7 +783,7 @@ _CONFIGURATION_PROPERTIES = {
 
     'expire_peer': 600,
     'language': ['English'],
-    'user_interface': ['V2', 'V3'],
+    'user_interface': ['V3', 'V2'],
     'new_user_default_ui': keyword_auto,
     'submitui': ['fields', 'textarea', 'files'],
     # Init user default page with no selection to use site landing page
@@ -1084,10 +1084,9 @@ location.""" % self.config_file)
             self.short_title = config.get('SITE', 'short_title')
 
         if config.has_option('SITE', 'user_interface'):
-            self.user_interface = config.get(
-                'SITE', 'user_interface').split()
+            self.user_interface = config.get('SITE', 'user_interface').split()
         else:
-            self.user_interface = ['V2']
+            self.user_interface = ['V3', 'V2']
 
         # Allow gradual transition to new user interface - only new sign ups
         if config.has_option('SITE', 'new_user_default_ui'):
@@ -2614,6 +2613,8 @@ location.""" % self.config_file)
             self.site_enable_styles = False
             self.site_enable_widgets = False
             self.site_enable_gravatars = False
+            # NOTE: so far only the V2 interface is supported on GDP sites
+            self.user_interface = ['V2']
 
         # Filter disabled features from vgrid links
         exclude_features = []

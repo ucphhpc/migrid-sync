@@ -567,8 +567,8 @@
   "user_imnotify_port": 6667,
   "user_imnotify_username": "",
   "user_interface": [
-    "V2",
-    "V3"
+    "V3",
+    "V2"
   ],
   "user_janitor_log": "janitor.log",
   "user_messages": "",
