@@ -76,8 +76,8 @@ menu_items['account'] = {'class': 'account fas fa-account', 'url': 'account.py',
                          'legacy_only': True, 'title': 'Account',
                          'hover': 'Account info and management'}
 menu_items['settings'] = {'class': 'settings fas fa-user', 'url': 'settings.py',
-                          'legacy_only': True, 'title': 'Settings',
-                          'hover': 'Your personal settings for these pages'}
+                          'legacy_only': True, 'title': 'Profile',
+                          'hover': 'Your profile settings for these pages'}
 menu_items['setup'] = {'class': 'setup fas fa-user-cog', 'url': 'setup.py',
                        'legacy_only': True, 'title': 'Setup',
                        'hover': 'Your client access setup for this site'}
@@ -2070,7 +2070,7 @@ def get_xgi_html_header(
     <div class="popup-middle col-12">
         <a class="user-menu__item link-home %(disablehome)s" href="home.py">Home</a>
         <a class="user-menu__item link-account %(disableaccount)s" href="account.py">Account</a>
-        <a class="user-menu__item link-settings %(disablesettings)s" href="settings.py">Settings</a>
+        <a class="user-menu__item link-settings %(disablesettings)s" href="settings.py">Profile</a>
         <a class="user-menu__item link-setup %(disablesetup)s" href="setup.py">Setup</a>
         <a class="user-menu__item link-help %(disablehelp)s" href="%(help_url)s">Help</a>
     </div>
