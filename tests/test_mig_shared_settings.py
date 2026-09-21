@@ -91,7 +91,6 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
         """Create clean test environment for vgridaccess tests"""
         conf = self.configuration
         conf.user_interface = ["V3", "V2", "V4", "V1"]
-        conf.new_user_default_ui = "V3"
         used_state_dirs = [
             conf.mig_system_files,
             conf.mig_system_run,
@@ -154,6 +153,31 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
         )
         self.assertNotEqual(saved.get("USER_INTERFACE", "UNSET"), "V2")
         self.assertEqual(saved.get("USER_INTERFACE", "UNSET"), "UNSET")
+
+    @unittest.skip("Fix parser to reject invalid ui values and enable")
+    def test_settings_save_with_user_interface_invalid(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "INVALID"))
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        saved = load_settings(TEST_USER_DN, self.configuration)
+        # print("DEBUG: loaded saved %s" % saved)
+        # NOTE: saved should be a non-empty dict at this point
+        self.assertTrue(isinstance(saved, dict))
+        self.assertEqual(saved["EMAIL"], [TEST_USER_EMAIL])
+        self.assertEqual(
+            saved["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
+        self.assertEqual(saved["USER_INTERFACE"], "INVALID")
+        # NOTE: we no longer auto save default values for optional vars
+        for key in saved:
+            self.assertTrue(
+                key in ["EMAIL", "SITE_USER_MENU", "USER_INTERFACE"]
+            )
 
     # TODO: fix issue 667 and re-enable this test
     @unittest.skip("Fix parser to not skip kw default value when conf differs")
@@ -345,7 +369,7 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
         self.assertFalse(save_msg)
 
         with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
-            mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "V0"))
+            mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "INVALID"))
         save_status, save_msg = parse_and_save_settings(
             self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
         )
@@ -359,7 +383,7 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
         self.assertEqual(
             updated["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
         )
-        self.assertNotEqual(updated["USER_INTERFACE"], "V0")
+        self.assertNotEqual(updated["USER_INTERFACE"], "INVALID")
         # NOTE: we no longer auto save default values for optional vars
         for key in updated:
             self.assertTrue(
@@ -444,13 +468,13 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
         self.assertTrue(save_status)
         self.assertFalse(save_msg)
 
-        changes = {"USER_INTERFACE": "V0"}
+        changes = {"USER_INTERFACE": "INVALID"}
         updated = update_settings(
             TEST_USER_DN, self.configuration, changes, self.settings_defaults
         )
         # NOTE: updated should be a non-empty dict at this point
         self.assertTrue(isinstance(updated, dict))
-        self.assertNotEqual(updated["USER_INTERFACE"], "V0")
+        self.assertNotEqual(updated["USER_INTERFACE"], "INVALID")
 
     @unittest.skip("Fix parser to not force default keyword ui value")
     def test_update_settings_email_does_not_change_user_interface(self):
