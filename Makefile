@@ -29,14 +29,16 @@ info:
 	@echo
 	@echo "The following should help you get started:"
 	@echo
-	@echo "'make test'            - run the test suite (default python 3)"
-	@echo "'make test PYVER=X.Y'  - run the test suite (python version X.Y)"
-	@echo "'make unittest'        - execute tests locally for development"
-	@echo "'make lint-python'     - lint python code (in LINT_ENFORCE_DIRS)"
-	@echo "'make secscan-python'  - security scan python code (in LINT_ENFORCE_DIRS)"
-	@echo "'make format-python'   - format python code (in LINT_ENFORCE_DIRS)"
-	@echo "'make clean'           - clean up cache and other temporary files"
-	@echo "'make distclean'       - clean up completely to pristine state"
+	@echo "'make test'                   - run the test suite (default python 3)"
+	@echo "'make test PYVER=X.Y'         - run the test suite (python version X.Y)"
+	@echo "'make unittest'               - execute tests locally for development"
+	@echo "'make lint-python'            - lint python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make lint-fix-python'        - lint and fix python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make lint-fix-unsafe-python' - lint and force fix python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make secscan-python'         - security scan python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make format-python'          - format python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make clean'                  - clean up cache and other temporary files"
+	@echo "'make distclean'              - clean up completely to pristine state"
 
 .PHONY: help
 help: info
@@ -75,6 +77,18 @@ style-check-python: dependencies
 lint-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only
 	@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS)
+
+.PHONY: lint-fix-python
+lint-fix-python: dependencies
+	@$(LOCAL_PYTHON_BIN) -m ruff check --fix $(LINT_ENFORCE_DIRS)
+
+.PHONY: lint-fix-unsafe-python
+lint-fix-unsafe-python: dependencies
+	@echo
+	@echo "Force-fixing lint issues with unsafe flag - please carefuly review!"
+	@echo
+	@sleep 3
+	@$(LOCAL_PYTHON_BIN) -m ruff check --fix --unsafe-fixes $(LINT_ENFORCE_DIRS)
 
 .PHONY: secscan
 secscan:
