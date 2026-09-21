@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resedit - Resource editor back end
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,14 +20,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
 
-# Martin Rehr martin@rehr.dk August 2005
-
 """Display resource editor"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -199,7 +199,7 @@ description, you can likely just leave the field alone.''' % configuration.short
              conf[field])
         })
     else:
-        output_objects.append({'object_type': 'html_form', 'text': """<br />
+        output_objects.append({'object_type': 'html_form', 'text': r"""<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
 <input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s'
     required pattern='[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+'
