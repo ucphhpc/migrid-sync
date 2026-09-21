@@ -1,0 +1,152 @@
+<div id="confirm_dialog" title="Confirm">
+        <div id="confirm_text"><!-- filled by js --></div>
+        <textarea class="fillwidth padspace" cols="40" rows="4" id="confirm_input"
+        style="display:none;"></textarea>
+    </div>
+    
+
+<div id='wrap-tabs' class='migadmin-tabs'>
+<ul>
+<li><a href='#serverstatus-tab'>Server Status</a></li>
+<li><a href='#accountreqs-tab'>Account Requests</a></li>
+<li><a href='#sitestats-tab'>Site Stats</a></li>
+</ul>
+
+
+<div id="serverstatus-tab">
+
+
+<h2>Server Status</h2>
+<p class='importanttext'>
+This page automatically refreshes every 120 seconds.
+</p>
+<p>
+You can see the current grid daemon status and server logs below. The buttons
+provide access to e.g. managing the grid job queues.
+</p>
+<form method='get' action='migadmin.py'>
+    <input type='hidden' name='action' value='' />
+    <input type='submit' value='Show last log lines' />
+    <input type='text' size='2' name='lines' value='20' />
+</form>
+<br />
+<form method='get' action='migadmin.py'>
+    <input type='hidden' name='lines' value='20' />
+    <input type='hidden' name='action' value='reloadconfig' />
+    <input type='submit' value='Reload Configuration' />
+</form>
+<br />
+
+<form method='get' action='migadmin.py'>
+    <input type='hidden' name='lines' value='20' />
+    <input type='submit' value='Log Jobs' />
+    <select name='action'>
+<option  value='showqueued'>queued</option><option  value='showexecuting'>executing</option><option  value='showdone'>done</option>
+    </select>
+</form>
+<br />
+
+<form method='get' action='migadmin.py'>
+    <input type='hidden' name='lines' value='20' />
+    <input type='submit' value='Drop Job' />
+    <select name='action'>
+<option  value='dropqueued'>queued</option><option  value='dropexecuting'>executing</option><option  value='dropdone'>done</option>
+    </select>
+    <input type='text' size='20' name='job_id' value='' />
+</form>
+<br />
+
+<div id='daemonstatus'>
+<div class='status_offline'>grid_cron.py not running!</div></div>
+<br />
+
+<h2>/home/feo/projects/migrid-sync/tests/output/state/log/mig.log</h2>
+<textarea class="fillwidth padspace" rows=20 readonly="readonly">
+</textarea>
+
+
+    </div>
+
+
+<div id="accountreqs-tab">
+
+<h1 class="header ">Pending Account Requests</h1>
+
+<div>
+    <div class="toolbar">
+        <div class="pager" id="pager">
+        <form style="display: inline;" action="">
+
+
+        <span class="pager-nav-wrap first icon"></span>
+        <span class="pager-nav-wrap prev icon"></span>
+        <input class="pagedisplay" type="text" size=18 readonly="readonly" />
+        <span class="pager-nav-wrap next icon"></span>
+        <span class="pager-nav-wrap last icon"></span>
+        <select class="pagesize pager-select styled-select html-select">
+<option  value="5">5 pending certificate/OpenID account requests per page</option>
+<option  value="10">10 pending certificate/OpenID account requests per page</option>
+<option  value="20">20 pending certificate/OpenID account requests per page</option>
+<option selected value="25">25 pending certificate/OpenID account requests per page</option>
+<option  value="40">40 pending certificate/OpenID account requests per page</option>
+<option  value="50">50 pending certificate/OpenID account requests per page</option>
+<option  value="80">80 pending certificate/OpenID account requests per page</option>
+<option  value="100">100 pending certificate/OpenID account requests per page</option>
+<option  value="250">250 pending certificate/OpenID account requests per page</option>
+<option  value="500">500 pending certificate/OpenID account requests per page</option>
+<option  value="1000">1000 pending certificate/OpenID account requests per page</option>
+
+        </select>
+        
+
+        <div id="pagerrefresh" class="inline">
+            
+            <span class="pager-nav-wrap refresh icon" title="Refresh"></span>
+        
+            <div id="ajax_status" class="inline"><!-- Dynamically filled by js --></div>
+        </div>
+
+        </form>
+        </div>
+    </div>
+</div>
+    
+
+<div class="table-responsive">
+<table class="accountreqs columnsort" id="accountreqtable">
+<thead class="title">
+    <tr>
+        <th>ID</th>
+        <th class="icon"><!-- Action icons --></th>
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>Organization</th>
+        <th>Country</th>
+        <th>State</th>
+        <th>Comment</th>
+        <th>Auth Access</th>
+        <th>Created</th>
+    </tr>
+</thead>
+<tbody>
+
+
+</tbody>
+</table>
+</div>
+<br/>
+
+
+    </div>
+
+
+    <div id="sitestats-tab">
+
+
+<h2>Site Statistics</h2>
+<span class="warningtext">Site stats not available</span>
+
+    </div>
+
+
+</div>
