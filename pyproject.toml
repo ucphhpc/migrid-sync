@@ -73,6 +73,7 @@ extend-exclude = [
     "sbin/grid_sftp.py",
     "sbin/grid_webdavs.py"
 ]
+# NOTE: we have decided to stay with %X string-expansion for now
 [tool.ruff.lint]
 ignore = ["UP031"]
 select = ["E713"]
