@@ -63,6 +63,8 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
     """
     client_dir = client_id_dir(client_id)
     result = parse(source, strip_space, strip_comments)
+    # include any source keywords without colon prefix
+    source_result_keys = [key.strip(':') for (key, value) in result]
 
     # TODO: rename or split up check_types to avoid or clarify side-effects
     # NOTE: check_types also fills parsed results into the given keywords dict!
@@ -80,14 +82,17 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
         return (False, msg)
 
     new_dict = {}
+    # fill in the source provided parsed result values
+    # if they are allowed keywords
+    for key in parsed:
+        if key in keywords and key in source_result_keys:
+            new_dict[key] = parsed[key]['Value']
 
-    # copy parsed result and required default values to a new flat dictionary
-
+    # fill in any missing required values from keywords
     for key in keywords:
-        if keywords[key].get('Required', True):
-            new_dict[key] = parsed[key]['Value']
-        elif parsed[key]['Value'] != keywords[key]['Value']:
-            new_dict[key] = parsed[key]['Value']
+        if keywords[key].get('Required', True) and key not in new_dict:
+            new_dict[key] = keywords[key]['Value']
+
     # apply any overrides
     for key in overrides:
         new_dict[key] = overrides[key]
