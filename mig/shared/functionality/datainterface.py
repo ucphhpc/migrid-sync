@@ -143,13 +143,15 @@ def _validate_csrf_token(configuration, request_info, environ):
     return True
 
 
-def _state_change_request(environ):
-    return environ["REQUEST_METHOD"].upper() in [
-        "POST",
-        "PUT",
-        "PATCH",
-        "DELETE",
-    ]
+def _state_change_request(environ, request_method):
+    """Returns True if the request is a state change request, False otherwise"""
+    state_change_requests = ["POST", "PUT", "PATCH", "DELETE"]
+    if (
+        environ["REQUEST_METHOD"].upper() in state_change_requests
+        and request_method.upper() in state_change_requests
+    ):
+        return True
+    return False
 
 
 # TODO, move the helper functions and the peers related handlers/normalizers
@@ -1474,12 +1476,11 @@ def _main(
         )
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if _state_change_request(environ) and not _validate_csrf_token(
-        configuration, request_info, environ
-    ):
-        # 1a. validate the CSRF token if it is present for post requests
-        error = {"error": "the supplied CSRF token was invalid"}
-        return create_api_response(output_objects, 403, **error)
+    # 1a. validate the CSRF token if it is present for state change requests
+    if _state_change_request(environ, request_info.method):
+        if not _validate_csrf_token(configuration, request_info, environ):
+            error = {"error": "the supplied CSRF token was invalid"}
+            return create_api_response(output_objects, 403, **error)
 
     # 2. determine the specifics of the request being made
     if request_info.request_package not in HANDLERS_BY_PACKAGE:
