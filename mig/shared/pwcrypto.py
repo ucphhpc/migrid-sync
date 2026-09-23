@@ -932,20 +932,37 @@ def assure_password_strength(configuration, password, allow_legacy=False):
         raise err
 
 
-def valid_login_password(configuration, password):
+def valid_login_password(configuration, password, allow_legacy=True):
     """Helper to verify that provided password is valid for login purposes.
+    The optional allow_legacy toggles accept if legacy password policy applies.
     This is a convenience wrapper for assure_password_strength to get a boolean
     result. Used in grid_webdavs and from sftpsubsys PAM helper.
     """
     _logger = configuration.logger
     try:
-        assure_password_strength(configuration, password, allow_legacy=True)
+        assure_password_strength(configuration, password,
+                                 allow_legacy=allow_legacy)
         return True
     except ValueError as err:
         return False
     except Exception as exc:
         _logger.error("unexpected exception in valid_login_password: %s" % exc)
         return False
+
+
+def valid_login_legacy_password(configuration, password):
+    """Helper to verify that provided password is valid only for legacy login
+    purposes. I.e. that it is ONLY compliant with legacy password policy and
+    not with password policy.
+    This is a convenience wrapper for assure_password_strength to get a boolean
+    result. Used in legacy password detection and notification.
+    """
+    _logger = configuration.logger
+    if not valid_login_password(configuration, password, allow_legacy=True) or \
+            valid_login_password(configuration, password, allow_legacy=False):
+        return False
+    else:
+        return True
 
 
 def make_generic_hash(val, algo, hex_format=True):

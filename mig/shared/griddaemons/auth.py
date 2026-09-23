@@ -187,6 +187,7 @@ def validate_auth_attempt(configuration,
                           valid_twofa=False,
                           authtype_enabled=False,
                           valid_auth=False,
+                          legacy_password=False,
                           modify_account=False,
                           exceeded_rate_limit=False,
                           exceeded_max_sessions=False,
@@ -229,6 +230,8 @@ def validate_auth_attempt(configuration,
                  % valid_twofa
                  + "authtype_enabled: %s, valid_auth: %s\n"
                  % (authtype_enabled, valid_auth)
+                 + "legacy_password: %s\n"
+                 % legacy_password
                  + "modify_account: %s\n"
                  % modify_account
                  + "exceeded_rate_limit: %s\n"
@@ -426,13 +429,21 @@ fails to provide the correct credentials.
     elif valid_auth and twofa_passed:
         authorized = True
         notify = False
+        hint = None
         auth_msg = "Accepted %s" % authtype
+        if legacy_password:
+            notify = True
+            auth_msg + = " (legacy pw)"
+            hint = """
+Your provided password does not adhere to the current site password policy.
+Please reset it with the link from your site login page or your Account page.
+"""
         log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
         logger.info(log_msg)
-        authlog(configuration, 'INFO', protocol, authtype,
-                username, ip_addr, auth_msg, notify=notify)
+        authlog(configuration, 'INFO', protocol, authtype, username, ip_addr,
+                auth_msg, notify=notify, hint=hint)
     else:
         disconnect = True
         auth_msg = "Unknown auth error"

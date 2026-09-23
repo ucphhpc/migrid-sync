@@ -105,7 +105,8 @@ try:
         validate_auth_attempt
     from mig.shared.htmlgen import openid_page_template
     from mig.shared.logger import daemon_logger, register_hangup_handler
-    from mig.shared.pwcrypto import make_simple_hash
+    from mig.shared.pwcrypto import make_simple_hash, \
+        valid_login_legacy_password
     from mig.shared.safeinput import valid_distinguished_name, valid_password, \
         valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
         valid_complex_url, valid_fqdn, html_escape, InputException
@@ -1032,6 +1033,7 @@ inconsistent session state.
         invalid_user = False
         account_accessible = False
         valid_password = False
+        legacy_password = False
         daemon_conf = configuration.daemon_conf
         max_user_hits = daemon_conf['auth_limits']['max_user_hits']
         user_abuse_hits = daemon_conf['auth_limits']['user_abuse_hits']
@@ -1076,6 +1078,9 @@ inconsistent session state.
                     invalid_user = True
                 elif accepted:
                     valid_password = True
+                    if valid_login_legacy_password(configuration,
+                                                   self.password):
+                        legacy_password = True
                     if not self.query['success_to']:
                         self.query['success_to'] = '%s/id/' \
                             % self.server.base_url
@@ -1098,6 +1103,7 @@ inconsistent session state.
                 skip_twofa_check=True,
                 authtype_enabled=True,
                 valid_auth=valid_password,
+                legacy_password=legacy_password,
                 exceeded_rate_limit=exceeded_rate_limit,
                 user_abuse_hits=user_abuse_hits,
                 proto_abuse_hits=proto_abuse_hits,
