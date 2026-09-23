@@ -142,6 +142,7 @@ class SupportTestCase_using_fakeconfig(MigTestCase):
 
     def test_provides_a_fake_configuration(self):
         configuration = self.configuration
+
         self.assertIsInstance(configuration, RuntimeConfiguration)
         static_configuration = configuration._configuration
         self.assertIsInstance(static_configuration, FakeConfiguration)

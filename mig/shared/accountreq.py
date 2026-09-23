@@ -33,9 +33,11 @@ account request handlers.
 from __future__ import absolute_import
 
 from builtins import zip
+from datetime import date
 import os
 import re
 import time
+import copy
 
 # NOTE: the external iso3166 module is optional and only used if available
 try:
@@ -50,14 +52,15 @@ from mig.shared.base import auth_type_description, canonical_user, \
     requested_backend
 from mig.shared.defaults import peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
-    gdp_distinguished_field
-from mig.shared.fileio import delete_file, make_temp_file
+    gdp_distinguished_field, peer_kinds
+from mig.shared.fileio import delete_file, make_temp_file, unpickle, pickle, acquire_file_lock, release_file_lock
 from mig.shared.notification import notify_user
 from mig.shared.pwcrypto import check_hash, check_scramble
 # Expose some helper variables for functionality backends
 from mig.shared.safeinput import name_extras, password_extras, \
     password_min_len, password_max_len, valid_password_chars, \
-    valid_name_chars, dn_max_len, html_escape, validated_input, REJECT_UNSET
+    valid_name_chars, dn_max_len, html_escape, validated_input, REJECT_UNSET, \
+    valid_commonname, valid_date, valid_peer_label, valid_peer_kind
 from mig.shared.serial import load, dump, dumps
 from mig.shared.useradm import user_request_reject, user_account_notify, \
     default_search, search_users, create_user
@@ -793,6 +796,282 @@ def list_account_reqs(configuration):
     return (True, accountreq_list)
 
 
+def list_account_reqs_pairs(configuration):
+    success, reqids = list_account_reqs(configuration)
+    if not success:
+        return []
+
+    user_dn_reqid_pairs = []
+
+    for reqid in reqids:
+        user_pending_file = os.path.join(configuration.user_pending, reqid)
+        user_pending_dict = unpickle(user_pending_file, configuration.logger)
+        user_dn_reqid_pairs.append((user_pending_dict['distinguished_name'], reqid))
+
+    return user_dn_reqid_pairs
+
+
+def list_peers_requested(configuration, client_id):
+    """
+    Return the requested peers corresponding to a particular user.
+    """
+
+    pending_peers = load_peers_pending(configuration, client_id)
+    if not pending_peers:
+        return []
+    return [peer_dict for _, peer_dict in pending_peers]
+
+
+def list_peers_accepted(configuration, client_id):
+    """
+    Return the accepted peers corresponding to a particular user.
+    """
+    accepted_peers = load_peers_accepted(configuration, client_id)
+    if not accepted_peers:
+        return {}
+    return accepted_peers
+
+
+def peer_already_exists(configuration, client_id, peer_email):
+    """Validate that an identical existing requested/accepted peer does not exist already
+    """
+    requested_peers = list(
+        list_peers_requested(
+            configuration, client_id
+        )
+    )
+    if peer_email in [
+        requested_peer["email"] for requested_peer in requested_peers
+    ]:
+        return True, "you already have a requested peer with that email"
+
+    accepted_peers = list_peers_accepted(
+        configuration, client_id
+    )
+    if peer_email in [
+        accepted_peer["email"] for accepted_peer in accepted_peers.values()
+    ]:
+        return True, "you already have an accepted peer with that email"
+    return False, "you do not have a peer with that email"
+
+
+
+def load_peers_pending(configuration, client_id):
+    """ Loads the pending peers for the client """
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    peers_path = os.path.join(configuration.user_settings, client_dir, pending_peers_filename)
+
+    try:
+        pending_peers = load_db_with_lock(peers_path, logger=_logger, exclusive=True)
+    except Exception as exc:
+        if os.path.exists(peers_path):
+            _logger.warning("could not load accepted peers from %s: %s" %
+                            (peers_path, exc))
+    return pending_peers
+
+
+def load_peers_accepted(configuration, client_id):
+    """ Loads the accepted peers for the client """
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
+
+    try:
+        accepted_peers = load_db_with_lock(peers_path, logger=_logger, exclusive=True)
+    except Exception as exc:
+        if os.path.exists(peers_path):
+            _logger.warning("could not load accepted peers from %s: %s" %
+                            (peers_path, exc))
+    return accepted_peers
+
+
+def acquire_lock_for_path(path, exclusive=False):
+    """Lock the path """
+    lock_path = "%s.lock" % path
+    return acquire_file_lock(lock_path, exclusive=exclusive)
+
+
+def load_db_with_lock(path, logger=None, exclusive=False):
+    """ Retrieve the db """
+    if not os.path.exists(path):
+        return False
+
+    with acquire_lock_for_path(path, exclusive=exclusive) as _lock_handle:
+        try:
+            return unpickle(path, logger, allow_missing=False)
+        finally:
+            release_file_lock(_lock_handle)
+
+
+def update_peers_accepted(configuration, client_id, update_peer_dicts):
+    """ Update the accepted peers for the client """
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+
+    peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
+    with acquire_lock_for_path(peers_path, exclusive=True) as _lock_handle:
+        try:
+            peers_db = unpickle(peers_path, _logger, allow_missing=True)
+            if not peers_db:
+                _logger.info("found no peers db at %s to update the peer %s from for %s" % (peers_path, update_peer_dicts, client_id))
+                return True
+
+            copy_peers_db = copy.deepcopy(peers_db)
+            for peer_dn, peer_update_dict in update_peer_dicts.items():
+                if peer_dn not in copy_peers_db:
+                    continue
+                copy_peers_db[peer_dn].update(**peer_update_dict)
+
+            if pickle(copy_peers_db, peers_path, _logger):
+                _logger.info("updating accepted peer(s) %s from %s for %s" % (update_peer_dicts, peers_path, client_id))
+                return True
+
+            _logger.error("updating accepted peer(s) %s from %s for %s failed" % (update_peer_dicts, peers_path, client_id))
+            return False
+        finally:
+            release_file_lock(_lock_handle)
+
+
+def remove_pending_peers_from_client(configuration, client_id, peers_dns):
+    """
+    Remove a specified pending peer from the client.
+    Expects peers_dns to be a list of tuples, this is used to maintain the order
+    of the peers in the list when a user has to approve them.
+
+    peers_dns: [x509_peer_dn_string]
+    """
+
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+
+    peers_path = os.path.join(configuration.user_settings, client_dir, pending_peers_filename)
+    with acquire_lock_for_path(peers_path, exclusive=True) as _lock_handle:
+        try:
+            peers_db = unpickle(peers_path, _logger, allow_missing=True)
+            if not peers_db:
+                _logger.info("found no pending peers db at %s to delete the peer %s from for %s" % (peers_path, peers_dns, client_id))
+                return True
+
+            new_peers_db = [
+                (peer_dn, peer_dict)
+                for peer_dn, peer_dict in peers_db
+                if peer_dn not in peers_dns
+            ]
+            if pickle(new_peers_db, peers_path, _logger):
+                _logger.info("removed pending peer(s) %s from %s for %s" % (peers_dns, peers_path, client_id))
+                return True
+
+            _logger.error("deleting pending peer(s) %s from %s for %s failed" % (peers_dns, peers_path, client_id))
+            return False
+        finally:
+            release_file_lock(_lock_handle)
+
+
+def add_pending_peers_to_client(configuration, client_id, peers):
+    """
+    Add a specified pending peer from the client.
+    Expects peers to be a list of tuples, this is used to maintain the order
+    of the peers in the list when a user has to approve them.
+
+    peers: [(x509_peer_dn_string, dict_of_peer_fields)]
+    """
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+
+    peers_path = os.path.join(configuration.user_settings, client_dir, pending_peers_filename)
+    with acquire_lock_for_path(peers_path, exclusive=True) as _lock_handle:
+        try:
+            peers_db = unpickle(peers_path, _logger, allow_missing=True)
+            if not peers_db:
+                peers_db = []
+                _logger.warning("found no pending peers db at %s to add peer(s) %s to for %s" % (peers_path, peers, client_id))
+                _logger.info("creating a new pending peers db at %s" % peers_path)
+
+            change_peers = dict(peers)
+            # NOTE: always remove old first to replace any existing and move them last
+            peers_db = [
+                (peer_dn, peer_dict)
+                for (peer_dn, peer_dict) in peers_db
+                if peer_dn not in change_peers
+            ]
+
+            peers_db += peers
+            if pickle(peers_db, peers_path, _logger):
+                _logger.info("added pending peer(s) %s to %s for %s" % (peers, peers_path, client_id))
+                return True
+
+            _logger.error("adding pending peer(s) %s to %s for %s failed" % (peers, peers_path, client_id))
+            return False
+        finally:
+            release_file_lock(_lock_handle)
+
+
+def remove_accepted_peers_from_client(configuration, client_id, peers_dns):
+    """
+    Remove accepted peers from the client.
+    Expects peers_dns to be a list of x509 distinguished names to identify the peer.
+
+    peers_dns: [x509_peer_dn_string]
+    """
+
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+
+    peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
+    with acquire_lock_for_path(peers_path, exclusive=True) as _lock_handle:
+        try:
+            peers_db = unpickle(peers_path, _logger, allow_missing=True)
+            if not peers_db:
+                _logger.info("found no peers db at %s to delete the peer %s from for %s" % (peers_path, peers_dns, client_id))
+                return True
+
+            for peer_dn in peers_dns:
+                if peer_dn in peers_db:
+                    del peers_db[peer_dn]
+
+            if pickle(peers_db, peers_path, _logger):
+                _logger.info("removed peer(s) %s from %s for %s" % (peers_dns, peers_path, client_id))
+                return True
+
+            _logger.error("deleting %s peer(s) from %s for %s failed" % (peers_dns, peers_path, client_id))
+            return False
+        finally:
+            release_file_lock(_lock_handle)
+
+
+def add_accepted_peers_to_client(configuration, client_id, peers_dict):
+    """
+    Remove accepted peers from the client.
+    Expects peers to be a dictionary
+
+    peers: {x509_peer_dn_string, dict_of_peer_fields}
+    """
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+
+    peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
+    with acquire_lock_for_path(peers_path, exclusive=True) as _lock_handle:
+        try:
+            peers_db = unpickle(peers_path, _logger, allow_missing=True)
+            if not peers_db:
+                peers_db = {}
+                _logger.warning("found no peers db at %s to add peer(s) %s to for %s" % (peers_path, peers_dict, client_id))
+                _logger.info("creating a new peers db at %s" % peers_path)
+
+            for peer_dn, peer_dict in peers_dict.items():
+                peers_db[peer_dn] = peer_dict
+
+            if pickle(peers_db, peers_path, _logger):
+                _logger.info("added peer(s) %s to %s for %s" % (peers_dict, peers_path, client_id))
+                return True
+
+            _logger.error("adding peer(s) %s to %s for %s failed" % (peers_dict, peers_path, client_id))
+            return False
+        finally:
+            release_file_lock(_lock_handle)
+
+
 def is_account_req(req_id, configuration):
     """Check that req_id is an existing account request"""
     req_path = os.path.join(configuration.user_pending, req_id)
@@ -814,8 +1093,11 @@ def get_account_req(req_id, configuration):
         return (True, req_dict)
 
 
-def accept_account_req(req_id, configuration, peer_id, user_copy=True,
-                       admin_copy=True, auth_type='oid', default_renew=False):
+def accept_account_req(req_id, configuration, peer_id,
+                       user_copy=True,
+                       admin_copy=True,
+                       auth_type='oid',
+                       default_renew=False):
     """Helper to accept a pending account request"""
     _logger = configuration.logger
     _logger.info('accept account %s with peer %s' % (req_id, peer_id))
@@ -891,6 +1173,12 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
     _logger.info('%sd %s in user database and in file system' %
                  (operation_type.title(), user_dict['distinguished_name']))
 
+    if not delete_file(req_path, _logger):
+        err_msg = 'failed to clean up request %s after user %s' % \
+                  (req_path, operation_type)
+        _logger.error(err_msg)
+        return (False, err_msg)
+
     if user_copy or admin_copy:
         extra_copies = []
         # Default to inform mail used in request
@@ -931,17 +1219,15 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
     else:
         _logger.error('one or more account intro messages failed for %s' %
                       req_path)
-
-    if not delete_file(req_path, _logger):
-        err_msg = 'failed to clean up request %s after user %s' % \
-                  (req_path, operation_type)
-        _logger.error(err_msg)
-        return (False, err_msg)
     return (True, '')
 
 
-def peer_account_req(req_id, configuration, target_id, user_copy=False,
-                     admin_copy=True, auth_type='oid'):
+def peer_account_req(req_id, configuration, target_id,
+                    admin_copy=True,
+                    user_copy=True,
+                    include_auto_email=True,
+                    auth_type='oid',
+                    _notify_user=notify_user):
     """Helper to request peer accept for a pending account request"""
     # TODO: enable user_copy if it can be clearly marked only CC?
     _logger = configuration.logger
@@ -993,7 +1279,8 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
 
     # Use email from user DB by default
     raw_targets = {}
-    raw_targets['email'] = [keyword_auto]
+    if include_auto_email:
+        raw_targets['email'] = [keyword_auto]
 
     extra_copies = []
     if user_copy and req_dict.get('email', ''):
@@ -1071,7 +1358,7 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
 """ % (peers_field.replace('_', ' '), req_dict.get(field_name, ''))
         peers_details += """Comment: %(comment)s
 """ % req_dict
-        (send_status, send_errors) = notify_user(
+        (send_status, send_errors) = _notify_user(
             notify_dict, [peer_id, configuration.short_title, 'peeraccount',
                           peers_details, req_dict['email'], user_id],
             'SENDREQUEST', _logger, '', configuration)
@@ -1085,7 +1372,9 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
             all_sent = False
             all_errors += send_errors
 
-    if notify_count < 1:
+    had_email_to_send = len(raw_targets)
+
+    if had_email_to_send and notify_count < 1:
         err_msg = 'no valid actual peers found for %s' % req_path
         _logger.warning(err_msg)
         return (False, err_msg)
@@ -1526,6 +1815,111 @@ def parse_peers_form(configuration, raw_lines, csv_sep):
     return (peers, err)
 
 
+BASIC_PEER_FIELDS = dict([(i, REJECT_UNSET) for i in peers_fields])
+EXTRA_PEER_FIELDS_TYPE = {
+    'expire': valid_date,
+    'kind': valid_peer_kind,
+    'label': valid_peer_label,
+}
+EXTRA_PEER_FIELDS = {
+    'expire': REJECT_UNSET,
+    'kind': REJECT_UNSET,
+    'label': REJECT_UNSET,
+}
+
+
+def _unlistify_dict(thedict):
+    return {key:value[0] for key, value in thedict.items()}
+
+
+def _normalize_rejected_value(failure_detail):
+    """
+    Convert single rejected field value to an error string.
+
+    The complexity here is necessary because different
+    rejections cause different structures to be returned
+    as values of rejected keys. Try to make something
+    presentable in the UI from what we get.
+    """
+
+    normalized_details = []
+    if isinstance(failure_detail, list):
+        normalized_details.append(failure_detail[0][1])
+    else:
+        normalized_details.append(failure_detail[0])
+        normalized_details.append(failure_detail[1][0])
+    return ' '.join(normalized_details)
+
+
+def _normalize_rejected(rejected):
+    """
+    Make a dictionary of rejected fields uniform.
+    """
+    return {key: _normalize_rejected_value(value)
+            for key, value in rejected.items()}
+
+
+def peer_dict_from_fields(configuration, peer_fields_dict):
+    """
+    Creates a peer_dict from a simple dictionary containing fields
+    and their values ensuring the validity of the key/value pairs.
+    """
+
+    rejected = {}
+    basic_fields = {field_name: peer_fields_dict.get(field_name, '').strip()
+                    for field_name in BASIC_PEER_FIELDS.keys()}
+    basic_accepted, rejected = validated_input(basic_fields,
+                                         BASIC_PEER_FIELDS,
+                                         list_wrap=True)
+    rejected.update(rejected)
+    # There is no choice but use list_wrap during validation - not doing
+    # so leads to accepted containing arrays of the _characters_ within the
+    # values. This is unfortunate. It means we get our input values back from
+    # validation wrapped in arrays, so we need to undo that.
+    peer_dict = _unlistify_dict(basic_accepted)
+
+
+    # the only remaining fields should now be the extra fields
+    extra_fields = {k:v for k, v in peer_fields_dict.items()
+                             if k not in BASIC_PEER_FIELDS}
+    try:
+        extra_accepted, extra_rejected = validated_input(extra_fields,
+                            EXTRA_PEER_FIELDS,
+                            EXTRA_PEER_FIELDS_TYPE,
+                            list_wrap=True)
+    except Exception as any_exc:
+        # unfortunately validated_input itself is not safe against input
+        # data that is not wrapped the way it expects - treat this an error
+        extra_accepted = {}
+        extra_rejected = {k: 'invalid value' for k in EXTRA_PEER_FIELDS.keys()}
+    rejected.update(extra_rejected)
+    peer_dict.update(_unlistify_dict(extra_accepted))
+
+    if rejected:
+        errors = _normalize_rejected(rejected)
+        return peer_dict, errors
+
+    # nudge expire into a unix time
+    peer_dict = fill_user(peer_dict)
+    # This is required to match how client_id pending_peers are currently loaded
+    combined_accepted_fields = list(basic_accepted.keys()) + list(extra_accepted.keys())
+    canonicaled_peer_dict = canonical_user(configuration, peer_dict, combined_accepted_fields)
+    filled_canonicaled_peer_dict = fill_distinguished_name(canonicaled_peer_dict)
+    return filled_canonicaled_peer_dict, None
+
+
+def transform_account_datestr_to_epoch(expire):
+    """ Transform the expected expire date YYYY-MM-DD to epoch time """
+    expire_date = date.fromisoformat(expire)
+    return int(time.mktime(expire_date.timetuple()))
+
+
+def transform_account_epoch_to_date(expire):
+    """ Transform the expected epoch time to YYYY-MM-DD """
+    expire_date = date.fromisoformat(expire)
+    return expire_date.isoformat()
+
+
 def parse_peers_userid(configuration, raw_entries):
     """Parse list of user IDs into a list of peers"""
     _logger = configuration.logger
@@ -1589,34 +1983,17 @@ def parse_peers(configuration, peers_content, peers_format, csv_sep=';'):
 
 
 def manage_pending_peers(configuration, client_id, action, change_list):
-    """Helper to manage changes to pending peers list of client_id"""
-    _logger = configuration.logger
-    client_dir = client_id_dir(client_id)
-    pending_peers_path = os.path.join(configuration.user_settings, client_dir,
-                                      pending_peers_filename)
-    try:
-        pending_peers = load(pending_peers_path)
-    except Exception as exc:
-        if os.path.exists(pending_peers_path):
-            _logger.warning("could not load pending peers from %s: %s" %
-                            (pending_peers_path, exc))
-        pending_peers = []
-    change_dict = dict(change_list)
-    # NOTE: always remove old first to replace any existing and move them last
-    pending_peers = [(i, j)
-                     for (i, j) in pending_peers if not i in change_dict]
+    """
+    Helper to manage changes to pending peers list of client_id
+    
+    change_list: [(peer_dn, peer_dict)]
+    """
+    if action not in ["add", "remove"]:
+        raise ValueError("unsupported action in manage pending peers: %s" % action)
+
     if action == "add":
-        pending_peers += change_list
-    elif action == "remove":
-        pass
-    else:
-        _logger.error(
-            "unsupported action in manage pending peers: %s" % action)
-        return False
-    try:
-        dump(pending_peers, pending_peers_path)
-        return True
-    except Exception as exc:
-        _logger.warning("could not save pending peers to %s: %s" %
-                        (pending_peers_path, exc))
-        return False
+        return add_pending_peers_to_client(configuration, client_id, change_list)
+
+    # Remove only needs a list of peer_dns
+    remove_list = [change[0] for change in change_list]
+    return remove_pending_peers_from_client(configuration, client_id, remove_list)

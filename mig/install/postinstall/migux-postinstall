@@ -1,0 +1,55 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# --- BEGIN_HEADER ---
+#
+# migux-postinstall - script used to setup the required directories for the migux library
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+import importlib.util
+import os
+import shutil
+import sys
+
+SCRIPT_DIR = os.path.dirname(__file__)
+ROOT_DIR = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
+
+
+def main(argv):
+    migux_package = importlib.util.find_spec("migux")
+    if not migux_package:
+        return 1
+
+    package_dir = os.path.dirname(migux_package.origin)
+    source_dir = os.path.join(package_dir, "public")
+
+    mig_assets_dir = os.path.join(ROOT_DIR, "mig", "assets")
+    target_dir = os.path.join(mig_assets_dir, "migux")
+
+    os.makedirs(target_dir, exist_ok=True)
+    shutil.copytree(source_dir, target_dir, dirs_exist_ok=True)
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
