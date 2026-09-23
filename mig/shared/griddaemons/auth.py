@@ -433,7 +433,7 @@ fails to provide the correct credentials.
         auth_msg = "Accepted %s" % authtype
         if legacy_password:
             notify = True
-            auth_msg + = " (legacy pw)"
+            auth_msg += " (legacy pw)"
             hint = """
 Your provided password does not adhere to the current site password policy.
 Please reset it with the link from your site login page or your Account page.

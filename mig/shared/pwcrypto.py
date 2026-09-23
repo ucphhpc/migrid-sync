@@ -631,7 +631,7 @@ def assure_reset_supported(configuration, user_dict, auth_type):
     for user_dict. Raises ValueError if not.
     """
     _logger = configuration.logger
-    if not 'password_hash' in user_dict and not 'password' in user_dict:
+    if 'password_hash' not in user_dict and 'password' not in user_dict:
         _logger.error("cannot generate %s reset token for %s without password"
                       % (auth_type, user_dict['email']))
         raise ValueError("No saved password info for %r !" %
@@ -876,7 +876,7 @@ def __assure_password_strength_helper(configuration, password, use_legacy=False)
             pw_classes.append('other')
             continue
         for (char_class, values) in list(char_class_map.items()):
-            if i in "%s" % values and not char_class in pw_classes:
+            if i in "%s" % values and char_class not in pw_classes:
                 pw_classes.append(char_class)
                 break
     if len(pw_classes) < min_classes:
@@ -943,7 +943,7 @@ def valid_login_password(configuration, password, allow_legacy=True):
         assure_password_strength(configuration, password,
                                  allow_legacy=allow_legacy)
         return True
-    except ValueError as err:
+    except ValueError:
         return False
     except Exception as exc:
         _logger.error("unexpected exception in valid_login_password: %s" % exc)
@@ -971,7 +971,7 @@ def make_generic_hash(val, algo, hex_format=True):
     otherwise.
     """
     # NOTE: hashlib functions require bytes and hexdigest returns native string
-    if not algo in valid_hash_algos:
+    if algo not in valid_hash_algos:
         algo = default_algo
     hash_helper = valid_hash_algos[algo]
     if hex_format:
@@ -1037,10 +1037,9 @@ def generate_random_password(configuration, tries=42):
         try:
             assure_password_strength(configuration, password)
             return password
-        except ValueError as err:
+        except ValueError:
             _logger.warning("generated password %s didn't fit policy - retry"
                             % password)
-            pass
     _logger.error("failed to generate password to fit site policy")
     raise ValueError("Failed to generate suitable password!")
 
