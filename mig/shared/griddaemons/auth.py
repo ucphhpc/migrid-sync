@@ -435,9 +435,18 @@ fails to provide the correct credentials.
             notify = True
             auth_msg += " (legacy)"
             hint = """
-Your provided password does not adhere to the current site password policy.
-Please reset it with the link from your site login page or your Account page.
+HINT: your provided %s password no longer adheres to the active site password
+policy.""" % proto_alias
+        if protocol in ["openid"]:
+            hint += """
+Please reset it with the 'Forgot your password' link from your site login page
+or with the Reset Account Password button from your Account page if available.
 """
+        else:
+            hint += """
+Please update it in the corresponding %s tab from your site Setup page.
+""" % proto_alias
+
         log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
