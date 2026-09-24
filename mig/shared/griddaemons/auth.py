@@ -437,13 +437,13 @@ fails to provide the correct credentials.
             hint = """
 HINT: your provided %s password no longer adheres to the active site password
 policy.""" % proto_alias
-        if protocol in ["openid"]:
-            hint += """
+            if protocol in ["openid"]:
+                hint += """
 Please reset it with the 'Forgot your password' link from your site login page
 or with the Reset Account Password button from your Account page if available.
 """
-        else:
-            hint += """
+            else:
+                hint += """
 Please update it in the corresponding %s tab from your site Setup page.
 """ % proto_alias
 
