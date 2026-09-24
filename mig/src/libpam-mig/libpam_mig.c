@@ -1227,7 +1227,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     if (true == mig_check_twofactor_session(safeUsername, pAddress)) {
         mode |= MIG_VALID_TWOFA;
     }
-    if (true == mig_check_legacy_password(safeUsername, pAddress)) {
+    if (true == mig_check_legacy_password(pPassword)) {
         mode |= MIG_LEGACY_PASSWORD;
     }
     if (false == mig_reg_auth_attempt(mode, safeUsername, pAddress, pHash)) {
