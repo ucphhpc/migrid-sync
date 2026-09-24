@@ -959,7 +959,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
     /* IMPORTANT: do NOT check password strength for sharelinks/Xsidmount as
        they are NOT guaranteed to follow policy, like character classes
-       required.
+       or length required.
      */
     /* Assure password follows site policy for length and character classes */
     if (validate_password(pPassword) != 0) {
@@ -1226,6 +1226,9 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         | MIG_AUTHTYPE_ENABLED | MIG_VALID_AUTH;
     if (true == mig_check_twofactor_session(safeUsername, pAddress)) {
         mode |= MIG_VALID_TWOFA;
+    }
+    if (true == mig_check_legacy_password(safeUsername, pAddress)) {
+        mode |= MIG_LEGACY_PASSWORD;
     }
     if (false == mig_reg_auth_attempt(mode, safeUsername, pAddress, pHash)) {
         return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
