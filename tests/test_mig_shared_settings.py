@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_settings - unit test of the corresponding mig shared module
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -28,133 +28,485 @@
 """Unit tests for the migrid module pointed to in the filename"""
 
 import os
-import sys
+import unittest
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
+from mig.shared.settings import (
+    load_settings,
+    parse_and_save_settings,
+    update_settings,
+)
+from mig.shared.settingskeywords import get_keywords_dict
+from tests.support import (
+    MigTestCase,
+    ensure_dirs_exist,
+    testmain,
+)
+from tests.support.usersupp import (
+    OTHER_USER_DN,
+    TEST_USER_DN,
+    UserAssertMixin,
+)
 
-from tests.support import TEST_OUTPUT_DIR, MigTestCase, FakeConfiguration, \
-    cleanpath, testmain
-from mig.shared.settings import load_settings, update_settings, \
-    parse_and_save_settings
+TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[1]
+OTHER_USER_EMAIL = OTHER_USER_DN.split("/emailAddress=", 1)[1]
 
-DUMMY_USER = "dummy-user"
-DUMMY_SETTINGS_DIR = 'dummy_user_settings'
-DUMMY_SETTINGS_PATH = os.path.join(TEST_OUTPUT_DIR, DUMMY_SETTINGS_DIR)
-DUMMY_SYSTEM_FILES_DIR = 'dummy_system_files'
-DUMMY_SYSTEM_FILES_PATH = os.path.join(TEST_OUTPUT_DIR, DUMMY_SYSTEM_FILES_DIR)
-DUMMY_TMP_DIR = 'dummy_tmp'
-DUMMY_TMP_FILE = 'settings.mRSL'
-DUMMY_TMP_PATH = os.path.join(TEST_OUTPUT_DIR, DUMMY_TMP_DIR)
-DUMMY_MRSL_PATH = os.path.join(DUMMY_TMP_PATH, DUMMY_TMP_FILE)
-
-DUMMY_USER_INTERFACE = ['V3', 'V42']
-DUMMY_DEFAULT_UI = 'V42'
-DUMMY_INIT_MRSL = """
+INIT_SETTINGS_MRSL = """
 ::EMAIL::
-john@doe.org
+test@example.com
 
 ::SITE_USER_MENU::
 sharelinks
 people
 peers
 """
-DUMMY_UPDATE_MRSL = """
+UPDATE_SETTINGS_MRSL = """
 ::EMAIL::
-jane@doe.org
+other@example.com
 
 ::SITE_USER_MENU::
 people
 """
-DUMMY_CONF = FakeConfiguration(user_settings=DUMMY_SETTINGS_PATH,
-                               mig_system_files=DUMMY_SYSTEM_FILES_PATH,
-                               user_interface=DUMMY_USER_INTERFACE,
-                               new_user_default_ui=DUMMY_DEFAULT_UI)
 
 
-class MigSharedSettings(MigTestCase):
+class MigSharedSettings(MigTestCase, UserAssertMixin):
     """Wrap unit tests for the corresponding module"""
 
+    def __add_mrsl_key_val(self, mrsl, key, val):
+        """Add formatted key and val entries to existing mrsl"""
+        return """%s
+
+::%s::
+%s
+""" % (mrsl.strip(), key.upper(), val)
+
+    def _add_mrsl_ui(self, mrsl, user_interface):
+        """Add user_interface to existing mrsl"""
+        return self.__add_mrsl_key_val(mrsl, "USER_INTERFACE", user_interface)
+
+    def _provide_configuration(self):
+        """Prepare isolated test config"""
+        return "testconfig"
+
+    def before_each(self):
+        """Create clean test environment for vgridaccess tests"""
+        conf = self.configuration
+        conf.user_interface = ["V3", "V2", "V4", "V1"]
+        used_state_dirs = [
+            conf.mig_system_files,
+            conf.mig_system_run,
+            conf.user_home,
+            conf.user_settings,
+        ]
+        for state_dir in used_state_dirs:
+            ensure_dirs_exist(state_dir)
+            # Make sure no stale data is left
+            self.assertEqual(os.listdir(state_dir), [])
+        user_home = self._provision_test_user(self, TEST_USER_DN)
+        self.TEST_USER_HOME = user_home
+        client_dir = user_home.replace(conf.user_home, "").strip(os.sep)
+        self.TEST_USER_SETTINGS = os.path.join(
+            conf.user_settings, client_dir, "settings"
+        )
+        self.TEST_SETTINGS_MRSL = os.path.join(
+            conf.mrsl_files_dir, client_dir, "settings.mRSL"
+        )
+        kwd = get_keywords_dict()
+        # self.settings_defaults = dict([(i, kwd[i]['Value']) for i in kwd])
+        self.settings_defaults = {i: kwd[i]["Value"] for i in kwd}
+
     def test_settings_save_load(self):
-        os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
-        cleanpath(DUMMY_SETTINGS_DIR, self)
-        os.makedirs(os.path.join(DUMMY_SYSTEM_FILES_PATH, DUMMY_USER))
-        cleanpath(DUMMY_SYSTEM_FILES_DIR, self)
-        os.makedirs(os.path.join(DUMMY_TMP_PATH))
-        cleanpath(DUMMY_TMP_DIR, self)
-
-        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
-            mrsl_fd.write(DUMMY_INIT_MRSL)
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
         save_status, save_msg = parse_and_save_settings(
-            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
         self.assertTrue(save_status)
         self.assertFalse(save_msg)
 
-        saved_path = os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER, 'settings')
-        self.assertTrue(os.path.exists(saved_path))
+        self.assertTrue(os.path.exists(self.TEST_USER_SETTINGS))
 
-        settings = load_settings(DUMMY_USER, DUMMY_CONF)
-        # NOTE: updated should be a non-empty dict at this point
-        self.assertTrue(isinstance(settings, dict))
-        self.assertEqual(settings['EMAIL'], ['john@doe.org'])
-        self.assertEqual(settings['SITE_USER_MENU'],
-                         ['sharelinks', 'people', 'peers'])
+        saved = load_settings(TEST_USER_DN, self.configuration)
+        # NOTE: saved should be a non-empty dict at this point
+        self.assertTrue(isinstance(saved, dict))
+        self.assertEqual(saved["EMAIL"], [TEST_USER_EMAIL])
+        self.assertEqual(
+            saved["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
         # NOTE: we no longer auto save default values for optional vars
-        for key in settings.keys():
-            self.assertTrue(key in ['EMAIL', 'SITE_USER_MENU'])
-        # Any saved USER_INTERFACE value must match configured default if set
-        self.assertEqual(settings.get('USER_INTERFACE', DUMMY_DEFAULT_UI),
-                         DUMMY_DEFAULT_UI)
+        for key in saved:
+            self.assertTrue(key in ["EMAIL", "SITE_USER_MENU"])
 
-    def test_settings_replace(self):
-        os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
-        cleanpath(DUMMY_SETTINGS_DIR, self)
-        os.makedirs(os.path.join(DUMMY_SYSTEM_FILES_PATH, DUMMY_USER))
-        cleanpath(DUMMY_SYSTEM_FILES_DIR, self)
-        os.makedirs(os.path.join(DUMMY_TMP_PATH))
-        cleanpath(DUMMY_TMP_DIR, self)
-
-        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
-            mrsl_fd.write(DUMMY_INIT_MRSL)
+    def test_save_settings_email_and_menu_does_not_change_user_interface(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
         save_status, save_msg = parse_and_save_settings(
-            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
         self.assertTrue(save_status)
         self.assertFalse(save_msg)
 
-        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
-            mrsl_fd.write(DUMMY_UPDATE_MRSL)
+        saved = load_settings(TEST_USER_DN, self.configuration)
+        self.assertTrue(isinstance(saved, dict))
+        self.assertEqual(saved["EMAIL"], [TEST_USER_EMAIL])
+        self.assertEqual(
+            saved["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
+        self.assertNotEqual(saved.get("USER_INTERFACE", "UNSET"), "V2")
+        self.assertEqual(saved.get("USER_INTERFACE", "UNSET"), "UNSET")
+
+    @unittest.skip("Fix parser to reject invalid ui values and enable")
+    def test_settings_save_with_user_interface_invalid(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "INVALID"))
         save_status, save_msg = parse_and_save_settings(
-            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
         self.assertTrue(save_status)
         self.assertFalse(save_msg)
 
-        updated = load_settings(DUMMY_USER, DUMMY_CONF)
+        saved = load_settings(TEST_USER_DN, self.configuration)
+        # print("DEBUG: loaded saved %s" % saved)
+        # NOTE: saved should be a non-empty dict at this point
+        self.assertTrue(isinstance(saved, dict))
+        self.assertEqual(saved["EMAIL"], [TEST_USER_EMAIL])
+        self.assertEqual(
+            saved["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
+        self.assertEqual(saved["USER_INTERFACE"], "INVALID")
+        # NOTE: we no longer auto save default values for optional vars
+        for key in saved:
+            self.assertTrue(
+                key in ["EMAIL", "SITE_USER_MENU", "USER_INTERFACE"]
+            )
+
+    # TODO: fix issue 667 and re-enable this test
+    @unittest.skip("Fix parser to not skip kw default value when conf differs")
+    def test_settings_save_with_user_interface_v2(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "V2"))
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        saved = load_settings(TEST_USER_DN, self.configuration)
+        # print("DEBUG: loaded saved %s" % saved)
+        # NOTE: saved should be a non-empty dict at this point
+        self.assertTrue(isinstance(saved, dict))
+        self.assertEqual(saved["EMAIL"], [TEST_USER_EMAIL])
+        self.assertEqual(
+            saved["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
+        self.assertEqual(saved["USER_INTERFACE"], "V2")
+        # NOTE: we no longer auto save default values for optional vars
+        for key in saved:
+            self.assertTrue(
+                key in ["EMAIL", "SITE_USER_MENU", "USER_INTERFACE"]
+            )
+
+    def test_settings_replace_existing_values(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(UPDATE_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        updated = load_settings(TEST_USER_DN, self.configuration)
         # NOTE: updated should be a non-empty dict at this point
         self.assertTrue(isinstance(updated, dict))
-        self.assertEqual(updated['EMAIL'], ['jane@doe.org'])
-        self.assertEqual(updated['SITE_USER_MENU'], ['people'])
+        self.assertEqual(updated["EMAIL"], [OTHER_USER_EMAIL])
+        self.assertEqual(updated["SITE_USER_MENU"], ["people"])
+        # NOTE: we no longer auto save default values for optional vars
+        for key in updated:
+            self.assertTrue(key in ["EMAIL", "SITE_USER_MENU"])
 
-    def test_update_settings(self):
-        os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
-        cleanpath(DUMMY_SETTINGS_DIR, self)
-        os.makedirs(os.path.join(DUMMY_SYSTEM_FILES_PATH, DUMMY_USER))
-        cleanpath(DUMMY_SYSTEM_FILES_DIR, self)
-        os.makedirs(os.path.join(DUMMY_TMP_PATH))
-        cleanpath(DUMMY_TMP_DIR, self)
-
-        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
-            mrsl_fd.write(DUMMY_INIT_MRSL)
+    def test_settings_replace_with_user_interface_v1(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
         save_status, save_msg = parse_and_save_settings(
-            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
         self.assertTrue(save_status)
         self.assertFalse(save_msg)
 
-        changes = {'EMAIL': ['john@doe.org', 'jane@doe.org']}
-        defaults = {}
-        updated = update_settings(DUMMY_USER, DUMMY_CONF, changes, defaults)
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "V1"))
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        updated = load_settings(TEST_USER_DN, self.configuration)
         # NOTE: updated should be a non-empty dict at this point
         self.assertTrue(isinstance(updated, dict))
-        self.assertEqual(updated['EMAIL'], ['john@doe.org', 'jane@doe.org'])
+        self.assertEqual(updated["EMAIL"], [TEST_USER_EMAIL])
+        self.assertEqual(
+            updated["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
+        self.assertEqual(updated["USER_INTERFACE"], "V1")
+        # NOTE: we no longer auto save default values for optional vars
+        for key in updated:
+            self.assertTrue(
+                key in ["EMAIL", "SITE_USER_MENU", "USER_INTERFACE"]
+            )
+
+    # TODO: fix issue 667 and re-enable this test
+    @unittest.skip("Fix parser to not skip kw default value when conf differs")
+    def test_settings_replace_with_user_interface_v2(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "V2"))
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        updated = load_settings(TEST_USER_DN, self.configuration)
+        # print("DEBUG: loaded updated %s" % updated)
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated["EMAIL"], [TEST_USER_EMAIL])
+        self.assertEqual(
+            updated["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
+        self.assertEqual(updated["USER_INTERFACE"], "V2")
+        # NOTE: we no longer auto save default values for optional vars
+        for key in updated:
+            self.assertTrue(
+                key in ["EMAIL", "SITE_USER_MENU", "USER_INTERFACE"]
+            )
+
+    def test_settings_replace_with_user_interface_v3(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "V3"))
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        updated = load_settings(TEST_USER_DN, self.configuration)
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated["EMAIL"], [TEST_USER_EMAIL])
+        self.assertEqual(
+            updated["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
+        self.assertEqual(updated["USER_INTERFACE"], "V3")
+        # NOTE: we no longer auto save default values for optional vars
+        for key in updated:
+            self.assertTrue(
+                key in ["EMAIL", "SITE_USER_MENU", "USER_INTERFACE"]
+            )
+
+    def test_settings_replace_with_user_interface_v4(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "V4"))
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        updated = load_settings(TEST_USER_DN, self.configuration)
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated["EMAIL"], [TEST_USER_EMAIL])
+        self.assertEqual(
+            updated["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
+        self.assertEqual(updated["USER_INTERFACE"], "V4")
+        # NOTE: we no longer auto save default values for optional vars
+        for key in updated:
+            self.assertTrue(
+                key in ["EMAIL", "SITE_USER_MENU", "USER_INTERFACE"]
+            )
+
+    @unittest.skip("Fix parser to reject invalid ui values and enable")
+    def test_settings_replace_with_user_interface_invalid(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "INVALID"))
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        updated = load_settings(TEST_USER_DN, self.configuration)
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated["EMAIL"], [TEST_USER_EMAIL])
+        self.assertEqual(
+            updated["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
+        )
+        self.assertNotEqual(updated["USER_INTERFACE"], "INVALID")
+        # NOTE: we no longer auto save default values for optional vars
+        for key in updated:
+            self.assertTrue(
+                key in ["EMAIL", "SITE_USER_MENU", "USER_INTERFACE"]
+            )
+
+    def test_update_settings_email(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        changes = {"EMAIL": [TEST_USER_EMAIL, OTHER_USER_EMAIL]}
+        updated = update_settings(
+            TEST_USER_DN, self.configuration, changes, self.settings_defaults
+        )
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated["EMAIL"], [TEST_USER_EMAIL, OTHER_USER_EMAIL])
+
+    def test_update_settings_user_interface_v2(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        changes = {"USER_INTERFACE": "V2"}
+        updated = update_settings(
+            TEST_USER_DN, self.configuration, changes, self.settings_defaults
+        )
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated["USER_INTERFACE"], "V2")
+
+    def test_update_settings_user_interface_same_as_conf_default(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        changes = {"USER_INTERFACE": "V3"}
+        updated = update_settings(
+            TEST_USER_DN, self.configuration, changes, self.settings_defaults
+        )
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated["USER_INTERFACE"], "V3")
+
+    def test_update_settings_user_interface_v4(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        changes = {"USER_INTERFACE": "V4"}
+        updated = update_settings(
+            TEST_USER_DN, self.configuration, changes, self.settings_defaults
+        )
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated["USER_INTERFACE"], "V4")
+
+    @unittest.skip("Fix parser to reject invalid ui values and enable")
+    def test_update_settings_user_interface_invalid_fails(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        changes = {"USER_INTERFACE": "INVALID"}
+        updated = update_settings(
+            TEST_USER_DN, self.configuration, changes, self.settings_defaults
+        )
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertNotEqual(updated["USER_INTERFACE"], "INVALID")
+
+    @unittest.skip("Fix parser to not force default keyword ui value")
+    def test_update_settings_email_does_not_change_user_interface(self):
+        with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
+            mrsl_fd.write(INIT_SETTINGS_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            self.TEST_SETTINGS_MRSL, TEST_USER_DN, self.configuration
+        )
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
+
+        saved = load_settings(TEST_USER_DN, self.configuration)
+        # print("DEBUG: loaded orig %s" % saved)
+        self.assertTrue(isinstance(saved, dict))
+        self.assertEqual(saved["EMAIL"], [TEST_USER_EMAIL])
+        self.assertNotEqual(saved.get("USER_INTERFACE", "UNSET"), "V2")
+        self.assertEqual(saved.get("USER_INTERFACE", "UNSET"), "UNSET")
+
+        changes = {"EMAIL": [TEST_USER_EMAIL, OTHER_USER_EMAIL]}
+        update_res = update_settings(
+            TEST_USER_DN, self.configuration, changes, self.settings_defaults
+        )
+        # NOTE: updated should be a non-empty dict at this point
+        # print("DEBUG: update res %s" % update_res)
+        self.assertTrue(isinstance(update_res, dict))
+        updated = load_settings(TEST_USER_DN, self.configuration)
+        # print("DEBUG: loaded %s" % updated)
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated["EMAIL"], [TEST_USER_EMAIL, OTHER_USER_EMAIL])
+        self.assertNotEqual(updated.get("USER_INTERFACE", "UNSET"), "V2")
+        self.assertEqual(updated.get("USER_INTERFACE", "UNSET"), "")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()
