@@ -68,6 +68,7 @@ extend-exclude = [
 ]
 [tool.ruff.lint]
 ignore = ["UP031"]
+select = ["E713"]
 
 [tool.bandit]
 exclude_dirs = [".git/", "tests/data/", "tests/fixture/"]

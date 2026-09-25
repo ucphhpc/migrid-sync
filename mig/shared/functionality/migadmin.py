@@ -255,7 +255,7 @@ def main(client_id, user_arguments_dict, environ=None):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     html = ""
-    if action and not action in list(grid_actions) + accountreq_actions:
+    if action and action not in list(grid_actions) + accountreq_actions:
         output_objects.append(
             {"object_type": "error_text", "text": "Invalid action: %s" % action}
         )
@@ -702,7 +702,7 @@ provide access to e.g. managing the grid job queues.
         for filename in listdir(sitestats_home):
             prefix, ext = os.path.splitext(filename)
             file_format = ext.lstrip(".")
-            if not file_format in ["pickle", "json", "yaml"]:
+            if file_format not in ["pickle", "json", "yaml"]:
                 continue
             path = os.path.join(sitestats_home, filename)
             stats = all_stats[prefix] = all_stats.get(prefix, {})
