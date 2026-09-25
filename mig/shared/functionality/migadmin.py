@@ -126,10 +126,7 @@ def format_stats(filename, stats):
         html += """<p>
 %s: %s
 </p>
-""" % (
-            key,
-            val,
-        )
+""" % (key, val)
     html += """
 <h4>Weekly</h4>
 """
@@ -137,10 +134,7 @@ def format_stats(filename, stats):
         html += """<p>
 %s: %s
 </p>
-""" % (
-            key,
-            val,
-        )
+""" % (key, val)
     return html
 
 
@@ -349,11 +343,7 @@ provide access to e.g. managing the grid job queues.
     <input type='submit' value='Reload Configuration' />
 </form>
 <br />
-""" % (
-        configuration.sleep_secs,
-        lines,
-        lines,
-    )
+""" % (configuration.sleep_secs, lines, lines)
     show += """
 <form method='get' action='migadmin.py'>
     <input type='hidden' name='lines' value='%s' />
@@ -473,10 +463,7 @@ provide access to e.g. managing the grid job queues.
         html += """
 <h2>%s</h2>
 <textarea class="fillwidth padspace" rows=%s readonly="readonly">
-""" % (
-            log_path,
-            lines,
-        )
+""" % (log_path, lines)
         log_lines = read_tail_lines(log_path, lines, logger)
         html += "".join(log_lines[-lines:])
         html += """</textarea>
