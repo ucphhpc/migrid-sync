@@ -1,12 +1,9 @@
 from collections import defaultdict
 
-import html5lib
+from lxml import etree
 
 from mig.shared import htmlgen
 from tests.support import MigTestCase
-
-# html namespace as default
-ns = {"": "http://www.w3.org/1999/xhtml"}
 
 
 class TestGetXgiHtmlHeader(MigTestCase):
@@ -22,8 +19,8 @@ class TestGetXgiHtmlHeader(MigTestCase):
             script_map=defaultdict(str),
         )
 
-        parsed = html5lib.parse(result)
-        links = parsed.findall('.//div[@id="userMenu"]//a[@class]', ns)
+        parsed = etree.HTML(result)
+        links = parsed.findall('.//div[@id="userMenu"]//a[@class]')
         link_setup = next(
             l for l in links if "link-setup" in l.attrib["class"].split()
         )
@@ -39,8 +36,8 @@ class TestGetXgiHtmlHeader(MigTestCase):
             base_menu=["setup"],
         )
 
-        parsed = html5lib.parse(result)
-        links = parsed.findall('.//div[@id="userMenu"]//a[@class]', ns)
+        parsed = etree.HTML(result)
+        links = parsed.findall('.//div[@id="userMenu"]//a[@class]')
         link_setup = next(
             l for l in links if "link-setup" in l.attrib["class"].split()
         )

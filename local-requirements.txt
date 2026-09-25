@@ -15,4 +15,4 @@ werkzeug
 # We need pyOpenSSL for the FTPS service and related tlsserver unit tests
 pyOpenSSL
 # for unittesting of htmlgen module
-html5lib==1.1
+lxml
