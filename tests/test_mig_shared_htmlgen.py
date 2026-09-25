@@ -3,16 +3,20 @@ from collections import defaultdict
 import html5lib
 
 from mig.shared import htmlgen
-from tests.support import FakeConfiguration, MigTestCase
+from tests.support import MigTestCase
 
 # html namespace as default
 ns = {"": "http://www.w3.org/1999/xhtml"}
 
 
 class TestGetXgiHtmlHeader(MigTestCase):
+
+    def _provide_configuration(self) -> str:
+        return "testconfig"
+
     def test_user_menu_setup_disabled_if_setup_app_not_specified(self):
         result = htmlgen.get_xgi_html_header(
-            configuration=FakeConfiguration(user_interface=["V3"]),
+            configuration=self.configuration,
             title="title",
             header="header",
             script_map=defaultdict(str),
@@ -28,7 +32,7 @@ class TestGetXgiHtmlHeader(MigTestCase):
 
     def test_user_menu_setup_enabled_if_setup_app_specified(self):
         result = htmlgen.get_xgi_html_header(
-            configuration=FakeConfiguration(user_interface=["V3"]),
+            configuration=self.configuration,
             title="title",
             header="header",
             script_map=defaultdict(str),
