@@ -179,8 +179,6 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
                 key in ["EMAIL", "SITE_USER_MENU", "USER_INTERFACE"]
             )
 
-    # TODO: fix issue 667 and re-enable this test
-    @unittest.skip("Fix parser to not skip kw default value when conf differs")
     def test_settings_save_with_user_interface_v2(self):
         with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
             mrsl_fd.write(self._add_mrsl_ui(INIT_SETTINGS_MRSL, "V2"))
@@ -262,8 +260,6 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
                 key in ["EMAIL", "SITE_USER_MENU", "USER_INTERFACE"]
             )
 
-    # TODO: fix issue 667 and re-enable this test
-    @unittest.skip("Fix parser to not skip kw default value when conf differs")
     def test_settings_replace_with_user_interface_v2(self):
         with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
             mrsl_fd.write(INIT_SETTINGS_MRSL)
@@ -476,7 +472,6 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
         self.assertTrue(isinstance(updated, dict))
         self.assertNotEqual(updated["USER_INTERFACE"], "INVALID")
 
-    @unittest.skip("Fix parser to not force default keyword ui value")
     def test_update_settings_email_does_not_change_user_interface(self):
         with open(self.TEST_SETTINGS_MRSL, "w") as mrsl_fd:
             mrsl_fd.write(INIT_SETTINGS_MRSL)
