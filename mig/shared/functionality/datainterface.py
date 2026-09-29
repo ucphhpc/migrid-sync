@@ -266,12 +266,12 @@ def validate_peers_csvlines(csvlines):
     return accepted, rejected
 
 
-def _check_peers_permit(configuration, request_info):
+def _check_peers_permit(configuration, client_id):
     """Check if the requesting client is permitted to manage peers.
 
     Returns True if permitted, False otherwise.
     """
-    user_dict = distinguished_name_to_user(request_info.client_id)
+    user_dict = distinguished_name_to_user(client_id)
     return accountreq.peers_permit_allowed(configuration, user_dict)
 
 
@@ -441,7 +441,7 @@ def handle_GET_peers_summary(configuration, request_info):
     Request handler: GET /peers/summary
     """
     # Check if user is permitted to manage peers
-    if not _check_peers_permit(configuration, request_info):
+    if not _check_peers_permit(configuration, request_info.client_id):
         return create_handler_response(403, error="you are not permitted to manage peers")
 
     accepted_peers = accountreq.list_peers_accepted(
@@ -474,7 +474,7 @@ def handle_POST_peers_send_invitation(configuration, request_info):
     Request handler: POST /peers/send_invitation
     """
     # Check if user is permitted to manage peers
-    if not _check_peers_permit(configuration, request_info):
+    if not _check_peers_permit(configuration, request_info.client_id):
         return create_handler_response(403, error="you are not permitted to manage peers")
 
     peers = request_info.arg_value("peers", list)
@@ -572,7 +572,7 @@ def handle_POST_peers_new(configuration, request_info):
     Request handler: POST /peers/new
     """
     # Check if user is permitted to manage peers
-    if not _check_peers_permit(configuration, request_info):
+    if not _check_peers_permit(configuration, request_info.client_id):
         return create_handler_response(403, error="you are not permitted to manage peers")
 
     fields_dict = request_info.args
@@ -718,7 +718,7 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
     Request handler: DELETE /peers/accepted/delete
     """
     # Check if user is permitted to manage peers
-    if not _check_peers_permit(configuration, request_info):
+    if not _check_peers_permit(configuration, request_info.client_id):
         return create_handler_response(403, error="you are not permitted to manage peers")
 
     peers = request_info.arg_value("peers", list)
@@ -827,7 +827,7 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
     Request handler: POST /peers/accepted/fetch
     """
     # Check if user is permitted to manage peers
-    if not _check_peers_permit(configuration, request_info):
+    if not _check_peers_permit(configuration, request_info.client_id):
         return create_handler_response(403, error="you are not permitted to manage peers")
 
     peer = request_info.args["peer"]
@@ -872,7 +872,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     Request handler: POST /peers/accepted/import
     """
     # Check if user is permitted to manage peers
-    if not _check_peers_permit(configuration, request_info):
+    if not _check_peers_permit(configuration, request_info.client_id):
         return create_handler_response(403, error="you are not permitted to manage peers")
 
     args = request_info.args
@@ -1067,7 +1067,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     Request Handler: POST /peers/accepted/update
     """
     # Check if user is permitted to manage peers
-    if not _check_peers_permit(configuration, request_info):
+    if not _check_peers_permit(configuration, request_info.client_id):
         return create_handler_response(403, error="you are not permitted to manage peers")
 
     args = request_info.args
@@ -1180,7 +1180,7 @@ def handle_POST_peers_requested_delete(configuration, request_info):
     Request handler: DELETE /peers/requested/delete
     """
     # Check if user is permitted to manage peers
-    if not _check_peers_permit(configuration, request_info):
+    if not _check_peers_permit(configuration, request_info.client_id):
         return create_handler_response(403, error="you are not permitted to manage peers")
 
     peers = request_info.arg_value("peers", list)
@@ -1291,7 +1291,7 @@ def handle_POST_peers_requested_accept(configuration, request_info):
     Request handler: POST /peers/requested/accept
     """
     # Check if user is permitted to manage peers
-    if not _check_peers_permit(configuration, request_info):
+    if not _check_peers_permit(configuration, request_info.client_id):
         return create_handler_response(403, error="you are not permitted to manage peers")
 
     peers = request_info.arg_value("peers", list)
