@@ -1083,11 +1083,16 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     peer_dn = accepted["peer"]
 
     # Validate the global peers args
-    common_update_args = {
-        "label": args.pop("label", ""),
-        "kind": args.pop("kind", ""),
-        "expire": args.pop("expire", ""),
-    }
+    input_label = args.get("label", None)
+    input_kind = args.get("kind", None)
+    input_expire = args.get("expire", None)
+
+    common_update_args = {}
+    for input_arg in ["label", "kind", "expire"]:
+        value = args.get(input_arg, None)
+        if value:
+            common_update_args[input_arg] = value
+
     accepted_common, rejected_common = validate_peers_update_fields(
         common_update_args
     )
@@ -1102,14 +1107,15 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     kind = accepted_common["kind"]
     expire = accepted_common["expire"]
 
-    # validate expire range (min/max days)
-    valid_expire, expire_message = validate_peer_expire_value(expire)
-    if not valid_expire:
-        return create_handler_response(
-            400,
-            error="an incorrect End Date value was received.",
-            errors_map={"0": {"expire": expire_message}},
-        )
+    if expire is not None:
+        # validate expire range (min/max days)
+        valid_expire, expire_message = validate_peer_expire_value(expire)
+        if not valid_expire:
+            return create_handler_response(
+                400,
+                error="an incorrect End Date value was received.",
+                errors_map={"0": {"expire": expire_message}},
+            )
 
     accepted_peers = accountreq.list_peers_accepted(
         configuration, request_info.client_id
@@ -1124,8 +1130,14 @@ def handle_POST_peers_accepted_update(configuration, request_info):
 
     # Update the underlying peer
     update_peer_dict = {
-        peer_dn: {"label": label, "kind": kind, "expire": expire}
+        peer_dn: {}
     }
+    if label is not None:
+        update_peer_dict[peer_dn]["label"] = label
+    if kind is not None:
+        update_peer_dict[peer_dn]["kind"] = kind
+    if expire is not None:
+        update_peer_dict[peer_dn]["expire"] = expire
 
     if not accountreq.update_peers_accepted(
         configuration, request_info.client_id, update_peer_dict
