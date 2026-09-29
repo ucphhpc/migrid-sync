@@ -157,11 +157,18 @@ def html_add(formatted_text, html=True):
 def legacy_user_interface(configuration, user_settings,
                           legacy_versions=["V1", "V2"]):
     """Helper to ease detection of legacy user interfaces"""
+    _logger = configuration.logger
     # Default to first config value or V3 if explicitly unset
-    active_ui = (configuration.user_interface + ['V3'])[0]
+    valid_user_interfaces = configuration.user_interface + ['V3']
+    active_ui = valid_user_interfaces[0]
     # Please note that user_settings may be boolean False if never saved
     if user_settings:
-        active_ui = user_settings.get('USER_INTERFACE', active_ui)
+        user_ui = user_settings.get('USER_INTERFACE', active_ui)
+        if user_ui in valid_user_interfaces:
+            active_ui = user_ui
+        else:
+            _logger.warning("ignoring invalid saved user interface value: %s" %
+                            user_ui)
     if active_ui in legacy_versions:
         return True
     else:
