@@ -552,6 +552,15 @@ def _main(
             object_type="error_text",
             output_return_code=returnvalues.CLIENT_ERROR,
         )
+
+    # Validate that the specified package is supported
+    if request_info.request_package not in TMPL_DATA_HANDLERS:
+        return create_text_response(
+            output_objects,
+            "the specified route package handler was not found",
+            object_type="error_text",
+            output_return_code=returnvalues.CLIENT_ERROR,
+        )
     try:
         package_module = importlib.import_module(request_info.request_package)
     except (ImportError, ModuleNotFoundError) as exc:
@@ -587,15 +596,6 @@ def _main(
         return create_text_response(
             output_objects,
             "the required 'generate_args' key was not found in the template package routes",
-            object_type="error_text",
-            output_return_code=returnvalues.CLIENT_ERROR,
-        )
-
-    # 2a. reference all routes that are implemented for the given package
-    if request_info.request_package not in TMPL_DATA_HANDLERS:
-        return create_text_response(
-            output_objects,
-            "the specified route package handler was not found",
             object_type="error_text",
             output_return_code=returnvalues.CLIENT_ERROR,
         )
