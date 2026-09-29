@@ -1083,10 +1083,6 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     peer_dn = accepted["peer"]
 
     # Validate the global peers args
-    input_label = args.get("label", None)
-    input_kind = args.get("kind", None)
-    input_expire = args.get("expire", None)
-
     common_update_args = {}
     for input_arg in ["label", "kind", "expire"]:
         value = args.get(input_arg, None)
