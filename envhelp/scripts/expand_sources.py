@@ -59,6 +59,11 @@ def download_url_wget(url, output_file):
     subprocess.run(["wget", "-O", output_file, url], stderr=subprocess.DEVNULL)
 
 
+def clear_directory(path):
+    shutil.rmtree(path, ignore_errors=True)
+    os.makedirs(path)
+
+
 def main(argv):
     use_wget = "--use-wget" in argv
 
@@ -110,7 +115,7 @@ def main(argv):
             shutil.copyfile(package_path, target_path_path)
 
         # remove all staged files
-        shutil.rmtree(staging_dir)
+        clear_directory(staging_dir)
 
     packages_list = os.path.join(STAGING_DIR, ".packages.lst")
 
