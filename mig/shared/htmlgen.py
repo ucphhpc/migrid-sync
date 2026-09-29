@@ -106,9 +106,6 @@ def get_menu_items(user_settings=None):
     menu_items['peers'] = {'class': 'peers fas fa-address-card', 'url': 'peers.py',
                            'title': 'Peers',
                            'hover': 'Vouch for collaboration partner or course participant accounts'}
-    menu_items['statistics'] = {'class': 'statistics fas fa-poll', 'url': 'showstats.py',
-                                'legacy_only': True, 'title': 'Statistics',
-                                'hover': 'Usage overview for resources and users on this server'}
     menu_items['docs'] = {'class': 'docs fas fa-book', 'url': 'docs.py',
                           'title': 'Docs',
                           'hover': 'Some built-in documentation for reference'}
