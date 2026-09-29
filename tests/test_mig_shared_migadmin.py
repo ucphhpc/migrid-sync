@@ -36,6 +36,7 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
         self.configuration.site_enable_migadmin = True
         self.configuration.migadmin_view_access = "ANY"
         self.configuration.migadmin_act_access = "ANY"
+        self.configuration.logfile = "/tmp/mig.log"
         conf_fd, self.config_path = tempfile.mkstemp(
             dir=self.tempdir, prefix="MigServer", suffix=".conf", text=True
         )
