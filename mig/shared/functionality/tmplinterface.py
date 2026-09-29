@@ -95,7 +95,7 @@ def _compile_condition_value(search_value):
     """
 
     if isinstance(search_value, str):
-        pattern = re.compile(".*%s.*" % (search_value,))
+        pattern = re.compile(".*%s.*" % (re.escape(search_value),))
         return lambda value: bool(re.search(pattern, value))
     elif isinstance(search_value, date):
         return lambda value: _coerce_date(value) >= search_value
