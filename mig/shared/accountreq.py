@@ -862,12 +862,9 @@ def load_peers_pending(configuration, client_id):
     client_dir = client_id_dir(client_id)
     peers_path = os.path.join(configuration.user_settings, client_dir, pending_peers_filename)
 
-    try:
-        pending_peers = load_db_with_lock(peers_path, logger=_logger, exclusive=True)
-    except Exception as exc:
-        if os.path.exists(peers_path):
-            _logger.warning("could not load accepted peers from %s: %s" %
-                            (peers_path, exc))
+    pending_peers = load_db_with_lock(peers_path, logger=_logger, exclusive=True)
+    if not pending_peers and os.path.exists(peers_path):
+        _logger.warning("failed to load accepted peers from: %s" % peers_path)
     return pending_peers
 
 
@@ -877,12 +874,9 @@ def load_peers_accepted(configuration, client_id):
     client_dir = client_id_dir(client_id)
     peers_path = os.path.join(configuration.user_settings, client_dir, peers_filename)
 
-    try:
-        accepted_peers = load_db_with_lock(peers_path, logger=_logger, exclusive=True)
-    except Exception as exc:
-        if os.path.exists(peers_path):
-            _logger.warning("could not load accepted peers from %s: %s" %
-                            (peers_path, exc))
+    accepted_peers = load_db_with_lock(peers_path, logger=_logger, exclusive=True)
+    if not accepted_peers and os.path.exists(peers_path):
+        _logger.warning("failed to load accepted peers from: %s" % peers_path)
     return accepted_peers
 
 
@@ -897,11 +891,18 @@ def load_db_with_lock(path, logger=None, exclusive=False):
     if not os.path.exists(path):
         return False
 
-    with acquire_lock_for_path(path, exclusive=exclusive) as _lock_handle:
-        try:
-            return unpickle(path, logger, allow_missing=False)
-        finally:
-            release_file_lock(_lock_handle)
+    if logger is None:
+        logger = null_logger("dummy")
+
+    try:
+        with acquire_lock_for_path(path, exclusive=exclusive) as _lock_handle:
+            try:
+                return unpickle(path, logger, allow_missing=False)
+            finally:
+                release_file_lock(_lock_handle)
+    except Exception as exc:
+        logger.error("could not load db from %s: %s" % (path, exc))
+    return False
 
 
 def update_peers_accepted(configuration, client_id, update_peer_dicts):
