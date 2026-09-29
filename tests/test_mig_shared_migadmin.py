@@ -29,7 +29,7 @@
 import os
 import shutil
 import tempfile
-from typing import TextIO
+from typing import ContextManager, TextIO
 from unittest.mock import patch
 
 from mig.shared.functionality import migadmin
@@ -44,8 +44,7 @@ from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
 class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
     """Test the main function of the migadmin module."""
 
-    _config_file: TextIO
-    config_path: str
+    config_file: tempfile.NamedTemporaryFile
     tempdir: str
 
     def __init__(self, *args) -> None:
@@ -54,37 +53,44 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
     def _provide_configuration(self) -> str:
         return "testconfig"
 
-    def write_configuration(self) -> None:
-        with self._config_file as f:
-            write_configuration(self.configuration, f)
-        f.close()
-
     def before_each(self) -> None:
         self.tempdir = tempfile.mkdtemp(prefix=self.id().replace(".", "_"))
-        self._configuration = None  # TODO: fix hack to reset to default conf
         self.configuration.site_enable_migadmin = True
         self.configuration.migadmin_view_access = "ANY"
         self.configuration.migadmin_act_access = "ANY"
         self.configuration.logfile = "/tmp/mig.log"
-        conf_fd, self.config_path = tempfile.mkstemp(
-            dir=self.tempdir, prefix="MigServer", suffix=".conf", text=True
+        self.config_file = tempfile.NamedTemporaryFile(
+            dir=self.tempdir,
+            prefix="MigServer",
+            suffix=".conf",
+            mode="w+t",
+            delete_on_close=False,
         )
-        self._config_file = os.fdopen(conf_fd, mode="w+")
 
     def after_each(self) -> None:
         shutil.rmtree(self.tempdir)
 
-    def test_snapshot_is_not_admin(self) -> None:
-        self._provision_test_user(self, TEST_USER_DN)
-        self.configuration.admin_list = []  # user is not admin
-        self.write_configuration()
+    def write_config_and_patch_environ(self) -> ContextManager:
+        """
+        Writes the configuration file, and patches `os.environ` with
+        the location, along with other required values.
+        """
+
+        write_configuration(self.configuration, self.config_file)
+        self.config_file.close()
+
         environ = {
-            "MIG_CONF": self.config_path,
+            "MIG_CONF": self.config_file.name,
             "SCRIPT_URI": "https://test.url",
             generic_id_field: "https://openidv2.domain",
         }
+        return patch("os.environ", environ)
 
-        with patch("os.environ", environ):
+    def test_snapshot_is_not_admin(self) -> None:
+        self._provision_test_user(self, TEST_USER_DN)
+        self.configuration.admin_list = []  # user is not admin
+
+        with self.write_config_and_patch_environ():
             outobjs, retval = migadmin.main(TEST_USER_DN, {})
             output = html_format(self.configuration, retval, "", outobjs)
 
@@ -93,14 +99,8 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
     def test_snapshot_is_admin(self):
         self._provision_test_user(self, TEST_USER_DN)
         self.configuration.admin_list = [TEST_USER_DN]
-        self.write_configuration()
-        environ = {
-            "MIG_CONF": self.config_path,
-            "SCRIPT_URI": "https://test.url",
-            generic_id_field: "https://openidv2.domain",
-        }
 
-        with patch("os.environ", environ):
+        with self.write_config_and_patch_environ():
             outobjs, retval = migadmin.main(TEST_USER_DN, {})
             output = html_format(self.configuration, retval, "", outobjs)
 
