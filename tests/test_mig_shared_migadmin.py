@@ -64,7 +64,7 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
             prefix="MigServer",
             suffix=".conf",
             mode="w+t",
-            delete_on_close=False,
+            delete=False,
         )
 
     def after_each(self) -> None:
