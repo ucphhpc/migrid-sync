@@ -299,8 +299,8 @@ def create_peers_notify_msg(
 
     notify_peers = [
         """
-            "Peer: %s
-            "Expire: %s
+            Peer: %s
+            Expire: %s
         """ % (peer_dn, peer_dict["expire"])
         for peer_dn, peer_dict in peers.items()
     ]
