@@ -1909,18 +1909,6 @@ def peer_dict_from_fields(configuration, peer_fields_dict):
     return filled_canonicaled_peer_dict, None
 
 
-def transform_account_datestr_to_epoch(expire):
-    """ Transform the expected expire date YYYY-MM-DD to epoch time """
-    expire_date = date.fromisoformat(expire)
-    return int(time.mktime(expire_date.timetuple()))
-
-
-def transform_account_epoch_to_date(expire):
-    """ Transform the expected epoch time to YYYY-MM-DD """
-    expire_date = date.fromisoformat(expire)
-    return expire_date.isoformat()
-
-
 def parse_peers_userid(configuration, raw_entries):
     """Parse list of user IDs into a list of peers"""
     _logger = configuration.logger
