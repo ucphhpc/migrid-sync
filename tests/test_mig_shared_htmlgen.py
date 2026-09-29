@@ -1,7 +1,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# test_mig_shared_griddaemons_login - unit tests for griddaemons login functions
+# test_mig_shared_htmlgen - unit tests for htmlgen functions
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -50,10 +50,12 @@ class TestGetXgiHtmlHeader(MigTestCase):
         parsed = etree.HTML(result)
         links = parsed.findall('.//div[@id="userMenu"]//a[@class]')
         link_setup = next(
-            l for l in links if "link-setup" in l.attrib["class"].split()
+            link
+            for link in links
+            if "link-setup" in link.attrib["class"].split()
         )
 
-        assert "disable-link" in link_setup.attrib["class"].split()
+        self.assertIn("disable-link", link_setup.attrib["class"].split())
 
     def test_user_menu_setup_enabled_if_setup_app_specified(self):
         result = htmlgen.get_xgi_html_header(
@@ -67,7 +69,9 @@ class TestGetXgiHtmlHeader(MigTestCase):
         parsed = etree.HTML(result)
         links = parsed.findall('.//div[@id="userMenu"]//a[@class]')
         link_setup = next(
-            l for l in links if "link-setup" in l.attrib["class"].split()
+            link
+            for link in links
+            if "link-setup" in link.attrib["class"].split()
         )
 
-        assert "disable-link" not in link_setup.attrib["class"].split()
+        self.assertNotIn("disable-link", link_setup.attrib["class"].split())
