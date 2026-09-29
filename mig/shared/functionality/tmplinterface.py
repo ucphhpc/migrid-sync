@@ -422,6 +422,24 @@ def prepare_GET_migux_apps_peers_csrf_tokens(configuration, request_info):
     return create_handler_response(200, data=tokens)
 
 
+TMPL_DATA_HANDLERS = {
+    "migux.apps.peers": {
+        "GET /accepted": prepare_GET_migux_apps_peers_accepted,
+        "GET /requested": prepare_GET_migux_apps_peers_requested,
+        "GET /csrf_tokens": prepare_GET_migux_apps_peers_csrf_tokens,
+    }
+}
+
+
+NORMALIZE_INPUTS_BY_PACKAGE = {
+    "migux.apps.peers": {
+        "GET /accepted": convert_peers_listing_request_data,
+        "GET /requested": convert_peers_listing_request_data,
+        "GET /csrf_tokens": convert_csrf_tokens_request_data,
+    }
+}
+
+
 def create_tmpl_response(
     output_objects,
     template_group,
@@ -442,24 +460,6 @@ def create_tmpl_response(
         }
     )
     return (output_objects, returnvalues.OK)
-
-
-TMPL_DATA_HANDLERS = {
-    "migux.apps.peers": {
-        "GET /accepted": prepare_GET_migux_apps_peers_accepted,
-        "GET /requested": prepare_GET_migux_apps_peers_requested,
-        "GET /csrf_tokens": prepare_GET_migux_apps_peers_csrf_tokens,
-    }
-}
-
-
-NORMALIZE_INPUTS_BY_PACKAGE = {
-    "migux.apps.peers": {
-        "GET /accepted": convert_peers_listing_request_data,
-        "GET /requested": convert_peers_listing_request_data,
-        "GET /csrf_tokens": convert_csrf_tokens_request_data,
-    }
-}
 
 
 def _main(
