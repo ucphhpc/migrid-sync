@@ -54,6 +54,7 @@ from mig.shared.defaults import peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
     gdp_distinguished_field, peer_kinds
 from mig.shared.fileio import delete_file, make_temp_file, unpickle, pickle, acquire_file_lock, release_file_lock
+from mig.shared.logger import null_logger
 from mig.shared.notification import notify_user
 from mig.shared.pwcrypto import check_hash, check_scramble
 # Expose some helper variables for functionality backends
