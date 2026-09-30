@@ -156,6 +156,9 @@ jobs:
           # Make sure we can find migrid modules
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run lint error check for changed python files to limit noise
+          # NOTE: perms are not right inside container so repeat what checkout module does.
+          # NOTE: include tests here as they should be fully python3 compatible
+          git config --global --add safe.directory "$PWD"
           echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$')"
           LINT_ENFORCE_DIRS=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$')
           [ -z "$LINT_ENFORCE_DIRS" ] || make lint-python
