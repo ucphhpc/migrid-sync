@@ -61,7 +61,12 @@ from mig.lib.reqinfo import (
     unlistify_dict,
 )
 from mig.shared import accountreq, returnvalues
-from mig.shared.base import extract_field, fill_user, distinguished_name_to_user, string_snippet
+from mig.shared.base import (
+    distinguished_name_to_user,
+    extract_field,
+    fill_user,
+    string_snippet,
+)
 from mig.shared.defaults import (
     CSRF_WARN,
     keyword_auto,
@@ -83,6 +88,7 @@ from mig.shared.safeinput import (
     valid_boolean,
     valid_date,
     valid_distinguished_name,
+    valid_peer_expire_optional,
     valid_peer_kind,
     valid_peer_label,
     valid_peers_csvlines,
@@ -244,7 +250,7 @@ def validate_peers_update_fields(update_args):
         type_override={
             "label": valid_peer_label,
             "kind": valid_peer_kind,
-            "expire": valid_date,
+            "expire": valid_peer_expire_optional,
         },
         list_wrap=True,
     )
@@ -442,7 +448,9 @@ def handle_GET_peers_summary(configuration, request_info):
     """
     # Check if user is permitted to manage peers
     if not _check_peers_permit(configuration, request_info.client_id):
-        return create_handler_response(403, error="you are not permitted to manage peers")
+        return create_handler_response(
+            403, error="you are not permitted to manage peers"
+        )
 
     accepted_peers = accountreq.list_peers_accepted(
         configuration, request_info.client_id
@@ -475,7 +483,9 @@ def handle_POST_peers_send_invitation(configuration, request_info):
     """
     # Check if user is permitted to manage peers
     if not _check_peers_permit(configuration, request_info.client_id):
-        return create_handler_response(403, error="you are not permitted to manage peers")
+        return create_handler_response(
+            403, error="you are not permitted to manage peers"
+        )
 
     peers = request_info.arg_value("peers", list)
     validations = validate_input_peers_distinguished_names(peers)
@@ -573,7 +583,9 @@ def handle_POST_peers_new(configuration, request_info):
     """
     # Check if user is permitted to manage peers
     if not _check_peers_permit(configuration, request_info.client_id):
-        return create_handler_response(403, error="you are not permitted to manage peers")
+        return create_handler_response(
+            403, error="you are not permitted to manage peers"
+        )
 
     fields_dict = request_info.args
     input_invite_on_email = fields_dict.pop("invite_on_email")
@@ -719,7 +731,9 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
     """
     # Check if user is permitted to manage peers
     if not _check_peers_permit(configuration, request_info.client_id):
-        return create_handler_response(403, error="you are not permitted to manage peers")
+        return create_handler_response(
+            403, error="you are not permitted to manage peers"
+        )
 
     peers = request_info.arg_value("peers", list)
     validations = validate_input_peers_distinguished_names(peers)
@@ -828,7 +842,9 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
     """
     # Check if user is permitted to manage peers
     if not _check_peers_permit(configuration, request_info.client_id):
-        return create_handler_response(403, error="you are not permitted to manage peers")
+        return create_handler_response(
+            403, error="you are not permitted to manage peers"
+        )
 
     peer = request_info.args["peer"]
     accepted, rejected = validate_input_peer_distinguished_name(peer)
@@ -873,7 +889,9 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     """
     # Check if user is permitted to manage peers
     if not _check_peers_permit(configuration, request_info.client_id):
-        return create_handler_response(403, error="you are not permitted to manage peers")
+        return create_handler_response(
+            403, error="you are not permitted to manage peers"
+        )
 
     args = request_info.args
     # Validate invite on email
@@ -1057,8 +1075,14 @@ def convert_POST_peers_accepted_update(request_data):
     peer = unlistify(args.pop("peer_dn", ""))
     args["peer"] = {"peer": peer}
 
-    expire = unlistify(args.pop("expire", ""))
+    expire = unlistify(args.pop("expire", None))
     args["expire"] = {"expire": expire}
+
+    label = unlistify(args.pop("label", None))
+    args["label"] = {"label": label}
+
+    kind = unlistify(args.pop("kind", None))
+    args["kind"] = {"kind": kind}
     return args
 
 
@@ -1068,7 +1092,9 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     """
     # Check if user is permitted to manage peers
     if not _check_peers_permit(configuration, request_info.client_id):
-        return create_handler_response(403, error="you are not permitted to manage peers")
+        return create_handler_response(
+            403, error="you are not permitted to manage peers"
+        )
 
     args = request_info.args
 
@@ -1086,7 +1112,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     common_update_args = {}
     for input_arg in ["label", "kind", "expire"]:
         value = args.get(input_arg, None)
-        if value:
+        if value is not None:
             common_update_args[input_arg] = value
 
     accepted_common, rejected_common = validate_peers_update_fields(
@@ -1125,9 +1151,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
         )
 
     # Update the underlying peer
-    update_peer_dict = {
-        peer_dn: {}
-    }
+    update_peer_dict = {peer_dn: {}}
     if label is not None:
         update_peer_dict[peer_dn]["label"] = label
     if kind is not None:
@@ -1189,7 +1213,9 @@ def handle_POST_peers_requested_delete(configuration, request_info):
     """
     # Check if user is permitted to manage peers
     if not _check_peers_permit(configuration, request_info.client_id):
-        return create_handler_response(403, error="you are not permitted to manage peers")
+        return create_handler_response(
+            403, error="you are not permitted to manage peers"
+        )
 
     peers = request_info.arg_value("peers", list)
     validations = validate_input_peers_distinguished_names(peers)
@@ -1300,7 +1326,9 @@ def handle_POST_peers_requested_accept(configuration, request_info):
     """
     # Check if user is permitted to manage peers
     if not _check_peers_permit(configuration, request_info.client_id):
-        return create_handler_response(403, error="you are not permitted to manage peers")
+        return create_handler_response(
+            403, error="you are not permitted to manage peers"
+        )
 
     peers = request_info.arg_value("peers", list)
     validations = validate_input_peers_distinguished_names(peers)

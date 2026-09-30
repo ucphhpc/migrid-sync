@@ -598,12 +598,12 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         )
 
         new_label = "update_peer_label"
+        new_kind = "course"
         new_expire = date_expire_in_min.isoformat()
-        new_kind = ""
         payload = {
             "peer_dn": self.TEST_PEER_DN,
             "label": new_label,
-            "kind": "",
+            "kind": new_kind,
             "expire": new_expire,
         }
 
@@ -641,16 +641,29 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
 
+    def test_peers_accepted_update_partial(self):
+        # We don't want to test email sending here
+        # just the correctness of the datastructure
+        self.configuration.context_get("notifier").send_email.forgive_email()
 
-    def test_peers_accepted_update_empty(self):
         self._provision_peer_user(
             self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
         )
 
+        # Retrieve the initial peers state
+        initial_peers = self.assertUserPeers(self.TEST_CLIENT_ID)
+        initial_peer = initial_peers.get(self.TEST_PEER_DN, None)
+        self.assertIsNotNone(initial_peer)
+        self.assertNotIn("label", initial_peer)
+        self.assertNotIn("kind", initial_peer)
+        self.assertIn("expire", initial_peer)
+
+        payload = {"peer_dn": self.TEST_PEER_DN, "kind": "project"}
+
         request_body = {
             "type": "peers__accepted__update",
             "operation": "create",
-            "peer_dn": self.TEST_PEER_DN,
+            **payload,
         }
         prepared_wsgi = self.prepareWsgiAssert(
             self.configuration,
@@ -662,8 +675,22 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         json_response = self.assertWsgiJsonResponse(prepared_wsgi)
 
         status = json_response["status"]
-        self.assertEqual(status, 400)
+        self.assertEqual(status, 200)
         self.assertIn("error", json_response)
+
+        # Validate that the peer was only partially updated
+        peers = self.assertUserPeers(self.TEST_CLIENT_ID)
+        peer = peers.get(self.TEST_PEER_DN, None)
+        self.assertIsNotNone(peer)
+
+        self.assertEqual(peer["distinguished_name"], self.TEST_PEER_DN)
+        self.assertIn("expire", peer)
+        self.assertEqual(peer["expire"], initial_peer["expire"])
+
+        self.assertIn("kind", peer)
+        self.assertEqual(peer["kind"], "project")
+
+        self.assertNotIn("label", peer)
 
     def test_peers_send_invitation_valid(self):
         self._provision_peer_user(

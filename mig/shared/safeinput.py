@@ -1089,7 +1089,7 @@ def valid_peer_expire_optional(
     """Verify that the supplied expire value is either empty or a valid date
     """
 
-    if expire == "":
+    if expire == "" or expire is None:
         return True
 
     valid_date(expire, min_length=min_length, max_length=max_length)
@@ -1112,7 +1112,7 @@ def valid_peer_kind(value, **kwargs):
     """Verify that the supplied kind is either an empty string,
     or one of peer_kinds.
     """
-    if value == '':
+    if value == '' or value is None:
         return True
 
     if value not in peer_kinds:
