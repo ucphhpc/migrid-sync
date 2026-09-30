@@ -1226,7 +1226,7 @@ def accept_account_req(req_id, configuration, peer_id,
 
 def peer_account_req(req_id, configuration, target_id,
                     admin_copy=True,
-                    user_copy=True,
+                    user_copy=False,
                     include_auto_email=True,
                     auth_type='oid',
                     _notify_user=notify_user):
