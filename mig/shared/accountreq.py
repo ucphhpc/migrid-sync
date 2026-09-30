@@ -1175,12 +1175,6 @@ def accept_account_req(req_id, configuration, peer_id,
     _logger.info('%sd %s in user database and in file system' %
                  (operation_type.title(), user_dict['distinguished_name']))
 
-    if not delete_file(req_path, _logger):
-        err_msg = 'failed to clean up request %s after user %s' % \
-                  (req_path, operation_type)
-        _logger.error(err_msg)
-        return (False, err_msg)
-
     if user_copy or admin_copy:
         extra_copies = []
         # Default to inform mail used in request
@@ -1221,6 +1215,12 @@ def accept_account_req(req_id, configuration, peer_id,
     else:
         _logger.error('one or more account intro messages failed for %s' %
                       req_path)
+
+    if not delete_file(req_path, _logger):
+        err_msg = 'failed to clean up request %s after user %s' % \
+                  (req_path, operation_type)
+        _logger.error(err_msg)
+        return (False, err_msg)
     return (True, '')
 
 
