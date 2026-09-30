@@ -91,6 +91,8 @@ jobs:
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
       - name: Lint with make lint-python on changed .py files
         run: |
+          # Make sure we can find pip installed binaries like ruff
+          export PATH="$HOME/.local/bin:$PATH"
           # Make sure we can find migrid modules
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run lint error check for changed python files to limit noise
@@ -154,6 +156,8 @@ jobs:
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
       - name: Lint with make lint-python on changed .py files
         run: |
+          # Make sure we can find pip installed binaries like ruff
+          export PATH="$HOME/.local/bin:$PATH"
           # Make sure we can find migrid modules
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run lint error check for changed python files to limit noise
