@@ -1831,7 +1831,15 @@ EXTRA_PEER_FIELDS = {
 
 
 def _unlistify_dict(thedict):
+    """ A module helper for converting a dictionary of lists to a dictionary of values."""
     return {key:value[0] for key, value in thedict.items()}
+
+
+def _unlisty(thelist):
+    """ A module helper for extracting the first element of a list."""
+    if isinstance(thelist, list):
+        return thelist[0]
+    return thelist
 
 
 def _normalize_rejected_value(failure_detail):
@@ -1842,14 +1850,25 @@ def _normalize_rejected_value(failure_detail):
     rejections cause different structures to be returned
     as values of rejected keys. Try to make something
     presentable in the UI from what we get.
-    """
 
+    failure_detail: is expected to be either a list, a tuple or a string. The format is defined by how the value was rejected.
+    """
     normalized_details = []
     if isinstance(failure_detail, list):
-        normalized_details.append(failure_detail[0][1])
+        # When the rejected structure is a list, the first element is an error identifier,
+        # and the second is the error message.
+        unlisted_failure = _unlisty(failure_detail)
+        normalized_details.append(unlisted_failure[-1])
+    elif isinstance(failure_detail, tuple) and len(failure_detail) == 2:
+        # When the rejected structure is a tuple, the first element is the
+        # input field key, and the second is a list with the error message.
+        key = failure_detail[0]
+        value = _unlisty(failure_detail[1])
+        normalized_details.append(value)
+    elif isinstance(failure_detail, str):
+        normalized_details.append(failure_detail)
     else:
-        normalized_details.append(failure_detail[0])
-        normalized_details.append(failure_detail[1][0])
+        normalized_details.append('the field value was rejected for unknown reasons')
     return ' '.join(normalized_details)
 
 
@@ -1870,16 +1889,15 @@ def peer_dict_from_fields(configuration, peer_fields_dict):
     rejected = {}
     basic_fields = {field_name: peer_fields_dict.get(field_name, '').strip()
                     for field_name in BASIC_PEER_FIELDS.keys()}
-    basic_accepted, rejected = validated_input(basic_fields,
+    basic_accepted, basic_rejected = validated_input(basic_fields,
                                          BASIC_PEER_FIELDS,
                                          list_wrap=True)
-    rejected.update(rejected)
+    rejected.update(basic_rejected)
     # There is no choice but use list_wrap during validation - not doing
     # so leads to accepted containing arrays of the _characters_ within the
     # values. This is unfortunate. It means we get our input values back from
     # validation wrapped in arrays, so we need to undo that.
     peer_dict = _unlistify_dict(basic_accepted)
-
 
     # the only remaining fields should now be the extra fields
     extra_fields = {k:v for k, v in peer_fields_dict.items()
