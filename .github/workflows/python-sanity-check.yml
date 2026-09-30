@@ -89,6 +89,14 @@ jobs:
       - name: Setup environment with full recommended dependencies
         run: |
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
+      - name: Get changed .py files
+        id: changed-py-files
+        run: |
+            if ${{ github.event_name == 'pull_request' }}; then
+                echo "changed_py_files=$(git diff --diff-filter=ACMRTB --name-only -r HEAD^1 HEAD | grep -E '\.py$' | xargs)" >> $GITHUB_OUTPUT
+            else
+                echo "changed_py_files=$(git diff --diff-filter=ACMRTB --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -E '\.py$' | xargs)" >> $GITHUB_OUTPUT
+            fi
       - name: Lint with make lint-python on changed .py files
         run: |
           # Make sure we can find pip installed binaries like ruff
@@ -96,18 +104,16 @@ jobs:
           # Make sure we can find migrid modules
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run lint error check for changed python files to limit noise
-          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
-          echo "Lint changed code files: ${CHANGED_PY_FILES}"
-          [ -z "${CHANGED_PY_FILES}" ] || make PYTHON_BIN=python3 lint-python LINT_ENFORCE_DIRS="${CHANGED_PY_FILES}"
+          echo "Lint changed code files: ${changed_py_files}"
+          [ -z "${changed_py_files}" ] || make PYTHON_BIN=python3 lint-python LINT_ENFORCE_DIRS="${changed_py_files}"
       # TODO: drop the next ones when make lint works and handle all linting there
       - name: Lint with pylint
         run: |
           # Make sure we can find migrid modules
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run pylint error check for changed python files to limit noise
-          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
-          echo "Lint changed code files: ${CHANGED_PY_FILES}"
-          echo "${CHANGED_PY_FILES}" | xargs -r pylint -E
+          echo "Lint changed code files: ${changed_py_files}"
+          echo "${changed_py_files}" | xargs -r pylint -E
       - name: Lint with flake8
         run: |
           # TODO: fix unittest dir and remove from excludes
@@ -154,6 +160,14 @@ jobs:
       - name: Setup environment with full recommended dependencies
         run: |
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
+      - name: Get changed .py files
+        id: changed-py-files
+        run: |
+            if ${{ github.event_name == 'pull_request' }}; then
+                echo "changed_py_files=$(git diff --diff-filter=ACMRTB --name-only -r HEAD^1 HEAD | grep -E '\.py$' | xargs -r)" >> $GITHUB_OUTPUT
+            else
+                echo "changed_py_files=$(git diff --diff-filter=ACMRTB --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -E '\.py$' | xargs -r)" >> $GITHUB_OUTPUT
+            fi
       - name: Lint with make lint-python on changed .py files
         run: |
           # Make sure we can find pip installed binaries like ruff
@@ -167,9 +181,8 @@ jobs:
           # NOTE: perms are not right inside container so repeat what checkout module does.
           git config --global --add safe.directory "$PWD"
           # NOTE: include tests here as they should be fully python3 compatible
-          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
-          echo "Lint changed code files: ${CHANGED_PY_FILES}"
-          [ -z "${CHANGED_PY_FILES}" ] || make PYTHON_BIN=python3 lint-python LINT_ENFORCE_DIRS="${CHANGED_PY_FILES}"
+          echo "Lint changed code files: ${changed_py_files}"
+          [ -z "${changed_py_files}" ] || make PYTHON_BIN=python3 lint-python LINT_ENFORCE_DIRS="${changed_py_files}"
       # TODO: drop the next ones when make lint works and handle all linting there
       - name: Lint with pylint
         run: |
@@ -179,9 +192,8 @@ jobs:
           # NOTE: perms are not right inside container so repeat what checkout module does.
           git config --global --add safe.directory "$PWD"
           # NOTE: include tests here as they should be fully python3 compatible
-          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
-          echo "Lint changed code files: ${CHANGED_PY_FILES}"
-          echo "${CHANGED_PY_FILES}" | xargs -r pylint -E
+          echo "Lint changed code files: ${changed_py_files}"
+          echo "${changed_py_files}" | xargs -r pylint -E
       - name: Lint with flake8
         run: |
           # TODO: fix unittest dir and remove from excludes
