@@ -552,4 +552,3 @@ valid_gdp_anon_scripts = [
 
 # Maximum allowed workflow parameter sweep size
 MAX_SWEEP = 250
-
