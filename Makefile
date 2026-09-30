@@ -137,21 +137,13 @@ ifeq ($(MIG_ENV),'local')
 	@echo "installing development dependencies"
 	@$(LOCAL_PYTHON_BIN) -m pip install \
 		-r local-requirements.txt
-	@echo "expanding local packages"
-	@$(LOCAL_PYTHON_BIN) ./envhelp/scripts/expand_sources.py
-	@echo "generating local package index"
-	@./envhelp/invoke dumb-pypi \
-		--package-list "$(STAGING_DIR)/.packages.lst" \
-		--packages-url='../..' \
-		--output-dir "$(STAGING_DIR)"
 endif
 	@echo "installing dependencies from $(REQS_PATH)"
 	@$(LOCAL_PYTHON_BIN) -m pip install -r $(REQS_PATH)
 ifeq ($(MIG_ENV),'local')
 	@echo "installing plugins"
 	@$(LOCAL_PYTHON_BIN) -m pip install \
-		-r ./mig/install/requirements/migux-requirements.txt \
-		--extra-index-url="file://$(STAGING_DIR)/simple"
+		-r ./mig/install/requirements/migux-requirements.txt
 	@echo "running plugins postinstall"
 	@$(LOCAL_PYTHON_BIN) ./mig/install/postinstall/migux-postinstall
 endif
