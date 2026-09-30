@@ -96,7 +96,7 @@ jobs:
           # NOTE: we only run lint error check for changed python files to limit noise
           CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' || echo '')
           echo "Lint changed code files: ${CHANGED_PY_FILES}"
-          [ -z "${CHANGED_PY_FILES}" ] || make lint-python LINT_ENFORCE_DIRS="${CHANGED_PY_FILES}"
+          [ -z "${CHANGED_PY_FILES}" ] || make PYTHON_BIN=python3 lint-python LINT_ENFORCE_DIRS="${CHANGED_PY_FILES}"
       # TODO: drop the next ones when make lint works and handle all linting there
       - name: Lint with pylint
         run: |
@@ -162,7 +162,7 @@ jobs:
           git config --global --add safe.directory "$PWD"
           CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' || echo '')
           echo "Lint changed code files: ${CHANGED_PY_FILES}"
-          [ -z "${CHANGED_PY_FILES}" ] || make lint-python LINT_ENFORCE_DIRS="${CHANGED_PY_FILES}"
+          [ -z "${CHANGED_PY_FILES}" ] || make PYTHON_BIN=python3 lint-python LINT_ENFORCE_DIRS="${CHANGED_PY_FILES}"
       # TODO: drop the next ones when make lint works and handle all linting there
       - name: Lint with pylint
         run: |
