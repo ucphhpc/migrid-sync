@@ -89,6 +89,15 @@ jobs:
       - name: Setup environment with full recommended dependencies
         run: |
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
+      - name: Lint with make lint-python on changed .py files
+        run: |
+          # Make sure we can find migrid modules
+          export PYTHONPATH="$PWD:$PYTHONPATH"
+          # NOTE: we only run lint error check for changed python files to limit noise
+          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$')"
+          LINT_ENFORCE_DIRS=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$')
+          [ -z "$LINT_ENFORCE_DIRS" ] || make lint-python
+      # TODO: drop the next ones when make lint works and handle all linting there
       - name: Lint with pylint
         run: |
           # Make sure we can find migrid modules
@@ -142,6 +151,15 @@ jobs:
       - name: Setup environment with full recommended dependencies
         run: |
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
+      - name: Lint with make lint-python on changed .py files
+        run: |
+          # Make sure we can find migrid modules
+          export PYTHONPATH="$PWD:$PYTHONPATH"
+          # NOTE: we only run lint error check for changed python files to limit noise
+          echo "Lint changed code files: $(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$')"
+          LINT_ENFORCE_DIRS=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$')
+          [ -z "$LINT_ENFORCE_DIRS" ] || make lint-python
+      # TODO: drop the next ones when make lint works and handle all linting there
       - name: Lint with pylint
         run: |
           # Make sure we can find migrid modules
