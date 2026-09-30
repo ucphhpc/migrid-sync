@@ -15,3 +15,5 @@ paramiko>=3.4.0
 werkzeug
 # We need pyOpenSSL for the FTPS service and related tlsserver unit tests
 pyOpenSSL
+# for unittesting of htmlgen module
+lxml
