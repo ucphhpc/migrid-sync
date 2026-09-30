@@ -94,7 +94,7 @@ jobs:
           # Make sure we can find migrid modules
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run lint error check for changed python files to limit noise
-          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' || echo '')
+          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
           echo "Lint changed code files: ${CHANGED_PY_FILES}"
           [ -z "${CHANGED_PY_FILES}" ] || make PYTHON_BIN=python3 lint-python LINT_ENFORCE_DIRS="${CHANGED_PY_FILES}"
       # TODO: drop the next ones when make lint works and handle all linting there
@@ -103,7 +103,7 @@ jobs:
           # Make sure we can find migrid modules
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run pylint error check for changed python files to limit noise
-          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' || echo '')
+          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
           echo "Lint changed code files: ${CHANGED_PY_FILES}"
           echo "${CHANGED_PY_FILES}" | xargs -r pylint -E
       - name: Lint with flake8
@@ -160,7 +160,7 @@ jobs:
           # NOTE: perms are not right inside container so repeat what checkout module does.
           # NOTE: include tests here as they should be fully python3 compatible
           git config --global --add safe.directory "$PWD"
-          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' || echo '')
+          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
           echo "Lint changed code files: ${CHANGED_PY_FILES}"
           [ -z "${CHANGED_PY_FILES}" ] || make PYTHON_BIN=python3 lint-python LINT_ENFORCE_DIRS="${CHANGED_PY_FILES}"
       # TODO: drop the next ones when make lint works and handle all linting there
@@ -172,7 +172,7 @@ jobs:
           # NOTE: perms are not right inside container so repeat what checkout module does.
           # NOTE: include tests here as they should be fully python3 compatible
           git config --global --add safe.directory "$PWD"
-          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' || echo '')
+          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
           echo "Lint changed code files: ${CHANGED_PY_FILES}"
           echo "${CHANGED_PY_FILES}" | xargs -r pylint -E
       - name: Lint with flake8
