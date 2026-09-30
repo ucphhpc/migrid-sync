@@ -158,9 +158,9 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
             errors_map,
             {
                 "0": {
-                    "expire": "expire is required but missing",
-                    "kind": "kind is required but missing",
-                    "label": "label is required but missing",
+                    "expire": "is required but missing",
+                    "kind": "is required but missing",
+                    "label": "is required but missing",
                 }
             },
         )
@@ -567,6 +567,26 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertEqual(fake_send_email.total_emails_sent(), 4)
 
+    def test_peers_accepted_import_invalid_global_fields(self):
+        request_body = {
+            "type": "peers__accepted__import",
+            "operation": "create",
+            "label": "test_label",
+            "kind": "not_a_valid_kind",
+            "expire": "invalid-date",
+            "csvtext": "full_name,email,country,organization,state\nTest,test@example.com,DK,Org,NA",
+            "invite_on_email": False,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+        self.assertEqual(json_response["status"], 400)
+        self.assertIn("error", json_response)
+
     def test_peers_accepted_update(self):
         date_expire_in_min = (
             date.today()
@@ -620,6 +640,30 @@ class MigSharedFunctionalityDatainterface__peers_wsgi(
         # check emails were sent
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.email_was_sent_to("admin@example.com"))
+
+
+    def test_peers_accepted_update_empty(self):
+        self._provision_peer_user(
+            self, [self.TEST_PEER_DN], self.TEST_CLIENT_ID
+        )
+
+        request_body = {
+            "type": "peers__accepted__update",
+            "operation": "create",
+            "peer_dn": self.TEST_PEER_DN,
+        }
+        prepared_wsgi = self.prepareWsgiAssert(
+            self.configuration,
+            "http://localhost/datainterface.py",
+            form=request_body,
+            mig_user_dn=self.TEST_CLIENT_ID,
+        )
+
+        json_response = self.assertWsgiJsonResponse(prepared_wsgi)
+
+        status = json_response["status"]
+        self.assertEqual(status, 400)
+        self.assertIn("error", json_response)
 
     def test_peers_send_invitation_valid(self):
         self._provision_peer_user(
