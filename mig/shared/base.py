@@ -1036,3 +1036,4 @@ if __name__ == '__main__':
     from mig.shared.conf import get_configuration_object
     conf = get_configuration_object(skip_log=True, disable_auth_log=True)
     legacy_main(conf)
+
