@@ -157,17 +157,18 @@ jobs:
       - name: Lint with make lint-python on changed .py files
         run: |
           # Make sure we can find pip installed binaries like ruff
-          export PATH="$HOME/.local/bin:/usr/local/bin:./envhelp/venv/bin:$PATH"
+          export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
           # Make sure we can find migrid modules
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run lint error check for changed python files to limit noise
+          # NOTE: work around ruff install in /usr/local/bin/ruff not found here
+          mkdir -p "$HOME/.local/bin"
+          [ -e "$HOME/.local/bin/ruff" ] || ln -s "$(command -v ruff)" "$HOME/.local/bin/ruff"
           # NOTE: perms are not right inside container so repeat what checkout module does.
-          # NOTE: include tests here as they should be fully python3 compatible
           git config --global --add safe.directory "$PWD"
+          # NOTE: include tests here as they should be fully python3 compatible
           CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
           echo "Lint changed code files: ${CHANGED_PY_FILES}"
-          ls -l /usr/local/bin/r*  /usr/bin/r* $HOME/.local/bin/ ./envhelp/venv/bin/
-          which ruff
           [ -z "${CHANGED_PY_FILES}" ] || make PYTHON_BIN=python3 lint-python LINT_ENFORCE_DIRS="${CHANGED_PY_FILES}"
       # TODO: drop the next ones when make lint works and handle all linting there
       - name: Lint with pylint
@@ -176,8 +177,8 @@ jobs:
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run pylint error check for changed python files to limit noise
           # NOTE: perms are not right inside container so repeat what checkout module does.
-          # NOTE: include tests here as they should be fully python3 compatible
           git config --global --add safe.directory "$PWD"
+          # NOTE: include tests here as they should be fully python3 compatible
           CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
           echo "Lint changed code files: ${CHANGED_PY_FILES}"
           echo "${CHANGED_PY_FILES}" | xargs -r pylint -E
