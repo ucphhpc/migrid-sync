@@ -117,3 +117,18 @@ class TestGetXgiHtmlHeader(MigTestCase):
                 script_loader.attrib["src"],
                 "/assets/%s/%s" % (package, expected_loader_script),
             )
+
+    def test_user_interface_non_v4_templates_init_javascript_loader(self):
+        """Test that no script src is added to DOM if the user interface is not V4"""
+        result = htmlgen.get_xgi_html_header(
+            configuration=self.configuration,
+            title="title",
+            header="header",
+            script_map=defaultdict(str),
+            base_menu=["setup"],
+            user_settings={"USER_INTERFACE": "V3"},
+        )
+
+        parsed = etree.HTML(result)
+        scripts = parsed.findall(".//script[@src]")
+        self.assertEqual(len(scripts), 0)
