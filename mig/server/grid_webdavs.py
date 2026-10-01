@@ -121,7 +121,7 @@ from mig.shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
 from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from mig.shared.notification import send_system_notification
-from mig.shared.pwcrypto import make_scramble, unscramble_digest, \
+from mig.shared.pwcrypto import unscramble_digest, \
     make_simple_hash, valid_login_password
 from mig.shared.sslsession import ssl_session_token
 from mig.shared.tlsserver import hardened_ssl_context
@@ -370,7 +370,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 # call shutdown() before close().
                 clean_sock.shutdown(socket.SHUT_RDWR)
                 clean_sock.close()
-            except Exception as exc:
+            except Exception:
                 pass
 
     def get_environ(self, ssl_sock):
@@ -592,7 +592,7 @@ class MiGDomainController(SimpleDomainController):
                 active_sessions = {}
             expired = 0
             for cache_id in list(self.config['mig_dc']['digest_cache']):
-                if not cache_id in active_sessions:
+                if cache_id not in active_sessions:
                     # logger.debug("expire digest cache entry for inactive %s" %
                     #             cache_id)
                     del self.config['mig_dc']['digest_cache'][cache_id]
@@ -1432,7 +1432,7 @@ class MiGFilesystemProvider(FilesystemProvider):
                 if os.path.islink(user_chroot):
                     try:
                         user_chroot = os.readlink(user_chroot)
-                    except Exception as exc:
+                    except Exception:
                         logger.error("could not expand link %s" % user_chroot)
                         continue
                 break
@@ -1933,8 +1933,10 @@ def run(configuration):
         native_logger.setLevel(logger.getEffectiveLevel())
 
     # NOTE: parent FilesystemProvider changed constructor API slightly in 4
+    fs_opts = daemon_conf['fs_dav_provider']
     mig_fs_provider = MiGFilesystemProvider(daemon_conf['root_dir'],
-                                            readonly=daemon_conf['read_only'])
+                                            readonly=daemon_conf['read_only'],
+                                            fs_opts=fs_opts)
     mig_fs_provider.post_init(configuration, dav_conf)
     config.update({
         "provider_mapping": {
@@ -2083,6 +2085,10 @@ unless it is available in mig/server/MiGserver.conf
     configuration.daemon_conf = {
         'host': address,
         'port': port,
+        # NOTE: allow follow symlinks with chrooting e.g. for vgrid shares
+        'fs_dav_provider': {
+            'follow_symlinks': True,
+        },
         'root_dir': os.path.abspath(configuration.user_home),
         'chmod_exceptions': chmod_exceptions,
         'chroot_exceptions': chroot_exceptions,
