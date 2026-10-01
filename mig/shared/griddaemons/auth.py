@@ -187,6 +187,7 @@ def validate_auth_attempt(configuration,
                           valid_twofa=False,
                           authtype_enabled=False,
                           valid_auth=False,
+                          legacy_password=False,
                           modify_account=False,
                           exceeded_rate_limit=False,
                           exceeded_max_sessions=False,
@@ -229,6 +230,8 @@ def validate_auth_attempt(configuration,
                  % valid_twofa
                  + "authtype_enabled: %s, valid_auth: %s\n"
                  % (authtype_enabled, valid_auth)
+                 + "legacy_password: %s\n"
+                 % legacy_password
                  + "modify_account: %s\n"
                  % modify_account
                  + "exceeded_rate_limit: %s\n"
@@ -426,13 +429,30 @@ fails to provide the correct credentials.
     elif valid_auth and twofa_passed:
         authorized = True
         notify = False
+        hint = None
         auth_msg = "Accepted %s" % authtype
+        if legacy_password:
+            notify = True
+            auth_msg += " (legacy)"
+            hint = """
+HINT: your provided %s password no longer adheres to the active site password
+policy.""" % proto_alias
+            if protocol in ["openid"]:
+                hint += """
+Please reset it with the 'Forgot your password' link from your site login page
+or with the Reset Account Password button from your Account page if available.
+"""
+            else:
+                hint += """
+Please update it in the corresponding %s tab from your site Setup page.
+""" % proto_alias
+
         log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
         logger.info(log_msg)
-        authlog(configuration, 'INFO', protocol, authtype,
-                username, ip_addr, auth_msg, notify=notify)
+        authlog(configuration, 'INFO', protocol, authtype, username, ip_addr,
+                auth_msg, notify=notify, hint=hint)
     else:
         disconnect = True
         auth_msg = "Unknown auth error"
