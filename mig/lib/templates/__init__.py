@@ -277,6 +277,28 @@ def render_html_template(
     return bound.render()
 
 
+def get_packages_init_js_loaders(runtime_configuration):
+    """Extract the template base_package javascript bootstrap script if provided"""
+    js_loaders = {}
+
+    config_template_section = runtime_configuration.division(
+        section_name="TEMPLATES"
+    )
+    base_packages = config_template_section.base_packages
+    for package in base_packages:
+        imported_package = import_module(package)
+        if imported_package is None:
+            continue
+
+        package_loader_script = None
+        if hasattr(imported_package, "INIT_JAVASCRIPT_LOADER") and isinstance(
+            imported_package.INIT_JAVASCRIPT_LOADER, str
+        ):
+            js_loaders[package] = imported_package.INIT_JAVASCRIPT_LOADER
+
+    return js_loaders
+
+
 class MissingCacheDirError(RuntimeError):
     def __init__(self, cache_dir):
         super().__init__(cache_dir)
