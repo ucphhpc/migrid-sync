@@ -865,7 +865,7 @@ def load_peers_pending(configuration, client_id):
 
     pending_peers = load_db_with_lock(peers_path, logger=_logger, exclusive=True)
     if not pending_peers and os.path.exists(peers_path):
-        _logger.warning("failed to load accepted peers from: %s" % peers_path)
+        _logger.warning("failed to load pending peers from: %s" % peers_path)
     return pending_peers
 
 
