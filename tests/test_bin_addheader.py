@@ -30,7 +30,8 @@ import shutil
 import tempfile
 import unittest
 
-import bin.addheader
+from bin.addheader import __file__ as addheader_module_file
+from bin.addheader import main
 from tests.support import MigTestCase
 from tests.support.iosupp import read_file, read_tree, write_file, write_tree
 
@@ -80,7 +81,7 @@ def add_header(modulename: str, modulebody: str) -> str:
 
 
 class TestMain(MigTestCase):
-    """Unit tests for bin.addheader.main function."""
+    """Unit tests for the main function."""
 
     target_dir: str
 
@@ -95,7 +96,7 @@ class TestMain(MigTestCase):
         fname = "file_without_header.py"
         write_file(self.target_dir, fname, FILE_WITHOUT_HEADER_CONTENT)
 
-        bin.addheader.main([bin.addheader.__file__, self.target_dir])
+        main([addheader_module_file, self.target_dir])
 
         actual_content = read_file(self.target_dir, fname)
         expected_content = FILE_WITH_HEADER_CONTENT.format(
@@ -112,7 +113,7 @@ class TestMain(MigTestCase):
         )
         write_file(self.target_dir, fname, content)
 
-        bin.addheader.main([bin.addheader.__file__, self.target_dir])
+        main([addheader_module_file, self.target_dir])
 
         actual_content = read_file(self.target_dir, fname)
         self.assertEqual(content, actual_content)
@@ -128,7 +129,7 @@ class TestMain(MigTestCase):
             )
             write_file(self.target_dir, fname, content)
 
-            bin.addheader.main([bin.addheader.__file__])
+            main([addheader_module_file])
 
             actual_content = read_file(self.target_dir, fname)
             self.assertEqual(content, actual_content)
@@ -147,7 +148,7 @@ class TestMain(MigTestCase):
         }
         write_tree(self.target_dir, initial)
 
-        bin.addheader.main([bin.addheader.__file__, self.target_dir])
+        main([addheader_module_file, self.target_dir])
 
         actual = read_tree(self.target_dir)
         expected = {
@@ -181,7 +182,7 @@ class TestMain(MigTestCase):
             FILE_WITHOUT_HEADER_CONTENT + format_string_line,
         )
 
-        bin.addheader.main([bin.addheader.__file__, self.target_dir])
+        main([addheader_module_file, self.target_dir])
 
         actual_content = read_file(self.target_dir, fname)
         expected_content = (
