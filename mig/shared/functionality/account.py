@@ -74,6 +74,43 @@ _account_field_order = [
 ]
 
 
+TEMPLATE_PASSWORD_RESET = """
+<div class="password_reset__header col-12">
+    <h3>Request Password Reset</h3>
+    <p>
+        In order to change your password, you can request a password reset.
+        You will receive an e-mail with link that will lead you to a page,
+        where you can select a new password for your account. 
+    </p>
+    <form method='{form_method!s}' action='{target_op!s}.py'>
+        <input type='hidden' name='{csrf_field!s}' value='{csrf_token!s}' />
+        <input type='hidden' name='cert_id' value='{cert_id!s}' />
+        <input type='hidden' name='auth_type' value='{auth_type!s}' />
+        <input type=submit value='Reset Password'/>
+    </form>
+</div>
+"""
+
+
+def manage_account_password_reset_section_html(
+    configuration: object, client_id: str, cert_id: str, auth_type: str
+) -> str:
+    form_method = "post"
+    target_op = "reqpwresetaction"
+    csrf_limit = get_csrf_limit(configuration)
+    csrf_token = make_csrf_token(
+        configuration, form_method, target_op, client_id, csrf_limit
+    )
+    return TEMPLATE_PASSWORD_RESET.format(
+        form_method=form_method,
+        target_op=target_op,
+        csrf_field=csrf_field,
+        csrf_token=csrf_token,
+        cert_id=cert_id,
+        auth_type=auth_type,
+    )
+
+
 def html_tmpl(configuration, client_id, environ, title_entry):
     """HTML page base: some account and manage actions depend on configuration
     and environ.
@@ -313,6 +350,14 @@ before your access renewal can be accepted.
                 %(renew_helper)s
             </div>
         """ % fill_helpers
+
+        if user_dict:
+            html += manage_account_password_reset_section_html(
+                configuration,
+                client_id,
+                copy.deepcopy(user_dict["email"]),
+                auth_type,
+            )
 
         html += """
                 <div class="col-lg-12 vertical-spacer"></div>
