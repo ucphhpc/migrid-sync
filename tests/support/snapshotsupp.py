@@ -29,7 +29,7 @@
 import difflib
 import errno
 import os
-import re
+import unittest
 
 from tests.support.suppconst import TEST_BASE
 
@@ -150,7 +150,7 @@ class SnapshotAssertMixin:
         In the case a snapshot does not exist it is saved on first invocation.
         """
 
-        file_name = "".join([self._testMethodName, ".", extension])
+        file_name = f"{unittest.TestCase.id(self)}.{extension}"
         file_path = os.path.join(TEST_SNAPSHOTS_DIR, file_name)
 
         if not os.path.isfile(file_path) or _force_refresh_snapshots():
