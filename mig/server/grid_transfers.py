@@ -827,9 +827,14 @@ def manage_transfers(configuration):
         logger.debug('handling update of transfers file: %s' % transfers_path)
         abs_client_dir = os.path.dirname(transfers_path)
         if os.path.islink(abs_client_dir):
-            # With the introduction of the new client_id symlinks in configuration.user_settings we
-            # can encounter a symlink duplication here, which we don't want to add as an additional transfer.
-            logger.debug('skip transfers client symlink duplication dir: %s' % transfers_path)
+            # With the introduction of the new client_id symlinks 
+            # in configuration.user_settings we can encounter a 
+            # symlink duplication here which we don't want
+            # to add as an additional transfer.
+            logger.debug(
+                'skip transfers client symlink duplication dir: %s' %
+                transfers_path
+            )
             continue
 
         client_dir = os.path.basename(abs_client_dir)
