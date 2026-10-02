@@ -50,7 +50,7 @@ from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
-    legacy_user_interface, save_settings_js, save_settings_html, menu_items
+    legacy_user_interface, save_settings_js, save_settings_html, get_menu_items
 from mig.shared.httpsclient import detect_client_auth
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.profilekeywords import get_profile_specs
@@ -182,6 +182,7 @@ def main(client_id, user_arguments_dict):
     if not user_settings:
         user_settings = {}
 
+    menu_items = get_menu_items(user_settings=user_settings)
     # Hide default settings in GDP mode
     if configuration.site_enable_gdp:
         valid_topics = []
