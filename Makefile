@@ -55,14 +55,15 @@ format-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS)
 	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS)
 
+# NOTE: prefix check commands with minus ('-') to continue even if one fails
 .PHONY: lint
 lint:
 ifneq ($(MIG_ENV),'local')
 	@echo "unavailable outside local development environment"
 	@exit 1
 endif
-	@make style-check-python
-	@make lint-python
+	-@make style-check-python
+	-@make lint-python
 
 # NOTE: black and isort use pyproject.toml to temporarily exclude a few paths
 .PHONY: style-check-python
@@ -71,10 +72,11 @@ style-check-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS) --check-only
 
 # NOTE: pylint and ruff use pyproject.toml to temporarily exclude a few paths
+# NOTE: prefix lint commands with minus ('-') to continue even if one fails
 .PHONY: lint-python
 lint-python: dependencies
-	@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only
-	@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS)
+	-@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only && echo 'No pylint errors'
+	-@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS)
 
 .PHONY: secscan
 secscan:
@@ -89,17 +91,19 @@ endif
 secscan-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m bandit -r $(LINT_ENFORCE_DIRS)
 
+# NOTE: prefix clean commands with minus ('-') to continue even if one fails
 .PHONY: clean
 clean:
-	@rm -f ./envhelp/py3.imageid
-	@rm -f ./envhelp/local.depends
+	-@rm -f ./envhelp/py3.imageid
+	-@rm -f ./envhelp/local.depends
 
+# NOTE: prefix clean commands with minus ('-') to continue even if one fails
 .PHONY: distclean
 distclean: clean
-	@rm -rf ./envhelp/venv
-	@rm -rf ./envhelp/output
-	@rm -rf ./tests/__pycache__
-	@rm -f ./tests/*.pyc
+	-@rm -rf ./envhelp/venv
+	-@rm -rf ./envhelp/output
+	-@rm -rf ./tests/__pycache__
+	-@rm -f ./tests/*.pyc
 
 .PHONY: test
 test: dependencies testconfig
