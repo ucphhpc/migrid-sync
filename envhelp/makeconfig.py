@@ -84,6 +84,8 @@ def write_testconfig(env_name, is_docker=False):
         'mig_certs': os.path.join(test_output_dir, 'certs'),
         'mig_state': os.path.join(test_output_dir, 'state'),
         'templates_cache_dir': os.path.join(envhelp_output_dir, '__jinja__'),
+        'admin_email': 'admin@example.com',
+        'support_email': 'support@example.com',
     })
 
     if is_docker:

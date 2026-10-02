@@ -73,7 +73,7 @@ try:
         valid_filter_methods, default_twofactor_auth_apps, \
         mig_conf_section_dirname
     from mig.shared.logger import Logger, SYSLOG_GDP
-    from mig.shared.htmlgen import menu_items, vgrid_items
+    from mig.shared.htmlgen import get_menu_items, vgrid_items
     from mig.shared.fileio import read_file, load_json, write_file
 except ImportError as ioe:
     print("could not import migrid modules")
@@ -392,7 +392,7 @@ def _generate_fix_missing_definitions():
     monitor_section = {'sleep_secs': '60',
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
-    settings_section = {'language': 'English', 'user_interface': ['V3', 'V2'],
+    settings_section = {'language': 'English', 'user_interface': ['V3', 'V4', 'V2'],
                         'submitui': ['fields', 'textarea', 'files']}
     feasibility_section = {'resource_seen_within_hours': '24',
                            'skip_validation': '',
@@ -783,7 +783,7 @@ _CONFIGURATION_PROPERTIES = {
 
     'expire_peer': 600,
     'language': ['English'],
-    'user_interface': ['V3', 'V2'],
+    'user_interface': ['V3', 'V4', 'V2'],
     'new_user_default_ui': keyword_auto,
     'submitui': ['fields', 'textarea', 'files'],
     # Init user default page with no selection to use site landing page
@@ -2029,15 +2029,17 @@ location.""" % self.config_file)
             self.site_user_redirect = config.get('SITE', 'user_redirect')
         else:
             self.site_user_redirect = '/cert_redirect'
+
+        # Menu items
         if config.has_option('SITE', 'base_menu'):
             menus = ['default', 'simple', 'advanced']
             req = config.get('SITE', 'base_menu').split()
-            self.site_base_menu = [i for i in req if i in menus]
+            self.site_base_menu = [i for i in req if i in get_menu_items()]
         else:
             self.site_base_menu = ['default']
         if config.has_option('SITE', 'default_menu'):
             req = config.get('SITE', 'default_menu').split()
-            self.site_default_menu = [i for i in req if i in menu_items]
+            self.site_default_menu = [i for i in req if i in get_menu_items()]
         else:
             self.site_default_menu = ['home', 'files', 'submitjob', 'jobs',
                                       'resources', 'vgrids', 'downloads',
@@ -2046,13 +2048,13 @@ location.""" % self.config_file)
                                       'logout']
         if config.has_option('SITE', 'simple_menu'):
             req = config.get('SITE', 'simple_menu').split()
-            self.site_simple_menu = [i for i in req if i in menu_items]
+            self.site_simple_menu = [i for i in req if i in get_menu_items()]
         else:
             self.site_simple_menu = ['home', 'files', 'vgrids',
                                      'settings', 'logout']
         if config.has_option('SITE', 'advanced_menu'):
             req = config.get('SITE', 'advanced_menu').split()
-            self.site_advanced_menu = [i for i in req if i in menu_items]
+            self.site_advanced_menu = [i for i in req if i in get_menu_items()]
         else:
             self.site_advanced_menu = ['home', 'submitjob', 'files',
                                        'jobs', 'vgrids', 'resources',
@@ -2061,7 +2063,7 @@ location.""" % self.config_file)
                                        'logout']
         if config.has_option('SITE', 'user_menu'):
             req = config.get('SITE', 'user_menu').split()
-            self.site_user_menu = [i for i in req if i in menu_items]
+            self.site_user_menu = [i for i in req if i in get_menu_items()]
         else:
             self.site_user_menu = []
 
