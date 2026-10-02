@@ -38,7 +38,7 @@ skip = [
 
 [tool.pylint]
 max-line-length = 80
-ignore-pattern = '''
+ignore-patterns = '''
       tests/data/
     | tests/fixture/
 '''
