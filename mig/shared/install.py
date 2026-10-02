@@ -485,6 +485,7 @@ def generate_confs(
     ftps_pasv_ports='8100:8400',
     openid_port=8443,
     openid_show_port='',
+    openid_session_inactivity_timeout=900,
     openid_session_lifetime=43200,
     seafile_secret=keyword_auto,
     seafile_ccnetid=keyword_auto,
@@ -817,6 +818,7 @@ def _generate_confs_prepare(
     ftps_pasv_ports,
     openid_port,
     openid_show_port,
+    openid_session_inactivity_timeout,
     openid_session_lifetime,
     seafile_secret,
     seafile_ccnetid,
@@ -1062,6 +1064,8 @@ def _generate_confs_prepare(
     user_dict['__FTPS_CTRL_PORT__'] = "%s" % ftps_ctrl_port
     user_dict['__FTPS_PASV_PORTS__'] = ftps_pasv_ports
     user_dict['__OPENID_PORT__'] = "%s" % openid_port
+    user_dict['__OPENID_SESSION_INACTIVITY_TIMEOUT__'] = "%s" % \
+        openid_session_inactivity_timeout
     user_dict['__OPENID_SESSION_LIFETIME__'] = "%s" % openid_session_lifetime
     user_dict['__SEAFILE_SEAHUB_PORT__'] = "%s" % seafile_seahub_port
     user_dict['__SEAFILE_SEAFHTTP_PORT__'] = "%s" % seafile_seafhttp_port
