@@ -23,25 +23,23 @@
 # --- END_HEADER ---
 #
 
-from __future__ import annotations
+"""Support functions for reading and writing test data."""
 
 import os
-import typing
+from typing import Union
+
+TreeDict = Union[dict[str, "TreeDict"], dict[str, str]]
 
 
-if typing.TYPE_CHECKING:
-    TreeDict = dict[str, "TreeDict"] | dict[str, str]
-
-
-def write_file(dir: str, name: str, content: str) -> None:
+def write_file(directory: str, name: str, content: str) -> None:
     """Write text content into a specified file."""
-    with open(os.path.join(dir, name), "w") as f:
+    with open(os.path.join(directory, name), "w", encoding="utf-8") as f:
         f.write(content)
 
 
-def read_file(dir: str, name: str) -> str:
+def read_file(directory: str, name: str) -> str:
     """Read text content from a specified file."""
-    with open(os.path.join(dir, name), "r") as f:
+    with open(os.path.join(directory, name), "r", encoding="utf-8") as f:
         return f.read()
 
 
