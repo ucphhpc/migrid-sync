@@ -48,10 +48,11 @@ from mig.shared.base import auth_type_description, canonical_user, \
     client_id_dir, distinguished_name_to_user, fill_distinguished_name, \
     fill_user, force_utf8, force_native_str_rec, get_user_id, mask_creds, \
     requested_backend
-from mig.shared.defaults import peers_fields, peers_filename, \
+from mig.shared.defaults import csrf_field, peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
     gdp_distinguished_field
 from mig.shared.fileio import delete_file, make_temp_file
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.notification import notify_user
 from mig.shared.pwcrypto import check_hash, check_scramble
 # Expose some helper variables for functionality backends
