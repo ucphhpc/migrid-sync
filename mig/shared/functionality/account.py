@@ -78,9 +78,10 @@ TEMPLATE_PASSWORD_RESET = """
 <div class="password_reset__header col-12">
     <h3>Request Password Reset</h3>
     <p>
-        In order to change your password, you can request a password reset.
-        You will receive an e-mail with link that will lead you to a page,
-        where you can select a new password for your account. 
+        To change your account password request a password reset here. You will
+        then receive an e-mail at the address you used to register this account
+        with a link that will lead you to the password reset page. Follow the
+        instructions in the e-mail you receive to reset your password.
     </p>
     <form method='{form_method!s}' action='{target_op!s}.py'>
         <input type='hidden' name='{csrf_field!s}' value='{csrf_token!s}' />
@@ -95,6 +96,7 @@ TEMPLATE_PASSWORD_RESET = """
 def manage_account_password_reset_section_html(
     configuration: object, client_id: str, cert_id: str, auth_type: str
 ) -> str:
+    """Renders HTML for the password reset section of the account page."""
     form_method = "post"
     target_op = "reqpwresetaction"
     csrf_limit = get_csrf_limit(configuration)
