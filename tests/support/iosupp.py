@@ -1,6 +1,7 @@
 #
 # --- BEGIN_HEADER ---
 #
+#
 # iosupp - test support functions related to io
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
@@ -23,12 +24,13 @@
 # --- END_HEADER ---
 #
 
+
 """Support functions for reading and writing test data."""
 
 import os
 from typing import Union
 
-TreeDict = Union[dict[str, "TreeDict"], dict[str, str]]
+TreeDict = dict[str, Union["TreeDict", str]]
 
 
 def write_file(directory: str, name: str, content: str) -> None:
@@ -48,7 +50,7 @@ def read_tree(root: str) -> TreeDict:
     Read the filetree rooted at the given directory as a nested dictionary
     tree, where leafs represent file contents.
     """
-    tree = {}
+    tree: TreeDict = {}
     for name in os.listdir(root):
         path = os.path.join(root, name)
         if os.path.isdir(path):
@@ -59,9 +61,7 @@ def read_tree(root: str) -> TreeDict:
 
 
 def write_tree(root: str, tree: TreeDict) -> None:
-    """
-    Write the given given tree to the given root directory.
-    """
+    """Write the given tree to the given root directory."""
     for name, branch in tree.items():
         if isinstance(branch, str):  # leaf
             write_file(root, name, branch)

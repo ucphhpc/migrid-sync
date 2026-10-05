@@ -26,13 +26,10 @@
 """Unit tests of the bin.addheader module."""
 
 import os
-import shutil
-import tempfile
-import unittest
 
 from bin.addheader import __file__ as addheader_module_file
 from bin.addheader import main
-from tests.support import MigTestCase
+from tests.support import MigTestCase, temppath
 from tests.support.iosupp import read_file, read_tree, write_file, write_tree
 
 FILE_WITHOUT_HEADER_CONTENT = '''"""Python module without header"""
@@ -45,7 +42,7 @@ HEADER_FORMAT = """#!/usr/bin/env python
 # --- BEGIN_HEADER ---
 #
 #
-# {modulename} - {description}
+# %(modulename)s - %(description)s
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -73,9 +70,9 @@ DEFAULT_DESC = "[optionally add short module description on this line]"
 
 
 def add_header(modulename: str, modulebody: str) -> str:
-    """Naive function to add a header, used for generting test data."""
+    """Naive function to add a header, used for generating test data."""
     return (
-        HEADER_FORMAT.format(modulename=modulename, description=DEFAULT_DESC)
+        HEADER_FORMAT % {"modulename": modulename, "description": DEFAULT_DESC}
         + modulebody
     )
 
@@ -87,10 +84,7 @@ class TestMain(MigTestCase):
 
     def before_each(self) -> None:
         self.maxDiff = None
-        self.target_dir = tempfile.mkdtemp(prefix=self.id())
-
-    def after_each(self) -> None:
-        shutil.rmtree(self.target_dir)
+        self.target_dir = temppath(self.id(), self, ensure_dir=True)
 
     def test_adds_header_to_file_without_header(self) -> None:
         fname = "file_without_header.py"
@@ -99,18 +93,18 @@ class TestMain(MigTestCase):
         main([addheader_module_file, self.target_dir])
 
         actual_content = read_file(self.target_dir, fname)
-        expected_content = FILE_WITH_HEADER_CONTENT.format(
-            modulename="file_without_header",
-            description="[optionally add short module description on this line]",
-        )
+        expected_content = FILE_WITH_HEADER_CONTENT % {
+            "modulename": "file_without_header",
+            "description": "[optionally add short module description on this line]",
+        }
         self.assertEqual(expected_content, actual_content)
 
     def test_does_not_change_file_with_header(self) -> None:
         fname = "file_with_header.py"
-        content = FILE_WITH_HEADER_CONTENT.format(
-            modulename="file_with_header",
-            description="pre-existing description",
-        )
+        content = FILE_WITH_HEADER_CONTENT % {
+            "modulename": "file_with_header",
+            "description": "pre-existing description",
+        }
         write_file(self.target_dir, fname, content)
 
         main([addheader_module_file, self.target_dir])
@@ -123,10 +117,10 @@ class TestMain(MigTestCase):
         try:
             os.chdir(self.target_dir)
             fname = "file_with_header.py"
-            content = FILE_WITH_HEADER_CONTENT.format(
-                modulename="file_with_header",
-                description="pre-existing description",
-            )
+            content = FILE_WITH_HEADER_CONTENT % {
+                "modulename": "file_with_header",
+                "description": "pre-existing description",
+            }
             write_file(self.target_dir, fname, content)
 
             main([addheader_module_file])
@@ -186,10 +180,11 @@ class TestMain(MigTestCase):
 
         actual_content = read_file(self.target_dir, fname)
         expected_content = (
-            FILE_WITH_HEADER_CONTENT.format(
-                modulename="file_without_header_with_format_string",
-                description=DEFAULT_DESC,
-            )
+            FILE_WITH_HEADER_CONTENT
+            % {
+                "modulename": "file_without_header_with_format_string",
+                "description": DEFAULT_DESC,
+            }
             + format_string_line
         )
         self.assertEqual(expected_content, actual_content)
