@@ -250,6 +250,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'ftps_ctrl_show_port',
         'openid_port',
         'openid_show_port',
+        'openid_session_inactivity_timeout',
         'openid_session_lifetime',
         'seafile_seahub_port',
         'seafile_seafhttp_port',
