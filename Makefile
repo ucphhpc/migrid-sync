@@ -10,7 +10,6 @@ endif
 #LINT_ENFORCE_DIRS = ./bin ./mig/lib ./sbin ./tests
 LINT_ENFORCE_DIRS = ./mig/__init__.py
 LOCAL_PYTHON_BIN = './envhelp/lpython'
-ROOT_DIR=$(realpath .)
 
 ifdef PYTHON_BIN
 	LOCAL_PYTHON_BIN = $(PYTHON_BIN)
