@@ -150,23 +150,27 @@ class _RequestInfo(SimpleNamespace):
         """
         setattr(self, "_args", args)
 
-
     @classmethod
     def create(cls, client_id, operation, sent_type, request_data):
         """
         Creates and returns a _RequestInfo instance from the supplied arguments
-        that can be used to discover the requested endpoint handler and deliver the supplied payload
-        from the given client to said handler.
+        that can be used to discover the requested endpoint handler and deliver
+        the supplied payload from the given client to said handler.
 
         operation: is expected to specify which type of request the client made
         from the available REQUEST_INFO_METHOD_BY_OPERATION.
-        sent_type: specifies the expected lookup package key and the associated route handler path that is associated with the request.
-            An example of this could be a sent_type that is set to `migux_apps_peers__new` that is then transformed into the _RequestInfo constructor values:
+        sent_type: specifies the expected lookup package key and the associated
+        route handler path that is associated with the request.
+
+            An example of this could be a sent_type that is set to
+            `migux_apps_peers__new` that is then transformed into
+            the _RequestInfo constructor values:
 
             request_package = 'migux_apps_peers'
             request_type = '/new'
 
-            These can then be used to lookup the expected request handler function via the package name and the type of request.
+            These can then be used to lookup the expected request
+            handler function via the package name and the type of request.
 
         request_data: the request payload from the client
         """
@@ -189,7 +193,7 @@ class _RequestInfo(SimpleNamespace):
         csrf_token = request_data.pop("csrf_token", None)
         if isinstance(csrf_token, list):
             csrf_token = csrf_token[0]
-    
+
         kwargs = {}
         kwargs["method"] = method
         kwargs["client_id"] = client_id
