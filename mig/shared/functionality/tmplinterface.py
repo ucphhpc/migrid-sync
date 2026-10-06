@@ -394,7 +394,16 @@ def validate_csrf_requests_input(csrf_args):
 
 def prepare_GET_migux_apps_peers_csrf_tokens(configuration, request_info):
     """
-    Data preparation function for mixux.apps.peers GET /csrf_tokens
+    Data preparation function for mixux.apps.peers GET /csrf_tokens.
+
+    This function is responsible for generating csrf tokens for the specific requests.
+    The requests are expected to be a list of strings, that each contains the particular method
+    and operation for which a csrf token should be generated.
+
+    An example of the requests parameter could be:
+    {
+        "requests": ["method=POST&operation=/peers/peer_accept", "method=POST&operation=/peers/peer_reject"]
+    }
     """
     # Validate the requests parameter
     accepted, rejected = validate_csrf_requests_input(request_info.args)
@@ -406,17 +415,51 @@ def prepare_GET_migux_apps_peers_csrf_tokens(configuration, request_info):
         )
 
     accepted_requests = accepted["requests"]
-    tokens = []
+    token_errors, tokens = {}, []
     for request_object in accepted_requests:
-        method_obj, operation_obj = request_object.split("&")
-        method = method_obj.split("=")[1]
-        operation = operation_obj.split("=")[1]
+        if "&" not in request_object:
+            token_errors[request_object] = "missing & in csrf token request"
+            continue
+        request_object_split = request_object.split("&")
+        if len(request_object_split) != 2:
+            token_errors[request_object] = (
+                "in a csrf request, only a single & is valid to deliminate the method and operation"
+            )
+            continue
+
+        method_obj, operation_obj = (
+            request_object_split[0],
+            request_object_split[1],
+        )
+
+        method_split = method_obj.split("=")
+        if len(method_split) != 2:
+            token_errors[request_object] = (
+                "in a csrf request, only a single method assignment via = is allowed"
+            )
+            continue
+        method = method_split[1]
+
+        operation_split = operation_obj.split("=")
+        if len(operation_split) != 2:
+            token_errors[request_object] = (
+                "in a csrf request, only a single operation assignment via = is allowed"
+            )
+            continue
+        operation = operation_split[1]
 
         token = make_csrf_token(
             configuration, method, operation, request_info.client_id
         )
         tokens.append(
             {"token": token, "method": method, "operation": operation}
+        )
+
+    if token_errors:
+        return create_handler_response(
+            400,
+            error="failed to generate csrf tokens for the following requests: %s"
+            % token_errors,
         )
 
     return create_handler_response(200, data=tokens)
@@ -645,7 +688,7 @@ def _main(
     if template_data_exit_resp is None:
         return create_text_response(
             output_objects,
-            "an unknown error occurred during data preparation",
+            "an unknown error occurred during data preparation for the template handler",
             object_type="error_text",
             output_return_code=returnvalues.SYSTEM_ERROR,
         )
