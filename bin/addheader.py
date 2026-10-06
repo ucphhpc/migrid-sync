@@ -173,7 +173,7 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
     if module_lines and module_lines[0].strip():
         module_header.append("\n")
 
-    updated_lines = [i % var_dict for i in module_header + module_lines]
+    updated_lines = [i % var_dict for i in module_header] + module_lines
 
     if not write_file_lines(updated_lines, path, None):
         print("Failed to write %s with added headers!" % path)
