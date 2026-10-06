@@ -570,9 +570,16 @@ class MigSharedFunctionalityTmplinterface__csrf_tokens(
     """Tests of the csrf_tokens endpoint"""
 
     TEST_CLIENT_ID = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=test@example.com"
+    # Set a dummy salt such that we can verify the expected snapshot generated/returned
+    # by the tmplinterface request
+    TEST_SITE_DIGEST_SALT = "1234567890abcdef"
 
     def _provide_configuration(self):
         return "testconfig"
+
+    def before_each(self):
+        self.configuration.site_csrf_protection = "FULL"
+        self.configuration.site_digest_salt = self.TEST_SITE_DIGEST_SALT
 
     def test_responds_with_csrf_tokens_for_form_data(self):
         request_body = {
