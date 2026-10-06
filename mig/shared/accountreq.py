@@ -53,7 +53,8 @@ from mig.shared.base import auth_type_description, canonical_user, \
 from mig.shared.defaults import csrf_field, peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
     gdp_distinguished_field, peer_kinds
-from mig.shared.fileio import delete_file, make_temp_file, unpickle, pickle, acquire_file_lock, release_file_lock
+from mig.shared.fileio import delete_file, make_temp_file, unpickle, \
+    pickle, acquire_file_lock, release_file_lock
 from mig.shared.logger import null_logger
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.notification import notify_user
