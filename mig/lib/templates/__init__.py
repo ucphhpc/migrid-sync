@@ -278,7 +278,9 @@ def render_html_template(
 
 
 def get_packages_init_js_loaders(runtime_configuration):
-    """Extract the template base_package javascript bootstrap script if provided"""
+    """
+    Extract the template base_package javascript bootstrap script if provided
+    """
     js_loaders = {}
 
     config_template_section = runtime_configuration.division(
