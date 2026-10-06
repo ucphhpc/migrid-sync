@@ -11,7 +11,6 @@ endif
 LINT_ENFORCE_DIRS = ./mig/__init__.py
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 ROOT_DIR=$(realpath .)
-STAGING_DIR="$(ROOT_DIR)/envhelp/staging"
 
 ifdef PYTHON_BIN
 	LOCAL_PYTHON_BIN = $(PYTHON_BIN)
@@ -103,7 +102,6 @@ clean:
 distclean: clean
 	@rm -rf ./envhelp/venv
 	@rm -rf ./envhelp/output
-	@rm -rf ./envhelp/staging
 	@rm -rf ./tests/__pycache__
 	@rm -f ./tests/*.pyc
 

@@ -182,7 +182,6 @@ mig/images/site-conf.js
 
 # self-test
 /envhelp/output/
-/envhelp/staging/
 /envhelp/venv/
 /envhelp/*.depends
 /envhelp/*.imageid
