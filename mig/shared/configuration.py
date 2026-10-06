@@ -2033,8 +2033,9 @@ location.""" % self.config_file)
         # Menu items
         if config.has_option('SITE', 'base_menu'):
             menus = ['default', 'simple', 'advanced']
+            menu_items = get_menu_items()
             req = config.get('SITE', 'base_menu').split()
-            self.site_base_menu = [i for i in req if i in get_menu_items()]
+            self.site_base_menu = [i for i in req if i in menu_items]
         else:
             self.site_base_menu = ['default']
         if config.has_option('SITE', 'default_menu'):
