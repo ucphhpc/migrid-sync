@@ -50,11 +50,12 @@ from mig.shared.base import auth_type_description, canonical_user, \
     client_id_dir, distinguished_name_to_user, fill_distinguished_name, \
     fill_user, force_utf8, force_native_str_rec, get_user_id, mask_creds, \
     requested_backend
-from mig.shared.defaults import peers_fields, peers_filename, \
+from mig.shared.defaults import csrf_field, peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
     gdp_distinguished_field, peer_kinds
 from mig.shared.fileio import delete_file, make_temp_file, unpickle, pickle, acquire_file_lock, release_file_lock
 from mig.shared.logger import null_logger
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.notification import notify_user
 from mig.shared.pwcrypto import check_hash, check_scramble
 # Expose some helper variables for functionality backends
@@ -664,6 +665,46 @@ and select which authentication method you want to change password for.
 </div>
 """
     return html
+
+
+TEMPLATE_ACCOUNT_PASSWORD_RESET_SECTION = """
+<div class="password_reset__header col-12">
+    <h3>Request Password Reset</h3>
+    <p>
+        To change your account password you can request a password reset. You
+        will then receive an e-mail at the address you used to register your
+        account with a link that will lead you to the password reset page. Just
+        follow the instructions in the e-mail you receive to reset your
+        password.
+    </p>
+    <form method='%(form_method)s' action='%(target_op)s.py'>
+        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+        <input type='hidden' name='cert_id' value='%(cert_id)s' />
+        <input type='hidden' name='auth_type' value='%(auth_type)s' />
+        <input type=submit value='Reset Password'/>
+    </form>
+</div>
+"""
+
+
+def account_page_pw_reset_html(
+    configuration: object, client_id: str, cert_id: str, auth_type: str
+) -> str:
+    """Renders HTML for the password reset section of the account page."""
+    form_method = "post"
+    target_op = "reqpwresetaction"
+    csrf_limit = get_csrf_limit(configuration)
+    csrf_token = make_csrf_token(
+        configuration, form_method, target_op, client_id, csrf_limit
+    )
+    return TEMPLATE_ACCOUNT_PASSWORD_RESET_SECTION % {
+        "form_method": form_method,
+        "target_op": target_op,
+        "csrf_field": csrf_field,
+        "csrf_token": csrf_token,
+        "cert_id": cert_id,
+        "auth_type": auth_type,
+    }
 
 
 def renew_account_access_template(configuration,

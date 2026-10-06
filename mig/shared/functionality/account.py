@@ -38,7 +38,10 @@ import time
 
 from mig.lib.accounting import get_usage
 from mig.shared import returnvalues
-from mig.shared.accountreq import renew_account_access_template
+from mig.shared.accountreq import (
+    account_page_pw_reset_html,
+    renew_account_access_template,
+)
 from mig.shared.accountstate import account_expire_info
 from mig.shared.base import extract_field, requested_page
 from mig.shared.defaults import (
@@ -313,6 +316,14 @@ before your access renewal can be accepted.
                 %(renew_helper)s
             </div>
         """ % fill_helpers
+
+        if user_dict:
+            html += account_page_pw_reset_html(
+                configuration,
+                client_id,
+                user_dict["email"],
+                auth_type,
+            )
 
         html += """
                 <div class="col-lg-12 vertical-spacer"></div>
