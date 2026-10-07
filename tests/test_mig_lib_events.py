@@ -374,7 +374,7 @@ class MigLibEvents__timers(MigTestCase):
 
     def test_cron_match_with_leading_zero_match(self):
         """Test cron_match with various leading zero match combinations"""
-        now = datetime.datetime.now().replace(second=0, microsecond=0)
+        now = datetime.datetime.now().replace(day=1, second=0, microsecond=0)
         test_cases = [
             (
                 {

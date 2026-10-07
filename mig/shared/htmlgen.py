@@ -37,6 +37,7 @@ import sys
 from mig.shared.base import requested_backend, client_id_dir
 from mig.shared.defaults import default_pager_entries, trash_linkname, \
     csrf_field, keyword_all, default_twofactor_auth_apps
+from mig.lib.templates import get_packages_init_js_loaders
 
 ICONS_ONLY, TEXT_ONLY = "ICONS_ONLY", "TEXT_ONLY"
 
@@ -106,6 +107,8 @@ def get_menu_items(user_settings=None):
     menu_items['peers'] = {'class': 'peers fas fa-address-card', 'url': 'peers.py',
                            'title': 'Peers',
                            'hover': 'Vouch for collaboration partner or course participant accounts'}
+    if user_settings is not None and user_settings.get('USER_INTERFACE', 'V3') == 'V4':
+        menu_items['peers']['url'] = 'javascript:migappBootstrap(\'peers\')'
     menu_items['docs'] = {'class': 'docs fas fa-book', 'url': 'docs.py',
                           'title': 'Docs',
                           'hover': 'Some built-in documentation for reference'}
@@ -1845,8 +1848,20 @@ def get_xgi_html_preamble(
 %s
 </title>
 %s
+''' % (title, head_extras)
+
+    # Insert the template base_package loader script if we are using the V4 UI
+    active_user_interface = user_settings.get("USER_INTERFACE", "V3")
+    if active_user_interface == 'V4':
+        package_init_js_scripts = get_packages_init_js_loaders(configuration)
+        for package, script in package_init_js_scripts.items():
+            out += '''
+    <script src="/assets/%s/%s"></script>
+            ''' % (package, script)
+
+    out += '''
 </head>
-    ''' % (title, head_extras)
+    '''
     return out
 
 
