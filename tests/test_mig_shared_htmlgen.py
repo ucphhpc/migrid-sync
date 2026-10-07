@@ -94,7 +94,7 @@ class TestLegacyUserInterface(MigTestCase):
         )
         self.assertTrue(result)
 
-    def test_legacy_user_interface_tur_for_v2(self):
+    def test_legacy_user_interface_true_for_v2(self):
         user_settings = {"USER_INTERFACE": "V2"}
         result = htmlgen.legacy_user_interface(
             self.configuration, user_settings, legacy_versions=self.legacy
