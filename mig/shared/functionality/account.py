@@ -31,22 +31,25 @@
 
 from __future__ import absolute_import
 
+import copy
 import datetime
 import os
-import copy
 import time
 
 from mig.lib.accounting import get_usage
 from mig.shared import returnvalues
-from mig.shared.accountreq import renew_account_access_template
+from mig.shared.accountreq import (
+    account_page_pw_reset_html,
+    renew_account_access_template,
+)
 from mig.shared.accountstate import account_expire_info
 from mig.shared.base import extract_field, requested_page
 from mig.shared.defaults import (
-    csrf_field,
-    user_home_label,
+    AUTH_MIG_CERT,
     AUTH_MIG_OID,
     AUTH_MIG_OIDC,
-    AUTH_MIG_CERT,
+    csrf_field,
+    user_home_label,
 )
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
@@ -54,8 +57,8 @@ from mig.shared.htmlgen import html_user_messages, man_base_js
 from mig.shared.httpsclient import detect_client_auth, find_auth_type_and_label
 from mig.shared.init import find_entry, initialize_main_variables
 from mig.shared.useradm import (
-    get_full_user_map,
     default_search,
+    get_full_user_map,
     search_users,
     verify_user_peers,
 )
@@ -88,7 +91,7 @@ def html_tmpl(configuration, client_id, environ, title_entry):
     user_account = ""
     if user_dict:
         # NOTE: set min days high enough to always return renew and extend_days
-        (_, _, renew_days, extend_days) = account_expire_info(
+        _, _, renew_days, extend_days = account_expire_info(
             configuration, client_id, environ, 999999
         )
         user_account += """
@@ -115,11 +118,8 @@ and sign up for %d days at a time)""" % (
                         renew_days,
                     )
                 elif renew_days > 0:
-                    field_hint = (
-                        """(renewal may extend it for up to %d days
-at a time depending on site policies)"""
-                        % renew_days
-                    )
+                    field_hint = """(renewal may extend it for up to %d days
+at a time depending on site policies)""" % renew_days
             user_account += """%s: %s %s<br/>
             """ % (
                 label,
@@ -147,16 +147,12 @@ at a time depending on site policies)"""
         "user_token": user_token,
     }
 
-    html = (
-        """
+    html = """
     <!-- CONTENT -->
     <div class="container">
         <div id="account-container" class="row">
-            """
-        % fill_helpers
-    )
-    html += (
-        """
+            """ % fill_helpers
+    html += """
             <div id="user-account-container" class="col-12 invert-theme">
                 <div id="user-account-content" class="user-account-placeholder">
                     %(user_account)s
@@ -171,19 +167,14 @@ at a time depending on site policies)"""
                 </p>
                 </div>
             </div>
-            """
-        % fill_helpers
-    )
-    html += (
-        """
+            """ % fill_helpers
+    html += """
             <div id="user-msg-container" class="col-12 invert-theme %(show_user_msg)s">
                 <div id="user-msg-content" class="user-msg-placeholder">
                     %(user_msg)s
                 </div>
             </div>
-            """
-        % fill_helpers
-    )
+            """ % fill_helpers
     html += """
             <div class="col-lg-12 vertical-spacer"></div>
         </div>
@@ -191,8 +182,8 @@ at a time depending on site policies)"""
 
     # Account management like renew account access for local users
     # TODO: add change password and delete account support for all accounts?
-    (auth_type_name, auth_flavor) = detect_client_auth(configuration, environ)
-    (auth_type, auth_label) = find_auth_type_and_label(
+    auth_type_name, auth_flavor = detect_client_auth(configuration, environ)
+    auth_type, auth_label = find_auth_type_and_label(
         configuration, auth_type_name, auth_flavor
     )
     fill_helpers.update(
@@ -211,8 +202,7 @@ at a time depending on site policies)"""
     #    i for i in configuration.site_login_methods if i.startswith("ext")
     # ]
     if auth_type in show_local:
-        html += (
-            """
+        html += """
             <div id="manage-container" class="row">
                 <div class="manage-page__header col-12">
                     <h2>Manage Account</h2>
@@ -221,9 +211,7 @@ at a time depending on site policies)"""
                     below.
                     </p>
                 </div>
-                """
-            % fill_helpers
-        )
+                """ % fill_helpers
         form_method = "post"
         csrf_limit = get_csrf_limit(configuration)
         target_op = "accountaction"
@@ -248,7 +236,7 @@ at a time depending on site policies)"""
             search_filter = default_search()
             search_filter["email"] = peers_email
             logger.debug("peers_email: %r" % peers_email)
-            (_, hits) = search_users(
+            _, hits = search_users(
                 search_filter,
                 configuration,
                 default_db_path(configuration),
@@ -260,7 +248,7 @@ at a time depending on site policies)"""
             for verify_peer in possible_peers:
                 logger.debug("verify_peer: %r" % verify_peer)
                 try:
-                    (verified_peer_list, _) = verify_user_peers(
+                    verified_peer_list, _ = verify_user_peers(
                         configuration,
                         default_db_path(configuration),
                         client_id,
@@ -288,18 +276,13 @@ at a time depending on site policies)"""
                     extract_field(peer, "email"),
                 )
         if show_peers:
-            fill_helpers["peer_acceptance_notice"] = (
-                """
+            fill_helpers["peer_acceptance_notice"] = """
 %s accepted you as a peer and you can now renew your access here.
-            """
-                % show_peers
-            )
+            """ % show_peers
         elif not configuration.site_peers_mandatory:
-            fill_helpers["peer_acceptance_notice"] = (
-                """
+            fill_helpers["peer_acceptance_notice"] = """
 You can renew your access here.
             """
-            )
         else:
             bin_url = requested_page(os.environ).replace("-sid", "-bin")
             if fill_helpers.get("auth_flavor", "") == AUTH_MIG_OID:
@@ -314,9 +297,7 @@ You can renew your access here.
                 fill_helpers["target_op"] = os.path.join(
                     os.path.dirname(bin_url), "migcert"
                 )
-            fill_helpers[
-                "peer_acceptance_notice"
-            ] = """
+            fill_helpers["peer_acceptance_notice"] = """
 It looks like you may need someone with authority to appoint you as their peer
 before your access renewal can be accepted.
             """
@@ -329,15 +310,20 @@ before your access renewal can be accepted.
             )
             % fill_helpers
         )
-        html += (
-            """
+        html += """
             <div class="renew-account-access__header col-12">
                 <h3>Renew Account Access</h3>
                 %(renew_helper)s
             </div>
-        """
-            % fill_helpers
-        )
+        """ % fill_helpers
+
+        if user_dict:
+            html += account_page_pw_reset_html(
+                configuration,
+                client_id,
+                user_dict["email"],
+                auth_type,
+            )
 
         html += """
                 <div class="col-lg-12 vertical-spacer"></div>
@@ -411,14 +397,11 @@ before your access renewal can be accepted.
             <div class="usage-page__header col-12">
                 <h2>Account Usage</h2>
        """
-        html += (
-            """
+        html += """
                 %(usage_helper)s
             </div>
             <div class="col-lg-12 vertical-spacer"></div>
-            """
-            % fill_helpers
-        )
+            """ % fill_helpers
 
     html += """
         </div>
@@ -441,11 +424,11 @@ def main(client_id, user_arguments_dict, environ=None):
     if environ is None:
         environ = os.environ
 
-    (configuration, logger, output_objects, op_name) = (
-        initialize_main_variables(client_id, op_header=False, op_menu=client_id)
+    configuration, logger, output_objects, op_name = initialize_main_variables(
+        client_id, op_header=False, op_menu=client_id
     )
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input_and_cert(
+    validate_status, accepted = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
@@ -462,7 +445,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # jquery support for AJAX saving
 
-    (add_import, add_init, add_ready) = man_base_js(configuration, [])
+    add_import, add_init, add_ready = man_base_js(configuration, [])
     add_init += """
     """
     add_ready += """

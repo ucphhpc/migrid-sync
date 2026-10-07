@@ -5,8 +5,9 @@
 # Exclude internal helper scripts only relevant for development
 bugweed.py export-ignore
 bin/bugweed.py export-ignore
-addheader.py export-ignore
-bin/addheader.py export-ignore
+# the following (outcommented) line causes the addheader unittests to fail
+# when checkout falls back to downloading an archive 
+# bin/addheader.py export-ignore 
 futurizeall.py export-ignore
 bin/futurizeall.py export-ignore
 modernizeall.py export-ignore
