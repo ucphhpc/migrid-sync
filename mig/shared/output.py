@@ -2633,7 +2633,7 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
     if status_line:
         timing_footer = ''
         status_line = status_line.replace('TIMING_INFO', timing_info)
-        if user_settings.get('USER_INTERFACE', configuration.user_interface[-1]) == 'V2':
+        if user_settings.get('USER_INTERFACE', 'V2') == 'V2':
             timing_footer = status_line
         # TODO: move inside get_xgi_html_footer?
         # Terminate UI V3 container
