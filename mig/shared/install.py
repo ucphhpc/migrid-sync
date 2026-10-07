@@ -407,7 +407,7 @@ def generate_confs(
     enable_accounting=False,
     io_account_expire=False,
     gdp_email_notify=False,
-    user_interface="V3 V2",
+    user_interface="V3 V2 V4",
     mig_oid_title='MiG',
     mig_oid_provider='',
     ext_oid_title='External',

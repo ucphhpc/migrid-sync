@@ -568,8 +568,8 @@
   "user_imnotify_username": "",
   "user_interface": [
     "V3",
-    "V4",
-    "V2"
+    "V2",
+    "V4"
   ],
   "user_janitor_log": "janitor.log",
   "user_messages": "",
