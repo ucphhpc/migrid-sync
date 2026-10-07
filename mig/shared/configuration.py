@@ -392,7 +392,8 @@ def _generate_fix_missing_definitions():
     monitor_section = {'sleep_secs': '60',
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
-    settings_section = {'language': 'English', 'user_interface': ['V3', 'V2', 'V4'],
+    settings_section = {'language': 'English',
+                        'user_interface': ['V3', 'V2', 'V4'],
                         'submitui': ['fields', 'textarea', 'files']}
     feasibility_section = {'resource_seen_within_hours': '24',
                            'skip_validation': '',
