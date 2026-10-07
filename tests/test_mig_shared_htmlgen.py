@@ -179,6 +179,17 @@ class TestLegacyUserInterface(MigTestCase):
         )
         self.assertFalse(result)
 
+    def test_legacy_user_interface_false_and_silent_for_empty_default(self):
+        user_settings = {"USER_INTERFACE": ""}
+        self.configuration.user_interface = []
+        usual_warn = "ignoring invalid saved user interface value"
+        with self.assertLogs(level="WARNING") as log_capture:
+            result = htmlgen.legacy_user_interface(
+                self.configuration, user_settings, legacy_versions=self.legacy
+            )
+        self.assertFalse(result)
+        self.assertFalse(any(usual_warn in msg for msg in log_capture.output))
+
     def test_legacy_user_interface_false_if_unset_when_unconfigured(self):
         user_settings = {}
         self.configuration.user_interface = []

@@ -164,9 +164,10 @@ def legacy_user_interface(configuration, user_settings,
     # Please note that user_settings may be boolean False if never saved
     if user_settings:
         user_ui = user_settings.get('USER_INTERFACE', active_ui)
+        # NOTE: ignore default empty string for user_ui here
         if user_ui in valid_user_interfaces:
             active_ui = user_ui
-        else:
+        elif user_ui:
             _logger.warning("ignoring invalid saved user interface value: %s" %
                             user_ui)
     if active_ui in legacy_versions:
