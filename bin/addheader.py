@@ -228,22 +228,6 @@ def _parse_block_wrap(head_lines: list[str]) -> tuple[int, list[str]]:
             block_content.append(prefix + ln)
     return block_lines, block_content
 
-    for ln in head_lines:
-        ln = ln.strip()
-        if not hash_quote_begun:
-            if ln.startswith("#"):
-                hash_quote_begun = True
-                header_lines.append(ln)
-            else:
-                # ignore other block wrapped lines
-                extra_lines += 1
-            continue
-        if ln.startswith("#") or ln == "\n":
-            header_lines.append(ln)
-        elif ln == "*/":
-            extra_lines += 1
-            break
-
 
 def _parse_lines(header_lines: list[str]) -> tuple[bool, Header]:
     parsed = Header()
@@ -399,7 +383,9 @@ def add_header(
     logger.debug("Wrote %s with added headers", path)
 
 
-def find_matching_project_pattern(src_path: str, mig_code_base: str) -> Optional[str]:
+def find_matching_project_pattern(
+    src_path: str, mig_code_base: str
+) -> Optional[str]:
     for pattern in list_code_files():
         pattern = os.path.normpath(
             os.path.join(mig_code_base, CODE_ROOT, pattern)
