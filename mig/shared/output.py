@@ -2634,9 +2634,10 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
         timing_footer = ''
         status_line = status_line.replace('TIMING_INFO', timing_info)
         # Used to rely on configuration.user_interface[-1], but since we
-        # can't guarantee that the last user_interface is V2, we should just set
-        # it directly until we retire V2 and can remove this
-        if user_settings.get('USER_INTERFACE', 'V2') == 'V2':
+        # can't guarantee the order of the user_interface configuration option,
+        # we will instead fallback to our current default version (V3)
+        # if the user has not explicitly set a version.
+        if user_settings.get('USER_INTERFACE', 'V3') == 'V2':
             timing_footer = status_line
         # TODO: move inside get_xgi_html_footer?
         # Terminate UI V3 container
