@@ -285,8 +285,8 @@ class MigTestCase(TestCase):
         self._register_check(check_callable)
         return assert_over
 
-    def temppath(self, relative_path, **kwargs):
-        return temppath(relative_path, self, **kwargs)
+    def temppath(self, relative_path: str, ensure_dir: bool = True) -> str:
+        return temppath(relative_path, self, ensure_dir=ensure_dir)
 
     # custom assertions available for common use
 
@@ -418,7 +418,7 @@ def ensure_dirs_exist(absolute_dir):
     return absolute_dir
 
 
-def temppath(relative_path, test_case, ensure_dir=False):
+def temppath(relative_path: str, test_case: MigTestCase, ensure_dir: bool =False) -> str:
     """Register relative_path as a temp path and schedule automatic clean up
     after unit tests unless skip_clean is set. Anchors the temp path in
     internal test output dir unless skip_output_anchor is set. Returns
