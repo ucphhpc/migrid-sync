@@ -2566,3 +2566,4 @@ sudo cp %(destination)s/migacctexpire /etc/cron.monthly/
     if not success:
         print("could not write instructions ot %s" % (instructions_path,))
     return success
+
