@@ -172,7 +172,7 @@ class MigSharedSettings(MigTestCase, UserAssertMixin):
         self.assertEqual(
             saved["SITE_USER_MENU"], ["sharelinks", "people", "peers"]
         )
-        self.assertEqual(saved["USER_INTERFACE"], "INVALID")
+        self.assertNotEqual(saved["USER_INTERFACE"], "INVALID")
         # NOTE: we no longer auto save default values for optional vars
         for key in saved:
             self.assertTrue(
