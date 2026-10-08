@@ -44,7 +44,6 @@ HEADER_ENCODING_LINE = "# -*- coding: utf-8 -*-\n"
 HEADER_FORMAT = """#
 # --- BEGIN_HEADER ---
 #
-#
 # %(modulename)s - %(description)s
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
@@ -155,7 +154,7 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
             authors="The MiG Project by the Science HPC Center at UCPH",
             module_encoding="utf-8",
             interpreter_path="/usr/bin/env python",
-            lines=27,
+            lines=26,
         ),
         expected_ok=True,
     ),
@@ -175,7 +174,7 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
             authors="The MiG Project by the Science HPC Center at UCPH",
             module_encoding="",
             interpreter_path="",
-            lines=25,
+            lines=24,
         ),
         expected_ok=True,
     ),

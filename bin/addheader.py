@@ -1,8 +1,6 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
 #
 # --- BEGIN_HEADER ---
-#
 #
 # addheader - add license header to all code modules.
 # Copyright (C) 2009-2026  The MiG Project by the Science HPC Center at UCPH
@@ -118,8 +116,7 @@ END_MARKER = "--- END_HEADER ---"
 BACKUP_SUFFIX = ".unlicensed"
 
 # Mandatory copyright notice for any license
-LICENSE_TEXT = """#
-# %(module_name)s - %(module_description)s
+LICENSE_TEXT = """# %(module_name)s - %(module_description)s
 # Copyright (C) %(copyright_year)s  %(authors)s
 """
 
@@ -333,17 +330,6 @@ def _parse_lines(header_lines: list[str]) -> tuple[bool, Header]:
         parsed.lines += 1
 
     return True, parsed
-
-
-def check_header(path: str, opts: Header, preamble_lines: int = 100) -> bool:
-    """Check if path has a credible license header and otherwise adds one.
-
-    Only looks inside the first preamble_lines of the file and if it doesn't
-    find an existing license header there it adds a standard header populated
-    with project variables from `opts`.
-    """
-    module_preamble = "\n".join(read_head_lines(path, preamble_lines, None))
-    return BEGIN_MARKER in module_preamble or opts["authors"] in module_preamble
 
 
 def _parse_header_consume_empty_lines(header_lines: list[str], ptr: int) -> int:
