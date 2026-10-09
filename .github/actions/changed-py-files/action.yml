@@ -1,6 +1,5 @@
 name: "Changed Python Files"
 description: "Determines the changed Python files in the CI event context"
-
 runs:
   using: "composite"
   steps:
@@ -8,11 +7,11 @@ runs:
     if: ${{ github.event_name == 'pull_request' }}
     shell: bash
     run: |
+      HEAD="${{ github.event.pull_request.head.sha }}"
+      BASE="$(git merge-base "${{ github.event.pull_request.base.sha }}" "$HEAD")"
       {
         echo 'CHANGED_FILES<<EOF'
-        git diff --diff-filter=dux --name-only --merge-base \
-          "${{ github.event.pull_request.base.sha }}" \
-          "${{ github.event.pull_request.head.sha }}"
+        git diff --diff-filter=dux --name-only "$BASE" "$HEAD"
         echo EOF
       } >> "$GITHUB_ENV"
   - name: Determinte changed files and store them in environment (push)
