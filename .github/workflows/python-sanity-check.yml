@@ -91,13 +91,30 @@ jobs:
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
       - name: Determine changed files and store them in environment (pull_request)
         if: ${{ github.event_name == 'pull_request' }}
-        run: echo "CHANGED_FILES=$(git diff --diff-filter=dux --name-only --merge-base ${{ github.base_ref }})" > "$GITHUB_ENV"
+        run: |
+          git fetch ${{ github.base_ref }}
+          {
+            echo 'CHANGED_FILES<<EOF'
+            git diff --diff-filter=dux --name-only --merge-base ${{ github.base_ref }}
+            echo EOF
+          } > "$GITHUB_ENV"
       - name: Determinte changed files and store them in environment (push)
         if: ${{ github.event_name == 'push' }}
-        run: echo "CHANGED_FILES=$(git diff --diff-filter=dux --name-only ${{ github.event.before }}..${{ github.event.after }})" > "$GITHUB_ENV"
+        run: |
+          {
+            echo 'CHANGED_FILES<<EOF'
+            git diff --diff-filter=dux --name-only ${{ github.event.before }}..${{ github.event.after }})
+            echo EOF
+          } > "$GITHUB_ENV"
       - name: Determinte changed files and store them in environment (workflow_dispatch)
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: echo "CHANGED_FILES=$(git diff --diff-filter=dux --name-only ${{ github.event.ref }})" > "$GITHUB_ENV"
+        run: |
+          git fetch ${{ github.event.ref }}
+          {
+            echo 'CHANGED_FILES<<EOF'
+            git diff --diff-filter=dux --name-only ${{ github.event.ref }}
+            echo EOF
+          } > "$GITHUB_ENV"
       - name: Filter changed python files
         run: echo "CHANGED_PY_FILES=$(echo \"$CHANGED_FILES\" | grep -E '\.py$' | xargs || echo '')" > "$GITHUB_ENV"
       - name: Lint with make lint-python on changed .py files
