@@ -437,6 +437,8 @@ def generate_confs(
     ext_oidc_cookie_same_site='',
     ext_oidc_pass_cookies='',
     ext_oidc_remote_user_claim='sub',
+    ext_oidc_session_inactivity_timeout=900,
+    ext_oidc_session_max_duration=43200,
     ext_oidc_pass_claim_as='both',
     ext_oidc_rewrite_cookie='',
     dhparams_path='',
@@ -769,6 +771,8 @@ def _generate_confs_prepare(
     ext_oidc_cookie_same_site,
     ext_oidc_pass_cookies,
     ext_oidc_remote_user_claim,
+    ext_oidc_session_inactivity_timeout,
+    ext_oidc_session_max_duration,
     ext_oidc_pass_claim_as,
     ext_oidc_rewrite_cookie,
     dhparams_path,
@@ -1033,6 +1037,10 @@ def _generate_confs_prepare(
     user_dict['__EXT_OIDC_COOKIE_SAME_SITE__'] = ext_oidc_cookie_same_site
     user_dict['__EXT_OIDC_PASS_COOKIES__'] = ext_oidc_pass_cookies
     user_dict['__EXT_OIDC_REMOTE_USER_CLAIM__'] = ext_oidc_remote_user_claim
+    user_dict['__EXT_OIDC_SESSION_INACTIVITY_TIMEOUT__'] = "%s" % \
+        ext_oidc_session_inactivity_timeout
+    user_dict['__EXT_OIDC_SESSION_MAX_DURATION__'] = "%s" % \
+        ext_oidc_session_max_duration
     user_dict['__EXT_OIDC_PASS_CLAIM_AS__'] = ext_oidc_pass_claim_as
     user_dict['__EXT_OIDC_REWRITE_COOKIE__'] = ext_oidc_rewrite_cookie
     user_dict['__PUBLIC_URL__'] = ''
@@ -1953,6 +1961,9 @@ cert, oid and sid based https!
         ('__EXT_OIDC_COOKIE_SAME_SITE__', ext_oidc_cookie_same_site),
         ('__EXT_OIDC_PASS_COOKIES__', ext_oidc_pass_cookies),
         ('__EXT_OIDC_REMOTE_USER_CLAIM__', ext_oidc_remote_user_claim),
+        ('__EXT_OIDC_SESSION_INACTIVITY_TIMEOUT',
+         ext_oidc_session_inactivity_timeout),
+        ('__EXT_OIDC_SESSION_MAX_DURATION__', ext_oidc_session_max_duration),
         ('__EXT_OIDC_PASS_CLAIM_AS__', ext_oidc_pass_claim_as),
         ('__EXT_OIDC_REWRITE_COOKIE__', ext_oidc_rewrite_cookie),
     ]
