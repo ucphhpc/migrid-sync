@@ -62,7 +62,7 @@ from mig.shared.defaults import default_http_port, default_https_port, \
 from mig.shared.compat import ensure_native_string
 from mig.shared.fileio import read_file, read_file_lines, write_file, \
     write_file_lines
-from mig.shared.htmlgen import menu_items
+from mig.shared.htmlgen import get_menu_items
 from mig.shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
 from mig.shared.pwcrypto import password_requirements, make_simple_hash, \
@@ -242,7 +242,7 @@ def template_insert(template_file, insert_identifiers, unique=False):
                 f_index += 1
                 contents.insert(f_index, v)
         else:
-            print("A non-valid insert identifer dictionary value was supplied, "
+            print("A non-valid insert identifier dictionary value was supplied, "
                   "supports string and list")
             return False
     if not write_file_lines(contents, template_file, None):
@@ -437,6 +437,8 @@ def generate_confs(
     ext_oidc_cookie_same_site='',
     ext_oidc_pass_cookies='',
     ext_oidc_remote_user_claim='sub',
+    ext_oidc_session_inactivity_timeout=900,
+    ext_oidc_session_max_duration=43200,
     ext_oidc_pass_claim_as='both',
     ext_oidc_rewrite_cookie='',
     dhparams_path='',
@@ -544,7 +546,7 @@ def generate_confs(
     datasafety_text='',
     wwwserve_max_bytes=-1,
     templates_cache_dir=keyword_auto,
-    templates_base_packages='',
+    templates_base_packages='migux',
     _getpwnam=pwd.getpwnam,
     _prepare=None,
     _writefiles=None,
@@ -769,6 +771,8 @@ def _generate_confs_prepare(
     ext_oidc_cookie_same_site,
     ext_oidc_pass_cookies,
     ext_oidc_remote_user_claim,
+    ext_oidc_session_inactivity_timeout,
+    ext_oidc_session_max_duration,
     ext_oidc_pass_claim_as,
     ext_oidc_rewrite_cookie,
     dhparams_path,
@@ -1033,6 +1037,10 @@ def _generate_confs_prepare(
     user_dict['__EXT_OIDC_COOKIE_SAME_SITE__'] = ext_oidc_cookie_same_site
     user_dict['__EXT_OIDC_PASS_COOKIES__'] = ext_oidc_pass_cookies
     user_dict['__EXT_OIDC_REMOTE_USER_CLAIM__'] = ext_oidc_remote_user_claim
+    user_dict['__EXT_OIDC_SESSION_INACTIVITY_TIMEOUT__'] = "%s" % \
+        ext_oidc_session_inactivity_timeout
+    user_dict['__EXT_OIDC_SESSION_MAX_DURATION__'] = "%s" % \
+        ext_oidc_session_max_duration
     user_dict['__EXT_OIDC_PASS_CLAIM_AS__'] = ext_oidc_pass_claim_as
     user_dict['__EXT_OIDC_REWRITE_COOKIE__'] = ext_oidc_rewrite_cookie
     user_dict['__PUBLIC_URL__'] = ''
@@ -1953,6 +1961,9 @@ cert, oid and sid based https!
         ('__EXT_OIDC_COOKIE_SAME_SITE__', ext_oidc_cookie_same_site),
         ('__EXT_OIDC_PASS_COOKIES__', ext_oidc_pass_cookies),
         ('__EXT_OIDC_REMOTE_USER_CLAIM__', ext_oidc_remote_user_claim),
+        ('__EXT_OIDC_SESSION_INACTIVITY_TIMEOUT',
+         ext_oidc_session_inactivity_timeout),
+        ('__EXT_OIDC_SESSION_MAX_DURATION__', ext_oidc_session_max_duration),
         ('__EXT_OIDC_PASS_CLAIM_AS__', ext_oidc_pass_claim_as),
         ('__EXT_OIDC_REWRITE_COOKIE__', ext_oidc_rewrite_cookie),
     ]
@@ -2270,11 +2281,11 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         default_menu = 'home files submitjob jobs vgrids resources ' \
             'runtimeenvs people settings setup downloads transfers ' \
             'sharelinks crontab docs logout'
-    allow_menu = ' '.join([i for i in default_menu.split() if i in menu_items])
+    allow_menu = ' '.join([i for i in default_menu.split() if i in get_menu_items()])
     user_dict['__DEFAULT_MENU__'] = allow_menu
     if not user_menu:
         user_menu = ''
-    allow_menu = ' '.join([i for i in user_menu.split() if i in menu_items])
+    allow_menu = ' '.join([i for i in user_menu.split() if i in get_menu_items()])
     user_dict['__USER_MENU__'] = allow_menu
 
     # Collect final variable values for log

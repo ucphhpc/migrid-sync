@@ -41,17 +41,16 @@ from jinja2 import (
     TemplateNotFound,
 )
 from jinja2 import meta as jinja2_meta
-from jinja2 import (
-    select_autoescape,
-)
+from jinja2 import select_autoescape
+
+from mig.lib.modulehelpers import import_module
 
 
 def _expand_base_packages(base_packages):
     template_packages = []
     for package_name in base_packages:
-        try:
-            package = importlib.import_module(package_name)
-        except (ImportError, ModuleNotFoundError):
+        package = import_module(package_name)
+        if package is None:
             raise UnknownTemplateError(package_name)
         template_packages.extend(package.TEMPLATE_PACKAGES)
     return template_packages
@@ -96,6 +95,10 @@ class TemplateStore:
         self._template_env_by_package = {}
 
     @property
+    def packages(self):
+        return self._packages
+
+    @property
     def cache_dir(self):
         return self._cache_dir
 
@@ -117,7 +120,9 @@ class TemplateStore:
         package_cache_key = "%s-%%s.jinja_cache" % (package_name,)
         template_env = Environment(
             loader=PackageLoader(package_name),
-            bytecode_cache=FileSystemBytecodeCache(self._cache_dir, package_cache_key),
+            bytecode_cache=FileSystemBytecodeCache(
+                self._cache_dir, package_cache_key
+            ),
             autoescape=select_autoescape(),
         )
         self._template_env_by_package[package_name] = template_env
@@ -270,6 +275,30 @@ def render_html_template(
     template = store.grab_template(template_name, template_group, "html")
     bound = store.context.extend(template, template_args)
     return bound.render()
+
+
+def get_packages_init_js_loaders(runtime_configuration):
+    """
+    Extract the template base_package javascript bootstrap script if provided
+    """
+    js_loaders = {}
+
+    config_template_section = runtime_configuration.division(
+        section_name="TEMPLATES"
+    )
+    base_packages = config_template_section.base_packages
+    for package in base_packages:
+        imported_package = import_module(package)
+        if imported_package is None:
+            continue
+
+        package_loader_script = None
+        if hasattr(imported_package, "INIT_JAVASCRIPT_LOADER") and isinstance(
+            imported_package.INIT_JAVASCRIPT_LOADER, str
+        ):
+            js_loaders[package] = imported_package.INIT_JAVASCRIPT_LOADER
+
+    return js_loaders
 
 
 class MissingCacheDirError(RuntimeError):
