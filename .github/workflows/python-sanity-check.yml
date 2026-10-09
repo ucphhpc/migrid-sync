@@ -96,7 +96,7 @@ jobs:
             echo 'CHANGED_FILES<<EOF'
             git diff --diff-filter=dux --name-only --merge-base "origin/${{ github.base_ref }}"
             echo EOF
-          } > "$GITHUB_ENV"
+          } >> "$GITHUB_ENV"
       - name: Determinte changed files and store them in environment (push)
         if: ${{ github.event_name == 'push' }}
         run: |
@@ -112,16 +112,18 @@ jobs:
             echo 'CHANGED_FILES<<EOF'
             git diff --diff-filter=dux --name-only HEAD^ HEAD
             echo EOF
-          } > >"$GITHUB_ENV"
+          } >> "$GITHUB_ENV"
       - name: Filter changed python files
-        run: echo "CHANGED_PY_FILES=$(echo \"$CHANGED_FILES\" | grep -E '\.py$' | xargs || echo '')" >> "$GITHUB_ENV"
+        run: |
+          CHANGED_PY_FILES=$(echo "$CHANGED_FILES" | grep -E '\.py$' | xargs || echo '')
+          echo "Lint changed code files: ${CHANGED_PY_FILES}"
+          echo "CHANGED_PY_FILES=$CHANGED_PY_FILES" >> "$GITHUB_ENV"
       - name: Lint with make lint-python on changed .py files
         run: |
           # Make sure we can find pip installed binaries like ruff
           export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
           # Make sure we can find migrid modules
           export PYTHONPATH="$PWD:$PYTHONPATH"
-          echo "Lint changed code files: ${CHANGED_PY_FILES}"
           [ -z "${CHANGED_PY_FILES}" ] || make PYTHON_BIN=python3 lint-python LINT_ENFORCE_DIRS="${CHANGED_PY_FILES}"
       # TODO: drop the next ones when make lint works and handle all linting there
       - name: Lint with pylint
@@ -130,7 +132,6 @@ jobs:
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run pylint error check for changed python files to limit noise
           CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
-          echo "Lint changed code files: ${CHANGED_PY_FILES}"
           echo "${CHANGED_PY_FILES}" | xargs -r pylint -E
       - name: Lint with flake8
         run: |
