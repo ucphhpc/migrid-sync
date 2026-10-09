@@ -217,8 +217,9 @@ if '__main__' == __name__:
     if role:
         user_dict['role'] = role
 
-    # Remove any empty non-ID value fields to avoid truncating metadata values
-    id_keys = [i[0] for i in cert_field_order]
+    # Remove any empty non-ID value fields to avoid truncating metadata values.
+    # Also applies to any ID values simply not specified in requested new ID.
+    id_keys = [i[0] for i in cert_field_order if i[0] in raw_user]
     # NOTE: force list copy here as we delete inline below
     for key in list(user_dict):
         if key not in id_keys and not user_dict[key]:
