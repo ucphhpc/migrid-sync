@@ -90,7 +90,7 @@ jobs:
         run: |
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
       - name: Determine changed Python files
-        uses: ./actions/changed-py-files
+        uses: ./.github/actions/changed-py-files
       - name: Lint with make lint-python on changed .py files
         run: |
           # Make sure we can find pip installed binaries like ruff
@@ -154,7 +154,7 @@ jobs:
         run: |
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
       - name: Determine changed Python files
-        uses: ./actions/changed-py-files
+        uses: ./.github/actions/changed-py-files
       - name: Lint with make lint-python on changed .py files
         run: |
           # Make sure we can find pip installed binaries like ruff
