@@ -153,6 +153,8 @@ jobs:
       - name: Setup environment with full recommended dependencies
         run: |
           make PYTHON_BIN=python3 ALLDEPS=1 dependencies
+      - name: Allow dubious ownership of repository in container
+        run: git config --global --add safe.directory "$PWD"
       - name: Determine changed Python files
         uses: ./.github/actions/changed-py-files
       - name: Lint with make lint-python on changed .py files
