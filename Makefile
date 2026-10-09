@@ -72,11 +72,31 @@ style-check-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS) --check-only
 
 # NOTE: pylint and ruff use pyproject.toml to temporarily exclude a few paths
-# NOTE: prefix lint commands with minus ('-') to continue even if one fails
+# NOTE: run lint commands in a single shell to continue even if one fails
 .PHONY: lint-python
+.ONESHELL: lint-python
 lint-python: dependencies
-	-@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only && echo 'No pylint errors'
-	-@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS)
+	@LINTFAIL=0
+	@echo "=== Checking for errors with pylint ==="
+	@if $(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only; then
+	@	echo "No pylint errors"
+	@else
+	@	echo "*** Found pylint errors listed above! ***"
+	@	LINTFAIL=$$((LINTFAIL+1))
+	@fi
+	@echo "=== Checking for errors with ruff ==="
+	@if $(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS); then
+	@	echo "No ruff errors"
+	@else
+	@	echo "*** Found ruff errors listed above! ***"
+	@	LINTFAIL=$$((LINTFAIL+1))
+	@fi
+	@if [ $${LINTFAIL} -gt 0 ]; then
+	@	echo "*** Finished with $${LINTFAIL} overall lint errors ***"
+	@else
+	@	echo "+++ Finished lint without errors +++"
+	@fi
+	@exit $${LINTFAIL}
 
 .PHONY: secscan
 secscan:
@@ -91,19 +111,17 @@ endif
 secscan-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m bandit -r $(LINT_ENFORCE_DIRS)
 
-# NOTE: prefix clean commands with minus ('-') to continue even if one fails
 .PHONY: clean
 clean:
-	-@rm -f ./envhelp/py3.imageid
-	-@rm -f ./envhelp/local.depends
+	@rm -f ./envhelp/py3.imageid
+	@rm -f ./envhelp/local.depends
 
-# NOTE: prefix clean commands with minus ('-') to continue even if one fails
 .PHONY: distclean
 distclean: clean
-	-@rm -rf ./envhelp/venv
-	-@rm -rf ./envhelp/output
-	-@rm -rf ./tests/__pycache__
-	-@rm -f ./tests/*.pyc
+	@rm -rf ./envhelp/venv
+	@rm -rf ./envhelp/output
+	@rm -rf ./tests/__pycache__
+	@rm -f ./tests/*.pyc
 
 .PHONY: test
 test: dependencies testconfig
