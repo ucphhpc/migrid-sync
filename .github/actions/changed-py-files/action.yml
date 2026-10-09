@@ -1,0 +1,43 @@
+name: "Changed Python Files"
+description: "Determines the changed Python files in the CI event context"
+runs:
+  using: "composite"
+  steps:
+  - name: Determine changed files and store them in environment (pull_request)
+    if: ${{ github.event_name == 'pull_request' }}
+    shell: bash
+    run: |
+      HEAD="${{ github.event.pull_request.head.sha }}"
+      BASE="$(git merge-base "${{ github.event.pull_request.base.sha }}" "$HEAD")"
+      {
+        echo 'CHANGED_FILES<<EOF'
+        git diff --diff-filter=dux --name-only "$BASE" "$HEAD"
+        echo EOF
+      } >> "$GITHUB_ENV"
+  - name: Determinte changed files and store them in environment (push)
+    if: ${{ github.event_name == 'push' }}
+    shell: bash
+    run: |
+      BEFORE="${{ github.event.before }}"
+      AFTER="${{ github.event.after }}"
+      if [[ $BEFORE ~= ^0+$ ]]; then BEFORE="$AFTER^"; fi  # For newly pushed branches before is all zeroes
+      {
+        echo 'CHANGED_FILES<<EOF'
+        git diff --diff-filter=dux --name-only ${{ github.event.before }}..${{ github.event.after }}
+        echo EOF
+      } >> "$GITHUB_ENV"
+  - name: Determinte changed files and store them in environment (workflow_dispatch)
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    shell: bash
+    run: |
+      {
+        echo 'CHANGED_FILES<<EOF'
+        git diff --diff-filter=dux --name-only HEAD^ HEAD
+        echo EOF
+      } >> "$GITHUB_ENV"
+  - name: Filter changed python files
+    shell: bash
+    run: |
+      CHANGED_PY_FILES=$(echo "$CHANGED_FILES" | grep -E '\.py$' | xargs || echo '')
+      echo "Lint changed code files: ${CHANGED_PY_FILES}"
+      echo "CHANGED_PY_FILES=$CHANGED_PY_FILES" >> "$GITHUB_ENV"
