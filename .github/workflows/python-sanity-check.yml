@@ -94,12 +94,17 @@ jobs:
         run: |
           {
             echo 'CHANGED_FILES<<EOF'
-            git diff --diff-filter=dux --name-only --merge-base "origin/${{ github.base_ref }}"
+            git diff --diff-filter=dux --name-only --merge-base \
+              "${{ github.event.pull_request.base.sha }}" \
+              "${{ github.event.pull_request.head.sha }}"
             echo EOF
           } >> "$GITHUB_ENV"
       - name: Determinte changed files and store them in environment (push)
         if: ${{ github.event_name == 'push' }}
         run: |
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.event.after }}"
+          if [[ $BEFORE ~= ^0+$ ]]; then BEFORE="$AFTER^"; fi  # For newly pushed branches before is all zeroes
           {
             echo 'CHANGED_FILES<<EOF'
             git diff --diff-filter=dux --name-only ${{ github.event.before }}..${{ github.event.after }}
@@ -131,7 +136,6 @@ jobs:
           # Make sure we can find migrid modules
           export PYTHONPATH="$PWD:$PYTHONPATH"
           # NOTE: we only run pylint error check for changed python files to limit noise
-          CHANGED_PY_FILES=$(git diff --diff-filter=ACMRTB --name-only HEAD^1 -- | grep -E '\.py$' | xargs || echo '')
           echo "${CHANGED_PY_FILES}" | xargs -r pylint -E
       - name: Lint with flake8
         run: |
