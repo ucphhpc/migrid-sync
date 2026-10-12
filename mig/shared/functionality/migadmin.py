@@ -598,7 +598,7 @@ provide access to e.g. managing the grid job queues.
                 "text": "",
             }
         else:
-            logger.debug("request %s looks valid")
+            logger.debug("request %s looks valid" % req_id)
             req_item["createaccountreqlink"] = {
                 "object_type": "link",
                 "destination": "javascript: confirmDialog(%s, '%s', '%s', '', '%s');"
