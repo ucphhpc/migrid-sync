@@ -52,90 +52,88 @@ endif
 
 # NOTE: black and isort use pyproject.toml to temporarily exclude a few paths
 .PHONY: format-python
-.ONESHELL: format-python
+# NOTE: use a single line-extended command to continue even if one part fails
 format-python: dependencies
-	@FORMATFAIL=0
-	@if ! $(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS); then
-	@	echo "*** Found black warnings listed above! ***"
-	@	FORMATFAIL=$$((FORMATFAIL+1))
-	@fi
-	@if ! $(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS); then
-	@	echo "*** Found isort warnings listed above! ***"
-	@	FORMATFAIL=$$((FORMATFAIL+1))
-	@fi
-	@if [ $${FORMATFAIL} -gt 0 ]; then
-	@	echo "*** Finished with $${FORMATFAIL} overall lint errors ***"
-	@else
-	@	echo "+++ Finished lint without errors +++"
-	@fi
-	@exit $${FORMATFAIL}
+	@FORMATFAIL=0 ; \
+	if ! $(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS); then \
+		echo "*** Found black warnings listed above! ***" ; \
+		FORMATFAIL=$$((FORMATFAIL+1)) ; \
+	fi \
+	if ! $(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS); then \
+		echo "*** Found isort warnings listed above! ***" ; \
+		FORMATFAIL=$$((FORMATFAIL+1)) ; \
+	fi ; \
+	if [ $${FORMATFAIL} -gt 0 ]; then \
+		echo "*** Finished with $${FORMATFAIL} overall lint errors ***" ; \
+	else \
+		echo "+++ Finished lint without errors +++" \
+	fi ; \
+	exit $${FORMATFAIL}
 
-# NOTE: prefix check commands with minus ('-') to continue even if one fails
 .PHONY: lint
-.ONESHELL: lint
+# NOTE: use a single line-extended command to continue even if one part fails
 lint:
 ifneq ($(MIG_ENV),'local')
 	@echo "unavailable outside local development environment"
 	@exit 1
 endif
-	@LINTFAIL=0
-	@echo "=== Checking code style ==="
-	@if ! make style-check-python; then
-	@	LINTFAIL=$$((LINTFAIL+1))
-	@fi
-	@echo "=== Checking code errors ==="
-	@if ! make lint-python; then
-	@	LINTFAIL=$$((LINTFAIL+1))
-	@fi
-	@exit $${LINTFAIL}
+	@LINTFAIL=0 ; \
+	echo "=== Checking code style ===" ; \
+	if ! make style-check-python; then \
+		LINTFAIL=$$((LINTFAIL+1)) ; \
+	fi; \
+	echo "=== Checking code errors ===" ; \
+	if ! make lint-python; then \
+		LINTFAIL=$$((LINTFAIL+1)) ; \
+	fi ; \
+	exit $${LINTFAIL}
 
 # NOTE: black and isort use pyproject.toml to temporarily exclude a few paths
 .PHONY: style-check-python
-.ONESHELL: style-check-python
+# NOTE: use a single line-extended command to continue even if one part fails
 style-check-python: dependencies
-	@FORMATFAIL=0
-	@if ! $(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS) --check; then
-	@	echo "*** Found black warnings listed above! ***"
-	@	FORMATFAIL=$$((FORMATFAIL+1))
-	@fi
-	@if ! $(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS) --check-only; then
-	@	echo "*** Found isort warnings listed above! ***"
-	@	FORMATFAIL=$$((FORMATFAIL+1))
-	@fi
-	@if [ $${FORMATFAIL} -gt 0 ]; then
-	@	echo "*** Finished with $${FORMATFAIL} overall lint errors ***"
-	@else
-	@	echo "+++ Finished lint without errors +++"
-	@fi
-	@exit $${FORMATFAIL}
+	@FORMATFAIL=0 ; \
+	if ! $(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS) --check; then \
+		echo "*** Found black warnings listed above! ***" ; \
+		FORMATFAIL=$$((FORMATFAIL+1)) ; \
+	fi ; \
+	if ! $(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS) --check-only; then \
+		echo "*** Found isort warnings listed above! ***" ; \
+		FORMATFAIL=$$((FORMATFAIL+1)) ; \
+	fi ; \
+	if [ $${FORMATFAIL} -gt 0 ]; then \
+		echo "*** Finished with $${FORMATFAIL} overall lint errors ***" ; \
+	else \
+		echo "+++ Finished lint without errors +++" ; \
+	fi ; \
+	exit $${FORMATFAIL}
 
 # NOTE: pylint and ruff use pyproject.toml to temporarily exclude a few paths
-# NOTE: run lint commands in a single shell to continue even if one fails
+# TODO: move the following ruff rule ignores to pyproject.toml for consistency?
+# UP031 = Use format specifiers instead of percent format when interpolating strings
+# DTZ006 = datetime.datetime.fromtimestamp()` called without a `tz` argument
 .PHONY: lint-python
-.ONESHELL: lint-python
+# NOTE: use a single line-extended command to continue even if one part fails
 lint-python: dependencies
-	@LINTFAIL=0
-	@echo "=== Checking for errors with pylint ==="
-	@if ! $(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only; then
-	@	echo "*** Found pylint errors listed above! ***"
-	@	LINTFAIL=$$((LINTFAIL+1))
-	@else
-	@	echo "No issues found"
-	@fi
-	@echo "=== Checking for errors with ruff ==="
-	# TODO: move these exceptions to pyproject.toml?
-	# UP031 = Use format specifiers instead of percent format when interpolating strings
-	# DTZ006 = datetime.datetime.fromtimestamp()` called without a `tz` argument
-	@if ! $(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS) --ignore UP031,DTZ006; then
-	@	echo "*** Found ruff errors listed above! ***"
-	@	LINTFAIL=$$((LINTFAIL+1))
-	@fi
-	@if [ $${LINTFAIL} -gt 0 ]; then
-	@	echo "*** Finished with $${LINTFAIL} overall lint errors ***"
-	@else
-	@	echo "+++ Finished lint without errors +++"
-	@fi
-	@exit $${LINTFAIL}
+	@LINTFAIL=0 ; \
+	echo "=== Checking for errors with pylint ===" ; \
+	if ! $(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only; then \
+		echo "*** Found pylint errors listed above! ***" ; \
+		LINTFAIL=$$((LINTFAIL+1)) ; \
+	else \
+		echo "No issues found" ; \
+	fi ; \
+	echo "=== Checking for errors with ruff ===" ; \
+	if ! $(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS) --ignore UP031,DTZ006; then \
+		echo "*** Found ruff errors listed above! ***" ; \
+		LINTFAIL=$$((LINTFAIL+1)) ; \
+	fi ; \
+	if [ $${LINTFAIL} -gt 0 ]; then \
+		echo "*** Finished with $${LINTFAIL} overall lint errors ***" ; \
+	else \
+		echo "+++ Finished lint without errors +++" ; \
+	fi ; \
+	exit $${LINTFAIL}
 
 .PHONY: secscan
 secscan:
