@@ -157,8 +157,8 @@ def handle_POST_peers_send_invitation(configuration, request_info):
     if invalid_client_peers_dn:
         return create_handler_response(
             400,
-            error="you tried to send invitations to peers that you don' t have, namely: %s"
-            % invalid_client_peers_dn,
+            error="you tried to send invitations to peers "
+            "that you don' t have, namely: %s" % invalid_client_peers_dn,
         )
 
     peer_invitations = {}
@@ -227,8 +227,8 @@ def handle_POST_peers_new(configuration, request_info):
     if not accepted_invite or rejected_invite:
         return create_handler_response(
             400,
-            error="failed to add a new peer, the received invite on email argument was rejected %s"
-            % rejected_invite,
+            error="failed to add a new peer, the received invite on"
+            "email argument was rejected %s" % rejected_invite,
         )
     invite_on_email = accepted_invite.get("invite_on_email", False)
 
@@ -276,7 +276,8 @@ def handle_POST_peers_new(configuration, request_info):
             # so we can return early
             return create_handler_response(
                 500,
-                error="failed to save the submitted peer, please contact support for help with this.",
+                error="failed to save the submitted peer, please "
+                "contact support for help with this.",
             )
         created_peers[peer_dn] = peer_dict
         success_map[index] = True
@@ -287,7 +288,8 @@ def handle_POST_peers_new(configuration, request_info):
     if not created_peers:
         return create_handler_response(
             500,
-            error="no errors were discovered, but the peer was not created, please contact support about this",
+            error="no errors were discovered, but the peer was "
+            "not created, please contact support about this",
         )
 
     # Send email to peer about invitation
@@ -302,7 +304,8 @@ def handle_POST_peers_new(configuration, request_info):
                 peer_dict.get("kind", ""),
             )
             invite_log_msg = (
-                "Sending invitation: to: %s, header: %s, msg: %s, smtp_server: %s"
+                "Sending invitation: to: %s, header: %s, msg: %s, "
+                "smtp_server: %s"
                 % (
                     peer_dict["email"],
                     invite_msg["header"],
@@ -339,7 +342,8 @@ def handle_POST_peers_new(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s creating new peers %s"
+            "failed to send notification to admins about "
+            "the client %s creating new peers %s"
             % (request_info.client_id, "\n".join(created_peers))
         )
 
@@ -401,8 +405,8 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
     if invalid_client_peers_dn:
         return create_handler_response(
             400,
-            error="invalid peers that you don't have were found in your delete request, namely: %s"
-            % invalid_client_peers_dn,
+            error="invalid peers that you don't have were found "
+            "in your delete request, namely: %s" % invalid_client_peers_dn,
         )
 
     success_map, errors_map = {}, {}
@@ -448,10 +452,12 @@ def handle_POST_peers_accepted_delete(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s deleting the following accepted peers successfully %s"
+            "failed to send notification to admins about the client %s "
+            "deleting the following accepted peers successfully %s"
             % (request_info.client_id, "\n".join(peers_deleted.keys()))
         )
-        # log this error so it is visible to admins, but since the client peers have been deleted, we return it as
+        # log this error so it is visible to admins, but since
+        # the client peers have been deleted, we return it as
         # an success to the client
     return create_handler_response(200, success_map=success_map)
 
@@ -482,8 +488,8 @@ def handle_POST_peers_accepted_fetch(configuration, request_info):
     if not accepted or rejected:
         return create_handler_response(
             400,
-            error="failed to fetch the accepted with, received an incorrect peer argument %s"
-            % rejected,
+            error="failed to fetch the accepted with, received "
+            "an incorrect peer argument %s" % rejected,
         )
     peer_dn = accepted["peer"]
 
@@ -530,8 +536,8 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_invite or rejected_invite:
         return create_handler_response(
             400,
-            error="failed to import peer(s), the received invite on email argument was rejected %s"
-            % rejected_invite,
+            error="failed to import peer(s), the received invite on "
+            "email argument was rejected %s" % rejected_invite,
         )
     invite_on_email = accepted_invite.get("invite_on_email", False)
 
@@ -557,8 +563,8 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_csvlines or rejected_csvlines:
         return create_handler_response(
             400,
-            error="failed to import peer(s), the received peers csvlines argument(s) was rejected %s"
-            % rejected_csvlines,
+            error="failed to import peer(s), the received peers"
+            "csvlines argument(s) was rejected %s" % rejected_csvlines,
         )
 
     peers = accepted_csvlines.get("csvlines", [])
@@ -621,7 +627,8 @@ def handle_POST_peers_accepted_import(configuration, request_info):
         if not saved:
             success_map[index] = False
             errors_map[index] = {
-                "email": "failed to save the imported peer, please contact support for help with this."
+                "email": "failed to save the imported peer, "
+                "please contact support for help with this."
             }
             continue
 
@@ -635,7 +642,8 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not created_peers:
         return create_handler_response(
             500,
-            error="no errors were discovered, but the peer was not created, please contact support about this",
+            error="no errors were discovered, but the peer was not created, "
+            "please contact support about this",
         )
 
     # Send email to peer about invitation
@@ -687,7 +695,8 @@ def handle_POST_peers_accepted_import(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s importing new peers %s"
+            "failed to send notification to admins about the client %s "
+            "importing new peers %s"
             % (request_info.client_id, "\n".join(created_peers))
         )
     return create_handler_response(200, success_map=success_map)
@@ -729,8 +738,8 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if rejected:
         return create_handler_response(
             400,
-            error="failed to update the peer, received an incorrect peer argument %s"
-            % rejected,
+            error="failed to update the peer, received "
+            "an incorrect peer argument %s" % rejected,
         )
     peer_dn = accepted["peer"]
 
@@ -812,7 +821,8 @@ def handle_POST_peers_accepted_update(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s updating the following accepted peers successfully %s"
+            "failed to send notification to admins about the client %s "
+            "updating the following accepted peers successfully %s"
             % (request_info.client_id, "\n".join(peers_updated.keys()))
         )
     return create_handler_response(200)
@@ -874,7 +884,8 @@ def handle_POST_peers_requested_delete(configuration, request_info):
     if invalid_client_peers_dn:
         return create_handler_response(
             400,
-            error="invalid peers that you don't have were found in your delete request, namely: %s"
+            error="invalid peers that you don't have were "
+            "found in your delete request, namely: %s"
             % invalid_client_peers_dn,
         )
 
@@ -923,7 +934,8 @@ def handle_POST_peers_requested_delete(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s deleting the following requested peers successfully %s"
+            "failed to send notification to admins about the client %s "
+            "deleting the following requested peers successfully %s"
             % (request_info.client_id, "\n".join(peers_deleted.keys()))
         )
         # send_email logs this error, and since the peers have been deleted, we return it as
@@ -1021,7 +1033,8 @@ def handle_POST_peers_requested_accept(configuration, request_info):
     ):
         return create_handler_response(
             400,
-            error="the peers were accepted but the removal of the pending ones failed",
+            error="the peers were accepted but the removal "
+            "of the pending ones failed",
             errors_map=[
                 {index: False} for index, peer_dn in enumerate(to_accept_peers)
             ],
@@ -1048,7 +1061,8 @@ def handle_POST_peers_requested_accept(configuration, request_info):
         notify_dict["msg"],
     ):
         configuration.logger.error(
-            "failed to send notification to admins about the client %s accepting the pending peers %s"
+            "failed to send notification to admins about "
+            "the client %s accepting the pending peers %s"
             % (request_info.client_id, "\n".join(to_accept_peers))
         )
 
