@@ -118,7 +118,7 @@ def create_wsgi_environ(
         body = _urlencode_form(form)
 
         headers = headers or {}
-        if not "Content-Type" in headers:
+        if "Content-Type" not in headers:
             headers["Content-Type"] = "application/x-www-form-urlencoded"
 
         headers["Content-Length"] = str(len(body))
