@@ -197,7 +197,7 @@ def render_menu(configuration, menu_class='navmenu',
     menu_order = []
     # Remove duplicates and force logout last
     for name in raw_order:
-        if not name in menu_order and name != 'logout':
+        if name not in menu_order and name != 'logout':
             menu_order.append(name)
     if 'logout' in raw_order:
         menu_order.append('logout')
@@ -305,7 +305,7 @@ def render_apps(configuration, title_entry, active_menu):
     app_order = []
     # Remove duplicates
     for name in raw_order:
-        if not name in app_order:
+        if name not in app_order:
             app_order.append(name)
 
     app_lines = '''
@@ -2077,7 +2077,7 @@ def get_xgi_html_header(
                 # Disable any other entries missing from base and user menu
                 for user_entry in ['home', 'account', 'settings', 'setup']:
                     profile_helper['disable%s' % user_entry] = ''
-                    if not user_entry in base_menu + user_menu:
+                    if user_entry not in base_menu + user_menu:
                         profile_helper['disable%s' %
                                        user_entry] = 'disable-link'
 
