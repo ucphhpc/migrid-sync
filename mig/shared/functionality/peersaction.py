@@ -22,7 +22,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-# -- END_HEADER ---
+# --- END_HEADER ---
 #
 
 """Peers management action back end"""
@@ -146,13 +146,13 @@ Please contact the %s site support (%s) if you think it should be enabled.
     peers_invite = accepted['peers_invite'][-1].strip()
     do_invite = (peers_invite.lower() in ['on', 'true', 'yes', '1'])
 
-    if not action in peer_actions:
+    if action not in peer_actions:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'Unsupported peer action %r - only %s are allowed' %
              (action, ', '.join(peer_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    if not kind in peer_kinds:
+    if kind not in peer_kinds:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'Unsupported peer kind %r - only %s are allowed' %
