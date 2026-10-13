@@ -20,10 +20,10 @@ runs:
     run: |
       BEFORE="${{ github.event.before }}"
       AFTER="${{ github.event.after }}"
-      if [[ $BEFORE ~= ^0+$ ]]; then BEFORE="$AFTER^"; fi  # For newly pushed branches before is all zeroes
+      if [[ "$BEFORE" =~ ^0+$ ]]; then BEFORE="$AFTER^"; fi  # For newly pushed branches before is all zeroes
       {
         echo 'CHANGED_FILES<<EOF'
-        git diff --diff-filter=dux --name-only ${{ github.event.before }}..${{ github.event.after }}
+        git diff --diff-filter=dux --name-only "$BEFORE".."$AFTER"
         echo EOF
       } >> "$GITHUB_ENV"
   - name: Determine changed files and store them in environment (workflow_dispatch)
