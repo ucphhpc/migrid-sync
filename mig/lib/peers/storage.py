@@ -33,7 +33,8 @@ import os
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import peers_filename, pending_peers_filename
 from mig.shared.fileio import (
-    acquire_file_lock,
+    acquire_lock_for_path,
+    load_db_with_lock,
     pickle,
     release_file_lock,
     unpickle,
@@ -114,31 +115,6 @@ def load_peers_accepted(configuration, client_id):
             % peers_path
         )
     return accepted_peers
-
-
-def acquire_lock_for_path(path, exclusive=False):
-    """Lock the path"""
-    lock_path = "%s.lock" % path
-    return acquire_file_lock(lock_path, exclusive=exclusive)
-
-
-def load_db_with_lock(path, logger=None, exclusive=False):
-    """Retrieve the db"""
-    if not os.path.exists(path):
-        return False
-
-    if logger is None:
-        logger = null_logger("dummy")
-
-    try:
-        with acquire_lock_for_path(path, exclusive=exclusive) as _lock_handle:
-            try:
-                return unpickle(path, logger, allow_missing=False)
-            finally:
-                release_file_lock(_lock_handle)
-    except Exception as exc:
-        logger.error("could not load db from %s: %s" % (path, exc))
-    return False
 
 
 def update_peers_accepted(configuration, client_id, update_peer_dicts):

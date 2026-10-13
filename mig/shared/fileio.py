@@ -939,6 +939,33 @@ def release_file_lock(lock_handle, close=True):
             pass
 
 
+def acquire_lock_for_path(path, exclusive=False):
+    """Helper function to acquire a lock for the given
+    path using a separate lock file.
+    """
+    lock_path = "%s.lock" % path
+    return acquire_file_lock(lock_path, exclusive=exclusive)
+
+
+def load_db_with_lock(path, logger=None, exclusive=False):
+    """Helper function to retrieve a pickled db from path with lock"""
+    if not os.path.exists(path):
+        return False
+
+    if logger is None:
+        logger = null_logger("dummy")
+
+    try:
+        with acquire_lock_for_path(path, exclusive=exclusive) as _lock_handle:
+            try:
+                return unpickle(path, logger, allow_missing=False)
+            finally:
+                release_file_lock(_lock_handle)
+    except Exception as exc:
+        logger.error("could not load db from %s: %s" % (path, exc))
+    return False
+
+
 def check_readable(configuration, path):
     """Check and return boolean to indicate if path is a non-empty string and
     a readable location.
