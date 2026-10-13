@@ -417,7 +417,7 @@ def auth_check_init(lang):
     """Init all auth variables"""
     s = ''
     if lang == 'sh':
-        s += """
+        s += r"""
     declare -a ca_check
     if [ -z \"$ca_cert_file\" ]; then
         ca_check=(\"--insecure\")
@@ -535,7 +535,7 @@ def curl_perform(
 
     s = ''
     if lang == 'sh':
-        s += """
+        s += r"""
     # https://blogs.gnome.org/shaunm/2009/12/05/urlencode-and-urldecode-in-sh/
     urlquote() {
         LANG=C
@@ -822,7 +822,7 @@ def curl_chain_login_steps(
         return ''
 
     if lang == 'sh':
-        s += """
+        s += r"""
     # NOTE: curl_post_flex sets return val in $exit_code 
     #       and curl output to stdout
     out=$(curl_post_flex \"$user_conf\" \\
@@ -1401,7 +1401,7 @@ script_dir=`dirname $script_path`
     elif lang == 'python':
         s += comment(lang, '=== Main ===')
 
-        s += """
+        s += r"""
 verbose = 0
 conf = os.path.expanduser(\"~/.mig/miguser.conf\")
 auth_redir=""
@@ -1444,7 +1444,7 @@ def parse_options(lang, extra_opts, extra_opts_handler):
 """
         if extra_opts_handler:
             s += extra_opts_handler
-        s += """
+        s += r"""
         \?)  # unknown flag
              usage
              exit 1;;

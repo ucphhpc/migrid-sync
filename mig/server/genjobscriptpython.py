@@ -711,10 +711,10 @@ if not os.environ.get("MIG_JOBDIR", ""):
         successcode='0',
         msg='ERROR: unexpected exit code!',
     ):
-        """Print msg unless last command exitted with successcode"""
+        """Print msg unless last command exited with successcode"""
 
         cmd = 'if ' + result + ' != ' + successcode + ':\n'
-        cmd += '\tprint "WARNING: ' + msg + "\(\" + " + result + " + \"\)\"\n"
+        cmd += '\tprint "WARNING: ' + msg + '(" + ' + result + ' + ")"\n'
         cmd += '\n'
         return cmd
 
