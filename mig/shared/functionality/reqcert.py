@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcert - Local certificate request and account sign up backend
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -50,6 +50,10 @@ def signature(configuration):
 
     defaults = {'full_name': [''],
                 'organization': [''],
+                # NOTE: we accept organizational_unit but don't use it.
+                #       If explicitly set e.g. to NA in the user db the expire
+                #       emails will include value in semi-filled renew link.
+                'organizational_unit': [''],
                 'email': [''],
                 'country': [''],
                 'state': [''],
