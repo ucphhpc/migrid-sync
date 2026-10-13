@@ -27,6 +27,7 @@
 """Unit tests of the bin.addheader module."""
 
 import os
+import stat
 from typing import NamedTuple
 
 from bin.addheader import Header
@@ -80,9 +81,12 @@ def add_header(modulename: str, modulebody: str) -> str:
 
 
 class ParseFileTestCase(NamedTuple):
+    """
+    A tuple containing information needed to run a test of addheader.parse_file
+    """
+
     msg: str
-    filename: str
-    content: str
+    fixture_path: str
     expected_header: Header
     expected_ok: bool
     block_wrap: bool = False
@@ -91,39 +95,7 @@ class ParseFileTestCase(NamedTuple):
 PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
     ParseFileTestCase(
         "package init with shebang encoding and explicit headers",
-        "__init__.py",
-        (
-            "#!/usr/bin/env python\n"
-            "# -*- coding: utf-8 -*-\n"
-            "#\n"
-            "# --- BEGIN_HEADER ---\n"
-            "#\n"
-            "# __init__ - package marker\n"
-            "# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter\n"
-            "#\n"
-            "# This file is part of MiG.\n"
-            "#\n"
-            "# MiG is free software: you can redistribute it and/or modify\n"
-            "# it under the terms of the GNU General Public License as published by\n"
-            "# the Free Software Foundation; either version 2 of the License, or\n"
-            "# (at your option) any later version.\n"
-            "#\n"
-            "# MiG is distributed in the hope that it will be useful,\n"
-            "# but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-            "# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-            "# GNU General Public License for more details.\n"
-            "#\n"
-            "# You should have received a copy of the GNU General Public License\n"
-            "# along with this program; if not, write to the Free Software\n"
-            "# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\n"
-            "#\n"
-            "# -- END_HEADER ---\n"
-            "#\n"
-            "\n"
-            "def module_content():\n"
-            "    pass\n"
-            "\n"
-        ),
+        "./fixture/addheader/__init__.py",
         Header(
             module_name="__init__",
             module_description="package marker",
@@ -138,17 +110,10 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
     ),
     ParseFileTestCase(
         "module with shebang and encoding",
-        "module_name.py",
-        HEADER_SHEBANG_LINE
-        + HEADER_ENCODING_LINE
-        + FILE_WITH_HEADER_CONTENT
-        % {
-            "modulename": "module_name",
-            "description": "module description",
-        },
+        "./fixture/addheader/module_with_shebang_and_encoding.py",
         Header(
             project_name="MiG",
-            module_name="module_name",
+            module_name="module_with_shebang_and_encoding",
             module_description="module description",
             copyright_year="2003-2026",
             authors="The MiG Project by the Science HPC Center at UCPH",
@@ -160,15 +125,10 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
     ),
     ParseFileTestCase(
         "module without shebang or encoding",
-        "module_name.py",
-        FILE_WITH_HEADER_CONTENT
-        % {
-            "modulename": "module_name",
-            "description": "module description",
-        },
+        "./fixture/addheader/module_without_shebang_or_encoding.py",
         Header(
             project_name="MiG",
-            module_name="module_name",
+            module_name="module_without_shebang_or_encoding",
             module_description="module description",
             copyright_year="2003-2026",
             authors="The MiG Project by the Science HPC Center at UCPH",
@@ -180,14 +140,7 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
     ),
     ParseFileTestCase(
         "minimal header",
-        "minimal.py",
-        (
-            "# minimal - a module with a minimal header\n"
-            "# Copyright (C) 2003-2026  The MiG Project Team\n"
-            "# This file is part of MiG.\n"
-            "def module_content():\n"
-            "    pass\n"
-        ),
+        "./fixture/addheader/minimal.py",
         Header(
             module_name="minimal",
             module_description="a module with a minimal header",
@@ -202,16 +155,9 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
     ),
     ParseFileTestCase(
         "override module name",
-        "override.py",
-        (
-            "# wrong_module_name - a module with a wrong name\n"
-            "# Copyright (C) 2003-2026  The MiG Project Team\n"
-            "# This file is part of MiG.\n"
-            "def module_content():\n"
-            "    pass\n"
-        ),
+        "./fixture/addheader/override_module_name.py",
         Header(
-            module_name="override",
+            module_name="override_module_name",
             module_description="a module with a wrong name",
             copyright_year="2003-2026",
             authors="The MiG Project Team",
@@ -224,14 +170,7 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
     ),
     ParseFileTestCase(
         "no spacing between module name and module description",
-        "nospacing.py",
-        (
-            "# nospacing-a module with no spacing\n"
-            "# Copyright (C) 2003-2026  The MiG Project Team\n"
-            "# This file is part of MiG.\n"
-            "def module_content():\n"
-            "    pass\n"
-        ),
+        "./fixture/addheader/nospacing.py",
         Header(
             module_name="nospacing",
             module_description="a module with no spacing",
@@ -246,16 +185,7 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
     ),
     ParseFileTestCase(
         "allow empty line after encoding",
-        "emptyline.py",
-        (
-            "# -*- coding: utf-8 -*-\n"
-            "\n"
-            "# emptyline - a module with an empty line after encoding\n"
-            "# Copyright (C) 2003-2026  The MiG Project Team\n"
-            "# This file is part of MiG.\n"
-            "def module_content():\n"
-            "    pass\n"
-        ),
+        "./fixture/addheader/emptyline.py",
         Header(
             module_name="emptyline",
             module_description="a module with an empty line after encoding",
@@ -270,17 +200,7 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
     ),
     ParseFileTestCase(
         "do not allow two empty lines after encoding",
-        "twoemptylines.py",
-        (
-            "# -*- coding: utf-8 -*-\n"
-            "\n"
-            "\n"
-            "# twoemptylines - a module with two empty lines after encoding\n"
-            "# Copyright (C) 2003-2026  The MiG Project Team\n"
-            "# This file is part of MiG.\n"
-            "def module_content():\n"
-            "    pass\n"
-        ),
+        "./fixture/addheader/twoemptylines.py",
         Header(
             module_name="twoemptylines",
             module_description="",
@@ -295,21 +215,9 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
     ),
     ParseFileTestCase(
         "block wrapped",
-        "file.js",
-        (
-            "/*\n"
-            "\n"
-            "  # block - a js file with block wrapped header\n"
-            "  # Copyright (C) 2003-2026  The MiG Project Team\n"
-            "  # This file is part of MiG.\n"
-            "\n"
-            "*/\n"
-            "function jsfun() {\n"
-            "   return 123;\n"
-            "}\n"
-        ),
+        "./fixture/addheader/blockwrap.js",
         Header(
-            module_name="block",
+            module_name="blockwrap",
             module_description="a js file with block wrapped header",
             copyright_year="2003-2026",
             authors="The MiG Project Team",
@@ -323,37 +231,7 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
     ),
     ParseFileTestCase(
         "should not eat docstring",
-        "keeping_docstring.py",
-        (
-            "#!/usr/bin/python3\n"
-            "# -*- coding: utf-8 -*-\n"
-            "#\n"
-            "# keeping_docstring - should not eat docstring\n"
-            "# Copyright (C) 2020-2021  Jonas Bardino\n"
-            "#\n"
-            "# This file is part of MiG.\n"
-            "#\n"
-            "# MiG is free software: you can redistribute it and/or modify\n"
-            "# it under the terms of the GNU General Public License as published by\n"
-            "# the Free Software Foundation; either version 2 of the License, or\n"
-            "# (at your option) any later version.\n"
-            "#\n"
-            "# MiG is distributed in the hope that it will be useful,\n"
-            "# but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-            "# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-            "# GNU General Public License for more details.\n"
-            "#\n"
-            "# You should have received a copy of the GNU General Public License\n"
-            "# along with this program; if not, write to the Free Software\n"
-            "# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\n"
-            "\n"
-            '"""Reformat all python source code to python 3 friendly format using the\n'
-            "futurize tool available from\n"
-            "http://python-future.org/index.html\n"
-            "\n"
-            "A few manual tweaks are needed afterwards to avoid breakage.\n"
-            '"""\n'
-        ),
+        "./fixture/addheader/keeping_docstring.py",
         Header(
             module_name="keeping_docstring",
             module_description="should not eat docstring",
@@ -375,17 +253,17 @@ class TestParseFile(MigTestCase):
     def test_parse_file(self) -> None:
         for (
             msg,
-            fname,
-            content,
+            fixture_path,
             expected,
             expected_ok,
             block_wrap,
         ) in PARSE_FILE_TEST_CASES:
             with self.subTest(msg):
-                dir = self.temppath(self.id() + "_" + msg)
-                write_file(dir, fname, content)
+                fixture_path = os.path.join(
+                    os.path.dirname(__file__), fixture_path
+                )
 
-                ok, actual = parse_file(os.path.join(dir, fname), block_wrap)
+                ok, actual = parse_file(fixture_path, block_wrap)
 
                 self.assertEqual(ok, expected_ok)
                 self.assertEqual(actual, expected)
@@ -552,4 +430,92 @@ class TestMain(MigTestCase):
             }
             + format_string_line
         )
+        self.assertEqual(expected_content, actual_content)
+
+    def test_force_update_removes_header_from_non_executable_file_with_default_shebang(
+        self,
+    ):
+        fname = "non_executable.py"
+        write_file(
+            self.target_dir,
+            fname,
+            HEADER_SHEBANG_LINE
+            + FILE_WITH_HEADER_CONTENT
+            % {
+                "modulename": "non_executable",
+                "description": DEFAULT_DESC,
+            },
+        )
+
+        environ = {"ADDHEADER_FORCE_UPDATE": "True"}
+        main([addheader_file, self.target_dir], environ)
+
+        actual_content = read_file(self.target_dir, fname)
+        expected_content = FILE_WITH_HEADER_CONTENT % {
+            "modulename": "non_executable",
+            "description": DEFAULT_DESC,
+        }
+        assert expected_content == actual_content
+        self.assertEqual(expected_content, actual_content)
+
+    def test_force_update_keeps_header_for_executable_file_with_default_shebang(
+        self,
+    ):
+        fname = "non_executable.py"
+        write_file(
+            self.target_dir,
+            fname,
+            HEADER_SHEBANG_LINE
+            + FILE_WITH_HEADER_CONTENT
+            % {
+                "modulename": "non_executable",
+                "description": DEFAULT_DESC,
+            },
+        )
+
+        file_path = os.path.join(self.target_dir, fname)
+        os.chmod(file_path, os.stat(file_path).st_mode | stat.S_IEXEC)
+
+        environ = {"ADDHEADER_FORCE_UPDATE": "True"}
+        main([addheader_file, self.target_dir], environ)
+
+        actual_content = read_file(self.target_dir, fname)
+        expected_content = HEADER_SHEBANG_LINE + FILE_WITH_HEADER_CONTENT % {
+            "modulename": "non_executable",
+            "description": DEFAULT_DESC,
+        }
+        assert expected_content == actual_content
+        self.assertEqual(expected_content, actual_content)
+
+    def test_force_update_keeps_header_for_nonexecutable_file_with_nondefault_shebang(
+        self,
+    ):
+        fname = "non_executable.py"
+        write_file(
+            self.target_dir,
+            fname,
+            "#!/usr/bin/env python --custom-flag\n"
+            + FILE_WITH_HEADER_CONTENT
+            % {
+                "modulename": "non_executable",
+                "description": DEFAULT_DESC,
+            },
+        )
+
+        file_path = os.path.join(self.target_dir, fname)
+        os.chmod(file_path, os.stat(file_path).st_mode | stat.S_IEXEC)
+
+        environ = {"ADDHEADER_FORCE_UPDATE": "True"}
+        main([addheader_file, self.target_dir], environ)
+
+        actual_content = read_file(self.target_dir, fname)
+        expected_content = (
+            "#!/usr/bin/env python --custom-flag\n"
+            + FILE_WITH_HEADER_CONTENT
+            % {
+                "modulename": "non_executable",
+                "description": DEFAULT_DESC,
+            }
+        )
+        assert expected_content == actual_content
         self.assertEqual(expected_content, actual_content)

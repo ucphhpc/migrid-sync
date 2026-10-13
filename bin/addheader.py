@@ -55,62 +55,6 @@ if mig is None:
 from mig.shared.fileio import read_file_lines, read_head_lines, write_file_lines
 from mig.shared.projcode import CODE_ROOT, JAVASCRIPT, list_code_files
 
-
-@dataclass
-class Header:
-    module_name: str = ""
-    module_description: str = ""
-    project_name: str = ""
-    authors: str = ""
-    copyright_year: str = ""
-    interpreter_path: str = ""
-    module_encoding: str = ""
-    lines: int = 0
-
-    def overlay(self, other: Header) -> None:
-        for field in fields(self):
-            if not getattr(self, field.name):
-                setattr(self, field.name, getattr(other, field.name))
-
-    def to_dict(self) -> dict[str, str]:
-        return asdict(self)
-
-    def format(
-        self,
-        explicit_border: bool = True,
-        block_wrap: bool = False,
-    ) -> str:
-        header = LICENSE_TEXT % self.to_dict()
-
-        if explicit_border:
-            header = EXPLICIT_BORDER_FORMAT % (BEGIN_MARKER, header, END_MARKER)
-
-        if block_wrap:
-            header = BLOCK_WRAP_FORMAT % header
-
-        if not block_wrap and self.module_encoding:
-            header = f"# -*- coding: {self.module_encoding} -*-\n" + header
-
-        if self.interpreter_path:
-            header = f"#!{self.interpreter_path}\n" + header
-
-        return header
-
-
-# Modify these to fit actual project
-PROJ_CONSTS = Header(
-    project_name="MiG",
-    module_name="",
-    module_description="[optionally add short module description on this line]",
-    authors="The MiG Project by the Science HPC Center at UCPH",
-    copyright_year="2003-%d" % datetime.date.today().year,
-    # Set interpreter path and file encoding if not already set in source files
-    # Use empty string to leave them alone.
-    interpreter_path="/usr/bin/env python",
-    module_encoding="",
-)
-
-
 BEGIN_MARKER = "--- BEGIN_HEADER ---"
 END_MARKER = "--- END_HEADER ---"
 BACKUP_SUFFIX = ".unlicensed"
@@ -159,7 +103,7 @@ BLOCK_WRAP_FORMAT = """
 */
 """
 
-COMPLETE_MESSAGE = """Added license headers to code in '%s'"
+COMPLETE_MESSAGE = """Added license headers to code in %r"
 
 Don't forget to include COPYING file in root of source, e.g. run:
 wget -O COPYING http://www.gnu.org/licenses/gpl2.txt
@@ -168,23 +112,108 @@ if using the default GPL v2 license here."""
 RE_PYTHON_ENCODING = re.compile(r"# -\*- coding: ([a-zA-Z0-9-]+) -\*-")
 RE_MODULE_LINE = re.compile(r"# ([^ ]+) *\- *(.+)")
 RE_COPYRIGHT_LINE = re.compile(
-    r"# Copyright \(C\) (20[0-9]{2}(-20[0-9]{2})?)  ?(.+)"
+    r"# Copyright \(C\) ([1-9][0-9]{3}(-[1-9][0-9]{3})?)  ?(.+)"
 )
 RE_PROJECT_LINE = re.compile(r"# This file is part of (.+).")
+DEFAULT_PREAMBLE_LINES = 100
+
+
+@dataclass
+class Header:
+    """Represents a header in a source code file"""
+
+    module_name: str = ""
+    module_description: str = ""
+    project_name: str = ""
+    authors: str = ""
+    copyright_year: str = ""
+    interpreter_path: str = ""
+    module_encoding: str = ""
+    lines: int = 0
+
+    def overlay(self, other: Header) -> None:
+        """Modifies this Header's field values to those another header object
+        for all fields that have falsy values, e.g. empty strings and zeroes."""
+        for field in fields(self):
+            if not getattr(self, field.name):
+                setattr(self, field.name, getattr(other, field.name))
+
+    def to_dict(self) -> dict[str, str | int]:
+        """Returns this Header as a dictionary."""
+        return asdict(self)
+
+    def format(
+        self,
+        explicit_border: bool = True,
+        block_wrap: bool = False,
+    ) -> str:
+        """Format the header so that it can be prefixed to a source code file.
+
+        Args:
+            explicit_border: If True, begin and end header markers er inserted.
+            block_wrap: If True, the entire header will be wrapped by a block
+                comment.
+        Returns:
+            A string containing the formatted header.
+        """
+        header = LICENSE_TEXT % self.to_dict()
+
+        if explicit_border:
+            header = EXPLICIT_BORDER_FORMAT % (BEGIN_MARKER, header, END_MARKER)
+
+        if block_wrap:
+            header = BLOCK_WRAP_FORMAT % header
+
+        if not block_wrap and self.module_encoding:
+            header = (
+                "# -*- coding: {} -*-\n".format(self.module_encoding) + header
+            )
+
+        if self.interpreter_path:
+            header = "#!{}\n".format(self.interpreter_path) + header
+
+        return header
+
+
+# Modify these to fit actual project
+PROJ_CONSTS = Header(
+    project_name="MiG",
+    module_name="",
+    module_description="[optionally add short module description on this line]",
+    authors="The MiG Project by the Science HPC Center at UCPH",
+    copyright_year="2003-%d" % datetime.date.today().year,
+    # Set interpreter path and file encoding if not already set in source files
+    # Use empty string to leave them alone.
+    interpreter_path="/usr/bin/env python",
+    module_encoding="",
+)
 
 
 def parse_file(
-    path: str, block_wrap: bool, preamble_lines: int = 100
+    path: str, block_wrap: bool, preamble_lines: int = DEFAULT_PREAMBLE_LINES
 ) -> tuple[bool, Header]:
+    """Parses the specified file into a Header object.
+
+    Args:
+        path: path to the file whose header to parse
+        block_wrap: whether the file is expected to have a block-wrapped header
+            comment that be parsed first to find the header
+        preamble_lines: how many lines of each file to read to parse the header
+
+    Returns:
+        A tuple of a boolean and a Header. The boolean is True if parsing
+        completed successfully. If False the Header may be incomplete.
+        Header.lines of the returned Header contains the number of lines parsed.
+    """
     logger.debug("trying to parse module header of %r", path)
 
-    head_lines = read_head_lines(path, preamble_lines, None)
+    preamble = read_head_lines(path, preamble_lines, None)
     header_lines: list[str] = []
     block_lines: Optional[int] = None
     if block_wrap:
-        block_lines, header_lines = _parse_block_wrap(head_lines)
+        block_lines, header_lines = _parse_block_wrap(preamble)
     else:
-        header_lines = _filter_header_lines(head_lines)
+        header_lines = _filter_header_lines(preamble)
 
     ok, parsed = _parse_lines(header_lines)
 
@@ -198,21 +227,32 @@ def parse_file(
     return ok, parsed
 
 
-def _filter_header_lines(head_lines: list[str]) -> list[str]:
+def _filter_header_lines(preamble: list[str]) -> list[str]:
+    """Find all lines of the preamble that could be header lines, by returning
+    all lines prefixed with '#', or lines that are empty (or only whitespaces).
+    """
     header_lines: list[str] = []
-    for ln in head_lines:
-        if ln.startswith("#") or ln == "\n":
+    for ln in preamble:
+        if ln.startswith("#") or ln.strip() == "":
             header_lines.append(ln)
         else:
             break
     return header_lines
 
 
-def _parse_block_wrap(head_lines: list[str]) -> tuple[int, list[str]]:
+def _parse_block_wrap(preamble: list[str]) -> tuple[int, list[str]]:
+    """Parses a block comment wrapped section of the header, returning the
+    unwrapped header lines, to be parsed further. Stops parsing once it find
+    the end of the block comment, or reaches the end of the preamble.
+
+    Returns:
+        A tuple of the number of lines taken up by the entire block comment, and
+        the list of unwrapped lines.
+    """
     block_wrap_opened = False
     block_lines = 0
     block_content: list[str] = []
-    for ln in head_lines:
+    for ln in preamble:
         ln = ln.strip()
         block_lines += 1
         if not block_wrap_opened:
@@ -230,6 +270,16 @@ def _parse_block_wrap(head_lines: list[str]) -> tuple[int, list[str]]:
 
 
 def _parse_lines(header_lines: list[str]) -> tuple[bool, Header]:
+    """Parses the given lines and returns a tuple of the parse result, and the
+    parsed Header.
+
+    Attempts to be flexible about empty lines, and common formatting errors that
+    currently exist.
+
+    Keeps track of the number of lines parsed, by incrementing Header.lines of
+    the returned Header.
+    """
+
     parsed = Header()
 
     if not header_lines:
@@ -317,6 +367,12 @@ def _parse_lines(header_lines: list[str]) -> tuple[bool, Header]:
 
 
 def _parse_header_consume_empty_lines(header_lines: list[str], ptr: int) -> int:
+    """Consume empty lines by incrementing the pointer until either the end of
+    the header is found, or a line that is not an empty comment.
+
+    Returns:
+        The updated pointer value.
+    """
     while ptr < len(header_lines) and header_lines[ptr].strip() == "#":
         ptr += 1
     return ptr
@@ -360,8 +416,11 @@ def add_header(
     header.overlay(PROJ_CONSTS)
     header.module_name = os.path.basename(path).removesuffix(".py")
 
-    # no shebang if executable bit is not set
-    if not os.access(path, os.X_OK):
+    # remove shebang if executable bit is not set AND the shebang is default
+    # keep non-default shebangs always to avoid accidents
+    is_executable = os.access(path, os.X_OK)
+    is_shebang_default = header.interpreter_path == PROJ_CONSTS.interpreter_path
+    if not is_executable and is_shebang_default:
         header.interpreter_path = ""
 
     header_lines = header.format(
@@ -386,6 +445,7 @@ def add_header(
 def find_matching_project_pattern(
     src_path: str, mig_code_base: str
 ) -> Optional[str]:
+    """For the given source path, find any matching project pattern."""
     for pattern in list_code_files():
         pattern = os.path.normpath(
             os.path.join(mig_code_base, CODE_ROOT, pattern)
