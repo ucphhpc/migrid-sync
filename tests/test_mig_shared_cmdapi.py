@@ -45,8 +45,6 @@ from tests.support import MigTestCase, ensure_dirs_exist, testmain
 # Imports required for the unit test wrapping
 
 
-
-
 class TestMigSharedCmdapi(MigTestCase):
     """Unit tests for cmdapi helpers"""
 
