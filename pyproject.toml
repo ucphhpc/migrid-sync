@@ -72,3 +72,7 @@ select = ["E713"]
 
 [tool.bandit]
 exclude_dirs = [".git/", "tests/data/", "tests/fixture/"]
+
+# Test tools
+[tool.pytest.ini_options]
+addopts = "-p no:warnings"
