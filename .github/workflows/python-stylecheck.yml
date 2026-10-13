@@ -69,9 +69,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # This is necessary to get the commits
-      - name: Get changed python files between base and head
-        run: >
-          echo "CHANGED_FILES=$(echo $(git diff  --diff-filter=ACMRTB --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep -E '\.py$'))" >> $GITHUB_ENV
+      - name: Determine changed Python files
+        uses: ./.github/actions/changed-py-files
       - if: ${{ env.CHANGED_FILES }}
         uses: marian-code/python-lint-annotate@v4
         with:
