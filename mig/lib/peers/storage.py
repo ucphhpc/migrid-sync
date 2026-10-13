@@ -63,7 +63,9 @@ def list_peers_accepted(configuration, client_id):
 
 
 def peer_already_exists(configuration, client_id, peer_email):
-    """Validate that an identical existing requested/accepted peer does not exist already"""
+    """Validate that an identical existing requested/accepted
+    peer does not exist already.
+    """
     requested_peers = list(list_peers_requested(configuration, client_id))
     if peer_email in [
         requested_peer["email"] for requested_peer in requested_peers
@@ -176,7 +178,8 @@ def remove_pending_peers_from_client(configuration, client_id, peers_dns):
             peers_db = unpickle(peers_path, _logger, allow_missing=True)
             if not peers_db:
                 _logger.info(
-                    "found no pending peers db at %s to delete the peer %s from for %s"
+                    "found no pending peers db at %s "
+                    "to delete the peer %s from for %s"
                     % (peers_path, peers_dns, client_id)
                 )
                 return True

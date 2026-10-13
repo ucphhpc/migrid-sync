@@ -59,7 +59,9 @@ EXTRA_PEER_FIELDS = {
 
 
 def _unlistify_dict(thedict):
-    """A module helper for converting a dictionary of lists to a dictionary of values."""
+    """A module helper for converting a dictionary
+    of lists to a dictionary of values.
+    """
     return {key: value[0] for key, value in thedict.items()}
 
 
@@ -79,12 +81,13 @@ def _normalize_rejected_value(failure_detail):
     as values of rejected keys. Try to make something
     presentable in the UI from what we get.
 
-    failure_detail: is expected to be either a list, a tuple or a string. The format is defined by how the value was rejected.
+    failure_detail: is expected to be either a list, a tuple
+    or a string. The format is defined by how the value was rejected.
     """
     normalized_details = []
     if isinstance(failure_detail, list):
-        # When the rejected structure is a list, the first element is an error identifier,
-        # and the second is the error message.
+        # When the rejected structure is a list, the first element
+        # is an error identifier, and the second is the error message.
         unlisted_failure = _unlisty(failure_detail)
         normalized_details.append(unlisted_failure[-1])
     elif isinstance(failure_detail, tuple) and len(failure_detail) == 2:

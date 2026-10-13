@@ -552,7 +552,8 @@ def handle_POST_peers_accepted_import(configuration, request_info):
     if not accepted_common or rejected_common:
         return create_handler_response(
             400,
-            error="failed to import peer(s), the received import argument(s) was rejected %s"
+            error="failed to import peer(s), the received import "
+            "argument(s) was rejected %s"
             % rejected_common,
         )
 
@@ -634,7 +635,8 @@ def handle_POST_peers_accepted_import(configuration, request_info):
         created_peers[peer_dn] = peer_dict
         success_map[index] = True
 
-        # validate that an identical existing requested/accepted peer does not exist already
+        # validate that an identical existing
+        # requested/accepted peer does not exist already
     if errors_map:
         return create_handler_response(400, errors_map=errors_map)
 
@@ -657,7 +659,8 @@ def handle_POST_peers_accepted_import(configuration, request_info):
                 peer_dict.get("kind", ""),
             )
             invite_log_msg = (
-                "Sending invitation: to: %s, header: %s, msg: %s, smtp_server: %s"
+                "Sending invitation: to: %s, header: %s, "
+                "msg: %s, smtp_server: %s"
                 % (
                     peer_dict["email"],
                     invite_msg["header"],
@@ -755,7 +758,8 @@ def handle_POST_peers_accepted_update(configuration, request_info):
     if not accepted_common or rejected_common:
         return create_handler_response(
             400,
-            error="failed to update peer, the received update argument(s) was rejected %s"
+            error="failed to update peer, the received update argument(s) "
+            "was rejected %s"
             % rejected_common,
         )
 
@@ -937,8 +941,8 @@ def handle_POST_peers_requested_delete(configuration, request_info):
             "deleting the following requested peers successfully %s"
             % (request_info.client_id, "\n".join(peers_deleted.keys()))
         )
-        # send_email logs this error, and since the peers have been deleted, we return it as
-        # an success
+        # send_email logs this error, and since the peers have
+        # been deleted, we return it as an success
     return create_handler_response(200, success_map=success_map)
 
 
