@@ -82,7 +82,8 @@ class TestGetXgiHtmlHeader(MigTestCase):
         inserted into the DOM if the underlying package provides it.
         """
 
-        active_templates = self.configuration.division(section_name="TEMPLATES")
+        active_templates = self.configuration.division(
+            section_name="TEMPLATES")
         base_packages = active_templates.base_packages
         self.assertNotEqual(base_packages, "")
 
@@ -103,7 +104,8 @@ class TestGetXgiHtmlHeader(MigTestCase):
         for package in base_packages:
             imported_package = importlib.import_module(package)
             self.assertIsNotNone(imported_package)
-            self.assertTrue(hasattr(imported_package, "INIT_JAVASCRIPT_LOADER"))
+            self.assertTrue(
+                hasattr(imported_package, "INIT_JAVASCRIPT_LOADER"))
             self.assertIsInstance(imported_package.INIT_JAVASCRIPT_LOADER, str)
             expected_loader_script = imported_package.INIT_JAVASCRIPT_LOADER
 
@@ -132,3 +134,140 @@ class TestGetXgiHtmlHeader(MigTestCase):
         parsed = etree.HTML(result)
         scripts = parsed.findall(".//script[@src]")
         self.assertEqual(len(scripts), 0)
+
+
+class TestLegacyUserInterface(MigTestCase):
+    """Test coverage of the helper pointed to in the name"""
+
+    def _provide_configuration(self):
+        return "testconfig"
+
+    def before_each(self):
+        self.configuration.user_interface = ["V4", "V3", "V2", "V1"]
+        self.legacy = ["V1", "V2"]
+
+    def test_legacy_user_interface_true_for_v1(self):
+        user_settings = {"USER_INTERFACE": "V1"}
+        result = htmlgen.legacy_user_interface(
+            self.configuration, user_settings, legacy_versions=self.legacy
+        )
+        self.assertTrue(result)
+
+    def test_legacy_user_interface_true_for_v2(self):
+        user_settings = {"USER_INTERFACE": "V2"}
+        result = htmlgen.legacy_user_interface(
+            self.configuration, user_settings, legacy_versions=self.legacy
+        )
+        self.assertTrue(result)
+
+    def test_legacy_user_interface_false_for_v3(self):
+        user_settings = {"USER_INTERFACE": "V3"}
+        result = htmlgen.legacy_user_interface(
+            self.configuration, user_settings, legacy_versions=self.legacy
+        )
+        self.assertFalse(result)
+
+    def test_legacy_user_interface_false_for_v4(self):
+        user_settings = {"USER_INTERFACE": "V4"}
+        result = htmlgen.legacy_user_interface(
+            self.configuration, user_settings, legacy_versions=self.legacy
+        )
+        self.assertFalse(result)
+
+    def test_legacy_user_interface_false_for_v1_if_not_available(self):
+        user_settings = {"USER_INTERFACE": "V1"}
+        self.configuration.user_interface = [
+            i for i in self.configuration.user_interface if i != "V1"
+        ]
+        expect_warn = "ignoring invalid saved user interface value"
+        with self.assertLogs(level="WARNING") as log_capture:
+            result = htmlgen.legacy_user_interface(
+                self.configuration, user_settings, legacy_versions=self.legacy
+            )
+        self.assertFalse(result)
+        self.assertTrue(any(expect_warn in msg for msg in log_capture.output))
+
+    def test_legacy_user_interface_false_for_v2_if_not_available(self):
+        user_settings = {"USER_INTERFACE": "V2"}
+        self.configuration.user_interface = [
+            i for i in self.configuration.user_interface if i != "V2"
+        ]
+        expect_warn = "ignoring invalid saved user interface value"
+        with self.assertLogs(level="WARNING") as log_capture:
+            result = htmlgen.legacy_user_interface(
+                self.configuration, user_settings, legacy_versions=self.legacy
+            )
+        self.assertFalse(result)
+        self.assertTrue(any(expect_warn in msg for msg in log_capture.output))
+
+    def test_legacy_user_interface_false_for_v1_if_not_configured(self):
+        user_settings = {"USER_INTERFACE": "V1"}
+        self.configuration.user_interface = []
+        expect_warn = "ignoring invalid saved user interface value"
+        with self.assertLogs(level="WARNING") as log_capture:
+            result = htmlgen.legacy_user_interface(
+                self.configuration, user_settings, legacy_versions=self.legacy
+            )
+        self.assertFalse(result)
+        self.assertTrue(any(expect_warn in msg for msg in log_capture.output))
+
+    def test_legacy_user_interface_false_for_v2_if_not_configured(self):
+        user_settings = {"USER_INTERFACE": "V2"}
+        self.configuration.user_interface = []
+        expect_warn = "ignoring invalid saved user interface value"
+        with self.assertLogs(level="WARNING") as log_capture:
+            result = htmlgen.legacy_user_interface(
+                self.configuration, user_settings, legacy_versions=self.legacy
+            )
+        self.assertFalse(result)
+        self.assertTrue(any(expect_warn in msg for msg in log_capture.output))
+
+    def test_legacy_user_interface_false_for_v3_if_not_configured(self):
+        user_settings = {"USER_INTERFACE": "V3"}
+        self.configuration.user_interface = []
+        result = htmlgen.legacy_user_interface(
+            self.configuration, user_settings, legacy_versions=self.legacy
+        )
+        self.assertFalse(result)
+
+    def test_legacy_user_interface_false_for_v4_if_not_configured(self):
+        user_settings = {"USER_INTERFACE": "V4"}
+        self.configuration.user_interface = []
+        result = htmlgen.legacy_user_interface(
+            self.configuration, user_settings, legacy_versions=self.legacy
+        )
+        self.assertFalse(result)
+
+    def test_legacy_user_interface_false_and_silent_for_empty_default(self):
+        user_settings = {"USER_INTERFACE": ""}
+        self.configuration.user_interface = []
+        usual_warn = "ignoring invalid saved user interface value"
+        with self.assertLogs(level="WARNING") as log_capture:
+            result = htmlgen.legacy_user_interface(
+                self.configuration, user_settings, legacy_versions=self.legacy
+            )
+        self.assertFalse(result)
+        self.assertFalse(any(usual_warn in msg for msg in log_capture.output))
+
+    def test_legacy_user_interface_false_if_unset_when_unconfigured(self):
+        user_settings = {}
+        self.configuration.user_interface = []
+        result = htmlgen.legacy_user_interface(
+            self.configuration, user_settings, legacy_versions=self.legacy
+        )
+        self.assertFalse(result)
+
+    def test_legacy_user_interface_false_if_unset_with_modern_conf(self):
+        user_settings = {}
+        result = htmlgen.legacy_user_interface(
+            self.configuration, user_settings, legacy_versions=self.legacy
+        )
+        self.assertFalse(result)
+
+    def test_legacy_user_interface_true_if_unset_with_legacy_conf(self):
+        user_settings = {}
+        self.configuration.user_interface = ["V2", "V3"]
+        result = htmlgen.legacy_user_interface(
+            self.configuration, user_settings, legacy_versions=self.legacy
+        )
+        self.assertTrue(result)
