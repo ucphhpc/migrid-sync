@@ -22,7 +22,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 # USA.
 #
-# -- END_HEADER ---
+# --- END_HEADER ---
 #
 
 """Legacy functions for the pre USER_INTERFACE V4 peers feature."""
