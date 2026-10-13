@@ -82,8 +82,7 @@ class TestGetXgiHtmlHeader(MigTestCase):
         inserted into the DOM if the underlying package provides it.
         """
 
-        active_templates = self.configuration.division(
-            section_name="TEMPLATES")
+        active_templates = self.configuration.division(section_name="TEMPLATES")
         base_packages = active_templates.base_packages
         self.assertNotEqual(base_packages, "")
 
@@ -104,8 +103,7 @@ class TestGetXgiHtmlHeader(MigTestCase):
         for package in base_packages:
             imported_package = importlib.import_module(package)
             self.assertIsNotNone(imported_package)
-            self.assertTrue(
-                hasattr(imported_package, "INIT_JAVASCRIPT_LOADER"))
+            self.assertTrue(hasattr(imported_package, "INIT_JAVASCRIPT_LOADER"))
             self.assertIsInstance(imported_package.INIT_JAVASCRIPT_LOADER, str)
             expected_loader_script = imported_package.INIT_JAVASCRIPT_LOADER
 

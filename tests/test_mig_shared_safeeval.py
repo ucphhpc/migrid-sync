@@ -38,7 +38,6 @@ from mig.shared.safeeval import (
 )
 from tests.support import MigTestCase, testmain
 
-
 PWD_STR = os.getcwd()
 PWD_BYTES = PWD_STR.encode("utf8")
 
