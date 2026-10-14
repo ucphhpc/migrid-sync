@@ -74,7 +74,9 @@ extend-exclude = [
     "sbin/grid_webdavs.py"
 ]
 [tool.ruff.lint]
-ignore = ["UP031"]
+# UP031 = Use format specifiers instead of percent format when interpolating strings
+# DTZ006 = datetime.datetime.fromtimestamp()` called without a `tz` argument
+ignore = ["UP031", "DTZ006"]
 select = ["E713"]
 
 [tool.bandit]
