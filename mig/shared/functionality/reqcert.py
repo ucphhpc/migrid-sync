@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcert - Local certificate request and account sign up backend
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -50,6 +50,10 @@ def signature(configuration):
 
     defaults = {'full_name': [''],
                 'organization': [''],
+                # NOTE: we accept organizational_unit but don't use it.
+                #       If explicitly set e.g. to NA in the user db the expire
+                #       emails will include value in semi-filled renew link.
+                'organizational_unit': [''],
                 'email': [''],
                 'country': [''],
                 'state': [''],
@@ -76,7 +80,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not 'migcert' in configuration.site_signup_methods:
+    if 'migcert' not in configuration.site_signup_methods:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              '''X.509 certificate login is not enabled on this site'''})
@@ -159,7 +163,7 @@ jobs and privileges.</p>''' % configuration.short_title})
 
     # Override with arg values if set
     for field in user_fields:
-        if not field in accepted:
+        if field not in accepted:
             continue
         override_val = accepted[field][-1].strip()
         if override_val:
@@ -198,7 +202,7 @@ jobs and privileges.</p>''' % configuration.short_title})
                  list(cert_field_map) + given_peers]
     # Write-protect ID fields in auto-mode or if already logged in
     if keyword_auto in accepted['ro_fields'] or client_id:
-        ro_fields += [i for i in list(cert_field_map) if not i in ro_fields]
+        ro_fields += [i for i in list(cert_field_map) if i not in ro_fields]
     if reset_token:
         user_fields['reset_token'] = reset_token
         lock_fields = given_peers + ['comment']

@@ -98,9 +98,7 @@ class TestMigSharedTemplates_instance(MigTestCase):
         )
         self.assertEqual(
             template_vars,
-            set(
-                ["inner_variable"]
-            ),
+            set(["inner_variable"]),
         )
 
     def test_extract_variables_empty(self):
@@ -191,7 +189,6 @@ class TestMigSharedTemplates_cli(MigTestCase):
     def after_each(self):
         # clean up the configuration file specified cache directory
         shutil.rmtree(TEST_TEMPLATE_CACHE_DIR, ignore_errors=True)
-
 
     def test_command_cache(self):
         test_conf_file = os.path.join(

@@ -5,6 +5,9 @@ ARG CONTAINER_USER_NAME=migtest
 # the following value is required to be overridden via a --build-arg
 ARG CONTAINER_USER_UID=-42
 
+# NOTE: must create envhelp as root to avoid permission errors on podman
+RUN mkdir -p /usr/src/app/envhelp
+
 # switch to executing as the specified non-privileged user
 RUN useradd --uid ${CONTAINER_USER_UID} --create-home ${CONTAINER_USER_NAME}
 USER ${CONTAINER_USER_NAME}
@@ -16,7 +19,6 @@ COPY requirements.txt local-requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt -r local-requirements.txt
 
 # insert dist files for our local packages
-RUN mkdir -p ./envhelp
 COPY ./mig/install/requirements ./envhelp/requirements
 RUN pip install --no-cache-dir \
                  -r ./envhelp/requirements/migux-requirements.txt

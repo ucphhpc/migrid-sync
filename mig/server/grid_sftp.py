@@ -107,7 +107,7 @@ from mig.shared.griddaemons.sftp import default_username_validator, \
 from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from mig.shared.notification import send_system_notification
-from mig.shared.pwcrypto import make_simple_hash
+from mig.shared.pwcrypto import make_simple_hash, valid_login_legacy_password
 from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_job_id, possible_sharelink_id, possible_jupyter_mount_id
@@ -1496,6 +1496,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         valid_key = False
         valid_password = False
         valid_twofa = False
+        legacy_password = False
         exceeded_rate_limit = False
         exceeded_max_sessions = False
         update_key_map = False
@@ -1591,6 +1592,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
                         password_offered, password_allowed,
                         hash_cache, strict_password_policy, allow_legacy):
                     valid_password = True
+                    if valid_login_legacy_password(configuration, password):
+                        legacy_password = True
                     break
             if (valid_key and check_twofactor_session(
                     configuration, username, enforce_address, 'sftp-key')) \
@@ -1623,6 +1626,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                 valid_twofa=valid_twofa,
                 authtype_enabled=(key_enabled or password_enabled),
                 valid_auth=(valid_key or valid_password),
+                legacy_password=legacy_password,
                 exceeded_rate_limit=exceeded_rate_limit,
                 exceeded_max_sessions=exceeded_max_sessions,
                 user_abuse_hits=user_abuse_hits,

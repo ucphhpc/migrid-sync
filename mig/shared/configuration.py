@@ -392,7 +392,8 @@ def _generate_fix_missing_definitions():
     monitor_section = {'sleep_secs': '60',
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
-    settings_section = {'language': 'English', 'user_interface': ['V3', 'V4', 'V2'],
+    settings_section = {'language': 'English',
+                        'user_interface': ['V3', 'V2', 'V4'],
                         'submitui': ['fields', 'textarea', 'files']}
     feasibility_section = {'resource_seen_within_hours': '24',
                            'skip_validation': '',
@@ -783,7 +784,7 @@ _CONFIGURATION_PROPERTIES = {
 
     'expire_peer': 600,
     'language': ['English'],
-    'user_interface': ['V3', 'V4', 'V2'],
+    'user_interface': ['V3', 'V2', 'V4'],
     'new_user_default_ui': keyword_auto,
     'submitui': ['fields', 'textarea', 'files'],
     # Init user default page with no selection to use site landing page
@@ -1086,7 +1087,7 @@ location.""" % self.config_file)
         if config.has_option('SITE', 'user_interface'):
             self.user_interface = config.get('SITE', 'user_interface').split()
         else:
-            self.user_interface = ['V3', 'V2']
+            self.user_interface = ['V3', 'V2', 'V4']
 
         # Allow gradual transition to new user interface - only new sign ups
         if config.has_option('SITE', 'new_user_default_ui'):
