@@ -31,23 +31,18 @@
 import difflib
 import errno
 import io
-import json
 import logging
 import os
-import pickle
 import shutil
 import stat
 import sys
-from collections import defaultdict
-from configparser import ConfigParser
-from types import SimpleNamespace
+import warnings
 from unittest import TestCase
 from unittest import main as testmain
 
 import tests.support.fakes as fakes
 from tests.support._env import MIG_ENV, PY2
 from tests.support.configsupp import FakeConfiguration
-from tests.support.fixturesupp import _PreparedFixture
 from tests.support.suppconst import (
     ENVHELP_OUTPUT_DIR,
     MIG_BASE,
@@ -108,16 +103,20 @@ from tests.support.serversupp import make_wrapped_server
 class BlackHole:
     """Arrange a stream that ignores all logging messages"""
 
-    def write(self, message):
+    def write(self, _message):
         """NoOp to fake write"""
         pass
 
 
 BLACKHOLE_STREAM = BlackHole()
 # provide a working logging setup (black hole by default)
-logging.basicConfig(stream=BLACKHOLE_STREAM)
+logging.basicConfig(stream=BLACKHOLE_STREAM, force=True)
 # request capturing warnings from within the Python runtime
 logging.captureWarnings(True)
+# explicitly configure the warning filter as the unittest module does implicitly
+# so it also applies to tests running under pytest with its warnings module
+# disabled, e.g. `-p no:warnings`
+warnings.simplefilter("default")
 
 
 def _empty_dir(absolute_dir):
@@ -213,7 +212,9 @@ class MigTestCase(TestCase):
 
     @staticmethod
     def _make_configuration_instance(testcase, configuration_to_make):
-        if configuration_to_make == "fakeconfig":
+        if configuration_to_make == "preexisting":
+            return testcase._configuration
+        elif configuration_to_make == "fakeconfig":
             fake_configuration = FakeConfiguration(logger=testcase.logger)
             from mig.shared.conf import RuntimeConfiguration
 
@@ -239,15 +240,18 @@ class MigTestCase(TestCase):
     def configuration(self):
         """Init a fake configuration if not already done"""
 
-        if self._configuration is not None:
-            return self._configuration
-
         configuration_to_make = self._provide_configuration()
 
         if configuration_to_make == "unspecified":
             raise AssertionError(
                 "configuration access but testcase did not request it"
             )
+        elif configuration_to_make == "preexisting":
+            # unconditionally proceed so as to be certain that a valid
+            # configuration has been supplied and get it instrumented
+            pass
+        elif self._configuration is not None:
+            return self._configuration
 
         configuration_instance = self._make_configuration_instance(
             self, configuration_to_make

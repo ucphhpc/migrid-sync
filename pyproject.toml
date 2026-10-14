@@ -38,7 +38,7 @@ skip = [
 
 [tool.pylint]
 max-line-length = 80
-ignore-pattern = '''
+ignore-patterns = '''
       tests/data/
     | tests/fixture/
 '''
@@ -52,6 +52,13 @@ ignore-paths = [
     "sbin/grid_sftp.py",
     "sbin/grid_webdavs.py"
 ]
+# This ensures that pylint does not complain if we dynamically
+# adjust the sys.path inside tests to import packages/modules from directories
+# such as tests/data.
+# Documentation for this can be found at
+# https://github.com/databrickslabs/pylint-plugin/blob/b1be1a39703b8d3b693a0afd8a6ee61ff5078cb8/pyproject.toml#L202
+[tool.pylint.main]
+source-roots = "tests/data"
 
 [tool.ruff]
 line-length = 80
@@ -66,6 +73,15 @@ extend-exclude = [
     "sbin/grid_sftp.py",
     "sbin/grid_webdavs.py"
 ]
+[tool.ruff.lint]
+# UP031 = Use format specifiers instead of percent format when interpolating strings
+# DTZ006 = datetime.datetime.fromtimestamp()` called without a `tz` argument
+ignore = ["UP031", "DTZ006"]
+select = ["E713"]
 
 [tool.bandit]
 exclude_dirs = [".git/", "tests/data/", "tests/fixture/"]
+
+# Test tools
+[tool.pytest.ini_options]
+addopts = "-p no:warnings"
