@@ -253,6 +253,10 @@ def process_peer_action(
     do_invite=False,
     logger=None,
 ):
+    """
+    Process a peer action request.
+    """
+
     if logger is None:
         logger = configuration.logger
 
