@@ -28,13 +28,15 @@
 
 import os
 import stat
-from typing import NamedTuple
+from contextlib import redirect_stdout
+from typing import Any, Callable, NamedTuple
 
 from bin.addheader import Header
 from bin.addheader import __file__ as addheader_file
 from bin.addheader import main, parse_file
 from tests.support import MigTestCase
 from tests.support.iosupp import read_file, read_tree, write_file, write_tree
+
 
 FILE_CONTENT = '''"""Python module"""
 def func(a, b):
@@ -69,6 +71,19 @@ HEADER_FORMAT = """#
 """
 FILE_WITH_HEADER_CONTENT = HEADER_FORMAT + "\n" + FILE_CONTENT
 DEFAULT_DESC = "[optionally add short module description on this line]"
+
+
+def redirect_stdout_to_devnull(func: Callable[..., Any]) -> Callable[..., Any]:
+    """A decorator that wraps the given function with stdout redirection to
+    `os.devnull`. Useful for noisy tests.
+    """
+
+    def wrapped_func(*args, **kwargs):
+        with open(os.devnull, "w") as devnull:
+            with redirect_stdout(devnull):
+                return func(*args, **kwargs)
+
+    return wrapped_func
 
 
 def add_header(modulename: str, modulebody: str) -> str:
@@ -326,6 +341,7 @@ class TestMain(MigTestCase):
     def before_each(self) -> None:
         self.target_dir = self.temppath(self.id(), ensure_dir=True)
 
+    @redirect_stdout_to_devnull
     def test_adds_header_to_file_without_header(self) -> None:
         fname = "file_without_header.py"
         write_file(self.target_dir, fname, FILE_CONTENT)
@@ -339,6 +355,7 @@ class TestMain(MigTestCase):
         }
         self.assertEqual(expected_content, actual_content)
 
+    @redirect_stdout_to_devnull
     def test_does_not_change_file_with_header(self) -> None:
         fname = "file_with_header.py"
         content = FILE_WITH_HEADER_CONTENT % {
@@ -352,6 +369,7 @@ class TestMain(MigTestCase):
         actual_content = read_file(self.target_dir, fname)
         self.assertEqual(content, actual_content)
 
+    @redirect_stdout_to_devnull
     def test_updates_files_in_cwd_if_no_path_arg_is_given(self) -> None:
         oldcwd = os.getcwd()
         try:
@@ -370,6 +388,7 @@ class TestMain(MigTestCase):
         finally:
             os.chdir(oldcwd)
 
+    @redirect_stdout_to_devnull
     def test_adds_headers_and_backs_up_unlicensed_files(self) -> None:
         gdp_files = {
             "file1.py": "content of file shared/gdp/file1.py",
@@ -408,6 +427,7 @@ class TestMain(MigTestCase):
         }
         self.assertEqual(expected, actual)
 
+    @redirect_stdout_to_devnull
     def test_adds_header_to_file_with_format_string_in_module_body(
         self,
     ) -> None:
@@ -432,6 +452,7 @@ class TestMain(MigTestCase):
         )
         self.assertEqual(expected_content, actual_content)
 
+    @redirect_stdout_to_devnull
     def test_force_update_removes_header_from_non_executable_file_with_default_shebang(
         self,
     ):
@@ -458,6 +479,7 @@ class TestMain(MigTestCase):
         assert expected_content == actual_content
         self.assertEqual(expected_content, actual_content)
 
+    @redirect_stdout_to_devnull
     def test_force_update_keeps_header_for_executable_file_with_default_shebang(
         self,
     ):
@@ -487,6 +509,7 @@ class TestMain(MigTestCase):
         assert expected_content == actual_content
         self.assertEqual(expected_content, actual_content)
 
+    @redirect_stdout_to_devnull
     def test_force_update_keeps_header_for_nonexecutable_file_with_nondefault_shebang(
         self,
     ):
