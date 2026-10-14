@@ -165,11 +165,19 @@ def html_add(formatted_text, html=True):
 def legacy_user_interface(configuration, user_settings,
                           legacy_versions=["V1", "V2"]):
     """Helper to ease detection of legacy user interfaces"""
+    _logger = configuration.logger
     # Default to first config value or V3 if explicitly unset
-    active_ui = (configuration.user_interface + ['V3'])[0]
+    valid_user_interfaces = configuration.user_interface + ['V3']
+    active_ui = valid_user_interfaces[0]
     # Please note that user_settings may be boolean False if never saved
     if user_settings:
-        active_ui = user_settings.get('USER_INTERFACE', active_ui)
+        user_ui = user_settings.get('USER_INTERFACE', active_ui)
+        # NOTE: ignore default empty string for user_ui here
+        if user_ui in valid_user_interfaces:
+            active_ui = user_ui
+        elif user_ui:
+            _logger.warning("ignoring invalid saved user interface value: %s" %
+                            user_ui)
     if active_ui in legacy_versions:
         return True
     else:
@@ -189,7 +197,7 @@ def render_menu(configuration, menu_class='navmenu',
     menu_order = []
     # Remove duplicates and force logout last
     for name in raw_order:
-        if not name in menu_order and name != 'logout':
+        if name not in menu_order and name != 'logout':
             menu_order.append(name)
     if 'logout' in raw_order:
         menu_order.append('logout')
@@ -297,7 +305,7 @@ def render_apps(configuration, title_entry, active_menu):
     app_order = []
     # Remove duplicates
     for name in raw_order:
-        if not name in app_order:
+        if name not in app_order:
             app_order.append(name)
 
     app_lines = '''
@@ -2069,7 +2077,7 @@ def get_xgi_html_header(
                 # Disable any other entries missing from base and user menu
                 for user_entry in ['home', 'account', 'settings', 'setup']:
                     profile_helper['disable%s' % user_entry] = ''
-                    if not user_entry in base_menu + user_menu:
+                    if user_entry not in base_menu + user_menu:
                         profile_helper['disable%s' %
                                        user_entry] = 'disable-link'
 

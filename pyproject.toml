@@ -52,6 +52,13 @@ ignore-paths = [
     "sbin/grid_sftp.py",
     "sbin/grid_webdavs.py"
 ]
+# This ensures that pylint does not complain if we dynamically
+# adjust the sys.path inside tests to import packages/modules from directories
+# such as tests/data.
+# Documentation for this can be found at
+# https://github.com/databrickslabs/pylint-plugin/blob/b1be1a39703b8d3b693a0afd8a6ee61ff5078cb8/pyproject.toml#L202
+[tool.pylint.main]
+source-roots = "tests/data"
 
 [tool.ruff]
 line-length = 80

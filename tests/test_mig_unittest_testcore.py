@@ -31,16 +31,15 @@ import importlib
 import os
 import sys
 
-from tests.support import MigTestCase, testmain
-
 from mig.unittest.testcore import legacy_main
+from tests.support import MigTestCase, testmain
 
 
 class MigUnittestTestcore__legacy_main(MigTestCase):
     """Legacy tests for corresponding module self-checks"""
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     def test_existing_main(self):
         """Run the legacy self-tests directly in module"""
@@ -48,9 +47,10 @@ class MigUnittestTestcore__legacy_main(MigTestCase):
         def raise_on_error_exit(exit_code, identifying_message=None):
             if exit_code != 0:
                 if identifying_message is None:
-                    identifying_message = 'unknown'
+                    identifying_message = "unknown"
                 raise AssertionError(
-                    'legacy test failure: %s' % (identifying_message,))
+                    "legacy test failure: %s" % (identifying_message,)
+                )
 
         raise_on_error_exit.last_print = None
 
@@ -58,8 +58,12 @@ class MigUnittestTestcore__legacy_main(MigTestCase):
             """Keep track of printed output"""
             raise_on_error_exit.last_print = value
 
-        legacy_main(self.configuration, print=record_last_print, _exit=raise_on_error_exit)
+        legacy_main(
+            self.configuration,
+            print=record_last_print,
+            _exit=raise_on_error_exit,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()
