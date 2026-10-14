@@ -32,11 +32,26 @@ import os
 import unittest
 
 # Imports of the code under test
-from mig.lib.events import _restore_env, _save_env, at_remain, cron_match, \
-    get_path_expand_map, get_time_expand_map, load_atjobs, load_crontab
-from mig.lib.events import parse_and_save_atjobs, parse_and_save_crontab, \
-    parse_atjobs, parse_atjobs_contents, parse_crontab, \
-    parse_crontab_contents, run_cron_command, run_events_command, legacy_main
+from mig.lib.events import (
+    _restore_env,
+    _save_env,
+    at_remain,
+    cron_match,
+    get_path_expand_map,
+    get_time_expand_map,
+    legacy_main,
+    load_atjobs,
+    load_crontab,
+    parse_and_save_atjobs,
+    parse_and_save_crontab,
+    parse_atjobs,
+    parse_atjobs_contents,
+    parse_crontab,
+    parse_crontab_contents,
+    run_cron_command,
+    run_events_command,
+)
+
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase, ensure_dirs_exist
 
@@ -355,8 +370,7 @@ class MigLibEvents__timers(MigTestCase):
             ),
         ]
         for job, expected in test_cases:
-            self.assertEqual(cron_match(
-                self.configuration, now, job), expected)
+            self.assertEqual(cron_match(self.configuration, now, job), expected)
 
     def test_cron_match_specific_time(self):
         """Test cron_match rejects non-matching time"""
@@ -507,7 +521,8 @@ class MigLibEvents__timers(MigTestCase):
                 },
                 # Get first Monday of current month
                 now.replace(day=7).replace(
-                    day=now.replace(day=7).day - now.replace(day=7).weekday()),
+                    day=now.replace(day=7).day - now.replace(day=7).weekday()
+                ),
             ),
             (
                 {
@@ -519,7 +534,10 @@ class MigLibEvents__timers(MigTestCase):
                 },
                 # Get first Friday of current month
                 now.replace(day=7).replace(
-                    day=4 + now.replace(day=7).day - now.replace(day=7).weekday()),
+                    day=4
+                    + now.replace(day=7).day
+                    - now.replace(day=7).weekday()
+                ),
             ),
             (
                 {
@@ -531,7 +549,8 @@ class MigLibEvents__timers(MigTestCase):
                 },
                 # Get first Monday of current month
                 now.replace(day=7).replace(
-                    day=now.replace(day=7).day - now.replace(day=7).weekday()),
+                    day=now.replace(day=7).day - now.replace(day=7).weekday()
+                ),
             ),
             (
                 {
@@ -543,7 +562,10 @@ class MigLibEvents__timers(MigTestCase):
                 },
                 # Get first Friday of current month
                 now.replace(day=7).replace(
-                    day=4 + now.replace(day=7).day - now.replace(day=7).weekday()),
+                    day=4
+                    + now.replace(day=7).day
+                    - now.replace(day=7).weekday()
+                ),
             ),
         ]
         for job, now in test_cases:
@@ -643,7 +665,10 @@ class MigLibEvents__timers(MigTestCase):
                 },
                 # Get first Friday of current month
                 now.replace(day=7).replace(
-                    day=4 + now.replace(day=7).day - now.replace(day=7).weekday()),
+                    day=4
+                    + now.replace(day=7).day
+                    - now.replace(day=7).weekday()
+                ),
             ),
             (
                 {
@@ -655,7 +680,8 @@ class MigLibEvents__timers(MigTestCase):
                 },
                 # Get first Monday of current month
                 now.replace(day=7).replace(
-                    day=now.replace(day=7).day - now.replace(day=7).weekday()),
+                    day=now.replace(day=7).day - now.replace(day=7).weekday()
+                ),
             ),
             (
                 {
@@ -667,7 +693,10 @@ class MigLibEvents__timers(MigTestCase):
                 },
                 # Get first Friday of current month
                 now.replace(day=7).replace(
-                    day=4 + now.replace(day=7).day - now.replace(day=7).weekday()),
+                    day=4
+                    + now.replace(day=7).day
+                    - now.replace(day=7).weekday()
+                ),
             ),
             (
                 {
@@ -679,7 +708,8 @@ class MigLibEvents__timers(MigTestCase):
                 },
                 # Get first Monday of current month
                 now.replace(day=7).replace(
-                    day=now.replace(day=7).day - now.replace(day=7).weekday()),
+                    day=now.replace(day=7).day - now.replace(day=7).weekday()
+                ),
             ),
         ]
         for job, now in test_cases:
@@ -1409,8 +1439,7 @@ class MigLibEvents__expand_vars(MigTestCase):
         trigger_path = "../relative/path/file.txt"
         rule = {"vgrid_name": "test", "run_as": DUMMY_USER_DN}
         expanded = get_path_expand_map(trigger_path, rule, "modified")
-        self.assertEqual(expanded["+TRIGGERPATH+"],
-                         "../relative/path/file.txt")
+        self.assertEqual(expanded["+TRIGGERPATH+"], "../relative/path/file.txt")
         self.assertEqual(expanded["+TRIGGERFILENAME+"], "file.txt")
         self.assertEqual(expanded["+TRIGGERPREFIX+"], "file")
         self.assertEqual(expanded["+TRIGGEREXTENSION+"], ".txt")
@@ -1807,8 +1836,7 @@ class MigLibEvents__schedule(MigTestCase):
     def test_parse_atjobs(self):
         """Test parsing atjobs content lines"""
         parsed = parse_atjobs_contents(
-            self.configuration, DUMMY_USER_DN,
-            DUMMY_ATJOBS_CONTENT.splitlines()
+            self.configuration, DUMMY_USER_DN, DUMMY_ATJOBS_CONTENT.splitlines()
         )
         self.assertEqual(len(parsed), 1)
         self.assertEqual(parsed[0]["command"], ["/bin/future_command"])
@@ -1816,8 +1844,7 @@ class MigLibEvents__schedule(MigTestCase):
     def test_parse_atjobs_contents(self):
         """Test parsing atjobs content lines"""
         parsed = parse_atjobs_contents(
-            self.configuration, DUMMY_USER_DN,
-            DUMMY_ATJOBS_CONTENT.splitlines()
+            self.configuration, DUMMY_USER_DN, DUMMY_ATJOBS_CONTENT.splitlines()
         )
         self.assertEqual(len(parsed), 1)
         self.assertEqual(parsed[0]["command"], ["/bin/future_command"])
@@ -1825,8 +1852,9 @@ class MigLibEvents__schedule(MigTestCase):
     def test_parse_crontab(self):
         """Test parsing crontab content lines"""
         parsed = parse_crontab_contents(
-            self.configuration, DUMMY_USER_DN,
-            DUMMY_CRONTAB_CONTENT.splitlines()
+            self.configuration,
+            DUMMY_USER_DN,
+            DUMMY_CRONTAB_CONTENT.splitlines(),
         )
         self.assertEqual(len(parsed), 2)
         self.assertEqual(parsed[0]["command"], ["/bin/test_command"])
@@ -1834,8 +1862,9 @@ class MigLibEvents__schedule(MigTestCase):
     def test_parse_crontab_contents(self):
         """Test parsing crontab content lines"""
         parsed = parse_crontab_contents(
-            self.configuration, DUMMY_USER_DN,
-            DUMMY_CRONTAB_CONTENT.splitlines()
+            self.configuration,
+            DUMMY_USER_DN,
+            DUMMY_CRONTAB_CONTENT.splitlines(),
         )
         self.assertEqual(len(parsed), 2)
         self.assertEqual(parsed[0]["command"], ["/bin/test_command"])
@@ -3387,6 +3416,7 @@ class MigLibEvents__legacy_main(MigTestCase):
 
     def test_existing_main(self):
         """Wrap existing self-tests"""
+
         def raise_on_error_exit(exit_code):
             if exit_code != 0:
                 if raise_on_error_exit.last_print is not None:
@@ -3394,14 +3424,19 @@ class MigLibEvents__legacy_main(MigTestCase):
                 else:
                     identifying_message = "unknown"
                 raise AssertionError(
-                    'legacy test failure: %s' % (identifying_message,))
+                    "legacy test failure: %s" % (identifying_message,)
+                )
 
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
             raise_on_error_exit.last_print = value
 
-        legacy_main(self.configuration, print=record_last_print, _exit=raise_on_error_exit)
+        legacy_main(
+            self.configuration,
+            print=record_last_print,
+            _exit=raise_on_error_exit,
+        )
 
 
 if __name__ == "__main__":
