@@ -173,6 +173,8 @@ def check_peers_permit(configuration, client_id):
 
 
 def validate_peer_expire_value(expire_date):
+    """Validate that the expire date is of the correct format
+    and is within the allowed range"""
     try:
         expire = datetime.datetime.strptime(expire_date, "%Y-%m-%d")
     except ValueError:
