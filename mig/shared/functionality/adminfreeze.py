@@ -74,7 +74,7 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     flavor = accepted['flavor'][-1].strip()
     freeze_id = accepted['freeze_id'][-1].strip()
 
-    if not flavor in freeze_flavors:
+    if flavor not in freeze_flavors:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Invalid freeze flavor: %s' % flavor})
         return (output_objects, returnvalues.CLIENT_ERROR)

@@ -284,7 +284,7 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
         req = load_access_request(configuration, request_dir, req_name)
         if not req:
             continue
-        if not req.get('request_type', None) in ["vgridowner", "vgridmember",
+        if req.get('request_type', None) not in ["vgridowner", "vgridmember",
                                                  "vgridresource"]:
             logger.error("unexpected request_type %(request_type)s" % req)
             continue
