@@ -203,8 +203,8 @@ def prepare_GET_migux_apps_peers_accepted(configuration, request_info):
     if not accepted_inputs or rejected_inputs:
         return create_handler_response(
             400,
-            message="failed to validate the input arguments when listing your accepted peers, error: %s"
-            % rejected_inputs,
+            message="failed to validate the input arguments when listing your "
+            "accepted peers, error: %s" % rejected_inputs,
         )
 
     listing = list_peers_accepted(
@@ -227,16 +227,17 @@ def prepare_GET_migux_apps_peers_requested(configuration, request_info):
     if not accepted_inputs or rejected_inputs:
         return create_handler_response(
             400,
-            error="failed to validate the input arguments when listing your requsted peers, error: %s"
-            % rejected_inputs,
+            error="failed to validate the input arguments when listing your "
+            "requsted peers, error: %s" % rejected_inputs,
         )
 
     listing = list_peers_requested(configuration, request_info.client_id)
 
-    # When a peer request is accepted and forwarded from migadmin.py
-    # it is inserted into the user's user_settings/client_id/pending_peers file.
-    # Here the expire value is set to the maximum time a peer can be valid as an EPOCH timestamp.
-    # Therefore we need to transform this into the YYYY-MM-DD format to make it understandable for the user
+    # When a peer request is accepted and forwarded from migadmin.py is
+    # inserted into the user's user_settings/client_id/pending_peers file.
+    # Here the expire value is set to the maximum time a peer can be valid
+    # as an EPOCH timestamp. Therefore we need to transform this into
+    # the YYYY-MM-DD format to make it understandable for the user
     # who is going to accept the request.
 
     transformed_requested_peers = []
@@ -317,13 +318,16 @@ def prepare_GET_migux_apps_peers_csrf_tokens(configuration, request_info):
     """
     Data preparation function for mixux.apps.peers GET /csrf_tokens.
 
-    This function is responsible for generating csrf tokens for the specific requests.
-    The requests are expected to be a list of strings, that each contains the particular method
-    and operation for which a csrf token should be generated.
+    This function is responsible for generating csrf tokens for the
+    specific requests.
+    The requests are expected to be a list of strings,
+    that each contains the particular method and operation for which
+    a csrf token should be generated.
 
     An example of the requests parameter could be:
     {
-        "requests": ["method=POST&operation=/peers/peer_accept", "method=POST&operation=/peers/peer_reject"]
+        "requests": ["method=POST&operation=/peers/peer_accept",
+                     "method=POST&operation=/peers/peer_reject"]
     }
     """
     # Validate the requests parameter

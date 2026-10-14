@@ -225,15 +225,16 @@ def add_pending_peers_to_client(configuration, client_id, peers):
             if not peers_db:
                 peers_db = []
                 _logger.warning(
-                    "found no pending peers db at %s to add peer(s) %s to for %s"
-                    % (peers_path, peers, client_id)
+                    "found no pending peers db at %s to add "
+                    "peer(s) %s to for %s" % (peers_path, peers, client_id)
                 )
                 _logger.info(
                     "creating a new pending peers db at %s" % peers_path
                 )
 
             change_peers = dict(peers)
-            # NOTE: always remove old first to replace any existing and move them last
+            # NOTE: always remove old first to replace any
+            # existing and move them last
             peers_db = [
                 (peer_dn, peer_dict)
                 for (peer_dn, peer_dict) in peers_db
@@ -260,7 +261,8 @@ def add_pending_peers_to_client(configuration, client_id, peers):
 def remove_accepted_peers_from_client(configuration, client_id, peers_dns):
     """
     Remove accepted peers from the client.
-    Expects peers_dns to be a list of x509 distinguished names to identify the peer.
+    Expects peers_dns to be a list of x509 distinguished names
+    to identify the peer.
 
     peers_dns: [x509_peer_dn_string]
     """
