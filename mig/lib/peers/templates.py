@@ -48,6 +48,9 @@ from mig.shared.safeinput import (
 
 
 def _coerce_date(value):
+    """
+    Coerce a value to a date object.
+    """
     if isinstance(value, date):
         return value
     elif isinstance(value, datetime):
