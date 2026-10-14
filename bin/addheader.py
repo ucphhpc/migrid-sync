@@ -487,9 +487,6 @@ def main(argv: list[str], environ: Optional[Mapping[str, str]] = None) -> None:
             if src_path.endswith(BACKUP_SUFFIX):
                 continue
 
-            if "venv" in src_path:
-                continue
-
             pattern = find_matching_project_pattern(src_path, mig_code_base)
             if pattern is None:
                 continue
