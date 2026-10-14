@@ -57,6 +57,7 @@
 #define MIG_SKIP_NOTIFY             (0x002000)
 #define MIG_AUTHTYPE_PASSWORD       (0x004000)
 #define MIG_ACCOUNT_INACCESSIBLE    (0x008000)
+#define MIG_LEGACY_PASSWORD         (0x010000)
 
 #ifndef Py_PYTHON_H
   #error Python headers needed to compile C extensions, please install development version of Python.
@@ -167,7 +168,7 @@ static bool mig_pyinit()
             ("from mig.shared.logger import daemon_logger, register_hangup_handler");
         pyrun("from mig.shared.conf import get_configuration_object");
         pyrun("from mig.shared.accountstate import check_account_accessible");
-        pyrun("from mig.shared.pwcrypto import make_simple_hash, valid_login_password");
+        pyrun("from mig.shared.pwcrypto import make_simple_hash, valid_login_password, valid_login_legacy_password");
         pyrun("configuration = get_configuration_object(skip_log=True)");
         pyrun("log_level = configuration.loglevel");
         pyrun
@@ -349,6 +350,23 @@ static bool mig_validate_password(const char *password)
     return result;
 }
 
+static bool mig_check_legacy_password(const char *password)
+{
+    bool result = false;
+    pyrun("legacy_password = valid_login_legacy_password(configuration, '%s')",
+          password);
+    PyObject *py_legacy_password =
+        PyObject_GetAttrString(py_main, "legacy_password");
+    if (py_legacy_password == NULL) {
+        WRITELOGMESSAGE(LOG_ERR,
+                        "Missing python variable: py_legacy_password\n");
+    } else {
+        result = PyObject_IsTrue(py_legacy_password);
+        Py_DECREF(py_legacy_password);
+    }
+    return result;
+}
+
 static bool mig_reg_auth_attempt(const unsigned int mode,
                                   const char *username,
                                   const char *address, const char *secret)
@@ -414,6 +432,10 @@ static bool mig_reg_auth_attempt(const unsigned int mode,
     }
     if (mode & MIG_INVALID_AUTH) {
         strncat(&pycmd[0], "valid_auth=False, ",
+                MAX_PYCMD_LENGTH - strlen(pycmd));
+    }
+    if (mode & MIG_LEGACY_PASSWORD) {
+        strncat(&pycmd[0], "legacy_password=True, ",
                 MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_EXCEEDED_RATE_LIMIT) {
