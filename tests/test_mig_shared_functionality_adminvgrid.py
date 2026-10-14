@@ -29,19 +29,12 @@
 backend.
 """
 
-from __future__ import print_function
-
 import os
 import unittest
 
-# Imports required for the unit test wrapping
-import mig.shared.returnvalues as returnvalues
-from mig.shared.vgrid import vgrid_set_entities
-
-# Imports of the code under test
+from mig.shared import returnvalues
 from mig.shared.functionality.adminvgrid import main as backend_main
-
-# Imports required for the unit tests themselves
+from mig.shared.vgrid import vgrid_set_entities
 from tests.support import (
     MigTestCase,
     ensure_dirs_exist,
@@ -54,46 +47,67 @@ from tests.support.wsgisupp import create_http_environ, filter_output_objects
 class MigSharedFunctionalityAdminvgrid(MigTestCase, UserAssertMixin):
     """Wrap unit tests for the corresponding module"""
 
-    TEST_VGRID_NAME = 'testvgrid'
+    TEST_VGRID_NAME = "testvgrid"
 
     def _provide_configuration(self):
         return "testconfig"
 
     # TODO: integrate in tests infrastructure and use here and in vgridaccess
-    def _create_vgrid(self, vgrid_name, *, owners=None, members=None,
-                      resources=None, settings=None, triggers=None):
+    def _create_vgrid(
+        self,
+        vgrid_name,
+        *,
+        owners=None,
+        members=None,
+        resources=None,
+        settings=None,
+        triggers=None
+    ):
         """Helper to create valid skeleton vgrid for testing"""
         vgrid_path = os.path.join(self.configuration.vgrid_home, vgrid_name)
         ensure_dirs_exist(vgrid_path)
         # Save vgrid owners, members, resources, settings and triggers
         if owners is None:
             owners = []
-        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                             'owners', owners, allow_empty=True)
+        success_and_msg = vgrid_set_entities(
+            self.configuration, vgrid_name, "owners", owners, allow_empty=True
+        )
         self.assertEqual(success_and_msg, (True, ""))
         if members is None:
             members = []
-        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                             'members', members,
-                                             allow_empty=True)
+        success_and_msg = vgrid_set_entities(
+            self.configuration, vgrid_name, "members", members, allow_empty=True
+        )
         self.assertEqual(success_and_msg, (True, ""))
         if resources is None:
             resources = []
-        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                             'resources', resources,
-                                             allow_empty=True)
+        success_and_msg = vgrid_set_entities(
+            self.configuration,
+            vgrid_name,
+            "resources",
+            resources,
+            allow_empty=True,
+        )
         self.assertEqual(success_and_msg, (True, ""))
         if settings is None:
-            settings = [('vgrid_name', vgrid_name)]
-        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                             'settings', settings,
-                                             allow_empty=True)
+            settings = [("vgrid_name", vgrid_name)]
+        success_and_msg = vgrid_set_entities(
+            self.configuration,
+            vgrid_name,
+            "settings",
+            settings,
+            allow_empty=True,
+        )
         self.assertEqual(success_and_msg, (True, ""))
         if triggers is None:
             triggers = []
-        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                             'triggers', triggers,
-                                             allow_empty=True)
+        success_and_msg = vgrid_set_entities(
+            self.configuration,
+            vgrid_name,
+            "triggers",
+            triggers,
+            allow_empty=True,
+        )
         self.assertEqual(success_and_msg, (True, ""))
 
     def before_each(self):
@@ -150,8 +164,10 @@ class MigSharedFunctionalityAdminvgrid(MigTestCase, UserAssertMixin):
             )
         self.assertEqual(status, returnvalues.SYSTEM_ERROR)
         self.assertTrue(
-            any("Failed to load owners for INVALID" in msg for msg in
-                log_capture.output)
+            any(
+                "Failed to load owners for INVALID" in msg
+                for msg in log_capture.output
+            )
         )
 
         # Check expected error messages
@@ -206,8 +222,9 @@ class MigSharedFunctionalityAdminvgrid(MigTestCase, UserAssertMixin):
         self.assertEqual(len(error_objects), 1)
         self.assertIn("text", error_objects[0])
         text_object = error_objects[0]["text"]
-        expected_response_msg = "Only owners of %s can administrate it" % \
-            self.TEST_VGRID_NAME
+        expected_response_msg = (
+            "Only owners of %s can administrate it" % self.TEST_VGRID_NAME
+        )
         self.assertIn(expected_response_msg, text_object)
 
         # Check expected header messages

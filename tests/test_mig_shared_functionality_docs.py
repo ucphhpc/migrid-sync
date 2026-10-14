@@ -27,17 +27,10 @@
 
 """Unit tests of the MiG functionality file implementing the docs backend"""
 
-from __future__ import print_function
-
 import unittest
 
-# Imports required for the unit test wrapping
-import mig.shared.returnvalues as returnvalues
-
-# Imports of the code under test
+from mig.shared import returnvalues
 from mig.shared.functionality.docs import main as backend_main
-
-# Imports required for the unit tests themselves
 from tests.support import (
     MigTestCase,
     testmain,

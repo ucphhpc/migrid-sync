@@ -27,15 +27,8 @@
 
 """Unit tests of the MiG functionality file implementing the reqoid backend"""
 
-from __future__ import print_function
-
-# Imports required for the unit test wrapping
-import mig.shared.returnvalues as returnvalues
-
-# Imports of the code under test
+from mig.shared import returnvalues
 from mig.shared.functionality.reqoid import main as backend_main
-
-# Imports required for the unit tests themselves
 from tests.support import (
     MigTestCase,
     ensure_dirs_exist,
@@ -175,7 +168,7 @@ class MigSharedFunctionalityReqoid(MigTestCase, UserAssertMixin):
         self.assertEqual(len(html_objects), 2)
         relevant_obj = html_objects[1]
         # TODO: polish reqcert and reqoid to be consistent here
-        plain_text = relevant_obj["text"].replace('\n', ' ')
+        plain_text = relevant_obj["text"].replace("\n", " ")
         self.assertIn("Please enter your information", plain_text)
         self.assertNotIn("value='%s'" % TEST_USER_EMAIL, relevant_obj["text"])
 
@@ -216,7 +209,7 @@ class MigSharedFunctionalityReqoid(MigTestCase, UserAssertMixin):
         self.assertEqual(len(html_objects), 2)
         relevant_obj = html_objects[1]
         # TODO: polish reqcert and reqoid to be consistent here
-        plain_text = relevant_obj["text"].replace('\n', ' ')
+        plain_text = relevant_obj["text"].replace("\n", " ")
         self.assertIn("Please enter your information", plain_text)
         self.assertIn("value='%s'" % TEST_USER_EMAIL, relevant_obj["text"])
 

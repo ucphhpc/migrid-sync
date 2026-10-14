@@ -29,8 +29,6 @@
 backend.
 """
 
-from __future__ import print_function
-
 from mig.shared import returnvalues
 from mig.shared.defaults import CSRF_MINIMAL
 from mig.shared.functionality.datatransfer import main as backend_main
@@ -49,8 +47,7 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         return "testconfig"
 
     def before_each(self):
-        self.test_user_dir = self._provision_test_user(
-            self, TEST_USER_DN)
+        self.test_user_dir = self._provision_test_user(self, TEST_USER_DN)
         self.test_environ = create_http_environ(
             self.configuration, "wsgi-bin/datatransfer.py"
         )

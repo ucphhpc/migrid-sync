@@ -29,19 +29,12 @@
 backend.
 """
 
-from __future__ import print_function
-
 import os
 import unittest
 
-# Imports required for the unit test wrapping
-import mig.shared.returnvalues as returnvalues
-from mig.shared.vgrid import vgrid_set_entities
-
-# Imports of the code under test
+from mig.shared import returnvalues
 from mig.shared.functionality.vgridworkflows import main as backend_main
-
-# Imports required for the unit tests themselves
+from mig.shared.vgrid import vgrid_set_entities
 from tests.support import (
     MigTestCase,
     ensure_dirs_exist,
@@ -54,46 +47,67 @@ from tests.support.wsgisupp import create_http_environ, filter_output_objects
 class MigSharedFunctionalityVgridworkflows(MigTestCase, UserAssertMixin):
     """Wrap unit tests for the corresponding module"""
 
-    TEST_VGRID_NAME = 'testvgrid'
+    TEST_VGRID_NAME = "testvgrid"
 
     def _provide_configuration(self):
         return "testconfig"
 
     # TODO: integrate in tests infrastructure and use here and in vgridaccess
-    def _create_vgrid(self, vgrid_name, *, owners=None, members=None,
-                      resources=None, settings=None, triggers=None):
+    def _create_vgrid(
+        self,
+        vgrid_name,
+        *,
+        owners=None,
+        members=None,
+        resources=None,
+        settings=None,
+        triggers=None
+    ):
         """Helper to create valid skeleton vgrid for testing"""
         vgrid_path = os.path.join(self.configuration.vgrid_home, vgrid_name)
         ensure_dirs_exist(vgrid_path)
         # Save vgrid owners, members, resources, settings and triggers
         if owners is None:
             owners = []
-        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                             'owners', owners, allow_empty=True)
+        success_and_msg = vgrid_set_entities(
+            self.configuration, vgrid_name, "owners", owners, allow_empty=True
+        )
         self.assertEqual(success_and_msg, (True, ""))
         if members is None:
             members = []
-        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                             'members', members,
-                                             allow_empty=True)
+        success_and_msg = vgrid_set_entities(
+            self.configuration, vgrid_name, "members", members, allow_empty=True
+        )
         self.assertEqual(success_and_msg, (True, ""))
         if resources is None:
             resources = []
-        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                             'resources', resources,
-                                             allow_empty=True)
+        success_and_msg = vgrid_set_entities(
+            self.configuration,
+            vgrid_name,
+            "resources",
+            resources,
+            allow_empty=True,
+        )
         self.assertEqual(success_and_msg, (True, ""))
         if settings is None:
-            settings = [('vgrid_name', vgrid_name)]
-        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                             'settings', settings,
-                                             allow_empty=True)
+            settings = [("vgrid_name", vgrid_name)]
+        success_and_msg = vgrid_set_entities(
+            self.configuration,
+            vgrid_name,
+            "settings",
+            settings,
+            allow_empty=True,
+        )
         self.assertEqual(success_and_msg, (True, ""))
         if triggers is None:
             triggers = []
-        success_and_msg = vgrid_set_entities(self.configuration, vgrid_name,
-                                             'triggers', triggers,
-                                             allow_empty=True)
+        success_and_msg = vgrid_set_entities(
+            self.configuration,
+            vgrid_name,
+            "triggers",
+            triggers,
+            allow_empty=True,
+        )
         self.assertEqual(success_and_msg, (True, ""))
 
     def before_each(self):
@@ -226,8 +240,10 @@ class MigSharedFunctionalityVgridworkflows(MigTestCase, UserAssertMixin):
         self.assertEqual(len(html_objects), 0)
 
     def test_vgridworkflows_with_invalid_operation_fails(self):
-        payload = {"operation": ["INVALID"], "vgrid_name":
-                   [self.TEST_VGRID_NAME]}
+        payload = {
+            "operation": ["INVALID"],
+            "vgrid_name": [self.TEST_VGRID_NAME],
+        }
         output_objects, status = backend_main(
             TEST_USER_DN,
             payload,
