@@ -51,6 +51,10 @@ def signature(configuration):
 
     defaults = {'full_name': [''],
                 'organization': [''],
+                # NOTE: we accept organizational_unit but don't use it.
+                #       If explicitly set e.g. to NA in the user db the expire
+                #       emails will include value in semi-filled renew link.
+                'organizational_unit': [''],
                 'email': [''],
                 'country': [''],
                 'state': [''],

@@ -27,10 +27,9 @@
 
 """Unit tests for the tests module pointed to in the filename"""
 
+from mig.shared.configuration import Configuration
 from tests.support import MigTestCase, testmain
 from tests.support.configsupp import FakeConfiguration
-
-from mig.shared.configuration import Configuration
 
 
 class TestsSupportConfigsupp_FakeConfiguration(MigTestCase):
@@ -43,13 +42,13 @@ class TestsSupportConfigsupp_FakeConfiguration(MigTestCase):
         self.maxDiff = None
         self.assertEqual(
             Configuration.to_dict(default_configuration),
-            Configuration.to_dict(fake_configuration)
+            Configuration.to_dict(fake_configuration),
         )
 
     def test_only_configuration_keys(self):
         with self.assertRaises(AssertionError):
-            FakeConfiguration(bar='1')
+            FakeConfiguration(bar="1")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

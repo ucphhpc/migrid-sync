@@ -32,13 +32,9 @@ from __future__ import print_function
 import os
 import shutil
 
-# Imports required for the unit test wrapping
-import mig.shared.returnvalues as returnvalues
 
-# Imports of the code under test
+from mig.shared import returnvalues
 from mig.shared.functionality.cat import main as backend_main
-
-# Imports required for the unit tests themselves
 from tests.support import (
     TEST_DATA_DIR,
     MigTestCase,
@@ -55,10 +51,20 @@ class MigSharedFunctionalityCat(MigTestCase, UserAssertMixin):
         return "testconfig"
 
     def before_each(self):
-        self.test_user_dir = self._provision_test_user(self, TEST_USER_DN)
+        self.test_user_dir = self._provision_test_user(
+            self, TEST_USER_DN
+        )
         self.test_environ = create_http_environ(
             self.configuration, "wsgi-bin/cat.py"
         )
+
+    def assertSingleOutputObject(self, output_objects, with_object_type=None):
+        assert with_object_type is not None
+        found_objects = _only_output_objects(
+            output_objects, with_object_type=with_object_type
+        )
+        self.assertEqual(len(found_objects), 1)
+        return found_objects[0]
 
     def test_file_serving_a_single_file_match(self):
         test_data = "424242"

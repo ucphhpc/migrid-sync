@@ -73,7 +73,7 @@ try:
         valid_filter_methods, default_twofactor_auth_apps, \
         mig_conf_section_dirname
     from mig.shared.logger import Logger, SYSLOG_GDP
-    from mig.shared.htmlgen import menu_items, vgrid_items
+    from mig.shared.htmlgen import get_menu_items, vgrid_items
     from mig.shared.fileio import read_file, load_json, write_file
 except ImportError as ioe:
     print("could not import migrid modules")
@@ -392,7 +392,8 @@ def _generate_fix_missing_definitions():
     monitor_section = {'sleep_secs': '60',
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
-    settings_section = {'language': 'English', 'user_interface': ['V2', 'V3'],
+    settings_section = {'language': 'English',
+                        'user_interface': ['V3', 'V2', 'V4'],
                         'submitui': ['fields', 'textarea', 'files']}
     feasibility_section = {'resource_seen_within_hours': '24',
                            'skip_validation': '',
@@ -783,7 +784,7 @@ _CONFIGURATION_PROPERTIES = {
 
     'expire_peer': 600,
     'language': ['English'],
-    'user_interface': ['V2', 'V3'],
+    'user_interface': ['V3', 'V2', 'V4'],
     'new_user_default_ui': keyword_auto,
     'submitui': ['fields', 'textarea', 'files'],
     # Init user default page with no selection to use site landing page
@@ -1084,10 +1085,9 @@ location.""" % self.config_file)
             self.short_title = config.get('SITE', 'short_title')
 
         if config.has_option('SITE', 'user_interface'):
-            self.user_interface = config.get(
-                'SITE', 'user_interface').split()
+            self.user_interface = config.get('SITE', 'user_interface').split()
         else:
-            self.user_interface = ['V2']
+            self.user_interface = ['V3', 'V2', 'V4']
 
         # Allow gradual transition to new user interface - only new sign ups
         if config.has_option('SITE', 'new_user_default_ui'):
@@ -2030,6 +2030,8 @@ location.""" % self.config_file)
             self.site_user_redirect = config.get('SITE', 'user_redirect')
         else:
             self.site_user_redirect = '/cert_redirect'
+
+        # Menu items
         if config.has_option('SITE', 'base_menu'):
             menus = ['default', 'simple', 'advanced']
             req = config.get('SITE', 'base_menu').split()
@@ -2038,29 +2040,34 @@ location.""" % self.config_file)
             self.site_base_menu = ['default']
         if config.has_option('SITE', 'default_menu'):
             req = config.get('SITE', 'default_menu').split()
+            menu_items = get_menu_items()
             self.site_default_menu = [i for i in req if i in menu_items]
         else:
             self.site_default_menu = ['home', 'files', 'submitjob', 'jobs',
                                       'resources', 'vgrids', 'downloads',
                                       'runtimeenvs', 'people', 'settings',
-                                      'crontab', 'account', 'docs', 'logout']
+                                      'setup', 'crontab', 'account', 'docs',
+                                      'logout']
         if config.has_option('SITE', 'simple_menu'):
             req = config.get('SITE', 'simple_menu').split()
+            menu_items = get_menu_items()
             self.site_simple_menu = [i for i in req if i in menu_items]
         else:
             self.site_simple_menu = ['home', 'files', 'vgrids',
                                      'settings', 'logout']
         if config.has_option('SITE', 'advanced_menu'):
             req = config.get('SITE', 'advanced_menu').split()
+            menu_items = get_menu_items()
             self.site_advanced_menu = [i for i in req if i in menu_items]
         else:
             self.site_advanced_menu = ['home', 'submitjob', 'files',
                                        'jobs', 'vgrids', 'resources',
                                        'downloads', 'runtimeenvs', 'people',
-                                       'settings', 'crontab', 'docs',
+                                       'settings', 'setup', 'crontab', 'docs',
                                        'logout']
         if config.has_option('SITE', 'user_menu'):
             req = config.get('SITE', 'user_menu').split()
+            menu_items = get_menu_items()
             self.site_user_menu = [i for i in req if i in menu_items]
         else:
             self.site_user_menu = []
@@ -2174,7 +2181,8 @@ location.""" % self.config_file)
         if config.has_option('SITE', 'external_doc'):
             self.site_external_doc = config.get('SITE', 'external_doc')
         else:
-            self.site_external_doc = "https://sourceforge.net/p/migrid/wiki/"
+            self.site_external_doc = \
+                "https://github.com/ucphhpc/migrid-sync/wiki"
         if config.has_option('SITE', 'enable_wsgi'):
             self.site_enable_wsgi = config.getboolean('SITE', 'enable_wsgi')
         else:
@@ -2612,6 +2620,8 @@ location.""" % self.config_file)
             self.site_enable_styles = False
             self.site_enable_widgets = False
             self.site_enable_gravatars = False
+            # NOTE: so far only the V2 interface is supported on GDP sites
+            self.user_interface = ['V2']
 
         # Filter disabled features from vgrid links
         exclude_features = []

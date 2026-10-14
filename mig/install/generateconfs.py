@@ -251,6 +251,8 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'openid_port',
         'openid_show_port',
         'openid_session_lifetime',
+        'ext_oidc_session_inactivity_timeout',
+        'ext_oidc_session_max_duration',
         'seafile_seahub_port',
         'seafile_seafhttp_port',
         'seafile_client_port',

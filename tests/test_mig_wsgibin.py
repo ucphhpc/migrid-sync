@@ -28,23 +28,36 @@
 """Unit tests for the MiG WSGI glue"""
 
 import codecs
-from configparser import ConfigParser
-from html.parser import HTMLParser
 import importlib
 import os
 import shutil
 import stat
 import sys
 import unittest
+from configparser import ConfigParser
+from html.parser import HTMLParser
+
+import mig.shared.returnvalues as returnvalues
 
 # Imports required for the unit test wrapping
-from mig.shared.base import allow_script, brief_list, client_dir_id, \
-    client_id_dir, get_short_id, invisible_path
-import mig.shared.returnvalues as returnvalues
+from mig.shared.base import (
+    allow_script,
+    brief_list,
+    client_dir_id,
+    client_id_dir,
+    get_short_id,
+    invisible_path,
+)
 from mig.shared.compat import SimpleNamespace
+
 # Imports required for the unit tests themselves
-from tests.support import MIG_BASE, TEST_DATA_DIR, TEST_OUTPUT_DIR, \
-    MigTestCase, testmain
+from tests.support import (
+    MIG_BASE,
+    TEST_DATA_DIR,
+    TEST_OUTPUT_DIR,
+    MigTestCase,
+    testmain,
+)
 from tests.support.snapshotsupp import SnapshotAssertMixin
 from tests.support.wsgisupp import WsgiAssertMixin, prepare_wsgi
 
@@ -61,12 +74,12 @@ class DocumentBasicsHtmlParser(HTMLParser):
 
     def handle_decl(self, decl):
         try:
-            decltag, decltype = decl.split(' ')
+            decltag, decltype = decl.split(" ")
         except Exception:
             decltag = ""
             decltype = ""
 
-        if decltag.upper() == 'DOCTYPE':
+        if decltag.upper() == "DOCTYPE":
             self._saw_doctype = True
         else:
             decltype = "unknown"
@@ -74,11 +87,11 @@ class DocumentBasicsHtmlParser(HTMLParser):
         self._doctype = decltype
 
     def handle_starttag(self, tag, attrs):
-        if tag == 'html':
+        if tag == "html":
             if self._saw_tags:
-                tag_html = 'not_first'
+                tag_html = "not_first"
             else:
-                tag_html = 'was_first'
+                tag_html = "was_first"
             self._tag_html = tag_html
         self._saw_tags = True
 
@@ -86,13 +99,13 @@ class DocumentBasicsHtmlParser(HTMLParser):
         if not self._saw_doctype:
             raise AssertionError("missing DOCTYPE")
 
-        if self._doctype != 'html':
+        if self._doctype != "html":
             raise AssertionError("non-html DOCTYPE")
 
-        if self._tag_html == 'none':
+        if self._tag_html == "none":
             raise AssertionError("missing <html>")
 
-        if self._tag_html != 'was_first':
+        if self._tag_html != "was_first":
             raise AssertionError("first tag seen was not <html>")
 
 
@@ -111,13 +124,13 @@ class TitleExtractingHtmlParser(DocumentBasicsHtmlParser):
     def handle_starttag(self, tag, attrs):
         DocumentBasicsHtmlParser.handle_starttag(self, tag, attrs)
 
-        if tag == 'title':
+        if tag == "title":
             self._within_title = True
 
     def handle_endtag(self, tag):
         DocumentBasicsHtmlParser.handle_endtag(self, tag)
 
-        if tag == 'title':
+        if tag == "title":
             self._within_title = False
 
     def title(self, trim_newlines=False):
@@ -139,7 +152,7 @@ def _import_forcibly(module_name, relative_module_dir=None):
     that resides within a non-module directory.
     """
 
-    module_path = os.path.join(MIG_BASE, 'mig')
+    module_path = os.path.join(MIG_BASE, "mig")
     if relative_module_dir is not None:
         module_path = os.path.join(module_path, relative_module_dir)
     sys.path.append(module_path)
@@ -149,7 +162,7 @@ def _import_forcibly(module_name, relative_module_dir=None):
 
 
 # Imports of the code under test (indirect import needed here)
-migwsgi = _import_forcibly('migwsgi', relative_module_dir='wsgi-bin')
+migwsgi = _import_forcibly("migwsgi", relative_module_dir="wsgi-bin")
 
 
 class FakeBackend:
@@ -161,8 +174,8 @@ class FakeBackend:
 
     def __init__(self):
         self.output_objects = [
-            {'object_type': 'start'},
-            {'object_type': 'title', 'text': 'ERROR'},
+            {"object_type": "start"},
+            {"object_type": "title", "text": "ERROR"},
         ]
         self.return_value = returnvalues.ERROR
 
@@ -176,6 +189,7 @@ class FakeBackend:
     def to_import_module(self):
         def _import_module(module_path):
             return self
+
         return _import_module
 
 
@@ -183,11 +197,11 @@ class MigWsgibin(MigTestCase, SnapshotAssertMixin, WsgiAssertMixin):
     """WSGI glue test cases"""
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     def before_each(self):
         self.fake_backend = FakeBackend()
-        self.fake_wsgi = prepare_wsgi(self.configuration, 'http://localhost/')
+        self.fake_wsgi = prepare_wsgi(self.configuration, "http://localhost/")
 
         self.application_args = (
             self.fake_wsgi.environ,
@@ -209,57 +223,51 @@ class MigWsgibin(MigTestCase, SnapshotAssertMixin, WsgiAssertMixin):
 
     def test_top_level_request_returns_status_ok(self):
         wsgi_result = migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
         self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
 
     def test_objects_containing_only_title_has_expected_title(self):
-        output_objects = [
-            {'object_type': 'title', 'text': 'TEST'}
-        ]
+        output_objects = [{"object_type": "title", "text": "TEST"}]
         self.fake_backend.set_response(output_objects, returnvalues.OK)
 
         wsgi_result = migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
-        self.assertHtmlTitle(output, title_text='TEST', trim_newlines=True)
+        self.assertHtmlTitle(output, title_text="TEST", trim_newlines=True)
 
     def test_objects_containing_only_title_matches_snapshot(self):
-        output_objects = [
-            {'object_type': 'title', 'text': 'TEST'}
-        ]
+        output_objects = [{"object_type": "title", "text": "TEST"}]
         self.fake_backend.set_response(output_objects, returnvalues.OK)
 
         wsgi_result = migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
-        self.assertSnapshot(output, extension='html')
+        self.assertSnapshot(output, extension="html")
 
 
-TEST_TEMPLATE_CACHE_DIR = os.path.join(TEST_OUTPUT_DIR, '__template_cache__')
+TEST_TEMPLATE_CACHE_DIR = os.path.join(TEST_OUTPUT_DIR, "__template_cache__")
 
 
-class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
-                                SnapshotAssertMixin):
+class MigWsgibin_output_objects(
+    MigTestCase, WsgiAssertMixin, SnapshotAssertMixin
+):
     """Unit tests for output_object related part of wsgi functions."""
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     def after_each(self):
         shutil.rmtree(TEST_TEMPLATE_CACHE_DIR, ignore_errors=True)
 
     def before_each(self):
         self.fake_backend = FakeBackend()
-        self.fake_wsgi = prepare_wsgi(self.configuration, 'http://localhost/')
+        self.fake_wsgi = prepare_wsgi(self.configuration, "http://localhost/")
 
         self.application_args = (
             self.fake_wsgi.environ,
@@ -272,15 +280,17 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
         )
 
     def _arrange_use_of_testplugin(self):
-        templates_division = self.configuration.division('TEMPLATES')
+        templates_division = self.configuration.division("TEMPLATES")
         # overwrite the template source and cache directory to known locations for
         # the duration of the tests. this allows us to control which templates are
         # available as well as ensures the template cache directory is cleaned out
         # on test completion as part of the standard output directory cleanup
-        templates_division.__dict__.update({
-            'base_packages': ['testplugin'],
-            'cache_dir': TEST_TEMPLATE_CACHE_DIR,
-        })
+        templates_division.__dict__.update(
+            {
+                "base_packages": ["testplugin"],
+                "cache_dir": TEST_TEMPLATE_CACHE_DIR,
+            }
+        )
 
         # provision template directories
         os.makedirs(TEST_TEMPLATE_CACHE_DIR)
@@ -290,6 +300,7 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
         self._register_check(lambda: sys.path.pop())
 
         import testplugin
+
         for package_name in testplugin.TEMPLATE_PACKAGES:
             os.makedirs(os.path.join(TEST_TEMPLATE_CACHE_DIR, package_name))
 
@@ -302,36 +313,30 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
         self.logger.forgive_errors()
         output_objects = [
             {
-                'object_type': 'nonexistent',  # trigger error handling path
+                "object_type": "nonexistent",  # trigger error handling path
             }
         ]
         self.fake_backend.set_response(output_objects, returnvalues.OK)
 
         wsgi_result = migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
-        output, _ = self.assertWsgiResponse(
-            wsgi_result, self.fake_wsgi, 200)
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
         self.assertIsValidHtmlDocument(output)
 
     def test_objects_with_type_text(self):
         output_objects = [
+            {"object_type": "title", "text": "TEST"},
             {
-                'object_type': 'title',
-                'text': 'TEST'
+                "object_type": "text",
+                "text": "some text",
             },
-            {
-                'object_type': 'text',
-                'text': 'some text',
-            }
         ]
         self.fake_backend.set_response(output_objects, returnvalues.OK)
 
         wsgi_result = migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
@@ -340,20 +345,17 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
     def test_objects_with_type_template(self):
         output_objects = [
             {
-                'object_type': 'template',
-                'template_name': 'test_something',
-                'template_group': 'testplugin',
-                'template_args': {
-                    'greeting': 'here!!'
-                }
+                "object_type": "template",
+                "template_name": "test_something",
+                "template_group": "testplugin",
+                "template_args": {"greeting": "here!!"},
             }
         ]
         self.fake_backend.set_response(output_objects, returnvalues.OK)
         self._arrange_use_of_testplugin()
 
         wsgi_result = migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
@@ -362,32 +364,32 @@ class MigWsgibin_output_objects(MigTestCase, WsgiAssertMixin,
     def test_objects_with_type_template_without_args(self):
         output_objects = [
             {
-                'object_type': 'template',
-                'template_name': 'test_empty',
-                'template_group': 'testplugin',
-                'template_args': {}
+                "object_type": "template",
+                "template_name": "test_empty",
+                "template_group": "testplugin",
+                "template_args": {},
             }
         ]
         self.fake_backend.set_response(output_objects, returnvalues.OK)
         self._arrange_use_of_testplugin()
 
         wsgi_result = migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
         self.assertSnapshotOfHtmlContent(output, is_fragment=True)
 
 
-class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin,
-                              SnapshotAssertMixin):
+class MigWsgibin_input_object(
+    MigTestCase, WsgiAssertMixin, SnapshotAssertMixin
+):
     """Unit tests for input_object related part of wsgi functions."""
 
-    DUMMY_BYTES = 'dummyæøå-ßßß-value'.encode('utf-8')
+    DUMMY_BYTES = "dummyæøå-ßßß-value".encode("utf-8")
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     def before_each(self):
         self.fake_backend = FakeBackend()
@@ -400,8 +402,9 @@ class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin,
         # Set up a wsgi input with non-ascii bytes and open it in binary mode
         # If form_overrides is passed a list of tuples like [('key' 'val')] it
         # produces a fake_wsgi input on the form: b'key=val'
-        self.fake_wsgi = prepare_wsgi(self.configuration, 'http://localhost/',
-                                      form=form_overrides)
+        self.fake_wsgi = prepare_wsgi(
+            self.configuration, "http://localhost/", form=form_overrides
+        )
         # override the default environ fields from wsgisupp
         if custom_env:
             self.fake_wsgi.environ.update(custom_env)
@@ -418,7 +421,7 @@ class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin,
 
     # NOTE: enabled with underlying wsgi use of Fieldstorage fixed
     def test_put_text_plain_with_binary_input_succeeds(self):
-        test_form = [('_csrf', self.DUMMY_BYTES)]
+        test_form = [("_csrf", self.DUMMY_BYTES)]
         test_env = {
             "REQUEST_METHOD": "PUT",
             "CONTENT_TYPE": "text/plain",
@@ -428,20 +431,16 @@ class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin,
 
         output_objects = [
             # workaround invalid HTML being generated with no title object
+            {"object_type": "title", "text": "TEST"},
             {
-                'object_type': 'title',
-                'text': 'TEST'
+                "object_type": "text",
+                "text": "some text",
             },
-            {
-                'object_type': 'text',
-                'text': 'some text',
-            }
         ]
         self.fake_backend.set_response(output_objects, returnvalues.OK)
 
         wsgi_result = migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
         # Must succeed with HTTP 200 when it parses input
@@ -449,7 +448,7 @@ class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin,
 
     @unittest.skip("disabled with underlying wsgi use of Fieldstorage fixed")
     def test_put_text_plain_with_binary_input_fails(self):
-        test_form = [('_csrf', self.DUMMY_BYTES)]
+        test_form = [("_csrf", self.DUMMY_BYTES)]
         test_env = {
             "REQUEST_METHOD": "PUT",
             "CONTENT_TYPE": "text/plain",
@@ -459,52 +458,44 @@ class MigWsgibin_input_object(MigTestCase, WsgiAssertMixin,
 
         output_objects = [
             # workaround invalid HTML being generated with no title object
+            {"object_type": "title", "text": "TEST"},
             {
-                'object_type': 'title',
-                'text': 'TEST'
+                "object_type": "text",
+                "text": "some text",
             },
-            {
-                'object_type': 'text',
-                'text': 'some text',
-            }
         ]
         self.fake_backend.set_response(output_objects, returnvalues.OK)
 
         # TODO: can we add assertLogs to check error log explicitly?
         wsgi_result = migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
         # Must fail with HTTP 500 from failing to parse input
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 500)
 
     def test_post_url_encoded_with_binary_input_succeeds(self):
-        test_form = [('_csrf', self.DUMMY_BYTES)]
+        test_form = [("_csrf", self.DUMMY_BYTES)]
         test_env = None
         self._prepare_test(test_form, test_env)
 
         output_objects = [
             # workaround invalid HTML being generated with no title object
+            {"object_type": "title", "text": "TEST"},
             {
-                'object_type': 'title',
-                'text': 'TEST'
+                "object_type": "text",
+                "text": "some text",
             },
-            {
-                'object_type': 'text',
-                'text': 'some text',
-            }
         ]
         self.fake_backend.set_response(output_objects, returnvalues.OK)
 
         wsgi_result = migwsgi.application(
-            *self.application_args,
-            **self.application_kwargs
+            *self.application_args, **self.application_kwargs
         )
 
         # Must succeed with HTTP 200 when it parses input
         output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

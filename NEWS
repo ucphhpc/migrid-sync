@@ -2,6 +2,9 @@
 This file contains sporadic news entries and changelog entries for the
 individual releases of the MiG project code.
 
+NOTE: We have moved the news and changelogs to the official releases at
+https://github.com/ucphhpc/migrid-sync/releases
+so the entries below are at most of historical interest.
 
 == News ==
 A short description of changes 
@@ -202,9 +205,11 @@ for other users.
 
 
 == Changelogs ==
-More detailed changelogs for the public releases.
+More detailed changelogs are linked from the individual public releases
+mentioned above.
 The full changelog is available from the repository:
-https://sourceforge.net/p/migrid/code/commit_browser
+https://github.com/ucphhpc/migrid-sync/commits/next/
+with the entries below at most of historical interest.
 
 == 1.9.0 ==
 - Experimental OpenID Connect support

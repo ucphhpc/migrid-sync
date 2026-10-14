@@ -37,11 +37,12 @@ from mig.shared import returnvalues
 from mig.shared.accountstate import account_expire_info
 from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
-    get_short_id, requested_url_base
+    get_short_id
 from mig.shared.defaults import default_mrsl_filename, \
     default_css_filename, profile_img_max_kb, profile_img_extensions, \
     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
-    duplicati_schedule_choices
+    duplicati_schedule_choices, AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, \
+    AUTH_EXT_OIDC
 from mig.shared.duplicatikeywords import get_duplicati_specs, \
     get_duplicati_protocol_map
 from mig.shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
@@ -49,7 +50,8 @@ from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
-    legacy_user_interface, save_settings_js, save_settings_html, menu_items
+    legacy_user_interface, save_settings_js, save_settings_html, get_menu_items
+from mig.shared.httpsclient import detect_client_auth
 from mig.shared.init import extract_menu, find_entry, lazy_init_backend
 from mig.shared.profilekeywords import get_profile_specs
 from mig.shared.pwcrypto import parse_password_policy
@@ -184,6 +186,7 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     if not user_settings:
         user_settings = {}
 
+    menu_items = get_menu_items(user_settings=user_settings)
     # Hide default settings in GDP mode
     if configuration.site_enable_gdp:
         valid_topics = []
@@ -198,6 +201,7 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
     if configuration.site_enable_widgets and configuration.site_script_deps:
         valid_topics.append('widgets')
     if 'setup' not in active_menu:
+        page_title = 'Settings and Setup'
         if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
             valid_topics.append('sftp')
         if configuration.site_enable_davs:
@@ -213,6 +217,8 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
         if configuration.site_enable_twofactor \
                 and not configuration.site_enable_gdp:
             valid_topics.append('twofactor')
+    else:
+        page_title = 'Profile Settings'
 
     caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
     topic_list = accepted['topic']
@@ -237,7 +243,8 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
         if key in valid_topics:
             topic_titles[key] = val
 
-    output_objects.append({'object_type': 'header', 'text': 'Settings'})
+    title_entry['text'] = page_title
+    output_objects.append({'object_type': 'header', 'text': page_title})
 
     links = []
     for name in valid_topics:
@@ -274,7 +281,7 @@ def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
         expire_warn_msg = '''<p class="warningtext">
 NOTE: your %s account access including efficient file service access expires on
 %s. You can always repeat sign up to extend general access with another %s days.
-%s  
+%s
 </p>'''
         auto_renew_msg = '''Alternatively simply either hit Save below now
 <em>or</em> log in here again after that date to quickly extend your access for
@@ -2079,14 +2086,9 @@ value="%(default_authpassword)s" />
         <tr class="otp_wizard otp_ready hidden"><td>
         </td></tr>
         '''
-        cur_url = requested_url_base()
-        is_mig, is_ext = False, False
-        if cur_url.startswith(configuration.migserver_https_mig_oid_url) or \
-                cur_url.startswith(configuration.migserver_https_mig_oidc_url):
-            is_mig = True
-        if cur_url.startswith(configuration.migserver_https_ext_oid_url) or \
-                cur_url.startswith(configuration.migserver_https_ext_oidc_url):
-            is_ext = True
+        auth_type, auth_flavor = detect_client_auth(configuration, os.environ)
+        is_mig = auth_flavor in [AUTH_MIG_OID, AUTH_MIG_OIDC]
+        is_ext = auth_flavor in [AUTH_EXT_OID, AUTH_EXT_OIDC]
         # NOTE: re-order to show active access method openid first
         if is_ext and twofactor_entries[0][0] == 'MIG_OID_TWOFACTOR' and \
                 twofactor_entries[1][0] == 'EXT_OID_TWOFACTOR' or \

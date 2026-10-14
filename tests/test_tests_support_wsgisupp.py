@@ -28,15 +28,15 @@
 """Unit tests for the tests module pointed to in the filename"""
 
 import unittest
-from mig.shared.compat import SimpleNamespace
 
+from mig.shared.compat import SimpleNamespace
 from tests.support import AssertOver
 from tests.support.wsgisupp import prepare_wsgi
 
 
 def assert_a_thing(value):
     """A simple assert helper to test with"""
-    assert value.endswith(' thing'), "must end with a thing"
+    assert value.endswith(" thing"), "must end with a thing"
 
 
 class TestsSupportWsgisupp_prepare_wsgi(unittest.TestCase):
@@ -44,56 +44,57 @@ class TestsSupportWsgisupp_prepare_wsgi(unittest.TestCase):
 
     def test_prepare_GET(self):
         configuration = SimpleNamespace(
-            config_file='/path/to/the/confs/MiGserver.conf'
+            config_file="/path/to/the/confs/MiGserver.conf"
         )
 
-        environ, _ = prepare_wsgi(configuration, 'http://testhost/some/path')
+        environ, _ = prepare_wsgi(configuration, "http://testhost/some/path")
 
-        self.assertEqual(environ['MIG_CONF'],
-                         '/path/to/the/confs/MiGserver.conf')
-        self.assertEqual(environ['HTTP_HOST'], 'testhost')
-        self.assertEqual(environ['PATH_INFO'], '/some/path')
-        self.assertEqual(environ['REQUEST_METHOD'], 'GET')
+        self.assertEqual(
+            environ["MIG_CONF"], "/path/to/the/confs/MiGserver.conf"
+        )
+        self.assertEqual(environ["HTTP_HOST"], "testhost")
+        self.assertEqual(environ["PATH_INFO"], "/some/path")
+        self.assertEqual(environ["REQUEST_METHOD"], "GET")
 
     def test_prepare_GET_with_query(self):
-        test_url = 'http://testhost/some/path'
+        test_url = "http://testhost/some/path"
         configuration = SimpleNamespace(
-            config_file='/path/to/the/confs/MiGserver.conf'
+            config_file="/path/to/the/confs/MiGserver.conf"
         )
 
-        environ, _ = prepare_wsgi(configuration, test_url, query={
-            'foo': 'true',
-            'bar': 1
-        })
+        environ, _ = prepare_wsgi(
+            configuration, test_url, query={"foo": "true", "bar": 1}
+        )
 
-        self.assertEqual(environ['QUERY_STRING'], 'foo=true&bar=1')
+        self.assertEqual(environ["QUERY_STRING"], "foo=true&bar=1")
 
     def test_prepare_POST(self):
-        test_url = 'http://testhost/some/path'
+        test_url = "http://testhost/some/path"
         configuration = SimpleNamespace(
-            config_file='/path/to/the/confs/MiGserver.conf'
+            config_file="/path/to/the/confs/MiGserver.conf"
         )
 
-        environ, _ = prepare_wsgi(configuration, test_url, method='POST')
+        environ, _ = prepare_wsgi(configuration, test_url, method="POST")
 
-        self.assertEqual(environ['REQUEST_METHOD'], 'POST')
+        self.assertEqual(environ["REQUEST_METHOD"], "POST")
 
     def test_prepare_POST_with_headers(self):
-        test_url = 'http://testhost/some/path'
+        test_url = "http://testhost/some/path"
         configuration = SimpleNamespace(
-            config_file='/path/to/the/confs/MiGserver.conf'
+            config_file="/path/to/the/confs/MiGserver.conf"
         )
 
         headers = {
-            'Authorization': 'Basic XXXX',
-            'Content-Length': 0,
+            "Authorization": "Basic XXXX",
+            "Content-Length": 0,
         }
         environ, _ = prepare_wsgi(
-            configuration, test_url, method='POST', headers=headers)
+            configuration, test_url, method="POST", headers=headers
+        )
 
-        self.assertEqual(environ['CONTENT_LENGTH'], 0)
-        self.assertEqual(environ['HTTP_AUTHORIZATION'], 'Basic XXXX')
+        self.assertEqual(environ["CONTENT_LENGTH"], 0)
+        self.assertEqual(environ["HTTP_AUTHORIZATION"], "Basic XXXX")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

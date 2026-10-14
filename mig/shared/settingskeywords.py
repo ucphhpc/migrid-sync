@@ -102,7 +102,8 @@ def get_settings_specs():
         'Description': 'Your preferred web interface',
         'Example': 'V3',
         'Type': 'string',
-        'Value': 'V2',
+        # NOTE: do NOT change default here but use site user_interface conf
+        'Value': '',
         'Context': 'appearance',
         'Required': False,
     }))

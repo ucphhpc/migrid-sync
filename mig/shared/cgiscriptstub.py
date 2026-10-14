@@ -49,7 +49,8 @@ from mig.shared.base import requested_backend, allow_script, \
     is_default_str_coding, force_default_str_coding_rec
 from mig.shared.conf import get_configuration_object
 from mig.shared.httpsclient import extract_client_id
-from mig.shared.output import format_output, reject_main
+from mig.shared.output import format_output, reject_main, \
+    kwargs_for_functionality
 from mig.shared.returnvalues import CLIENT_ERROR
 from mig.shared.scriptinput import fieldstorage_to_dict
 
@@ -166,7 +167,10 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
             logger.warning("script %s rejected: %s" % (script_name, msg))
             # Override main function with reject helper
             main = reject_main
-        (out_obj, (ret_code, ret_msg)) = main(client_id, user_arguments_dict)
+        main_kwargs = kwargs_for_functionality(main, environ=environ)
+        (out_obj, (ret_code, ret_msg)) = main(client_id,
+                                              user_arguments_dict,
+                                              **main_kwargs)
     except:
         import traceback
         logger.error("script crashed:\n%s" % traceback.format_exc())

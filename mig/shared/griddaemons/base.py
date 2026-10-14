@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - grid daemon base helper functions
-# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -103,8 +104,8 @@ def flags_to_mode(flags):
     missing file creation flag should generally be handled separately.
     The same goes for handling of invalid flag combinations.
 
-    This function is inspired by the XMP example in the fuse-python code
-    http://sourceforge.net/apps/mediawiki/fuse/index.php?title=Main_Page
+    This function is inspired by the XMP example in the python-fuse code
+    https://github.com/libfuse/python-fuse/blob/master/example/xmp.py
     but we need to prevent truncation unless explicitly requested.
     """
     # Truncate per default when enabling write - disable later if needed

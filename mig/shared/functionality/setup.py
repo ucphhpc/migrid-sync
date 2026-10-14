@@ -778,7 +778,7 @@ fingerprint %s first time you connect.''' % ' or '.join(fingerprints)
         <div class="title centertext">SFTP access to your %(site)s account</div>
 
 <p>
-<p>You can enable SFTP login to your %(site)s account and use it for efficient
+You can enable SFTP login to your %(site)s account and use it for efficient
 file and folder upload/download or even for seamless data access from your
 Windows, Mac OS X and Linux/UN*X computer.
 </p>

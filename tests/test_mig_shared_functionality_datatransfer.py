@@ -31,14 +31,9 @@ backend.
 
 from __future__ import print_function
 
-# Imports required for the unit test wrapping
-import mig.shared.returnvalues as returnvalues
+from mig.shared import returnvalues
 from mig.shared.defaults import CSRF_MINIMAL
-
-# Imports of the code under test
 from mig.shared.functionality.datatransfer import main as backend_main
-
-# Imports required for the unit tests themselves
 from tests.support import (
     MigTestCase,
     testmain,
@@ -54,7 +49,8 @@ class MigSharedFunctionalityDataTransfer(MigTestCase, UserAssertMixin):
         return "testconfig"
 
     def before_each(self):
-        self.test_user_dir = self._provision_test_user(self, TEST_USER_DN)
+        self.test_user_dir = self._provision_test_user(
+            self, TEST_USER_DN)
         self.test_environ = create_http_environ(
             self.configuration, "wsgi-bin/datatransfer.py"
         )

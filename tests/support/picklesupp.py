@@ -52,8 +52,8 @@ class PickleAssertMixin:
 
         result = pickled
         for hint_name in apply_hints:
-            if not hint_name in _HINTS_APPLIERS_ARGLESS:
+            if hint_name not in _HINTS_APPLIERS_ARGLESS:
                 raise NotImplementedError("unknown hint %s" % (hint_name,))
             hint_fn = _HINTS_APPLIERS_ARGLESS[hint_name]
-            result = hint_fn(pickled, modifier=None)
+            result = hint_fn(result, modifier=None)
         return result
