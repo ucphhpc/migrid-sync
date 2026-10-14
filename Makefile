@@ -109,9 +109,6 @@ style-check-python: dependencies
 	exit $${FORMATFAIL}
 
 # NOTE: pylint and ruff use pyproject.toml to temporarily exclude a few paths
-# TODO: move the following ruff rule ignores to pyproject.toml for consistency?
-# UP031 = Use format specifiers instead of percent format when interpolating strings
-# DTZ006 = datetime.datetime.fromtimestamp()` called without a `tz` argument
 .PHONY: lint-python
 # NOTE: use a single line-extended command to continue even if one part fails
 lint-python: dependencies
@@ -124,7 +121,7 @@ lint-python: dependencies
 		echo "No issues found" ; \
 	fi ; \
 	echo "=== Checking for errors with ruff ===" ; \
-	if ! $(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS) --ignore UP031,DTZ006; then \
+	if ! $(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS); then \
 		echo "*** Found ruff errors listed above! ***" ; \
 		LINTFAIL=$$((LINTFAIL+1)) ; \
 	fi ; \
