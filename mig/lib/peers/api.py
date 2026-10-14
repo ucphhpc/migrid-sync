@@ -553,8 +553,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
         return create_handler_response(
             400,
             error="failed to import peer(s), the received import "
-            "argument(s) was rejected %s"
-            % rejected_common,
+            "argument(s) was rejected %s" % rejected_common,
         )
 
     # Validate the peers import field
@@ -759,8 +758,7 @@ def handle_POST_peers_accepted_update(configuration, request_info):
         return create_handler_response(
             400,
             error="failed to update peer, the received update argument(s) "
-            "was rejected %s"
-            % rejected_common,
+            "was rejected %s" % rejected_common,
         )
 
     label = accepted_common["label"]
