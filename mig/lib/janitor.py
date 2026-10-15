@@ -365,6 +365,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             )
         else:
             _logger.info("rejected invalid %r account request" % client_id)
+        _update_req_throttle(configuration, req_path, now, rej_status)
     elif authorized:
         _logger.info(
             "%r requested renew and authorized password change" % client_id
