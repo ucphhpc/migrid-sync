@@ -330,7 +330,14 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
     acceptance is in place and reject request if obviously invalid.
     """
     _logger = configuration.logger
-    # TODO: move throttle up here before any effort loading pickle?
+    # Throttle early to avoid loading pickle etc.
+    throttle_secs = 60 * MANAGE_TRIVIAL_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER
+    if (
+        _lookup_throttle(configuration, manage_register, req_path)
+        + throttle_secs
+        > now
+    ):
+        _logger.info("throttle down account request %s retry" % req_id)
     req_dict = load(req_path)
     client_id = get_user_id(configuration, req_dict)
     # NOTE: use timestamp from saved request file if available
@@ -345,16 +352,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
     user_copy = True
     admin_copy = True
     default_renew = False
-    throttle_secs = 60 * MANAGE_TRIVIAL_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER
-    if (
-        _lookup_throttle(configuration, manage_register, req_path)
-        + throttle_secs
-        > now
-    ):
-        _logger.info(
-            "throttle down %r account request %s retry" % (client_id, req_id)
-        )
-    elif req_invalid:
+    if req_invalid:
         _logger.info("%r made an invalid account request" % client_id)
         # NOTE: 'invalid' is a list of validation error strings if set
         reason = "invalid request: %s." % ". ".join(req_invalid)
@@ -562,20 +560,19 @@ def remind_and_expire_user_pending(configuration, now=None):
         req_id = filename
         req_path = os.path.join(configuration.user_pending, req_id)
         _logger.debug("checking account request in %r" % req_path)
-        req_age = now - os.path.getmtime(req_path)
-        req_age_days = req_age / SECS_PER_DAY
-        # Handle request throttling inline here as we don't use handle helper
+        # Throttle early to avoid loading pickle etc.
         throttle_secs = 60 * MANAGE_EXPIRY_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER
         if (
             _lookup_throttle(configuration, expiry_register, req_path)
             + throttle_secs
             > now
         ):
-            _logger.info(
+            _logger.debug(
                 "throttle down expiry of account request %s retry" % req_id
             )
             continue
-
+        req_age = now - os.path.getmtime(req_path)
+        req_age_days = req_age / SECS_PER_DAY
         req_dict = load(req_path)
         client_id = get_user_id(configuration, req_dict)
         req_auth = req_dict.get("auth", ["migoid"])[-1]
