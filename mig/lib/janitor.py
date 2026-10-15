@@ -64,7 +64,8 @@ SECS_PER_HOUR = 60 * SECS_PER_MINUTE
 SECS_PER_DAY = 24 * SECS_PER_HOUR
 
 task_triggers = {}
-request_throttle = {}
+manage_register = {}
+expiry_register = {}
 
 
 def __lookup_last_stamp(configuration, lookup_table, target):
@@ -120,24 +121,24 @@ def _update_last_run(configuration, target, stamp):
     return __update_last_stamp(configuration, task_triggers, target, stamp)
 
 
-def _lookup_req_throttle(configuration, target):
-    """Check if target has a throttle marker from a previous failed attempt.
+def _lookup_throttle(configuration, register, target):
+    """Check if target mark is in register from a previous failed attempt.
     Returns the stamp of any such registered failed attempt in UN*X epoch time.
     """
-    return __lookup_last_stamp(configuration, request_throttle, target)
+    return __lookup_last_stamp(configuration, register, target)
 
 
-def _update_req_throttle(configuration, target, stamp, success):
-    """Update req_path throttle marker with supplied stamp in UN*X epoch time
+def _update_throttle(configuration, register, target, stamp, success):
+    """Update target mark in register with supplied stamp in UN*X epoch time
     based on success boolean. Upon success any mark is removed as req is then
     gone.
     Returns the same updated timestamp if updated and -1 if it was removed.
     """
     if success:
-        __remove_last_stamp(configuration, request_throttle, target)
+        __remove_last_stamp(configuration, register, target)
         return -1
     else:
-        __update_last_stamp(configuration, request_throttle, target, stamp)
+        __update_last_stamp(configuration, register, target, stamp)
         return stamp
 
 
@@ -345,7 +346,11 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
     admin_copy = True
     default_renew = False
     throttle_secs = 60 * MANAGE_TRIVIAL_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER
-    if _lookup_req_throttle(configuration, req_path) + throttle_secs > now:
+    if (
+        _lookup_throttle(configuration, manage_register, req_path)
+        + throttle_secs
+        > now
+    ):
         _logger.info(
             "throttle down %r account request %s retry" % (client_id, req_id)
         )
@@ -368,7 +373,9 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             )
         else:
             _logger.info("rejected invalid %r account request" % client_id)
-        _update_req_throttle(configuration, req_path, now, rej_status)
+        _update_throttle(
+            configuration, manage_register, req_path, now, rej_status
+        )
     elif authorized:
         _logger.info(
             "%r requested renew and authorized password change" % client_id
@@ -391,7 +398,9 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             )
         else:
             _logger.info("accepted authorized %r access renew" % client_id)
-        _update_req_throttle(configuration, req_path, now, acc_status)
+        _update_throttle(
+            configuration, manage_register, req_path, now, acc_status
+        )
     elif reset_token:
         # TODO: handle loaded user_dict == None here (e.g. recently removed)
         #       to avoid verify_reset_token failing on DN access.
@@ -419,7 +428,9 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
                 )
             else:
                 _logger.info("accepted %r password reset" % client_id)
-            _update_req_throttle(configuration, req_path, now, acc_status)
+            _update_throttle(
+                configuration, manage_register, req_path, now, acc_status
+            )
         else:
             _logger.warning(
                 "%r requested password reset with bad token: %s"
@@ -441,7 +452,9 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
                 )
             else:
                 _logger.info("rejected %r password reset" % client_id)
-            _update_req_throttle(configuration, req_path, now, rej_status)
+            _update_throttle(
+                configuration, manage_register, req_path, now, rej_status
+            )
     elif req_expire < now:
         #  NOTE: probably should no longer happen after initial auto clean
         _logger.warning("%r request is now past expire" % client_id)
@@ -460,7 +473,9 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             )
         else:
             _logger.info("rejected %r request now past expire" % client_id)
-        _update_req_throttle(configuration, req_path, now, rej_status)
+        _update_throttle(
+            configuration, manage_register, req_path, now, rej_status
+        )
     elif existing_user_collision(configuration, req_dict, client_id):
         _logger.warning("ID collision in request from %r" % client_id)
         reason = "ID collision - please re-request with *existing* ID fields"
@@ -479,18 +494,20 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             )
         else:
             _logger.info("rejected %r request with ID collision" % client_id)
-        _update_req_throttle(configuration, req_path, now, rej_status)
+        _update_throttle(
+            configuration, manage_register, req_path, now, rej_status
+        )
     elif user_dict:
         _logger.info(
             "%r requested access renewal but not automated" % client_id
         )
         # TODO: renew if trivial with existing valid peer?
-        _update_req_throttle(configuration, req_path, now, False)
+        _update_throttle(configuration, manage_register, req_path, now, False)
     else:
         _logger.info(
             "%r requested a new account requiring operator" % client_id
         )
-        _update_req_throttle(configuration, req_path, now, False)
+        _update_throttle(configuration, manage_register, req_path, now, False)
 
 
 def manage_trivial_user_requests(configuration, now=None):
@@ -549,7 +566,11 @@ def remind_and_expire_user_pending(configuration, now=None):
         req_age_days = req_age / SECS_PER_DAY
         # Handle request throttling inline here as we don't use handle helper
         throttle_secs = 60 * MANAGE_EXPIRY_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER
-        if _lookup_req_throttle(configuration, req_path) + throttle_secs > now:
+        if (
+            _lookup_throttle(configuration, expiry_register, req_path)
+            + throttle_secs
+            > now
+        ):
             _logger.info(
                 "throttle down expiry of account request %s retry" % req_id
             )
@@ -568,7 +589,9 @@ def remind_and_expire_user_pending(configuration, now=None):
             #       ... possibly with copy to peers if pending acceptance.
 
             remind_status = False
-            _update_req_throttle(configuration, req_path, now, remind_status)
+            _update_throttle(
+                configuration, expiry_register, req_path, now, remind_status
+            )
             handled += 1
         if req_age_days > EXPIRE_REQ_DAYS:
             _logger.info(
@@ -596,7 +619,9 @@ def remind_and_expire_user_pending(configuration, now=None):
                 )
             else:
                 _logger.info("expired %s request from %r" % (req_id, client_id))
-            _update_req_throttle(configuration, req_path, now, rej_status)
+            _update_throttle(
+                configuration, expiry_register, req_path, now, rej_status
+            )
             handled += 1
     _logger.debug("handled %d user account request action(s)" % handled)
     return handled
