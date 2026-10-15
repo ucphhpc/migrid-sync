@@ -259,6 +259,19 @@ PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
         ),
         expected_ok=True,
     ),
+    ParseFileTestCase(
+        "should parse project name line without period",
+        "./fixture/addheader/project_name_line_without_dot.py",
+        Header(
+            module_name="project_name_line_without_dot",
+            module_description="a module without a dot in the project name line",
+            copyright_year="2003-2026",
+            authors="The MiG Project Team",
+            project_name="Project Name",
+            lines=3,
+        ),
+        expected_ok=True,
+    ),
 ]
 
 

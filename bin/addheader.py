@@ -103,18 +103,18 @@ BLOCK_WRAP_FORMAT = """
 */
 """
 
-COMPLETE_MESSAGE = """Added license headers to code in %r"
+COMPLETE_MESSAGE = """Added license headers to code in %r
 
 Don't forget to include COPYING file in root of source, e.g. run:
 wget -O COPYING http://www.gnu.org/licenses/gpl2.txt
-if using the default GPL v2 license here."""
+if using the default GPL v2 (or later) license here."""
 
 RE_PYTHON_ENCODING = re.compile(r"# -\*- coding: ([a-zA-Z0-9-]+) -\*-")
-RE_MODULE_LINE = re.compile(r"# ([^ ]+) *\- *(.+)")
+RE_MODULE_LINE = re.compile(r"# ([a-zA-Z0-9._-]+) *- *(.+)")
 RE_COPYRIGHT_LINE = re.compile(
     r"# Copyright \(C\) ([1-9][0-9]{3}(-[1-9][0-9]{3})?)  ?(.+)"
 )
-RE_PROJECT_LINE = re.compile(r"# This file is part of (.+).")
+RE_PROJECT_LINE = re.compile(r"^# This file is part of ([^\.\n]+)")
 DEFAULT_PREAMBLE_LINES = 100
 
 
@@ -131,9 +131,11 @@ class Header:
     module_encoding: str = ""
     lines: int = 0
 
-    def overlay(self, other: Header) -> None:
-        """Modifies this Header's field values to those another header object
-        for all fields that have falsy values, e.g. empty strings and zeroes."""
+    def underlay(self, other: Header) -> None:
+        """Modifies all fields of this Header that have "falsy" values (e.g.
+        empty strings, or zeroes) to the corresponding values of the given other
+        Header. Fields with truthy values are not modified.
+        """
         for field in fields(self):
             if not getattr(self, field.name):
                 setattr(self, field.name, getattr(other, field.name))
@@ -150,7 +152,7 @@ class Header:
         """Format the header so that it can be prefixed to a source code file.
 
         Args:
-            explicit_border: If True, begin and end header markers er inserted.
+            explicit_border: If True, begin and end header markers are inserted.
             block_wrap: If True, the entire header will be wrapped by a block
                 comment.
         Returns:
@@ -242,7 +244,7 @@ def _filter_header_lines(preamble: list[str]) -> list[str]:
 
 def _parse_block_wrap(preamble: list[str]) -> tuple[int, list[str]]:
     """Parses a block comment wrapped section of the header, returning the
-    unwrapped header lines, to be parsed further. Stops parsing once it find
+    unwrapped header lines, to be parsed further. Stops parsing once it finds
     the end of the block comment, or reaches the end of the preamble.
 
     Returns:
@@ -413,7 +415,7 @@ def add_header(
         logger.warning("Failed to create backup of %s - skip!", path)
         return False
 
-    header.overlay(PROJ_CONSTS)
+    header.underlay(PROJ_CONSTS)
     header.module_name = os.path.basename(path).removesuffix(".py")
 
     # remove shebang if executable bit is not set AND the shebang is default
