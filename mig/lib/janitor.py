@@ -52,6 +52,8 @@ MANAGE_TRIVIAL_REQ_MINUTES = 5
 # Throttle next attempt MANAGE_TRIVIAL_REQ_MINUTES times upon failed attempt.
 # I.e. retry in MANAGE_TRIVIAL_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER minutes.
 THROTTLE_REQ_MULTIPLIER = 12
+# Throttle next attempt MANAGE_EXPIRY_REQ_MINUTES times upon failed attempt.
+MANAGE_EXPIRY_REQ_MINUTES = 120
 
 EXPIRE_STATE_DAYS = 30
 EXPIRE_DUMMY_JOBS_DAYS = 7
@@ -544,6 +546,15 @@ def remind_and_expire_user_pending(configuration, now=None):
         _logger.debug("checking account request in %r" % req_path)
         req_age = now - os.path.getmtime(req_path)
         req_age_days = req_age / SECS_PER_DAY
+        # Handle request throttling inline here as we don't use handle helper
+        throttle_secs = 60 * MANAGE_EXPIRY_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER
+        if _lookup_req_throttle(configuration, req_path) + throttle_secs > now:
+            _logger.info(
+                "throttle down expiry of %r account request %s retry"
+                % (client_id, req_id)
+            )
+            continue
+
         req_dict = load(req_path)
         client_id = get_user_id(configuration, req_dict)
         req_auth = req_dict.get("auth", ["migoid"])[-1]
@@ -555,6 +566,9 @@ def remind_and_expire_user_pending(configuration, now=None):
             )
             # TODO: actually remind operator and user that request is pending
             #       ... possibly with copy to peers if pending acceptance.
+
+            remind_status = False
+            _update_req_throttle(configuration, req_path, now, remind_status)
             handled += 1
         if req_age_days > EXPIRE_REQ_DAYS:
             _logger.info(
@@ -582,6 +596,7 @@ def remind_and_expire_user_pending(configuration, now=None):
                 )
             else:
                 _logger.info("expired %s request from %r" % (req_id, client_id))
+            _update_req_throttle(configuration, req_path, now, rej_status)
             handled += 1
     _logger.debug("handled %d user account request action(s)" % handled)
     return handled
