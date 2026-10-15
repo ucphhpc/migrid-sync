@@ -635,7 +635,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         req_id = os.path.basename(req_path)
         now = time.time()
         # Attempt handling with expected ignore
-        with self.assertLogs(level="INFO") as log_capture:
+        with self.assertLogs(level="DEBUG") as log_capture:
             manage_single_req(
                 self.configuration, req_id, req_path, self.user_db_path, now
             )
@@ -647,7 +647,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         )
 
         # Now verify that retry soon after gets throttled
-        with self.assertLogs(level="INFO") as log_capture:
+        with self.assertLogs(level="DEBUG") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
@@ -664,7 +664,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         )
 
         # Now verify that retry long after is attempted again
-        with self.assertLogs(level="INFO") as log_capture:
+        with self.assertLogs(level="DEBUG") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,

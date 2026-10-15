@@ -337,7 +337,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         + throttle_secs
         > now
     ):
-        _logger.info("throttle down account request %s retry" % req_id)
+        _logger.debug("throttle down account request %s retry" % req_id)
     req_dict = load(req_path)
     client_id = get_user_id(configuration, req_dict)
     # NOTE: use timestamp from saved request file if available
@@ -496,13 +496,13 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             configuration, manage_register, req_path, now, rej_status
         )
     elif user_dict:
-        _logger.info(
+        _logger.debug(
             "%r requested access renewal but not automated" % client_id
         )
         # TODO: renew if trivial with existing valid peer?
         _update_throttle(configuration, manage_register, req_path, now, False)
     else:
-        _logger.info(
+        _logger.debug(
             "%r requested a new account requiring operator" % client_id
         )
         _update_throttle(configuration, manage_register, req_path, now, False)
