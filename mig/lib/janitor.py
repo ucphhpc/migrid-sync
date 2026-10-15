@@ -329,6 +329,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
     acceptance is in place and reject request if obviously invalid.
     """
     _logger = configuration.logger
+    # TODO: move throttle up here before any effort loading pickle?
     req_dict = load(req_path)
     client_id = get_user_id(configuration, req_dict)
     # NOTE: use timestamp from saved request file if available
@@ -550,8 +551,7 @@ def remind_and_expire_user_pending(configuration, now=None):
         throttle_secs = 60 * MANAGE_EXPIRY_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER
         if _lookup_req_throttle(configuration, req_path) + throttle_secs > now:
             _logger.info(
-                "throttle down expiry of %r account request %s retry"
-                % (client_id, req_id)
+                "throttle down expiry of account request %s retry" % req_id
             )
             continue
 
