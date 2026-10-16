@@ -41,7 +41,8 @@ import getopt
 import os
 import sys
 
-from mig.shared.accountreq import peers_permit_allowed, manage_pending_peers
+from mig.lib.peers.permissions import peers_permit_allowed
+from mig.lib.peers.legacy import manage_pending_peers
 from mig.shared.base import fill_distinguished_name
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import keyword_auto, gdp_distinguished_field

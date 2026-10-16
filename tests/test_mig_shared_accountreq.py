@@ -35,6 +35,9 @@ import unittest
 
 # Imports of the code under test
 import mig.shared.accountreq as accountreq
+from mig.lib.peers.legacy import manage_pending_peers, peer_account_req
+from mig.lib.peers.permissions import peers_prefilter_allowed
+from mig.lib.peers.storage import list_peers_accepted, list_peers_requested
 
 # Imports required for the unit test wrapping
 from mig.shared.base import (
@@ -102,7 +105,7 @@ class MigSharedAccountreq__peers_helpers(
         peer_dict = pending_peers_fixture.fixture_data[TEST_PENDING_PEER_DN]
         assert peer_dict["distinguished_name"] == TEST_PENDING_PEER_DN
 
-        success = accountreq.manage_pending_peers(
+        success = manage_pending_peers(
             self.configuration,
             self.TEST_USER_DN,
             "add",
@@ -144,7 +147,7 @@ class MigSharedAccountreq__peers_under_request(
             expectation="peer account request tmpNOEXIST extraction failed",
         )
 
-        success, message = accountreq.peer_account_req(
+        success, message = peer_account_req(
             "tmpNOEXIST", self.configuration, self.TEST_USER_DN
         )
 
@@ -167,7 +170,7 @@ class MigSharedAccountreq__peers_under_request(
             expectation="no target users to request peer acceptance from",
         )
 
-        success, message = accountreq.peer_account_req(
+        success, message = peer_account_req(
             req_id, self.configuration, self.TEST_USER_DN, request_dict
         )
 
@@ -183,7 +186,7 @@ class MigSharedAccountreq__peers_under_request(
         _, request_dict = self._peer_dict_from_fixture()
         fake_notify_user = make_fake_notify_user()
 
-        success, _ = accountreq.peer_account_req(
+        success, _ = peer_account_req(
             req_id,
             self.configuration,
             self.TEST_USER_DN,
@@ -219,9 +222,7 @@ class MigSharedAccountreq__peers_existing(
         self.assertDirEmpty(self.configuration.user_pending)
         self._record_peer("peers--single", against_user_dn=TEST_USER_DN)
 
-        listing = accountreq.list_peers_accepted(
-            self.configuration, TEST_USER_DN
-        )
+        listing = list_peers_accepted(self.configuration, TEST_USER_DN)
 
         self.assertEqual(len(listing), 1)
 
@@ -231,9 +232,7 @@ class MigSharedAccountreq__peers_existing(
             TEST_PENDING_PEER_DN, against_user_dn=TEST_USER_DN
         )
 
-        listing = accountreq.list_peers_requested(
-            self.configuration, TEST_USER_DN
-        )
+        listing = list_peers_requested(self.configuration, TEST_USER_DN)
 
         self.assertEqual(len(listing), 1)
 
@@ -353,17 +352,13 @@ class MigSharedAccountreq__filters(MigTestCase, UserAssertMixin):
     def test_peers_prefilter_email_accept(self):
         for addr in self.TEST_INTERNAL_EMAILS:
             self.EXT_USER["peers_email"] = addr
-            check = accountreq.peers_prefilter_allowed(
-                self.configuration, self.EXT_USER
-            )
+            check = peers_prefilter_allowed(self.configuration, self.EXT_USER)
             self.assertTrue(check)
 
     def test_peers_prefilter_email_reject(self):
         for addr in self.TEST_EXTERNAL_EMAILS:
             self.EXT_USER["peers_email"] = addr
-            check = accountreq.peers_prefilter_allowed(
-                self.configuration, self.EXT_USER
-            )
+            check = peers_prefilter_allowed(self.configuration, self.EXT_USER)
             self.assertFalse(check)
 
     def test_early_validation_checks_valid_new_simple(self):
