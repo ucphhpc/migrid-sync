@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cat - show lines of one or more files
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -41,8 +42,8 @@ from mig.shared.fileio import read_file, read_file_lines, write_file, \
     write_file_lines
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.init import initialize_main_variables, find_entry, \
-    make_start_entry, start_error, start_download
+from mig.shared.init import find_entry, lazy_init_backend, start_download, \
+    start_error
 from mig.shared.parseflags import verbose, binary
 from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.safeinput import valid_path_pattern
@@ -90,32 +91,12 @@ def signature():
     return ['file_output', defaults]
 
 
-def main(client_id, user_arguments_dict, environ=None):
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs=None):
     """Main function wrapper used by front end"""
 
-    if environ is None:
-        environ = os.environ
-
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id)
-
-    return _main(configuration, logger, environ, op_name=op_name,
-                 output_objects=output_objects, client_id=client_id,
-                 user_arguments_dict=user_arguments_dict)
-
-
-def _main(configuration, logger, environ, op_name='', output_objects=None, client_id=None,
-          user_arguments_dict=None):
-    """Actual main function to generate contents for the front end"""
-
-    assert environ is not None, "required arg: environ"
-
-    if logger is None:
-        logger = configuration.logger
-
-    # Create new output_objects list with start entry if None was supplied
-    if output_objects is None:
-        output_objects = [make_start_entry()]
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
 
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]

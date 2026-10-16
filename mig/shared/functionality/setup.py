@@ -51,7 +51,7 @@ from mig.shared.htmlgen import man_base_js, man_base_html, console_log_javascrip
     save_settings_js, save_settings_html
 from mig.shared.httpsclient import detect_client_auth, require_twofactor_setup, \
     protected_twofactor_settings, missing_twofactor_settings
-from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.init import extract_menu, find_entry, lazy_init_backend
 from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape, password_min_len, password_max_len, \
     valid_password_chars
@@ -528,11 +528,15 @@ and key as described in the Login Details.
     return snippet
 
 
-def main(client_id, user_arguments_dict, target_op='settingsaction'):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
+    # Override to use shared backend for saving
+    target_op = 'settingsaction'
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -542,6 +546,7 @@ def main(client_id, user_arguments_dict, target_op='settingsaction'):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
