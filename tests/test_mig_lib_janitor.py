@@ -47,9 +47,9 @@ from mig.lib.janitor import (
     SECS_PER_MINUTE,
     _clean_stale_state_files,
     _lookup_last_run,
-    _lookup_req_throttle,
+    _lookup_throttle,
     _update_last_run,
-    _update_req_throttle,
+    _update_throttle,
     clean_mig_system_files,
     clean_no_job_helpers,
     clean_sessid_to_mrls_link_home,
@@ -129,6 +129,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         self.user_db_path = os.path.join(
             self.configuration.user_db_home, TEST_USERDB
         )
+        self.throttles = {}
         # Create fake fs layout matching real systems
         ensure_dirs_exist(self.configuration.user_pending)
         ensure_dirs_exist(self.configuration.user_db_home)
@@ -170,22 +171,24 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
     def test_request_throttle_bookkeeping(self):
         """Register a request throttle timestamp and check it"""
         expect = -1
-        stamp = _lookup_req_throttle(self.configuration, "janitor_req")
+        stamp = _lookup_throttle(
+            self.configuration, self.throttles, "janitor_req"
+        )
         self.assertEqual(stamp, expect)
         expect = 42
-        stamp = _update_req_throttle(
-            self.configuration, "janitor_req", expect, False
+        stamp = _update_throttle(
+            self.configuration, self.throttles, "janitor_req", expect, False
         )
         self.assertEqual(stamp, expect)
         expect = time.time()
-        stamp = _update_req_throttle(
-            self.configuration, "janitor_req", expect, False
+        stamp = _update_throttle(
+            self.configuration, self.throttles, "janitor_req", expect, False
         )
         self.assertEqual(stamp, expect)
         # NOTE: reset to -1 on success
         expect = -1
-        stamp = _update_req_throttle(
-            self.configuration, "janitor_req", 42, True
+        stamp = _update_throttle(
+            self.configuration, self.throttles, "janitor_req", 42, True
         )
         self.assertEqual(stamp, expect)
 
@@ -632,7 +635,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         req_id = os.path.basename(req_path)
         now = time.time()
         # Attempt handling with expected ignore
-        with self.assertLogs(level="INFO") as log_capture:
+        with self.assertLogs(level="DEBUG") as log_capture:
             manage_single_req(
                 self.configuration, req_id, req_path, self.user_db_path, now
             )
@@ -644,7 +647,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         )
 
         # Now verify that retry soon after gets throttled
-        with self.assertLogs(level="INFO") as log_capture:
+        with self.assertLogs(level="DEBUG") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
@@ -661,7 +664,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         )
 
         # Now verify that retry long after is attempted again
-        with self.assertLogs(level="INFO") as log_capture:
+        with self.assertLogs(level="DEBUG") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
@@ -1131,23 +1134,27 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         req = "test-req"
 
         # Initial state
-        stamp = _lookup_req_throttle(self.configuration, req)
+        stamp = _lookup_throttle(self.configuration, self.throttles, req)
         self.assertEqual(stamp, -1)
 
         # Update & verify
-        updated = _update_req_throttle(self.configuration, req, now, False)
+        updated = _update_throttle(
+            self.configuration, self.throttles, req, now, False
+        )
         self.assertEqual(updated, now)
 
         # Check persistence (within process)
-        retrieved = _lookup_req_throttle(self.configuration, req)
+        retrieved = _lookup_throttle(self.configuration, self.throttles, req)
         self.assertEqual(retrieved, now)
 
         # Remove & verify
-        updated = _update_req_throttle(self.configuration, req, now, True)
+        updated = _update_throttle(
+            self.configuration, self.throttles, req, now, True
+        )
         self.assertEqual(updated, -1)
 
         # Check persistence (within process)
-        retrieved = _lookup_req_throttle(self.configuration, req)
+        retrieved = _lookup_throttle(self.configuration, self.throttles, req)
         self.assertEqual(retrieved, -1)
 
     def test__clean_stale_state_files_edge(self):
