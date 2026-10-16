@@ -64,7 +64,7 @@ LICENSE_TEXT = """# %(module_name)s - %(module_description)s
 # Copyright (C) %(copyright_year)s  %(authors)s
 """
 
-# This is the actual GPL version 2 header to match
+# This is the actual GPL version 2 (or later) header to match
 # http://opensource.org/licenses/GPL-2.0
 # Replace text if another license is desired.
 # Additionally add a file called COPYING in the root of the distributed source
