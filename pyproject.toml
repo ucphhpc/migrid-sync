@@ -73,6 +73,7 @@ extend-exclude = [
     "sbin/grid_sftp.py",
     "sbin/grid_webdavs.py"
 ]
+# NOTE: we have decided to stay with %X string-expansion for now
 [tool.ruff.lint]
 # UP031 = Use format specifiers instead of percent format when interpolating strings
 # DTZ006 = datetime.datetime.fromtimestamp()` called without a `tz` argument
