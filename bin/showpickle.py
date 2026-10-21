@@ -64,7 +64,7 @@ is a dict or index if it is a sequence.
 """ % {"name": name})
 
 
-def main(args, select=None):
+def main(args, select=None, verbose=False):
     """Run load and show pickle optionally limited to select."""
     errors = 0
     out = ""
@@ -75,24 +75,30 @@ def main(args, select=None):
     for path in args:
         if path_prefix:
             out += "%s: " % path
-        obj = load(path, serializer=SERIALIZER)
-        if obj is None:
-            out += "failed to load!"
+        if verbose:
+            print("loading pickle in %s" % path)
+        try:
+            obj = load(path, serializer=SERIALIZER)
+            if isinstance(obj, dict) and select is not None:
+                out += "data[%r]: %s" % (select, obj.get(select, "**UNSET**"))
+            elif isinstance(obj, Iterable) and select is not None:
+                out += "data[%s]: %s" % (select, obj[int(select)])
+            else:
+                out += "%s" % obj
+        except Exception as exc:
+            out += "failed to load: %s" % exc
             errors += 1
-        elif isinstance(obj, dict) and select is not None:
-            out += "%s" % obj.get(select, "UNSET")
-        elif isinstance(obj, Iterable) and select is not None:
-            out += "%s" % obj[int(select)]
-        else:
-            out += "%s" % obj
         out += "\n"
     print(out.strip())
+    if verbose:
+        print("completed with %d errors" % errors)
     return errors
 
 
 if __name__ == "__main__":
     opt_args = "hs:v"
     select = None
+    verbose = False
     try:
         opts, args = getopt.getopt(sys.argv[1:], opt_args)
     except getopt.GetoptError as err:
@@ -116,5 +122,5 @@ if __name__ == "__main__":
     if not args:
         usage()
         sys.exit(1)
-    err = main(args, select)
+    err = main(args, select, verbose)
     sys.exit(err)
