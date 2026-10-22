@@ -222,6 +222,7 @@ def advanced_editor_js_deps():
             $("#editorarea").markItUpRemove();
             /* stylesheet button settings collide for different sets
             disable all set stylesheets and enable only selected one */
+            //disableStyleSheet("default");
             disableStyleSheet("html");
             //disableStyleSheet("txt2tags");
         } else if (lastEdit == "CodeMirror") {
@@ -234,6 +235,13 @@ def advanced_editor_js_deps():
     function enable_editorarea_editor(newSet) {
         lastEdit = "raw";
         switch(newSet) {
+            /*
+            case "default":
+                lastEdit = "MarkItUp";
+                enableStyleSheet("default");
+                $("#editorarea").markItUp(myDefaultSettings);
+                break;
+            */
             case "html":
                 lastEdit = "MarkItUp";
                 enableStyleSheet("html");
@@ -390,6 +398,7 @@ Edit contents:<br />
     if 'switcher' in includes:
         html += '''
 <ul id="switcher">
+<!--<li class="default"><a href="#">Text Editor</a></li>-->
 <li class="html currentSet"><a href="#">HTML/Text Editor</a></li>
 <li class="codemirror"><a href="#">Code Editor</a></li>
 <!-- <li class="txt2tags"><a href="#">Txt2Tags Editor</a></li> -->
