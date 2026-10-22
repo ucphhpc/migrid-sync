@@ -180,7 +180,7 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[],
     for (variable, value) in settings.items():
         suffix = ''
         if variable in eat_trailing_space:
-            suffix = '\s{0,1}'
+            suffix = r'\s{0,1}'
         try:
             contents = re.sub(variable + suffix, value, contents)
         except Exception as exc:

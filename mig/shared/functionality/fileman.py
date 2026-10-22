@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileman - File manager UI for browsing and manipulating files and folders
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -463,7 +464,7 @@ def js_tmpl_parts(configuration,
             ('%s' % (configuration.site_enable_transfers and legacy_buttons)).lower(),
         'enable_gdp':
             ('%s' % configuration.site_enable_gdp).lower(),
-        'max_stream_size': 64*1024*1024
+        'max_stream_size': 64 * 1024 * 1024
     }
 
     js_import = '''
@@ -480,7 +481,7 @@ var csrf_map = {};
         js_import += '''
 csrf_map["%s"] = "%s";
 ''' % (target_op, token)
-    js_import += '''
+    js_import += r'''
 </script>
 <script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>

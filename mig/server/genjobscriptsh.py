@@ -1106,7 +1106,7 @@ class GenJobScriptSh(object):
         """Print msg unless result contains success code"""
 
         cmd = 'if [ $' + result + ' -ne ' + successcode + ' ]; then\n'
-        cmd += '\techo "WARNING: ' + msg + "\($" + result + "\)\"\n"
+        cmd += '\techo "WARNING: ' + msg + '($' + result + ')"\n'
         cmd += 'fi\n'
         return cmd
 
