@@ -47,6 +47,8 @@ from mig.shared.fileio import delete_file, listdir
 from mig.shared.pwcrypto import verify_reset_token
 from mig.shared.serial import load
 from mig.shared.userdb import default_db_path, load_user_dict
+from mig.shared.vgridaccess import get_resource_map, get_user_map, \
+    get_vgrid_map, last_refresh, RESOURCES, USERS, VGRIDS
 
 REMIND_REQ_DAYS = 5
 EXPIRE_REQ_DAYS = 30
@@ -620,7 +622,17 @@ def handle_cache_updates(configuration, now=None):
         now = time.time()
     handled = 0
     _logger.debug("handle pending cache updates")
-    # TODO: actually handle vgrid/user/resource/... cache updates
+    # NOTE: we use get_X_map here to throttle down and only refresh when needed
+    user_map = get_user_map(configuration, caching=False)
+    if last_refresh[USERS] > now:
+        handled += 1
+    if configuration.site_enable_resources:
+        resource_map = get_resource_map(configuration, caching=False)
+        if last_refresh[RESOURCES] > now:
+            handled += 1
+    vgrid_map = get_vgrid_map(configuration, caching=False)
+    if last_refresh[VGRIDS] > now:
+        handled += 1
     if handled > 0:
         _logger.info("handled %d pending cache updates" % handled)
     else:
