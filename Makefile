@@ -110,6 +110,11 @@ test: dependencies testconfig
 unittest: dependencies testconfig
 	@$(LOCAL_PYTHON_BIN) -m unittest discover -s tests/
 
+.PHONY: coverage
+coverage: dependencies testconfig
+	@$(LOCAL_PYTHON_BIN) -m coverage run -m unittest discover -s tests/
+	@$(LOCAL_PYTHON_BIN) -m coverage lcov
+
 .PHONY: dependencies
 dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/local.depends
 
