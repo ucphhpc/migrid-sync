@@ -1,14 +1,13 @@
+import fcntl
 import os
 from datetime import datetime
 from typing import Any, override
 
-from mig.lib.accountreqs import AccountRequest, AccountRequestRepository
 from mig.lib.users.repository import UserRepository, UserSearchFilter
 from mig.lib.users.user import User
 from mig.shared.defaults import user_db_filename
 from mig.shared.pwcrypto import make_hash, scramble_password
 from mig.shared.serial import dump, load
-from mig.shared.useradm import create_user
 from tests.support import MigTestCase
 
 TEST_SALT = "12345678"
@@ -142,4 +141,25 @@ class TestSearch(UserRepositoryTestCase):
 
 
 class TestLockDB(UserRepositoryTestCase):
-    pass
+
+    def test_cannot_acquire_exclusive_lock_after_exclusively_locked(self):
+        repo = UserRepository(self.configuration)
+        lock_path = "%s.lock" % repo._user_db_path
+
+        with repo._lock_user_db(exclusive=True):
+            with open(lock_path, "w+") as lock_handle:
+                with self.assertRaises(IOError):
+                    fcntl.flock(
+                        lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB
+                    )
+
+    def test_cannot_acquire_exclusive_lock_after_nonexclusively_locked(self):
+        repo = UserRepository(self.configuration)
+        lock_path = "%s.lock" % repo._user_db_path
+
+        with repo._lock_user_db(exclusive=False):
+            with open(lock_path, "w+") as lock_handle:
+                with self.assertRaises(IOError):
+                    fcntl.flock(
+                        lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB
+                    )
