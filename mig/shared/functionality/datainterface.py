@@ -53,6 +53,7 @@ import os
 import sys
 from io import BytesIO
 
+from mig.lib.accountreqs import api as accountreqs_api
 from mig.lib.peers import api as peers_api
 from mig.lib.reqinfo import (
     booleanify,
@@ -205,6 +206,7 @@ def main(client_id, user_arguments_dict, environ=None, configuration=None):
 
 
 HANDLERS_BY_PACKAGE = {}
+HANDLERS_BY_PACKAGE.update(accountreqs_api.HANDLERS_BY_PACKAGE)
 HANDLERS_BY_PACKAGE.update(peers_api.HANDLERS_BY_PACKAGE)
 
 NORMALIZE_INPUTS_BY_PACKAGE = {}
