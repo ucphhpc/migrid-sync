@@ -32,6 +32,7 @@ import os
 import sys
 from collections.abc import Iterable
 
+# TODO: can we avoid or refactor this clunky import wrap for reuse?
 # Try to import mig to assure we have a suitable python module load path
 try:
     import mig
@@ -122,5 +123,5 @@ if __name__ == "__main__":
     if not args:
         usage()
         sys.exit(1)
-    err = main(args, select, verbose)
-    sys.exit(err)
+    err_count = main(args, select, verbose)
+    sys.exit(err_count)
