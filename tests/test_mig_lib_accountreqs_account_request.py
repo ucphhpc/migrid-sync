@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from mig.lib.account_request import AccountRequest
+from mig.lib.accountreqs import AccountRequest
 from mig.shared.pwcrypto import make_hash, scramble_password
 from tests.support import MigTestCase
 
@@ -13,7 +13,6 @@ test_account_request = AccountRequest(
     comment="A comment",
     country="DK",
     created=datetime(2020, 1, 1, 12, 0, 0),
-    distinguished_name="/C=DK/ST=NA/L=Copenhagen/O=Organization/OU=Unit/CN=Full Name/emailAddress=external@example.com",
     email="external@example.com",
     expire=datetime(2021, 1, 1, 12, 0, 0),
     full_name="Full Name",
@@ -122,26 +121,32 @@ class TestFromDict(MigTestCase):
 
 
 class TestFillDistinguishedName(MigTestCase):
-    def test_does_not_change_existing_distinguished_name(self):
+    def test_returns_updated_distinguished_name(self):
         accreq = test_account_request.copy()
         accreq.email = "anotheremail@example.com"
 
-        accreq.fill_distinguished_name()
         actual = accreq.distinguished_name
 
-        expected = "/C=DK/ST=NA/L=Copenhagen/O=Organization/OU=Unit/CN=Full Name/emailAddress=external@example.com"
-        not_expected = "/C=DK/ST=NA/L=Copenhagen/O=Organization/OU=Unit/CN=Full Name/emailAddress=anotheremail@example.com"
+        expected = "/C=DK/ST=NA/L=Copenhagen/O=Organization/OU=Unit/CN=Full Name/emailAddress=anotheremail@example.com"
+        not_expected = "/C=DK/ST=NA/L=Copenhagen/O=Organization/OU=Unit/CN=Full Name/emailAddress=external@example.com"
         self.assertEqual(actual, expected)
         self.assertNotEqual(actual, not_expected)
 
-    def test_fills_empty_distinguished_name(self) -> None:
+    def test_returns_expected_distinguished_name(self) -> None:
         accreq = test_account_request.copy()
-        accreq.distinguished_name = ""
 
-        accreq.fill_distinguished_name()
         actual = accreq.distinguished_name
 
         expected = "/C=DK/ST=NA/L=Copenhagen/O=Organization/OU=Unit/CN=Full Name/emailAddress=external@example.com"
+        self.assertEqual(actual, expected)
+
+    def test_returns_expected_with_gdp(self) -> None:
+        accreq = test_account_request.copy()
+        accreq.gdp = "gdpval"
+
+        actual = accreq.distinguished_name
+
+        expected = "/C=DK/ST=NA/L=Copenhagen/O=Organization/OU=Unit/CN=Full Name/emailAddress=external@example.com/GDP=gdpval"
         self.assertEqual(actual, expected)
 
 

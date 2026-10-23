@@ -1,9 +1,8 @@
 import os
 from datetime import datetime
+from typing import override
 
-from typing_extensions import override
-
-from mig.lib.account_request import AccountRequest, AccountRequestRepository
+from mig.lib.accountreqs import AccountRequest, AccountRequestRepository
 from mig.shared.pwcrypto import make_hash, scramble_password
 from mig.shared.serial import load
 from tests.support import MigTestCase
@@ -18,7 +17,6 @@ test_account_request = AccountRequest(
     comment="A comment",
     country="DK",
     created=datetime(2020, 1, 1, 12, 0, 0),
-    distinguished_name="/C=DK/ST=NA/L=Copenhagen/O=Organization/OU=Unit/CN=Full Name/emailAddress=external@example.com",
     email="external@example.com",
     expire=datetime(2021, 1, 1, 12, 0, 0),
     full_name="Full Name",
@@ -103,6 +101,25 @@ class TestRemove(AccountRequestRepositoryTestCase):
             repository.remove(actual_id)
 
 
+class TestRead(AccountRequestRepositoryTestCase):
+
+    def test_returns_expected_saved_account_request(self) -> None:
+        repository = AccountRequestRepository(self.configuration)
+        expected = test_account_request.copy()
+        accreq_id: str = repository.save(expected)
+
+        actual = repository.read(accreq_id)
+
+        self.assertEqual(actual, expected)
+
+    def test_returns_none_for_non_existing_id(self) -> None:
+        repository = AccountRequestRepository(self.configuration)
+
+        actual = repository.read("non-existing-id")
+
+        self.assertIsNone(actual)
+
+
 class TestReadAll(AccountRequestRepositoryTestCase):
 
     def test_return_empty_list_if_no_account_requests(self) -> None:
@@ -112,7 +129,7 @@ class TestReadAll(AccountRequestRepositoryTestCase):
 
         self.assertEqual(actual, [])
 
-    def test_saved_account_requests(self) -> None:
+    def test_returns_saved_account_requests(self) -> None:
         repository = AccountRequestRepository(self.configuration)
 
         # prepare some account requests
@@ -120,7 +137,6 @@ class TestReadAll(AccountRequestRepositoryTestCase):
         for i in range(3):
             accreq = test_account_request.copy()
             accreq.email = "external{}@example.com".format(i + 1)
-            accreq.fill_distinguished_name()
             repository.save(accreq)
             expected.append(accreq)
 

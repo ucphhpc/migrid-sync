@@ -1,3 +1,29 @@
+#
+# --- BEGIN_HEADER ---
+#
+#
+# account_request - Logic related to account request objects.
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# --- END_HEADER ---
+#
+
 """Logic related to account request objects."""
 
 from __future__ import annotations
@@ -7,7 +33,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from mig.shared.base import fill_distinguished_name, mask_creds
+from mig.shared.base import mask_creds
+from mig.shared.defaults import gdp_distinguished_field
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +46,6 @@ class AccountRequest:
     comment: str
     country: str
     created: datetime
-    distinguished_name: str
     email: str
     expire: datetime | None
     full_name: str
@@ -33,16 +59,33 @@ class AccountRequest:
     peers_full_name: str
     peers_email: str
     state: str
+    gdp: str | None = None
 
-    def fill_distinguished_name(self) -> None:
-        """Fill distinguished_name field from other fields if not already set.
+    @property
+    def distinguished_name(self) -> str:
+        """Computes the distinguished_name based on the account request fields.
 
         Please note that MiG certificates get empty fields set to NA, so this
         is translated here, too.
         """
-        self.distinguished_name = fill_distinguished_name(self.to_dict())[
-            "distinguished_name"
-        ]
+
+        dn = ""
+        for key, val in [
+            ("C", self.country),
+            ("ST", self.state),
+            ("L", self.locality),
+            ("O", self.organization),
+            ("OU", self.organizational_unit),
+            ("CN", self.full_name),
+            ("emailAddress", self.email),
+        ]:
+            dn += "/%s=%s" % (key, val or "NA")
+
+        gdp = self.gdp
+        if gdp:
+            dn += "/%s=%s" % (gdp_distinguished_field, gdp)
+
+        return dn
 
     def to_masked_dict(self) -> dict[str, Any]:
         """Returns a dictionary containing the data of the accoutn request, with
@@ -55,7 +98,7 @@ class AccountRequest:
         record.
         """
 
-        return {
+        result = {
             "comment": self.comment,
             "country": self.country,
             "created": self.created.timestamp(),
@@ -75,28 +118,32 @@ class AccountRequest:
             "path": self.path,
         }
 
+        if self.gdp:
+            result["GDP"] = self.gdp
+
+        return result
+
     def copy(self) -> AccountRequest:
         """Returns a copy of the account request."""
         if accreq := AccountRequest.from_dict(self.to_dict()):
             return accreq
         raise ValueError("error copying AccountRequest")
 
-    @staticmethod
-    def from_dict(data: dict[str, Any]) -> AccountRequest | None:
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> AccountRequest | None:
         """Create an account request record from the given data dictionary.
 
-        Returns None if an exception if the data is not valid.
+        Returns None if the data is not valid.
         """
         try:
-            return AccountRequest(
+            return cls(
                 comment=data["comment"],
                 country=data["country"],
                 created=datetime.fromtimestamp(data["created"]),
-                distinguished_name=data["distinguished_name"],
                 email=data["email"],
                 expire=(
                     datetime.fromtimestamp(data["expire"])
-                    if data["expire"]
+                    if "expire" in data
                     else None
                 ),
                 full_name=data["full_name"],
@@ -110,6 +157,7 @@ class AccountRequest:
                 peers_email=data["peers_email"],
                 peers_full_name=data["peers_full_name"],
                 state=data["state"],
+                gdp=data.get("GDP"),
             )
         except Exception as err:
             log.warning(
