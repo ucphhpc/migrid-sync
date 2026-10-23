@@ -2,7 +2,7 @@
 # --- BEGIN_HEADER ---
 #
 #
-# account_request - Logic related to account request objects.
+# account_request - Definition and logic of account request records.
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -24,7 +24,7 @@
 # --- END_HEADER ---
 #
 
-"""Logic related to account request objects."""
+"""Definition and logic of account request records."""
 
 from __future__ import annotations
 
