@@ -33,6 +33,7 @@ info:
 	@echo "'make test'            - run the test suite (default python 3)"
 	@echo "'make test PYVER=X.Y'  - run the test suite (python version X.Y)"
 	@echo "'make unittest'        - execute tests locally for development"
+	@echo "'make coverage'        - measure coverage of unittests"
 	@echo "'make lint-python'     - lint python code (in LINT_ENFORCE_DIRS)"
 	@echo "'make secscan-python'  - security scan python code (in LINT_ENFORCE_DIRS)"
 	@echo "'make format-python'   - format python code (in LINT_ENFORCE_DIRS)"
@@ -109,6 +110,12 @@ test: dependencies testconfig
 .PHONY: unittest
 unittest: dependencies testconfig
 	@$(LOCAL_PYTHON_BIN) -m unittest discover -s tests/
+
+.PHONY: coverage
+coverage: dependencies testconfig
+	@$(LOCAL_PYTHON_BIN) -m coverage run -m unittest discover -s tests/
+	@$(LOCAL_PYTHON_BIN) -m coverage lcov
+	@$(LOCAL_PYTHON_BIN) -m coverage report
 
 .PHONY: dependencies
 dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/local.depends
