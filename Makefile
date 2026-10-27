@@ -8,7 +8,7 @@ endif
 
 # TODO: enable more dirs when ready, but just leave to dummy init and tests for now
 #LINT_ENFORCE_DIRS = ./bin ./mig/lib ./sbin ./tests
-LINT_ENFORCE_DIRS = ./mig/__init__.py ./tests
+LINT_ENFORCE_DIRS = ./mig/__init__.py ./mig/lib ./tests
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
 ifdef PYTHON_BIN
