@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -40,7 +41,7 @@ from mig.shared.accountreq import valid_password_chars, valid_name_chars, \
 from mig.shared.defaults import csrf_field, keyword_auto
 from mig.shared.functional import validate_input
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape
 
@@ -67,16 +68,19 @@ def signature(configuration):
     return ['html_form', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False, 'op_menu': False}):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False, op_menu=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     client_dir = client_id_dir(client_id)
     defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  defaults, output_objects,
-                                                 allow_rejects=False)
+                                                 allow_rejects=False,
+                                                 environ=environ)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 

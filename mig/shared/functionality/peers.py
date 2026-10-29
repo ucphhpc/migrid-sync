@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # peers - manage external collaboration partners, etc.
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -38,7 +39,7 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import peers_permit_allowed, list_country_codes
-from mig.shared.base import pretty_format_user, fill_distinguished_name, \
+from mig.shared.base import fill_distinguished_name, \
     client_id_dir, force_native_str_rec
 from mig.shared.defaults import csrf_field, peers_filename, \
     pending_peers_filename, peers_fields, peer_kinds, default_pager_entries, \
@@ -46,7 +47,7 @@ from mig.shared.defaults import csrf_field, peers_filename, \
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
-from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.serial import load
 from mig.shared.user import anon_user_id
 from mig.shared.useradm import get_full_user_map
@@ -69,11 +70,13 @@ def signature():
     return ['peers', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     defaults = signature()[1]
     client_dir = client_id_dir(client_id)
     title_entry = find_entry(output_objects, 'title')
@@ -85,6 +88,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -219,10 +223,10 @@ Please contact the %s site support (%s) if you think it should be enabled.
                     'target_op': target_op, 'csrf_token': csrf_token,
                     'expire_help': expire_help,
                     # NOTE: allow select expire N days or more from now
-                    'min_peers_expire': datetime.date.today() + \
+                    'min_peers_expire': datetime.date.today() +
                     datetime.timedelta(days=peers_expire_min_days),
                     # NOTE: allow up to N days in the future
-                    'max_peers_expire': datetime.date.today() + \
+                    'max_peers_expire': datetime.date.today() +
                     datetime.timedelta(days=peers_expire_max_days),
                     'csv_header': csv_sep.join([i for i in peers_fields])}
     form_prefix_html = '''
@@ -471,7 +475,7 @@ filled for the row to be treated.
             ''' % entry_fill
             tabs_html += '''
       </div>
-''' % entry_fill
+'''  # % entry_fill
 
         tabs_html += '''
     </div>

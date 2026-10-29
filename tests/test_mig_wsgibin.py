@@ -37,9 +37,7 @@ import unittest
 from configparser import ConfigParser
 from html.parser import HTMLParser
 
-import mig.shared.returnvalues as returnvalues
-
-# Imports required for the unit test wrapping
+from mig.shared import returnvalues
 from mig.shared.base import (
     allow_script,
     brief_list,
@@ -49,8 +47,6 @@ from mig.shared.base import (
     invisible_path,
 )
 from mig.shared.compat import SimpleNamespace
-
-# Imports required for the unit tests themselves
 from tests.support import (
     MIG_BASE,
     TEST_DATA_DIR,

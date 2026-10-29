@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -19,7 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -59,7 +60,7 @@ from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.htmlgen import html_post_helper, man_base_html, man_base_js
 from mig.shared.httpsclient import detect_client_auth
-from mig.shared.init import find_entry, initialize_main_variables
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.safeeval import (
     subprocess_pipe,
     subprocess_popen,
@@ -138,14 +139,13 @@ def format_stats(filename, stats):
     return html
 
 
-def main(client_id, user_arguments_dict, environ=None):
-    """Main function used by front end"""
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
 
-    if environ is None:
-        environ = os.environ
-    configuration, logger, output_objects, op_name = initialize_main_variables(
-        client_id, op_header=False
-    )
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     defaults = signature()[1]
     validate_status, accepted = validate_input_and_cert(
         user_arguments_dict,
@@ -154,6 +154,7 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)

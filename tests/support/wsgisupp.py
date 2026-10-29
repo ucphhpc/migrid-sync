@@ -90,6 +90,27 @@ def _urlencode_form(form_content):
     return urlencode(field_key_and_value_pairs, doseq=True).encode("ascii")
 
 
+def create_http_environ(configuration, path_info=""):
+    """Small helper that can create a minimum viable environ dict suitable
+    for passing to http-facing code for the supplied configuration.
+    """
+
+    environ = {}
+    environ["MIG_CONF"] = configuration.config_file
+    environ["HTTP_HOST"] = "localhost"
+    environ["PATH_INFO"] = path_info
+    environ["REMOTE_ADDR"] = "127.0.0.1"
+    environ["SCRIPT_URI"] = "".join(
+        ("https://", environ["HTTP_HOST"], "/", path_info.lstrip("/"))
+    )
+    return environ
+
+
+def filter_output_objects(output_objects, with_object_type=None):
+    """Filter output objects to pick only those of a specific object_type"""
+    return [o for o in output_objects if o["object_type"] == with_object_type]
+
+
 def create_wsgi_environ(
     configuration,
     wsgi_url,

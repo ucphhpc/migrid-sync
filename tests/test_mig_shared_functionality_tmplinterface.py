@@ -27,8 +27,6 @@
 
 """Unit tests of the MiG functionality file implementing the cat backend"""
 
-from __future__ import print_function
-
 import os
 import shutil
 import sys

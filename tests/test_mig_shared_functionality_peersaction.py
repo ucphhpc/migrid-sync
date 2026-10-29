@@ -27,8 +27,6 @@
 
 """Unit tests of the MiG functionality file implementing the cat backend"""
 
-from __future__ import print_function
-
 import importlib
 import os
 import shutil
@@ -37,16 +35,11 @@ import unittest
 from datetime import date, timedelta
 from time import mktime
 
-import mig.shared.returnvalues as returnvalues
+from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
 from mig.shared.functionality.peersaction import _main as submain
 from tests.support import (
-    MIG_BASE,
-    PY2,
-    TEST_DATA_DIR,
     MigTestCase,
-    ensure_dirs_exist,
-    temppath,
     testmain,
 )
 from tests.support.fixturesupp import TEST_FIXTURE_DIR

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # functional - functionality backend helpers
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -33,20 +34,20 @@ from __future__ import absolute_import
 
 from past.builtins import basestring
 import os
-import time
-
-# REJECT_UNSET is not used directly but exposed to functionality
 
 from mig.shared.accountstate import check_account_status, \
     check_update_account_expire
 from mig.shared.base import requested_backend, force_native_str, get_site_base_url
 from mig.shared.defaults import csrf_field, auth_openid_ext_db
 from mig.shared.findtype import is_user
-from mig.shared.httpsclient import extract_client_cert, extract_client_openid, \
+from mig.shared.httpsclient import extract_client_openid, \
     extract_base_url
 from mig.shared.init import find_entry, make_title_entry, make_header_entry
 from mig.shared.safeinput import validated_input, REJECT_UNSET
 from mig.shared.useradm import expire_oid_sessions
+
+# REJECT_UNSET is not used directly but exposed to functionality
+__exports = [REJECT_UNSET]
 
 
 def warn_on_rejects(rejects, output_objects):
@@ -89,6 +90,7 @@ def validate_input(
     output_objects,
     allow_rejects,
     prefilter_map=None,
+    environ=None,
     typecheck_overrides={}
 ):
     """A wrapper used by most back end functionality.
@@ -154,7 +156,6 @@ def validate_input_and_cert(
     creds_error = ''
     pending_expire, account_expire = True, 0
     account_accessible, account_status = True, 'active'
-    user_dict = None
     if not client_id:
         creds_error = "Invalid or missing user credentials"
     elif not is_user(client_id, configuration):
@@ -176,7 +177,7 @@ def validate_input_and_cert(
     #       Expired users can still log out or use their login to access the
     #       (unprivileged) account request pages to renew their account with
     #       auto-fill of fields.
-    if creds_error and not requested_backend(environ) in \
+    if creds_error and requested_backend(environ) not in \
             ['logout', 'autologout', 'reqoid', 'reqcert', 'extcert']:
         # Simple init to get page preamble even where initialize_main_variables
         # was called with most things disabled because no or limited direct
@@ -282,7 +283,8 @@ and just need to sign up for a local %s account on the''' %
 
     (status, retval) = validate_input(user_arguments_dict, defaults,
                                       output_objects, allow_rejects,
-                                      filter_values,
+                                      prefilter_map=filter_values,
+                                      environ=environ,
                                       typecheck_overrides=typecheck_overrides)
 
     return (status, retval)
