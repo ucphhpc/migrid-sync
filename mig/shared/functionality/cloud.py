@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cloud - user control for the available cloud services
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -20,7 +20,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 #
 # -- END_HEADER ---
 #
@@ -32,17 +33,15 @@ configuration.cloud_services entries.
 
 from __future__ import absolute_import
 
-import os
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir
 from mig.shared.cloud import check_cloud_available, allowed_cloud_images, \
     status_all_cloud_instances, cloud_access_allowed, cloud_edit_actions, \
     cloud_load_instance
 from mig.shared.defaults import csrf_field, keyword_all
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.init import find_entry, initialize_main_variables
+from mig.shared.init import find_entry, lazy_init_backend
 from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
 from mig.shared.useradm import get_full_user_map
 
@@ -54,11 +53,13 @@ def signature():
     return ['cloud', defaults]
 
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
-    client_dir = client_id_dir(client_id)
+def main(client_id, user_arguments_dict, environ=None, init_main_res=None,
+         init_kwargs={'op_header': False}):
+    """Main function wrapper used by front end"""
+
+    (configuration, logger, output_objects, op_name, environ) = \
+        lazy_init_backend(client_id, environ, init_main_res, init_kwargs)
+
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -67,12 +68,12 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
     )
-
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    logger.debug("User: %s executing %s", client_id, op_name)
+    logger.debug("User: %s executing %s" % (client_id, op_name))
     if not configuration.site_enable_cloud:
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -153,7 +154,7 @@ this site. Please contact %s support (%s) if you think you should have.""" %
                    ('softrestart', 'Soft boot'), ('hardrestart', 'Hard boot'),
                    ('status', 'Status'),
                    # NOTE: expose console on status page
-                   #('webaccess', 'Console'),
+                   # ('webaccess', 'Console'),
                    ('updatekeys', 'Set keys on'),
                    ('create', 'Create'), ('delete', 'Delete')]
     # Delete instance form helper shared for all cloud services
