@@ -1,6 +1,7 @@
 #
 # --- BEGIN_HEADER ---
 #
+#
 # test_bin_addheader - unit tests for the bin.addheader module
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
@@ -26,21 +27,25 @@
 """Unit tests of the bin.addheader module."""
 
 import os
+import stat
+from contextlib import redirect_stdout
+from typing import Any, Callable, NamedTuple
 
-from bin.addheader import __file__ as addheader_module_file
-from bin.addheader import main
-from tests.support import MigTestCase, temppath
+from bin.addheader import Header
+from bin.addheader import __file__ as addheader_file
+from bin.addheader import main, parse_file
+from tests.support import MigTestCase
 from tests.support.iosupp import read_file, read_tree, write_file, write_tree
 
-FILE_WITHOUT_HEADER_CONTENT = '''"""Python module without header"""
+
+FILE_CONTENT = '''"""Python module"""
 def func(a, b):
     return a + b
 '''
-HEADER_FORMAT = """#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
+HEADER_SHEBANG_LINE = "#!/usr/bin/env python\n"
+HEADER_ENCODING_LINE = "# -*- coding: utf-8 -*-\n"
+HEADER_FORMAT = """#
 # --- BEGIN_HEADER ---
-#
 #
 # %(modulename)s - %(description)s
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
@@ -63,18 +68,282 @@ HEADER_FORMAT = """#!/usr/bin/env python
 #
 # --- END_HEADER ---
 #
-
 """
-FILE_WITH_HEADER_CONTENT = HEADER_FORMAT + FILE_WITHOUT_HEADER_CONTENT
+FILE_WITH_HEADER_CONTENT = HEADER_FORMAT + "\n" + FILE_CONTENT
 DEFAULT_DESC = "[optionally add short module description on this line]"
+
+
+def redirect_stdout_to_devnull(func: Callable[..., Any]) -> Callable[..., Any]:
+    """A decorator that wraps the given function with stdout redirection to
+    `os.devnull`. Useful for noisy tests.
+    """
+
+    def wrapped_func(*args, **kwargs):
+        with open(os.devnull, "w") as devnull:
+            with redirect_stdout(devnull):
+                return func(*args, **kwargs)
+
+    return wrapped_func
 
 
 def add_header(modulename: str, modulebody: str) -> str:
     """Naive function to add a header, used for generating test data."""
     return (
         HEADER_FORMAT % {"modulename": modulename, "description": DEFAULT_DESC}
+        + "\n"
         + modulebody
     )
+
+
+class ParseFileTestCase(NamedTuple):
+    """
+    A tuple containing information needed to run a test of addheader.parse_file
+    """
+
+    msg: str
+    fixture_path: str
+    expected_header: Header
+    expected_ok: bool
+    block_wrap: bool = False
+
+
+PARSE_FILE_TEST_CASES: list[ParseFileTestCase] = [
+    ParseFileTestCase(
+        "package init with shebang encoding and explicit headers",
+        "./fixture/addheader/__init__.py",
+        Header(
+            module_name="__init__",
+            module_description="package marker",
+            authors="The MiG Project lead by Brian Vinter",
+            copyright_year="2003-2021",
+            project_name="MiG",
+            interpreter_path="/usr/bin/env python",
+            module_encoding="utf-8",
+            lines=26,
+        ),
+        expected_ok=True,
+    ),
+    ParseFileTestCase(
+        "module with shebang and encoding",
+        "./fixture/addheader/module_with_shebang_and_encoding.py",
+        Header(
+            project_name="MiG",
+            module_name="module_with_shebang_and_encoding",
+            module_description="module description",
+            copyright_year="2003-2026",
+            authors="The MiG Project by the Science HPC Center at UCPH",
+            module_encoding="utf-8",
+            interpreter_path="/usr/bin/env python",
+            lines=26,
+        ),
+        expected_ok=True,
+    ),
+    ParseFileTestCase(
+        "module without shebang or encoding",
+        "./fixture/addheader/module_without_shebang_or_encoding.py",
+        Header(
+            project_name="MiG",
+            module_name="module_without_shebang_or_encoding",
+            module_description="module description",
+            copyright_year="2003-2026",
+            authors="The MiG Project by the Science HPC Center at UCPH",
+            module_encoding="",
+            interpreter_path="",
+            lines=24,
+        ),
+        expected_ok=True,
+    ),
+    ParseFileTestCase(
+        "minimal header",
+        "./fixture/addheader/minimal.py",
+        Header(
+            module_name="minimal",
+            module_description="a module with a minimal header",
+            copyright_year="2003-2026",
+            authors="The MiG Project Team",
+            project_name="MiG",
+            interpreter_path="",
+            module_encoding="",
+            lines=3,
+        ),
+        expected_ok=True,
+    ),
+    ParseFileTestCase(
+        "override module name",
+        "./fixture/addheader/override_module_name.py",
+        Header(
+            module_name="override_module_name",
+            module_description="a module with a wrong name",
+            copyright_year="2003-2026",
+            authors="The MiG Project Team",
+            project_name="MiG",
+            interpreter_path="",
+            module_encoding="",
+            lines=3,
+        ),
+        expected_ok=True,
+    ),
+    ParseFileTestCase(
+        "no spacing between module name and module description",
+        "./fixture/addheader/nospacing.py",
+        Header(
+            module_name="nospacing",
+            module_description="a module with no spacing",
+            copyright_year="2003-2026",
+            authors="The MiG Project Team",
+            project_name="MiG",
+            interpreter_path="",
+            module_encoding="",
+            lines=3,
+        ),
+        expected_ok=True,
+    ),
+    ParseFileTestCase(
+        "allow empty line after encoding",
+        "./fixture/addheader/emptyline.py",
+        Header(
+            module_name="emptyline",
+            module_description="a module with an empty line after encoding",
+            copyright_year="2003-2026",
+            authors="The MiG Project Team",
+            project_name="MiG",
+            interpreter_path="",
+            module_encoding="utf-8",
+            lines=5,
+        ),
+        expected_ok=True,
+    ),
+    ParseFileTestCase(
+        "do not allow two empty lines after encoding",
+        "./fixture/addheader/twoemptylines.py",
+        Header(
+            module_name="twoemptylines",
+            module_description="",
+            copyright_year="",
+            authors="",
+            project_name="",
+            interpreter_path="",
+            module_encoding="utf-8",
+            lines=1,
+        ),
+        expected_ok=False,
+    ),
+    ParseFileTestCase(
+        "block wrapped",
+        "./fixture/addheader/blockwrap.js",
+        Header(
+            module_name="blockwrap",
+            module_description="a js file with block wrapped header",
+            copyright_year="2003-2026",
+            authors="The MiG Project Team",
+            project_name="MiG",
+            interpreter_path="",
+            module_encoding="",
+            lines=7,
+        ),
+        expected_ok=True,
+        block_wrap=True,
+    ),
+    ParseFileTestCase(
+        "should not eat docstring",
+        "./fixture/addheader/keeping_docstring.py",
+        Header(
+            module_name="keeping_docstring",
+            module_description="should not eat docstring",
+            copyright_year="2020-2021",
+            authors="Jonas Bardino",
+            project_name="MiG",
+            interpreter_path="/usr/bin/python3",
+            module_encoding="utf-8",
+            lines=21,
+        ),
+        expected_ok=True,
+    ),
+    ParseFileTestCase(
+        "should parse project name line without period",
+        "./fixture/addheader/project_name_line_without_dot.py",
+        Header(
+            module_name="project_name_line_without_dot",
+            module_description="a module without a dot in the project name line",
+            copyright_year="2003-2026",
+            authors="The MiG Project Team",
+            project_name="Project Name",
+            lines=3,
+        ),
+        expected_ok=True,
+    ),
+]
+
+
+class TestParseFile(MigTestCase):
+    """Unit tests for parse_file function."""
+
+    def test_parse_file(self) -> None:
+        for (
+            msg,
+            fixture_path,
+            expected,
+            expected_ok,
+            block_wrap,
+        ) in PARSE_FILE_TEST_CASES:
+            with self.subTest(msg):
+                fixture_path = os.path.join(
+                    os.path.dirname(__file__), fixture_path
+                )
+
+                ok, actual = parse_file(fixture_path, block_wrap)
+
+                self.assertEqual(ok, expected_ok)
+                self.assertEqual(actual, expected)
+
+
+class TestHeader(MigTestCase):
+    """Unit tests for Header class."""
+
+    def test_format(self):
+        header: Header = Header(
+            project_name="MiG",
+            module_name="module_name",
+            module_description="module description",
+            copyright_year="2003-2026",
+            authors="The MiG Project by the Science HPC Center at UCPH",
+            module_encoding="utf-8",
+            interpreter_path="/usr/bin/env python",
+        )
+
+        actual = header.format()
+
+        expected = (
+            HEADER_SHEBANG_LINE
+            + HEADER_ENCODING_LINE
+            + HEADER_FORMAT
+            % {
+                "modulename": header.module_name,
+                "description": header.module_description,
+            }
+        )
+        self.assertEqual(actual, expected)
+
+    def test_format_parse(self) -> None:
+        dir = self.temppath(self.id())
+        header: Header = Header(
+            project_name="MiG",
+            module_name="module_name",
+            module_description="module description",
+            copyright_year="2003-2026",
+            authors="The MiG Project by the Science HPC Center at UCPH",
+            module_encoding="utf-8",
+            interpreter_path="/usr/bin/env python",
+        )
+        fname = header.module_name + ".py"
+        formatted_header = header.format()
+        header.lines = len(formatted_header.splitlines())
+
+        write_file(dir, fname, formatted_header)
+        ok, parsed = parse_file(os.path.join(dir, fname), block_wrap=False)
+
+        self.assertTrue(ok)
+        self.assertEqual(parsed, header)
 
 
 class TestMain(MigTestCase):
@@ -83,14 +352,14 @@ class TestMain(MigTestCase):
     target_dir: str
 
     def before_each(self) -> None:
-        self.maxDiff = None
-        self.target_dir = temppath(self.id(), self, ensure_dir=True)
+        self.target_dir = self.temppath(self.id(), ensure_dir=True)
 
+    @redirect_stdout_to_devnull
     def test_adds_header_to_file_without_header(self) -> None:
         fname = "file_without_header.py"
-        write_file(self.target_dir, fname, FILE_WITHOUT_HEADER_CONTENT)
+        write_file(self.target_dir, fname, FILE_CONTENT)
 
-        main([addheader_module_file, self.target_dir])
+        main([addheader_file, self.target_dir])
 
         actual_content = read_file(self.target_dir, fname)
         expected_content = FILE_WITH_HEADER_CONTENT % {
@@ -99,6 +368,7 @@ class TestMain(MigTestCase):
         }
         self.assertEqual(expected_content, actual_content)
 
+    @redirect_stdout_to_devnull
     def test_does_not_change_file_with_header(self) -> None:
         fname = "file_with_header.py"
         content = FILE_WITH_HEADER_CONTENT % {
@@ -107,11 +377,12 @@ class TestMain(MigTestCase):
         }
         write_file(self.target_dir, fname, content)
 
-        main([addheader_module_file, self.target_dir])
+        main([addheader_file, self.target_dir])
 
         actual_content = read_file(self.target_dir, fname)
         self.assertEqual(content, actual_content)
 
+    @redirect_stdout_to_devnull
     def test_updates_files_in_cwd_if_no_path_arg_is_given(self) -> None:
         oldcwd = os.getcwd()
         try:
@@ -123,48 +394,53 @@ class TestMain(MigTestCase):
             }
             write_file(self.target_dir, fname, content)
 
-            main([addheader_module_file])
+            main([addheader_file])
 
             actual_content = read_file(self.target_dir, fname)
             self.assertEqual(content, actual_content)
         finally:
             os.chdir(oldcwd)
 
+    @redirect_stdout_to_devnull
     def test_adds_headers_and_backs_up_unlicensed_files(self) -> None:
+        gdp_files = {
+            "file1.py": "content of file shared/gdp/file1.py",
+            "file2.py": "content of file shared/gdp/file2.py",
+        }
+        shared_files = {
+            "file.py": "content of shared/file.py",
+        }
         initial = {
-            "shared": {
-                "file.py": "content of shared/file.py",
-                "gdp": {
-                    "file1.py": "content of file shared/gdp/file1.py",
-                    "file2.py": "content of file shared/gdp/file2.py",
-                },
-            },
+            "shared": shared_files | {"gdp": gdp_files},
         }
         write_tree(self.target_dir, initial)
 
-        main([addheader_module_file, self.target_dir])
+        main([addheader_file, self.target_dir])
 
         actual = read_tree(self.target_dir)
         expected = {
             "shared": {
-                "file.py.unlicensed": initial["shared"]["file.py"],
-                "file.py": add_header("file", initial["shared"]["file.py"]),
+                "file.py.unlicensed": shared_files["file.py"],
+                "file.py": add_header(
+                    "file", modulebody=shared_files["file.py"]
+                ),
                 "gdp": {
-                    "file1.py.unlicensed": initial["shared"]["gdp"]["file1.py"],
+                    "file1.py.unlicensed": gdp_files["file1.py"],
                     "file1.py": add_header(
                         "file1",
-                        initial["shared"]["gdp"]["file1.py"],
+                        gdp_files["file1.py"],
                     ),
-                    "file2.py.unlicensed": initial["shared"]["gdp"]["file2.py"],
+                    "file2.py.unlicensed": gdp_files["file2.py"],
                     "file2.py": add_header(
                         "file2",
-                        initial["shared"]["gdp"]["file2.py"],
+                        gdp_files["file2.py"],
                     ),
                 },
             },
         }
         self.assertEqual(expected, actual)
 
+    @redirect_stdout_to_devnull
     def test_adds_header_to_file_with_format_string_in_module_body(
         self,
     ) -> None:
@@ -173,10 +449,10 @@ class TestMain(MigTestCase):
         write_file(
             self.target_dir,
             fname,
-            FILE_WITHOUT_HEADER_CONTENT + format_string_line,
+            FILE_CONTENT + format_string_line,
         )
 
-        main([addheader_module_file, self.target_dir])
+        main([addheader_file, self.target_dir])
 
         actual_content = read_file(self.target_dir, fname)
         expected_content = (
@@ -187,4 +463,95 @@ class TestMain(MigTestCase):
             }
             + format_string_line
         )
+        self.assertEqual(expected_content, actual_content)
+
+    @redirect_stdout_to_devnull
+    def test_force_update_removes_header_from_non_executable_file_with_default_shebang(
+        self,
+    ):
+        fname = "non_executable.py"
+        write_file(
+            self.target_dir,
+            fname,
+            HEADER_SHEBANG_LINE
+            + FILE_WITH_HEADER_CONTENT
+            % {
+                "modulename": "non_executable",
+                "description": DEFAULT_DESC,
+            },
+        )
+
+        environ = {"ADDHEADER_FORCE_UPDATE": "True"}
+        main([addheader_file, self.target_dir], environ)
+
+        actual_content = read_file(self.target_dir, fname)
+        expected_content = FILE_WITH_HEADER_CONTENT % {
+            "modulename": "non_executable",
+            "description": DEFAULT_DESC,
+        }
+        assert expected_content == actual_content
+        self.assertEqual(expected_content, actual_content)
+
+    @redirect_stdout_to_devnull
+    def test_force_update_keeps_header_for_executable_file_with_default_shebang(
+        self,
+    ):
+        fname = "non_executable.py"
+        write_file(
+            self.target_dir,
+            fname,
+            HEADER_SHEBANG_LINE
+            + FILE_WITH_HEADER_CONTENT
+            % {
+                "modulename": "non_executable",
+                "description": DEFAULT_DESC,
+            },
+        )
+
+        file_path = os.path.join(self.target_dir, fname)
+        os.chmod(file_path, os.stat(file_path).st_mode | stat.S_IEXEC)
+
+        environ = {"ADDHEADER_FORCE_UPDATE": "True"}
+        main([addheader_file, self.target_dir], environ)
+
+        actual_content = read_file(self.target_dir, fname)
+        expected_content = HEADER_SHEBANG_LINE + FILE_WITH_HEADER_CONTENT % {
+            "modulename": "non_executable",
+            "description": DEFAULT_DESC,
+        }
+        assert expected_content == actual_content
+        self.assertEqual(expected_content, actual_content)
+
+    @redirect_stdout_to_devnull
+    def test_force_update_keeps_header_for_nonexecutable_file_with_nondefault_shebang(
+        self,
+    ):
+        fname = "non_executable.py"
+        write_file(
+            self.target_dir,
+            fname,
+            "#!/usr/bin/env python --custom-flag\n"
+            + FILE_WITH_HEADER_CONTENT
+            % {
+                "modulename": "non_executable",
+                "description": DEFAULT_DESC,
+            },
+        )
+
+        file_path = os.path.join(self.target_dir, fname)
+        os.chmod(file_path, os.stat(file_path).st_mode | stat.S_IEXEC)
+
+        environ = {"ADDHEADER_FORCE_UPDATE": "True"}
+        main([addheader_file, self.target_dir], environ)
+
+        actual_content = read_file(self.target_dir, fname)
+        expected_content = (
+            "#!/usr/bin/env python --custom-flag\n"
+            + FILE_WITH_HEADER_CONTENT
+            % {
+                "modulename": "non_executable",
+                "description": DEFAULT_DESC,
+            }
+        )
+        assert expected_content == actual_content
         self.assertEqual(expected_content, actual_content)

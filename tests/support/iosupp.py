@@ -27,10 +27,16 @@
 
 """Support functions for reading and writing test data."""
 
-import os
-from typing import Union
+from __future__ import annotations
 
-TreeDict = dict[str, Union["TreeDict", str]]
+import os
+from typing import TYPE_CHECKING, Union
+
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    TreeDict = Mapping[str, Union["TreeDict", str]]
 
 
 def write_file(directory: str, name: str, content: str) -> None:

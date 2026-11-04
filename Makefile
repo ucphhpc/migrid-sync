@@ -33,6 +33,7 @@ info:
 	@echo "'make test'                   - run the test suite (default python 3)"
 	@echo "'make test PYVER=X.Y'         - run the test suite (python version X.Y)"
 	@echo "'make unittest'               - execute tests locally for development"
+	@echo "'make coverage'               - measure coverage of unittests"
 	@echo "'make lint-python'            - lint python code (in LINT_ENFORCE_DIRS)"
 	@echo "'make lint-fix-python'        - lint and fix python code (in LINT_ENFORCE_DIRS)"
 	@echo "'make lint-fix-unsafe-python' - lint and force fix python code (in LINT_ENFORCE_DIRS)"
@@ -77,9 +78,7 @@ style-check-python: dependencies
 .PHONY: lint-python
 lint-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only
-# UP031 = Use format specifiers instead of percent format when interpolating strings
-# DTZ006 = datetime.datetime.fromtimestamp()` called without a `tz` argument
-	@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS) --ignore UP031,DTZ006
+	@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS)
 
 .PHONY: lint-fix-python
 lint-fix-python: dependencies
@@ -125,6 +124,12 @@ test: dependencies testconfig
 .PHONY: unittest
 unittest: dependencies testconfig
 	@$(LOCAL_PYTHON_BIN) -m unittest discover -s tests/
+
+.PHONY: coverage
+coverage: dependencies testconfig
+	@$(LOCAL_PYTHON_BIN) -m coverage run -m unittest discover -s tests/
+	@$(LOCAL_PYTHON_BIN) -m coverage lcov
+	@$(LOCAL_PYTHON_BIN) -m coverage report
 
 .PHONY: dependencies
 dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/local.depends
