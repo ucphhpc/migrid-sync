@@ -6,7 +6,8 @@ ifndef PY
 	PY = 3
 endif
 
-# TODO: enable more dirs when ready, but just leave to dummy init and tests for now
+# TODO: rename LINT_ENFORCE_DIRS e.g. to ENFORCE_CODE_QUALITY_PATHS to fit use
+# TODO: enforce on more paths when ready, but limit to base compliant ones now
 #LINT_ENFORCE_DIRS = ./bin ./mig/lib ./sbin ./tests
 LINT_ENFORCE_DIRS = ./mig/__init__.py ./mig/lib ./tests
 LOCAL_PYTHON_BIN = './envhelp/lpython'
