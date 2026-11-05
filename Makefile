@@ -30,14 +30,17 @@ info:
 	@echo
 	@echo "The following should help you get started:"
 	@echo
-	@echo "'make test'            - run the test suite (default python 3)"
-	@echo "'make test PYVER=X.Y'  - run the test suite (python version X.Y)"
-	@echo "'make unittest'        - execute tests locally for development"
-	@echo "'make lint-python'     - lint python code (in LINT_ENFORCE_DIRS)"
-	@echo "'make secscan-python'  - security scan python code (in LINT_ENFORCE_DIRS)"
-	@echo "'make format-python'   - format python code (in LINT_ENFORCE_DIRS)"
-	@echo "'make clean'           - clean up cache and other temporary files"
-	@echo "'make distclean'       - clean up completely to pristine state"
+	@echo "'make test'                   - run the test suite (default python 3)"
+	@echo "'make test PYVER=X.Y'         - run the test suite (python version X.Y)"
+	@echo "'make unittest'               - execute tests locally for development"
+	@echo "'make coverage'               - measure coverage of unittests"
+	@echo "'make lint-python'            - lint python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make lint-fix-python'        - lint and fix python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make lint-fix-unsafe-python' - lint and force fix python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make secscan-python'         - security scan python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make format-python'          - format python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make clean'                  - clean up cache and other temporary files"
+	@echo "'make distclean'              - clean up completely to pristine state"
 
 .PHONY: help
 help: info
@@ -132,6 +135,18 @@ lint-python: dependencies
 	fi ; \
 	exit $${LINTFAIL}
 
+.PHONY: lint-fix-python
+lint-fix-python: dependencies
+	@$(LOCAL_PYTHON_BIN) -m ruff check --fix $(LINT_ENFORCE_DIRS)
+
+.PHONY: lint-fix-unsafe-python
+lint-fix-unsafe-python: dependencies
+	@echo
+	@echo "Force-fixing lint issues with unsafe flag - please carefuly review!"
+	@echo
+	@sleep 3
+	@$(LOCAL_PYTHON_BIN) -m ruff check --fix --unsafe-fixes $(LINT_ENFORCE_DIRS)
+
 .PHONY: secscan
 secscan:
 ifneq ($(MIG_ENV),'local')
@@ -164,6 +179,12 @@ test: dependencies testconfig
 .PHONY: unittest
 unittest: dependencies testconfig
 	@$(LOCAL_PYTHON_BIN) -m unittest discover -s tests/
+
+.PHONY: coverage
+coverage: dependencies testconfig
+	@$(LOCAL_PYTHON_BIN) -m coverage run -m unittest discover -s tests/
+	@$(LOCAL_PYTHON_BIN) -m coverage lcov
+	@$(LOCAL_PYTHON_BIN) -m coverage report
 
 .PHONY: dependencies
 dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/local.depends
