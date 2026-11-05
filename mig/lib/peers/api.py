@@ -28,6 +28,7 @@
 
 import datetime
 
+from mig.lib.api_helpers import create_handler_response
 from mig.lib.peers.legacy import parse_peers
 from mig.lib.peers.notifications import (
     create_peer_invitation_msg,
@@ -62,18 +63,6 @@ from mig.lib.reqinfo import (
 )
 from mig.shared.base import extract_field, fill_user
 from mig.shared.notification import send_email
-
-
-def create_handler_response(
-    status, message=None, error=None, **ui_response_kwargs
-):
-    """
-    A helper function to create route handler responses.
-    """
-    response = {"status": status, "message": message, "error": error}, {
-        **ui_response_kwargs
-    }
-    return response
 
 
 def handle_GET_peers_summary(configuration, request_info):
