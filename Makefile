@@ -58,7 +58,7 @@ format-python: dependencies
 	if ! $(LOCAL_PYTHON_BIN) -m black $(LINT_ENFORCE_DIRS); then \
 		echo "*** Found black warnings listed above! ***" ; \
 		FORMATFAIL=$$((FORMATFAIL+1)) ; \
-	fi \
+	fi ; \
 	if ! $(LOCAL_PYTHON_BIN) -m isort $(LINT_ENFORCE_DIRS); then \
 		echo "*** Found isort warnings listed above! ***" ; \
 		FORMATFAIL=$$((FORMATFAIL+1)) ; \
@@ -66,7 +66,7 @@ format-python: dependencies
 	if [ $${FORMATFAIL} -gt 0 ]; then \
 		echo "*** Finished with $${FORMATFAIL} overall lint errors ***" ; \
 	else \
-		echo "+++ Finished lint without errors +++" \
+		echo "+++ Finished lint without errors +++" ; \
 	fi ; \
 	exit $${FORMATFAIL}
 
