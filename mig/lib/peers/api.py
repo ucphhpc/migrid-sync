@@ -34,6 +34,7 @@ from mig.lib.peers.notifications import (
     create_peers_notify_msg,
 )
 from mig.lib.peers.parsing import peer_dict_from_fields
+from mig.lib.peers.permissions import check_peers_permit
 from mig.lib.peers.storage import (
     add_accepted_peers_to_client,
     list_peers_accepted,
@@ -45,7 +46,6 @@ from mig.lib.peers.storage import (
     update_peers_accepted,
 )
 from mig.lib.peers.validation import (
-    check_peers_permit,
     validate_input_peer_distinguished_name,
     validate_input_peers_distinguished_names,
     validate_peer_expire_value,
