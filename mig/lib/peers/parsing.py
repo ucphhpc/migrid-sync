@@ -26,24 +26,19 @@
 
 """Parse peers from various formats."""
 
-from builtins import zip
-
 from mig.shared.base import (
     canonical_user,
-    distinguished_name_to_user,
     fill_distinguished_name,
     fill_user,
 )
-from mig.shared.defaults import keyword_auto, peers_fields
+from mig.shared.defaults import peers_fields
 from mig.shared.safeinput import (
     REJECT_UNSET,
-    html_escape,
     valid_date,
     valid_peer_kind,
     valid_peer_label,
     validated_input,
 )
-from mig.shared.validstring import valid_email_addresses
 
 BASIC_PEER_FIELDS = dict([(i, REJECT_UNSET) for i in peers_fields])
 EXTRA_PEER_FIELDS_TYPE = {

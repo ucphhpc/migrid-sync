@@ -29,7 +29,6 @@
 import datetime
 
 from mig.lib.peers.parsing import EXTRA_PEER_FIELDS, EXTRA_PEER_FIELDS_TYPE
-from mig.lib.peers.permissions import peers_permit_allowed
 from mig.lib.reqinfo import unlistify_dict
 from mig.shared.defaults import peers_expire_max_days, peers_expire_min_days
 from mig.shared.safeinput import (
