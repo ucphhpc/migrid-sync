@@ -34,7 +34,7 @@ from __future__ import absolute_import
 import os
 import time
 
-from mig.lib.peers import prefilter_potential_peers
+from mig.lib.peers.permissions import prefilter_potential_peers
 from mig.shared import returnvalues
 from mig.shared.accountreq import early_validation_checks,  \
     existing_country_code, save_account_request, \
