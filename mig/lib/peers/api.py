@@ -227,7 +227,7 @@ def handle_POST_peers_new(configuration, request_info):
         return create_handler_response(
             400,
             error="failed to add a new peer, the received invite on"
-            "email argument was rejected %s" % rejected_invite,
+            " email argument was rejected %s" % rejected_invite,
         )
     invite_on_email = accepted_invite.get("invite_on_email", False)
 
@@ -563,7 +563,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
         return create_handler_response(
             400,
             error="failed to import peer(s), the received peers"
-            "csvlines argument(s) was rejected %s" % rejected_csvlines,
+            " csvlines argument(s) was rejected %s" % rejected_csvlines,
         )
 
     peers = accepted_csvlines.get("csvlines", [])
