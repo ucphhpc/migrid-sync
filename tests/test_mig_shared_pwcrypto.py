@@ -266,6 +266,18 @@ class MigSharedPwCrypto(MigTestCase):
         allow_modern = valid_login_password(self.dummy_conf, DUMMY_MODERN_PW)
         self.assertTrue(allow_modern, "refused login with modern pw")
 
+    def test_valid_login_legacy_password(self):
+        """Test valid login legacy password checker for legacy detection"""
+        allow_weak = valid_login_legacy_password(self.dummy_conf,
+                                                 DUMMY_WEAK_PW)
+        self.assertFalse(allow_weak, "allowed legacy login with weak pw")
+        allow_medium = valid_login_legacy_password(self.dummy_conf,
+                                                   DUMMY_MEDIUM_PW)
+        self.assertTrue(allow_medium, "refused login with medium pw")
+        allow_modern = valid_login_legacy_password(self.dummy_conf,
+                                                   DUMMY_MODERN_PW)
+        self.assertFalse(allow_modern, "allowed login with modern pw")
+
     def test_make_simple_hash_fixed(self):
         """Test basic hashing of a fixed string to be constant"""
         expected = DUMMY_MODERN_PW_MD5
