@@ -32,8 +32,8 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import valid_name_chars, dn_max_len, \
-    account_css_helpers, account_js_helpers, account_request_template
+from mig.shared.safeinput import valid_name_chars, dn_max_len
+from mig.shared.accountreq import account_css_helpers, account_js_helpers, account_request_template
 from mig.shared.base import distinguished_name_to_user, canonical_user, \
     cert_field_map
 from mig.shared.defaults import csrf_field, keyword_auto

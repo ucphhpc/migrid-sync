@@ -33,8 +33,7 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import account_css_helpers, \
-    account_js_helpers, \
-    account_request_template
+    account_js_helpers, account_request_template
 from mig.shared.base import canonical_user, cert_field_map, client_id_dir, \
     distinguished_name_to_user, requested_page
 from mig.shared.defaults import csrf_field, keyword_auto
