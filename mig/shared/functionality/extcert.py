@@ -77,7 +77,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not 'extcert' in configuration.site_signup_methods:
+    if 'extcert' not in configuration.site_signup_methods:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              '''X.509 certificate login is not enabled on this site'''})
@@ -121,7 +121,7 @@ def main(client_id, user_arguments_dict):
 
     # Override with arg values if set
     for field in user_fields:
-        if not field in accepted:
+        if field not in accepted:
             continue
         override_val = accepted[field][-1].strip()
         if override_val:
@@ -160,7 +160,7 @@ def main(client_id, user_arguments_dict):
                  list(cert_field_map) + given_peers]
     # Write-protect ID fields in auto-mode or if already logged in
     if keyword_auto in accepted['ro_fields'] or client_id:
-        ro_fields += [i for i in list(cert_field_map) if not i in ro_fields]
+        ro_fields += [i for i in list(cert_field_map) if i not in ro_fields]
     for field in ro_fields:
         fill_helpers['readonly_%s' % field] = 'readonly'
     fill_helpers.update(user_fields)

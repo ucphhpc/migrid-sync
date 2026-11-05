@@ -89,7 +89,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     short_title = configuration.short_title
-    if not 'migcert' in configuration.site_signup_methods:
+    if 'migcert' not in configuration.site_signup_methods:
         output_objects.append({'object_type': 'text', 'text':
                                """X.509 sign up is disabled on this site.
 Please contact the %s site support (%s) if you think it should be enabled.

@@ -83,7 +83,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     if not configuration.site_enable_openid or \
-            not 'migoid' in configuration.site_signup_methods:
+            'migoid' not in configuration.site_signup_methods:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              '''Local OpenID login is not enabled on this site'''})
@@ -172,7 +172,7 @@ to your old files, jobs and privileges. </p>''' %
 
     # Override with arg values if set
     for field in user_fields:
-        if not field in accepted:
+        if field not in accepted:
             continue
         override_val = accepted[field][-1].strip()
         if override_val:
@@ -211,7 +211,7 @@ to your old files, jobs and privileges. </p>''' %
                  list(cert_field_map) + given_peers]
     # Write-protect ID fields in auto-mode or if already logged in
     if keyword_auto in accepted['ro_fields'] or client_id:
-        ro_fields += [i for i in list(cert_field_map) if not i in ro_fields]
+        ro_fields += [i for i in list(cert_field_map) if i not in ro_fields]
     if reset_token:
         user_fields['reset_token'] = reset_token
         lock_fields = given_peers + ['comment']

@@ -79,7 +79,7 @@ def main(client_id, user_arguments_dict, environ=None):
              '''No local login to reset password for on this site'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    unsupported = [i for i in show if not i in local_auth]
+    unsupported = [i for i in show if i not in local_auth]
     if unsupported:
         output_objects.append(
             {'object_type': 'html_form', 'text':

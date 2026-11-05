@@ -93,7 +93,7 @@ def main(client_id, user_arguments_dict):
 
     short_title = configuration.short_title
     if not configuration.site_enable_openid or \
-            not 'migoid' in configuration.site_signup_methods:
+            'migoid' not in configuration.site_signup_methods:
         output_objects.append({'object_type': 'text', 'text':
                                """OpenID sign up is disabled on this site.
 Please contact the %s site support (%s) if you think it should be enabled.
