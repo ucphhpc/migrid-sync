@@ -123,18 +123,6 @@ def _state_change_request(environ, request_method):
     return False
 
 
-def create_handler_response(
-    status, message=None, error=None, **ui_response_kwargs
-):
-    """
-    A helper function to create route handler responses.
-    """
-    response = {"status": status, "message": message, "error": error}, {
-        **ui_response_kwargs
-    }
-    return response
-
-
 def main(client_id, user_arguments_dict, environ=None, configuration=None):
     """
     Main function used by front end.
