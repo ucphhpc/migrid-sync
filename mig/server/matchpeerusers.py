@@ -38,7 +38,7 @@ import re
 import sys
 import time
 
-from mig.shared.accountreq import parse_peers
+from mig.lib.peers.legacy import parse_peers
 from mig.shared.base import fill_distinguished_name
 from mig.shared.useradm import init_user_adm, search_users, default_search
 
