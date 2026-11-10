@@ -32,7 +32,6 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Union
 
-
 if TYPE_CHECKING:
     from collections.abc import Mapping
 

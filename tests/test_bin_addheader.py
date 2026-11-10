@@ -37,7 +37,6 @@ from bin.addheader import main, parse_file
 from tests.support import MigTestCase
 from tests.support.iosupp import read_file, read_tree, write_file, write_tree
 
-
 FILE_CONTENT = '''"""Python module"""
 def func(a, b):
     return a + b

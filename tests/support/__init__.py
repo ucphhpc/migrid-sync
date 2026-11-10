@@ -417,7 +417,9 @@ def ensure_dirs_exist(absolute_dir):
     return absolute_dir
 
 
-def temppath(relative_path: str, test_case: MigTestCase, ensure_dir: bool =False) -> str:
+def temppath(
+    relative_path: str, test_case: MigTestCase, ensure_dir: bool = False
+) -> str:
     """Register relative_path as a temp path and schedule automatic clean up
     after unit tests unless skip_clean is set. Anchors the temp path in
     internal test output dir unless skip_output_anchor is set. Returns

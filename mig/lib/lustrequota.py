@@ -41,13 +41,24 @@ except ImportError:
     psutil = None
 
 from mig.shared.base import force_unicode
-from mig.shared.fileio import make_symlink, makedirs_rec, pickle, save_json, \
-    scandir, unpickle, walk, write_file
+from mig.shared.fileio import (
+    make_symlink,
+    makedirs_rec,
+    pickle,
+    save_json,
+    scandir,
+    unpickle,
+    walk,
+    write_file,
+)
 from mig.shared.vgrid import vgrid_flat_name
 
 try:
-    from lustreclient.lfs import lfs_get_project_quota, lfs_set_project_id, \
-        lfs_set_project_quota
+    from lustreclient.lfs import (
+        lfs_get_project_quota,
+        lfs_set_project_id,
+        lfs_set_project_quota,
+    )
 except ImportError:
     lfs_set_project_id = None
     lfs_get_project_quota = None
@@ -186,7 +197,7 @@ def __set_project_id(
     logger = configuration.logger
     next_lustre_projid = quota_lustre_projid
     while next_lustre_projid < max_lustre_projid:
-        (rc, currfiles, _, _, _) = lfs_get_project_quota(
+        rc, currfiles, _, _, _ = lfs_get_project_quota(
             lustre_basepath, next_lustre_projid
         )
         if rc != 0:
@@ -246,7 +257,7 @@ def __set_project_id(
     waiting = 0
     max_waiting = 60
     while files == 0 and waiting < max_waiting:
-        (rc, files, _, _, _) = lfs_get_project_quota(
+        rc, files, _, _, _ = lfs_get_project_quota(
             lustre_basepath, next_lustre_projid
         )
         if rc != 0:
@@ -326,7 +337,7 @@ def __update_quota(
         quota_basefs = "fuse.gocryptfs"
         stdin_str = os.path.join(rel_data_basepath, quota_name)
         cmd = "gocryptfs-xray -encrypt-paths %s" % gocryptfs_sock
-        (rc, stdout, stderr) = __shellexec(
+        rc, stdout, stderr = __shellexec(
             configuration, cmd, stdin_str=stdin_str
         )
         if rc == 0 and stdout:
