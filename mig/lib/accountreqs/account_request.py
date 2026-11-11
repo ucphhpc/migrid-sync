@@ -88,7 +88,7 @@ class AccountRequest:
         return dn
 
     def to_masked_dict(self) -> dict[str, Any]:
-        """Returns a dictionary containing the data of the accoutn request, with
+        """Returns a dictionary containing the data of the account request, with
         sensitive fields (e.g. credentials) masked.
         """
         return mask_creds(self.to_dict())

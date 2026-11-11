@@ -94,7 +94,6 @@ class TestRemove(AccountRequestRepositoryTestCase):
         repository = AccountRequestRepository(self.configuration)
         accreq = test_account_request.copy()
         actual_id = repository.save(accreq)
-        actual_path = self._path(actual_id)
 
         repository.remove(actual_id)
         with self.assertRaises(FileNotFoundError):

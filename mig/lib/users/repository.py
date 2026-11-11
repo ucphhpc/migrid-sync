@@ -31,6 +31,7 @@ from __future__ import annotations
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
+from typing import Any
 
 from mig.lib.users.user import User
 from mig.shared.serial import dump, load
@@ -82,10 +83,30 @@ class UserRepository:
         finally:
             unlock_user_db(lock)
 
+    def _load_user_db(self) -> dict[str, dict[str, Any]]:
+        """Loads the user database, handling the case where it does not exist,
+        and re-raising other exceptions after logging them.
+
+        :return: The loaded user database, or a fresh one if one did not exist.
+        """
+        try:
+            return load(self._user_db_path)  # type: ignore
+        except FileNotFoundError:
+            log.warning(
+                "user database %r not found, trying to create it",
+                self._user_db_path,
+            )
+            return {}
+        except Exception:
+            log.exception(
+                "unexpected error loading user database %r", self._user_db_path
+            )
+            raise
+
     def save(self, user: User) -> None:
         """Saves the specified user record into the user database."""
         with self._lock_user_db(exclusive=True):
-            user_db: dict[str, dict[str, Any]] = load(self._user_db_path)  # type: ignore
+            user_db = self._load_user_db()
             user_db[user.distinguished_name] = user.to_dict()
             dump(user_db, self._user_db_path)
         log.info(
@@ -100,10 +121,10 @@ class UserRepository:
             data dictionaries.
         """
         with self._lock_user_db(exclusive=False):
-            userdb = load(self._user_db_path)
+            user_db = self._load_user_db()
 
         result = {}
-        for user_dn, user_data in userdb.items():  # type: ignore
+        for user_dn, user_data in user_db.items():  # type: ignore
             user = User.from_dict(user_data)
             if user:
                 result[user_dn] = user

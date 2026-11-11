@@ -28,8 +28,6 @@
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
-
 from mig.lib.accountreqs import AccountRequestRepository
 from mig.lib.accountreqs.permissions import check_account_requests_permit
 from mig.lib.api_helpers import HandlerResponse, create_handler_response
@@ -40,7 +38,6 @@ from mig.lib.peers.storage import (
 )
 from mig.lib.reqinfo import _RequestInfo
 from mig.lib.users.repository import UserRepository, UserSearchFilter
-
 
 
 def get_summary(

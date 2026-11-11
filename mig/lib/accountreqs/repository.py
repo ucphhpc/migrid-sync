@@ -59,6 +59,13 @@ class AccountRequestRepository:
             os.mkdir(self._cfg.user_pending)
         except FileExistsError:
             pass
+        except Exception:
+            log.exception(
+                "Error creating account requests repository storage "
+                "directory in %r",
+                self._cfg.user_pending,
+            )
+            raise
 
     def _path(self, accreq_id: str) -> str:
         """Returns the path to an account request file.
@@ -78,7 +85,7 @@ class AccountRequestRepository:
         except FileNotFoundError:
             return None
         except Exception:
-            log.exception("error occurred loading account request")
+            log.exception("Error occurred loading account request")
             return None
 
         return AccountRequest.from_dict(accreq_data)  # type: ignore
@@ -90,7 +97,7 @@ class AccountRequestRepository:
         """
         status, path_or_err = save_account_request(self._cfg, accreq.to_dict())
         if not status:
-            log.warning(
+            log.error(
                 "Error occurred saving account request %r",
                 accreq.to_masked_dict(),
             )
@@ -107,7 +114,9 @@ class AccountRequestRepository:
         try:
             os.remove(os.path.join(self._cfg.user_pending, accreq_id))
         except Exception:
-            log.info("Error occurred removing account request %r", accreq_id)
+            log.exception(
+                "Error occurred removing account request %r", accreq_id
+            )
             raise
         log.info("Removed account request %r", accreq_id)
 
@@ -117,14 +126,24 @@ class AccountRequestRepository:
         :return: All account requests.
         """
         try:
-            accreq_ids = os.listdir(self._cfg.user_pending)
+            accreq_ids: list[str] = os.listdir(self._cfg.user_pending)
         except Exception as err:
-            log.warning("Error occurred reading all account requests: %r", err)
+            log.exception(
+                "Error occurred reading all account requests: %r", err
+            )
             return []
 
         accreqs = []
         for accreq_id in accreq_ids:
+            if accreq_id.startswith("."):
+                # skip dot-files like `.placeholder`, to avoid unnecessary
+                # unpickling
+                continue
             data = unpickle(self._path(accreq_id), log)
+            if data is False:
+                # do not try to construct an account request from a failed
+                # unpickle
+                continue
             accreq = AccountRequest.from_dict(data)  # type: ignore
             if accreq is not None:
                 accreqs.append(accreq)

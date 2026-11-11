@@ -28,7 +28,7 @@
 from mig.shared.findtype import is_admin
 
 
-def check_account_requests_permit(configuration: object, user_dn: str):
+def check_account_requests_permit(configuration: object, user_dn: str) -> bool:
     """Check if the requesting client is permitted to manage account requests.
 
     Returns True if permitted, False otherwise.

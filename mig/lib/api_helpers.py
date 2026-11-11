@@ -26,7 +26,6 @@
 
 """General helper functions that can be used by REST-like API handlers."""
 
-
 from typing import Any, TypedDict
 
 
