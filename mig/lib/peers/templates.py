@@ -29,7 +29,7 @@
 import re
 from datetime import date, datetime
 
-from mig.lib.peers.api import create_handler_response
+from mig.lib.api_helpers import create_handler_response
 from mig.lib.peers.storage import list_peers_accepted, list_peers_requested
 from mig.lib.reqinfo import (
     uncommaify,

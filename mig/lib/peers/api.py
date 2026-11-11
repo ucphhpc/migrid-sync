@@ -28,13 +28,14 @@
 
 import datetime
 
+from mig.lib.api_helpers import create_handler_response
 from mig.lib.peers.legacy import parse_peers
 from mig.lib.peers.notifications import (
     create_peer_invitation_msg,
     create_peers_notify_msg,
 )
 from mig.lib.peers.parsing import peer_dict_from_fields
-from mig.lib.peers.permissions import peers_permit_allowed
+from mig.lib.peers.permissions import check_peers_permit
 from mig.lib.peers.storage import (
     add_accepted_peers_to_client,
     list_peers_accepted,
@@ -46,7 +47,6 @@ from mig.lib.peers.storage import (
     update_peers_accepted,
 )
 from mig.lib.peers.validation import (
-    check_peers_permit,
     validate_input_peer_distinguished_name,
     validate_input_peers_distinguished_names,
     validate_peer_expire_value,
@@ -63,18 +63,6 @@ from mig.lib.reqinfo import (
 )
 from mig.shared.base import extract_field, fill_user
 from mig.shared.notification import send_email
-
-
-def create_handler_response(
-    status, message=None, error=None, **ui_response_kwargs
-):
-    """
-    A helper function to create route handler responses.
-    """
-    response = {"status": status, "message": message, "error": error}, {
-        **ui_response_kwargs
-    }
-    return response
 
 
 def handle_GET_peers_summary(configuration, request_info):
@@ -227,7 +215,7 @@ def handle_POST_peers_new(configuration, request_info):
         return create_handler_response(
             400,
             error="failed to add a new peer, the received invite on"
-            "email argument was rejected %s" % rejected_invite,
+            " email argument was rejected %s" % rejected_invite,
         )
     invite_on_email = accepted_invite.get("invite_on_email", False)
 
@@ -563,7 +551,7 @@ def handle_POST_peers_accepted_import(configuration, request_info):
         return create_handler_response(
             400,
             error="failed to import peer(s), the received peers"
-            "csvlines argument(s) was rejected %s" % rejected_csvlines,
+            " csvlines argument(s) was rejected %s" % rejected_csvlines,
         )
 
     peers = accepted_csvlines.get("csvlines", [])

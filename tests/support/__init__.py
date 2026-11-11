@@ -284,8 +284,8 @@ class MigTestCase(TestCase):
         self._register_check(check_callable)
         return assert_over
 
-    def temppath(self, relative_path, **kwargs):
-        return temppath(relative_path, self, **kwargs)
+    def temppath(self, relative_path: str, ensure_dir: bool = True) -> str:
+        return temppath(relative_path, self, ensure_dir=ensure_dir)
 
     # custom assertions available for common use
 

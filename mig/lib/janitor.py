@@ -137,8 +137,7 @@ def _update_req_throttle(configuration, target, stamp, success):
         __remove_last_stamp(configuration, request_throttle, target)
         return -1
     else:
-        __update_last_stamp(configuration, request_throttle, target,
-                            stamp)
+        __update_last_stamp(configuration, request_throttle, target, stamp)
         return stamp
 
 
@@ -346,8 +345,9 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
     default_renew = False
     throttle_secs = 60 * MANAGE_TRIVIAL_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER
     if _lookup_req_throttle(configuration, req_path) + throttle_secs > now:
-        _logger.info("throttle down %r account request %s retry" %
-                     (client_id, req_id))
+        _logger.info(
+            "throttle down %r account request %s retry" % (client_id, req_id)
+        )
     elif req_invalid:
         _logger.info("%r made an invalid account request" % client_id)
         # NOTE: 'invalid' is a list of validation error strings if set
@@ -454,8 +454,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         )
         if not rej_status:
             _logger.warning(
-                "failed to reject expired %r request: %s" % (
-                    client_id, rej_err)
+                "failed to reject expired %r request: %s" % (client_id, rej_err)
             )
         else:
             _logger.info("rejected %r request now past expire" % client_id)
@@ -480,8 +479,9 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             _logger.info("rejected %r request with ID collision" % client_id)
         _update_req_throttle(configuration, req_path, now, rej_status)
     elif user_dict:
-        _logger.info("%r requested access renewal but not automated" %
-                     client_id)
+        _logger.info(
+            "%r requested access renewal but not automated" % client_id
+        )
         # TODO: renew if trivial with existing valid peer?
         _update_req_throttle(configuration, req_path, now, False)
     else:
@@ -513,8 +513,7 @@ def manage_trivial_user_requests(configuration, now=None):
             continue
         req_id = filename
         req_path = os.path.join(configuration.user_pending, req_id)
-        _logger.debug(
-            "checking if account request in %r is trivial" % req_path)
+        _logger.debug("checking if account request in %r is trivial" % req_path)
         req_age = now - os.path.getmtime(req_path)
         req_age_minutes = req_age / SECS_PER_MINUTE
         if req_age_minutes > MANAGE_TRIVIAL_REQ_MINUTES:
@@ -524,8 +523,7 @@ def manage_trivial_user_requests(configuration, now=None):
             )
             manage_single_req(configuration, req_id, req_path, db_path, now)
             handled += 1
-    _logger.debug(
-        "handled %d trivial user account request action(s)" % handled)
+    _logger.debug("handled %d trivial user account request action(s)" % handled)
     return handled
 
 
@@ -584,8 +582,7 @@ def remind_and_expire_user_pending(configuration, now=None):
                     % (req_id, client_id, rej_err)
                 )
             else:
-                _logger.info("expired %s request from %r" %
-                             (req_id, client_id))
+                _logger.info("expired %s request from %r" % (req_id, client_id))
             handled += 1
     _logger.debug("handled %d user account request action(s)" % handled)
     return handled

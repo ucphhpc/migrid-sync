@@ -48,31 +48,14 @@ import cgi
 import importlib
 import json
 import os
-import re
 import sys
-from datetime import date, datetime
 from io import BytesIO
 
 from mig.lib.peers import templates as peers_templates
-from mig.lib.reqinfo import (
-    coalesce_request,
-    uncommaify,
-    unlistify,
-    unlistify_dict,
-)
-from mig.shared import accountreq, returnvalues
-from mig.shared.functionality.datainterface import create_handler_response
+from mig.lib.reqinfo import coalesce_request
+from mig.shared import returnvalues
 from mig.shared.init import initialize_main_variables, make_start_entry
-from mig.shared.pwcrypto import make_csrf_token
-from mig.shared.safeinput import (
-    html_escape,
-    valid_csrf_request_field,
-    valid_peer_expire_optional,
-    valid_peer_kind,
-    valid_peer_query,
-    valid_template_field,
-    validated_input,
-)
+from mig.shared.safeinput import html_escape
 from mig.shared.scriptinput import fieldstorage_to_dict
 
 

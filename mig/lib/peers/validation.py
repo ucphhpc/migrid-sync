@@ -29,9 +29,7 @@
 import datetime
 
 from mig.lib.peers.parsing import EXTRA_PEER_FIELDS, EXTRA_PEER_FIELDS_TYPE
-from mig.lib.peers.permissions import peers_permit_allowed
 from mig.lib.reqinfo import unlistify_dict
-from mig.shared.base import distinguished_name_to_user
 from mig.shared.defaults import peers_expire_max_days, peers_expire_min_days
 from mig.shared.safeinput import (
     REJECT_UNSET,
@@ -161,15 +159,6 @@ def validate_peers_csvlines(csvlines):
         list_wrap=True,
     )
     return accepted, rejected
-
-
-def check_peers_permit(configuration, client_id):
-    """Check if the requesting client is permitted to manage peers.
-
-    Returns True if permitted, False otherwise.
-    """
-    user_dict = distinguished_name_to_user(client_id)
-    return peers_permit_allowed(configuration, user_dict)
 
 
 def validate_peer_expire_value(expire_date):

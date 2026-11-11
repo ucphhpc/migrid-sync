@@ -38,7 +38,6 @@ from mig.shared.fileio import (
     release_file_lock,
     unpickle,
 )
-from mig.shared.logger import null_logger
 
 
 def list_peers_requested(configuration, client_id):

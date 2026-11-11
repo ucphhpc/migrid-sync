@@ -47,7 +47,6 @@ the ability to easily extend the routes made available is a key feature here.
 from __future__ import absolute_import
 
 import cgi
-import datetime
 import json
 import os
 import sys
@@ -55,49 +54,19 @@ from io import BytesIO
 
 from mig.lib.accountreqs import api as accountreqs_api
 from mig.lib.peers import api as peers_api
-from mig.lib.reqinfo import (
-    booleanify,
-    coalesce_request,
-    unconcatify,
-    unlistify,
-    unlistify_dict,
-)
-from mig.shared import accountreq, returnvalues
-from mig.shared.base import (
-    distinguished_name_to_user,
-    extract_field,
-    fill_user,
-    string_snippet,
-)
-from mig.shared.defaults import (
-    CSRF_WARN,
-    keyword_auto,
-    peers_expire_max_days,
-    peers_expire_min_days,
-    peers_fields,
-)
+from mig.lib.reqinfo import coalesce_request
+from mig.shared import returnvalues
+from mig.shared.base import string_snippet
+from mig.shared.defaults import CSRF_WARN
 from mig.shared.handlers import check_enable_csrf, get_csrf_limit
 from mig.shared.init import (
     find_entry,
     initialize_main_variables,
     make_start_entry,
 )
-from mig.shared.notification import send_email
 from mig.shared.pwcrypto import make_csrf_token
-from mig.shared.safeinput import (
-    REJECT_UNSET,
-    html_escape,
-    valid_boolean,
-    valid_date,
-    valid_distinguished_name,
-    valid_peer_expire_optional,
-    valid_peer_kind,
-    valid_peer_label,
-    valid_peers_csvlines,
-    validated_input,
-)
+from mig.shared.safeinput import html_escape
 from mig.shared.scriptinput import fieldstorage_to_dict
-from mig.shared.url import urlencode
 
 
 def _validate_csrf_token(configuration, request_info, environ):
@@ -153,18 +122,6 @@ def _state_change_request(environ, request_method):
     ):
         return True
     return False
-
-
-def create_handler_response(
-    status, message=None, error=None, **ui_response_kwargs
-):
-    """
-    A helper function to create route handler responses.
-    """
-    response = {"status": status, "message": message, "error": error}, {
-        **ui_response_kwargs
-    }
-    return response
 
 
 def main(client_id, user_arguments_dict, environ=None, configuration=None):

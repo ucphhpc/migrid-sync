@@ -28,6 +28,8 @@
 
 import re
 
+from mig.shared.base import distinguished_name_to_user
+
 
 def peers_prefilter_allowed(configuration, user_dict):
     """Check if user with user_dict is potentially allowed to manage peers
@@ -57,3 +59,12 @@ def prefilter_potential_peers(peers_list, configuration):
         if peers_prefilter_allowed(configuration, peer_dict):
             potential_peers.append(peer_dict)
     return potential_peers
+
+
+def check_peers_permit(configuration, client_id):
+    """Check if the requesting client is permitted to manage peers.
+
+    Returns True if permitted, False otherwise.
+    """
+    user_dict = distinguished_name_to_user(client_id)
+    return peers_permit_allowed(configuration, user_dict)

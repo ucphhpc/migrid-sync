@@ -26,24 +26,19 @@
 
 """Parse peers from various formats."""
 
-from builtins import zip
-
 from mig.shared.base import (
     canonical_user,
-    distinguished_name_to_user,
     fill_distinguished_name,
     fill_user,
 )
-from mig.shared.defaults import keyword_auto, peers_fields
+from mig.shared.defaults import peers_fields
 from mig.shared.safeinput import (
     REJECT_UNSET,
-    html_escape,
     valid_date,
     valid_peer_kind,
     valid_peer_label,
     validated_input,
 )
-from mig.shared.validstring import valid_email_addresses
 
 BASIC_PEER_FIELDS = dict([(i, REJECT_UNSET) for i in peers_fields])
 EXTRA_PEER_FIELDS_TYPE = {
@@ -93,7 +88,7 @@ def _normalize_rejected_value(failure_detail):
     elif isinstance(failure_detail, tuple) and len(failure_detail) == 2:
         # When the rejected structure is a tuple, the first element is the
         # input field key, and the second is a list with the error message.
-        key = failure_detail[0]
+        _ = failure_detail[0]
         value = _unlisty(failure_detail[1])
         normalized_details.append(value)
     elif isinstance(failure_detail, str):
@@ -146,7 +141,7 @@ def peer_dict_from_fields(configuration, peer_fields_dict):
             EXTRA_PEER_FIELDS_TYPE,
             list_wrap=True,
         )
-    except Exception as any_exc:
+    except Exception:
         # unfortunately validated_input itself is not safe against input
         # data that is not wrapped the way it expects - treat this an error
         extra_accepted = {}
