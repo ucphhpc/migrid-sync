@@ -32,6 +32,7 @@ from typing import Any, TypedDict
 
 from mig.lib.accountreqs import AccountRequestRepository
 from mig.lib.accountreqs.permissions import check_account_requests_permit
+from mig.lib.api_helpers import HandlerResponse, create_handler_response
 from mig.lib.peers.storage import (
     add_pending_peers_to_client,
     list_peers_accepted,
@@ -41,36 +42,6 @@ from mig.lib.reqinfo import _RequestInfo
 from mig.lib.users.repository import UserRepository, UserSearchFilter
 
 
-class HandlerExitResponse(TypedDict):
-    """A definition of the non-data part of the JSON response."""
-
-    status: int
-    message: str | None
-    error: str | None
-
-
-HandlerResponse = tuple[HandlerExitResponse, dict[str, Any]]
-
-
-def _create_handler_response(
-    status: int,
-    message: str | None = None,
-    error: str | None = None,
-    **response_data: Any,
-) -> HandlerResponse:
-    """Utility function to format request handler JSON response.
-
-    :param status: An HTTP status code.
-    :param message: A message to return in the response.
-    :param error: An error to return in the response.
-    :param response_data: Key-value arguments that will be available in the
-        response object under the 'data' key.
-    """
-    return (
-        {"status": status, "message": message, "error": error},
-        response_data,
-    )
-
 
 def get_summary(
     configuration: object, request_info: _RequestInfo
@@ -79,7 +50,7 @@ def get_summary(
     Request handler: GET /accountreqs/summary
     """
     if not check_account_requests_permit(configuration, request_info.client_id):
-        return _create_handler_response(
+        return create_handler_response(
             403, error="you are not permitted to manage peers"
         )
 
@@ -131,7 +102,7 @@ def get_summary(
         "peer_pending": peer_pending,
         "peer_accepted": peer_accepted,
     }
-    return _create_handler_response(200, summary=summary)
+    return create_handler_response(200, summary=summary)
 
 
 def post_forward(
@@ -141,7 +112,7 @@ def post_forward(
     Request handler: POST /accountreqs/forward
     """
     if not check_account_requests_permit(configuration, request_info.client_id):
-        return _create_handler_response(
+        return create_handler_response(
             403, error="you are not permitted to manage peers"
         )
 
@@ -176,7 +147,7 @@ def post_forward(
             )
         successes.append(accreq_id)
 
-    return _create_handler_response(
+    return create_handler_response(
         400 if errors else 200, errors=errors, successes=successes
     )
 
