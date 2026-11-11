@@ -26,14 +26,35 @@
 
 """General helper functions that can be used by REST-like API handlers."""
 
+from typing import Any, TypedDict
+
+
+class HandlerExitResponse(TypedDict):
+    """A definition of the non-data part of the JSON response."""
+
+    status: int
+    message: str | None
+    error: str | None
+
+
+HandlerResponse = tuple[HandlerExitResponse, dict[str, Any]]
+
 
 def create_handler_response(
-    status, message=None, error=None, **ui_response_kwargs
-):
+    status: int,
+    message: str | None = None,
+    error: str | None = None,
+    **ui_response_kwargs: Any,
+) -> HandlerResponse:
+    """Utility function to format request handler JSON response.
+
+    :param status: An HTTP status code.
+    :param message: A message to return in the response.
+    :param error: An error to return in the response.
+    :param ui_response_kwargs: Key-value arguments that will be available in the
+        response object under the 'data' key.
     """
-    A helper function to create route handler responses.
-    """
-    response = {"status": status, "message": message, "error": error}, {
-        **ui_response_kwargs
-    }
-    return response
+    return (
+        {"status": status, "message": message, "error": error},
+        ui_response_kwargs,
+    )

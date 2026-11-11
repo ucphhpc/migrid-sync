@@ -337,7 +337,7 @@ included:
                     )
                 )
 
-    def assertFileExists(self, relative_path):
+    def assertFileExists(self, relative_path: str) -> str:
         """Make sure relative_path exists and is a file"""
         path_kind = self.assertPathExists(relative_path)
         assert path_kind == "file", "expected a file but found %s" % (
@@ -345,15 +345,28 @@ included:
         )
         return os.path.join(TEST_OUTPUT_DIR, relative_path)
 
+    def _assert_absolute_path(
+        self, relative_path: str, allow_anypath: bool = False
+    ) -> str:
+        if not os.path.isabs(relative_path):
+            return os.path.join(TEST_OUTPUT_DIR, relative_path)
+
+        if allow_anypath:
+            return relative_path
+
+        self.assertPathWithin(relative_path, start=TEST_OUTPUT_DIR)
+        return relative_path
+
+    def assertFileNotExist(
+        self, relative_path: str, allow_anypath=False
+    ) -> None:
+        absolute_path = self._assert_absolute_path(relative_path, allow_anypath)
+        with self.assertRaises(FileNotFoundError):
+            os.stat(absolute_path)
+
     def assertPathExists(self, relative_path, allow_anypath=False):
         """Make sure file in relative_path exists"""
-        if not os.path.isabs(relative_path):
-            absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-        elif allow_anypath:
-            absolute_path = relative_path
-        else:
-            self.assertPathWithin(relative_path, start=TEST_OUTPUT_DIR)
-            absolute_path = relative_path
+        absolute_path = self._assert_absolute_path(relative_path, allow_anypath)
         return MigTestCase._absolute_path_kind(absolute_path)
 
     def assertLogs(self, name=None, level=None):
