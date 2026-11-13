@@ -5,6 +5,7 @@ from mig.lib.accountreqs import AccountRequest, AccountRequestRepository
 from mig.lib.peers.storage import (
     add_accepted_peers_to_client,
     add_pending_peers_to_client,
+    list_peers_accepted,
     list_peers_requested,
 )
 from mig.shared.pwcrypto import make_hash, scramble_password
@@ -41,7 +42,7 @@ test_account_request = AccountRequest(
 )
 
 
-class AccountRequestAPITestCase(MigTestCase, UserAssertMixin):
+class AccountRequestAPITestCase(MigTestCase, WsgiAssertMixin, UserAssertMixin):
 
     def _provide_configuration(self):
         return "testconfig"
@@ -58,28 +59,41 @@ class AccountRequestAPITestCase(MigTestCase, UserAssertMixin):
             TEST_NONADMIN_CLIENT_ID,
         )
 
-
-class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
-
-    def _request_wsgi_post_forward(
-        self, accreq_ids: list[str], mig_user_dn: str = TEST_ADMIN_CLIENT_ID
+    def assert_wsgi_request(
+        self, type: str, operation: str, mig_user_dn: str, **request_args: Any
     ) -> Any:
-        request_body = {
-            "type": "accountrequests__forward",
-            "operation": "create",
-            "account_request_ids": accreq_ids,
-        }
         prepared_wsgi = self.prepareWsgiAssert(
             self.configuration,
             "http://localhost/datainterface.py",
-            form=request_body,
+            form={
+                "type": "accountrequests__" + type,
+                "operation": operation,
+                **request_args,
+            },
             mig_user_dn=mig_user_dn,
         )
         return self.assertWsgiJsonResponse(prepared_wsgi)
 
+    def assert_wsgi_get(
+        self, type: str, mig_user_dn: str, **request_args: Any
+    ) -> Any:
+        return self.assert_wsgi_request(
+            type, "read", mig_user_dn, **request_args
+        )
+
+    def assert_wsgi_post(
+        self, type: str, mig_user_dn: str, **request_args: Any
+    ) -> Any:
+        return self.assert_wsgi_request(
+            type, "create", mig_user_dn, **request_args
+        )
+
+
+class TestPostForward(AccountRequestAPITestCase):
+
     def test_permission_denied_when_not_on_admin_list(self) -> None:
-        actual = self._request_wsgi_post_forward(
-            [], mig_user_dn=TEST_NONADMIN_CLIENT_ID
+        actual = self.assert_wsgi_post(
+            "forward", TEST_NONADMIN_CLIENT_ID, account_request_ids=[]
         )
         expected = {
             "status": 403,
@@ -89,12 +103,30 @@ class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
 
         self.assertEqual(actual, expected)
 
+    def test_returns_not_found_error(self) -> None:
+        json_response = self.assert_wsgi_post(
+            "forward",
+            mig_user_dn=TEST_ADMIN_CLIENT_ID,
+            account_request_ids=["nonexisting-accreq-id"],
+        )
+
+        status = json_response["status"]
+        actual = json_response["data"]
+        expected = {
+            "errors": {"nonexisting-accreq-id": "account request not found"},
+            "successes": [],
+        }
+        self.assertEqual(status, 400)
+        self.assertEqual(actual, expected)
+
     def test_returns_expected_success(self) -> None:
         accreq_repo = AccountRequestRepository(self.configuration)
         accreq_forward = test_account_request.copy()
         accreq_id = accreq_repo.save(accreq_forward)
 
-        json_response = self._request_wsgi_post_forward([accreq_id])
+        json_response = self.assert_wsgi_post(
+            "forward", TEST_ADMIN_CLIENT_ID, account_request_ids=[accreq_id]
+        )
 
         status = json_response["status"]
         actual = json_response["data"]
@@ -107,12 +139,131 @@ class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
         accreq_forward = test_account_request.copy()
         accreq_id = accreq_repo.save(accreq_forward)
 
-        json_response = self._request_wsgi_post_forward([accreq_id])
+        json_response = self.assert_wsgi_post(
+            "forward", TEST_ADMIN_CLIENT_ID, account_request_ids=[accreq_id]
+        )
         actual = list_peers_requested(
             self.configuration, TEST_PEER_CONTACT_CLIENT_ID
         )
 
         expected = [accreq_forward.to_dict()]
+        status = json_response["status"]
+        self.assertEqual(status, 200)
+        self.assertEqual(actual, expected)
+
+
+class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
+
+    def test_permission_denied_when_not_on_admin_list(self) -> None:
+        actual = self.assert_wsgi_post(
+            "reject", mig_user_dn=TEST_NONADMIN_CLIENT_ID
+        )
+        expected = {
+            "status": 403,
+            "error": "you are not permitted to manage peers",
+            "data": {},
+        }
+
+        self.assertEqual(actual, expected)
+
+    def test_returns_not_found_error(self) -> None:
+        accreq_repo = AccountRequestRepository(self.configuration)
+        accreq_reject = test_account_request.copy()
+        accreq_id = accreq_repo.save(accreq_reject)
+
+        json_response = self.assert_wsgi_post(
+            "reject",
+            mig_user_dn=TEST_ADMIN_CLIENT_ID,
+            account_request_ids=["nonexisting-accreq-id"],
+        )
+
+        status = json_response["status"]
+        actual = json_response["data"]
+        expected = {
+            "errors": {"nonexisting-accreq-id": ["account request not found"]},
+            "successes": [],
+        }
+        self.assertEqual(status, 400)
+        self.assertEqual(actual, expected)
+
+    def test_returns_expected_success(self) -> None:
+        accreq_repo = AccountRequestRepository(self.configuration)
+        accreq_reject = test_account_request.copy()
+        accreq_id = accreq_repo.save(accreq_reject)
+
+        json_response = self.assert_wsgi_post(
+            "reject",
+            mig_user_dn=TEST_ADMIN_CLIENT_ID,
+            account_request_ids=[accreq_id],
+        )
+
+        status = json_response["status"]
+        actual = json_response["data"]
+        expected = {"errors": {}, "successes": [accreq_id]}
+        self.assertEqual(status, 200)
+        self.assertEqual(actual, expected)
+
+    def test_removes_account_request(self) -> None:
+        accreq_repo = AccountRequestRepository(self.configuration)
+        accreq_reject = test_account_request.copy()
+        accreq_id = accreq_repo.save(accreq_reject)
+
+        json_response = self.assert_wsgi_post(
+            "reject",
+            mig_user_dn=TEST_ADMIN_CLIENT_ID,
+            account_request_ids=[accreq_id],
+        )
+        actual = accreq_repo.read_all()
+
+        expected = []
+        status = json_response["status"]
+        self.assertEqual(status, 200)
+        self.assertEqual(actual, expected)
+
+    def test_removes_pending_peer_from_peer_contact(self) -> None:
+        accreq_repo = AccountRequestRepository(self.configuration)
+        accreq_reject = test_account_request.copy()
+        accreq_id = accreq_repo.save(accreq_reject)
+        add_pending_peers_to_client(
+            self.configuration,
+            TEST_PEER_CONTACT_CLIENT_ID,
+            [(accreq_reject.distinguished_name, accreq_reject.to_dict())],
+        )
+
+        json_response = self.assert_wsgi_post(
+            "reject",
+            mig_user_dn=TEST_ADMIN_CLIENT_ID,
+            account_request_ids=[accreq_id],
+        )
+        actual = list_peers_requested(
+            self.configuration, TEST_PEER_CONTACT_CLIENT_ID
+        )
+
+        expected = []
+        status = json_response["status"]
+        self.assertEqual(status, 200)
+        self.assertEqual(actual, expected)
+
+    def test_removes_accepted_peer_from_peer_contact(self) -> None:
+        accreq_repo = AccountRequestRepository(self.configuration)
+        accreq_reject = test_account_request.copy()
+        accreq_id = accreq_repo.save(accreq_reject)
+        add_accepted_peers_to_client(
+            self.configuration,
+            TEST_PEER_CONTACT_CLIENT_ID,
+            {accreq_reject.distinguished_name: accreq_reject.to_dict()},
+        )
+
+        json_response = self.assert_wsgi_post(
+            "reject",
+            mig_user_dn=TEST_ADMIN_CLIENT_ID,
+            account_request_ids=[accreq_id],
+        )
+        actual = list_peers_accepted(
+            self.configuration, TEST_PEER_CONTACT_CLIENT_ID
+        )
+
+        expected = {}
         status = json_response["status"]
         self.assertEqual(status, 200)
         self.assertEqual(actual, expected)
