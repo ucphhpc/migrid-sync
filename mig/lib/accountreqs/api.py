@@ -28,6 +28,8 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
+
 from mig.lib.accountreqs import AccountRequestRepository
 from mig.lib.accountreqs.permissions import check_account_requests_permit
 from mig.lib.api_helpers import HandlerResponse, create_handler_response
@@ -35,6 +37,8 @@ from mig.lib.peers.storage import (
     add_pending_peers_to_client,
     list_peers_accepted,
     list_peers_requested,
+    remove_accepted_peers_from_client,
+    remove_pending_peers_from_client,
 )
 from mig.lib.reqinfo import _RequestInfo
 from mig.lib.users.repository import UserRepository, UserSearchFilter
@@ -149,10 +153,80 @@ def post_forward(
     )
 
 
+def post_reject(
+    configuration: object, request_info: _RequestInfo
+) -> HandlerResponse:
+    """
+    Request handler: POST /accountreqs/forward
+    """
+    if not check_account_requests_permit(configuration, request_info.client_id):
+        return create_handler_response(
+            403, error="you are not permitted to manage peers"
+        )
+
+    # TODO: dependency injection
+    accreq_repo = AccountRequestRepository(configuration)
+    user_repo = UserRepository(configuration)
+
+    accreq_ids = request_info.arg_value("account_request_ids", list)
+
+    errors: dict[str, list[str]] = defaultdict(list)
+    successes: list[str] = []
+    for accreq_id in accreq_ids:
+        accreq = accreq_repo.read(accreq_id)
+        if accreq is None:
+            errors[accreq_id].append("account request not found")
+            continue
+
+        try:
+            accreq_repo.remove(accreq_id)
+        except FileNotFoundError:
+            errors[accreq_id].append("account request not found")
+            continue
+
+        peer_contacts = user_repo.search(UserSearchFilter(accreq.peers_email))
+
+        # TODO: handle more peer contacts
+        peer_contact = peer_contacts[0]
+
+        if not remove_pending_peers_from_client(
+            configuration,
+            peer_contact.distinguished_name,
+            [accreq.distinguished_name],
+        ):
+            errors[accreq_id].append(
+                "could not remove pending peer from peer contact"
+            )
+
+        if not remove_accepted_peers_from_client(
+            configuration,
+            peer_contact.distinguished_name,
+            [accreq.distinguished_name],
+        ):
+            errors[accreq_id].append(
+                "could not remove accepted peer from peer contact"
+            )
+
+        if not errors[accreq_id]:
+            successes.append(accreq_id)
+
+    # clean errors of empty entries
+    errors = {
+        accreq_id: accreq_errors
+        for accreq_id, accreq_errors in errors.items()
+        if accreq_errors
+    }
+
+    return create_handler_response(
+        400 if errors else 200, errors=errors, successes=successes
+    )
+
+
 HANDLERS_BY_PACKAGE = {
     "accountrequests": {
         "GET /summary": get_summary,
         "POST /forward": post_forward,
+        "POST /reject": post_reject,
     },
 }
 
