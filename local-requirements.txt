@@ -16,3 +16,5 @@ werkzeug
 pyOpenSSL
 # for unittesting of htmlgen module
 lxml
+# for unittest coverage
+coverage

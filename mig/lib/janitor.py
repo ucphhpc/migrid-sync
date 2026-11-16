@@ -467,7 +467,8 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         )
         if not rej_status:
             _logger.warning(
-                "failed to reject expired %r request: %s" % (client_id, rej_err)
+                "failed to reject expired %r request: %s" % (
+                    client_id, rej_err)
             )
         else:
             _logger.info("rejected %r request now past expire" % client_id)
@@ -496,6 +497,7 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
             configuration, manage_register, req_path, now, rej_status
         )
     elif user_dict:
+
         _logger.debug(
             "%r requested access renewal but not automated" % client_id
         )
@@ -530,7 +532,8 @@ def manage_trivial_user_requests(configuration, now=None):
             continue
         req_id = filename
         req_path = os.path.join(configuration.user_pending, req_id)
-        _logger.debug("checking if account request in %r is trivial" % req_path)
+        _logger.debug(
+            "checking if account request in %r is trivial" % req_path)
         req_age = now - os.path.getmtime(req_path)
         req_age_minutes = req_age / SECS_PER_MINUTE
         if req_age_minutes > MANAGE_TRIVIAL_REQ_MINUTES:
@@ -540,7 +543,8 @@ def manage_trivial_user_requests(configuration, now=None):
             )
             manage_single_req(configuration, req_id, req_path, db_path, now)
             handled += 1
-    _logger.debug("handled %d trivial user account request action(s)" % handled)
+    _logger.debug(
+        "handled %d trivial user account request action(s)" % handled)
     return handled
 
 
@@ -615,7 +619,8 @@ def remind_and_expire_user_pending(configuration, now=None):
                     % (req_id, client_id, rej_err)
                 )
             else:
-                _logger.info("expired %s request from %r" % (req_id, client_id))
+                _logger.info("expired %s request from %r" %
+                             (req_id, client_id))
             _update_throttle(
                 configuration, expiry_register, req_path, now, rej_status
             )

@@ -192,7 +192,7 @@ class MigSharedInstall__generate_confs(MigTestCase):
         os.remove(os.path.join(generated_dir, "generateconfs.log"))
         os.remove(os.path.join(generated_dir, "instructions.txt"))
 
-        actual_files = os.listdir(fixture_dir)
+        actual_files = os.listdir(generated_dir)
         expected_files = os.listdir(fixture_dir)
         self.assertEqual(len(actual_files), len(expected_files))
 

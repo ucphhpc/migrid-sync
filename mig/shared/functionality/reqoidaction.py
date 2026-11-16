@@ -34,9 +34,10 @@ from __future__ import absolute_import
 import os
 import time
 
+from mig.lib.peers.permissions import prefilter_potential_peers
 from mig.shared import returnvalues
 from mig.shared.accountreq import early_validation_checks, \
-    existing_country_code, prefilter_potential_peers, save_account_request, \
+    existing_country_code, save_account_request, \
     signup_prefilter_allowed, user_manage_commands
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
@@ -92,7 +93,7 @@ def main(client_id, user_arguments_dict):
 
     short_title = configuration.short_title
     if not configuration.site_enable_openid or \
-            not 'migoid' in configuration.site_signup_methods:
+            'migoid' not in configuration.site_signup_methods:
         output_objects.append({'object_type': 'text', 'text':
                                """OpenID sign up is disabled on this site.
 Please contact the %s site support (%s) if you think it should be enabled.

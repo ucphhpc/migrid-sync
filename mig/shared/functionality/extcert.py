@@ -32,15 +32,14 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import valid_name_chars, dn_max_len, \
-    account_css_helpers, account_js_helpers, account_request_template
+from mig.shared.accountreq import account_css_helpers, account_js_helpers, account_request_template
 from mig.shared.base import distinguished_name_to_user, canonical_user, \
     cert_field_map
 from mig.shared.defaults import csrf_field, keyword_auto
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
-from mig.shared.safeinput import html_escape
+from mig.shared.safeinput import html_escape, valid_name_chars, dn_max_len
 
 
 def signature(configuration):
@@ -78,7 +77,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not 'extcert' in configuration.site_signup_methods:
+    if 'extcert' not in configuration.site_signup_methods:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              '''X.509 certificate login is not enabled on this site'''})
@@ -122,7 +121,7 @@ def main(client_id, user_arguments_dict):
 
     # Override with arg values if set
     for field in user_fields:
-        if not field in accepted:
+        if field not in accepted:
             continue
         override_val = accepted[field][-1].strip()
         if override_val:
@@ -161,7 +160,7 @@ def main(client_id, user_arguments_dict):
                  list(cert_field_map) + given_peers]
     # Write-protect ID fields in auto-mode or if already logged in
     if keyword_auto in accepted['ro_fields'] or client_id:
-        ro_fields += [i for i in list(cert_field_map) if not i in ro_fields]
+        ro_fields += [i for i in list(cert_field_map) if i not in ro_fields]
     for field in ro_fields:
         fill_helpers['readonly_%s' % field] = 'readonly'
     fill_helpers.update(user_fields)

@@ -35,12 +35,9 @@ import os
 import re
 import tempfile
 
+from mig.lib.peers.legacy import manage_pending_peers, parse_peers
+from mig.lib.peers.permissions import peers_permit_allowed
 from mig.shared import returnvalues
-from mig.shared.accountreq import (
-    manage_pending_peers,
-    parse_peers,
-    peers_permit_allowed,
-)
 from mig.shared.base import (
     client_id_dir,
     extract_field,

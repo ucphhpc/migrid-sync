@@ -33,8 +33,7 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import account_css_helpers, \
-    account_js_helpers, \
-    account_request_template
+    account_js_helpers, account_request_template
 from mig.shared.base import canonical_user, cert_field_map, client_id_dir, \
     distinguished_name_to_user, requested_page
 from mig.shared.defaults import csrf_field, keyword_auto
@@ -43,9 +42,7 @@ from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import find_entry, initialize_main_variables
 from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape, \
-    password_max_len, \
-    password_min_len, \
-    valid_name_chars,\
+    password_max_len, password_min_len, valid_name_chars, \
     valid_password_chars
 from mig.shared.useradm import get_full_user_map
 
@@ -86,7 +83,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     if not configuration.site_enable_openid or \
-            not 'migoid' in configuration.site_signup_methods:
+            'migoid' not in configuration.site_signup_methods:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              '''Local OpenID login is not enabled on this site'''})
@@ -175,7 +172,7 @@ to your old files, jobs and privileges. </p>''' %
 
     # Override with arg values if set
     for field in user_fields:
-        if not field in accepted:
+        if field not in accepted:
             continue
         override_val = accepted[field][-1].strip()
         if override_val:
@@ -214,7 +211,7 @@ to your old files, jobs and privileges. </p>''' %
                  list(cert_field_map) + given_peers]
     # Write-protect ID fields in auto-mode or if already logged in
     if keyword_auto in accepted['ro_fields'] or client_id:
-        ro_fields += [i for i in list(cert_field_map) if not i in ro_fields]
+        ro_fields += [i for i in list(cert_field_map) if i not in ro_fields]
     if reset_token:
         user_fields['reset_token'] = reset_token
         lock_fields = given_peers + ['comment']

@@ -36,8 +36,9 @@ from builtins import range
 import datetime
 import os
 
+from mig.lib.peers.permissions import peers_permit_allowed
 from mig.shared import returnvalues
-from mig.shared.accountreq import peers_permit_allowed, list_country_codes
+from mig.shared.accountreq import list_country_codes
 from mig.shared.base import pretty_format_user, fill_distinguished_name, \
     client_id_dir, force_native_str_rec
 from mig.shared.defaults import csrf_field, peers_filename, \

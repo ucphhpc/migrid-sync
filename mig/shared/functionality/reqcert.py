@@ -34,15 +34,15 @@ import os
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, distinguished_name_to_user, \
     canonical_user, cert_field_map, requested_page
-from mig.shared.accountreq import valid_password_chars, valid_name_chars, \
-    password_min_len, password_max_len, account_js_helpers, \
+from mig.shared.accountreq import account_js_helpers, \
     account_css_helpers, account_request_template
 from mig.shared.defaults import csrf_field, keyword_auto
 from mig.shared.functional import validate_input
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.pwcrypto import parse_password_policy
-from mig.shared.safeinput import html_escape
+from mig.shared.safeinput import html_escape, valid_password_chars, \
+    valid_name_chars, password_min_len, password_max_len
 
 
 def signature(configuration):
