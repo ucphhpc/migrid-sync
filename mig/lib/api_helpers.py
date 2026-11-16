@@ -26,6 +26,8 @@
 
 """General helper functions that can be used by REST-like API handlers."""
 
+from __future__ import annotations
+
 from typing import Any, TypedDict
 
 

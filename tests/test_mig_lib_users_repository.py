@@ -1,7 +1,32 @@
+#
+# --- BEGIN_HEADER ---
+#
+# test_mig_lib_users_repository - user repository unit tests
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# --- END_HEADER ---
+#
+
 import fcntl
 import os
 from datetime import datetime
-from typing import Any, override
+from typing import Any
 
 from mig.lib.users.repository import UserRepository, UserSearchFilter
 from mig.lib.users.user import User
@@ -38,11 +63,9 @@ test_user = User(
 class UserRepositoryTestCase(MigTestCase):
     """Common functionality for account request repository test case classes."""
 
-    @override
     def _provide_configuration(self):
         return "testconfig"
 
-    @override
     def before_each(self) -> None:
         os.mkdir(self.configuration.user_db_home)
         dump({}, self._db_path)
