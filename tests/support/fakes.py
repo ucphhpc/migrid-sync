@@ -52,7 +52,8 @@ def _valid_email_address(address):
             _valid = False
     else:
         try:
-            _valid = validate_email(address, check_deliverability=True)
+            # NOTE: don't use delivery check here to let example emails pass
+            _valid = validate_email(address, check_deliverability=False)
         except Exception:
             # DNS lookup failed
             _valid = False
