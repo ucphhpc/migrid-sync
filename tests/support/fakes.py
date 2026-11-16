@@ -44,10 +44,9 @@ TEST_BOGUS_EMAIL = "invalid.user@no-such-mail-domain.org"
 def _valid_email_address(address):
     """A simple helper to validate an email address with library or natively"""
     if validate_email is None:
-        match = re.match(r'^[A-Za-z0-9+_.]+@[A-Za-z0-9.-]+\.[a-z]+$',
-                         address)
+        match = re.match(r"^[A-Za-z0-9+_.]+@[A-Za-z0-9.-]+\.[a-z]+$", address)
         if match:
-            _valid = {'email': address}
+            _valid = {"email": address}
         else:
             _valid = False
     else:
@@ -57,7 +56,7 @@ def _valid_email_address(address):
         except Exception:
             # DNS lookup failed
             _valid = False
-    if not _valid or _valid['email'] != address:
+    if not _valid or _valid["email"] != address:
         return False
     elif address == TEST_BOGUS_EMAIL:
         return False

@@ -41,9 +41,9 @@ from unittest import TestCase
 from unittest import main as testmain
 
 import tests.support.fakes as fakes
-from tests.support.fakes import TEST_BOGUS_EMAIL
 from tests.support._env import MIG_ENV, PY2
 from tests.support.configsupp import FakeConfiguration
+from tests.support.fakes import TEST_BOGUS_EMAIL
 from tests.support.suppconst import (
     ENVHELP_OUTPUT_DIR,
     MIG_BASE,
