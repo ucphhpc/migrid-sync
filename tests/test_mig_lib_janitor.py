@@ -102,6 +102,7 @@ TEST_INVALID_PW_PBKDF2 = (
 )
 # NOTE: tokens always should contain a multiple of 4 chars
 INVALID_TEST_TOKEN = "THIS_RESET_TOKEN_WAS_NEVER_VALID"
+# TODO: switch to TEST_BOGUS_EMAIL from support after PR743 is merged
 INVALID_TEST_EMAIL = "invalid.user@no-such-mail-domain.org"
 
 
