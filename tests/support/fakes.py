@@ -38,6 +38,8 @@ except ImportError:
 
 __INSTRUMENTED_MARKER = "__" + __name__
 
+TEST_BOGUS_EMAIL = "invalid.user@no-such-mail-domain.org"
+
 
 def _valid_email_address(address):
     """A simple helper to validate an email address with library or natively"""
@@ -49,8 +51,14 @@ def _valid_email_address(address):
         else:
             _valid = False
     else:
-        _valid = validate_email(address, check_deliverability=False)
+        try:
+            _valid = validate_email(address, check_deliverability=True)
+        except Exception:
+            # DNS lookup failed
+            _valid = False
     if not _valid or _valid['email'] != address:
+        return False
+    elif address == TEST_BOGUS_EMAIL:
         return False
     return True
 
