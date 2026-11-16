@@ -338,6 +338,8 @@ def manage_single_req(configuration, req_id, req_path, db_path, now):
         > now
     ):
         _logger.debug("throttle down account request %s retry" % req_id)
+        return
+
     req_dict = load(req_path)
     client_id = get_user_id(configuration, req_dict)
     # NOTE: use timestamp from saved request file if available
