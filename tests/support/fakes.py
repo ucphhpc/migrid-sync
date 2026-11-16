@@ -39,6 +39,22 @@ except ImportError:
 __INSTRUMENTED_MARKER = "__" + __name__
 
 
+def _valid_email_address(address):
+    """A simple helper to validate an email address with library or natively"""
+    if validate_email is None:
+        match = re.match(r'^[A-Za-z0-9+_.]+@[A-Za-z0-9.-]+\.[a-z]+$',
+                         address)
+        if match:
+            _valid = {'email': address}
+        else:
+            _valid = False
+    else:
+        _valid = validate_email(address, check_deliverability=False)
+    if not _valid or _valid['email'] != address:
+        return False
+    return True
+
+
 class FakeSendEmail:
     """
     Fake for the interception of email sending calls.
@@ -55,22 +71,8 @@ class FakeSendEmail:
         # Record any arguments upon a call to send email (discarding the
         # leading configuration argument)
         self.calls.append((args, kwargs))
-        return True
-
-    def _invalid_email_address(self, address):
-        """A simple helper to validate an email address"""
-        if validate_email is None:
-            match = re.match(r'^[A-Za-z0-9+_.]@[A-Za-z0-9.-]+\.[a-z]+$',
-                             address)
-            if match:
-                _valid = {'email': address}
-            else:
-                _valid = False
-        else:
-            _valid = validate_email(address, check_deliverability=False)
-        if not _valid or _valid['email'] != address:
-            return False
-        return True
+        # NOTE: fail on invalid address to allow emulating failure in tests
+        return _valid_email_address(args[0])
 
     def invalid_recipients(self):
         """Extract invalid recipient addresses from send email calls"""
@@ -78,10 +80,12 @@ class FakeSendEmail:
             return self._invalid
 
         invalid = set()
-        for email_address in self.all_recipients():
-            if self._invalid_email_address(email_address):
+        for args, kwargs in self.calls:
+            email_address = args[0]
+            if not _valid_email_address(email_address):
                 invalid.add(email_address)
         self._invalid = invalid
+
         return invalid
 
     def all_recipients(self):
