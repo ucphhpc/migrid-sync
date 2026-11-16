@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from typing import override
 
 from mig.lib.accountreqs import AccountRequest, AccountRequestRepository
 from mig.shared.pwcrypto import make_hash, scramble_password
@@ -36,11 +35,9 @@ test_account_request = AccountRequest(
 class AccountRequestRepositoryTestCase(MigTestCase):
     """Common functionality for account request repository test case classes."""
 
-    @override
     def _provide_configuration(self):
         return "testconfig"
 
-    @override
     def before_each(self) -> None:
         os.mkdir(self.configuration.user_pending)
 

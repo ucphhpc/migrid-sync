@@ -1,7 +1,7 @@
 import fcntl
 import os
 from datetime import datetime
-from typing import Any, override
+from typing import Any
 
 from mig.lib.users.repository import UserRepository, UserSearchFilter
 from mig.lib.users.user import User
@@ -38,11 +38,9 @@ test_user = User(
 class UserRepositoryTestCase(MigTestCase):
     """Common functionality for account request repository test case classes."""
 
-    @override
     def _provide_configuration(self):
         return "testconfig"
 
-    @override
     def before_each(self) -> None:
         os.mkdir(self.configuration.user_db_home)
         dump({}, self._db_path)
