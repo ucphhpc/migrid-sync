@@ -40,11 +40,13 @@ from mig.lib.janitor import (
     EXPIRE_REQ_DAYS,
     EXPIRE_STATE_DAYS,
     EXPIRE_TWOFACTOR_DAYS,
+    MANAGE_EXPIRY_REQ_MINUTES,
     MANAGE_TRIVIAL_REQ_MINUTES,
     REMIND_REQ_DAYS,
     SECS_PER_DAY,
     SECS_PER_HOUR,
     SECS_PER_MINUTE,
+    THROTTLE_REQ_MULTIPLIER,
     _clean_stale_state_files,
     _lookup_last_run,
     _lookup_throttle,
@@ -1691,6 +1693,78 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         fake_send_email.email_was_sent_to("test@example.com")
+
+    @unittest.skip("Fix test failure on invalid email and enable next")
+    def test_janitor_task_cleanup_throttle_after_failed_reject_invalid_mail(
+        self,
+    ):
+        """Verify proper cleanup throttle after failed invalid mail reject"""
+        TEST_INVALID_EMAIL = "invalid.user@no-such-mail-domain"
+        TEST_INVALID_DN = TEST_USER_DN.replace(
+            TEST_USER_EMAIL, TEST_INVALID_EMAIL
+        )
+        req_dict = {
+            "client_id": TEST_INVALID_DN,
+            "distinguished_name": TEST_INVALID_DN,
+            "invalid": ["Test intentional invalid"],
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
+            "email": TEST_INVALID_EMAIL,
+        }
+        saved, req_path = save_account_request(self.configuration, req_dict)
+        req_id = os.path.basename(req_path)
+
+        # Verify initial existence
+        self.assertTrue(os.path.exists(req_path))
+
+        now = time.time()
+        manage_single_req(
+            self.configuration, req_id, req_path, self.user_db_path, now
+        )
+        self.assertTrue(
+            os.path.exists(req_path),
+            "Removed req despite failed cleanup after reject for %s" % req_path,
+        )
+        fake_send_email = self.configuration.context_get("notifier").send_email
+        # NOTE: fundamentally invalid emails never reach recipients list
+        # fake_send_email.email_was_sent_to(TEST_INVALID_EMAIL)
+        fake_send_email.email_failed_as_invalid(TEST_INVALID_EMAIL)
+
+        retrieved = _lookup_throttle(
+            self.configuration, self.throttles, req_path
+        )
+        self.assertEqual(retrieved, now)
+
+        # NOTE: test again after a minute - i.e. within throttled period
+        manage_single_req(
+            self.configuration, req_id, req_path, self.user_db_path, now + 60
+        )
+        self.assertTrue(
+            os.path.exists(req_path),
+            "Removed req despite failed cleanup after reject for %s" % req_path,
+        )
+        retrieved = _lookup_throttle(
+            self.configuration, self.throttles, req_path
+        )
+        self.assertEqual(retrieved, now)
+
+        # NOTE: test again after throttled period
+        throttled_secs = (
+            60 * MANAGE_EXPIRY_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER
+        )
+        after = now + throttled_secs + 1
+        manage_single_req(
+            self.configuration, req_id, req_path, self.user_db_path, after
+        )
+        self.assertTrue(
+            os.path.exists(req_path),
+            "Removed req despite failed cleanup after reject for %s" % req_path,
+        )
+        retrieved = _lookup_throttle(
+            self.configuration, self.throttles, req_path
+        )
+        self.assertEqual(retrieved, after)
 
     def test_cleaner_with_multiple_patterns(self):
         """Test state cleaner with multiple filename patterns"""
