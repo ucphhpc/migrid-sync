@@ -140,9 +140,9 @@ class AccountRequestRepository:
                 # unpickling
                 continue
             data = unpickle(self._path(accreq_id), log)
-            if data is False:
+            if not isinstance(data, dict):
                 # do not try to construct an account request from a failed
-                # unpickle
+                # unpickle, or if the data format is unexpected (e.g. not dict)
                 continue
             accreq = AccountRequest.from_dict(data)  # type: ignore
             if accreq is not None:
