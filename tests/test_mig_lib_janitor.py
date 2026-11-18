@@ -43,6 +43,7 @@ from mig.lib.janitor import (
     MANAGE_EXPIRY_REQ_MINUTES,
     MANAGE_TRIVIAL_REQ_MINUTES,
     REMIND_REQ_DAYS,
+    RETRY_NOTIFY_DAYS,
     SECS_PER_DAY,
     SECS_PER_HOUR,
     SECS_PER_MINUTE,
@@ -73,11 +74,14 @@ from mig.shared.base import client_id_dir, distinguished_name_to_user
 from mig.shared.pwcrypto import generate_reset_token
 from mig.shared.useradm import create_user
 from tests.support import MigTestCase, ensure_dirs_exist
-from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
+from tests.support.usersupp import OTHER_USER_DN, TEST_USER_DN, UserAssertMixin
 
 TEST_USER_FULLNAME = TEST_USER_DN.split("/CN=", 1)[-1].split("/", 1)[0]
 TEST_USER_ORG = TEST_USER_DN.split("/O=", 1)[-1].split("/", 1)[0]
 TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[-1]
+OTHER_USER_FULLNAME = OTHER_USER_DN.split("/CN=", 1)[-1].split("/", 1)[0]
+OTHER_USER_ORG = OTHER_USER_DN.split("/O=", 1)[-1].split("/", 1)[0]
+OTHER_USER_EMAIL = OTHER_USER_DN.split("/emailAddress=", 1)[-1]
 TEST_SKIP_EMAIL = ""
 # TODO: adjust password reset token helpers to handle configured services
 #       it currently silently fails if not in migoid(c) or migcert
@@ -472,11 +476,11 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_handle_pending_requests(self):
         """Test combined request handling"""
-        # Create requests (valid, expired)
+        # Create requests (valid, expired, silent)
         valid_dict = {
             "client_id": TEST_USER_DN,
             "distinguished_name": TEST_USER_DN,
@@ -518,18 +522,48 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
             (expire_time, expire_time),
         )
 
+        # Create long expired request for other user to silently expire
+        silent_id = "silent_req"
+        silent_dict = {
+            "client_id": OTHER_USER_DN,
+            "distinguished_name": OTHER_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": OTHER_USER_FULLNAME,
+            "organization": OTHER_USER_ORG,
+            "password": TEST_MODERN_PW,
+            "peers": [TEST_PEER_DN],
+            "email": OTHER_USER_EMAIL,
+        }
+        saved, silent_req_path = save_account_request(
+            self.configuration, silent_dict
+        )
+        self.assertTrue(saved, "failed to save long expired req")
+        silent_id = os.path.basename(silent_req_path)
+        # Make old enough to silently expire
+        expire_time = (
+            time.time()
+            - (EXPIRE_REQ_DAYS + RETRY_NOTIFY_DAYS) * SECS_PER_DAY
+            - 1
+        )
+        os.utime(
+            os.path.join(self.configuration.user_pending, silent_id),
+            (expire_time, expire_time),
+        )
+
         # NOTE: when using real user mail we currently hit send email errors.
         #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
         # TODO: rework to handle expire before stale to avoid duplicate here
         handled = handle_pending_requests(self.configuration)
-        # self.assertEqual(handled, 2)  # 1 manage + 1 expire
-        self.assertEqual(handled, 3)  # 1 manage + 1 expire + 1 stale
+        # self.assertEqual(handled, 3)  # 1 manage + 1 expire + 1 silent
+        self.assertEqual(handled, 6)  # 2 manage + 2 expire + 2 stale
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertIn(TEST_USER_EMAIL, fake_send_email.all_recipients())
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
+        self.assertNotIn(OTHER_USER_EMAIL, fake_send_email.all_recipients())
 
     def test_handle_janitor_tasks_full(self):
         """Test full janitor task scheduler"""
@@ -724,7 +758,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         # NOTE: invalid request results in request rejected email
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_manage_single_req_expired_token(self):
         """Test request handling with expired reset token"""
@@ -777,7 +811,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     @unittest.skip("TODO: enable once fernet decrypt err handling is improved")
     def test_manage_single_req_invalid_token_decrypt(self):
@@ -821,7 +855,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         # NOTE: token verification failure results in request rejected email
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_manage_single_req_collision(self):
         """Test request handling with existing user collision"""
@@ -867,7 +901,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_manage_single_req_auth_change(self):
         """Test request handling with auth password change"""
@@ -909,7 +943,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_manage_single_req_auth_renew_without_peer_requirement(self):
         """Test request handling with authenticated renew"""
@@ -949,7 +983,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_manage_single_req_auth_renew_with_required_peer(self):
         """Test request handling with authorized renew with peer validation"""
@@ -1018,7 +1052,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_manage_single_req_auth_renew_fail_on_empty_required_peer(self):
         """Test request handling with authorized renew fails on empty required peer"""
@@ -1301,7 +1335,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         # NOTE: token verification failure results in request rejected email
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_verify_reset_token_success(self):
         """Test token verification success with valid token"""
@@ -1354,7 +1388,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_verify_reset_token_single_use(self):
         """Test token single use"""
@@ -1407,7 +1441,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
         # Change password_hash again to mimic another pw change with same token
         req_dict["password_hash"] = TEST_OTHER_MODERN_PW_PBKDF2
@@ -1438,7 +1472,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_twice)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_verify_reset_token_single_use_race(self):
         """Test token single use even when submitted under duress"""
@@ -1497,7 +1531,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
         # Now verify race fails since pw hash changed to invalidate token
         with self.assertLogs(level="WARNING") as log_capture:
@@ -1519,7 +1553,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_twice)
-        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
+        self.assertTrue(fake_send_email.email_was_sent_to(TEST_USER_EMAIL))
 
     def test_remind_and_expire_edge_cases(self):
         """Test request expiration with exact boundary timestamps"""
@@ -1695,7 +1729,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         )
 
         fake_send_email = self.configuration.context_get("notifier").send_email
-        fake_send_email.email_was_sent_to("test@example.com")
+        fake_send_email.email_was_sent_to(TEST_USER_EMAIL)
 
     @unittest.skip("Fix test failure on invalid email and enable next")
     def test_janitor_task_cleanup_throttle_after_failed_expire_invalid_mail(

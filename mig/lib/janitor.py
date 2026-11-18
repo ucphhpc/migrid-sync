@@ -48,6 +48,7 @@ from mig.shared.userdb import default_db_path, load_user_dict
 
 REMIND_REQ_DAYS = 5
 EXPIRE_REQ_DAYS = 30
+RETRY_NOTIFY_DAYS = 10
 MANAGE_TRIVIAL_REQ_MINUTES = 5
 # Throttle next attempt MANAGE_TRIVIAL_REQ_MINUTES times upon failed attempt.
 # I.e. retry in MANAGE_TRIVIAL_REQ_MINUTES * THROTTLE_REQ_MULTIPLIER minutes.
@@ -605,7 +606,11 @@ def remind_and_expire_user_pending(configuration, now=None):
                 "failed to be verified and accepted within %d day limit"
                 % EXPIRE_REQ_DAYS
             )
-            user_copy = True
+            # Retry with user notify for some days before silent clean on error
+            if req_age_days > EXPIRE_REQ_DAYS + RETRY_NOTIFY_DAYS:
+                user_copy = False
+            else:
+                user_copy = True
             admin_copy = True
             rej_status, rej_err = reject_account_req(
                 req_id,
