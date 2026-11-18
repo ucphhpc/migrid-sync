@@ -73,7 +73,7 @@ from mig.shared.accountreq import save_account_request
 from mig.shared.base import client_id_dir, distinguished_name_to_user
 from mig.shared.pwcrypto import generate_reset_token
 from mig.shared.useradm import create_user
-from tests.support import MigTestCase, ensure_dirs_exist
+from tests.support import TEST_BOGUS_EMAIL, MigTestCase, ensure_dirs_exist
 from tests.support.usersupp import OTHER_USER_DN, TEST_USER_DN, UserAssertMixin
 
 TEST_USER_FULLNAME = TEST_USER_DN.split("/CN=", 1)[-1].split("/", 1)[0]
@@ -106,8 +106,7 @@ TEST_INVALID_PW_PBKDF2 = (
 )
 # NOTE: tokens always should contain a multiple of 4 chars
 INVALID_TEST_TOKEN = "THIS_RESET_TOKEN_WAS_NEVER_VALID"
-# TODO: switch to TEST_BOGUS_EMAIL from support after PR743 is merged
-INVALID_TEST_EMAIL = "invalid.user@no-such-mail-domain.org"
+INVALID_TEST_EMAIL = TEST_BOGUS_EMAIL
 
 
 class MigLibJanitor(MigTestCase, UserAssertMixin):
@@ -1731,7 +1730,6 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         fake_send_email = self.configuration.context_get("notifier").send_email
         fake_send_email.email_was_sent_to(TEST_USER_EMAIL)
 
-    @unittest.skip("Fix test failure on invalid email and enable next")
     def test_janitor_task_cleanup_throttle_after_failed_expire_invalid_mail(
         self,
     ):
