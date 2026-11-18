@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # snapahotsupp - snapshot helpers for unit tests
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -150,7 +150,10 @@ class SnapshotAssertMixin:
         In the case a snapshot does not exist it is saved on first invocation.
         """
 
-        file_name = f"{unittest.TestCase.id(self)}.{extension}"
+        file_name = "{name}.{ext}".format(
+            name=unittest.TestCase.id(self),
+            ext=extension,
+        )
         file_path = os.path.join(TEST_SNAPSHOTS_DIR, file_name)
 
         if not os.path.isfile(file_path) or _force_refresh_snapshots():

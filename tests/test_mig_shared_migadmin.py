@@ -2,7 +2,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_migadmin - unit test of the corresponding mig shared module
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -44,9 +44,6 @@ from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
 class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
     """Test the main function of the migadmin module."""
 
-    config_file: tempfile.NamedTemporaryFile
-    tempdir: str
-
     def __init__(self, *args) -> None:
         super().__init__(*args)
 
@@ -54,7 +51,9 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
         return "testconfig"
 
     def before_each(self) -> None:
-        self.tempdir = tempfile.mkdtemp(prefix=self.id().replace(".", "_"))
+        self.tempdir = self.temppath(
+            self.id().replace(".", "_"), ensure_dir=True
+        )
         self.configuration.site_enable_migadmin = True
         self.configuration.migadmin_view_access = "ANY"
         self.configuration.migadmin_act_access = "ANY"
@@ -67,10 +66,7 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
             delete=False,
         )
 
-    def after_each(self) -> None:
-        shutil.rmtree(self.tempdir)
-
-    def write_config_and_patch_environ(self) -> ContextManager:
+    def write_config_and_patch_environ(self) -> ContextManager[dict[str, str]]:
         """
         Writes the configuration file, and patches `os.environ` with
         the location, along with other required values.
@@ -80,7 +76,7 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
         self.config_file.close()
 
         environ = {
-            "MIG_CONF": self.config_file.name,
+            "MIG_CONF": self.config_file.name,  # type: ignore
             "SCRIPT_URI": "https://test.url",
             generic_id_field: "https://openidv2.domain",
         }

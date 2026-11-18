@@ -94,8 +94,8 @@ class FakeConfiguration(SimpleNamespace):
 
 def _ini_section_from_config(
     conf,
-    attrs: list[str | tuple[str, Callable[[str], str]]],
-    removeprefix: str | None = None,
+    attr_specs: list[str | tuple[str, Callable[[str], str]]],
+    attr_prefix_to_remove: str | None = None,
 ) -> dict[str, Any]:
     """
     Create a dictionary containing ini-style configuration values,
@@ -103,33 +103,33 @@ def _ini_section_from_config(
 
     Args:
         conf: A configuration object.
-        attrs: A list of configuration attributes to map the specific section's
-            values. If an attribute is a string the attribute is mapped over
-            directly (but the value is stringified) otherwise the given
-            function is called on the configuration attribute.
-        removeprefix: If given, remove the specified prefix from attribute names
-            in the resulting ini section dictionary.
+        attrs_specs: A list of configuration attributes to map the specific
+            section's values. If an attribute is a string the attribute is
+            mapped over directly (but the value is stringified) otherwise the
+            given function is called on the configuration attribute.
+        attr_prefix_to_remove: If given, remove the specified prefix from
+            attribute names in the resulting ini section dictionary.
 
     Returns:
         A dictionary with the mapped configuration attributes.
     """
     ini = {}
 
-    for key in attrs:
-        conf_key = key
-        ini_value = str
+    for attr_spec in attr_specs:
+        if isinstance(attr_spec, tuple):
+            conf_attr_name, to_ini_value = attr_spec
+        else:
+            conf_attr_name = attr_spec
+            to_ini_value = str
 
-        if not isinstance(key, str):
-            ini_value = key[1]
-            conf_key = key[0]
-
-        if not hasattr(conf, conf_key):
+        if not hasattr(conf, conf_attr_name):
             continue
 
         ini_key = (
-            conf_key.removeprefix(removeprefix) if removeprefix else conf_key
+            conf_attr_name.removeprefix(attr_prefix_to_remove)
+            if attr_prefix_to_remove else conf_attr_name
         )
-        ini[ini_key] = ini_value(getattr(conf, conf_key))
+        ini[ini_key] = to_ini_value(getattr(conf, conf_attr_name))
 
     return ini
 
@@ -318,7 +318,7 @@ def write_configuration(conf, file: TextIO) -> None:
         [
             "site_enable_migadmin",
         ],
-        removeprefix="site_",
+        attr_prefix_to_remove="site_",
     )
     config["SCHEDULER"] = _ini_section_from_config(
         conf,
