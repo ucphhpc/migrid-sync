@@ -176,6 +176,18 @@ class TestPostForward(AccountRequestAPITestCase):
         self.assertEqual(status, 200)
         self.assertEqual(actual, expected)
 
+    def test_invalid_account_requests_id_gets_rejected(self) -> None:
+        json_response = self.assert_wsgi_post(
+            "forward",
+            TEST_ADMIN_CLIENT_ID,
+            account_request_ids=["invalid/account/request"],
+        )
+
+        status = json_response["status"]
+        error = json_response["error"]
+        self.assertEqual(status, 400)
+        self.assertEqual(error, "invalid account request id(s) given")
+
 
 class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
 
