@@ -27,9 +27,40 @@
 """Fake implementations of various assistant functionality used by MiG logic."""
 
 import inspect
+import re
 from types import SimpleNamespace
 
+# NOTE: we rely on email-validator if available but fall-back to dumb check
+try:
+    from email_validator import validate_email
+except ImportError:
+    validate_email = None
+
 __INSTRUMENTED_MARKER = "__" + __name__
+
+TEST_BOGUS_EMAIL = "invalid.user@no-such-mail-domain.org"
+
+
+def _valid_email_address(address):
+    """A simple helper to validate an email address with library or natively"""
+    if validate_email is None:
+        match = re.match(r"^[A-Za-z0-9+_.]+@[A-Za-z0-9.-]+\.[a-z]+$", address)
+        if match:
+            _valid = {"email": address}
+        else:
+            _valid = False
+    else:
+        try:
+            # NOTE: don't use delivery check here to let example emails pass
+            _valid = validate_email(address, check_deliverability=False)
+        except Exception:
+            # DNS lookup failed
+            _valid = False
+    if not _valid or _valid["email"] != address:
+        return False
+    elif address == TEST_BOGUS_EMAIL:
+        return False
+    return True
 
 
 class FakeSendEmail:
@@ -42,14 +73,31 @@ class FakeSendEmail:
         self._checked = set()
         self._forgive = False
         self._recipients = None
+        self._invalid = None
 
     def __call__(self, *args, **kwargs):
         # Record any arguments upon a call to send email (discarding the
         # leading configuration argument)
         self.calls.append((args, kwargs))
-        return True
+        # NOTE: fail on invalid address to allow emulating failure in tests
+        return _valid_email_address(args[0])
+
+    def invalid_recipients(self):
+        """Extract invalid recipient addresses from send email calls"""
+        if self._invalid:
+            return self._invalid
+
+        invalid = set()
+        for args, kwargs in self.calls:
+            email_address = args[0]
+            if not _valid_email_address(email_address):
+                invalid.add(email_address)
+        self._invalid = invalid
+
+        return invalid
 
     def all_recipients(self):
+        """Extract recipient addresses from send email calls"""
         if self._recipients:
             return self._recipients
 
@@ -61,22 +109,24 @@ class FakeSendEmail:
         return recipients
 
     def check_empty_and_reset(self):
+        """Verify that only expected send email calls were made - if pending"""
         if self.is_checked():
             # nothing to do
             return
 
-        suprise_recipients = self.all_recipients() - self._checked
-        if not suprise_recipients:
+        surprise_recipients = self.all_recipients() - self._checked
+        if not surprise_recipients:
             # all have been checked
             return
 
-        display_recipients = sorted(suprise_recipients)
+        display_recipients = sorted(surprise_recipients)
         raise AssertionError(
             "detected email sending without expectation: \n  %s"
             % ("\n  ".join(display_recipients),)
         )
 
     def is_checked(self):
+        """Whether delivery was already checked by tests"""
         if self._forgive:
             return True
 
@@ -87,13 +137,16 @@ class FakeSendEmail:
         return False
 
     def forgive_email(self):
+        """Silence warnings about unexpected send email calls"""
         self._forgive = True
 
     def _called_times(self, count):
+        """Shared helper to inspect number of send email calls"""
         return len(self.calls) == count
 
     @property
     def called_once(self):
+        """Check if exactly one send email call was made"""
         was_called_once = self._called_times(1)
         if was_called_once:
             self._forgive = True
@@ -101,26 +154,35 @@ class FakeSendEmail:
 
     @property
     def called_twice(self):
+        """Check if exactly two send email calls were made"""
         return self._called_times(2)
 
     def email_was_sent_to(self, email_address):
+        """Check if an email was sent to email_address"""
         recipients = self.all_recipients()
 
         assert (
             email_address in recipients
-        ), "no email was not set to recipient: %s" % (email_address,)
+        ), "no send email call with recipient: %s" % (email_address,)
 
         self._checked.add(email_address)
 
         return email_address in recipients
 
+    def email_failed_as_invalid(self, email_address):
+        """Check if email_address failed validation when attempted sent"""
+        invalid = self.invalid_recipients()
+        return email_address in invalid
+
     def total_emails_sent(self):
+        """Count the number of send_email calls made"""
         total = len(self.calls)
         self._forgive = True
         return total
 
 
 def make_fake_notifier(mig_test_case=None):
+    """Instantiate fake email notifier for dev/test centexts."""
     fake_send_email = FakeSendEmail()
 
     if mig_test_case:
@@ -130,6 +192,7 @@ def make_fake_notifier(mig_test_case=None):
 
 
 def instrument_test_case(mig_test_case=None, mig_configuration=None):
+    """Bind instrumentation to a unit test case"""
     assert inspect.ismethod(
         getattr(mig_configuration, "context_set", None)
     ), "supplied configuration must be usable at runtime"
