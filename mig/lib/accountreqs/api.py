@@ -172,6 +172,8 @@ def post_reject(
     user_repo = UserRepository(configuration)
 
     accreq_ids = request_info.arg_value("account_request_ids", list)
+    if not validate_account_request_ids(accreq_ids):
+        return create_handler_response(400, error="invalid account request id(s) given")
 
     errors: dict[str, list[str]] = defaultdict(list)
     successes: list[str] = []
