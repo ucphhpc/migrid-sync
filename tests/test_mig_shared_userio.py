@@ -523,7 +523,7 @@ class TestMigSharedUserIO__legacy_main(MigTestCase):
     """Legacy tests for corresponding module self-checks"""
 
     def _provide_configuration(self):
-        return 'testconfig'
+        return "testconfig"
 
     # TODO: migrate all legacy self-check functionality into the above?
     def test_existing_main(self):
@@ -538,14 +538,21 @@ class TestMigSharedUserIO__legacy_main(MigTestCase):
                 else:
                     identifying_message = "unknown"
                 raise AssertionError(
-                    'legacy test failure: %s' % (identifying_message,))
+                    "legacy test failure: %s" % (identifying_message,)
+                )
+
         raise_on_error_exit.last_print = None
 
         def record_last_print(value):
             """Helper to show last print on error"""
             raise_on_error_exit.last_print = value
 
-        legacy_main(self.configuration, print=record_last_print, _exit=raise_on_error_exit, _argv=[])
+        legacy_main(
+            self.configuration,
+            print=record_last_print,
+            _exit=raise_on_error_exit,
+            _argv=[],
+        )
 
 
 if __name__ == "__main__":

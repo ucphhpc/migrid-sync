@@ -417,7 +417,8 @@ def run_cron_command(
         os.environ["PATH_INFO"] = "%s.py" % function
         # Make sure SCRIPT_URI is available for URL lookup in input validation
         os.environ["SCRIPT_URI"] = os.environ.get(
-            "SCRIPT_URI", "https://localhost/cgi-bin/%s.py" % function)
+            "SCRIPT_URI", "https://localhost/cgi-bin/%s.py" % function
+        )
         os.environ["REQUEST_METHOD"] = form_method.upper()
         # We may need a REMOTE_ADDR for gdplog call even if not really enabled
         os.environ["REMOTE_ADDR"] = "127.0.0.1"
@@ -436,8 +437,7 @@ def run_cron_command(
         _restore_env(saved_environ, os.environ)
         raise exc
     logger.info(
-        "(%s) done running command for %s: %s" % (
-            pid, target_path, command_str)
+        "(%s) done running command for %s: %s" % (pid, target_path, command_str)
     )
 
     # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
@@ -519,7 +519,8 @@ def run_events_command(
         os.environ["PATH_INFO"] = "%s.py" % function
         # Make sure SCRIPT_URI is available for URL lookup in input validation
         os.environ["SCRIPT_URI"] = os.environ.get(
-            "SCRIPT_URI", "https://localhost/cgi-bin/%s.py" % function)
+            "SCRIPT_URI", "https://localhost/cgi-bin/%s.py" % function
+        )
         os.environ["REQUEST_METHOD"] = form_method.upper()
         # We may need a REMOTE_ADDR for gdplog call even if not really enabled
         os.environ["REMOTE_ADDR"] = "127.0.0.1"
@@ -538,8 +539,7 @@ def run_events_command(
         _restore_env(saved_environ, os.environ)
         raise exc
     logger.info(
-        "(%s) done running command for %s: %s" % (
-            pid, target_path, command_str)
+        "(%s) done running command for %s: %s" % (pid, target_path, command_str)
     )
 
     # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
@@ -630,5 +630,6 @@ def legacy_main(conf, print=print, _exit=sys.exit):
 
 if __name__ == "__main__":
     from mig.shared.conf import get_configuration_object
+
     conf = get_configuration_object(skip_log=True, disable_auth_log=True)
     legacy_main(conf)

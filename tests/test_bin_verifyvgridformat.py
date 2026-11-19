@@ -34,6 +34,7 @@ import unittest
 from unittest.mock import patch
 
 from bin.verifyvgridformat import verify_vgrid_format
+
 # Imports required for building the vgrid test fixtures
 from mig.shared.vgrid import vgrid_flat_name
 
@@ -197,9 +198,7 @@ class TestBinVerifyVgridFormat(MigTestCase):
         """Verify returns True when targeting a named vgrid in modern format."""
         self._make_vgrid("testvgrid")
         self._make_vgrid_files_symlink("testvgrid")
-        result = verify_vgrid_format(
-            self.configuration, vgrid_name="testvgrid"
-        )
+        result = verify_vgrid_format(self.configuration, vgrid_name="testvgrid")
         self.assertTrue(result)
 
     def test_specific_vgrid_name_legacy_format_returns_true(self):
@@ -219,9 +218,7 @@ class TestBinVerifyVgridFormat(MigTestCase):
         """Verify verbose mode with no vgrids produces no output and returns True."""
         captured = io.StringIO()
         with patch("sys.stdout", captured):
-            result = verify_vgrid_format(
-                self.configuration, verbose=True
-            )
+            result = verify_vgrid_format(self.configuration, verbose=True)
         self.assertTrue(result)
         self.assertEqual(captured.getvalue(), "")
 
@@ -231,9 +228,7 @@ class TestBinVerifyVgridFormat(MigTestCase):
         self._make_vgrid_files_symlink("testvgrid")
         captured = io.StringIO()
         with patch("sys.stdout", captured):
-            result = verify_vgrid_format(
-                self.configuration, verbose=True
-            )
+            result = verify_vgrid_format(self.configuration, verbose=True)
         self.assertTrue(result)
         self.assertIn("up to date", captured.getvalue())
 
@@ -243,9 +238,7 @@ class TestBinVerifyVgridFormat(MigTestCase):
         self._make_vgrid_files_dir("testvgrid")
         captured = io.StringIO()
         with patch("sys.stdout", captured):
-            result = verify_vgrid_format(
-                self.configuration, verbose=True
-            )
+            result = verify_vgrid_format(self.configuration, verbose=True)
         self.assertTrue(result)
         output = captured.getvalue()
         self.assertIn("legacy format", output)

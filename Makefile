@@ -6,9 +6,10 @@ ifndef PY
 	PY = 3
 endif
 
-# TODO: enable on these dirs when ready, but just leave to dummy init for now
+# TODO: rename LINT_ENFORCE_DIRS e.g. to ENFORCE_CODE_QUALITY_PATHS to fit use
+# TODO: enforce on more paths when ready, but limit to base compliant ones now
 #LINT_ENFORCE_DIRS = ./bin ./mig/lib ./sbin ./tests
-LINT_ENFORCE_DIRS = ./mig/__init__.py
+LINT_ENFORCE_DIRS = ./mig/__init__.py ./mig/lib ./tests
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
 ifdef PYTHON_BIN
@@ -16,6 +17,7 @@ ifdef PYTHON_BIN
 else
 	PYTHON_BIN = './envhelp/python3'
 endif
+
 
 ifeq ($(ALLDEPS),1)
 	REQS_PATH = ./recommended.txt
@@ -29,14 +31,17 @@ info:
 	@echo
 	@echo "The following should help you get started:"
 	@echo
-	@echo "'make test'            - run the test suite (default python 3)"
-	@echo "'make test PYVER=X.Y'  - run the test suite (python version X.Y)"
-	@echo "'make unittest'        - execute tests locally for development"
-	@echo "'make lint-python'     - lint python code (in LINT_ENFORCE_DIRS)"
-	@echo "'make secscan-python'  - security scan python code (in LINT_ENFORCE_DIRS)"
-	@echo "'make format-python'   - format python code (in LINT_ENFORCE_DIRS)"
-	@echo "'make clean'           - clean up cache and other temporary files"
-	@echo "'make distclean'       - clean up completely to pristine state"
+	@echo "'make test'                   - run the test suite (default python 3)"
+	@echo "'make test PYVER=X.Y'         - run the test suite (python version X.Y)"
+	@echo "'make unittest'               - execute tests locally for development"
+	@echo "'make coverage'               - measure coverage of unittests"
+	@echo "'make lint-python'            - lint python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make lint-fix-python'        - lint and fix python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make lint-fix-unsafe-python' - lint and force fix python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make secscan-python'         - security scan python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make format-python'          - format python code (in LINT_ENFORCE_DIRS)"
+	@echo "'make clean'                  - clean up cache and other temporary files"
+	@echo "'make distclean'              - clean up completely to pristine state"
 
 .PHONY: help
 help: info
@@ -76,6 +81,18 @@ lint-python: dependencies
 	@$(LOCAL_PYTHON_BIN) -m pylint $(LINT_ENFORCE_DIRS) --errors-only
 	@$(LOCAL_PYTHON_BIN) -m ruff check $(LINT_ENFORCE_DIRS)
 
+.PHONY: lint-fix-python
+lint-fix-python: dependencies
+	@$(LOCAL_PYTHON_BIN) -m ruff check --fix $(LINT_ENFORCE_DIRS)
+
+.PHONY: lint-fix-unsafe-python
+lint-fix-unsafe-python: dependencies
+	@echo
+	@echo "Force-fixing lint issues with unsafe flag - please carefuly review!"
+	@echo
+	@sleep 3
+	@$(LOCAL_PYTHON_BIN) -m ruff check --fix --unsafe-fixes $(LINT_ENFORCE_DIRS)
+
 .PHONY: secscan
 secscan:
 ifneq ($(MIG_ENV),'local')
@@ -109,6 +126,12 @@ test: dependencies testconfig
 unittest: dependencies testconfig
 	@$(LOCAL_PYTHON_BIN) -m unittest discover -s tests/
 
+.PHONY: coverage
+coverage: dependencies testconfig
+	@$(LOCAL_PYTHON_BIN) -m coverage run -m unittest discover -s tests/
+	@$(LOCAL_PYTHON_BIN) -m coverage lcov
+	@$(LOCAL_PYTHON_BIN) -m coverage report
+
 .PHONY: dependencies
 dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/local.depends
 
@@ -118,18 +141,28 @@ testconfig: ./envhelp/output/testconfs
 ./envhelp/output/testconfs:
 	@./envhelp/makeconfig test --docker
 	@./envhelp/makeconfig test
+	@echo "prime any configured templates"
+	@$(LOCAL_PYTHON_BIN) -m mig.lib.templates prime \
+		-c ./envhelp/output/testconfs-local/MiGserver.conf
 
 ifeq ($(MIG_ENV),'local')
 ./envhelp/local.depends: $(REQS_PATH) local-requirements.txt
 else
 ./envhelp/local.depends: $(REQS_PATH)
 endif
+ifeq ($(MIG_ENV),'local')
+	@echo "installing development dependencies"
+	@$(LOCAL_PYTHON_BIN) -m pip install \
+		-r local-requirements.txt
+endif
 	@echo "installing dependencies from $(REQS_PATH)"
 	@$(LOCAL_PYTHON_BIN) -m pip install -r $(REQS_PATH)
 ifeq ($(MIG_ENV),'local')
-	@echo ""
-	@echo "installing development dependencies"
-	@$(LOCAL_PYTHON_BIN) -m pip install -r local-requirements.txt
+	@echo "installing plugins"
+	@$(LOCAL_PYTHON_BIN) -m pip install \
+		-r ./mig/install/requirements/migux-requirements.txt
+	@echo "running plugins postinstall"
+	@$(LOCAL_PYTHON_BIN) ./mig/install/postinstall/migux-postinstall
 endif
 	@touch ./envhelp/local.depends
 
@@ -138,4 +171,4 @@ endif
 	@/usr/bin/env python3 -m venv ./envhelp/venv
 	@rm -f ./envhelp/local.depends
 	@echo "upgrading venv pip as required for some dependencies"
-	@./envhelp/venv/bin/pip3 install --upgrade pip
+	@$(LOCAL_PYTHON_BIN) -m pip install --upgrade pip

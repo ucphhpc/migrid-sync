@@ -33,7 +33,7 @@ from __future__ import absolute_import
 from mig.shared import returnvalues
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.init import initialize_main_variables
-from mig.shared.htmlgen import themed_styles, themed_scripts, menu_items
+from mig.shared.htmlgen import themed_styles, themed_scripts, get_menu_items
 from mig.shared.settings import load_settings
 
 
@@ -74,6 +74,7 @@ def main(client_id, user_arguments_dict):
     if not user_settings:
         user_settings = {}
 
+    menu_items = get_menu_items(user_settings=user_settings)
     default_page = user_settings.get('DEFAULT_PAGE', None)
     if default_page and default_page in menu_items:
         redirect_location = menu_items[default_page]['url']

@@ -27,6 +27,9 @@ wheels/
 *.egg
 MANIFEST
 
+# Plugins
+mig/assets/migux/
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -41,6 +44,7 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .coverage
+coverage.lcov
 .coverage.*
 .cache
 nosetests.xml

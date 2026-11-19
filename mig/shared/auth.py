@@ -215,7 +215,7 @@ def get_twofactor_secrets(configuration, client_id):
     else:
         username = client_id
     otp_uri = totp.provisioning_uri(
-        username, issuer_name=configuration.short_title)
+        name=username, issuer_name=configuration.short_title)
     # Some auth apps like FreeOTP support addition of logo with &image=PNG_URL
     # Testing is easy with https://freeotp.github.io/qrcode.html
     if configuration.site_logo_left.endswith('.png'):

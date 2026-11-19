@@ -105,7 +105,7 @@ from mig.shared.griddaemons.ftps import default_max_user_hits, \
     update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
     check_twofactor_session, validate_auth_attempt
 from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.pwcrypto import make_simple_hash
+from mig.shared.pwcrypto import make_simple_hash, valid_login_legacy_password
 from mig.shared.tlsserver import hardened_openssl_context
 from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_sharelink_id
@@ -217,6 +217,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         account_accessible = False
         valid_password = False
         valid_twofa = False
+        legacy_password = False
         exceeded_rate_limit = False
         client_ip = handler.remote_ip
         client_port = handler.remote_port
@@ -286,6 +287,9 @@ class MiGUserAuthorizer(DummyAuthorizer):
                             password_offered, password_allowed,
                             hash_cache, strict_password_policy, allow_legacy):
                         valid_password = True
+                        if valid_login_legacy_password(configuration,
+                                                       password):
+                            legacy_password = True
                         break
             if valid_password and check_twofactor_session(
                     configuration, username, enforce_address, 'ftps'):
@@ -307,6 +311,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
             valid_twofa=valid_twofa,
             authtype_enabled=password_enabled,
             valid_auth=valid_password,
+            legacy_password=legacy_password,
             exceeded_rate_limit=exceeded_rate_limit,
             user_abuse_hits=user_abuse_hits,
             proto_abuse_hits=proto_abuse_hits,

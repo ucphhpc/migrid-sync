@@ -121,8 +121,8 @@ from mig.shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
 from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from mig.shared.notification import send_system_notification
-from mig.shared.pwcrypto import make_scramble, unscramble_digest, \
-    make_simple_hash, valid_login_password
+from mig.shared.pwcrypto import unscramble_digest, \
+    make_simple_hash, valid_login_password, valid_login_legacy_password
 from mig.shared.sslsession import ssl_session_token
 from mig.shared.tlsserver import hardened_ssl_context
 from mig.shared.useradm import check_password_hash, generate_password_hash, \
@@ -370,7 +370,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 # call shutdown() before close().
                 clean_sock.shutdown(socket.SHUT_RDWR)
                 clean_sock.close()
-            except Exception as exc:
+            except Exception:
                 pass
 
     def get_environ(self, ssl_sock):
@@ -490,6 +490,7 @@ class MiGDomainController(SimpleDomainController):
                       valid_digest,
                       password_auth,
                       valid_password,
+                      legacy_password,
                       exceeded_rate_limit):
         """Update statistics cache"""
         if self.config['enable_stats']:
@@ -521,6 +522,7 @@ class MiGDomainController(SimpleDomainController):
                     'digest_failed': 0,
                     'password_accepted': 0,
                     'password_failed': 0,
+                    'legacy_password': 0,
                 }
 
             if valid_session:
@@ -541,6 +543,8 @@ class MiGDomainController(SimpleDomainController):
             elif password_auth:
                 if valid_password and valid_twofa:
                     stats['password_accepted'] += 1
+                    if legacy_password:
+                        stats['legacy_password'] += 1
                 elif valid_password and not valid_twofa:
                     stats['invalid_twofa'] += 1
                 else:
@@ -592,7 +596,7 @@ class MiGDomainController(SimpleDomainController):
                 active_sessions = {}
             expired = 0
             for cache_id in list(self.config['mig_dc']['digest_cache']):
-                if not cache_id in active_sessions:
+                if cache_id not in active_sessions:
                     # logger.debug("expire digest cache entry for inactive %s" %
                     #             cache_id)
                     del self.config['mig_dc']['digest_cache'][cache_id]
@@ -676,6 +680,7 @@ class MiGDomainController(SimpleDomainController):
         valid_password = False
         valid_digest = False
         valid_twofa = False
+        legacy_password = False
         exceeded_rate_limit = False
         invalid_username = False
         invalid_user = False
@@ -785,6 +790,9 @@ class MiGDomainController(SimpleDomainController):
                                                strict_policy, allow_legacy):
                             result = True
                             valid_password = True
+                            if valid_login_legacy_password(configuration,
+                                                           password):
+                                legacy_password = True
                             break
 
                 environ['http_authenticator.password_enabled'] = password_enabled
@@ -881,6 +889,7 @@ class MiGDomainController(SimpleDomainController):
                 valid_twofa=valid_twofa,
                 authtype_enabled=(password_enabled or digest_enabled),
                 valid_auth=(valid_password or valid_digest),
+                legacy_password=legacy_password,
                 exceeded_rate_limit=exceeded_rate_limit,
                 user_abuse_hits=user_abuse_hits,
                 proto_abuse_hits=proto_abuse_hits,
@@ -921,6 +930,7 @@ class MiGDomainController(SimpleDomainController):
             valid_digest,
             authtype == 'password',
             valid_password,
+            legacy_password,
             exceeded_rate_limit)
 
         return result
@@ -1432,7 +1442,7 @@ class MiGFilesystemProvider(FilesystemProvider):
                 if os.path.islink(user_chroot):
                     try:
                         user_chroot = os.readlink(user_chroot)
-                    except Exception as exc:
+                    except Exception:
                         logger.error("could not expand link %s" % user_chroot)
                         continue
                 break
@@ -1933,8 +1943,10 @@ def run(configuration):
         native_logger.setLevel(logger.getEffectiveLevel())
 
     # NOTE: parent FilesystemProvider changed constructor API slightly in 4
+    fs_opts = daemon_conf['fs_dav_provider']
     mig_fs_provider = MiGFilesystemProvider(daemon_conf['root_dir'],
-                                            readonly=daemon_conf['read_only'])
+                                            readonly=daemon_conf['read_only'],
+                                            fs_opts=fs_opts)
     mig_fs_provider.post_init(configuration, dav_conf)
     config.update({
         "provider_mapping": {
@@ -2083,6 +2095,10 @@ unless it is available in mig/server/MiGserver.conf
     configuration.daemon_conf = {
         'host': address,
         'port': port,
+        # NOTE: allow follow symlinks with chrooting e.g. for vgrid shares
+        'fs_dav_provider': {
+            'follow_symlinks': True,
+        },
         'root_dir': os.path.abspath(configuration.user_home),
         'chmod_exceptions': chmod_exceptions,
         'chroot_exceptions': chroot_exceptions,

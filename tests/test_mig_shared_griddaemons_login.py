@@ -691,13 +691,9 @@ class MigSharedGriddaemonsLogin__get_job_changes(MigTestCase):
         # Create sample credential files
         self.test_user_home = self._provision_test_user(self, TEST_USER_DN)
         self.start_time = time.time()
-        auth_files = _prepare_auth_files(
-            self.test_user_home,
-            ["ssh"]
-        )
+        auth_files = _prepare_auth_files(self.test_user_home, ["ssh"])
         self.auth_keys_path, self.auth_passwords_path = auth_files
         self.auth_digests_path = None
-
 
     def test_get_job_changes_new_job(self):
         """Verify that a new job mrsl file is detected as a change"""
@@ -810,13 +806,9 @@ class MigSharedGriddaemonsLogin__get_share_changes(MigTestCase):
 
         self.test_user_home = self._provision_test_user(self, TEST_USER_DN)
         self.start_time = time.time()
-        auth_files = _prepare_auth_files(
-            self.test_user_home,
-            ["ssh"]
-        )
+        auth_files = _prepare_auth_files(self.test_user_home, ["ssh"])
         self.auth_keys_path, self.auth_passwords_path = auth_files
         self.auth_digests_path = None
-
 
     def test_get_share_changes_detects_updates(self):
         """Verify that share link and key file changes are detected"""
@@ -1087,7 +1079,9 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             "RESOURCE_CONFIG": {"HOSTURL": "localhost"},
         }
         # Manually set the modification time on the job files to be current_time
-        _create_job_mrsl_file(self, "staticjob", job_dict, override_modification_time=start_time)
+        _create_job_mrsl_file(
+            self, "staticjob", job_dict, override_modification_time=start_time
+        )
 
         add_job_object(
             self.configuration,
@@ -1114,7 +1108,9 @@ class MigSharedGriddaemonsLogin__refresh_job_creds(MigTestCase):
             "RESOURCE_CONFIG": {"HOSTURL": "localhost"},
         }
 
-        _create_job_mrsl_file(self, TEST_JOB_ID, job_dict, override_modification_time=start_time)
+        _create_job_mrsl_file(
+            self, TEST_JOB_ID, job_dict, override_modification_time=start_time
+        )
 
         conf, changed = refresh_job_creds(
             self.configuration, "sftp", TEST_JOB_ID
@@ -1471,10 +1467,7 @@ class MigSharedGriddaemonsLogin__refresh_share_creds(MigTestCase):
         self.configuration.daemon_conf["allow_digest"] = False
 
         self.test_user_home = self._provision_test_user(self, TEST_USER_DN)
-        auth_files = _prepare_auth_files(
-            self.test_user_home,
-            ["ssh"]
-        )
+        auth_files = _prepare_auth_files(self.test_user_home, ["ssh"])
         self.auth_keys_path, self.auth_passwords_path = auth_files
         self.auth_digests_path = None
 

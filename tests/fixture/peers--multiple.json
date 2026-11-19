@@ -1,0 +1,59 @@
+{
+  "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Peer User 1/emailAddress=peer1@example.com": {
+    "full_name": "Test Peer User 1",
+    "organization": "Test Org",
+    "state": "NA",
+    "country": "DK",
+    "email": "peer1@example.com",
+    "comment": "test@example.com",
+    "locality": "",
+    "organizational_unit": "",
+    "expire": {
+      "_FixtureHint": true,
+      "hint": "today_relative_date",
+      "modifier": "days|+5",
+      "value": 0
+    },
+    "created": 1727434813.0792377,
+    "openid_names": [],
+    "distinguished_name": "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Peer User 1/emailAddress=peer1@example.com"
+  },
+  "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Peer Test User 2/emailAddress=peer2@example.com": {
+    "full_name": "Peer Test User 2",
+    "organization": "Test Org",
+    "state": "NA",
+    "country": "DK",
+    "email": "peer2@example.com",
+    "comment": "test@example.com",
+    "locality": "",
+    "organizational_unit": "",
+    "expire": {
+      "_FixtureHint": true,
+      "hint": "today_relative_date",
+      "modifier": "days|+5",
+      "value": 0
+    },
+    "created": 1727434813.0792377,
+    "openid_names": [],
+    "distinguished_name": "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Peer Test User 2/emailAddress=peer2@example.com"
+  },
+  "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Peer User 3/emailAddress=peer2@example.com": {
+    "full_name": "Test Peer User 3",
+    "organization": "Test Org",
+    "state": "NA",
+    "country": "DK",
+    "email": "peer2@example.com",
+    "comment": "test@example.com",
+    "locality": "",
+    "organizational_unit": "",
+    "expire": {
+      "_FixtureHint": true,
+      "hint": "today_relative_date",
+      "modifier": "days|+5",
+      "value": 0
+    },
+    "created": 1727434813.0792377,
+    "openid_names": [],
+    "distinguished_name": "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test Peer User 3/emailAddress=peer2@example.com"
+  }
+}

@@ -31,13 +31,13 @@ import binascii
 import os
 import sys
 
+from mig.shared.compat import PY2, ensure_native_string
 from tests.support import MigTestCase, testmain
 
-from mig.shared.compat import PY2, ensure_native_string
+DUMMY_BYTECHARS = b"DEADBEEF"
+DUMMY_BYTESRAW = binascii.unhexlify("DEADBEEF")  # 4 bytes
+DUMMY_UNICODE = "UniCode123½¾µßðþđŋħĸþł@ª€£$¥©®"
 
-DUMMY_BYTECHARS = b'DEADBEEF'
-DUMMY_BYTESRAW = binascii.unhexlify('DEADBEEF') # 4 bytes
-DUMMY_UNICODE = u'UniCode123½¾µßðþđŋħĸþł@ª€£$¥©®'
 
 class MigSharedCompat__ensure_native_string(MigTestCase):
     """Unit test helper for the migrid code pointed to in class name"""
@@ -45,7 +45,7 @@ class MigSharedCompat__ensure_native_string(MigTestCase):
     def test_char_bytes_conversion(self):
         actual = ensure_native_string(DUMMY_BYTECHARS)
         self.assertIs(type(actual), str)
-        self.assertEqual(actual, 'DEADBEEF')
+        self.assertEqual(actual, "DEADBEEF")
 
     def test_raw_bytes_conversion(self):
         with self.assertRaises(UnicodeDecodeError):
@@ -60,5 +60,5 @@ class MigSharedCompat__ensure_native_string(MigTestCase):
             self.assertEqual(actual, DUMMY_UNICODE)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

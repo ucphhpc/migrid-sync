@@ -27,24 +27,44 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
-from string import ascii_letters, digits
 import datetime
 import os
 import pickle
 import random
 import time
 import unittest
+from string import ascii_letters, digits
 
-from mig.lib.janitor import EXPIRE_DUMMY_JOBS_DAYS, EXPIRE_REQ_DAYS, \
-    EXPIRE_STATE_DAYS, EXPIRE_TWOFACTOR_DAYS, MANAGE_TRIVIAL_REQ_MINUTES, \
-    REMIND_REQ_DAYS, SECS_PER_DAY, SECS_PER_HOUR, SECS_PER_MINUTE, \
-    _clean_stale_state_files, _lookup_last_run, _lookup_req_throttle, \
-    _update_last_run, _update_req_throttle, clean_mig_system_files, \
-    clean_no_job_helpers, clean_sessid_to_mrls_link_home, \
-    clean_twofactor_sessions, clean_webserver_home, handle_cache_updates, \
-    handle_janitor_tasks, handle_pending_requests, handle_session_cleanup, \
-    handle_state_cleanup, manage_single_req, manage_trivial_user_requests, \
-    remind_and_expire_user_pending, task_triggers
+from mig.lib.janitor import (
+    EXPIRE_DUMMY_JOBS_DAYS,
+    EXPIRE_REQ_DAYS,
+    EXPIRE_STATE_DAYS,
+    EXPIRE_TWOFACTOR_DAYS,
+    MANAGE_TRIVIAL_REQ_MINUTES,
+    REMIND_REQ_DAYS,
+    SECS_PER_DAY,
+    SECS_PER_HOUR,
+    SECS_PER_MINUTE,
+    _clean_stale_state_files,
+    _lookup_last_run,
+    _lookup_req_throttle,
+    _update_last_run,
+    _update_req_throttle,
+    clean_mig_system_files,
+    clean_no_job_helpers,
+    clean_sessid_to_mrls_link_home,
+    clean_twofactor_sessions,
+    clean_webserver_home,
+    handle_cache_updates,
+    handle_janitor_tasks,
+    handle_pending_requests,
+    handle_session_cleanup,
+    handle_state_cleanup,
+    manage_single_req,
+    manage_trivial_user_requests,
+    remind_and_expire_user_pending,
+    task_triggers,
+)
 from mig.shared.accountreq import save_account_request
 from mig.shared.base import client_id_dir, distinguished_name_to_user
 from mig.shared.pwcrypto import generate_reset_token
@@ -52,29 +72,33 @@ from mig.shared.useradm import create_user
 from tests.support import MigTestCase, ensure_dirs_exist
 from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
 
-TEST_USER_FULLNAME = TEST_USER_DN.split("/CN=", 1)[-1].split('/', 1)[0]
-TEST_USER_ORG = TEST_USER_DN.split("/O=", 1)[-1].split('/', 1)[0]
+TEST_USER_FULLNAME = TEST_USER_DN.split("/CN=", 1)[-1].split("/", 1)[0]
+TEST_USER_ORG = TEST_USER_DN.split("/O=", 1)[-1].split("/", 1)[0]
 TEST_USER_EMAIL = TEST_USER_DN.split("/emailAddress=", 1)[-1]
-TEST_SKIP_EMAIL = ''
+TEST_SKIP_EMAIL = ""
 # TODO: adjust password reset token helpers to handle configured services
 #       it currently silently fails if not in migoid(c) or migcert
 # TEST_SERVICE = 'dummy-svc'
-TEST_AUTH = TEST_SERVICE = 'migoid'
-TEST_USERDB = 'MiG-users.db'
-TEST_PEER_DN = '/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com'
+TEST_AUTH = TEST_SERVICE = "migoid"
+TEST_USERDB = "MiG-users.db"
+TEST_PEER_DN = "/C=DK/ST=NA/L=NA/O=Test Org/OU=NA/CN=Test User/emailAddress=peer@example.com"
 TEST_PEER_EMAIL = TEST_PEER_DN.split("/emailAddress=", 1)[-1]
 # NOTE: these passwords are not and should not ever be used outside unit tests
-TEST_MODERN_PW = 'NoSuchPassword_42'
-TEST_MODERN_PW_PBKDF2 = \
+TEST_MODERN_PW = "NoSuchPassword_42"
+TEST_MODERN_PW_PBKDF2 = (
     "PBKDF2$sha256$10000$XMZGaar/pU4PvWDr$w0dYjezF6JGtSiYPexyZMt3lM2134uix"
-TEST_NEW_MODERN_PW_PBKDF2 = \
+)
+TEST_NEW_MODERN_PW_PBKDF2 = (
     "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$B22uw6C7C4VFiYAe4Vf10n581pjXFHrn"
-TEST_OTHER_MODERN_PW_PBKDF2 = \
+)
+TEST_OTHER_MODERN_PW_PBKDF2 = (
     "PBKDF2$sha256$10000$XDAwMDAwMDAwMDAw$B22uw6C7C4VFiYAe4Vf10n581pjXY123"
-TEST_INVALID_PW_PBKDF2 = \
+)
+TEST_INVALID_PW_PBKDF2 = (
     "PBKDF2$sha256$10000$MDAwMDAwMDAwMDAw$B22uw6C7C4VFiYAe4Vf1rn1pjX0n58FH"
+)
 # NOTE: tokens always should contain a multiple of 4 chars
-INVALID_TEST_TOKEN = 'THIS_RESET_TOKEN_WAS_NEVER_VALID'
+INVALID_TEST_TOKEN = "THIS_RESET_TOKEN_WAS_NEVER_VALID"
 
 
 class MigLibJanitor(MigTestCase, UserAssertMixin):
@@ -82,11 +106,11 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
     def _provide_configuration(self):
         """Prepare isolated test config"""
-        return 'testconfig'
+        return "testconfig"
 
-    def _prepare_test_file(self, path, times=None, content='test'):
+    def _prepare_test_file(self, path, times=None, content="test"):
         """Prepare file in path with optional times for timestamp"""
-        with open(path, 'w') as fp:
+        with open(path, "w") as fp:
             fp.write(content)
         os.utime(path, times)
 
@@ -102,8 +126,9 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         self.configuration.site_peers_explicit_fields = []
         # Prevent admin email during reject, etc.
         self.configuration.admin_email = TEST_SKIP_EMAIL
-        self.user_db_path = os.path.join(self.configuration.user_db_home,
-                                         TEST_USERDB)
+        self.user_db_path = os.path.join(
+            self.configuration.user_db_home, TEST_USERDB
+        )
         # Create fake fs layout matching real systems
         ensure_dirs_exist(self.configuration.user_pending)
         ensure_dirs_exist(self.configuration.user_db_home)
@@ -118,8 +143,9 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         ensure_dirs_exist(self.configuration.sessid_to_mrsl_link_home)
         ensure_dirs_exist(self.configuration.mrsl_files_dir)
         ensure_dirs_exist(self.configuration.resource_pending)
-        dummy_job = os.path.join(self.configuration.user_home,
-                                 "no_grid_jobs_in_grid_scheduler")
+        dummy_job = os.path.join(
+            self.configuration.user_home, "no_grid_jobs_in_grid_scheduler"
+        )
         ensure_dirs_exist(dummy_job)
 
         # Prepare user DB with a single dummy user for all tests
@@ -132,39 +158,42 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
     def test_last_run_bookkeeping(self):
         """Register a last run timestamp and check it"""
         expect = -1
-        stamp = _lookup_last_run(self.configuration, 'janitor_task')
+        stamp = _lookup_last_run(self.configuration, "janitor_task")
         self.assertEqual(stamp, expect)
         expect = 42
-        stamp = _update_last_run(self.configuration, 'janitor_task', expect)
+        stamp = _update_last_run(self.configuration, "janitor_task", expect)
         self.assertEqual(stamp, expect)
         expect = time.time()
-        stamp = _update_last_run(self.configuration, 'janitor_task', expect)
+        stamp = _update_last_run(self.configuration, "janitor_task", expect)
         self.assertEqual(stamp, expect)
 
     def test_request_throttle_bookkeeping(self):
         """Register a request throttle timestamp and check it"""
         expect = -1
-        stamp = _lookup_req_throttle(self.configuration, 'janitor_req')
+        stamp = _lookup_req_throttle(self.configuration, "janitor_req")
         self.assertEqual(stamp, expect)
         expect = 42
-        stamp = _update_req_throttle(self.configuration, 'janitor_req', expect,
-                                     False)
+        stamp = _update_req_throttle(
+            self.configuration, "janitor_req", expect, False
+        )
         self.assertEqual(stamp, expect)
         expect = time.time()
-        stamp = _update_req_throttle(self.configuration, 'janitor_req', expect,
-                                     False)
+        stamp = _update_req_throttle(
+            self.configuration, "janitor_req", expect, False
+        )
         self.assertEqual(stamp, expect)
         # NOTE: reset to -1 on success
         expect = -1
-        stamp = _update_req_throttle(self.configuration, 'janitor_req', 42,
-                                     True)
+        stamp = _update_req_throttle(
+            self.configuration, "janitor_req", 42, True
+        )
         self.assertEqual(stamp, expect)
 
     def test_clean_mig_system_files(self):
         """Test clean_mig system files helper"""
         test_time = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
-        valid_filenames = ['fresh.log', 'current.tmp']
-        stale_filenames = ['tmp_expired.txt', 'no_grid_jobs.123']
+        valid_filenames = ["fresh.log", "current.tmp"]
+        stale_filenames = ["tmp_expired.txt", "no_grid_jobs.123"]
         for name in valid_filenames + stale_filenames:
             path = os.path.join(self.configuration.mig_system_files, name)
             self._prepare_test_file(path, (test_time, test_time))
@@ -172,8 +201,10 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
         handled = clean_mig_system_files(self.configuration)
         self.assertEqual(handled, len(stale_filenames))
-        self.assertEqual(len(os.listdir(self.configuration.mig_system_files)),
-                         len(valid_filenames))
+        self.assertEqual(
+            len(os.listdir(self.configuration.mig_system_files)),
+            len(valid_filenames),
+        )
         for name in valid_filenames:
             path = os.path.join(self.configuration.mig_system_files, name)
             self.assertTrue(os.path.exists(path))
@@ -185,8 +216,8 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         """Test clean webserver files helper"""
         stale_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
         test_dir = self.configuration.webserver_home
-        valid_filename = 'fresh.log'
-        stale_filename = 'stale.log'
+        valid_filename = "fresh.log"
+        stale_filename = "stale.log"
         valid_path = os.path.join(test_dir, valid_filename)
         stale_path = os.path.join(test_dir, stale_filename)
         self._prepare_test_file(valid_path)
@@ -202,10 +233,11 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
     def test_clean_no_job_helpers(self):
         """Test clean dummy job helper files"""
         stale_stamp = time.time() - EXPIRE_DUMMY_JOBS_DAYS * SECS_PER_DAY - 1
-        test_dir = os.path.join(self.configuration.user_home,
-                                "no_grid_jobs_in_grid_scheduler")
-        valid_filename = 'alive.txt'
-        stale_filename = 'expired.txt'
+        test_dir = os.path.join(
+            self.configuration.user_home, "no_grid_jobs_in_grid_scheduler"
+        )
+        valid_filename = "alive.txt"
+        stale_filename = "expired.txt"
         valid_path = os.path.join(test_dir, valid_filename)
         stale_path = os.path.join(test_dir, stale_filename)
         self._prepare_test_file(valid_path)
@@ -222,8 +254,8 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         """Test clean twofactor sessions"""
         stale_stamp = time.time() - EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY - 1
         test_dir = self.configuration.twofactor_home
-        valid_filename = 'current'
-        stale_filename = 'expired'
+        valid_filename = "current"
+        stale_filename = "expired"
         valid_path = os.path.join(test_dir, valid_filename)
         stale_path = os.path.join(test_dir, stale_filename)
         self._prepare_test_file(valid_path)
@@ -245,11 +277,11 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         cnt = 16
         for _ in range(cnt):
             # Mimic IP_SESSION link to SESSION from gdp-mode
-            prefix = '.'.join(random.choices(digits[1:], k=4))
+            prefix = ".".join(random.choices(digits[1:], k=4))
             # Make suffix long enough to rule out collisions in practice
-            suffix = ''.join(random.choices(ascii_letters + digits, k=8))
-            session_filename = 'session-%s' % suffix
-            symlink_filename = '%s_session-%s' % (prefix, suffix)
+            suffix = "".join(random.choices(ascii_letters + digits, k=8))
+            session_filename = "session-%s" % suffix
+            symlink_filename = "%s_session-%s" % (prefix, suffix)
             symlink_path = os.path.join(test_dir, symlink_filename)
             session_path = os.path.join(test_dir, session_filename)
             self._prepare_test_file(session_path)
@@ -263,7 +295,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
             future = time.time() + (2 * EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY)
             handled = clean_twofactor_sessions(self.configuration, now=future)
             self.assertEqual(handled, 2 * cnt)
-            for (symlink_path, session_path) in test_pairs:
+            for symlink_path, session_path in test_pairs:
                 self.assertFalse(os.path.exists(session_path))
                 self.assertFalse(os.path.lexists(symlink_path))
         except AssertionError as ase:
@@ -271,7 +303,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         finally:
             # NOTE: File only exists if clean_twofactor_sessions fails to
             #       remove it
-            for (symlink_path, session_path) in test_pairs:
+            for symlink_path, session_path in test_pairs:
                 if os.path.exists(session_path):
                     os.remove(session_path)
                 if os.path.lexists(symlink_path):
@@ -282,8 +314,8 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         """Test clean twofactor sessions with a stale session symlink"""
         test_dir = self.configuration.twofactor_home
         # arrange pre-existing symlink pointing nowhere
-        symlink_filename = 'stalelink'
-        nowhere_filename = 'nowhere'
+        symlink_filename = "stalelink"
+        nowhere_filename = "nowhere"
         symlink_path = os.path.join(test_dir, symlink_filename)
         nowhere_path = os.path.join(test_dir, nowhere_filename)
         os.symlink(nowhere_path, symlink_path)
@@ -308,8 +340,8 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         """Test clean session MRSL link files"""
         stale_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
         test_dir = self.configuration.sessid_to_mrsl_link_home
-        valid_filename = 'active_session_link'
-        stale_filename = 'expired_session_link'
+        valid_filename = "active_session_link"
+        stale_filename = "expired_session_link"
         valid_path = os.path.join(test_dir, valid_filename)
         stale_path = os.path.join(test_dir, stale_filename)
         self._prepare_test_file(valid_path)
@@ -327,12 +359,14 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         # Create a stale file in each location to clean up
         stale_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
         mig_path = os.path.join(
-            self.configuration.mig_system_files, 'tmpAbCd1234')
-        web_path = os.path.join(self.configuration.webserver_home, 'stale.txt')
+            self.configuration.mig_system_files, "tmpAbCd1234"
+        )
+        web_path = os.path.join(self.configuration.webserver_home, "stale.txt")
         empty_job_path = os.path.join(
-            os.path.join(self.configuration.user_home,
-                         "no_grid_jobs_in_grid_scheduler"),
-            'sleep.job'
+            os.path.join(
+                self.configuration.user_home, "no_grid_jobs_in_grid_scheduler"
+            ),
+            "sleep.job",
         )
         stale_paths = [mig_path, web_path, empty_job_path]
         for path in stale_paths:
@@ -347,12 +381,17 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
     def test_handle_session_cleanup(self):
         """Test combined session cleanup"""
-        stale_stamp = time.time() - max(EXPIRE_STATE_DAYS,
-                                        EXPIRE_TWOFACTOR_DAYS) * SECS_PER_DAY - 1
+        stale_stamp = (
+            time.time()
+            - max(EXPIRE_STATE_DAYS, EXPIRE_TWOFACTOR_DAYS) * SECS_PER_DAY
+            - 1
+        )
         session_path = os.path.join(
-            self.configuration.sessid_to_mrsl_link_home, 'expired.txt')
+            self.configuration.sessid_to_mrsl_link_home, "expired.txt"
+        )
         twofactor_path = os.path.join(
-            self.configuration.twofactor_home, 'expired.txt')
+            self.configuration.twofactor_home, "expired.txt"
+        )
         test_paths = [session_path, twofactor_path]
         for path in test_paths:
             os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -367,15 +406,15 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
     def test_manage_pending_user_request(self):
         """Test pending user request management"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
-            'password_hash': TEST_MODERN_PW_PBKDF2,
-            'password': TEST_MODERN_PW,
-            'peers': [TEST_PEER_DN],
-            'email': TEST_USER_EMAIL,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
+            "password_hash": TEST_MODERN_PW_PBKDF2,
+            "password": TEST_MODERN_PW,
+            "peers": [TEST_PEER_DN],
+            "email": TEST_USER_EMAIL,
         }
 
         self.assertDirEmpty(self.configuration.user_pending)
@@ -387,8 +426,9 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         os.utime(req_path, (req_age, req_age))
 
         # Need user DB and path to simulate existing user
-        user_dir = os.path.join(self.configuration.user_home,
-                                client_id_dir(TEST_USER_DN))
+        user_dir = os.path.join(
+            self.configuration.user_home, client_id_dir(TEST_USER_DN)
+        )
         os.makedirs(user_dir, exist_ok=True)
         handled = manage_trivial_user_requests(self.configuration)
         self.assertEqual(handled, 1)
@@ -396,14 +436,14 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
     def test_expire_user_pending(self):
         """Test pending user request expiration reminders"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
-            'password': TEST_MODERN_PW,
-            'peers': [TEST_PEER_DN],
-            'email': TEST_USER_EMAIL,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
+            "password": TEST_MODERN_PW,
+            "peers": [TEST_PEER_DN],
+            "email": TEST_USER_EMAIL,
         }
         self.assertDirEmpty(self.configuration.user_pending)
         saved, req_path = save_account_request(self.configuration, req_dict)
@@ -422,49 +462,53 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         # self.assertEqual(handled, 1)
         self.assertEqual(handled, 2)  # counted stale and expired (see above)
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_handle_pending_requests(self):
         """Test combined request handling"""
         # Create requests (valid, expired)
         valid_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
-            'password_hash': TEST_MODERN_PW_PBKDF2,
-            'password': TEST_MODERN_PW,
-            'peers': [TEST_PEER_DN],
-            'email': TEST_USER_EMAIL,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
+            "password_hash": TEST_MODERN_PW_PBKDF2,
+            "password": TEST_MODERN_PW,
+            "peers": [TEST_PEER_DN],
+            "email": TEST_USER_EMAIL,
         }
         self.assertDirEmpty(self.configuration.user_pending)
-        saved, valid_req_path = save_account_request(self.configuration,
-                                                     valid_dict)
+        saved, valid_req_path = save_account_request(
+            self.configuration, valid_dict
+        )
         self.assertTrue(saved, "failed to save valid req")
         self.assertDirNotEmpty(self.configuration.user_pending)
 
-        expired_id = 'expired_req'
+        expired_id = "expired_req"
         expired_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
-            'password': TEST_MODERN_PW,
-            'peers': [TEST_PEER_DN],
-            'email': TEST_USER_EMAIL,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
+            "password": TEST_MODERN_PW,
+            "peers": [TEST_PEER_DN],
+            "email": TEST_USER_EMAIL,
         }
         saved, expired_req_path = save_account_request(
-            self.configuration, expired_dict)
+            self.configuration, expired_dict
+        )
         self.assertTrue(saved, "failed to save expired req")
         expired_id = os.path.basename(expired_req_path)
         # Make just one old enough to expire
         expire_time = time.time() - EXPIRE_REQ_DAYS * SECS_PER_DAY - 1
-        os.utime(os.path.join(self.configuration.user_pending, expired_id),
-                 (expire_time, expire_time))
+        os.utime(
+            os.path.join(self.configuration.user_pending, expired_id),
+            (expire_time, expire_time),
+        )
 
         # NOTE: when using real user mail we currently hit send email errors.
         #       We forgive those errors here and only check any known warnings.
@@ -475,33 +519,37 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         # self.assertEqual(handled, 2)  # 1 manage + 1 expire
         self.assertEqual(handled, 3)  # 1 manage + 1 expire + 1 stale
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_handle_janitor_tasks_full(self):
         """Test full janitor task scheduler"""
-        self.configuration.context_get('notifier').send_email.forgive_email()
+        self.configuration.context_get("notifier").send_email.forgive_email()
         # Prepare environment with pending tasks of each kind
         mig_stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
-        mig_path = os.path.join(self.configuration.mig_system_files,
-                                'tmp-stale.txt')
-        two_path = os.path.join(self.configuration.twofactor_home, 'stale.txt')
+        mig_path = os.path.join(
+            self.configuration.mig_system_files, "tmp-stale.txt"
+        )
+        two_path = os.path.join(self.configuration.twofactor_home, "stale.txt")
         two_stamp = time.time() - EXPIRE_TWOFACTOR_DAYS * SECS_PER_DAY - 1
-        stale_tests = ((mig_path, mig_stamp), (two_path, two_stamp), )
-        for (stale_path, stale_stamp) in stale_tests:
+        stale_tests = (
+            (mig_path, mig_stamp),
+            (two_path, two_stamp),
+        )
+        for stale_path, stale_stamp in stale_tests:
             self._prepare_test_file(stale_path, (stale_stamp, stale_stamp))
             self.assertTrue(os.path.exists(stale_path))
 
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
-            'password': TEST_MODERN_PW,
-            'peers': [TEST_PEER_DN],
-            'email': TEST_USER_EMAIL,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
+            "password": TEST_MODERN_PW,
+            "peers": [TEST_PEER_DN],
+            "email": TEST_USER_EMAIL,
         }
         self.assertDirEmpty(self.configuration.user_pending)
         saved, req_path = save_account_request(self.configuration, req_dict)
@@ -510,8 +558,10 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         req_id = os.path.basename(req_path)
         # Make request very old
         req_age = time.time() - EXPIRE_REQ_DAYS * SECS_PER_DAY - 1
-        os.utime(os.path.join(self.configuration.user_pending, req_id),
-                 (req_age, req_age))
+        os.utime(
+            os.path.join(self.configuration.user_pending, req_id),
+            (req_age, req_age),
+        )
 
         # Set no last run timestamps to trigger all tasks
         now = time.time()
@@ -526,26 +576,26 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         handled = handle_janitor_tasks(self.configuration, now=now)
         # self.assertEqual(handled, 3)  # state+session+requests
         self.assertEqual(handled, 5)  # state+session+3*request
-        for (stale_path, _) in stale_tests:
+        for stale_path, _ in stale_tests:
             self.assertFalse(os.path.exists(stale_path), stale_path)
 
     def test__clean_stale_state_files(self):
         """Test core stale state file cleaner helper"""
-        test_dir = self.temppath('stale_state_test', ensure_dir=True)
-        patterns = ['tmp_*', 'session_*']
+        test_dir = self.temppath("stale_state_test", ensure_dir=True)
+        patterns = ["tmp_*", "session_*"]
 
         # Create test files (fresh, expired, unexpired, non-matching)
         test_remove = [
-            ('tmp_expired.txt', EXPIRE_STATE_DAYS * SECS_PER_DAY + 1),
-            ('session_old.dat', EXPIRE_STATE_DAYS * SECS_PER_DAY + 1),
+            ("tmp_expired.txt", EXPIRE_STATE_DAYS * SECS_PER_DAY + 1),
+            ("session_old.dat", EXPIRE_STATE_DAYS * SECS_PER_DAY + 1),
         ]
         test_keep = [
-            ('tmp_fresh.txt', -1),
-            ('session_valid.dat', 0),
-            ('other_file.log', EXPIRE_STATE_DAYS * SECS_PER_DAY + 1),
+            ("tmp_fresh.txt", -1),
+            ("session_valid.dat", 0),
+            ("other_file.log", EXPIRE_STATE_DAYS * SECS_PER_DAY + 1),
         ]
 
-        for (name, age_diff) in test_keep + test_remove:
+        for name, age_diff in test_keep + test_remove:
             path = os.path.join(test_dir, name)
             stamp = time.time() - age_diff
             self._prepare_test_file(path, (stamp, stamp))
@@ -557,83 +607,87 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
             patterns,
             EXPIRE_STATE_DAYS,
             time.time(),
-            include_dotfiles=False
+            include_dotfiles=False,
         )
         self.assertEqual(handled, 2)  # tmp_expired.txt + session_old.dat
-        for (name, _) in test_keep:
+        for name, _ in test_keep:
             path = os.path.join(test_dir, name)
             self.assertTrue(os.path.exists(path))
-        for (name, _) in test_remove:
+        for name, _ in test_remove:
             path = os.path.join(test_dir, name)
             self.assertFalse(os.path.exists(path))
 
     def test_manage_single_req_throttles_down_unsuccessful(self):
         """Test request handling throttle for recently unsuccessful request"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'password_hash': TEST_MODERN_PW_PBKDF2,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "password_hash": TEST_MODERN_PW_PBKDF2,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
+            "email": TEST_USER_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
         now = time.time()
         # Attempt handling with expected ignore
-        with self.assertLogs(level='INFO') as log_capture:
+        with self.assertLogs(level="INFO") as log_capture:
             manage_single_req(
-                self.configuration,
-                req_id,
-                req_path,
-                self.user_db_path,
-                now
+                self.configuration, req_id, req_path, self.user_db_path, now
             )
-        self.assertTrue(any('but not automated' in msg
-                            for msg in log_capture.output))
-        self.assertTrue(os.path.exists(req_path),
-                        "Removed failed req in %s" % req_path)
+        self.assertTrue(
+            any("but not automated" in msg for msg in log_capture.output)
+        )
+        self.assertTrue(
+            os.path.exists(req_path), "Removed failed req in %s" % req_path
+        )
 
         # Now verify that retry soon after gets throttled
-        with self.assertLogs(level='INFO') as log_capture:
+        with self.assertLogs(level="INFO") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                now + 10
+                now + 10,
             )
-        self.assertTrue(any('throttle down' in msg
-                            for msg in log_capture.output))
-        self.assertTrue(os.path.exists(req_path),
-                        "Removed throttled failing req in %s" % req_path)
+        self.assertTrue(
+            any("throttle down" in msg for msg in log_capture.output)
+        )
+        self.assertTrue(
+            os.path.exists(req_path),
+            "Removed throttled failing req in %s" % req_path,
+        )
 
         # Now verify that retry long after is attempted again
-        with self.assertLogs(level='INFO') as log_capture:
+        with self.assertLogs(level="INFO") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                now + 7200
+                now + 7200,
             )
-        self.assertTrue(any('but not automated' in msg
-                            for msg in log_capture.output))
-        self.assertTrue(os.path.exists(req_path),
-                        "Removed retried failing req in %s" % req_path)
+        self.assertTrue(
+            any("but not automated" in msg for msg in log_capture.output)
+        )
+        self.assertTrue(
+            os.path.exists(req_path),
+            "Removed retried failing req in %s" % req_path,
+        )
 
     def test_manage_single_req_invalid(self):
         """Test request handling for invalid request"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'invalid': ['Missing required field: organization'],
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'password_hash': TEST_MODERN_PW_PBKDF2,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "invalid": ["Missing required field: organization"],
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "password_hash": TEST_MODERN_PW_PBKDF2,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
+            "email": TEST_USER_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
@@ -642,47 +696,50 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
-        with self.assertLogs(level='INFO') as log_capture:
+        with self.assertLogs(level="INFO") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
-        self.assertTrue(any('invalid account request' in msg
-                            for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed to clean invalid req for %s" % req_path)
+        self.assertTrue(
+            any("invalid account request" in msg for msg in log_capture.output)
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed to clean invalid req for %s" % req_path,
+        )
 
         # NOTE: invalid request results in request rejected email
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_manage_single_req_expired_token(self):
         """Test request handling with expired reset token"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
-            'password_hash': TEST_MODERN_PW_PBKDF2,
-            'expire': time.time() + SECS_PER_DAY,
-            'status': 'temporal',
+            "email": TEST_USER_EMAIL,
+            "password_hash": TEST_MODERN_PW_PBKDF2,
+            "expire": time.time() + SECS_PER_DAY,
+            "status": "temporal",
         }
         # Mimic proper but old expired token
         timestamp = 42
         # IMPORTANT: we can't use a fixed token here due to dynamic crypto seed
-        req_dict['reset_token'] = generate_reset_token(self.configuration,
-                                                       req_dict, TEST_SERVICE,
-                                                       timestamp)
+        req_dict["reset_token"] = generate_reset_token(
+            self.configuration, req_dict, TEST_SERVICE, timestamp
+        )
         # Change password_hash here to mimic pw change
-        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
+        req_dict["password_hash"] = TEST_NEW_MODERN_PW_PBKDF2
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
@@ -690,80 +747,91 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
-        with self.assertLogs(level='WARNING') as log_capture:
+        with self.assertLogs(level="WARNING") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
-        self.assertTrue(any('reject expired reset token' in msg
-                            for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed to clean token req for %s" % req_path)
+        self.assertTrue(
+            any(
+                "reject expired reset token" in msg
+                for msg in log_capture.output
+            )
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed to clean token req for %s" % req_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     @unittest.skip("TODO: enable once fernet decrypt err handling is improved")
     def test_manage_single_req_invalid_token_decrypt(self):
         """Test request handling with invalid reset token"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
-            'password_hash': TEST_MODERN_PW_PBKDF2,
-            'expire': time.time() - SECS_PER_DAY,
-            'status': 'temporal',
+            "email": TEST_USER_EMAIL,
+            "password_hash": TEST_MODERN_PW_PBKDF2,
+            "expire": time.time() - SECS_PER_DAY,
+            "status": "temporal",
         }
         # Inject known invalid reset token
-        req_dict['reset_token'] = INVALID_TEST_TOKEN
+        req_dict["reset_token"] = INVALID_TEST_TOKEN
         # Change password_hash here to mimic pw change
-        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
+        req_dict["password_hash"] = TEST_NEW_MODERN_PW_PBKDF2
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
-        with self.assertLogs(level='WARNING') as log_capture:
+        with self.assertLogs(level="WARNING") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
-        self.assertTrue(any('reset with bad token' in msg
-                            for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed to clean token req for %s" % req_path)
+        self.assertTrue(
+            any("reset with bad token" in msg for msg in log_capture.output)
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed to clean token req for %s" % req_path,
+        )
 
         # NOTE: token verification failure results in request rejected email
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_manage_single_req_collision(self):
         """Test request handling with existing user collision"""
         # Create collision with the already provisioned user with TEST_USER_DN
         changed_full_name = "Changed Test Name"
         req_dict = {
-            'client_id': TEST_USER_DN.replace(TEST_USER_FULLNAME,
-                                              changed_full_name),
-            'distinguished_name': TEST_USER_DN.replace(TEST_USER_FULLNAME,
-                                                       changed_full_name),
-            'auth': [TEST_AUTH],
-            'full_name': changed_full_name,
-            'organization': TEST_USER_ORG,
-            'password_hash': TEST_MODERN_PW_PBKDF2,
+            "client_id": TEST_USER_DN.replace(
+                TEST_USER_FULLNAME, changed_full_name
+            ),
+            "distinguished_name": TEST_USER_DN.replace(
+                TEST_USER_FULLNAME, changed_full_name
+            ),
+            "auth": [TEST_AUTH],
+            "full_name": changed_full_name,
+            "organization": TEST_USER_ORG,
+            "password_hash": TEST_MODERN_PW_PBKDF2,
             # NOTE: we need original email here to cause collision
-            'email': TEST_USER_EMAIL,
+            "email": TEST_USER_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
@@ -772,121 +840,130 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
-        with self.assertLogs(level='WARNING') as log_capture:
+        with self.assertLogs(level="WARNING") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
-            self.assertTrue(any('ID collision' in msg
-                                for msg in log_capture.output))
+            self.assertTrue(
+                any("ID collision" in msg for msg in log_capture.output)
+            )
 
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed cleanup collision for %s" % req_path)
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed cleanup collision for %s" % req_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_manage_single_req_auth_change(self):
         """Test request handling with auth password change"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
-            'password': '',
-            'password_hash': TEST_MODERN_PW_PBKDF2,
-            'expire': time.time() + SECS_PER_DAY,
-            'status': 'temporal',
+            "email": TEST_USER_EMAIL,
+            "password": "",
+            "password_hash": TEST_MODERN_PW_PBKDF2,
+            "expire": time.time() + SECS_PER_DAY,
+            "status": "temporal",
         }
         # Change password_hash here to mimic pw change
-        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
-        req_dict['authorized'] = True
+        req_dict["password_hash"] = TEST_NEW_MODERN_PW_PBKDF2
+        req_dict["authorized"] = True
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
-        with self.assertLogs(level='INFO') as log_capture:
+        with self.assertLogs(level="INFO") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
         self.assertTrue(
-            any('created/renewed user' in msg for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed to clean token req for %s" % req_path)
+            any("created/renewed user" in msg for msg in log_capture.output)
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed to clean token req for %s" % req_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_manage_single_req_auth_renew_without_peer_requirement(self):
         """Test request handling with authenticated renew"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
-            'password': '',
-            'expire': time.time() + 30 * SECS_PER_DAY,
-            'status': 'temporal',
+            "email": TEST_USER_EMAIL,
+            "password": "",
+            "expire": time.time() + 30 * SECS_PER_DAY,
+            "status": "temporal",
         }
         # Mark authorized here to mimic authenticated renew
-        req_dict['authorized'] = True
+        req_dict["authorized"] = True
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
-        with self.assertLogs(level='INFO') as log_capture:
+        with self.assertLogs(level="INFO") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
         self.assertTrue(
-            any('created/renewed user' in msg for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed to renew authorized req for %s" % req_path)
+            any("created/renewed user" in msg for msg in log_capture.output)
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed to renew authorized req for %s" % req_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_manage_single_req_auth_renew_with_required_peer(self):
         """Test request handling with authorized renew with peer validation"""
         self.configuration.site_enable_peers = True
         self.configuration.site_peers_mandatory = True
-        self.configuration.site_peers_explicit_fields = ['full_name', 'email']
+        self.configuration.site_peers_explicit_fields = ["full_name", "email"]
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
-            'password': '',
-            'expire': time.time() + 30 * SECS_PER_DAY,
-            'status': 'temporal',
-            'peers': [TEST_PEER_DN],
-            'peers_email': [TEST_PEER_EMAIL],
+            "email": TEST_USER_EMAIL,
+            "password": "",
+            "expire": time.time() + 30 * SECS_PER_DAY,
+            "status": "temporal",
+            "peers": [TEST_PEER_DN],
+            "peers_email": [TEST_PEER_EMAIL],
         }
         # Mark authorized here to mimic authenticated renew
-        req_dict['authorized'] = True
+        req_dict["authorized"] = True
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
@@ -897,120 +974,134 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         test_user_dict["password"] = ""
         try:
             create_user(
-                test_user_dict, self.configuration, self.user_db_path,
-                default_renew=True
+                test_user_dict,
+                self.configuration,
+                self.user_db_path,
+                default_renew=True,
             )
         except Exception:
             self.assertFalse(True, "should not be reached")
-        peers_path = os.path.join(self.configuration.user_settings,
-                                  client_id_dir(TEST_PEER_DN), "peers")
+        peers_path = os.path.join(
+            self.configuration.user_settings,
+            client_id_dir(TEST_PEER_DN),
+            "peers",
+        )
         ensure_dirs_exist(os.path.dirname(peers_path))
         expire_date = datetime.date.today() + datetime.timedelta(days=365)
         with open(peers_path, "wb") as peers_fd:
-            pickle.dump({TEST_USER_DN: {'expire': str(expire_date)}}, peers_fd)
+            pickle.dump({TEST_USER_DN: {"expire": str(expire_date)}}, peers_fd)
 
-        with self.assertLogs(level='INFO') as log_capture:
+        with self.assertLogs(level="INFO") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
         self.assertTrue(
-            any('created/renewed user' in msg for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed to renew authorized req with peer for %s" %
-                         req_path)
+            any("created/renewed user" in msg for msg in log_capture.output)
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed to renew authorized req with peer for %s" % req_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_manage_single_req_auth_renew_fail_on_empty_required_peer(self):
         """Test request handling with authorized renew fails on empty required peer"""
         self.configuration.site_enable_peers = True
         self.configuration.site_peers_mandatory = True
-        self.configuration.site_peers_explicit_fields = ['full_name', 'email']
+        self.configuration.site_peers_explicit_fields = ["full_name", "email"]
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
-            'password': '',
-            'expire': time.time() + 30 * SECS_PER_DAY,
-            'status': 'temporal',
-            'peers': None,
-            'peers_email': [],
+            "email": TEST_USER_EMAIL,
+            "password": "",
+            "expire": time.time() + 30 * SECS_PER_DAY,
+            "status": "temporal",
+            "peers": None,
+            "peers_email": [],
         }
         # Mark authorized here to mimic authenticated renew
-        req_dict['authorized'] = True
+        req_dict["authorized"] = True
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
-        with self.assertLogs(level='ERROR') as log_capture:
+        with self.assertLogs(level="ERROR") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
         self.assertTrue(
-            any('ailed auto-detect peer' in msg for msg in log_capture.output))
-        self.assertTrue(os.path.exists(req_path),
-                        "Allowed renew authorized req on empty peer for %s" %
-                        req_path)
+            any("ailed auto-detect peer" in msg for msg in log_capture.output)
+        )
+        self.assertTrue(
+            os.path.exists(req_path),
+            "Allowed renew authorized req on empty peer for %s" % req_path,
+        )
 
     def test_manage_single_req_auth_renew_fail_on_invalid_required_peer(self):
         """Test request handling with authorized renew fails with invalid required peer"""
         self.configuration.site_enable_peers = True
         self.configuration.site_peers_mandatory = True
-        self.configuration.site_peers_explicit_fields = ['full_name', 'email']
+        self.configuration.site_peers_explicit_fields = ["full_name", "email"]
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
-            'password': '',
-            'expire': time.time() + 30 * SECS_PER_DAY,
-            'status': 'temporal',
-            'peers': [TEST_PEER_DN],
-            'peers_email': [TEST_PEER_EMAIL],
+            "email": TEST_USER_EMAIL,
+            "password": "",
+            "expire": time.time() + 30 * SECS_PER_DAY,
+            "status": "temporal",
+            "peers": [TEST_PEER_DN],
+            "peers_email": [TEST_PEER_EMAIL],
         }
         # Mark authorized here to mimic authenticated renew
-        req_dict['authorized'] = True
+        req_dict["authorized"] = True
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
         # Make sure no peers acceptance of TEST_USER_DN from TEST_PEER_DN
-        peers_path = os.path.join(self.configuration.user_settings,
-                                  client_id_dir(TEST_PEER_DN), "peers")
+        peers_path = os.path.join(
+            self.configuration.user_settings,
+            client_id_dir(TEST_PEER_DN),
+            "peers",
+        )
         if os.path.exists(peers_path):
             os.remove(peers_path)
 
-        with self.assertLogs(level='ERROR') as log_capture:
+        with self.assertLogs(level="ERROR") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
         self.assertTrue(
-            any('ailed verify peer' in msg for msg in log_capture.output))
-        self.assertTrue(os.path.exists(req_path),
-                        "Allowed renew authorized req on invalid peer for %s" %
-                        req_path)
+            any("ailed verify peer" in msg for msg in log_capture.output)
+        )
+        self.assertTrue(
+            os.path.exists(req_path),
+            "Allowed renew authorized req on invalid peer for %s" % req_path,
+        )
 
     def test_handle_cache_updates_stub(self):
         """Test handle_cache_updates placeholder returns zero"""
@@ -1020,7 +1111,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
     def test_janitor_update_timestamps(self):
         """Test task trigger timestamp updates in janitor"""
         now = time.time()
-        task = 'test-task'
+        task = "test-task"
 
         # Initial state
         stamp = _lookup_last_run(self.configuration, task)
@@ -1037,7 +1128,7 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
     def test_janitor_update_request_throttle(self):
         """Test request throttle timestamp updates in janitor"""
         now = time.time()
-        req = 'test-req'
+        req = "test-req"
 
         # Initial state
         stamp = _lookup_req_throttle(self.configuration, req)
@@ -1061,24 +1152,24 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
 
     def test__clean_stale_state_files_edge(self):
         """Test state file cleaner with special cases"""
-        test_dir = self.temppath('edge_case_test', ensure_dir=True)
+        test_dir = self.temppath("edge_case_test", ensure_dir=True)
 
         # Dot file
-        dot_path = os.path.join(test_dir, '.hidden.tmp')
+        dot_path = os.path.join(test_dir, ".hidden.tmp")
         stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
         self._prepare_test_file(dot_path, (stamp, stamp))
 
         # Directory
-        dir_path = os.path.join(test_dir, 'subdir')
+        dir_path = os.path.join(test_dir, "subdir")
         os.makedirs(dir_path)
 
         handled = _clean_stale_state_files(
             self.configuration,
             test_dir,
-            ['*'],
+            ["*"],
             EXPIRE_STATE_DAYS,
             time.time(),
-            include_dotfiles=False
+            include_dotfiles=False,
         )
         self.assertEqual(handled, 0)
 
@@ -1086,46 +1177,50 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         handled = _clean_stale_state_files(
             self.configuration,
             test_dir,
-            ['*'],
+            ["*"],
             EXPIRE_STATE_DAYS,
             time.time(),
-            include_dotfiles=True
+            include_dotfiles=True,
         )
         self.assertEqual(handled, 1)
 
     @unittest.skip("TODO: enable once unpickling error handling is improved")
     def test_manage_single_req_corrupted_file(self):
         """Test manage_single_req with corrupted request file"""
-        req_id = 'corrupted_req'
+        req_id = "corrupted_req"
         req_path = os.path.join(self.configuration.user_pending, req_id)
-        with open(req_path, 'w') as fp:
-            fp.write('invalid pickle content')
+        with open(req_path, "w") as fp:
+            fp.write("invalid pickle content")
 
-        with self.assertLogs(level='ERROR') as log_capture:
+        with self.assertLogs(level="ERROR") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
-        self.assertTrue(any('Failed to load request from' in msg
-                            or 'Could not load saved request' in msg
-                            for msg in log_capture.output))
+        self.assertTrue(
+            any(
+                "Failed to load request from" in msg
+                or "Could not load saved request" in msg
+                for msg in log_capture.output
+            )
+        )
         self.assertFalse(os.path.exists(req_path))
 
     def test_manage_single_req_nonexistent_userdb(self):
         """Test manage_single_req with missing user database"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
-            'password_hash': TEST_MODERN_PW_PBKDF2,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
+            "password_hash": TEST_MODERN_PW_PBKDF2,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
+            "email": TEST_USER_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
@@ -1133,38 +1228,39 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         # Remove user database
         os.remove(self.user_db_path)
 
-        with self.assertLogs(level='ERROR') as log_capture:
+        with self.assertLogs(level="ERROR") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
-        self.assertTrue(any('Failed to load user DB' in msg
-                            for msg in log_capture.output))
+        self.assertTrue(
+            any("Failed to load user DB" in msg for msg in log_capture.output)
+        )
 
     def test_verify_reset_token_failure_logging(self):
         """Test token verification failure creates proper log entries"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
-            'password_hash': TEST_MODERN_PW_PBKDF2,
-            'expire': time.time() + SECS_PER_DAY,  # Future expiration
+            "email": TEST_USER_EMAIL,
+            "password_hash": TEST_MODERN_PW_PBKDF2,
+            "expire": time.time() + SECS_PER_DAY,  # Future expiration
         }
         timestamp = time.time()
 
         # Now change to another pw hash and generate invalid token from it
-        req_dict['password_hash'] = TEST_INVALID_PW_PBKDF2
-        req_dict['reset_token'] = generate_reset_token(self.configuration,
-                                                       req_dict, TEST_SERVICE,
-                                                       timestamp)
+        req_dict["password_hash"] = TEST_INVALID_PW_PBKDF2
+        req_dict["reset_token"] = generate_reset_token(
+            self.configuration, req_dict, TEST_SERVICE, timestamp
+        )
 
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
@@ -1173,46 +1269,50 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
-        with self.assertLogs(level='WARNING') as log_capture:
+        with self.assertLogs(level="WARNING") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
-        self.assertTrue(any('wrong hash' in msg.lower()
-                            for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed cleanup invalid token for %s" % req_path)
+        self.assertTrue(
+            any("wrong hash" in msg.lower() for msg in log_capture.output)
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed cleanup invalid token for %s" % req_path,
+        )
 
         # NOTE: token verification failure results in request rejected email
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_verify_reset_token_success(self):
         """Test token verification success with valid token"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
-            'email': TEST_USER_EMAIL,
-            'comment': '',
-            'password': '',
-            'password_hash': TEST_MODERN_PW_PBKDF2,
-            'expire': time.time() + 30 * SECS_PER_DAY,  # Future expiration
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
+            "email": TEST_USER_EMAIL,
+            "comment": "",
+            "password": "",
+            "password_hash": TEST_MODERN_PW_PBKDF2,
+            "expire": time.time() + 30 * SECS_PER_DAY,  # Future expiration
         }
 
         timestamp = time.time()
-        reset_token = generate_reset_token(self.configuration, req_dict,
-                                           TEST_SERVICE, timestamp)
-        req_dict['reset_token'] = reset_token
+        reset_token = generate_reset_token(
+            self.configuration, req_dict, TEST_SERVICE, timestamp
+        )
+        req_dict["reset_token"] = reset_token
         # Change password_hash here to mimic pw change
-        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
+        req_dict["password_hash"] = TEST_NEW_MODERN_PW_PBKDF2
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
@@ -1220,45 +1320,52 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
-        with self.assertLogs(level='INFO') as log_capture:
+        with self.assertLogs(level="INFO") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
-        self.assertTrue(any('created/renewed user' in msg.lower()
-                            for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed cleanup invalid token for %s" % req_path)
+        self.assertTrue(
+            any(
+                "created/renewed user" in msg.lower()
+                for msg in log_capture.output
+            )
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed cleanup invalid token for %s" % req_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_verify_reset_token_single_use(self):
         """Test token single use"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
-            'email': TEST_USER_EMAIL,
-            'comment': '',
-            'password': '',
-            'password_hash': TEST_MODERN_PW_PBKDF2,
-            'expire': time.time() + 30 * SECS_PER_DAY,  # Future expiration
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
+            "email": TEST_USER_EMAIL,
+            "comment": "",
+            "password": "",
+            "password_hash": TEST_MODERN_PW_PBKDF2,
+            "expire": time.time() + 30 * SECS_PER_DAY,  # Future expiration
         }
 
         timestamp = time.time()
-        reset_token = generate_reset_token(self.configuration, req_dict,
-                                           TEST_SERVICE, timestamp)
-        req_dict['reset_token'] = reset_token
+        reset_token = generate_reset_token(
+            self.configuration, req_dict, TEST_SERVICE, timestamp
+        )
+        req_dict["reset_token"] = reset_token
         # Change password_hash here to mimic pw change
-        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
+        req_dict["password_hash"] = TEST_NEW_MODERN_PW_PBKDF2
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
@@ -1266,26 +1373,32 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
-        with self.assertLogs(level='INFO') as log_capture:
+        with self.assertLogs(level="INFO") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
         # Verify that first pw change succeeded
-        self.assertTrue(any('created/renewed user' in msg.lower()
-                            for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed cleanup invalid token for %s" % req_path)
+        self.assertTrue(
+            any(
+                "created/renewed user" in msg.lower()
+                for msg in log_capture.output
+            )
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed cleanup invalid token for %s" % req_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
         # Change password_hash again to mimic another pw change with same token
-        req_dict['password_hash'] = TEST_OTHER_MODERN_PW_PBKDF2
+        req_dict["password_hash"] = TEST_OTHER_MODERN_PW_PBKDF2
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
@@ -1293,52 +1406,56 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
-        with self.assertLogs(level='WARNING') as log_capture:
+        with self.assertLogs(level="WARNING") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
         # Now verify original token is no longer valid since pw hash changed
-        self.assertTrue(any('wrong hash' in msg.lower()
-                            for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed cleanup invalid token for %s" % req_path)
+        self.assertTrue(
+            any("wrong hash" in msg.lower() for msg in log_capture.output)
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed cleanup invalid token for %s" % req_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_twice)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_verify_reset_token_single_use_race(self):
         """Test token single use even when submitted under duress"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
-            'email': TEST_USER_EMAIL,
-            'comment': '',
-            'password': '',
-            'password_hash': TEST_MODERN_PW_PBKDF2,
-            'expire': time.time() + 30 * SECS_PER_DAY,  # Future expiration
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
+            "email": TEST_USER_EMAIL,
+            "comment": "",
+            "password": "",
+            "password_hash": TEST_MODERN_PW_PBKDF2,
+            "expire": time.time() + 30 * SECS_PER_DAY,  # Future expiration
         }
 
         timestamp = time.time()
-        reset_token = generate_reset_token(self.configuration, req_dict,
-                                           TEST_SERVICE, timestamp)
-        req_dict['reset_token'] = reset_token
+        reset_token = generate_reset_token(
+            self.configuration, req_dict, TEST_SERVICE, timestamp
+        )
+        req_dict["reset_token"] = reset_token
         # Change password_hash here to mimic pw change
-        req_dict['password_hash'] = TEST_NEW_MODERN_PW_PBKDF2
+        req_dict["password_hash"] = TEST_NEW_MODERN_PW_PBKDF2
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
 
         # Change password_hash again to mimic another pw change with same token
         race_dict = req_dict.copy()
-        race_dict['password_hash'] = TEST_OTHER_MODERN_PW_PBKDF2
+        race_dict["password_hash"] = TEST_OTHER_MODERN_PW_PBKDF2
         raced, race_path = save_account_request(self.configuration, race_dict)
         race_id = os.path.basename(race_path)
 
@@ -1346,65 +1463,73 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         #       We forgive those errors here and only check any known warnings.
         # TODO: integrate generic skip email support and adjust here to fit
         self.logger.forgive_errors()
-        with self.assertLogs(level='INFO') as log_capture:
+        with self.assertLogs(level="INFO") as log_capture:
             manage_single_req(
                 self.configuration,
                 req_id,
                 req_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
         # Verify that first pw change succeeded
-        self.assertTrue(any('created/renewed user' in msg.lower()
-                            for msg in log_capture.output))
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed cleanup invalid token for %s" % req_path)
+        self.assertTrue(
+            any(
+                "created/renewed user" in msg.lower()
+                for msg in log_capture.output
+            )
+        )
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed cleanup invalid token for %s" % req_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_once)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
         # Now verify race fails since pw hash changed to invalidate token
-        with self.assertLogs(level='WARNING') as log_capture:
+        with self.assertLogs(level="WARNING") as log_capture:
             manage_single_req(
                 self.configuration,
                 race_id,
                 race_path,
                 self.user_db_path,
-                time.time()
+                time.time(),
             )
 
-        self.assertTrue(any('wrong hash' in msg.lower()
-                            for msg in log_capture.output))
-        self.assertFalse(os.path.exists(race_path),
-                         "Failed cleanup invalid token for %s" % race_path)
+        self.assertTrue(
+            any("wrong hash" in msg.lower() for msg in log_capture.output)
+        )
+        self.assertFalse(
+            os.path.exists(race_path),
+            "Failed cleanup invalid token for %s" % race_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
+        fake_send_email = self.configuration.context_get("notifier").send_email
         self.assertTrue(fake_send_email.called_twice)
-        self.assertTrue(fake_send_email.email_was_sent_to('test@example.com'))
+        self.assertTrue(fake_send_email.email_was_sent_to("test@example.com"))
 
     def test_remind_and_expire_edge_cases(self):
         """Test request expiration with exact boundary timestamps"""
-        self.configuration.context_get('notifier').send_email.forgive_email()
+        self.configuration.context_get("notifier").send_email.forgive_email()
         now = time.time()
         test_cases = [
-            ('exact_remind', now - REMIND_REQ_DAYS * SECS_PER_DAY),
-            ('exact_expire', now - EXPIRE_REQ_DAYS * SECS_PER_DAY),
+            ("exact_remind", now - REMIND_REQ_DAYS * SECS_PER_DAY),
+            ("exact_expire", now - EXPIRE_REQ_DAYS * SECS_PER_DAY),
         ]
 
-        for (req_id, mtime) in test_cases:
+        for req_id, mtime in test_cases:
             req_path = os.path.join(self.configuration.user_pending, req_id)
             req_dict = {
-                'client_id': TEST_USER_DN,
-                'distinguished_name': TEST_USER_DN,
-                'auth': [TEST_AUTH],
-                'full_name': TEST_USER_FULLNAME,
-                'organization': TEST_USER_ORG,
-                'password': TEST_MODERN_PW,
-                'email': TEST_USER_EMAIL,
+                "client_id": TEST_USER_DN,
+                "distinguished_name": TEST_USER_DN,
+                "auth": [TEST_AUTH],
+                "full_name": TEST_USER_FULLNAME,
+                "organization": TEST_USER_ORG,
+                "password": TEST_MODERN_PW,
+                "email": TEST_USER_EMAIL,
             }
-            saved, req_path = save_account_request(
-                self.configuration, req_dict)
+            saved, req_path = save_account_request(self.configuration, req_dict)
             os.utime(req_path, (mtime, mtime))
 
         # NOTE: when using real user mail we currently hit send email errors.
@@ -1421,29 +1546,43 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         """Test janitor task frequency thresholds"""
         now = time.time()
 
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "state-cleanup"), -1)
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "session-cleanup"), -1)
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "pending-reqs"), -1)
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "cache-updates"), -1)
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "state-cleanup"), -1
+        )
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "session-cleanup"), -1
+        )
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "pending-reqs"), -1
+        )
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "cache-updates"), -1
+        )
         # Test all tasks EXCEPT cache-updates are past threshold
         last_state_cleanup = now - SECS_PER_DAY - 3
         last_session_cleanup = now - SECS_PER_HOUR - 3
         last_pending_reqs = now - SECS_PER_MINUTE - 3
         last_cache_update = now - SECS_PER_MINUTE + 10  # Not expired
-        task_triggers.update({'state-cleanup': last_state_cleanup,
-                              'session-cleanup': last_session_cleanup,
-                              'pending-reqs': last_pending_reqs,
-                              'cache-updates': last_cache_update})
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "state-cleanup"), last_state_cleanup)
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "session-cleanup"), last_session_cleanup)
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "cache-updates"), last_cache_update)
+        task_triggers.update(
+            {
+                "state-cleanup": last_state_cleanup,
+                "session-cleanup": last_session_cleanup,
+                "pending-reqs": last_pending_reqs,
+                "cache-updates": last_cache_update,
+            }
+        )
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "state-cleanup"),
+            last_state_cleanup,
+        )
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "session-cleanup"),
+            last_session_cleanup,
+        )
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "cache-updates"),
+            last_cache_update,
+        )
 
         # TODO: handled does NOT count no action runs - add dummies to handle?
         handled = handle_janitor_tasks(self.configuration, now=now)
@@ -1451,26 +1590,32 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         self.assertEqual(handled, 0)  # ran with nothing to do
 
         # Verify last run timestamps updated
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "state-cleanup"), now)
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "session-cleanup"), now)
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "pending-reqs"), now)
-        self.assertEqual(_lookup_last_run(
-            self.configuration, "cache-updates"), last_cache_update)
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "state-cleanup"), now
+        )
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "session-cleanup"), now
+        )
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "pending-reqs"), now
+        )
+        self.assertEqual(
+            _lookup_last_run(self.configuration, "cache-updates"),
+            last_cache_update,
+        )
 
     @unittest.skip("TODO: enable once cleaner has improved error handling")
     def test_clean_stale_files_nonexistent_dir(self):
         """Test state cleaner with invalid directory path"""
-        target_dir = os.path.join(self.configuration.mig_system_files,
-                                  "non_existing_dir")
+        target_dir = os.path.join(
+            self.configuration.mig_system_files, "non_existing_dir"
+        )
         handled = _clean_stale_state_files(
             self.configuration,
             target_dir,
             ["*"],
             EXPIRE_STATE_DAYS,
-            time.time()
+            time.time(),
         )
         self.assertEqual(handled, 0)
 
@@ -1484,13 +1629,13 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         stamp = time.time() - EXPIRE_STATE_DAYS * SECS_PER_DAY - 1
         self._prepare_test_file(test_path, (stamp, stamp))
 
-        with self.assertLogs(level='ERROR'):
+        with self.assertLogs(level="ERROR"):
             handled = _clean_stale_state_files(
                 self.configuration,
                 test_dir,
                 ["*"],
                 EXPIRE_STATE_DAYS,
-                time.time()
+                time.time(),
             )
             self.assertEqual(handled, 0)
 
@@ -1513,14 +1658,14 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
     def test_janitor_task_cleanup_after_reject(self):
         """Verify proper cleanup after request rejection"""
         req_dict = {
-            'client_id': TEST_USER_DN,
-            'distinguished_name': TEST_USER_DN,
-            'invalid': ['Test intentional invalid'],
-            'auth': [TEST_AUTH],
-            'full_name': TEST_USER_FULLNAME,
-            'organization': TEST_USER_ORG,
+            "client_id": TEST_USER_DN,
+            "distinguished_name": TEST_USER_DN,
+            "invalid": ["Test intentional invalid"],
+            "auth": [TEST_AUTH],
+            "full_name": TEST_USER_FULLNAME,
+            "organization": TEST_USER_ORG,
             # NOTE: we need original email here to match provisioned user
-            'email': TEST_USER_EMAIL,
+            "email": TEST_USER_EMAIL,
         }
         saved, req_path = save_account_request(self.configuration, req_dict)
         req_id = os.path.basename(req_path)
@@ -1529,30 +1674,28 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
         self.assertTrue(os.path.exists(req_path))
 
         manage_single_req(
-            self.configuration,
-            req_id,
-            req_path,
-            self.user_db_path,
-            time.time()
+            self.configuration, req_id, req_path, self.user_db_path, time.time()
         )
 
-        self.assertFalse(os.path.exists(req_path),
-                         "Failed cleanup after reject for %s" % req_path)
+        self.assertFalse(
+            os.path.exists(req_path),
+            "Failed cleanup after reject for %s" % req_path,
+        )
 
-        fake_send_email = self.configuration.context_get('notifier').send_email
-        fake_send_email.email_was_sent_to('test@example.com')
+        fake_send_email = self.configuration.context_get("notifier").send_email
+        fake_send_email.email_was_sent_to("test@example.com")
 
     def test_cleaner_with_multiple_patterns(self):
         """Test state cleaner with multiple filename patterns"""
-        test_dir = self.temppath('multi_pattern_test', ensure_dir=True)
-        clean_patterns = ['*.tmp', '*.log', 'temp*']
+        test_dir = self.temppath("multi_pattern_test", ensure_dir=True)
+        clean_patterns = ["*.tmp", "*.log", "temp*"]
         clean_pairs = [
-            ('should_keep_recent.log', EXPIRE_STATE_DAYS - 1),
-            ('should_remove_stale.tmp', EXPIRE_STATE_DAYS + 1),
-            ('should_keep_other.pck', EXPIRE_STATE_DAYS + 1)
+            ("should_keep_recent.log", EXPIRE_STATE_DAYS - 1),
+            ("should_remove_stale.tmp", EXPIRE_STATE_DAYS + 1),
+            ("should_keep_other.pck", EXPIRE_STATE_DAYS + 1),
         ]
 
-        for (name, age_days) in clean_pairs:
+        for name, age_days in clean_pairs:
             path = os.path.join(test_dir, name)
             stamp = time.time() - age_days * SECS_PER_DAY
             self._prepare_test_file(path, (stamp, stamp))
@@ -1563,15 +1706,18 @@ class MigLibJanitor(MigTestCase, UserAssertMixin):
             test_dir,
             clean_patterns,
             EXPIRE_STATE_DAYS,
-            time.time()
+            time.time(),
         )
         self.assertEqual(handled, 1)
-        self.assertTrue(os.path.exists(
-            os.path.join(test_dir, 'should_keep_recent.log')))
-        self.assertFalse(os.path.exists(
-            os.path.join(test_dir, 'should_remove_stale.tmp')))
-        self.assertTrue(os.path.exists(
-            os.path.join(test_dir, 'should_keep_other.pck')))
+        self.assertTrue(
+            os.path.exists(os.path.join(test_dir, "should_keep_recent.log"))
+        )
+        self.assertFalse(
+            os.path.exists(os.path.join(test_dir, "should_remove_stale.tmp"))
+        )
+        self.assertTrue(
+            os.path.exists(os.path.join(test_dir, "should_keep_other.pck"))
+        )
 
     def test_absent_jobs_flag(self):
         """Test clean_no_job_helpers with site_enable_jobs disabled"""

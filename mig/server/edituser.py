@@ -39,6 +39,7 @@ import sys
 from mig.shared.base import canonical_user, distinguished_name_to_user, \
     fill_distinguished_name, fill_user, force_native_str_rec, is_gdp_user
 from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import cert_field_order
 from mig.shared.serial import load
 from mig.shared.useradm import init_user_adm, edit_user
 
@@ -54,7 +55,7 @@ Usage:
 or
 %(name)s [OPTIONS] -i USER_ID -n NEW_ID
 or
-%(name)s [OPTIONS] -i USER_ID [FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] [EMAIL]
+%(name)s [OPTIONS] -i USER_ID FULL_NAME ORGANIZATION STATE COUNTRY EMAIL
 to edit an existing user account non-interactively
 or
 %(name)s [OPTIONS] -i USER_ID
@@ -187,9 +188,13 @@ if '__main__' == __name__:
         raw_user['country'] = input('2-letter Country Code: ')
         raw_user['email'] = input('Email: ')
     else:
-        print("Error: Missing one or more of the arguments: "
-              + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
-              + "[EMAIL]")
+        print("Error: Missing new user ID arguments or flags")
+        usage()
+        sys.exit(1)
+
+    if not raw_user.get('email', None):
+        print('Error: user ID must include an actual email value')
+        usage()
         sys.exit(1)
 
     # Force user ID fields to canonical form for consistency
@@ -212,10 +217,12 @@ if '__main__' == __name__:
     if role:
         user_dict['role'] = role
 
-    # Remove empty value fields
+    # Remove any empty non-ID value fields to avoid truncating metadata values.
+    # Also applies to any ID values simply not specified in requested new ID.
+    id_keys = [i[0] for i in cert_field_order if i[0] in raw_user]
     # NOTE: force list copy here as we delete inline below
     for key in list(user_dict):
-        if not user_dict[key]:
+        if key not in id_keys and not user_dict[key]:
             del user_dict[key]
 
     # Now all user fields are set and we can begin editing the user

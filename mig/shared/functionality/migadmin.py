@@ -31,12 +31,12 @@ status and configuration view.
 import os
 
 from mig.shared import returnvalues
+from mig.lib.peers.legacy import peer_account_req
 from mig.shared.accountreq import (
     accept_account_req,
     build_accountreqitem_object,
     get_account_req,
     list_account_reqs,
-    peer_account_req,
     reject_account_req,
 )
 from mig.shared.base import force_native_str_rec
@@ -598,7 +598,7 @@ provide access to e.g. managing the grid job queues.
                 "text": "",
             }
         else:
-            logger.debug("request %s looks valid")
+            logger.debug("request %s looks valid" % req_id)
             req_item["createaccountreqlink"] = {
                 "object_type": "link",
                 "destination": "javascript: confirmDialog(%s, '%s', '%s', '', '%s');"

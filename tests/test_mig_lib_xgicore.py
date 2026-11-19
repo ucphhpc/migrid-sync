@@ -30,9 +30,8 @@
 import os
 import sys
 
-from tests.support import MigTestCase, FakeConfiguration, testmain
-
 from mig.lib.xgicore import *
+from tests.support import FakeConfiguration, MigTestCase, testmain
 
 
 class MigLibXgicore__get_output_format(MigTestCase):
@@ -42,28 +41,32 @@ class MigLibXgicore__get_output_format(MigTestCase):
         """Test that default output_format is returned when not set."""
         expected = "html"
         user_args = {}
-        actual = get_output_format(FakeConfiguration(), user_args,
-                                   default_format=expected)
-        self.assertEqual(actual, expected,
-                         "mismatch in default output_format")
+        actual = get_output_format(
+            FakeConfiguration(), user_args, default_format=expected
+        )
+        self.assertEqual(actual, expected, "mismatch in default output_format")
 
     def test_get_single_requested_format(self):
         """Test that the requested output_format is returned."""
         expected = "file"
-        user_args = {'output_format': [expected]}
-        actual = get_output_format(FakeConfiguration(), user_args,
-                                   default_format='BOGUS')
-        self.assertEqual(actual, expected,
-                         "mismatch in extracted output_format")
+        user_args = {"output_format": [expected]}
+        actual = get_output_format(
+            FakeConfiguration(), user_args, default_format="BOGUS"
+        )
+        self.assertEqual(
+            actual, expected, "mismatch in extracted output_format"
+        )
 
     def test_get_first_requested_format(self):
         """Test that first requested output_format is returned."""
         expected = "file"
-        user_args = {'output_format': [expected, 'BOGUS']}
-        actual = get_output_format(FakeConfiguration(), user_args,
-                                   default_format='BOGUS')
-        self.assertEqual(actual, expected,
-                         "mismatch in extracted output_format")
+        user_args = {"output_format": [expected, "BOGUS"]}
+        actual = get_output_format(
+            FakeConfiguration(), user_args, default_format="BOGUS"
+        )
+        self.assertEqual(
+            actual, expected, "mismatch in extracted output_format"
+        )
 
 
 class MigLibXgicore__override_output_format(MigTestCase):
@@ -74,29 +77,35 @@ class MigLibXgicore__override_output_format(MigTestCase):
         expected = "html"
         user_args = {}
         out_objs = []
-        actual = override_output_format(FakeConfiguration(), user_args,
-                                        out_objs, expected)
-        self.assertEqual(actual, expected,
-                         "mismatch in unchanged output_format")
+        actual = override_output_format(
+            FakeConfiguration(), user_args, out_objs, expected
+        )
+        self.assertEqual(
+            actual, expected, "mismatch in unchanged output_format"
+        )
 
     def test_get_single_requested_format(self):
         """Test that the requested output_format is returned if overriden."""
         expected = "file"
-        user_args = {'output_format': [expected]}
-        out_objs = [{'object_type': 'start', 'override_format': True}]
-        actual = override_output_format(FakeConfiguration(), user_args,
-                                        out_objs, 'OVERRIDE')
-        self.assertEqual(actual, expected,
-                         "mismatch in overriden output_format")
+        user_args = {"output_format": [expected]}
+        out_objs = [{"object_type": "start", "override_format": True}]
+        actual = override_output_format(
+            FakeConfiguration(), user_args, out_objs, "OVERRIDE"
+        )
+        self.assertEqual(
+            actual, expected, "mismatch in overriden output_format"
+        )
 
     def test_get_first_requested_format(self):
         """Test that first requested output_format is returned if overriden."""
         expected = "file"
-        user_args = {'output_format': [expected, 'BOGUS']}
-        actual = get_output_format(FakeConfiguration(), user_args,
-                                   default_format='BOGUS')
-        self.assertEqual(actual, expected,
-                         "mismatch in extracted output_format")
+        user_args = {"output_format": [expected, "BOGUS"]}
+        actual = get_output_format(
+            FakeConfiguration(), user_args, default_format="BOGUS"
+        )
+        self.assertEqual(
+            actual, expected, "mismatch in extracted output_format"
+        )
 
 
 class MigLibXgicore__fill_start_headers(MigTestCase):
@@ -105,35 +114,38 @@ class MigLibXgicore__fill_start_headers(MigTestCase):
     def test_unchanged_when_set(self):
         """Test that existing valid start entry is returned as-is."""
         out_format = "file"
-        headers = [('Content-Type', 'application/octet-stream'),
-                   ('Content-Size', 42)]
-        expected = {'object_type': 'start', 'headers': headers}
-        out_objs = [expected, {'object_type': 'binary', 'data': 42*b'0'}]
+        headers = [
+            ("Content-Type", "application/octet-stream"),
+            ("Content-Size", 42),
+        ]
+        expected = {"object_type": "start", "headers": headers}
+        out_objs = [expected, {"object_type": "binary", "data": 42 * b"0"}]
         actual = fill_start_headers(FakeConfiguration(), out_objs, out_format)
-        self.assertEqual(actual, expected,
-                         "mismatch in unchanged start entry")
+        self.assertEqual(actual, expected, "mismatch in unchanged start entry")
 
     def test_headers_added_when_missing(self):
         """Test that start entry headers are added if missing."""
         out_format = "file"
-        headers = [('Content-Type', 'application/octet-stream')]
-        minimal_start = {'object_type': 'start'}
-        expected = {'object_type': 'start', 'headers': headers}
-        out_objs = [minimal_start, {'object_type': 'binary', 'data': 42*b'0'}]
+        headers = [("Content-Type", "application/octet-stream")]
+        minimal_start = {"object_type": "start"}
+        expected = {"object_type": "start", "headers": headers}
+        out_objs = [minimal_start, {"object_type": "binary", "data": 42 * b"0"}]
         actual = fill_start_headers(FakeConfiguration(), out_objs, out_format)
-        self.assertEqual(actual, expected,
-                         "mismatch in auto initialized start entry")
+        self.assertEqual(
+            actual, expected, "mismatch in auto initialized start entry"
+        )
 
     def test_start_added_when_missing(self):
         """Test that start entry is added if missing."""
         out_format = "file"
-        headers = [('Content-Type', 'application/octet-stream')]
-        expected = {'object_type': 'start', 'headers': headers}
-        out_objs = [{'object_type': 'binary', 'data': 42*b'0'}]
+        headers = [("Content-Type", "application/octet-stream")]
+        expected = {"object_type": "start", "headers": headers}
+        out_objs = [{"object_type": "binary", "data": 42 * b"0"}]
         actual = fill_start_headers(FakeConfiguration(), out_objs, out_format)
-        self.assertEqual(actual, expected,
-                         "mismatch in auto initialized start entry")
+        self.assertEqual(
+            actual, expected, "mismatch in auto initialized start entry"
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testmain()

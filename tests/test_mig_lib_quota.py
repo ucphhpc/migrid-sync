@@ -29,6 +29,7 @@
 
 # Imports of the code under test
 from mig.lib.quota import update_quota
+
 # Imports required for the unit tests themselves
 from tests.support import MigTestCase
 
@@ -38,7 +39,7 @@ class MigLibQouta(MigTestCase):
 
     def _provide_configuration(self):
         """Prepare isolated test config"""
-        return 'testconfig'
+        return "testconfig"
 
     def before_each(self):
         """Set up test configuration and reset state before each test"""
@@ -47,7 +48,9 @@ class MigLibQouta(MigTestCase):
     def test_invalid_quota_backend(self):
         """Test invalid quota_backend in configuration"""
         self.configuration.quota_backend = "NEVERNEVER"
-        with self.assertLogs(level='ERROR') as log_capture:
+        with self.assertLogs(level="ERROR") as log_capture:
             update_quota(self.configuration)
-        self.assertTrue("'NEVERNEVER' not in supported_quota_backends:" in msg
-                        for msg in log_capture.output)
+        self.assertTrue(
+            "'NEVERNEVER' not in supported_quota_backends:" in msg
+            for msg in log_capture.output
+        )

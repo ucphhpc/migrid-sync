@@ -30,12 +30,17 @@
 import os
 import sys
 
+from mig.shared.serial import *
 from tests.support import MigTestCase, temppath, testmain
 
-from mig.shared.serial import *
 
 class BasicSerial(MigTestCase):
-    BASIC_OBJECT = {'abc': 123, 'def': 'def', 'ghi': 42.0, 'accented': 'TéstÆøå'}
+    BASIC_OBJECT = {
+        "abc": 123,
+        "def": "def",
+        "ghi": 42.0,
+        "accented": "TéstÆøå",
+    }
 
     def test_pickle_string(self):
         orig = BasicSerial.BASIC_OBJECT
@@ -49,5 +54,6 @@ class BasicSerial(MigTestCase):
         data = load(tmp_path)
         self.assertEqual(data, orig, "mismatch pickling string")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     testmain()

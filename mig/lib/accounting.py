@@ -36,9 +36,12 @@ import math
 import os
 import time
 
-from mig.shared.base import client_dir_id, distinguished_name_to_user, \
-    force_native_str
-from mig.shared.defaults import vgrid_nest_sep, freeze_meta_filename
+from mig.shared.base import (
+    client_dir_id,
+    distinguished_name_to_user,
+    force_native_str,
+)
+from mig.shared.defaults import freeze_meta_filename, vgrid_nest_sep
 from mig.shared.fileio import load_json, make_symlink, pickle, unpickle
 from mig.shared.useradm import get_accepted_peers
 from mig.shared.vgrid import vgrid_list_vgrids, vgrid_owners
@@ -70,11 +73,11 @@ def __get_owned_vgrid(configuration, verbose=False):
     NOTE: First owner of top-vgrid is primary owner"""
     logger = configuration.logger
     result = {}
-    (status, vgrids) = vgrid_list_vgrids(configuration)
+    status, vgrids = vgrid_list_vgrids(configuration)
     if status:
         for vgrid_name in vgrids:
             # print("checking vgrid: %s" % check_vgrid_name)
-            (owners_status, owners_list) = vgrid_owners(
+            owners_status, owners_list = vgrid_owners(
                 vgrid_name, configuration, recursive=True
             )
             # Find first non-zero owner
@@ -486,8 +489,9 @@ def update_accounting(configuration, verbose=False):
             )
             # Some Archives don't have meta and should just be quietly skipped
             legacy_freeze_meta = unpickle(
-                legacy_freeze_meta_filepath, configuration.logger,
-                allow_missing=True
+                legacy_freeze_meta_filepath,
+                configuration.logger,
+                allow_missing=True,
             )
             if not legacy_freeze_meta:
                 msg = "Missing metadata for archive: %r" % freeze_name
