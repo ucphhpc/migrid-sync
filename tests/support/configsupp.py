@@ -94,7 +94,7 @@ class FakeConfiguration(SimpleNamespace):
 
 def _ini_section_from_config(
     conf,
-    attr_specs: list[str | tuple[str, Callable[[str], str]]],
+    attr_specs: list[str | tuple[str, Callable[[Any], str]]],
     attr_prefix_to_remove: str | None = None,
 ) -> dict[str, Any]:
     """
@@ -247,7 +247,7 @@ def write_configuration(conf, file: TextIO) -> None:
             "user_davs_log",
             "user_ftps_address",
             "user_ftps_ctrl_port",
-            "user_ftps_pasv_ports",
+            ("user_ftps_pasv_ports", lambda v: "{}:{}".format(v[0], v[-1]+1)),
             "user_ftps_key",
             "user_ftps_key_sha256",
             "user_ftps_auth",
