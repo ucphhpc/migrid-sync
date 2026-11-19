@@ -84,7 +84,7 @@ class AccountRequestAPITestCase(MigTestCase, WsgiAssertMixin, UserAssertMixin):
             TEST_NONADMIN_CLIENT_ID,
         )
 
-    def assert_wsgi_request(
+    def assert_account_request_wsgi_request(
         self, type: str, operation: str, mig_user_dn: str, **request_args: Any
     ) -> Any:
         prepared_wsgi = self.prepareWsgiAssert(
@@ -99,17 +99,17 @@ class AccountRequestAPITestCase(MigTestCase, WsgiAssertMixin, UserAssertMixin):
         )
         return self.assertWsgiJsonResponse(prepared_wsgi)
 
-    def assert_wsgi_get(
+    def assert_account_request_wsgi_get(
         self, type: str, mig_user_dn: str, **request_args: Any
     ) -> Any:
-        return self.assert_wsgi_request(
+        return self.assert_account_request_wsgi_request(
             type, "read", mig_user_dn, **request_args
         )
 
-    def assert_wsgi_post(
+    def assert_account_request_wsgi_post(
         self, type: str, mig_user_dn: str, **request_args: Any
     ) -> Any:
-        return self.assert_wsgi_request(
+        return self.assert_account_request_wsgi_request(
             type, "create", mig_user_dn, **request_args
         )
 
@@ -117,7 +117,7 @@ class AccountRequestAPITestCase(MigTestCase, WsgiAssertMixin, UserAssertMixin):
 class TestPostForward(AccountRequestAPITestCase):
 
     def test_permission_denied_when_not_on_admin_list(self) -> None:
-        actual = self.assert_wsgi_post(
+        actual = self.assert_account_request_wsgi_post(
             "forward", TEST_NONADMIN_CLIENT_ID, account_request_ids=[]
         )
         expected = {
@@ -129,7 +129,7 @@ class TestPostForward(AccountRequestAPITestCase):
         self.assertEqual(actual, expected)
 
     def test_returns_not_found_error(self) -> None:
-        json_response = self.assert_wsgi_post(
+        json_response = self.assert_account_request_wsgi_post(
             "forward",
             mig_user_dn=TEST_ADMIN_CLIENT_ID,
             account_request_ids=["nonexisting-accreq-id"],
@@ -149,7 +149,7 @@ class TestPostForward(AccountRequestAPITestCase):
         accreq_forward = test_account_request.copy()
         accreq_id = accreq_repo.save(accreq_forward)
 
-        json_response = self.assert_wsgi_post(
+        json_response = self.assert_account_request_wsgi_post(
             "forward", TEST_ADMIN_CLIENT_ID, account_request_ids=[accreq_id]
         )
 
@@ -164,7 +164,7 @@ class TestPostForward(AccountRequestAPITestCase):
         accreq_forward = test_account_request.copy()
         accreq_id = accreq_repo.save(accreq_forward)
 
-        json_response = self.assert_wsgi_post(
+        json_response = self.assert_account_request_wsgi_post(
             "forward", TEST_ADMIN_CLIENT_ID, account_request_ids=[accreq_id]
         )
         actual = list_peers_requested(
@@ -177,7 +177,7 @@ class TestPostForward(AccountRequestAPITestCase):
         self.assertEqual(actual, expected)
 
     def test_invalid_account_requests_id_gets_rejected(self) -> None:
-        json_response = self.assert_wsgi_post(
+        json_response = self.assert_account_request_wsgi_post(
             "forward",
             TEST_ADMIN_CLIENT_ID,
             account_request_ids=["invalid/account/request"],
@@ -192,7 +192,7 @@ class TestPostForward(AccountRequestAPITestCase):
 class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
 
     def test_permission_denied_when_not_on_admin_list(self) -> None:
-        actual = self.assert_wsgi_post(
+        actual = self.assert_account_request_wsgi_post(
             "reject", mig_user_dn=TEST_NONADMIN_CLIENT_ID
         )
         expected = {
@@ -208,7 +208,7 @@ class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
         accreq_reject = test_account_request.copy()
         accreq_id = accreq_repo.save(accreq_reject)
 
-        json_response = self.assert_wsgi_post(
+        json_response = self.assert_account_request_wsgi_post(
             "reject",
             mig_user_dn=TEST_ADMIN_CLIENT_ID,
             account_request_ids=["nonexisting-accreq-id"],
@@ -228,7 +228,7 @@ class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
         accreq_reject = test_account_request.copy()
         accreq_id = accreq_repo.save(accreq_reject)
 
-        json_response = self.assert_wsgi_post(
+        json_response = self.assert_account_request_wsgi_post(
             "reject",
             mig_user_dn=TEST_ADMIN_CLIENT_ID,
             account_request_ids=[accreq_id],
@@ -245,7 +245,7 @@ class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
         accreq_reject = test_account_request.copy()
         accreq_id = accreq_repo.save(accreq_reject)
 
-        json_response = self.assert_wsgi_post(
+        json_response = self.assert_account_request_wsgi_post(
             "reject",
             mig_user_dn=TEST_ADMIN_CLIENT_ID,
             account_request_ids=[accreq_id],
@@ -267,7 +267,7 @@ class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
             [(accreq_reject.distinguished_name, accreq_reject.to_dict())],
         )
 
-        json_response = self.assert_wsgi_post(
+        json_response = self.assert_account_request_wsgi_post(
             "reject",
             mig_user_dn=TEST_ADMIN_CLIENT_ID,
             account_request_ids=[accreq_id],
@@ -291,7 +291,7 @@ class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
             {accreq_reject.distinguished_name: accreq_reject.to_dict()},
         )
 
-        json_response = self.assert_wsgi_post(
+        json_response = self.assert_account_request_wsgi_post(
             "reject",
             mig_user_dn=TEST_ADMIN_CLIENT_ID,
             account_request_ids=[accreq_id],
@@ -305,9 +305,8 @@ class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
         self.assertEqual(status, 200)
         self.assertEqual(actual, expected)
 
-
     def test_invalid_account_requests_id_gets_rejected(self) -> None:
-        json_response = self.assert_wsgi_post(
+        json_response = self.assert_account_request_wsgi_post(
             "reject",
             TEST_ADMIN_CLIENT_ID,
             account_request_ids=["invalid/account/request"],
