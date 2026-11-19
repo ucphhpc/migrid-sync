@@ -57,7 +57,7 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
         self.configuration.site_enable_migadmin = True
         self.configuration.migadmin_view_access = "ANY"
         self.configuration.migadmin_act_access = "ANY"
-        self.configuration.logfile = "/tmp/mig.log"
+        self._setup_external_log_file()
         self.config_file = tempfile.NamedTemporaryFile(
             dir=self.tempdir,
             prefix="MigServer",
@@ -65,6 +65,22 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
             mode="w+t",
             delete=False,
         )
+
+    def after_each(self) -> None:
+        self._clean_up_external_log_file()
+    
+    def _setup_external_log_file(self) -> None:
+        """Set up the external log loaded by migadmin, and ensure a file does
+        not currently exist.
+        """
+        # TODO: do not rely on absolute paths for tests
+        self.configuration.logfile = "/tmp/{}.log".format(self.id())
+        with self.assertRaises(FileNotFoundError):
+            os.stat(self.configuration.logfile)
+    
+    def _clean_up_external_log_file(self):
+        os.unlink(self.configuration.logfile)
+    
 
     def write_config_and_patch_environ(self) -> ContextManager[dict[str, str]]:
         """
@@ -95,6 +111,9 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
     def test_snapshot_is_admin(self):
         self._provision_test_user(self, TEST_USER_DN)
         self.configuration.admin_list = [TEST_USER_DN]
+
+        with open(self.configuration.logfile, "w") as logfile:
+            logfile.write("2026-01-01 12:00:00,000 INFO some log message\n")
 
         with self.write_config_and_patch_environ():
             outobjs, retval = migadmin.main(TEST_USER_DN, {})
