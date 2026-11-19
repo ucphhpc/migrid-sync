@@ -79,7 +79,10 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
             os.stat(self.configuration.logfile)
     
     def _clean_up_external_log_file(self):
-        os.unlink(self.configuration.logfile)
+        try:
+            os.unlink(self.configuration.logfile)
+        except FileNotFoundError:
+            pass
     
 
     def write_config_and_patch_environ(self) -> ContextManager[dict[str, str]]:
