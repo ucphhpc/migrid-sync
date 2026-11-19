@@ -30,6 +30,7 @@ from __future__ import annotations
 
 from mig.lib.accountreqs import AccountRequestRepository
 from mig.lib.accountreqs.permissions import check_account_requests_permit
+from mig.lib.accountreqs.validation import validate_account_request_ids
 from mig.lib.api_helpers import HandlerResponse, create_handler_response
 from mig.lib.peers.storage import (
     add_pending_peers_to_client,
@@ -118,6 +119,8 @@ def post_forward(
     user_repo = UserRepository(configuration)
 
     accreq_ids = request_info.arg_value("account_request_ids", list)
+    if not validate_account_request_ids(accreq_ids):
+        return create_handler_response(400, error="invalid account request id(s) given")
 
     errors: dict[str, str] = {}
     successes: list[str] = []
