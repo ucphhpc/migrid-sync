@@ -127,7 +127,8 @@ def _ini_section_from_config(
 
         ini_key = (
             conf_attr_name.removeprefix(attr_prefix_to_remove)
-            if attr_prefix_to_remove else conf_attr_name
+            if attr_prefix_to_remove
+            else conf_attr_name
         )
         ini[ini_key] = to_ini_value(getattr(conf, conf_attr_name))
 
@@ -247,7 +248,7 @@ def write_configuration(conf, file: TextIO) -> None:
             "user_davs_log",
             "user_ftps_address",
             "user_ftps_ctrl_port",
-            ("user_ftps_pasv_ports", lambda v: "{}:{}".format(v[0], v[-1]+1)),
+            ("user_ftps_pasv_ports", lambda v: "{}:{}".format(v[0], v[-1] + 1)),
             "user_ftps_key",
             "user_ftps_key_sha256",
             "user_ftps_auth",

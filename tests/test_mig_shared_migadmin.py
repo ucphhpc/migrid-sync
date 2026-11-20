@@ -27,9 +27,8 @@
 """Unit tests of the mig.shared.functionality.migadmin module"""
 
 import os
-import shutil
 import tempfile
-from typing import ContextManager, TextIO
+from contextlib import AbstractContextManager
 from unittest.mock import patch
 
 from mig.shared.functionality import migadmin
@@ -68,7 +67,7 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
 
     def after_each(self) -> None:
         self._clean_up_external_log_file()
-    
+
     def _setup_external_log_file(self) -> None:
         """Set up the external log loaded by migadmin, and ensure a file does
         not currently exist.
@@ -77,15 +76,16 @@ class TestMain(MigTestCase, UserAssertMixin, SnapshotAssertMixin):
         self.configuration.logfile = "/tmp/{}.log".format(self.id())
         with self.assertRaises(FileNotFoundError):
             os.stat(self.configuration.logfile)
-    
+
     def _clean_up_external_log_file(self):
         try:
             os.unlink(self.configuration.logfile)
         except FileNotFoundError:
             pass
-    
 
-    def write_config_and_patch_environ(self) -> ContextManager[dict[str, str]]:
+    def write_config_and_patch_environ(
+        self,
+    ) -> AbstractContextManager[dict[str, str]]:
         """
         Writes the configuration file, and patches `os.environ` with
         the location, along with other required values.
