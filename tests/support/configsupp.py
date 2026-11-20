@@ -91,6 +91,8 @@ class FakeConfiguration(SimpleNamespace):
     def reload_config(self, *args, **kwargs):
         """Stub defined to quack like Configuration."""
 
+        pass
+
 
 def _ini_section_from_config(
     conf,
