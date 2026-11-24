@@ -104,7 +104,8 @@ class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
 
     def test_permission_denied_when_not_on_admin_list(self) -> None:
         actual = self._request_wsgi_post_forward(
-            [], mig_user_dn=TEST_NONADMIN_CLIENT_ID,
+            [],
+            mig_user_dn=TEST_NONADMIN_CLIENT_ID,
         )
         expected = {
             "status": 403,
@@ -141,15 +142,16 @@ class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
         status = json_response["status"]
         self.assertEqual(status, 200)
         self.assertEqual(actual, expected)
-    
+
     def test_invalid_account_requests_id_gets_rejected(self) -> None:
-        json_response = self._request_wsgi_post_forward(["invalid/account/request"])
+        json_response = self._request_wsgi_post_forward(
+            ["invalid/account/request"]
+        )
 
         status = json_response["status"]
         error = json_response["error"]
         self.assertEqual(status, 400)
         self.assertEqual(error, "invalid account request id(s) given")
-    
 
 
 class TestGetSummary(AccountRequestAPITestCase, WsgiAssertMixin):

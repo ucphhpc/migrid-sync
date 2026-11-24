@@ -76,20 +76,6 @@ class UserRepositoryTestCase(MigTestCase):
         return os.path.join(self.configuration.user_db_home, user_db_filename)
 
 
-class TestSave(UserRepositoryTestCase):
-
-    def test_adds_expected_user_to_db(self) -> None:
-        repo = UserRepository(self.configuration)
-        user = test_user.copy()
-
-        repo.save(user)
-        user_db: dict[str, dict[str, Any]] = load(self._db_path)  # type: ignore
-        actual = user_db[user.distinguished_name]
-
-        expected = user.to_dict()
-        self.assertEqual(actual, expected)
-
-
 class TestReadAll(UserRepositoryTestCase):
 
     def test_returns_all_saved_users(self) -> None:

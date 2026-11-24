@@ -33,7 +33,7 @@ def validate_account_request_ids(accreq_ids: list[str]) -> bool:
 
     Args:
         accreq_ids: Account request IDs to validate.
-    
+
     Return:
         True if all account request IDs are valid, False otherwise.
     """
@@ -47,7 +47,7 @@ def validate_account_request_id(accreq_id: str) -> bool:
 
     Args:
         accreq_id: Account request ID to validate.
-    
+
     Return:
         True if the account request ID is valid, False otherwise.
     """
