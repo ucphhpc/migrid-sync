@@ -5,7 +5,8 @@ future
 # cgi was removed from the standard library in Python 3.13
 legacy-cgi;python_version >= "3.13"
 
-pyotp
+# Mitigation of CVE-2026-3276 in 2.11.2
+pyotp>=2.11.2
 pyyaml
 # NOTE: python-3.x should work with any modern dnspython.
 # IMPORTANT: there's a known security issue (CVE-2023-29483) in dnspython<2.6.1
