@@ -848,6 +848,18 @@ def valid_job_id_patterns(
         valid_job_id(pattern, min_length, max_length, extra_chars)
 
 
+def valid_account_request_id(accreq_id: str) -> None:
+    """Verify that the given account request ID is valid.
+    
+    Args:
+        accreq_id: The account request ID to be validated.
+    Raises:
+        InputException: if the account request ID is invalid.
+    """
+
+    valid_alphanumeric(contents=accreq_id, min_length=1, max_length=255)
+
+
 def valid_user_path_name(
     safe_path,
     path,
