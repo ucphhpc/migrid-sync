@@ -109,7 +109,7 @@ class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
         )
         expected = {
             "status": 403,
-            "error": "you are not permitted to manage peers",
+            "error": "you are not permitted to manage account requests",
             "data": {},
         }
 
@@ -193,7 +193,7 @@ class TestGetSummary(AccountRequestAPITestCase, WsgiAssertMixin):
         )
         expected = {
             "status": 403,
-            "error": "you are not permitted to manage peers",
+            "error": "you are not permitted to manage account requests",
             "data": {},
         }
 
