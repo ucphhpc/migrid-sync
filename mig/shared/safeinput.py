@@ -864,7 +864,7 @@ def valid_account_request_id(accreq_id: str) -> None:
         contents=accreq_id,
         valid_chars=VALID_ACCOUNT_REQUEST_ID_CHARACTERS,
         min_length=1,
-        max_length=255,
+        max_length=11,  # "tmp" + 8 random characters from the set
     )
 
 

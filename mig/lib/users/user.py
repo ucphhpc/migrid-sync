@@ -62,7 +62,7 @@ class User:
 
     @property
     def distinguished_name(self) -> str:
-        """Computes the distinguished_name based on the account request fields.
+        """Computes the distinguished_name based on the user fields.
 
         Please note that MiG certificates get empty fields set to NA, so this
         is translated here, too.
@@ -127,12 +127,12 @@ class User:
                 email=data["email"],
                 created=(
                     datetime.fromtimestamp(data["created"])
-                    if "created" in data
+                    if "created" in data and data["created"] is not None
                     else None
                 ),
                 expire=(
                     datetime.fromtimestamp(data["expire"])
-                    if "expire" in data
+                    if "expire" in data and data["expire"] is not None
                     else None
                 ),
                 full_name=data["full_name"],

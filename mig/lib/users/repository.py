@@ -2,7 +2,7 @@
 # --- BEGIN_HEADER ---
 #
 #
-# repository - Functionality related to the account request repository.
+# repository - Functionality related to the user repository.
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -24,7 +24,7 @@
 # --- END_HEADER ---
 #
 
-"""Functionality related to the account request repository."""
+"""Functionality related to the user repository."""
 
 from __future__ import annotations
 

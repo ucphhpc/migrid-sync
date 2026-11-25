@@ -49,7 +49,7 @@ def get_summary(
     """
     if not check_account_requests_permit(configuration, request_info.client_id):
         return create_handler_response(
-            403, error="you are not permitted to manage peers"
+            403, error="you are not permitted to manage account requests"
         )
 
     # TODO: dependency injection
@@ -111,7 +111,7 @@ def post_forward(
     """
     if not check_account_requests_permit(configuration, request_info.client_id):
         return create_handler_response(
-            403, error="you are not permitted to manage peers"
+            403, error="you are not permitted to manage account requests"
         )
 
     # TODO: dependency injection
@@ -135,6 +135,7 @@ def post_forward(
         peer_contacts = user_repo.search(UserSearchFilter(accreq.peers_email))
         if not peer_contacts:
             errors[accreq_id] = "no valid peer contact found"
+            continue
 
         # TODO: handle more peer contacts
         peer_contact = peer_contacts[0]
@@ -147,6 +148,8 @@ def post_forward(
             errors[accreq_id] = (
                 "error occurred adding pending peer to peer contact"
             )
+            continue
+
         successes.append(accreq_id)
 
     return create_handler_response(
