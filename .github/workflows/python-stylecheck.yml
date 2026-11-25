@@ -75,7 +75,6 @@ jobs:
         uses: marian-code/python-lint-annotate@v4
         with:
           python-root-list: ${{ env.CHANGED_FILES }}
-          extra-pycodestyle-options: "--max-line-length=80"
           extra-black-options: "--line-length=80"
           extra-isort-options: "--line-length=80 -m=HANGING_INDENT"
           # NOTE: we disable flake8 and pylint here to avoid overlap with lint action and limit noise

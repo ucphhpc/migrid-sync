@@ -30,12 +30,13 @@
 import unittest
 
 from tests.support import AssertOver
-from tests.support.assertover import NoBlockError, NoCasesError
+from tests.support.assertover import NoCasesError
 
 
 def assert_a_thing(value):
     """A simple assert helper to test with"""
-    assert value.endswith(" thing"), "must end with a thing"
+    if not value.endswith(" thing"):
+        raise AssertionError("must end with a thing")
 
 
 class TestsSupportAssertOver(unittest.TestCase):
@@ -47,7 +48,7 @@ class TestsSupportAssertOver(unittest.TestCase):
             with AssertOver(
                 values=("some thing", "other thing")
             ) as value_block:
-                value_block(lambda _: assert_a_thing(_))
+                value_block(lambda val: assert_a_thing(val))
         except Exception as exc:
             saw_raise = True
         self.assertFalse(saw_raise)
@@ -57,7 +58,7 @@ class TestsSupportAssertOver(unittest.TestCase):
             with AssertOver(
                 values=("some thing", "other stuff", "foobar")
             ) as value_block:
-                value_block(lambda _: assert_a_thing(_))
+                value_block(lambda val: assert_a_thing(val))
 
         theexception = raised.exception
         self.assertEqual(
@@ -70,7 +71,7 @@ class TestsSupportAssertOver(unittest.TestCase):
     def test_no_cases(self):
         with self.assertRaises(AssertionError) as raised:
             with AssertOver(values=()) as value_block:
-                value_block(lambda _: assert_a_thing(_))
+                value_block(lambda val: assert_a_thing(val))
 
         theexception = raised.exception
         self.assertIsInstance(theexception, NoCasesError)

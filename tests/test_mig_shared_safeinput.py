@@ -40,6 +40,7 @@ from mig.shared.safeinput import (
 )
 from mig.shared.safeinput import main as safeinput_main
 from mig.shared.safeinput import (
+    valid_account_request_id,
     valid_alphanumeric,
     valid_base_url,
     valid_commonname,
@@ -290,6 +291,28 @@ class TestMigSharedSafeInput(MigTestCase):
         """Test that invalid URL fails in valid_complex_url"""
         with self.assertRaises(InputException):
             valid_complex_url(self.INVALID_URL)
+
+    def test_valid_account_request_id_accepts_default_mkstemp_format(
+        self,
+    ) -> None:
+        self.assertEqual(valid_account_request_id("tmpabc_123_"), None)
+
+    def test_valid_account_request_id_refuses_ascii_uppercase(self) -> None:
+        with self.assertRaises(InputException):
+            valid_account_request_id("tmpABCD1234")
+
+    def test_valid_account_request_id_refuses_invalid(self) -> None:
+        for char in ".-æ^~*/\\!":
+            with self.assertRaises(InputException):
+                valid_account_request_id("abcd_1234" + char)
+
+    def test_valid_account_request_id_refuses_empty(self) -> None:
+        with self.assertRaises(InputException):
+            valid_account_request_id("")
+
+    def test_valid_account_request_id_refuses_too_long(self) -> None:
+        with self.assertRaises(InputException):
+            valid_account_request_id("a" * 256)
 
 
 class TestMigSharedSafeInput__legacy(MigTestCase):

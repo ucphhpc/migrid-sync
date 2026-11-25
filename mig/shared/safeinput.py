@@ -46,7 +46,7 @@ import re
 import sys
 from email.utils import parseaddr, formataddr
 from html import escape as escape_html
-from string import ascii_letters, digits, printable
+from string import ascii_letters, ascii_lowercase, digits, printable
 from unicodedata import category, normalize, name as unicode_name
 
 try:
@@ -144,6 +144,9 @@ VALID_PATH_CHARACTERS = ascii_letters + digits + CURRENCY + "/.,_-+±×÷=½¾" 
 VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + CURRENCY + '?#*[]{}' + '"' + \
     "`|^" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = ascii_letters + digits + '.-'
+# account request IDs are created with mkstemp that internally samples the
+# below character set to create file names
+VALID_ACCOUNT_REQUEST_ID_CHARACTERS = ascii_lowercase + digits + "_"
 VALID_BACKEND_NAME_CHARACTERS = ascii_letters + digits + '-_'
 # According to https://tools.ietf.org/html/rfc3986#section-2 URLs may contain
 # '%'-encoded chars, alphanum chars and query chars "-._~:/?#[]@!$&'()*+,;=`."
@@ -846,6 +849,23 @@ def valid_job_id_patterns(
 
     for pattern in pattern_list:
         valid_job_id(pattern, min_length, max_length, extra_chars)
+
+
+def valid_account_request_id(accreq_id: str) -> None:
+    """Verify that the given account request ID is valid.
+    
+    Args:
+        accreq_id: The account request ID to be validated.
+    Raises:
+        InputException: if the account request ID is invalid.
+    """
+
+    __valid_contents(
+        contents=accreq_id,
+        valid_chars=VALID_ACCOUNT_REQUEST_ID_CHARACTERS,
+        min_length=1,
+        max_length=11,  # "tmp" + 8 random characters from the set
+    )
 
 
 def valid_user_path_name(

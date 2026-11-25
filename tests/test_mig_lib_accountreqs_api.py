@@ -122,7 +122,7 @@ class TestPostForward(AccountRequestAPITestCase):
         )
         expected = {
             "status": 403,
-            "error": "you are not permitted to manage peers",
+            "error": "you are not permitted to manage account requests",
             "data": {},
         }
 
@@ -159,6 +159,25 @@ class TestPostForward(AccountRequestAPITestCase):
         self.assertEqual(status, 200)
         self.assertEqual(actual, expected)
 
+    def test_invalid_peer_returns_error(self) -> None:
+        accreq_repo = AccountRequestRepository(self.configuration)
+        accreq_forward = test_account_request.copy()
+        accreq_forward.peers_email = "invalid_peer@unit.organization.edu"
+        accreq_id = accreq_repo.save(accreq_forward)
+
+        json_response = self.assert_account_request_wsgi_post(
+            "forward", TEST_ADMIN_CLIENT_ID, account_request_ids=[accreq_id]
+        )
+
+        status = json_response["status"]
+        actual = json_response["data"]
+        expected = {
+            "errors": {accreq_id: "no valid peer contact found"},
+            "successes": [],
+        }
+        self.assertEqual(status, 400)
+        self.assertEqual(actual, expected)
+
     def test_adds_pending_peer_to_peer_contact(self) -> None:
         accreq_repo = AccountRequestRepository(self.configuration)
         accreq_forward = test_account_request.copy()
@@ -173,6 +192,8 @@ class TestPostForward(AccountRequestAPITestCase):
 
         expected = [accreq_forward.to_dict()]
         status = json_response["status"]
+        error = json_response["error"]
+        self.assertIsNone(error)
         self.assertEqual(status, 200)
         self.assertEqual(actual, expected)
 
@@ -341,7 +362,7 @@ class TestGetSummary(AccountRequestAPITestCase, WsgiAssertMixin):
         )
         expected = {
             "status": 403,
-            "error": "you are not permitted to manage peers",
+            "error": "you are not permitted to manage account requests",
             "data": {},
         }
 

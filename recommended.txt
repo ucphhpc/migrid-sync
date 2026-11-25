@@ -1,7 +1,8 @@
 # migrid full dependencies on a format suitable for pip install as described on
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 future
-pyotp
+# Mitigation of CVE-2026-3276 in 2.11.2
+pyotp>=2.11.2
 pyyaml
 # NOTE: python-3.x should work with any modern dnspython.
 # IMPORTANT: there's a known security issue (CVE-2023-29483) in dnspython<2.6.1

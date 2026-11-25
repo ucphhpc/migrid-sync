@@ -45,7 +45,7 @@ class AccountRequest:
 
     comment: str
     country: str
-    created: datetime
+    created: datetime | None
     email: str
     expire: datetime | None
     full_name: str
@@ -101,7 +101,7 @@ class AccountRequest:
         result = {
             "comment": self.comment,
             "country": self.country,
-            "created": self.created.timestamp(),
+            "created": self.created.timestamp() if self.created else None,
             "distinguished_name": self.distinguished_name,
             "email": self.email,
             "expire": self.expire.timestamp() if self.expire else None,
@@ -139,11 +139,15 @@ class AccountRequest:
             return cls(
                 comment=data["comment"],
                 country=data["country"],
-                created=datetime.fromtimestamp(data["created"]),
+                created=(
+                    datetime.fromtimestamp(data["created"])
+                    if "created" in data and data["created"] is not None
+                    else None
+                ),
                 email=data["email"],
                 expire=(
                     datetime.fromtimestamp(data["expire"])
-                    if "expire" in data
+                    if "expire" in data and data["expire"] is not None
                     else None
                 ),
                 full_name=data["full_name"],

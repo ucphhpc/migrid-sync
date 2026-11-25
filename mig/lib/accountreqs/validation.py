@@ -25,7 +25,7 @@
 
 """Implements validation functions for the account requests API."""
 
-from mig.shared.safeinput import InputException, valid_job_id_pattern
+from mig.shared.safeinput import InputException, valid_account_request_id
 
 
 def validate_account_request_ids(accreq_ids: list[str]) -> bool:
@@ -33,7 +33,7 @@ def validate_account_request_ids(accreq_ids: list[str]) -> bool:
 
     Args:
         accreq_ids: Account request IDs to validate.
-    
+
     Return:
         True if all account request IDs are valid, False otherwise.
     """
@@ -47,12 +47,12 @@ def validate_account_request_id(accreq_id: str) -> bool:
 
     Args:
         accreq_id: Account request ID to validate.
-    
+
     Return:
         True if the account request ID is valid, False otherwise.
     """
     try:
-        valid_job_id_pattern(accreq_id)
+        valid_account_request_id(accreq_id)
     except InputException:
         return False
     else:
