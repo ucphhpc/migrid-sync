@@ -295,11 +295,16 @@ class TestMigSharedSafeInput(MigTestCase):
     def test_valid_account_request_id_accepts_default_mkstemp_format(
         self,
     ) -> None:
-        self.assertEqual(valid_account_request_id("tmpabcd1234"), None)
+        self.assertEqual(valid_account_request_id("tmpabc_123_"), None)
 
-    def test_valid_account_request_id_refuses_non_alphanumeric(self) -> None:
+    def test_valid_account_request_id_refuses_ascii_uppercase(self) -> None:
         with self.assertRaises(InputException):
-            valid_account_request_id("tmpabcd1234-")
+            valid_account_request_id("tmpABCD1234")
+
+    def test_valid_account_request_id_refuses_invalid(self) -> None:
+        for char in ".-æ^~*/\\!":
+            with self.assertRaises(InputException):
+                valid_account_request_id("abcd_1234" + char)
 
     def test_valid_account_request_id_refuses_empty(self) -> None:
         with self.assertRaises(InputException):

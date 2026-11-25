@@ -140,6 +140,8 @@ class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
 
         expected = [accreq_forward.to_dict()]
         status = json_response["status"]
+        error = json_response["error"]
+        self.assertIsNone(error)
         self.assertEqual(status, 200)
         self.assertEqual(actual, expected)
 
