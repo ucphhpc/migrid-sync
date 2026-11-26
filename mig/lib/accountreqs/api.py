@@ -157,7 +157,10 @@ def post_forward(
         successes.append(accreq_id)
 
     return create_handler_response(
-        400 if errors else 200, errors=errors, successes=successes
+        status=400 if errors else 200,
+        error="one or more errors occurred forwarding account requests",
+        errors=errors,
+        successes=successes,
     )
 
 
@@ -178,7 +181,9 @@ def post_reject(
 
     accreq_ids = request_info.arg_value("account_request_ids", list)
     if not validate_account_request_ids(accreq_ids):
-        return create_handler_response(400, error="invalid account request id(s) given")
+        return create_handler_response(
+            400, error="invalid account request id(s) given"
+        )
 
     errors: dict[str, list[str]] = defaultdict(list)
     successes: list[str] = []
@@ -193,6 +198,8 @@ def post_reject(
         except FileNotFoundError:
             errors[accreq_id].append("account request not found")
             continue
+        except Exception:
+            errors[accreq_id].append("error removing account request")
 
         peer_contacts = user_repo.search(UserSearchFilter(accreq.peers_email))
 
@@ -228,7 +235,10 @@ def post_reject(
     }
 
     return create_handler_response(
-        400 if errors else 200, errors=errors, successes=successes
+        status=400 if errors else 200,
+        error="one or more errors occurred rejecting account requests",
+        errors=errors,
+        successes=successes,
     )
 
 

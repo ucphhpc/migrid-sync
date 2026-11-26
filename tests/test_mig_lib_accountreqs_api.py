@@ -129,19 +129,21 @@ class TestPostForward(AccountRequestAPITestCase):
         self.assertEqual(actual, expected)
 
     def test_returns_not_found_error(self) -> None:
-        json_response = self.assert_account_request_wsgi_post(
+        nonexisting_accreq_id = "tmp1234abcd"
+        actual = self.assert_account_request_wsgi_post(
             "forward",
             mig_user_dn=TEST_ADMIN_CLIENT_ID,
-            account_request_ids=["nonexisting-accreq-id"],
+            account_request_ids=[nonexisting_accreq_id],
         )
 
-        status = json_response["status"]
-        actual = json_response["data"]
         expected = {
-            "errors": {"nonexisting-accreq-id": "account request not found"},
-            "successes": [],
+            "status": 400,
+            "error": "one or more errors occurred forwarding account requests",
+            "data": {
+                "errors": {nonexisting_accreq_id: "account request not found"},
+                "successes": [],
+            },
         }
-        self.assertEqual(status, 400)
         self.assertEqual(actual, expected)
 
     def test_returns_expected_success(self) -> None:
@@ -227,21 +229,26 @@ class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
     def test_returns_not_found_error(self) -> None:
         accreq_repo = AccountRequestRepository(self.configuration)
         accreq_reject = test_account_request.copy()
-        accreq_id = accreq_repo.save(accreq_reject)
+        _ = accreq_repo.save(accreq_reject)
 
-        json_response = self.assert_account_request_wsgi_post(
+        nonexisting_accreq_id = "tmp1234abcd"
+
+        actual = self.assert_account_request_wsgi_post(
             "reject",
             mig_user_dn=TEST_ADMIN_CLIENT_ID,
-            account_request_ids=["nonexisting-accreq-id"],
+            account_request_ids=[nonexisting_accreq_id],
         )
 
-        status = json_response["status"]
-        actual = json_response["data"]
         expected = {
-            "errors": {"nonexisting-accreq-id": ["account request not found"]},
-            "successes": [],
+            "status": 400,
+            "error": "one or more errors occurred rejecting account requests",
+            "data": {
+                "errors": {
+                    nonexisting_accreq_id: ["account request not found"]
+                },
+                "successes": [],
+            },
         }
-        self.assertEqual(status, 400)
         self.assertEqual(actual, expected)
 
     def test_returns_expected_success(self) -> None:
