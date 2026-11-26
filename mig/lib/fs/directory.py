@@ -1,3 +1,30 @@
+#
+# --- BEGIN_HEADER ---
+#
+# directory - Functionality related to file system directories.
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# --- END_HEADER ---
+#
+
+"""Functionality related to file system directories."""
+
 import os
 
 
@@ -26,14 +53,14 @@ def makedirs(path: str, *, mode: int = 0o700, exist_ok: bool = False) -> None:
     """
     # create intermediate directories
     split_path = os.path.normpath(path).split(os.path.sep)[:-1]
-    for i in range(len(split_path)-1):
-        intermediate_path = os.path.sep.join(split_path[0:i+2])
+    for i in range(len(split_path) - 1):
+        intermediate_path = os.path.sep.join(split_path[0 : i + 2])
         try:
             mkdir(intermediate_path, mode=mode)
         except FileExistsError:
             if not os.path.isdir(intermediate_path):
                 raise
-    
+
     # create leaf directory
     try:
         mkdir(path, mode=mode)
