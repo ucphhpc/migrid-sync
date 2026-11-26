@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_serial - unit test of the corresponding mig shared module
-# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -30,11 +30,13 @@
 import os
 import sys
 
-from mig.shared.serial import *
+from mig.shared.serial import dump, dumps, load, loads
 from tests.support import MigTestCase, temppath, testmain
 
 
 class BasicSerial(MigTestCase):
+    """Basic unit tests for the shared serial module"""
+
     BASIC_OBJECT = {
         "abc": 123,
         "def": "def",

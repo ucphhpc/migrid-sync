@@ -3,7 +3,7 @@
 # --- BEGIN_HEADER ---
 #
 # test_mig_shared_accountreq - unit test of the corresponding mig lib module
-# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+# Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -62,16 +62,22 @@ from tests.support.usersupp import (
 
 
 def make_fake_notify_user(*args):
+    """Helper to prepare a mock version of notify_user"""
+
     class FakeNotifyUser:
+        """Emulate notify_user but without sending messages"""
+
         def __init__(self):
             self.calls = []
 
         def __call__(self, *args):
+            """Keep count of the times we were called"""
             self.calls.append(args)
             return (True, [])
 
         @property
         def called_once(self):
+            """Check if called exactly once"""
             return len(self.calls) == 1
 
     return FakeNotifyUser()
@@ -121,6 +127,7 @@ class MigSharedAccountreq__peers_helpers(
 class MigSharedAccountreq__peers_under_request(
     MigTestCase, FixtureAssertMixin, PickleAssertMixin, UserAssertMixin
 ):
+    """Unit tests for peers under request within the accountreq module"""
 
     TEST_PEER_DN = TEST_PEER_DN
     TEST_USER_DN = TEST_USER_DN
@@ -205,7 +212,7 @@ class MigSharedAccountreq__peers_under_request(
 class MigSharedAccountreq__peers_existing(
     MigTestCase, FixtureAssertMixin, UserAssertMixin
 ):
-    """Unit tests for peers related functions within the accountreq module"""
+    """Unit tests for existing peers within the accountreq module"""
 
     TEST_PEER_DN = TEST_PEER_DN
     TEST_USER_DN = TEST_USER_DN
@@ -238,6 +245,7 @@ class MigSharedAccountreq__peers_existing(
 
 
 class MigSharedAccountreq__users_pending(MigTestCase, FixtureAssertMixin):
+    """Unit tests for pending users within the accountreq module"""
 
     def _provide_configuration(self):
         return "testconfig"
