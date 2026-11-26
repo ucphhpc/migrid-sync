@@ -1,7 +1,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# test_mig_lib_fs_directory - [optionally add short module description on this line]
+# test_mig_lib_fs_directory - unit tests of fs directory module
 # Copyright (C) 2003-2026  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
