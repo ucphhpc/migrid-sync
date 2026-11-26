@@ -52,7 +52,7 @@ import sys
 from io import BytesIO
 
 from mig.lib.peers import templates as peers_templates
-from mig.lib.reqinfo import coalesce_request
+from mig.lib.reqinfo import coalesce_request, unwrap_coalesce_request_exceptions
 from mig.shared import returnvalues
 from mig.shared.init import initialize_main_variables, make_start_entry
 from mig.shared.safeinput import html_escape
@@ -193,10 +193,13 @@ def _main(
         request_data = fieldstorage_to_dict(fieldstorage)
 
     # 1. validate data required for a basic JSON request
-    errors_info, request_info = coalesce_request(
-        request_data, client_id=client_id
-    )
-    if errors_info:
+    assert isinstance(request_data, dict)
+    try:
+        request_info = coalesce_request(
+            request_data, client_id=client_id
+        )
+    except Exception as err:
+        errors_info = unwrap_coalesce_request_exceptions(err)
         logger.error(
             "A validation error occurred on the general structure of the template API request: '%s'"
             % errors_info
@@ -300,7 +303,7 @@ def _main(
         )
 
     if normalize_inputs_fn is not None:
-        request_info.set_args(normalize_inputs_fn(request_info._request_data))
+        request_info.args = normalize_inputs_fn(request_info.request_data)
 
     # 3. attempt to handle the request
     template_data_exit_resp = None

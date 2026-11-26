@@ -53,7 +53,7 @@ import sys
 from io import BytesIO
 
 from mig.lib.peers import api as peers_api
-from mig.lib.reqinfo import coalesce_request
+from mig.lib.reqinfo import coalesce_request, unwrap_coalesce_request_exceptions
 from mig.shared import returnvalues
 from mig.shared.base import string_snippet
 from mig.shared.defaults import CSRF_WARN
@@ -216,13 +216,13 @@ def _main(
         try:
             request_data = json.loads(raw_data)
         except ValueError:
-            msg = (
+            errors_info = (
                 "An invalid format was supplied to: '%s', requires a JSON "
                 "compatible format" % op_name
             )
-            logger.error(msg)
+            logger.error(errors_info)
             output_objects.append(
-                {"object_type": "error_text", "text": html_escape(msg)}
+                {"object_type": "error_text", "text": html_escape(errors_info)}
             )
             return (output_objects, returnvalues.CLIENT_ERROR)
     elif raw_data == b"" and user_arguments_dict:
@@ -241,20 +241,21 @@ def _main(
         request_data = fieldstorage_to_dict(fieldstorage)
 
     # 1. validate data required for a basic JSON request
-    errors_info, request_info = coalesce_request(
-        request_data, client_id=client_id
-    )
-    if errors_info:
+    assert isinstance(request_data, dict)
+    try:
+        request_info = coalesce_request(request_data, client_id=client_id)
+    except Exception as err:
+        errors_info = unwrap_coalesce_request_exceptions(err)
         logger.error(
             "A validation error occurred on the general structure of the datainterface API request: '%s'"
             % errors_info
         )
-        msg = (
+        errors_info = (
             "The general request structure supplied to the data API was invalid or had illegal inputs, failed with the error: %s"
             % errors_info
         )
         output_objects.append(
-            {"object_type": "error_text", "text": html_escape(msg)}
+            {"object_type": "error_text", "text": html_escape(errors_info)}
         )
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -292,7 +293,7 @@ def _main(
         )
 
     if normalize_inputs_fn is not None:
-        request_info.set_args(normalize_inputs_fn(request_info._request_data))
+        request_info.args = normalize_inputs_fn(request_info.request_data)
 
     # 3. attempt to handle the request
     handler_exit_resp = None
