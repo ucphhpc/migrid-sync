@@ -852,19 +852,24 @@ def valid_job_id_patterns(
 
 
 def valid_account_request_id(accreq_id: str) -> None:
-    """Verify that the given account request ID is valid.
+    """Verify that the given account request ID is valid. Meaning that it
+    matches the regular expression `tmp[a-z0-9_]{8}`.
     
     Args:
         accreq_id: The account request ID to be validated.
     Raises:
         InputException: if the account request ID is invalid.
     """
+    # validate the prefix
+    if not accreq_id.startswith("tmp"):
+        raise InputException("must be prefixed with 'tmp'")
 
+    # validate the suffix
     __valid_contents(
         contents=accreq_id,
         valid_chars=VALID_ACCOUNT_REQUEST_ID_CHARACTERS,
-        min_length=1,
-        max_length=11,  # "tmp" + 8 random characters from the set
+        min_length=11,
+        max_length=11,
     )
 
 

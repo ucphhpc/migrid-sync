@@ -34,7 +34,7 @@ import sys
 from past.builtins import basestring, unicode
 
 from mig.shared.safeinput import (
-    VALID_NAME_CHARACTERS,
+    VALID_ACCOUNT_REQUEST_ID_CHARACTERS,
     InputException,
     filter_commonname,
 )
@@ -298,21 +298,43 @@ class TestMigSharedSafeInput(MigTestCase):
         self.assertEqual(valid_account_request_id("tmpabc_123_"), None)
 
     def test_valid_account_request_id_refuses_ascii_uppercase(self) -> None:
-        with self.assertRaises(InputException):
+        with self.assertRaises(InputException) as ctx:
             valid_account_request_id("tmpABCD1234")
+        expected = "found invalid character: 'A' (allowed: {})".format(
+            VALID_ACCOUNT_REQUEST_ID_CHARACTERS
+        )
+        self.assertEqual(ctx.exception.value, expected)
 
     def test_valid_account_request_id_refuses_invalid(self) -> None:
         for char in ".-æ^~*/\\!":
-            with self.assertRaises(InputException):
-                valid_account_request_id("abcd_1234" + char)
+            with self.assertRaises(InputException) as ctx:
+                valid_account_request_id("tmp1234567" + char)
+            expected = "found invalid character: {!r} (allowed: {})".format(
+                char, VALID_ACCOUNT_REQUEST_ID_CHARACTERS
+            )
+            self.assertEqual(ctx.exception.value, expected)
 
-    def test_valid_account_request_id_refuses_empty(self) -> None:
-        with self.assertRaises(InputException):
-            valid_account_request_id("")
+    def test_valid_account_request_id_refuses_short(self) -> None:
+        with self.assertRaises(InputException) as ctx:
+            valid_account_request_id("tmpabc123")
+        self.assertEqual(
+            ctx.exception.value, "shorter than minimum length (11)"
+        )
 
     def test_valid_account_request_id_refuses_too_long(self) -> None:
-        with self.assertRaises(InputException):
-            valid_account_request_id("a" * 256)
+        with self.assertRaises(InputException) as ctx:
+            valid_account_request_id("tmp12345678_")
+        self.assertEqual(ctx.exception.value, "maximum length (11) exceeded")
+
+    def test_valid_account_request_id_refuses_empty(self) -> None:
+        with self.assertRaises(InputException) as ctx:
+            valid_account_request_id("")
+        self.assertEqual(ctx.exception.value, "must be prefixed with 'tmp'")
+
+    def test_valid_account_request_id_refuses_missing_prefix(self) -> None:
+        with self.assertRaises(InputException) as ctx:
+            valid_account_request_id("12345abcde_")
+        self.assertEqual(ctx.exception.value, "must be prefixed with 'tmp'")
 
 
 class TestMigSharedSafeInput__legacy(MigTestCase):
