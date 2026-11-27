@@ -34,9 +34,7 @@ from contextlib import redirect_stdout
 from typing import TYPE_CHECKING, Any, Callable, Union
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    TreeDict = Mapping[str, Union["TreeDict", str]]
+    TreeDict = dict[str, Union["TreeDict", str]]
 
 
 def write_file(directory: str, name: str, content: str) -> None:
