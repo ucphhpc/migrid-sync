@@ -31,12 +31,15 @@ Demonstration of a route plugin for use in tests.
 """
 
 
-def tests_data__GET_testpluginendpoint(request_info, data):
+from mig.lib.reqinfo import RequestInfo
+
+
+def tests_data__GET_testpluginendpoint(request_info: RequestInfo, data):
     """
     Request handler: GET /testpluginendpoint
     """
 
-    greeting = request_info._arg_string("greeting", "<none>")
+    greeting = request_info.arg_value("greeting", str)
 
     return {
         "template_args": {
