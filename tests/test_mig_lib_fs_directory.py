@@ -50,7 +50,7 @@ class TestMkdir(MigTestCase):
 
         self.assertEqual(actual.st_mode & 0o777, 0o651)
 
-    def test_raises_exception_if_directory_exists(self) -> None:
+    def test_raises_file_exists_error_if_directory_exists(self) -> None:
         tmp = self.temppath("mkdir")
         path = os.path.join(tmp, "directory")
         os.mkdir(path)
@@ -58,7 +58,7 @@ class TestMkdir(MigTestCase):
         with self.assertRaises(FileExistsError):
             fs.mkdir(path)
 
-    def test_raises_exception_if_file_exists(self) -> None:
+    def test_raises_file_exists_error_if_file_exists(self) -> None:
         tmp = self.temppath("mkdir")
         path = os.path.join(tmp, "file")
         with open(path, "w") as tmpfile:
@@ -67,7 +67,9 @@ class TestMkdir(MigTestCase):
         with self.assertRaises(FileExistsError):
             fs.mkdir(path)
 
-    def test_raises_exception_parent_directory_does_not_exist(self) -> None:
+    def test_raises_file_not_found_error_parent_directory_does_not_exist(
+        self,
+    ) -> None:
         tmp = self.temppath("mkdir")
         path = os.path.join(tmp, "nonexisting", "created")
 
@@ -104,7 +106,7 @@ class TestMakedirs(MigTestCase):
         self.assertEqual(stat2.st_mode & 0o777, 0o751)
         self.assertEqual(stat3.st_mode & 0o777, 0o751)
 
-    def test_raises_exception_if_file_exists(self) -> None:
+    def test_raises_file_exists_error_if_file_exists(self) -> None:
         tmp = self.temppath("makedirs")
         path = os.path.join(tmp, "file")
         with open(path, "w") as tmpfile:
@@ -113,7 +115,9 @@ class TestMakedirs(MigTestCase):
         with self.assertRaises(FileExistsError):
             fs.makedirs(path)
 
-    def test_does_not_raise_exception_if_nonleaf_directory_exists(self) -> None:
+    def test_does_not_raise_file_exists_error_if_nonleaf_dir_exists(
+        self,
+    ) -> None:
         tmp = self.temppath("makedirs")
         path = os.path.join(tmp, "level1", "level2")
         os.mkdir(os.path.join(tmp, "level1"))
@@ -122,7 +126,7 @@ class TestMakedirs(MigTestCase):
 
         self.assertIsNotNone(os.stat(path))
 
-    def test_raises_exception_if_leaf_directory_exists(self) -> None:
+    def test_raises_file_exists_error_if_leaf_dir_exists(self) -> None:
         tmp = self.temppath("makedirs")
         path = os.path.join(tmp, "level1", "level2")
         os.makedirs(path)
@@ -130,7 +134,7 @@ class TestMakedirs(MigTestCase):
         with self.assertRaises(FileExistsError):
             fs.makedirs(path)
 
-    def test_does_not_raise_exception_when_leaf_directory_exists_if_exist_ok(
+    def test_does_not_raise_file_exists_error_when_leaf_dir_exists_if_exist_ok(
         self,
     ) -> None:
         tmp = self.temppath("makedirs")
