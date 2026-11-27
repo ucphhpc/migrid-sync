@@ -71,10 +71,10 @@ jobs:
           fetch-depth: 0  # This is necessary to get the commits
       - name: Determine changed Python files
         uses: ./.github/actions/changed-py-files
-      - if: ${{ env.CHANGED_FILES }}
+      - if: ${{ env.CHANGED_PY_FILES }}
         uses: marian-code/python-lint-annotate@v4
         with:
-          python-root-list: ${{ env.CHANGED_FILES }}
+          python-root-list: ${{ env.CHANGED_PY_FILES }}
           # NOTE: we disable flake8 and pylint here to avoid overlap with lint action and limit noise
           use-flake8: false
           use-pylint: false
