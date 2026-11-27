@@ -27,8 +27,8 @@ extend-exclude = '''
 profile = "black"
 skip_glob = [".git/*", "tests/data/*", "tests/fixture/*", "tests/snapshots/*"]
 line_length = 80
-# Multi line output mode HANGING_INDENT has value 2
-multi_line_output = 2
+# Multi line output mode VERTICAL_HANGING_INDENT has value 3
+multi_line_output = 3
 
 # NOTE: the following temporay excludes must be kept in sync between tools
 skip = [
