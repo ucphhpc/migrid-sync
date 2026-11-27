@@ -11,6 +11,7 @@ exclude = '''
     | tests/fixture/
     | tests/snapshots/
 '''
+
 # NOTE: the following temporay excludes must be kept in sync between tools
 extend-exclude = '''
       bin/checkconf.py
@@ -24,8 +25,11 @@ extend-exclude = '''
 
 [tool.isort]
 profile = "black"
-line_length = 80
 skip_glob = [".git/*", "tests/data/*", "tests/fixture/*", "tests/snapshots/*"]
+line_length = 80
+# Multi line output mode VERTICAL_HANGING_INDENT has value 3
+multi_line_output = 3
+
 # NOTE: the following temporay excludes must be kept in sync between tools
 skip = [
     "bin/checkconf.py",
@@ -34,7 +38,7 @@ skip = [
     "sbin/grid_ftps.py",
     "sbin/grid_openid.py",
     "sbin/grid_sftp.py",
-    "sbin/grid_webdavs.py"
+    "sbin/grid_webdavs.py",
 ]
 
 [tool.pylint]
@@ -44,6 +48,7 @@ ignore-patterns = '''
     | tests/fixture/
     | tests/snapshots/
 '''
+
 # NOTE: the following temporay excludes must be kept in sync between tools
 ignore-paths = [
     "bin/checkconf.py",
@@ -52,11 +57,12 @@ ignore-paths = [
     "sbin/grid_ftps.py",
     "sbin/grid_openid.py",
     "sbin/grid_sftp.py",
-    "sbin/grid_webdavs.py"
+    "sbin/grid_webdavs.py",
 ]
-# This ensures that pylint does not complain if we dynamically
-# adjust the sys.path inside tests to import packages/modules from directories
-# such as tests/data.
+
+# This ensures that pylint does not complain if we dynamically adjust the
+# sys.path inside tests to import packages/modules from directories such as
+# tests/data.
 # Documentation for this can be found at
 # https://github.com/databrickslabs/pylint-plugin/blob/b1be1a39703b8d3b693a0afd8a6ee61ff5078cb8/pyproject.toml#L202
 [tool.pylint.main]
@@ -73,8 +79,9 @@ extend-exclude = [
     "sbin/grid_ftps.py",
     "sbin/grid_openid.py",
     "sbin/grid_sftp.py",
-    "sbin/grid_webdavs.py"
+    "sbin/grid_webdavs.py",
 ]
+
 # NOTE: we have decided to stay with %X string-expansion for now
 [tool.ruff.lint]
 # UP031 = Use format specifiers instead of percent format when interpolating strings
@@ -84,6 +91,10 @@ select = ["E713", "D100", "D101", "D104", "D106"]
 
 [tool.bandit]
 exclude_dirs = [".git/", "tests/data/", "tests/fixture/", "tests/snapshots"]
+
+[tool.mypy]
+# NOTE: don't err on common missing type definitions
+disable_error_code = ["var-annotated", "assignment", "attr-defined"]
 
 # Test tools
 [tool.pytest.ini_options]

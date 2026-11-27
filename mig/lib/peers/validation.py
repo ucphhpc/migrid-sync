@@ -27,6 +27,7 @@
 """Input validation for peers API."""
 
 import datetime
+from typing import TYPE_CHECKING
 
 from mig.lib.peers.parsing import EXTRA_PEER_FIELDS, EXTRA_PEER_FIELDS_TYPE
 from mig.lib.reqinfo import unlistify_dict
@@ -91,7 +92,8 @@ def validate_peer_expire(expire):
     return unlistify_dict(accepted), unlistify_dict(rejected)
 
 
-def validate_peer_invite_on_email(invite_on_email):
+# Edit to check that max line length is honored
+def validate_peer_invite_on_email(invite_on_email: dict) -> tuple[dict, dict]:
     """Validates that the notify value has a valid structure and only allowed characters
 
     invite_on_email: {"invite_on_email": invite_on_email}
@@ -103,6 +105,9 @@ def validate_peer_invite_on_email(invite_on_email):
         type_override=PEER_NOTIFY_TYPE_MAP,
         list_wrap=True,
     )
+    # Also force a type error
+    a = len(invite_on_email)
+    a["oops"]
     return unlistify_dict(accepted), unlistify_dict(rejected)
 
 

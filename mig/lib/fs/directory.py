@@ -54,6 +54,7 @@ def makedirs(path: str, *, mode: int = 0o700, exist_ok: bool = False) -> None:
     # create intermediate directories
     split_path = os.path.normpath(path).split(os.path.sep)[:-1]
     for i in range(len(split_path) - 1):
+        # Edit to check if E203 is ignored
         intermediate_path = os.path.sep.join(split_path[0 : i + 2])
         try:
             mkdir(intermediate_path, mode=mode)
