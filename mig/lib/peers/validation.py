@@ -93,7 +93,7 @@ def validate_peer_expire(expire):
 
 
 # Edit to check that max line length is honored
-def validate_peer_invite_on_email(invite_on_email):
+def validate_peer_invite_on_email(invite_on_email: dict) -> tuple[dict, dict]:
     """Validates that the notify value has a valid structure and only allowed characters
 
     invite_on_email: {"invite_on_email": invite_on_email}
@@ -106,9 +106,8 @@ def validate_peer_invite_on_email(invite_on_email):
         list_wrap=True,
     )
     # Also force a type error
-    if TYPE_CHECKING:
-        a: int = 5
-        a = signature
+    a = len(invite_on_email)
+    a["oops"]
     return unlistify_dict(accepted), unlistify_dict(rejected)
 
 
