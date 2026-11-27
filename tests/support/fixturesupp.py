@@ -523,6 +523,8 @@ class _PreparedFixture:
 
 
 class FixtureAssertMixin:
+    """Mixin to help assert values against fixtures."""
+
     def prepareFixtureAssert(self, fixture_relpath, fixture_format=None):
         """Prepare to assert a value against a fixture."""
         return _PreparedFixture.from_relpath(
