@@ -94,20 +94,31 @@ class RequestInfo:
     method: str
     route: str
     full_route: str
-    csrf_token: str
+    csrf_token: str | None
     client_id: str
     client_email: str | None
     request_type: str
     request_package: str
     request_data: dict[str, Any]
-    args: dict[str, Any] | None = None
+    normalized_request_data: dict[str, Any] | None = None
+
+    @property
+    def args(self) -> dict[str, Any]:
+        """Property that returns the normalized request data if it exists,
+        otherwise it returns the unnormalized request data.
+        """
+
+        if self.normalized_request_data is None:
+            return self.request_data
+        else:
+            return self.normalized_request_data
 
     def arg_value(self, arg: str, type_of_value: type[T]) -> T:
         """
         Return the value for a particular argument forced to a particular type.
         """
 
-        args = self.args
+        args = self.normalized_request_data
         if args is None:
             args = self.request_data
 

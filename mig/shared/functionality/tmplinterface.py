@@ -303,7 +303,7 @@ def _main(
         )
 
     if normalize_inputs_fn is not None:
-        request_info.args = normalize_inputs_fn(request_info.request_data)
+        request_info.normalized_request_data = normalize_inputs_fn(request_info.request_data)
 
     # 3. attempt to handle the request
     template_data_exit_resp = None
