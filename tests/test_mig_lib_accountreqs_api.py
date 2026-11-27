@@ -142,7 +142,10 @@ class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
 
         status = json_response["status"]
         actual = json_response["data"]
-        expected = {"errors": {accreq_id: "no valid peer contact found"}, "successes": []}
+        expected = {
+            "errors": {accreq_id: "no valid peer contact found"},
+            "successes": [],
+        }
         self.assertEqual(status, 400)
         self.assertEqual(actual, expected)
 
@@ -172,6 +175,18 @@ class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
         error = json_response["error"]
         self.assertEqual(status, 400)
         self.assertEqual(error, "invalid account request id(s) given")
+
+    def test_no_account_requests_returns_error(self) -> None:
+        json_response = self._request_wsgi_post_forward(accreq_ids=[])
+
+        self.assertEqual(
+            json_response,
+            {
+                "status": 400,
+                "error": "no account request ids given",
+                "data": {},
+            },
+        )
 
 
 class TestGetSummary(AccountRequestAPITestCase, WsgiAssertMixin):
