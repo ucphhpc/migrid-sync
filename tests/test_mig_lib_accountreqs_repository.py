@@ -23,6 +23,8 @@
 # --- END_HEADER ---
 #
 
+"""Unit tests of mig.lib.accountreqs.repository."""
+
 import os
 from datetime import datetime
 
@@ -72,6 +74,7 @@ class AccountRequestRepositoryTestCase(MigTestCase):
 
 
 class TestSave(AccountRequestRepositoryTestCase):
+    """Unit test of AccountRequestRepository.save."""
 
     def test_creates_file_at_expected_path(self) -> None:
         repository = AccountRequestRepository(self.configuration)
@@ -96,6 +99,7 @@ class TestSave(AccountRequestRepositoryTestCase):
 
 
 class TestRemove(AccountRequestRepositoryTestCase):
+    """Unit test of AccountRequestRepository.remove."""
 
     def test_raises_exception_for_nonexisting(self) -> None:
         repository = AccountRequestRepository(self.configuration)
@@ -123,6 +127,7 @@ class TestRemove(AccountRequestRepositoryTestCase):
 
 
 class TestRead(AccountRequestRepositoryTestCase):
+    """Unit test of AccountRequestRepository.read."""
 
     def test_returns_expected_saved_account_request(self) -> None:
         repository = AccountRequestRepository(self.configuration)
@@ -142,6 +147,7 @@ class TestRead(AccountRequestRepositoryTestCase):
 
 
 class TestReadAll(AccountRequestRepositoryTestCase):
+    """Unit test of AccountRequestRepository.read_all."""
 
     def test_return_empty_list_if_no_account_requests(self) -> None:
         repository = AccountRequestRepository(self.configuration)

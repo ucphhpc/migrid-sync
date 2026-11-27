@@ -23,6 +23,8 @@
 # --- END_HEADER ---
 #
 
+"""Unit tests for mig.lib.users.repository."""
+
 import fcntl
 import os
 from datetime import datetime
@@ -77,7 +79,8 @@ class UserRepositoryTestCase(MigTestCase):
 
 
 class TestReadAll(UserRepositoryTestCase):
-
+    """Unit tests for UserRepository.read_all."""
+    
     def test_returns_all_saved_users(self) -> None:
         repo = UserRepository(self.configuration)
         users: list[User] = []
@@ -94,6 +97,7 @@ class TestReadAll(UserRepositoryTestCase):
 
 
 class TestUserSearchFilter(UserRepositoryTestCase):
+    """Unit tests for UserSearchFilter."""
 
     def test_includes_user_with_email(self) -> None:
         user = test_user.copy()
@@ -113,6 +117,7 @@ class TestUserSearchFilter(UserRepositoryTestCase):
 
 
 class TestSearch(UserRepositoryTestCase):
+    """Unit tests for UserRepository.search."""
 
     def test_only_includes_users_matching_filter(self) -> None:
         repo = UserRepository(self.configuration)
@@ -150,6 +155,7 @@ class TestSearch(UserRepositoryTestCase):
 
 
 class TestLockDB(UserRepositoryTestCase):
+    """Unit tests for UserRepository._lock_user_db."""
 
     def test_cannot_acquire_exclusive_lock_after_exclusively_locked(self):
         repo = UserRepository(self.configuration)

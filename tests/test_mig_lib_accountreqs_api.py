@@ -23,6 +23,8 @@
 # --- END_HEADER ---
 #
 
+"""Unit tests for mig.lib.accountreqs.api."""
+
 from datetime import datetime
 from typing import Any
 
@@ -67,6 +69,7 @@ test_account_request = AccountRequest(
 
 
 class AccountRequestAPITestCase(MigTestCase, UserAssertMixin):
+    """Common logic for account request API test cases."""
 
     def _provide_configuration(self):
         return "testconfig"
@@ -85,6 +88,7 @@ class AccountRequestAPITestCase(MigTestCase, UserAssertMixin):
 
 
 class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
+    """Unit test of POST /forward"""
 
     def _request_wsgi_post_forward(
         self, accreq_ids: list[str], mig_user_dn: str = TEST_ADMIN_CLIENT_ID
@@ -171,6 +175,7 @@ class TestPostForward(AccountRequestAPITestCase, WsgiAssertMixin):
 
 
 class TestGetSummary(AccountRequestAPITestCase, WsgiAssertMixin):
+    """Unit test of GET /summary"""
 
     def _request_wsgi_get_summary(
         self, mig_user_dn: str = TEST_ADMIN_CLIENT_ID
