@@ -28,14 +28,19 @@
 
 import os
 import stat
-from contextlib import redirect_stdout
-from typing import Any, Callable, NamedTuple
+from typing import NamedTuple
 
 from bin.addheader import Header
 from bin.addheader import __file__ as addheader_file
 from bin.addheader import main, parse_file
 from tests.support import MigTestCase
-from tests.support.iosupp import read_file, read_tree, write_file, write_tree
+from tests.support.iosupp import (
+    read_file,
+    read_tree,
+    redirect_stdout_to_devnull,
+    write_file,
+    write_tree,
+)
 
 FILE_CONTENT = '''"""Python module"""
 def func(a, b):
@@ -70,19 +75,6 @@ HEADER_FORMAT = """#
 """
 FILE_WITH_HEADER_CONTENT = HEADER_FORMAT + "\n" + FILE_CONTENT
 DEFAULT_DESC = "[optionally add short module description on this line]"
-
-
-def redirect_stdout_to_devnull(func: Callable[..., Any]) -> Callable[..., Any]:
-    """A decorator that wraps the given function with stdout redirection to
-    `os.devnull`. Useful for noisy tests.
-    """
-
-    def wrapped_func(*args, **kwargs):
-        with open(os.devnull, "w") as devnull:
-            with redirect_stdout(devnull):
-                return func(*args, **kwargs)
-
-    return wrapped_func
 
 
 def add_header(modulename: str, modulebody: str) -> str:
