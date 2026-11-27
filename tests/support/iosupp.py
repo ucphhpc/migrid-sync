@@ -30,7 +30,8 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Union
+from contextlib import redirect_stdout
+from typing import TYPE_CHECKING, Any, Callable, Union
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -74,3 +75,16 @@ def write_tree(root: str, tree: TreeDict) -> None:
             branchname = os.path.join(root, name)
             os.mkdir(branchname)
             write_tree(branchname, branch)
+
+
+def redirect_stdout_to_devnull(func: Callable[..., Any]) -> Callable[..., Any]:
+    """A decorator that wraps the given function with stdout redirection to
+    `os.devnull`. Useful for noisy tests.
+    """
+
+    def wrapped_func(*args, **kwargs):
+        with open(os.devnull, "w") as devnull:
+            with redirect_stdout(devnull):
+                return func(*args, **kwargs)
+
+    return wrapped_func

@@ -35,6 +35,7 @@ from mig.shared.base import client_id_dir
 from mig.shared.defaults import twofactor_filename
 from mig.shared.fileio import unpickle
 from tests.support import MigTestCase
+from tests.support.iosupp import redirect_stdout_to_devnull
 from tests.support.usersupp import TEST_USER_DN, UserAssertMixin
 
 TEST_SEED = base64.b32encode(b"a" * 20)
@@ -49,6 +50,7 @@ class TestMain(MigTestCase, UserAssertMixin):
     def before_each(self):
         self._provision_test_user(self, TEST_USER_DN)
 
+    @redirect_stdout_to_devnull
     def test_enable(self) -> None:
         tmp: str = self.temppath(self.id(), ensure_dir=True)
         seed_path = os.path.join(tmp, "seed.txt")
@@ -75,6 +77,7 @@ class TestMain(MigTestCase, UserAssertMixin):
         self.assertNotEqual(data, False)
         self.assertEqual(data["CREATOR"], TEST_USER_DN)
 
+    @redirect_stdout_to_devnull
     def test_remove(self) -> None:
         tmp: str = self.temppath(self.id(), ensure_dir=True)
         seed_path = os.path.join(tmp, "seed.txt")
