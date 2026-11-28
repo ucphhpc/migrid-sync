@@ -23,6 +23,8 @@
 # --- END_HEADER ---
 #
 
+"""Unit tests for mig.lib.accountreqs.api."""
+
 from datetime import datetime
 from typing import Any
 
@@ -68,6 +70,7 @@ test_account_request = AccountRequest(
 
 
 class AccountRequestAPITestCase(MigTestCase, WsgiAssertMixin, UserAssertMixin):
+    """Common logic for account request API test cases."""
 
     def _provide_configuration(self):
         return "testconfig"
@@ -115,6 +118,7 @@ class AccountRequestAPITestCase(MigTestCase, WsgiAssertMixin, UserAssertMixin):
 
 
 class TestPostForward(AccountRequestAPITestCase):
+    """Unit test of POST /forward"""
 
     def test_permission_denied_when_not_on_admin_list(self) -> None:
         actual = self.assert_account_request_wsgi_post(
@@ -211,8 +215,25 @@ class TestPostForward(AccountRequestAPITestCase):
         self.assertEqual(status, 400)
         self.assertEqual(error, "invalid account request id(s) given")
 
+    def test_no_account_requests_returns_error(self) -> None:
+        json_response = self.assert_account_request_wsgi_post(
+            "forward",
+            mig_user_dn=TEST_ADMIN_CLIENT_ID,
+            account_request_ids=[],
+        )
+        
+        self.assertEqual(
+            json_response,
+            {
+                "status": 400,
+                "error": "no account request ids given",
+                "data": {},
+            },
+        )
+
 
 class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
+    """Unit tests of POST /reject"""
 
     def test_permission_denied_when_not_on_admin_list(self) -> None:
         actual = self.assert_account_request_wsgi_post(
@@ -347,6 +368,7 @@ class TestPostReject(AccountRequestAPITestCase, WsgiAssertMixin):
 
 
 class TestGetSummary(AccountRequestAPITestCase, WsgiAssertMixin):
+    """Unit test of GET /summary"""
 
     def _request_wsgi_get_summary(
         self, mig_user_dn: str = TEST_ADMIN_CLIENT_ID

@@ -80,7 +80,7 @@ extend-exclude = [
 # UP031 = Use format specifiers instead of percent format when interpolating strings
 # DTZ006 = datetime.datetime.fromtimestamp()` called without a `tz` argument
 ignore = ["UP031", "DTZ006"]
-select = ["E713"]
+select = ["E713", "D100", "D101", "D104", "D106"]
 
 [tool.bandit]
 exclude_dirs = [".git/", "tests/data/", "tests/fixture/", "tests/snapshots"]

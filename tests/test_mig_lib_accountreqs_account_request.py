@@ -23,6 +23,8 @@
 # --- END_HEADER ---
 #
 
+"""Unit tests for mig.lib.accountreqs.account_request."""
+
 from datetime import datetime
 
 from mig.lib.accountreqs import AccountRequest
@@ -55,6 +57,8 @@ test_account_request = AccountRequest(
 
 
 class TestToDict(MigTestCase):
+    """Unit test for AccountRequest.to_dict."""
+
     def test_returns_expected_dictionary(self) -> None:
         accreq = test_account_request.copy()
 
@@ -83,6 +87,8 @@ class TestToDict(MigTestCase):
 
 
 class TestCopy(MigTestCase):
+    """Unit test for AccountRequest.copy."""
+
     def test_result_is_equal(self) -> None:
         actual = test_account_request.copy()
         self.assertEqual(actual, test_account_request)
@@ -93,6 +99,8 @@ class TestCopy(MigTestCase):
 
 
 class TestFromDict(MigTestCase):
+    """Unit test for AccountRequest.from_dict."""
+
     def test_returns_expected_account_request(self) -> None:
         actual = AccountRequest.from_dict(
             {
@@ -145,7 +153,9 @@ class TestFromDict(MigTestCase):
         self.assertIsNone(actual)
 
 
-class TestFillDistinguishedName(MigTestCase):
+class TestDistinguishedName(MigTestCase):
+    """Unit test for AccountRequest.distinguished_name."""
+
     def test_returns_updated_distinguished_name(self):
         accreq = test_account_request.copy()
         accreq.email = "anotheremail@example.com"
@@ -176,6 +186,8 @@ class TestFillDistinguishedName(MigTestCase):
 
 
 class TestToMaskedDict(MigTestCase):
+    """Unit test for AccountRequest.to_masked_dict."""
+
     def test_credentials_are_masked(self) -> None:
         accreq = test_account_request.copy()
 

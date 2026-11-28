@@ -32,6 +32,7 @@ import logging
 import os
 from typing import Any
 
+from mig.lib.fs import makedirs
 from mig.shared.accountreq import save_account_request
 from mig.shared.fileio import unpickle
 from mig.shared.serial import load
@@ -56,9 +57,7 @@ class AccountRequestRepository:
 
     def _initialize_directory(self) -> None:
         try:
-            os.mkdir(self._cfg.user_pending)
-        except FileExistsError:
-            pass
+            makedirs(self._cfg.user_pending, exist_ok=True)
         except Exception:
             log.exception(
                 "Error creating account requests repository storage "
