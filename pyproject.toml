@@ -82,6 +82,10 @@ extend-exclude = [
 ignore = ["UP031", "DTZ006"]
 select = ["E713", "D100", "D101", "D104", "D106"]
 
+[tool.ruff.lint.per-file-ignores]
+# ignore docstring rules for test files
+"tests/test_*.py" = ["D100", "D101", "D104", "D106"]
+
 [tool.bandit]
 exclude_dirs = [".git/", "tests/data/", "tests/fixture/", "tests/snapshots"]
 
